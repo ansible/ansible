@@ -226,5 +226,4 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
     sys.exit(0)
 
 else:
-    print("usage: --list  ..OR.. --host <hostname>")
-    sys.exit(1)
+    sys.exit("usage: --list  ..OR.. --host <hostname>")

@@ -27,7 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 from time import sleep
+
+from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
@@ -49,16 +52,59 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
+from ansible.module_utils.six import string_types
 
 class AnsibleAWSError(Exception):
     pass
 
 
+def _botocore_exception_maybe():
+    """
+    Allow for boto3 not being installed when using these utils by wrapping
+    botocore.exceptions instead of assigning from it directly.
+    """
+    if HAS_BOTO3:
+        return botocore.exceptions.ClientError
+    return type(None)
+
+
+class AWSRetry(CloudRetry):
+    base_class = _botocore_exception_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.response['Error']['Code']
+
+    @staticmethod
+    def found(response_code):
+        # This list of failures is based on this API Reference
+        # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        retry_on = [
+            'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+            'InternalFailure', 'InternalError'
+        ]
+
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
+
+
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+    try:
+        return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
+    except ValueError:
+        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+
+def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
 
     if conn_type not in ['both', 'resource', 'client']:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+        raise ValueError('There is an issue in the calling code. You '
+                         'must specify either both, resource, or client to '
+                         'the conn_type parameter in the boto3_conn function '
+                         'call')
 
     if conn_type == 'resource':
         resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
@@ -71,6 +117,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
+boto3_inventory_conn = _boto3_conn
 
 def aws_common_argument_spec():
     return dict(
@@ -151,11 +198,13 @@ def get_aws_connection_info(module, boto3=False):
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
                 region = botocore.session.get_session().get_config_variable('region')
             else:
-                module.fail_json("Boto3 is required for this module. Please install boto3 and try again")
+                module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
     if not security_token:
         if 'AWS_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['AWS_SECURITY_TOKEN']
+        elif 'AWS_SESSION_TOKEN' in os.environ:
+            security_token = os.environ['AWS_SESSION_TOKEN']
         elif 'EC2_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['EC2_SECURITY_TOKEN']
         else:
@@ -226,13 +275,13 @@ def ec2_connect(module):
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     elif ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
@@ -331,7 +380,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     filters_list = []
     for k,v in filters_dict.iteritems():
         filter_dict = {'Name': k}
-        if isinstance(v, basestring):
+        if isinstance(v, string_types):
             filter_dict['Values'] = [v]
         else:
             filter_dict['Values'] = v
@@ -364,7 +413,10 @@ def boto3_tag_list_to_ansible_dict(tags_list):
 
     tags_dict = {}
     for tag in tags_list:
-        tags_dict[tag['Key']] = tag['Value']
+        if 'key' in tag:
+            tags_dict[tag['key']] = tag['value']
+        elif 'Key' in tag:
+            tags_dict[tag['Key']] = tag['Value']
 
     return tags_dict
 
@@ -423,7 +475,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     sec_group_id_list = []
 
-    if isinstance(sec_group_list, basestring):
+    if isinstance(sec_group_list, string_types):
         sec_group_list = [sec_group_list]
 
     # Get all security groups

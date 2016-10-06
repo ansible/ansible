@@ -1,162 +1,112 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(default=22, type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    provider=dict()
-)
-
-CLI_PROMPTS_RE = [
-    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-]
-
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-]
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import NetworkError, NetworkModule
+from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+class Cli(CliBase):
 
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
 
-class Cli(object):
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
 
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
-
-        try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
-
-    def send(self, commands):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
-
-
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
-
-    @property
-    def connected(self):
-        return self._connected
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        self.connection = Cli(self)
-
-        self.connection.connect()
-        self.connection.send('terminal length 0')
-        self._connected = True
+    ### Config methods ###
 
     def configure(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure terminal')
-        commands.append('commit')
-        responses = self.execute(commands)
-        responses.pop(0)
-        responses.pop()
-        return responses
+        cmds = ['configure terminal']
+        if commands[-1] == 'end':
+            commands.pop()
+        cmds.extend(to_list(commands))
+        cmds.extend(['commit', 'end'])
+        responses = self.execute(cmds)
+        return responses[1:]
 
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
+    def get_config(self, flags=None):
+        cmd = 'show running-config'
+        if flags:
+            if isinstance(flags, list):
+                cmd += ' %s' % ' '.join(flags)
+            else:
+                cmd += ' %s' % flags
+        return self.execute([cmd])[0]
 
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
+    def load_config(self, config, commit=False, replace=False, comment=None):
+        commands = ['configure terminal']
+        commands.extend(config)
 
-    def parse_config(self, cfg):
-        return parse(cfg, indent=1)
+        if commands[-1] == 'end':
+            commands.pop()
 
-    def get_config(self):
-        return self.execute('show running-config')[0]
+        try:
+            self.execute(commands)
+            diff = self.execute(['show commit changes diff'])
+            if commit:
+                if replace:
+                    prompt = re.compile(r'\[no\]:\s$')
+                    commit = 'commit replace'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    cmd = Command(commit, prompt=prompt, response='yes')
+                    self.execute([cmd, 'end'])
+                else:
+                    commit = 'commit'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    self.execute([commit, 'end'])
+            else:
+                self.execute(['abort'])
+        except NetworkError:
+            self.execute(['abort'])
+            diff = None
+            raise
 
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
+        return diff[0]
 
-    module = NetworkModule(**kwargs)
-
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    return module
+Cli = register_transport('cli', default=True)(Cli)

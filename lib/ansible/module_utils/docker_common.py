@@ -22,6 +22,7 @@ import json
 import sys
 import copy
 
+from distutils.version import LooseVersion
 from urlparse import urlparse
 from ansible.module_utils.basic import *
 
@@ -37,7 +38,7 @@ try:
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker.utils.types import Ulimit, LogConfig
     from docker import auth
-except ImportError, exc:
+except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
 
@@ -151,7 +152,7 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
 
-        if docker_version < MIN_DOCKER_VERSION:
+        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
@@ -161,9 +162,9 @@ class AnsibleDockerClient(Client):
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
-        except APIError, exc:
+        except APIError as exc:
             self.fail("Docker API error: %s" % exc)
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
     def log(self, msg, pretty_print=False):
@@ -233,7 +234,7 @@ class AnsibleDockerClient(Client):
             tls_hostname=self._get_value('tls_hostname', params['tls_hostname'],
                                         'DOCKER_TLS_HOSTNAME', 'localhost'),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
-                                        DEFAULT_DOCKER_API_VERSION),
+                                        'auto'),
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
             cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
             key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
@@ -262,7 +263,7 @@ class AnsibleDockerClient(Client):
         try:
             tls_config = TLSConfig(**kwargs)
             return tls_config
-        except TLSParameterError, exc:
+        except TLSParameterError as exc:
            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
@@ -372,9 +373,9 @@ class AnsibleDockerClient(Client):
                 if container['Id'] == name:
                     result = container
                     break
-        except SSLError, exc:
+        except SSLError as exc:
             self._handle_ssl_error(exc)
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error retrieving container list: %s" % exc)
 
         if result is not None:
@@ -382,7 +383,7 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error inspecting container: %s" % exc)
 
         return result
@@ -411,7 +412,7 @@ class AnsibleDockerClient(Client):
         if len(images) == 1:
             try:
                 inspection = self.inspect_image(images[0]['Id'])
-            except Exception, exc:
+            except Exception as exc:
                 self.fail("Error inspecting image %s:%s - %s" % (name, tag, str(exc)))
             return inspection
 
@@ -431,9 +432,10 @@ class AnsibleDockerClient(Client):
         images = response
         if tag: 
             lookup = "%s:%s" % (name, tag)
+            images = []
             for image in response:
-                self.log(image, pretty_print=True)
-                if image.get('RepoTags') and lookup in image.get('RepoTags'):
+                tags = image.get('RepoTags')
+                if tags and lookup in tags:
                     images = [image]
                     break
         return images
@@ -444,8 +446,7 @@ class AnsibleDockerClient(Client):
         '''
         self.log("Pulling image %s:%s" % (name, tag))
         try:
-            for line in self.pull(name, tag=tag, stream=True):
-                line = json.loads(line)
+            for line in self.pull(name, tag=tag, stream=True, decode=True):
                 self.log(line, pretty_print=True)
                 if line.get('error'):
                     if line.get('errorDetail'):
@@ -455,7 +456,7 @@ class AnsibleDockerClient(Client):
                                                                                error_detail.get('message')))
                     else:
                         self.fail("Error pulling %s - %s" % (name, line.get('error')))
-        except Exception, exc:
+        except Exception as exc:
             self.fail("Error pulling image %s:%s - %s" % (name, tag, str(exc)))
 
         return self.find_image(name, tag)

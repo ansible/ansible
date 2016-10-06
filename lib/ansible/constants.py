@@ -25,30 +25,39 @@ from string import ascii_letters, digits
 
 from ansible.compat.six import string_types
 from ansible.compat.six.moves import configparser
-
-from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
+from ansible.module_utils._text import to_text
+from ansible.parsing.quoting import unquote
+from ansible.utils.path import makedirs_safe
+
+BOOL_TRUE = frozenset([ "true", "t", "y", "1", "yes", "on" ])
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
     if value is None:
         return False
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+    if val.lower() in BOOL_TRUE:
         return True
     else:
         return False
 
-def shell_expand(path):
+def shell_expand(path, expand_relative_paths=False):
     '''
     shell_expand is needed as os.path.expanduser does not work
     when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE
     '''
     if path:
         path = os.path.expanduser(os.path.expandvars(path))
+        if expand_relative_paths and not path.startswith('/'):
+            # paths are always 'relative' to the config?
+            if 'CONFIG_FILE' in globals():
+                CFGDIR = os.path.dirname(CONFIG_FILE)
+                path = os.path.join(CFGDIR, path)
+            path = os.path.abspath(path)
     return path
 
-def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False):
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False, islist=False, isnone=False, ispath=False, ispathlist=False, istmppath=False, expand_relative_paths=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
@@ -69,11 +78,13 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif istmppath:
             value = shell_expand(value)
             if not os.path.exists(value):
-                os.makedirs(value, 0o700)
-            value = tempfile.mkdtemp(prefix='ansible-local-tmp', dir=value)
+                makedirs_safe(value, 0o700)
+            prefix = 'ansible-local-%s' % os.getpid()
+            value = tempfile.mkdtemp(prefix=prefix, dir=value)
         elif ispathlist:
             if isinstance(value, string_types):
-                value = [shell_expand(x) for x in value.split(os.pathsep)]
+                value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
+                         for x in value.split(os.pathsep)]
         elif isinstance(value, string_types):
             value = unquote(value)
     return value
@@ -86,6 +97,8 @@ def _get_config(p, section, key, env_var, default):
             return value
     if p is not None:
         try:
+            # TODO: Once we branch Ansible-2.2, change to the following in devel
+            #return to_text(p.get(section, key, raw=True), errors='surrogate_or_strict')
             return p.get(section, key, raw=True)
         except:
             return default
@@ -101,7 +114,10 @@ def load_config_file():
         path0 = os.path.expanduser(path0)
         if os.path.isdir(path0):
             path0 += "/ansible.cfg"
-    path1 = os.getcwd() + "/ansible.cfg"
+    try:
+        path1 = os.getcwd() + "/ansible.cfg"
+    except OSError:
+        path1 = None
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
 
@@ -130,24 +146,29 @@ DEFAULT_COW_WHITELIST = ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'd
 DEFAULTS='defaults'
 
 # FIXME: add deprecation warning when these get set
-#### DEPRECATED VARS #### 
+#### DEPRECATED VARS ####
 # use more sanely named 'inventory'
 DEPRECATED_HOST_LIST  = get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts', ispath=True)
 # this is not used since 0.5 but people might still have in config
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern', None, None)
+# If --tags or --skip-tags is given multiple times on the CLI and this is
+# True, merge the lists of tags together.  If False, let the last argument
+# overwrite any previous ones.  Behaviour is overwrite through 2.2.  2.3
+# overwrites but prints deprecation.  2.4 the default is to merge.
+MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', False, boolean=True)
 
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
 DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, ispath=True)
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None, ispathlist=True)
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', ispathlist=True)
+DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', ispathlist=True, expand_relative_paths=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp')
 DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '$HOME/.ansible/tmp', istmppath=True)
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, integer=True)
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      os.getenv('LANG', 'en_US.UTF-8'))
-DEFAULT_MODULE_SET_LOCALE = get_config(p, DEFAULTS, 'module_set_locale','ANSIBLE_MODULE_SET_LOCALE',True, boolean=True)
+DEFAULT_MODULE_SET_LOCALE = get_config(p, DEFAULTS, 'module_set_locale','ANSIBLE_MODULE_SET_LOCALE',False, boolean=True)
 DEFAULT_MODULE_COMPRESSION= get_config(p, DEFAULTS, 'module_compression', None, 'ZIP_DEFLATED')
 DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, integer=True)
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, integer=True)
@@ -158,7 +179,7 @@ DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE
 DEFAULT_ASK_VAULT_PASS    = get_config(p, DEFAULTS, 'ask_vault_pass',    'ANSIBLE_ASK_VAULT_PASS',    False, boolean=True)
 DEFAULT_VAULT_PASSWORD_FILE = get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None, ispath=True)
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
-DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
+DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       'smart')
 DEFAULT_SFTP_BATCH_MODE   = get_config(p, 'ssh_connection', 'sftp_batch_mode', 'ANSIBLE_SFTP_BATCH_MODE', True, boolean=True)
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
@@ -169,10 +190,12 @@ DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBL
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
 DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
 DEFAULT_GATHER_SUBSET     = get_config(p, DEFAULTS, 'gather_subset', 'ANSIBLE_GATHER_SUBSET', 'all').lower()
+DEFAULT_GATHER_TIMEOUT    = get_config(p, DEFAULTS, 'gather_timeout', 'ANSIBLE_GATHER_TIMEOUT', 10, integer=True)
 DEFAULT_LOG_PATH          = get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', '', ispath=True)
 DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, boolean=True)
 DEFAULT_INVENTORY_IGNORE  = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE', ["~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo"], islist=True)
 DEFAULT_VAR_COMPRESSION_LEVEL = get_config(p, DEFAULTS, 'var_compression_level', 'ANSIBLE_VAR_COMPRESSION_LEVEL', 0, integer=True)
+DEFAULT_INTERNAL_POLL_INTERVAL = get_config(p, DEFAULTS, 'internal_poll_interval', None, 0.001, floating=True)
 
 # static includes
 DEFAULT_TASK_INCLUDES_STATIC    = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, boolean=True)
@@ -201,9 +224,9 @@ DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_
 DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, boolean=True)
 
 # Become
-BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'runas': '', 'doas': 'Permission denied', 'dzdo': ''} #FIXME: deal with i18n
-BECOME_MISSING_STRINGS    = {'sudo': 'sorry, a password is required to run sudo', 'su': '', 'pbrun': '', 'pfexec': '', 'runas': '', 'doas': 'Authorization required', 'dzdo': ''} #FIXME: deal with i18n
-BECOME_METHODS            = ['sudo','su','pbrun','pfexec','runas','doas','dzdo']
+BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'doas': 'Permission denied', 'dzdo': '', 'ksu': 'Password incorrect'} #FIXME: deal with i18n
+BECOME_MISSING_STRINGS    = {'sudo': 'sorry, a password is required to run sudo', 'su': '', 'pbrun': '', 'pfexec': '', 'doas': 'Authorization required', 'dzdo': '', 'ksu': 'No password given'} #FIXME: deal with i18n
+BECOME_METHODS            = ['sudo','su','pbrun','pfexec','doas','dzdo','ksu']
 BECOME_ALLOW_SAME_USER    = get_config(p, 'privilege_escalation', 'become_allow_same_user', 'ANSIBLE_BECOME_ALLOW_SAME_USER', False, boolean=True)
 DEFAULT_BECOME_METHOD     = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo' ).lower()
 DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',False, boolean=True)
@@ -220,7 +243,7 @@ DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pa
 # the module takes both, bad things could happen.
 # In the future we should probably generalize this even further
 # (mapping of param: squash field)
-DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apk, apt, dnf, package, pacman, pkgng, yum, zypper", islist=True)
+DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apk, apt, dnf, homebrew, package, pacman, pkgng, yum, zypper", islist=True)
 # paths
 DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '~/.ansible/plugins/action:/usr/share/ansible/plugins/action', ispathlist=True)
 DEFAULT_CACHE_PLUGIN_PATH      = get_config(p, DEFAULTS, 'cache_plugins',      'ANSIBLE_CACHE_PLUGINS', '~/.ansible/plugins/cache:/usr/share/ansible/plugins/cache', ispathlist=True)
@@ -245,7 +268,6 @@ ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOC
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
 ANSIBLE_COW_SELECTION          = get_config(p, DEFAULTS, 'cow_selection', 'ANSIBLE_COW_SELECTION', 'default')
 ANSIBLE_COW_WHITELIST          = get_config(p, DEFAULTS, 'cow_whitelist', 'ANSIBLE_COW_WHITELIST', DEFAULT_COW_WHITELIST, islist=True)
-DISPLAY_ARGS_TO_STDOUT         = get_config(p, DEFAULTS, 'display_args_to_stdout', 'DISPLAY_ARGS_TO_STDOUT', False, boolean=True)
 DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
 DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', True, boolean=True)
 HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, boolean=True)
@@ -262,10 +284,11 @@ DISPLAY_ARGS_TO_STDOUT         = get_config(p, DEFAULTS, 'display_args_to_stdout
 MAX_FILE_SIZE_FOR_DIFF         = get_config(p, DEFAULTS, 'max_diff_size', 'ANSIBLE_MAX_DIFF_SIZE', 1024*1024, integer=True)
 
 # CONNECTION RELATED
-ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', '-o ControlMaster=auto -o ControlPersist=60s')
-ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', "%(directory)s/ansible-ssh-%%h-%%p-%%r")
+ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', '-C -o ControlMaster=auto -o ControlPersist=60s')
+ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', u"%(directory)s/ansible-ssh-%%h-%%p-%%r")
 ANSIBLE_SSH_PIPELINING         = get_config(p, 'ssh_connection', 'pipelining', 'ANSIBLE_SSH_PIPELINING', False, boolean=True)
 ANSIBLE_SSH_RETRIES            = get_config(p, 'ssh_connection', 'retries', 'ANSIBLE_SSH_RETRIES', 0, integer=True)
+ANSIBLE_SSH_EXECUTABLE         = get_config(p, 'ssh_connection', 'ssh_executable', 'ANSIBLE_SSH_EXECUTABLE', 'ssh')
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
 PARAMIKO_PROXY_COMMAND         = get_config(p, 'paramiko_connection', 'proxy_command', 'ANSIBLE_PARAMIKO_PROXY_COMMAND', None)
 
@@ -288,8 +311,6 @@ GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBL
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', islist=True)
 
-# characters included in auto-generated passwords
-DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], islist=True )
 
 # colors
@@ -302,7 +323,7 @@ COLOR_DEPRECATE   = get_config(p, 'colors', 'deprecate', 'ANSIBLE_COLOR_DEPRECAT
 COLOR_SKIP        = get_config(p, 'colors', 'skip', 'ANSIBLE_COLOR_SKIP', 'cyan')
 COLOR_UNREACHABLE = get_config(p, 'colors', 'unreachable', 'ANSIBLE_COLOR_UNREACHABLE', 'bright red')
 COLOR_OK          = get_config(p, 'colors', 'ok', 'ANSIBLE_COLOR_OK', 'green')
-COLOR_CHANGED     = get_config(p, 'colors', 'ok', 'ANSIBLE_COLOR_CHANGED', 'yellow')
+COLOR_CHANGED     = get_config(p, 'colors', 'changed', 'ANSIBLE_COLOR_CHANGED', 'yellow')
 COLOR_DIFF_ADD    = get_config(p, 'colors', 'diff_add', 'ANSIBLE_COLOR_DIFF_ADD', 'green')
 COLOR_DIFF_REMOVE = get_config(p, 'colors', 'diff_remove', 'ANSIBLE_COLOR_DIFF_REMOVE', 'red')
 COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LINES', 'cyan')
@@ -311,9 +332,10 @@ COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LI
 DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, integer=True)
 
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
-MODULE_NO_JSON            = ['command', 'shell', 'raw']
+MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
+DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
@@ -324,4 +346,4 @@ TREE_DIR                  = None
 LOCALHOST                 = frozenset(['127.0.0.1', 'localhost', '::1'])
 # module search
 BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
-IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
+IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"]

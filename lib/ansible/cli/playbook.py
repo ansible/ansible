@@ -75,10 +75,8 @@ class PlaybookCLI(CLI):
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
 
-        self.options, self.args = parser.parse_args(self.args[1:])
-
-
         self.parser = parser
+        super(PlaybookCLI, self).parse()
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("You must specify a playbook file to run")
@@ -147,6 +145,11 @@ class PlaybookCLI(CLI):
         if len(inventory.list_hosts()) == 0 and no_hosts is False:
             # Invalid limit
             raise AnsibleError("Specified --limit does not match any hosts")
+
+        # flush fact cache if requested
+        if self.options.flush_cache:
+            for host in inventory.list_hosts():
+                variable_manager.clear_facts(host)
 
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)

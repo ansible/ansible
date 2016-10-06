@@ -1,0 +1,20 @@
+- name: Measure time before
+  shell: date +%s
+  register: before
+
+- debug:
+    var: i
+  with_sequence: count=3
+  loop_control:
+    loop_var: i
+    pause: 2
+
+- name: Measure time after
+  shell: date +%s
+  register: after
+
+# since there is 3 rounds, and 2 seconds between, it should last 4 seconds
+# we do not test the upper bound, since CI can lag significantly
+- assert:
+    that:
+    - '(after.stdout |int) - (before.stdout|int) >= 4'

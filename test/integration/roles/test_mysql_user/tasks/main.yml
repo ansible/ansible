@@ -112,7 +112,7 @@
 
 - name: assert grant access for user2 on multiple database
   assert: { that: "'{{ item }}' in result.stdout" }
-  with_items: db_names
+  with_items: "{{db_names}}"
 
 - include: remove_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
 

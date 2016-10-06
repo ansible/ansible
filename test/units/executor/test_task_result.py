@@ -85,6 +85,15 @@ class TestTaskResult(unittest.TestCase):
         tr = TaskResult(mock_host, mock_task, dict(results=[dict(skipped=True), dict(skipped=True), dict(skipped=True)]))
         self.assertTrue(tr.is_skipped())
 
+        # test with multiple squashed results (list of strings)
+        # first with the main result having skipped=False
+        mock_task.loop = 'foo'
+        tr = TaskResult(mock_host, mock_task, dict(results=["a", "b", "c"], skipped=False))
+        self.assertFalse(tr.is_skipped())
+        # then with the main result having skipped=True
+        tr = TaskResult(mock_host, mock_task, dict(results=["a", "b", "c"], skipped=True))
+        self.assertTrue(tr.is_skipped())
+
     def test_task_result_is_unreachable(self):
         mock_host = MagicMock()
         mock_task = MagicMock()

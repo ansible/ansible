@@ -8,12 +8,12 @@ Requirements
 ------------
 
 Using the Azure Resource Manager modules requires having `Azure Python SDK <https://github.com/Azure/azure-sdk-for-python>`_
-installed on the host running Ansible. You will need to have >= v2.0.0RC2 installed. The simplest way to install the
+installed on the host running Ansible. You will need to have == v2.0.0RC5 installed. The simplest way to install the
 SDK is via pip:
 
 .. code-block:: bash
 
-    $ pip install azure==2.0.0rc2
+    $ pip install "azure==2.0.0rc5"
 
 
 Authenticating with Azure
@@ -255,7 +255,7 @@ For a given host, the inventory script provides the following host variables:
         "version": "latest"
       },
       "location": "westus",
-      "mac_address": "00-0D-3A-31-2C-EC",
+      "mac_address": "00-00-5E-00-53-FE",
       "name": "object-name",
       "network_interface": "interface-name",
       "network_interface_id": "/subscriptions/subscription-id/resourceGroups/galaxy-production/providers/Microsoft.Network/networkInterfaces/object-name1",
@@ -320,6 +320,10 @@ Select hosts for specific tag key by assigning a comma separated list of tag key
 
 * AZURE_TAGS=key1,key2,key3
 
+Select hosts for specific locations by assigning a comma separated list of locations to:
+
+* AZURE_LOCATIONS=eastus,eastus2,westus
+
 Or, select hosts for specific tag key:value pairs by assigning a comma separated list key:value pairs to:
 
 * AZURE_TAGS=key1:value1,key2:value2
@@ -340,6 +344,9 @@ file will contain the following:
 
     # Control which tags are included. Set tags to a comma separated list of keys or key:value pairs
     #tags=
+
+    # Control which locations are included. Set locations to a comma separated list of locations.
+    #locations=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
     # Valid values: yes, no, true, false, True, False, 0, 1.

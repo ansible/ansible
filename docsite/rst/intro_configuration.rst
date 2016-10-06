@@ -24,6 +24,16 @@ Prior to 1.5 the order was::
 
 Ansible will process the above list and use the first file found. Settings in files are not merged.
 
+.. note:: Comments
+    The configuration file is one variant of an INI format.  Both the hash
+    sign ("#") and semicolon (";") are allowed as comment markers when the
+    comment starts the line.  However, if the comment is inline with regular
+    values, only the semicolon is allowed to introduce the comment.  For
+    instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
 .. _getting_the_latest_configuration:
 
 Getting the latest configuration
@@ -73,6 +83,22 @@ different locations::
    action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
+
+
+.. _allow_world_readable_tmpfiles:
+
+allow_world_readable_tmpfiles
+=============================
+
+.. versionadded:: 2.1
+This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task. 
+
+It is useful when becoming an unprivileged user::
+
+  allow_world_readable_tmpfiles=True
+
+
+
 
 .. _ansible_managed:
 
@@ -149,20 +175,9 @@ Callbacks are pieces of code in ansible that get called on specific events, perm
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
-
-.. _stdout_callback:
-
-stdout_callback
-===============
-
-.. versionadded:: 2.0
-
-This setting allows you to override the default stdout callback for ansible-playbook::
-
-    stdout_callback = skippy
 
 .. _callback_whitelist:
 
@@ -184,12 +199,12 @@ command_warnings
 
 .. versionadded:: 1.8
 
-By default since Ansible 1.8, Ansible will warn when usage of the shell and
-command module appear to be simplified by using a default Ansible module
-instead.  This can include reminders to use the 'git' module instead of
-shell commands to execute 'git'.  Using modules when possible over arbitrary
-shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks::
+By default since Ansible 1.8, Ansible will issue a warning when the shell or 
+command module is used and the command appears to be similar to an existing 
+Ansible module. For example, this can include reminders to use the 'git' module
+instead of shell commands to execute 'git'.  Using modules when possible over 
+arbitrary shell commands can lead to more reliable and consistent playbook runs, 
+and also easier to maintain playbooks::
 
     command_warnings = False
 
@@ -417,6 +432,20 @@ implications and wish to disable it, you may do so here by setting the value to 
 
     host_key_checking=True
 
+.. _internal_poll_interval:
+
+internal_poll_interval
+======================
+
+.. versionadded:: 2.2
+
+This sets the interval (in seconds) of Ansible internal processes polling each other.
+Lower values improve performance with large playbooks at the expense of extra CPU load.
+Higher values are more suitable for Ansible usage in automation scenarios, when UI responsiveness is not required but CPU usage might be a concern.
+Default corresponds to the value hardcoded in Ansible ≤ 2.1::
+
+    internal_poll_interval=0.001
+
 .. _inventory_file:
 
 inventory
@@ -457,6 +486,8 @@ Ansible knows how to look in multiple locations if you feed it a colon separated
 local_tmp
 =========
 
+.. versionadded:: 2.1
+
 When Ansible gets ready to send a module to a remote machine it usually has to
 add a few things to the module: Some boilerplate code, the module's
 parameters, and a few constants from the config file.  This combination of
@@ -495,18 +526,36 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _merge_multiple_cli_tags:
+
+merge_multiple_cli_tags
+=======================
+
+.. versionadded:: 2.3
+
+This allows changing how multiple --tags and --skip-tags arguments are handled
+on the command line.  In Ansible up to and including 2.3, specifying --tags
+more than once will only take the last value of --tags.  Setting this config
+value to True will mean that all of the --tags options will be merged
+together.  The same holds true for --skip-tags.
+
+.. note:: The default value for this in 2.3 is False.  In 2.4, the
+    default value will be True.  After 2.4, the option is going away.
+    Multiple --tags and multiple --skip-tags will always be merged together.
+
 .. _module_set_locale:
 
 module_set_locale
 =================
 
 This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
-via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
-being set when the module is executed on the given remote system.
+via the :ref:`module_lang` configuration option). If enabled, it results in the LANG, LC_MESSAGES, and LC_ALL
+being set when the module is executed on the given remote system.  By default this is disabled.
 
 .. note::
 
-    The module_set_locale option was added in Ansible 2.1.
+    The module_set_locale option was added in Ansible-2.1 and defaulted to
+    True.  The default was changed to False in Ansible-2.2
 
 .. _module_lang:
 
@@ -514,7 +563,8 @@ being set when the module is executed on the given remote system.
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
 
     module_lang = en_US.UTF-8
 
@@ -670,10 +720,21 @@ Instead of calling the module once for each item, the module is called once with
 
 The default value for this setting is only for certain package managers, but it can be used for any module::
 
-    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+    squash_actions = apk,apt,dnf,homebrew,package,pacman,pkgng,yum,zypper
 
 Currently, this is only supported for modules that have a name parameter, and only when the item is the
 only thing being passed to the parameter.
+
+.. _stdout_callback:
+
+stdout_callback
+===============
+
+.. versionadded:: 2.0
+
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _cfg_strategy_plugins:
 
@@ -804,7 +865,7 @@ The equivalent of adding sudo: or su: to a play or task, set to true/yes to acti
 become_method
 =============
 
-Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``::
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``, ``ksu``::
 
     become_method=su
 
@@ -844,7 +905,7 @@ Paramiko Specific Settings
 --------------------------
 
 Paramiko is the default SSH connection implementation on Enterprise Linux 6 or earlier, and is not used by default on other
-platforms.  Settings live under the [paramiko] header.
+platforms.  Settings live under the [paramiko_connection] header.
 
 .. _record_host_keys:
 
@@ -937,6 +998,19 @@ sudoers configurations that have requiretty (the default on many distros), but i
 recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
 
     pipelining=False
+
+.. _ssh_executable:
+
+ssh_executable
+==============
+
+.. versionadded:: 2.2
+
+This is the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in ``$PATH``. This config can also be overridden with ``ansible_ssh_executable`` inventory variable::
+
+  ssh_executable="/usr/local/bin/ssh"
+
+This option is usually not required, it might be useful when access to system ssh is restricted, or when using ssh wrappers to connect to remote hosts. 
 
 .. _accelerate_settings:
 

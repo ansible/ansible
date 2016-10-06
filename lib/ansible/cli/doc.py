@@ -24,11 +24,11 @@ import os
 import traceback
 import textwrap
 
-from ansible.compat.six import iteritems
+from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins import module_loader
+from ansible.plugins import module_loader, action_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
@@ -60,7 +60,8 @@ class DocCLI(CLI):
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(DocCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
     def run(self):
@@ -105,6 +106,12 @@ class DocCLI(CLI):
                     continue
 
                 if doc is not None:
+
+                    # is there corresponding action plugin?
+                    if module in action_loader:
+                        doc['action'] = True
+                    else:
+                        doc['action'] = False
 
                     all_keys = []
                     for (k,v) in iteritems(doc['options']):
@@ -212,7 +219,7 @@ class DocCLI(CLI):
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
         pad = 31
-        subdent = ''.join([" " for a in xrange(pad)])
+        subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
@@ -249,6 +256,9 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
 
+        if 'action' in doc and doc['action']:
+            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
+
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
 
@@ -266,21 +276,23 @@ class DocCLI(CLI):
             text.append("%s %s" % (opt_leadin, o))
 
             if isinstance(opt['description'], list):
-                desc = " ".join(opt['description'])
+                for entry in opt['description']:
+                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
-                desc = opt['description']
+                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
+            choices = ''
             if 'choices' in opt:
-                choices = ", ".join(str(i) for i in opt['choices'])
-                desc = desc + " (Choices: " + choices + ")"
-            if 'default' in opt:
-                default = str(opt['default'])
-                desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
+            default = ''
+            if 'default' in opt or not required:
+                default = "[Default: " +  str(opt.get('default', '(null)')) + "]"
+            text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Notes:")
+            for note in doc['notes']:
+                text.append(textwrap.fill(CLI.tty_ify(note), limit-6, initial_indent="  * ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
@@ -301,13 +313,13 @@ class DocCLI(CLI):
 
         maintainers = set()
         if 'author' in doc:
-            if isinstance(doc['author'], basestring):
+            if isinstance(doc['author'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])
 
         if 'maintainers' in doc:
-            if isinstance(doc['maintainers'], basestring):
+            if isinstance(doc['maintainers'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])

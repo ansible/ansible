@@ -98,7 +98,7 @@
        result.cmd == "echo foo=bar foo=bar"
 
 - name: raw duplicates, noop
-  raw: /bin/true foo=bar foo=bar
+  raw: env true foo=bar foo=bar
 
 - name: multi-line inline shell commands (should use script module but hey) are a thing
   shell: "{{ multi_line }}"

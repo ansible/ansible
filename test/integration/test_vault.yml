@@ -1,13 +1,4 @@
 - hosts: testhost
-  vars_files:
-    - vars/test_var_encrypted.yml
-  
   gather_facts: False
-
-  tasks:
-    - assert:
-        that:
-          - 'secret_var == "secret"'
-          
-    - copy: src=vault-secret.txt dest={{output_dir}}/secret.txt
-
+  roles:
+    - { role: test_vault, tags: test_vault}

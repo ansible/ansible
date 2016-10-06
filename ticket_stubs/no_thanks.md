@@ -14,7 +14,7 @@ open dialog.  You can stop by the development list, and we'd be glad to talk abo
 
    * https://groups.google.com/forum/#!forum/ansible-devel
 
-In the future, sometimes starting a discussion on the development list prior to implenting a feature can make getting things included a little easier, but it's not always necessary.
+In the future, sometimes starting a discussion on the development list prior to implementing a feature can make getting things included a little easier, but it's not always necessary.
 
 Thank you once again for this and your interest in Ansible!
 

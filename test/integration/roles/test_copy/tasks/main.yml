@@ -19,6 +19,10 @@
 - name: record the output directory
   set_fact: output_file={{output_dir}}/foo.txt
 
+- name: locate sha1sum/shasum
+  shell: which sha1sum || which shasum
+  register: sha1sum
+
 - name: initiate a basic copy, and also test the mode
   copy: src=foo.txt dest={{output_file}} mode=0444
   register: copy_result
@@ -210,8 +214,8 @@
 
 - name: overwrite the file as user nobody
   copy: dest=/tmp/worldwritable/file.txt content="baz"
-  sudo: yes
-  sudo_user: nobody
+  become: yes
+  become_user: nobody
   register: copy_result7
 
 - name: assert the file was overwritten
@@ -247,16 +251,10 @@
     - stat_link_result.stat.islnk
 
 - name: get the checksum of the link target
-  shell: sha1sum {{output_dir}}/follow_test | cut -f1 -sd ' '
+  shell: "{{ sha1sum.stdout }} {{output_dir}}/follow_test | cut -f1 -sd ' '"
   register: target_file_result
 
 - name: assert that the link target was updated
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
-
-- name: test first avialable file
-  copy: dest={{output_dir}}/faf_test
-  first_available_file: 
-        - doesntexist.txt
-        - foo.txt

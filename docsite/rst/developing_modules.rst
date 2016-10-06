@@ -17,7 +17,7 @@ by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 By default, everything that ships with Ansible is pulled from its source tree, but
 additional paths can be added.
 
-The directory i:file:`./library`, alongside your top level :term:`playbooks`, is also automatically
+The directory :file:`./library`, alongside your top level :term:`playbooks`, is also automatically
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
@@ -204,6 +204,25 @@ This should return something like::
 
     {"changed": true, "time": "2012-03-14 12:23:00.000307"}
 
+.. _binary_module_reading_input:
+
+Binary Modules Input
+++++++++++++++++++++
+
+Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
+supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
+would resemble something similar to the following payload for a module accepting the same arguments as the
+``ping`` module::
+
+    {
+        "data": "pong",
+        "_ansible_verbosity": 4,
+        "_ansible_diff": false,
+        "_ansible_debug": false,
+        "_ansible_check_mode": false,
+        "_ansible_no_log": false
+    }
+
 .. _module_provided_facts:
 
 Module Provided 'Facts'
@@ -335,6 +354,12 @@ how the command module is implemented.
 
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
 will still be shown in Ansible, but the command will not succeed.
+
+Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+
+Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+
+Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
 
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
@@ -615,15 +640,17 @@ The following  checklist items are important guidelines for people who want to c
 
 * The shebang should always be ``#!/usr/bin/python``, this allows ansible_python_interpreter to work
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
+* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
-    * Descriptions should always start with a Capital letter and end with a full stop. Consistency always helps.
-    * The `required` setting should always be present, be it true *or* false
-    * If `required` is false, you should document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
+    * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
+    * The `required` setting is only required when true, otherwise it is assumed to be false.
+    * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
     * Documenting `default` is not needed for `required: true`.
     * Remove unnecessary doc like `aliases: []` or `choices: []`.
-    * The version is not a float number and value the current development version.
+    * Do not use Boolean values in a choice list . For example, in the list `choices: ['no', 'verify', 'always]`, 'no' will be interpreted as a Boolean value (you can check basic.py for BOOLEANS_* constants to see the full list of Boolean keywords). If your option actually is a boolean, just use `type=bool`; there is no need to populate 'choices'.
+    * For new modules or options in a module add version_added. The version should match the value of the current development version and is a string (not a float), so be sure to enclose it in quotes.
     * Verify that arguments in doc and module spec dict are identical.
     * For password / secret arguments no_log=True should be set.
     * Requirements should be documented, using the `requirements=[]` field.
@@ -675,6 +702,7 @@ The following  checklist items are important guidelines for people who want to c
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes.
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
   import them into unittests in the future example::
 
@@ -693,7 +721,20 @@ The following  checklist items are important guidelines for people who want to c
   fields of a dictionary and return the dictionary.
 * When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
   rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
-
+* facts modules must return facts in the ansible_facts field of the result
+  dictionary. :ref:`module_provided_facts`
+* modules that are purely about fact gathering need to implement check_mode.
+  they should not cause any changes anyway so it should be as simple as adding
+  check_mode=True when instantiating AnsibleModule.  (The reason is that
+  playbooks which conditionalize based on fact information will only
+  conditionalize correctly in check_mode if the facts are returned in
+  check_mode).
+* Basic auth: module_utils.api has some helpers for doing basic auth with
+  module_utils.urls.fetch_url().  If you use those you may find you also want
+  to fallback on environment variables for default values.  If you do that,
+  be sure to use non-generic environment variables (like
+  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 `````````````````````````

@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+import os
 import re
 import socket
+import time
 
-# py2 vs py3; replace with six via ziploader
+# py2 vs py3; replace with six via ansiballz
 try:
     from StringIO import StringIO
 except ImportError:
@@ -27,29 +29,17 @@ except ImportError:
 
 try:
     import paramiko
+    from paramiko.ssh_exception import AuthenticationException
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
 
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkError
 
-ANSI_RE = re.compile(r'(\x1b\[\?1h\x1b=)')
-
-CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
-]
-
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"^% \w+", re.M),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-    re.compile(r"syntax error"),
-    re.compile(r"unknown command")
+ANSI_RE = [
+    re.compile(r'(\x1b\[\?1h\x1b=)'),
+    re.compile(r'\x08.')
 ]
 
 def to_list(val):
@@ -60,6 +50,7 @@ def to_list(val):
     else:
         return list()
 
+
 class ShellError(Exception):
 
     def __init__(self, msg, command=None):
@@ -67,15 +58,6 @@ class ShellError(Exception):
         self.message = msg
         self.command = command
 
-class Command(object):
-
-    def __init__(self, command, prompt=None, response=None):
-        self.command = command
-        self.prompt = prompt
-        self.response = response
-
-    def __str__(self):
-        return self.command
 
 class Shell(object):
 
@@ -86,27 +68,49 @@ class Shell(object):
         self.kickstart = kickstart
         self._matched_prompt = None
 
-        self.prompts = prompts_re or CLI_PROMPTS_RE
-        self.errors = errors_re or CLI_ERRORS_RE
+        self.prompts = prompts_re or list()
+        self.errors = errors_re or list()
 
-    def open(self, host, port=22, username=None, password=None,
-            timeout=10, key_filename=None, pkey=None, look_for_keys=None,
-            allow_agent=False):
+    def open(self, host, port=22, username=None, password=None, timeout=10,
+             key_filename=None, pkey=None, look_for_keys=None,
+             allow_agent=False, key_policy="loose"):
 
         self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        if key_policy != "ignore":
+            self.ssh.load_system_host_keys()
+            try:
+                self.ssh.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+            except IOError:
+                pass
+
+        if key_policy == "strict":
+            self.ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
+        else:
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # unless explicitly set, disable look for keys if a password is
         # present. this changes the default search order paramiko implements
         if not look_for_keys:
             look_for_keys = password is None
 
-        self.ssh.connect(host, port=port, username=username, password=password,
-                    timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
-                    key_filename=key_filename, allow_agent=allow_agent)
+        try:
+            self.ssh.connect(
+                host, port=port, username=username, password=password,
+                timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
+                key_filename=key_filename, allow_agent=allow_agent,
+            )
 
-        self.shell = self.ssh.invoke_shell()
-        self.shell.settimeout(timeout)
+            self.shell = self.ssh.invoke_shell()
+            self.shell.settimeout(timeout)
+        except socket.gaierror:
+            raise ShellError("unable to resolve host name")
+        except AuthenticationException:
+            raise ShellError('Unable to authenticate to remote device')
+        except socket.error:
+            exc = get_exception()
+            if exc.errno == 60:
+                raise ShellError('timeout trying to connect to host')
+            raise
 
         if self.kickstart:
             self.shell.sendall("\n")
@@ -114,10 +118,13 @@ class Shell(object):
         self.receive()
 
     def strip(self, data):
-        return ANSI_RE.sub('', data)
+        for regex in ANSI_RE:
+            data = regex.sub('', data)
+        return data
 
     def receive(self, cmd=None):
         recv = StringIO()
+        handled = False
 
         while True:
             data = self.shell.recv(200)
@@ -127,15 +134,15 @@ class Shell(object):
 
             window = self.strip(recv.read())
 
-            if isinstance(cmd, Command):
-                self.handle_input(window, prompt=cmd.prompt,
-                                  response=cmd.response)
+            if hasattr(cmd, 'prompt') and not handled:
+                handled = self.handle_prompt(window, cmd)
 
             try:
-                if self.read(window):
+                if self.find_prompt(window):
                     resp = self.strip(recv.getvalue())
                     return self.sanitize(cmd, resp)
-            except ShellError, exc:
+            except ShellError:
+                exc = get_exception()
                 exc.command = cmd
                 raise
 
@@ -147,34 +154,35 @@ class Shell(object):
                 self.shell.sendall(cmd)
                 responses.append(self.receive(command))
         except socket.timeout:
-            raise ShellError("timeout trying to send command", cmd)
+            raise ShellError("timeout trying to send command: %s" % cmd)
+        except socket.error:
+            exc = get_exception()
+            raise ShellError("problem sending command to host: %s" % exc.message)
         return responses
 
     def close(self):
         self.shell.close()
 
-    def handle_input(self, resp, prompt, response):
-        if not prompt or not response:
-            return
-
-        prompt = to_list(prompt)
-        response = to_list(response)
+    def handle_prompt(self, resp, cmd):
+        prompt = to_list(cmd.prompt)
+        response = to_list(cmd.response)
 
         for pr, ans in zip(prompt, response):
             match = pr.search(resp)
             if match:
-                cmd = '%s\r' % ans
-                self.shell.sendall(cmd)
+                answer = '%s\r' % ans
+                self.shell.sendall(answer)
+                return True
 
     def sanitize(self, cmd, resp):
         cleaned = []
         for line in resp.splitlines():
-            if line.startswith(str(cmd)) or self.read(line):
+            if line.startswith(str(cmd)) or self.find_prompt(line):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned)
 
-    def read(self, response):
+    def find_prompt(self, response):
         for regex in self.errors:
             if regex.search(response):
                 raise ShellError('matched error in response: %s' % response)
@@ -184,3 +192,78 @@ class Shell(object):
             if match:
                 self._matched_prompt = match.group()
                 return True
+
+
+class CliBase(object):
+    """Basic paramiko-based ssh transport any NetworkModule can use."""
+
+    def __init__(self):
+        if not HAS_PARAMIKO:
+            raise NetworkError(
+                msg='paramiko is required but does not appear to be installed.  '
+                'It can be installed using  `pip install paramiko`'
+            )
+
+        self.shell = None
+        self._connected = False
+        self.default_output = 'text'
+
+    def connect(self, params, kickstart=True):
+        host = params['host']
+        port = params.get('port') or 22
+
+        username = params['username']
+        password = params.get('password')
+        key_file = params.get('ssh_keyfile')
+        timeout = params['timeout']
+
+        try:
+            self.shell = Shell(
+                kickstart=kickstart,
+                prompts_re=self.CLI_PROMPTS_RE,
+                errors_re=self.CLI_ERRORS_RE,
+            )
+            self.shell.open(
+                host, port=port, username=username, password=password,
+                key_filename=key_file, timeout=timeout,
+            )
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(
+                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
+            )
+
+        self._connected = True
+
+    def disconnect(self):
+        self.shell.close()
+        self._connected = False
+
+    def authorize(self, params, **kwargs):
+        pass
+
+    ### Command methods ###
+
+    def execute(self, commands):
+        try:
+            return self.shell.send(commands)
+        except ShellError:
+            exc = get_exception()
+            raise NetworkError(exc.message, commands=commands)
+
+    def run_commands(self, commands):
+        return self.execute(to_list(commands))
+
+    ### Config methods ###
+
+    def configure(self, commands):
+        raise NotImplementedError
+
+    def get_config(self, **kwargs):
+        raise NotImplementedError
+
+    def load_config(self, commands, **kwargs):
+        raise NotImplementedError
+
+    def save_config(self):
+        raise NotImplementedError

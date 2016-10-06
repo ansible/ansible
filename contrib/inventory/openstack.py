@@ -3,6 +3,7 @@
 # Copyright (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 # Copyright (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
 # Copyright (c) 2015, Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2016, Rackspace Australia
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,12 +40,17 @@
 # use_hostnames changes the behavior from registering every host with its UUID
 #               and making a group of its hostname to only doing this if the
 #               hostname in question has more than one server
+# fail_on_errors causes the inventory to fail and return no hosts if one cloud
+#                has failed (for example, bad credentials or being offline).
+#                When set to False, the inventory will return hosts from
+#                whichever other clouds it can contact. (Default: True)
 
 import argparse
 import collections
 import os
 import sys
 import time
+from distutils.version import StrictVersion
 
 try:
     import json
@@ -80,7 +86,7 @@ def get_groups_from_server(server_vars, namegroup=True):
 
     for extra_group in metadata.get('groups', '').split(','):
         if extra_group:
-            groups.append(extra_group)
+            groups.append(extra_group.strip())
 
     groups.append('instance-%s' % server_vars['id'])
     if namegroup:
@@ -128,6 +134,9 @@ def get_host_groups_from_cloud(inventory):
     if hasattr(inventory, 'extra_config'):
         use_hostnames = inventory.extra_config['use_hostnames']
         list_args['expand'] = inventory.extra_config['expand_hostvars']
+        if StrictVersion(shade.__version__) >= StrictVersion("1.6.0"):
+            list_args['fail_on_cloud_config'] = \
+                inventory.extra_config['fail_on_errors']
     else:
         use_hostnames = False
 
@@ -216,6 +225,7 @@ def main():
                 config_defaults={
                     'use_hostnames': False,
                     'expand_hostvars': True,
+                    'fail_on_errors': True,
                 }
             ))
 

@@ -73,10 +73,9 @@ For starters, here's a playbook that contains just one play::
         - name: restart apache
           service: name=httpd state=restarted
 
-We can also break task items out over multiple lines using the YAML dictionary
-types to supply module arguments. This can be helpful when working with tasks
-that have really long parameters or modules that take many parameters to keep
-them well structured. Below is another version of the above example but using
+When working with tasks that have really long parameters or modules that take 
+many parameters, you can break tasks items over multiple lines to improve the 
+structure. Below is another version of the above example but using
 YAML dictionaries to supply the modules with their ``key=value`` arguments.::
 
     ---
@@ -126,7 +125,7 @@ the web servers, and then the database servers. For example::
       - name: ensure postgresql is at the latest version
         yum: name=postgresql state=latest
       - name: ensure that postgresql is started
-        service: name=postgresql state=running
+        service: name=postgresql state=started
 
 You can use this method to switch between the host group you're targeting,
 the username logging into the remote servers, whether to sudo or not, and so
@@ -259,8 +258,8 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
-running the playbook.   This is output for humans, so it is
-nice to have reasonably good descriptions of each task step.  If the name
+running the playbook.   This is human readable output, and so it is 
+useful to have provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
@@ -274,7 +273,7 @@ the service module takes ``key=value`` arguments::
 
    tasks:
      - name: make sure apache is running
-       service: name=httpd state=running
+       service: name=httpd state=started
 
 The **command** and **shell** modules are the only modules that just take a list
 of arguments and don't use the ``key=value`` form.  This makes
@@ -345,7 +344,7 @@ As we've mentioned, modules are written to be 'idempotent' and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
-These 'notify' actions are triggered at the end of each block of tasks in a playbook, and will only be
+These 'notify' actions are triggered at the end of each block of tasks in a play, and will only be
 triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
@@ -365,9 +364,9 @@ The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name.  Handlers are
-what notifiers notify.  If nothing notifies a handler, it will not
-run.  Regardless of how many things notify a handler, it will run only
+tasks, that are referenced by a globally unique name, and are notified 
+by notifiers.  If nothing notifies a handler, it will not
+run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.
 
 Here's an example handlers section::
@@ -378,15 +377,31 @@ Here's an example handlers section::
         - name: restart apache
           service: name=apache state=restarted
 
-Handlers are best used to restart services and trigger reboots.  You probably
-won't need them for much else.
+As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
+
+    handlers:
+        - name: restart memcached
+          service: name=memcached state=restarted
+          listen: "restart web services"
+        - name: restart apache
+          service: name=apache state=restarted
+          listen: "restart web services"
+
+    tasks:
+        - name: restart everything
+          command: echo "this task will restart the web services"
+          notify: "restart web services"
+
+This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names,
+making it easier to share handlers among playbooks and roles (especially when using 3rd party roles from
+a shared source like Galaxy).
 
 .. note::
-   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement.
-   * Handler names live in a global namespace.
+   * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
+   * Handler names and `listen` topics live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
-   * You cannot notify a handler that is defined inside of an include
+   * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
 Roles are described later on, but it's worthwhile to point out that:
 

@@ -107,8 +107,8 @@ class LookupModule(LookupBase):
             example.com  qtype=A                            # same
             example.com/TXT                                 # specific qtype
             example.com  qtype=txt                          # same
-            192.168.1.2/PTR                                 # reverse PTR
-              ^^ shortcut for 2.1.168.192.in-addr.arpa/PTR
+            192.0.2.23/PTR                                 # reverse PTR
+              ^^ shortcut for 23.2.0.192.in-addr.arpa/PTR
             example.net/AAAA  @nameserver                   # query specified server
                                ^^^ can be comma-sep list of names/addresses
 
@@ -128,7 +128,7 @@ class LookupModule(LookupBase):
         flat   = True
 
         for t in terms:
-            if t.startswith('@'):       # e.g. "@10.0.1.2,192.168.1.1" is ok.
+            if t.startswith('@'):       # e.g. "@10.0.1.2,192.0.2.1" is ok.
                 nsset = t[1:].split(',')
                 nameservers = []
                 for ns in nsset:

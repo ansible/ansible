@@ -23,7 +23,7 @@ How do I handle different machines needing different user accounts or ports to l
 
 Setting inventory variables in the inventory file is the easiest way.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports::
 
@@ -264,7 +264,7 @@ How do I generate crypted passwords for the user module?
 
 The mkpasswd utility that is available on most Linux systems is a great option::
 
-    mkpasswd --method=SHA-512
+    mkpasswd --method=sha-512
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
@@ -275,6 +275,9 @@ password hashing library is installed.
 Once the library is ready, SHA512 password values can then be generated as follows::
 
     python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
+
+Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
 
 .. _commercial_support:
 

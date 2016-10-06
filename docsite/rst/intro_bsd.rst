@@ -32,7 +32,7 @@ On your control machine you can simply execute the following for most versions o
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
 .. note::
-    This example used pkg_add as used on FreeBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
+    This example used pkg as used on FreeBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
 
 .. _python_location:
 

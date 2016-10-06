@@ -25,45 +25,146 @@
 
 - debug: var=stat_result
 
-- assert: 
-    that: 
+- assert:
+    that:
         - "'changed' in stat_result"
         - "stat_result.changed == false"
         - "'stat' in stat_result"
-        - "'atime' in stat_result.stat" 
-        - "'ctime' in stat_result.stat" 
-        - "'dev' in stat_result.stat" 
-        - "'exists' in stat_result.stat" 
-        - "'gid' in stat_result.stat" 
-        - "'inode' in stat_result.stat" 
-        - "'isblk' in stat_result.stat" 
-        - "'ischr' in stat_result.stat" 
-        - "'isdir' in stat_result.stat" 
-        - "'isfifo' in stat_result.stat" 
-        - "'isgid' in stat_result.stat" 
-        - "'isreg' in stat_result.stat" 
-        - "'issock' in stat_result.stat" 
-        - "'isuid' in stat_result.stat" 
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
         - "'md5' in stat_result.stat"
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
-        - "'mode' in stat_result.stat" # why is this 420?
-        - "'mtime' in stat_result.stat" 
-        - "'nlink' in stat_result.stat" 
-        - "'pw_name' in stat_result.stat" 
-        - "'rgrp' in stat_result.stat" 
-        - "'roth' in stat_result.stat" 
-        - "'rusr' in stat_result.stat" 
-        - "'size' in stat_result.stat" 
-        - "'uid' in stat_result.stat" 
-        - "'wgrp' in stat_result.stat" 
-        - "'woth' in stat_result.stat" 
-        - "'wusr' in stat_result.stat" 
-        - "'xgrp' in stat_result.stat" 
-        - "'xoth' in stat_result.stat" 
-        - "'xusr' in stat_result.stat" 
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
 
 - assert:
     that:
       - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
   when: ansible_fips != True
+
+- name: make a symlink
+  file:
+    src: "{{ output_dir }}/foo.txt"
+    path: "{{ output_dir }}/foo-link"
+    state: link
+
+- name: check stat of a symlink with follow off
+  stat:
+    path: "{{ output_dir }}/foo-link"
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "'stat' in stat_result"
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
+        - "'islnk' in stat_result.stat"
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
+
+- name: check stat of a symlink with follow on
+  stat:
+    path: "{{ output_dir }}/foo-link"
+    follow: True
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "'stat' in stat_result"
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
+        - "'md5' in stat_result.stat"
+        - "'checksum' in stat_result.stat"
+        - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
+
+- assert:
+    that:
+      - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
+  when: ansible_fips != True
+

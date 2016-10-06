@@ -27,10 +27,11 @@ from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible.parsing.utils.addresses import parse_address
+from ansible.compat.six import string_types
 
 class InventoryParser(object):
     """
-    Takes an INI-format inventory file and builds a list of groups and subgroups
+    Takes a YAML-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
 
@@ -77,6 +78,11 @@ class InventoryParser(object):
             self.groups[group] = Group(name=group)
 
         if isinstance(group_data, dict):
+            #make sure they are dicts 
+            for section in ['vars', 'children', 'hosts']:
+                if section in group_data and isinstance(group_data[section], string_types):
+                    group_data[section] = { group_data[section]: None}
+
             if 'vars' in group_data:
                 for var in group_data['vars']:
                     if var != 'ansible_group_priority':

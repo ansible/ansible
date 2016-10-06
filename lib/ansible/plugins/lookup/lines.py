@@ -21,6 +21,7 @@ __metaclass__ = type
 import subprocess
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 
 class LookupModule(LookupBase):
 
@@ -31,7 +32,7 @@ class LookupModule(LookupBase):
             p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
-                ret.extend(stdout.splitlines())
+                ret.extend([to_text(l) for l in stdout.splitlines()])
             else:
                 raise AnsibleError("lookup_plugin.lines(%s) returned %d" % (term, p.returncode))
         return ret

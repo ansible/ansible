@@ -20,6 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.compat.six import string_types
+
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
 from ansible.errors import AnsibleError
@@ -67,7 +69,14 @@ class ActionModule(ActionBase):
         # add it to the group if that was specified
         new_groups = []
         if groups:
-            for group_name in groups.split(","):
+            if isinstance(groups, list):
+               group_list = groups
+            elif isinstance(groups, string_types):
+               group_list = groups.split(",")
+            else:
+               raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
+
+            for group_name in group_list:
                 if group_name not in new_groups:
                     new_groups.append(group_name.strip())
 

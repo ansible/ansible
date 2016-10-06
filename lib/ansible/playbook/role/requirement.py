@@ -169,7 +169,7 @@ class RoleRequirement(RoleDefinition):
             if 'scm' not in role:
                 role['scm'] = None
 
-        for key in role.keys():
+        for key in list(role.keys()):
             if key not in VALID_SPEC_KEYS:
                 role.pop(key)
 

@@ -145,10 +145,9 @@ except ImportError:
     import simplejson as json
 
 try:
-    from dopy.manager import DoError, DoManager
+    from dopy.manager import DoManager
 except ImportError as e:
-    print("failed=True msg='`dopy` library required for this script'")
-    sys.exit(1)
+    sys.exit("failed=True msg='`dopy` library required for this script'")
 
 
 
@@ -178,9 +177,9 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'api_token'):
-            print('''Could not find values for DigitalOcean api_token.
+            sys.stderr.write('''Could not find values for DigitalOcean api_token.
 They must be specified via either ini file, command line argument (--api-token),
-or environment variables (DO_API_TOKEN)''')
+or environment variables (DO_API_TOKEN)\n''')
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
@@ -196,7 +195,7 @@ or environment variables (DO_API_TOKEN)''')
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    print('''Cache is empty and --force-cache was specified''')
+                    sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
                     sys.exit(-1)
 
         self.manager = DoManager(None, self.api_token, api_version=2)
@@ -351,7 +350,13 @@ or environment variables (DO_API_TOKEN)''')
 
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
-        self.inventory = {}
+        self.inventory = {
+                            'all': {
+                                    'hosts': [],
+                                    'vars': self.group_variables
+                                   },
+                            '_meta': {'hostvars': {}}
+                        }
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
@@ -365,24 +370,35 @@ or environment variables (DO_API_TOKEN)''')
             else:
                 dest = droplet['ip_address']
 
-            dest = { 'hosts': [ dest ], 'vars': self.group_variables }
+            self.inventory['all']['hosts'].append(dest)
 
-            self.inventory[droplet['id']] = dest
-            self.inventory[droplet['name']] = dest
-            self.inventory['region_' + droplet['region']['slug']] = dest
-            self.inventory['image_' + str(droplet['image']['id'])] = dest
-            self.inventory['size_' + droplet['size']['slug']] = dest
+            self.inventory[droplet['id']] = [dest]
+            self.inventory[droplet['name']] = [dest]
 
-            image_slug = droplet['image']['slug']
-            if image_slug:
-                self.inventory['image_' + self.to_safe(image_slug)] = dest
-            else:
-                image_name = droplet['image']['name']
-                if image_name:
-                    self.inventory['image_' + self.to_safe(image_name)] = dest
+            # groups that are always present
+            for group in [
+                            'region_' + droplet['region']['slug'],
+                            'image_' + str(droplet['image']['id']),
+                            'size_' + droplet['size']['slug'],
+                            'distro_' + self.to_safe(droplet['image']['distribution']),
+                            'status_' + droplet['status'],
 
-            self.inventory['distro_' + self.to_safe(droplet['image']['distribution'])] = dest
-            self.inventory['status_' + droplet['status']] = dest
+                        ]:
+                if group not in self.inventory:
+                    self.inventory[group] = { 'hosts': [ ], 'vars': {} }
+                self.inventory[group]['hosts'].append(dest)
+
+            # groups that are not always present
+            for group in [
+                            droplet['image']['slug'],
+                            droplet['image']['name']
+                         ]:
+                if group:
+                    image = 'image_' + self.to_safe(group)
+                    if image not in self.inventory:
+                        self.inventory[image] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[image]['hosts'].append(dest)
+
 
 
     def load_droplet_variables_for_host(self):

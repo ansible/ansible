@@ -148,6 +148,25 @@
       - "win_user_password_expired_result|changed"
       - "win_user_password_expired_result.password_expired"
 
+- name: set password when expired
+  win_user: name="{{ test_win_user_name }}" password={{ test_win_user_password2 }} update_password=always
+  register: win_user_can_set_password_on_expired
+
+- name: check set password on expired result
+  assert:
+    that:
+      - win_user_can_set_password_on_expired|changed
+
+- name: set password expired flag again
+  win_user: name="{{ test_win_user_name }}" password_expired=yes
+  register: win_user_password_expired_result
+
+- name: check password expired result
+  assert:
+    that:
+      - "win_user_password_expired_result|changed"
+      - "win_user_password_expired_result.password_expired"
+
 - name: clear password expired flag
   win_user: name="{{ test_win_user_name }}" password_expired=no
   register: win_user_clear_password_expired_result
@@ -207,6 +226,16 @@
     that:
       - "win_user_account_disabled_result|changed"
       - "win_user_account_disabled_result.account_disabled"
+
+- name: set password on disabled account
+  win_user: name="{{ test_win_user_name }}" password={{ test_win_user_password2 }} update_password=always
+  register: win_user_can_set_password_on_disabled
+
+- name: check set password on disabled result
+  assert:
+    that:
+      - win_user_can_set_password_on_disabled|changed
+      - win_user_can_set_password_on_disabled.account_disabled
 
 - name: clear account disabled flag
   win_user: name="{{ test_win_user_name }}" account_disabled=false

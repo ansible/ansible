@@ -14,7 +14,7 @@ notes:
 requirements:
     - list of required things
     - like the factor package
-    - or a specic platform
+    - or a specific platform
 options:
 # One or more of the following
     option_name:

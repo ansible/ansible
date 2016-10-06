@@ -25,10 +25,11 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
+from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
 
-class TestPlayIterator(unittest.TestCase):
+class TestPlaybookExecutor(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -58,6 +59,20 @@ class TestPlayIterator(unittest.TestCase):
               tasks:
               - debug: var=inventory_hostname
             ''',
+            'serial_list.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: [1, 2, 3]
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
+            'serial_list_mixed.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: [1, "20%", -1]
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
         })
 
         mock_inventory = MagicMock()
@@ -68,8 +83,10 @@ class TestPlayIterator(unittest.TestCase):
         mock_options = MagicMock()
         mock_options.syntax.value = True
 
+        templar = Templar(loader=fake_loader)
+
         pbe = PlaybookExecutor(
-            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml'],
+            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
@@ -79,27 +96,44 @@ class TestPlayIterator(unittest.TestCase):
 
         playbook = Playbook.load(pbe._playbooks[0], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
+        play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']])
 
         playbook = Playbook.load(pbe._playbooks[1], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
+        play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9']])
 
         playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
+        play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9']])
+
+        playbook = Playbook.load(pbe._playbooks[3], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
+        self.assertEqual(pbe._get_serialized_batches(play), [['host0'],['host1','host2'],['host3','host4','host5'],['host6','host7','host8'],['host9']])
+
+        playbook = Playbook.load(pbe._playbooks[4], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
+        self.assertEqual(pbe._get_serialized_batches(play), [['host0'],['host1','host2'],['host3','host4','host5','host6','host7','host8','host9']])
 
         # Test when serial percent is under 1.0
         playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
+        play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0'],['host1'],['host2']])
 
         # Test when there is a remainder for serial as a percent
         playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
+        play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9','host10']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9'],['host10']])

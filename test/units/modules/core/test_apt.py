@@ -1,9 +1,9 @@
 import collections
-import mock
 import os
 import sys
-from ansible.compat.tests import unittest
 
+from ansible.compat.tests import mock
+from ansible.compat.tests import unittest
 
 try:
     from ansible.modules.core.packaging.os.apt import (
@@ -16,7 +16,6 @@ except:
         pass
 
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class AptExpandPkgspecTestCase(unittest.TestCase):
 
     def setUp(self):

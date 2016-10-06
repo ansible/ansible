@@ -84,9 +84,9 @@ to retrieve the kv_groups and kv_metadata based on your consul configuration.
 This is used to lookup groups for a node in the key value store. It specifies a
 path to which each discovered node's name will be added to create a key to query
 the key/value store. There it expects to find a comma separated list of group
-names to which the node should be added e.g. if the inventory contains
-'nyc-web-1' and kv_groups = 'ansible/groups' then the key
-'v1/kv/ansible/groups/nyc-web-1' will be queried for a group list. If this query
+names to which the node should be added e.g. if the inventory contains node
+'nyc-web-1' in datacenter 'nyc-dc1' and kv_groups = 'ansible/groups' then the key
+'ansible/groups/nyc-dc1/nyc-web-1' will be queried for a group list. If this query
  returned 'test,honeypot' then the node address to both groups.
 
 'kv_metadata':
@@ -94,7 +94,9 @@ names to which the node should be added e.g. if the inventory contains
 kv_metadata is used to lookup metadata for each discovered node. Like kv_groups
 above it is used to build a path to lookup in the kv store where it expects to
 find a json dictionary of metadata entries. If found, each key/value pair in the
-dictionary is added to the metadata for the node.
+dictionary is added to the metadata for the node. eg node 'nyc-web-1' in datacenter
+'nyc-dc1' and kv_metadata = 'ansible/metadata', then the key 
+'ansible/groups/nyc-dc1/nyc-web-1' should contain '{"databse": "postgres"}'
 
 'availability':
 
@@ -124,6 +126,7 @@ be used to access the machine.
 import os
 import re
 import argparse
+import sys
 from time import time
 import sys
 import ConfigParser
@@ -189,9 +192,8 @@ except ImportError:
 try:
   import consul
 except ImportError as e:
-  print("""failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'""")
-  sys.exit(1)
+  sys.exit("""failed=True msg='python-consul required for this module.
+See http://python-consul.readthedocs.org/en/latest/#installation'""")
 
 from six import iteritems
 

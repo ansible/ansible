@@ -21,8 +21,7 @@ __metaclass__ = type
 
 import shlex
 from ansible.compat.six import PY3
-
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
 
 if PY3:
@@ -31,5 +30,5 @@ if PY3:
 else:
     # shlex.split() wants bytes (i.e. ``str``) input on Python 2
     def shlex_split(s, comments=False, posix=True):
-        return map(to_unicode, shlex.split(to_bytes(s), comments, posix))
+        return map(to_text, shlex.split(to_bytes(s), comments, posix))
     shlex_split.__doc__ = shlex.split.__doc__

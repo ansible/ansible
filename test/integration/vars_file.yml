@@ -8,5 +8,5 @@ things1:
     - 2
 things2:
     - "{{ foo }}"
-    - "{{ foob }}"
+    - "{{ foob | default('') }}"
 vars_file_var: 321

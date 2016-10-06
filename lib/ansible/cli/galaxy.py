@@ -39,13 +39,14 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class GalaxyCLI(CLI):
 
@@ -67,83 +68,62 @@ class GalaxyCLI(CLI):
 
         self.set_action()
 
-        # options specific to actions
+        # common
+        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
+        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
+
+        # specific to actions
         if self.action == "delete":
             self.parser.set_usage("usage: %prog delete [options] github_user github_repo")
         elif self.action == "import":
             self.parser.set_usage("usage: %prog import [options] github_user github_repo")
-            self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True,
-                help='Don\'t wait for import results.')
-            self.parser.add_option('--branch', dest='reference',
-                help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
-            self.parser.add_option('--status', dest='check_status', action='store_true', default=False,
-                help='Check the status of the most recent import request for given github_user/github_repo.')
+            self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True, help='Don\'t wait for import results.')
+            self.parser.add_option('--branch', dest='reference', help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
+            self.parser.add_option('--status', dest='check_status', action='store_true', default=False, help='Check the status of the most recent import request for given github_user/github_repo.')
         elif self.action == "info":
             self.parser.set_usage("usage: %prog info [options] role_name[,version]")
         elif self.action == "init":
             self.parser.set_usage("usage: %prog init [options] role_name")
-            self.parser.add_option('-p', '--init-path', dest='init_path', default="./",
-                help='The path in which the skeleton role will be created. The default is the current working directory.')
-            self.parser.add_option(
-                '--offline', dest='offline', default=False, action='store_true',
-                help="Don't query the galaxy API when creating roles")
+            self.parser.add_option('-p', '--init-path', dest='init_path', default="./", help='The path in which the skeleton role will be created. The default is the current working directory.')
         elif self.action == "install":
             self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
-            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                help='Ignore errors and continue with the next specified role.')
-            self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                help='Don\'t download roles listed as dependencies')
-            self.parser.add_option('-r', '--role-file', dest='role_file',
-                help='A file containing a list of roles to be imported')
+            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False, help='Ignore errors and continue with the next specified role.')
+            self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
+            self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
             self.parser.set_usage("usage: %prog list [role_name]")
         elif self.action == "login":
             self.parser.set_usage("usage: %prog login [options]")
-            self.parser.add_option('--github-token', dest='token', default=None,
-                help='Identify with github token rather than username and password.')
+            self.parser.add_option('--github-token', dest='token', default=None, help='Identify with github token rather than username and password.')
         elif self.action == "search":
-            self.parser.add_option('--platforms', dest='platforms',
-                help='list of OS platforms to filter by')
-            self.parser.add_option('--galaxy-tags', dest='tags',
-                help='list of galaxy tags to filter by')
-            self.parser.add_option('--author', dest='author',
-                help='GitHub username')
             self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
+            self.parser.add_option('--platforms', dest='platforms', help='list of OS platforms to filter by')
+            self.parser.add_option('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
+            self.parser.add_option('--author', dest='author', help='GitHub username')
         elif self.action == "setup":
             self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret")
-            self.parser.add_option('--remove', dest='remove_id', default=None,
-                help='Remove the integration matching the provided ID value. Use --list to see ID values.')
-            self.parser.add_option('--list', dest="setup_list", action='store_true', default=False,
-                help='List all of your integrations.')
+            self.parser.add_option('--remove', dest='remove_id', default=None, help='Remove the integration matching the provided ID value. Use --list to see ID values.')
+            self.parser.add_option('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
 
         # options that apply to more than one action
-        if not self.action in ("delete","import","init","login","setup"):
+        if self.action in ['init', 'info']:
+            self.parser.add_option( '--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
+
+        if self.action not in ("delete","import","init","login","setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
-            self.parser.add_option('-p', '--roles-path', dest='roles_path',
-                                   action="callback", callback=CLI.expand_paths,
-                                   type=str, default=C.DEFAULT_ROLES_PATH,
-                help='The path to the directory containing your roles. '
-                     'The default is the roles_path configured in your '
-                     'ansible.cfg file (/etc/ansible/roles if not configured)')
-
-        if self.action in ("import","info","init","install","login","search","setup","delete"):
-            self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
-                help='The API server destination')
-            self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
-                help='Ignore SSL certificate validation errors.')
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str, default=C.DEFAULT_ROLES_PATH,
+                help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg file (/etc/ansible/roles if not configured)')
 
         if self.action in ("init","install"):
-            self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
-                help='Force overwriting an existing role')
+            self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        self.options, self.args =self.parser.parse_args()
+        super(GalaxyCLI, self).parse()
+
         display.verbosity = self.options.verbosity
         self.galaxy = Galaxy(self.options)
-
-        return True
 
     def run(self):
 
@@ -162,7 +142,7 @@ class GalaxyCLI(CLI):
 
     def _display_role_info(self, role_info):
 
-        text = [u"", u"Role: %s" % to_unicode(role_info['name'])]
+        text = [u"", u"Role: %s" % to_text(role_info['name'])]
         text.append(u"\tdescription: %s" % role_info.get('description', ''))
 
         for k in sorted(role_info.keys()):
@@ -171,7 +151,6 @@ class GalaxyCLI(CLI):
                 continue
 
             if isinstance(role_info[k], dict):
-                text += "\t%s: \n" % (k)
                 text.append(u"\t%s:" % (k))
                 for key in sorted(role_info[k].keys()):
                     if key in self.SKIP_INFO_KEYS:
@@ -214,7 +193,7 @@ class GalaxyCLI(CLI):
             os.makedirs(role_path)
         readme_path = os.path.join(role_path, "README.md")
         f = open(readme_path, "wb")
-        f.write(self.galaxy.default_readme)
+        f.write(to_bytes(self.galaxy.default_readme))
         f.close()
 
         # create default .travis.yml
@@ -361,7 +340,7 @@ class GalaxyCLI(CLI):
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     try:
-                        required_roles =  yaml.safe_load(f.read())
+                        required_roles = yaml.safe_load(f.read())
                     except Exception as e:
                         raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
 
@@ -369,11 +348,23 @@ class GalaxyCLI(CLI):
                         raise AnsibleError("No roles found in file: %s" % role_file)
 
                     for role in required_roles:
-                        role = RoleRequirement.role_yaml_parse(role)
-                        display.vvv('found role %s in yaml file' % str(role))
-                        if 'name' not in role and 'scm' not in role:
-                            raise AnsibleError("Must specify name or src for role")
-                        roles_left.append(GalaxyRole(self.galaxy, **role))
+                        if "include" not in role:
+                            role = RoleRequirement.role_yaml_parse(role)
+                            display.vvv("found role %s in yaml file" % str(role))
+                            if "name" not in role and "scm" not in role:
+                                raise AnsibleError("Must specify name or src for role")
+                            roles_left.append(GalaxyRole(self.galaxy, **role))
+                        else:
+                            with open(role["include"]) as f_include:
+                                try:
+                                    roles_left += [
+                                        GalaxyRole(self.galaxy, **r) for r in
+                                        map(RoleRequirement.role_yaml_parse,
+                                            yaml.safe_load(f_include))
+                                    ]
+                                except Exception as e:
+                                    msg = "Unable to load data from the include requirements file: %s %s"
+                                    raise AnsibleError(msg % (role_file, e))
                 else:
                     display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
@@ -485,22 +476,23 @@ class GalaxyCLI(CLI):
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.get_opt('roles_path')
-            roles_path = os.path.expanduser(roles_path)
-            if not os.path.exists(roles_path):
-                raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % roles_path)
-            elif not os.path.isdir(roles_path):
-                raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
-            path_files = os.listdir(roles_path)
-            for path_file in path_files:
-                gr = GalaxyRole(self.galaxy, path_file)
-                if gr.metadata:
-                    install_info = gr.install_info
-                    version = None
-                    if install_info:
-                        version = install_info.get("version", None)
-                    if not version:
-                        version = "(unknown version)"
-                    display.display("- %s, %s" % (path_file, version))
+            for path in roles_path:
+                role_path = os.path.expanduser(path)
+                if not os.path.exists(role_path):
+                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % role_path)
+                elif not os.path.isdir(role_path):
+                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % role_path)
+                path_files = os.listdir(role_path)
+                for path_file in path_files:
+                    gr = GalaxyRole(self.galaxy, path_file)
+                    if gr.metadata:
+                        install_info = gr.install_info
+                        version = None
+                        if install_info:
+                            version = install_info.get("version", None)
+                        if not version:
+                            version = "(unknown version)"
+                        display.display("- %s, %s" % (path_file, version))
         return 0
 
     def execute_search(self):
@@ -510,14 +502,14 @@ class GalaxyCLI(CLI):
         if len(self.args):
             terms = []
             for i in range(len(self.args)):
-               terms.append(self.args.pop())
+                terms.append(self.args.pop())
             search = '+'.join(terms[::-1])
 
-        if not search and not self.options.platforms and not self.options.tags and not self.options.author:
+        if not search and not self.options.platforms and not self.options.galaxy_tags and not self.options.author:
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
         response = self.api.search_roles(search, platforms=self.options.platforms,
-            tags=self.options.tags, author=self.options.author, page_size=page_size)
+            tags=self.options.galaxy_tags, author=self.options.author, page_size=page_size)
 
         if response['count'] == 0:
             display.display("No roles match your search.", color=C.COLOR_ERROR)
@@ -586,8 +578,8 @@ class GalaxyCLI(CLI):
         if len(self.args) < 2:
             raise AnsibleError("Expected a github_username and github_repository. Use --help.")
 
-        github_repo = self.args.pop()
-        github_user = self.args.pop()
+        github_repo = to_text(self.args.pop(), errors='surrogate_or_strict')
+        github_user = to_text(self.args.pop(), errors='surrogate_or_strict')
 
         if self.options.check_status:
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
@@ -602,7 +594,8 @@ class GalaxyCLI(CLI):
                 display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
                 for t in task:
                     display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
-                display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo), color=C.COLOR_CHANGED)
+                display.display(u'\nTo properly namespace this role, remove each of the above and re-import %s/%s from scratch' % (github_user, github_repo),
+                        color=C.COLOR_CHANGED)
                 return 0
             # found a single role as expected
             display.display("Successfully submitted import request %d" % task[0]['id'])

@@ -114,7 +114,7 @@ Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these varia
 
    ---
    httpd_port: 80
-   ntpserver: 192.168.1.2
+   ntpserver: 192.0.2.23
 
 This is a YAML file, and you can create lists and dictionaries for more complex variable structures. 
 In this case, we are just setting two variables, one for the port for the web server, and one for the 

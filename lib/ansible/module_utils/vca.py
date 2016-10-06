@@ -103,6 +103,7 @@ class VcaAnsibleModule(AnsibleModule):
 
     def get_vm(self, vapp_name, vm_name):
         vapp = self.get_vapp(vapp_name)
+        children = vapp.me.get_Children()
         vms = [vm for vm in children.get_Vm() if vm.name == vm_name]
         try:
             return vms[0]
@@ -111,7 +112,7 @@ class VcaAnsibleModule(AnsibleModule):
 
     def create_instance(self):
         service_type = self.params.get('service_type', DEFAULT_SERVICE_TYPE)
-        if service_type == 'vcd': 
+        if service_type == 'vcd':
             host = self.params['host']
         else:
             host = LOGIN_HOST[service_type]
@@ -136,7 +137,7 @@ class VcaAnsibleModule(AnsibleModule):
             login_org = self.params['org']
 
         if not self.vca.login(password=password, org=login_org):
-            self.fail('Login to VCA failed', response=self.vca.response.content)
+            self.fail('Login to VCA failed', response=self.vca.response)
 
         try:
             method_name = 'login_%s' % service_type
@@ -144,8 +145,8 @@ class VcaAnsibleModule(AnsibleModule):
             meth()
         except AttributeError:
             self.fail('no login method exists for service_type %s' % service_type)
-        except VcaError, e:
-            self.fail(e.message, response=self.vca.response.content, **e.kwargs)
+        except VcaError as e:
+            self.fail(e.message, response=self.vca.response, **e.kwargs)
 
     def login_vca(self):
         instance_id = self.params['instance_id']
@@ -160,14 +161,14 @@ class VcaAnsibleModule(AnsibleModule):
 
         org = self.params['org']
         if not org:
-            raise VcaError('missing required or for service_type vchs')
+            raise VcaError('missing required org for service_type vchs')
 
         self.vca.login_to_org(service_id, org)
 
     def login_vcd(self):
         org = self.params['org']
         if not org:
-            raise VcaError('missing required or for service_type vchs')
+            raise VcaError('missing required org for service_type vcd')
 
         if not self.vca.token:
             raise VcaError('unable to get token for service_type vcd')
@@ -318,7 +319,7 @@ def vca_login(module):
             _vchs_login(vca, password, service, org)
         elif service_type == 'vcd':
             _vcd_login(vca, password, org)
-    except VcaError, e:
+    except VcaError as e:
         module.fail_json(msg=e.message, **e.kwargs)
 
     return vca

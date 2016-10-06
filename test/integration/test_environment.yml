@@ -25,7 +25,6 @@
             - '"val1" in test_env2.stdout_lines'
 
 - hosts: testhost
-  tasks:
   vars:
     - test1:
         key1: val1

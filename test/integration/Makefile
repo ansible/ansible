@@ -23,7 +23,11 @@ VAULT_PASSWORD_FILE = vault-password
 CONSUL_RUNNING := $(shell python consul_running.py)
 EUID := $(shell id -u -r)
 
-all: setup test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts
+UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
+
+all: setup other non_destructive destructive
+
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection test_async_conditional includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules test_hosts_field
 
 test_test_infra:
 	# ensure fail/assert work locally and can stop execution with non-zero exit code
@@ -45,21 +49,21 @@ includes: setup
 pull:	pull_run pull_no_127 pull_limit_inventory
 
 pull_run:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep MAGICKEYWORD; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep MAGICKEYWORD; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13681
 pull_no_127:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep -v 127\.0\.0\.1; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS) | grep -v 127\.0\.0\.1; \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
 
 # test for https://github.com/ansible/ansible/issues/13688
 pull_limit_inventory:
-	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git; \
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git $(TEST_FLAGS); \
     RC=$$? ; \
 	rm -rf $(MYTMPDIR); \
     exit $$RC
@@ -82,10 +86,20 @@ environment: setup
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
+# For our Docker images, which identify themselves with "ENV container=docker", automatically run the test_async target.
+# Otherwise, skip it, since we don't know if local ssh is available. You can always run the test_async target manually.
+ifeq ($(container),docker)
+test_async_conditional: test_async
+else
+test_async_conditional:
+endif
+
 # For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
 # Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
 ifeq ($(container),docker)
 TEST_CONNECTION_FILTER := 'test_docker'
+else ifeq ($(container),freebsd)
+TEST_CONNECTION_FILTER := 'test_freebsd'
 else
 TEST_CONNECTION_FILTER := 'test_default'
 endif
@@ -120,7 +134,7 @@ test_group_by: setup
 
 test_handlers:
 	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | grep -Po 'RUNNING HANDLER \[test_handlers : \K[^\]]+')" = "test handler" ]
+	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o 'RUNNING HANDLER \[test_handlers : .*?]')" = "RUNNING HANDLER [test_handlers : test handler]" ]
 	# Not forcing, should only run on successful host
 	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 	# Forcing from command line
@@ -148,6 +162,8 @@ test_vault: setup
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts -e outputdir=$(TEST_DIR)  -e @$(VARS_FILE)
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check -e outputdir=$(TEST_DIR)  -e @$(VARS_FILE)
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE)
+	ansible-playbook test_vault_embedded.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check -e outputdir=$(TEST_DIR)  -e @$(VARS_FILE)
+	ansible-playbook test_vault_embedded.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE)
 
 # test_delegate_to does not work unless we have permission to ssh to localhost.
 # Would take some more effort on our test systems to implement that -- probably
@@ -158,28 +174,52 @@ test_vault: setup
 test_delegate_to: setup
 	ansible-playbook test_delegate_to.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-test_winrm: setup
-	ansible-playbook test_winrm.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+# Split Windows CI targets to support parallel execution.
+# Targets should be balanced to have similar run times.
+ci_win: ci_win1 ci_win2 ci_win3
+ci_win1: test_win_group1
+ci_win2: test_win_group2 test_binary_modules_winrm
+ci_win3: test_win_group3 test_connection_winrm
+
+test_winrm: test_win_group1 test_win_group2 test_win_group3
+
+test_win_group1: setup
+	ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group2: setup
+	ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group3: setup
+	ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags: setup
+	# Run these using en_US.UTF-8 because list-tasks is a user output function and so it tailors its output to the user's locale.  For unicode tags, this means replacing non-ascii chars with "?"
 	# Run everything by default
-	[ "$$(ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
 	# Run the exact tags, and always
-	[ "$$(ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
 	# Skip one tag
-	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
+	# Skip a unicode tag
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --skip-tags くらとみ test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: []" ]
+	# Run just a unicode tag and always
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags くらとみ test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ]" ]
+	# Run a tag from a list of tags and always
+	[ "$$(LC_ALL=en_US.UTF-8 ansible-playbook --list-tasks --tags café test_tags.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press]" ]
 
 blocks: setup
 	# remove old output log
 	rm -f block_test.out
 	# run the test and check to make sure the right number of completions was logged
-	ansible-playbook -vv -e outputdir=$(TEST_DIR) test_blocks/main.yml | tee block_test.out
-	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" = "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	ansible-playbook -vv $(TEST_FLAGS) -e outputdir=$(TEST_DIR) test_blocks/main.yml | tee block_test.out
+	env python -c 'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' <block_test.out >block_test_wo_colors.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l | sed 's/ *//')" = "$$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 	# cleanup the output log again, to make sure the test is clean
-	rm -f block_test.out
+	rm -f block_test.out block_test_wo_colors.out
 	# run test with free strategy and again count the completions
-	ansible-playbook -vv -e outputdir=$(TEST_DIR) test_blocks/main.yml -e test_strategy=free | tee block_test.out
-	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" = "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	ansible-playbook -vv $(TEST_FLAGS) -e outputdir=$(TEST_DIR) test_blocks/main.yml -e test_strategy=free | tee block_test.out
+	env python -c 'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' <block_test.out >block_test_wo_colors.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l | sed 's/ *//')" = "$$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 
 cloud: amazon rackspace azure
 
@@ -234,6 +274,16 @@ cloudstack:
 	RC=$$? ; \
 	exit $$RC;
 
+exoscale:
+	ansible-playbook exoscale.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
+jenkins:
+	ansible-playbook jenkins.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
 cloudflare: $(CREDENTIALS_FILE)
 	ansible-playbook cloudflare.yml -i $(INVENTORY) -e @$(VARS_FILE) -e @$(CREDENTIALS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
 	RC=$$? ; \
@@ -283,4 +333,60 @@ test_lookup_paths: setup
 
 no_log: setup
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
-	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
+	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) $(TEST_FLAGS) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "26/0" ]
+
+test_binary_modules_winrm: INVENTORY = inventory.winrm
+test_binary_modules_winrm: test_binary_modules
+
+test_binary_modules:
+	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook download_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+	ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook test_binary_modules.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+
+binary_modules:
+	# Compiled versions of these binary modules are available at the url below.
+	# This avoids a dependency on go and keeps the binaries out of our git repository.
+	# https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/
+	cd library; \
+	GOOS=linux   GOARCH=amd64 go build -o helloworld_linux       helloworld.go; \
+	GOOS=windows GOARCH=amd64 go build -o helloworld_win32nt.exe helloworld.go; \
+	GOOS=darwin  GOARCH=amd64 go build -o helloworld_darwin      helloworld.go; \
+	GOOS=freebsd GOARCH=amd64 go build -o helloworld_freebsd     helloworld.go
+
+clean_binary_modules:
+	rm library/helloworld_*
+
+test_async:
+	# Verify that extra data before module JSON output during async call is ignored.
+	ANSIBLE_DEBUG=0 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS)
+	# Verify that the warning exists by examining debug output.
+	ANSIBLE_DEBUG=1 LC_ALL=bogus ansible-playbook test_async.yml -i localhost, -e ansible_connection=ssh -v $(TEST_FLAGS) \
+	| grep 'bash: warning: setlocale: LC_ALL: cannot change locale (bogus)' > /dev/null
+
+test_hosts_field:
+	# Hosts in playbook has a list of strings consisting solely of digits
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t string_digit_host_in_list -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 1
+	# Hosts taken from kv extra_var on the CLI
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t hosts_from_kv_string -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 1
+	# hosts is taken from an all digit json extra_vars string on the CLI
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t hosts_from_cli_json_string -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 1
+	# hosts is taken from a json list in extra_vars on the CLI
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t hosts_from_cli_json_list -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	grep 'Running on localhost' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 2
+	# hosts is taken from a json string in an extra_vars file
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t hosts_from_json_file_string -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 1
+	# hosts is taken from a json list in an extra_vars file
+	ansible-playbook test_hosts_field.yml -i inventory.hosts_field -e'target_kv=42' -e'{ "target_json_cli": "42", "target_json_cli_list": ["42", "localhost"] }' -e "@test_hosts_field.json" -t hosts_from_json_file_list -v $(TEST_FLAGS) | tee test_hosts_field.out
+	grep 'Running on 42' test_hosts_field.out 2>&1
+	grep 'Running on localhost' test_hosts_field.out 2>&1
+	test `grep -c 'ok=1' test_hosts_field.out` = 2
+	rm test_hosts_field.out

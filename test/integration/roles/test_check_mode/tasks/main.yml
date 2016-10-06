@@ -17,23 +17,30 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: fill in a basic template in check mode
-  template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated mode=0644
   register: template_result
+
+- name: check whether file exists
+  stat: path={{output_dir}}/checkmode_foo.templated
+  register: foo
 
 - name: verify that the file was marked as changed in check mode
   assert: 
     that: 
-      - "template_result.changed == true"
+      - "template_result|changed"
+      - "not foo.stat.exists"
 
-- name: Actually create the file
-  template: src=foo.j2 dest={{output_dir}}/foo.templated2 mode=0644
-  always_run: True
+- name: Actually create the file, disable check mode
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated2 mode=0644
+  check_mode: no
+  register: checkmode_disabled
 
-- name: fill in a basic template in check mode
-  template: src=foo.j2 dest={{output_dir}}/foo.templated2 mode=0644
+- name: fill in template with new content
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated2 mode=0644
   register: template_result2
 
-- name: verify that the file was marked as not changed in check mode
+- name: verify that the file was not changed
   assert: 
     that: 
-      - "template_result2.changed == false"
+      - "checkmode_disabled|changed"
+      - "not template_result2|changed"

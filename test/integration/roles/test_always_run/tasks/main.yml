@@ -18,7 +18,7 @@
 
 - name: run a command while in check mode
   shell: echo "running"
-  always_run: yes
+  check_mode: no
   register: result
 
 - name: assert that the command was run

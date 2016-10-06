@@ -54,17 +54,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-
-from ansible.utils.unicode import to_unicode
 from ansible.compat.six import string_types, text_type
+from ansible.module_utils._text import to_text
+
 
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'AnsibleJSONUnsafeEncoder', 'AnsibleJSONUnsafeDecoder', 'wrap_var']
+
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
 
+
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
     pass
+
 
 class UnsafeProxy(object):
     def __new__(cls, obj, *args, **kwargs):
@@ -73,9 +76,10 @@ class UnsafeProxy(object):
         # we're given but we may want to take it out for testing and sanitize
         # our input instead.
         if isinstance(obj, string_types):
-            obj = to_unicode(obj, errors='strict')
+            obj = to_text(obj, errors='surrogate_or_strict')
             return AnsibleUnsafeText(obj)
         return obj
+
 
 class AnsibleJSONUnsafeEncoder(json.JSONEncoder):
     def encode(self, obj):
@@ -84,6 +88,7 @@ class AnsibleJSONUnsafeEncoder(json.JSONEncoder):
         else:
             return super(AnsibleJSONUnsafeEncoder, self).encode(obj)
 
+
 class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
     def decode(self, obj):
         value = super(AnsibleJSONUnsafeDecoder, self).decode(obj)
@@ -91,6 +96,7 @@ class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
             return UnsafeProxy(value.get('value', ''))
         else:
             return value
+
 
 def _wrap_dict(v):
     for k in v.keys():
@@ -115,4 +121,3 @@ def wrap_var(v):
         if v is not None and not isinstance(v, AnsibleUnsafe):
             v = UnsafeProxy(v)
     return v
-

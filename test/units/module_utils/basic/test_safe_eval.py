@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2015-2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -24,53 +24,72 @@ import sys
 import json
 
 from ansible.compat.tests import unittest
-from units.mock.procenv import swap_stdin_and_argv
+from units.mock.procenv import ModuleTestCase
+from units.mock.generator import add_method
 
-try:
-    from importlib import reload
-except:
-    # Py2 has reload as a builtin
-    pass
 
-class TestAnsibleModuleExitJson(unittest.TestCase):
+# Strings that should be converted into a typed value
+VALID_STRINGS = (
+        [("'a'", 'a')],
+        [("'1'", '1')],
+        [("1", 1)],
+        [("True", True)],
+        [("False", False)],
+        [("{}", {})],
+        )
 
-    def test_module_utils_basic_safe_eval(self):
+# Passing things that aren't strings should just return the object
+NONSTRINGS = (
+        [({'a':1}, {'a':1})],
+        )
+
+# These strings are not basic types.  For security, these should not be
+# executed.  We return the same string and get an exception for some
+INVALID_STRINGS = (
+        [("a=1", "a=1", SyntaxError)],
+        [("a.foo()", "a.foo()", None)],
+        [("import foo", "import foo", None)],
+        [("__import__('foo')", "__import__('foo')", ValueError)],
+        )
+
+
+def _check_simple_types(self, code, expected):
+    # test some basic usage for various types
+    self.assertEqual(self.am.safe_eval(code), expected)
+
+def _check_simple_types_with_exceptions(self, code, expected):
+    # Test simple types with exceptions requested
+    self.assertEqual(self.am.safe_eval(code, include_exceptions=True), (expected, None))
+
+def _check_invalid_strings(self, code, expected):
+    self.assertEqual(self.am.safe_eval(code), expected)
+
+def _check_invalid_strings_with_exceptions(self, code, expected, exception):
+    res = self.am.safe_eval("a=1", include_exceptions=True)
+    self.assertEqual(res[0], "a=1")
+    self.assertEqual(type(res[1]), SyntaxError)
+
+@add_method(_check_simple_types, *VALID_STRINGS)
+@add_method(_check_simple_types, *NONSTRINGS)
+@add_method(_check_simple_types_with_exceptions, *VALID_STRINGS)
+@add_method(_check_simple_types_with_exceptions, *NONSTRINGS)
+@add_method(_check_invalid_strings, *[[i[0][0:-1]] for i in INVALID_STRINGS])
+@add_method(_check_invalid_strings_with_exceptions, *INVALID_STRINGS)
+class TestSafeEval(ModuleTestCase):
+
+    def setUp(self):
+        super(TestSafeEval, self).setUp()
+
         from ansible.module_utils import basic
+        self.old_ansible_args = basic._ANSIBLE_ARGS
 
-        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}, ANSIBLE_MODULE_CONSTANTS={}))
+        basic._ANSIBLE_ARGS = None
+        self.am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
 
-        with swap_stdin_and_argv(stdin_data=args):
-            reload(basic)
-            am = basic.AnsibleModule(
-                argument_spec=dict(),
-            )
+    def tearDown(self):
+        super(TestSafeEval, self).tearDown()
 
-            # test some basic usage
-            # string (and with exceptions included), integer, bool
-            self.assertEqual(am.safe_eval("'a'"), 'a')
-            self.assertEqual(am.safe_eval("'a'", include_exceptions=True), ('a', None))
-            self.assertEqual(am.safe_eval("1"), 1)
-            self.assertEqual(am.safe_eval("True"), True)
-            self.assertEqual(am.safe_eval("False"), False)
-            self.assertEqual(am.safe_eval("{}"), {})
-            # not passing in a string to convert
-            self.assertEqual(am.safe_eval({'a':1}), {'a':1})
-            self.assertEqual(am.safe_eval({'a':1}, include_exceptions=True), ({'a':1}, None))
-            # invalid literal eval
-            self.assertEqual(am.safe_eval("a=1"), "a=1")
-            res = am.safe_eval("a=1", include_exceptions=True)
-            self.assertEqual(res[0], "a=1")
-            self.assertEqual(type(res[1]), SyntaxError)
-            self.assertEqual(am.safe_eval("a.foo()"), "a.foo()")
-            res = am.safe_eval("a.foo()", include_exceptions=True)
-            self.assertEqual(res[0], "a.foo()")
-            self.assertEqual(res[1], None)
-            self.assertEqual(am.safe_eval("import foo"), "import foo")
-            res = am.safe_eval("import foo", include_exceptions=True)
-            self.assertEqual(res[0], "import foo")
-            self.assertEqual(res[1], None)
-            self.assertEqual(am.safe_eval("__import__('foo')"), "__import__('foo')")
-            res = am.safe_eval("__import__('foo')", include_exceptions=True)
-            self.assertEqual(res[0], "__import__('foo')")
-            self.assertEqual(type(res[1]), ValueError)
-
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = self.old_ansible_args

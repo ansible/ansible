@@ -8,7 +8,8 @@ Inventory
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to being saved in
-the location /etc/ansible/hosts.
+the location ``/etc/ansible/hosts``. You can specify a different inventory file using the
+``-i <path>`` option on the command line.
 
 Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
@@ -19,7 +20,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI-like format and looks like this::
+The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this::
 
     mail.example.com
 
@@ -48,9 +49,9 @@ To make things explicit, it is suggested that you set them if things are not run
 
 Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
-    jumper ansible_port=5555 ansible_host=192.168.1.50
+    jumper ansible_port=5555 ansible_host=192.0.2.50
 
-In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
+In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
 Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
@@ -65,7 +66,7 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     db-[a:f].example.com
 
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 You can also select the connection type and user on a per host basis:
 
@@ -186,7 +187,7 @@ available to them. This can be very useful to keep your variables organized when
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables. Note that this only works on Ansible 1.4 or later.
 
-Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in
+Tip: In Ansible 1.2 or later the ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
@@ -203,10 +204,10 @@ As alluded to above, setting the following variables controls how ansible intera
 Host connection:
 
 ansible_connection
-    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are smart, ssh or paramiko.  The default is smart. Non-SSH based types are described in the next section.
+    Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
 
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 SSH connection:
 
@@ -232,6 +233,10 @@ ansible_ssh_extra_args
     This setting is always appended to the default :command:`ssh` command line.
 ansible_ssh_pipelining
     Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`.
+.. versionadded:: 2.2
+ansible_ssh_executable
+    This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
+
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
 
@@ -242,7 +247,7 @@ ansible_become_method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
 ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (this is insecure, we strongly recommend using :option:`--ask-become-pass` or SSH keys)
 
 Remote host environment parameters:
 
@@ -300,7 +305,7 @@ ansible_become
 ansible_docker_extra_args
     Could be a string with any additional arguments understood by Docker, which are not command specific. This parameter is mainly used to configure a remote Docker daemon to use.
 
-Here an example of how to instantly depoloy to created containers::
+Here is an example of how to instantly deploy to created containers::
 
   - name: create jenkins container
     docker:

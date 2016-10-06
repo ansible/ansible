@@ -1,6 +1,6 @@
 ansible(1)
 =========
-:doctype:manpage
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -162,6 +162,14 @@ URL of the playbook repository to checkout.
 *--vault-password-file=*'VAULT_PASSWORD_FILE'::
 
 Vault password file.
+
+*--clean*::
+
+Modified files in the working repository will be discarded.
+
+*--track-subs*::
+
+Submodules will track the latest changes.
 
 *-v*, *--verbose*::
 

@@ -7,7 +7,7 @@ from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.plugins.callback import CallbackBase
 
-# Creat a callback object so we can capture the output
+# Create a callback object so we can capture the output
 class ResultsCollector(CallbackBase):
 
     def __init__(self, *args, **kwargs):

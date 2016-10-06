@@ -28,9 +28,10 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.module_utils.basic import is_executable
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
+
 
 try:
     from __main__ import display
@@ -63,7 +64,11 @@ class Connection(ConnectionBase):
             raise AnsibleError("%s is not a directory" % self.chroot)
 
         chrootsh = os.path.join(self.chroot, 'bin/sh')
-        if not is_executable(chrootsh):
+        # Want to check for a usable bourne shell inside the chroot.
+        # is_executable() == True is sufficient.  For symlinks it
+        # gets really complicated really fast.  So we punt on finding that
+        # out.  As long as it's a symlink we assume that it will work
+        if not (is_executable(chrootsh) or (os.path.lexists(chrootsh) and os.path.islink(chrootsh))):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
         self.chroot_cmd = distutils.spawn.find_executable('chroot')
@@ -89,7 +94,7 @@ class Connection(ConnectionBase):
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
-        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -125,7 +130,7 @@ class Connection(ConnectionBase):
 
         out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
-            with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
+            with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
@@ -151,7 +156,7 @@ class Connection(ConnectionBase):
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
-        with open(to_bytes(out_path, errors='strict'), 'wb+') as out_file:
+        with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
             try:
                 chunk = p.stdout.read(BUFSIZE)
                 while chunk:

@@ -19,158 +19,191 @@
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, Command, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
+from ansible.module_utils.basic import json
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
+from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(default=22, type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
-    provider=dict(),
-    timeout=dict(default=10, type='int')
-)
-
-CLI_PROMPTS_RE = [
-    re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-    re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-]
-
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-]
+add_argument('use_ssl', dict(default=True, type='bool'))
+add_argument('validate_certs', dict(default=True, type='bool'))
 
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+class Restconf(object):
 
+    DEFAULT_HEADERS = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 
-class Cli(object):
+    def __init__(self):
+        self.url = None
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+        self.token = None
+        self.link = None
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
-
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
-        timeout = self.module.params['timeout']
-
-        try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename, timeout=timeout)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
-
-    def authorize(self):
-        passwd = self.module.params['auth_pass']
-        self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
-
-    def send(self, commands):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
-
-
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
         self._connected = False
+        self.default_output = 'text'
 
-    @property
-    def connected(self):
-        return self._connected
+    def _error(self, msg):
+        raise NetworkError(msg, url=self.url)
 
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
+    def connect(self, params, **kwargs):
+        host = params['host']
+        port = params['port'] or 55443
 
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
+        # sets the module_utils/urls.py req parameters
+        self.url_args.params['url_username'] = params['username']
+        self.url_args.params['url_password'] = params['password']
+        self.url_args.params['validate_certs'] = params['validate_certs']
 
-    def connect(self):
-        self.connection = Cli(self)
+        self.url = 'https://%s:%s/api/v1/' % (host, port)
 
-        self.connection.connect()
-        self.connection.send('terminal length 0')
+        response = self.post('auth/token-services')
 
-        if self.params['authorize']:
-            self.connection.authorize()
-
+        self.token = response['token-id']
+        self.link = response['link']
         self._connected = True
 
-    def configure(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure terminal')
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
-
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
+    def disconnect(self, **kwargs):
+        self.delete(self.link)
+        self.url = None
         self._connected = False
 
-    def parse_config(self, cfg):
-        return parse(cfg, indent=1)
+    def authorize(self, params, **kwargs):
+        raise NotImplementedError
 
-    def get_config(self):
+    ### REST methods ###
+
+    def request(self, method, path, data=None, headers=None):
+
+        headers = headers or self.DEFAULT_HEADERS
+
+        if self.token:
+            headers['X-Auth-Token'] = self.token
+
+        if path.startswith('/'):
+            path = path[1:]
+
+        url = urlparse.urljoin(self.url, path)
+
+        if data:
+            data = json.dumps(data)
+
+        response, headers = fetch_url(self.url_args, url, data=data,
+                headers=headers, method=method)
+
+        if not 200 <= headers['status'] <= 299:
+            raise NetworkError(response=response, **headers)
+
+        if int(headers['content-length']) > 0:
+            if headers['content-type'].startswith('application/json'):
+                response = json.load(response)
+            elif headers['content-type'].startswith('text/plain'):
+                response = str(response.read())
+
+        return response
+
+    def get(self, path, data=None, headers=None):
+        return self.request('GET', path, data, headers)
+
+    def put(self, path, data=None, headers=None):
+        return self.request('PUT', path, data, headers)
+
+    def post(self, path, data=None, headers=None):
+        return self.request('POST', path, data, headers)
+
+    def delete(self, path, data=None, headers=None):
+        return self.request('DELETE', path, data, headers)
+
+    ### Command methods ###
+
+    def run_commands(self, commands, **kwargs):
+        responses = list()
+        commands = [str(c) for c in commands]
+        for cmd in commands:
+            if str(cmd).startswith('show '):
+                cmd = str(cmd)[4:]
+            responses.append(self.execute(str(cmd)))
+        return responses
+
+    def execute(self, command, **kwargs):
+        data = dict(show=command)
+        response = self.put('global/cli', data=data)
+        return response['results']
+
+    ### Config methods ###
+
+    def configure(self, commands):
+        config = list()
+        for c in commands:
+            config.append(str(c))
+        data = dict(config='\n'.join(config))
+        self.put('global/cli', data=data)
+
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
+
+    def get_config(self, **kwargs):
+        hdrs = {'Content-type': 'text/plain', 'Accept': 'text/plain'}
+        return self.get('global/running-config', headers=hdrs)
+
+    def save_config(self):
+        self.put('/api/v1/global/save-config')
+
+Restconf = register_transport('restconf')(Restconf)
+
+
+class Cli(CliBase):
+
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+    ]
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.shell.send('terminal length 0')
+
+    def authorize(self, params, **kwargs):
+        passwd = params['auth_pass']
+        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+
+    ### Config methods ###
+
+    def configure(self, commands, **kwargs):
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        if cmds[-1] != 'end':
+            cmds.append('end')
+        responses = self.execute(cmds)
+        return responses[1:]
+
+    def get_config(self, include_defaults=False, **kwargs):
         cmd = 'show running-config'
-        if self.params.get('include_defaults'):
+        if include_defaults:
             cmd += ' all'
-        return self.execute(cmd)[0]
+        return self.execute([cmd])[0]
 
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
 
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
 
-    module = NetworkModule(**kwargs)
-
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    return module
+Cli = register_transport('cli', default=True)(Cli)

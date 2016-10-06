@@ -33,7 +33,7 @@ The environment can also be stored in a variable, and accessed like so::
         - apt: name=cobbler state=installed
           environment: "{{proxy_env}}"
 
-You can also use it at a playbook level::
+You can also use it at a play level::
 
     - hosts: testhost
 
@@ -55,6 +55,9 @@ to define an environment hash might be a group_vars file, like so::
     proxy_env:
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
+
+.. note::
+   ``environment:`` is not currently supported for Windows targets
 
 .. seealso::
 
