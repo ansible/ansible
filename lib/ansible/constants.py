@@ -195,6 +195,8 @@ DEFAULT_LOG_PATH          = get_config(p, DEFAULTS, 'log_path',           'ANSIB
 DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, boolean=True)
 DEFAULT_INVENTORY_IGNORE  = get_config(p, DEFAULTS, 'inventory_ignore_extensions', 'ANSIBLE_INVENTORY_IGNORE', ["~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo"], islist=True)
 DEFAULT_VAR_COMPRESSION_LEVEL = get_config(p, DEFAULTS, 'var_compression_level', 'ANSIBLE_VAR_COMPRESSION_LEVEL', 0, integer=True)
+DEFAULT_GROUP_VAR_COMBINE = get_config(p, DEFAULTS, 'group_var_combine', 'ANSIBLE_GROUP_VAR_COMBINE', True, boolean=True)
+DEFAULT_HOST_VAR_COMBINE  = get_config(p, DEFAULTS, 'host_var_combine', 'ANSIBLE_HOST_VAR_COMBINE', True, boolean=True)
 
 # static includes
 DEFAULT_TASK_INCLUDES_STATIC    = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, boolean=True)

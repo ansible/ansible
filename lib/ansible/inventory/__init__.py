@@ -765,11 +765,11 @@ class Inventory(object):
             self._vars_per_host = {}
             self._vars_per_group = {}
 
-    def get_host_vars(self, host, new_pb_basedir=False, return_results=False):
+    def get_host_vars(self, host, new_pb_basedir=False, return_results=C.DEFAULT_HOST_VAR_COMBINE):
         """ Read host_vars/ files """
         return self._get_hostgroup_vars(host=host, group=None, new_pb_basedir=new_pb_basedir, return_results=return_results)
 
-    def get_group_vars(self, group, new_pb_basedir=False, return_results=False):
+    def get_group_vars(self, group, new_pb_basedir=False, return_results=C.DEFAULT_GROUP_VAR_COMBINE):
         """ Read group_vars/ files """
         return self._get_hostgroup_vars(host=None, group=group, new_pb_basedir=new_pb_basedir, return_results=return_results)
 
@@ -793,7 +793,7 @@ class Inventory(object):
             found_vars = set(os.listdir(to_text(path)))
         return found_vars
 
-    def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False, return_results=False):
+    def _get_hostgroup_vars(self, host=None, group=None, new_pb_basedir=False, return_results=C.DEFAULT_HOST_VAR_COMBINE):
         """
         Loads variables from group_vars/<groupname> and host_vars/<hostname> in directories parallel
         to the inventory base directory or in the same directory as the playbook.  Variables in the playbook
