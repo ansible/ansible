@@ -27,13 +27,9 @@ import os
 import sys
 from io import BytesIO, StringIO
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
+from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 
