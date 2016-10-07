@@ -93,6 +93,10 @@ options:
     choices: [ "present", "started", "stopped", "absent", "drained" ]
     required: False
     default: "started"
+  ignore_time_wait:
+    description:
+      - ignore time_wait socket states when waiting for connections to be drained
+    required: false
   path:
     version_added: "1.4"
     required: false
@@ -204,7 +208,6 @@ class TCPConnectionInfo(object):
         '03': 'SYN_RECV',
         '04': 'FIN_WAIT1',
         '05': 'FIN_WAIT2',
-        '06': 'TIME_WAIT',
     }
 
     def __new__(cls, *args, **kwargs):
@@ -217,6 +220,8 @@ class TCPConnectionInfo(object):
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
             module.fail_json(msg="psutil module required for wait_for")
+        if (module.params['ignore_time_wait'] is None):
+            connection_states['06'] = 'TIME_WAIT'
 
     def _get_exclude_ips(self):
         exclude_hosts = self.module.params['exclude_hosts']
@@ -397,6 +402,7 @@ def main():
             delay=dict(default=0, type='int'),
             port=dict(default=None, type='int'),
             path=dict(default=None, type='path'),
+            ignore_time_wait=dict(default=None),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
             exclude_hosts=dict(default=None, type='list'),
@@ -410,6 +416,7 @@ def main():
     timeout = params['timeout']
     connect_timeout = params['connect_timeout']
     delay = params['delay']
+    ignore_time_wait = params['ignore_time_wait']
     port = params['port']
     state = params['state']
     path = params['path']
