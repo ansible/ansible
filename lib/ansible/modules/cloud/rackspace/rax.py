@@ -182,7 +182,7 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: 
+author:
     - "Jesse Keating (@j2sol)"
     - "Matt Martz (@sivel)"
 notes:
@@ -287,7 +287,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
 
     if user_data and os.path.isfile(os.path.expanduser(user_data)):
         try:
-            user_data = os.path.expanduser('user_data')
+            user_data = os.path.expanduser(user_data)
             f = open(user_data)
             user_data = f.read()
             f.close()
