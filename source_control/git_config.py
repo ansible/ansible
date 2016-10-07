@@ -158,7 +158,7 @@ def main():
     else:
         new_value = None
 
-    args = [git_path, "config"]
+    args = [git_path, "config", "--includes"]
     if params['list_all']:
         args.append('-l')
     if scope:
