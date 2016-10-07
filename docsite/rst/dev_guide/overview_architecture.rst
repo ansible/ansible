@@ -15,6 +15,11 @@ Ansible works by connecting to your nodes and pushing out small programs, called
 
 Your library of modules can reside on any machine, and there are no servers, daemons, or databases required. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
 
+Plugins
+-------
+
+Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
+
 Inventory
 ````````````````````
 
