@@ -422,7 +422,7 @@ def main():
             state           = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
             path            = dict(defalt=None),
             sparse          = dict(default=False, type='bool'),
-            root_password   = dict(default=None),
+            root_password   = dict(default=None, no_log=True),
             timeout         = dict(default=600, type='int'),
             config          = dict(default=''),
             create_options  = dict(default=''),
