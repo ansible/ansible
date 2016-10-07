@@ -139,20 +139,26 @@ output:
   returned: success
   type: dict
   sample:
-    {
-        'FunctionName': 'string',
-        'FunctionArn': 'string',
-        'Runtime': 'nodejs',
-        'Role': 'string',
-        'Handler': 'string',
-        'CodeSize': 123,
-        'Description': 'string',
-        'Timeout': 123,
-        'MemorySize': 123,
-        'LastModified': 'string',
-        'CodeSha256': 'string',
-        'Version': 'string',
-    }
+    'code':
+      {
+        'location': 'an S3 URL',
+        'repository_type': 'S3',
+      }
+    'configuration':
+      {
+        'function_name': 'string',
+        'function_arn': 'string',
+        'runtime': 'nodejs',
+        'role': 'string',
+        'handler': 'string',
+        'code_size': 123,
+        'description': 'string',
+        'timeout': 123,
+        'memory_size': 123,
+        'last_modified': 'string',
+        'code_sha256': 'string',
+        'version': 'string',
+      }
 '''
 
 # Import from Python standard library
@@ -172,11 +178,14 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def get_current_function(connection, function_name):
+def get_current_function(connection, function_name, qualifier=None):
     try:
+        if qualifier is not None:
+            return connection.get_function(FunctionName=function_name,
+                                           Qualifier=qualifier)
         return connection.get_function(FunctionName=function_name)
-    except botocore.exceptions.ClientError as e:
-        return False
+    except botocore.exceptions.ClientError:
+        return None
 
 
 def sha256sum(filename):
@@ -277,9 +286,10 @@ def main():
 
         # Get current state
         current_config = current_function['Configuration']
+        current_version = None
 
         # Update function configuration
-        func_kwargs = {'FunctionName': name}
+        func_kwargs = {'FunctionName': name, 'Publish': True}
 
         # Update configuration if needed
         if role_arn and current_config['Role'] != role_arn:
@@ -318,22 +328,23 @@ def main():
                                         {'SubnetIds': vpc_subnet_ids,'SecurityGroupIds': vpc_security_group_ids}})
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
-            if ('VpcConfig' in current_config and 
+            if ('VpcConfig' in current_config and
                 'VpcId' in current_config['VpcConfig'] and
                 current_config['VpcConfig']['VpcId'] != ''):
                 func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
-        if len(func_kwargs) > 1:
+        if len(func_kwargs) > 2:
             try:
                 if not check_mode:
-                    client.update_function_configuration(**func_kwargs)
+                    response = client.update_function_configuration(**func_kwargs)
+                    current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
                 module.fail_json(msg=str(e))
 
         # Update code configuration
-        code_kwargs = {'FunctionName': name}
+        code_kwargs = {'FunctionName': name, 'Publish': True}
 
         # Update S3 location
         if s3_bucket and s3_key:
@@ -359,21 +370,22 @@ def main():
                     module.fail_json(msg=str(e))
 
         # Upload new code if needed (e.g. code checksum has changed)
-        if len(code_kwargs) > 1:
+        if len(code_kwargs) > 2:
             try:
                 if not check_mode:
-                    client.update_function_code(**code_kwargs)
+                    response = client.update_function_code(**code_kwargs)
+                    current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
                 module.fail_json(msg=str(e))
 
         # Describe function code and configuration
-        response = get_current_function(client, name)
+        response = get_current_function(client, name, qualifier=current_version)
         if not response:
             module.fail_json(msg='Unable to get function information after updating')
 
         # We're done
-        module.exit_json(changed=changed, result=camel_dict_to_snake_dict(response))
+        module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
 
     # Function doesn't exists, create new Lambda function
     elif state == 'present':
@@ -398,6 +410,7 @@ def main():
 
         func_kwargs = {'FunctionName': name,
                        'Description': description,
+                       'Publish': True,
                        'Runtime': runtime,
                        'Role': role_arn,
                        'Handler': handler,
@@ -421,11 +434,15 @@ def main():
         try:
             if not check_mode:
                 response = client.create_function(**func_kwargs)
+                current_version = response['Version']
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
             module.fail_json(msg=str(e))
 
-        module.exit_json(changed=changed, result=camel_dict_to_snake_dict(response))
+        response = get_current_function(client, name, qualifier=current_version)
+        if not response:
+            module.fail_json(msg='Unable to get function information after creating')
+        module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
 
     # Delete existing Lambda function
     if state == 'absent' and current_function:
@@ -446,4 +463,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()
