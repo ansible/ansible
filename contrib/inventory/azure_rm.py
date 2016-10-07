@@ -696,7 +696,7 @@ class AzureInventory(object):
                     values = file_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
-                elif key == 'destination_ip':
+                elif key == 'destination_ip' and file_settings.get(key):
                     setattr(self, key, file_settings.get(key))
                 elif file_settings.get(key):
                     val = self._to_boolean(file_settings[key])
@@ -708,8 +708,8 @@ class AzureInventory(object):
                     values = env_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
-                elif key == 'destination_ip':
-                    setattr(self, key, file_settings.get(key))
+                elif key == 'destination_ip' and env_settings.get(key):
+                    setattr(self, key, env_settings.get(key))
                 elif env_settings.get(key, None) is not None:
                     val = self._to_boolean(env_settings[key])
                     setattr(self, key, val)
