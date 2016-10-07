@@ -67,9 +67,9 @@ options:
        - Volume snapshot id to create from
      required: false
      default: None
-   volume_src:
+   volume:
      description:
-       - Volume source to create from
+       - Volume name or id to create from
      required: false
      default: None
      version_added: "2.3"
@@ -115,10 +115,10 @@ def _present_volume(module, cloud):
         image_id = cloud.get_image_id(module.params['image'])
         volume_args['imageRef'] = image_id
 
-    if module.params['volume_src']:
-        volume_id = cloud.get_volume_id(module.params['volume_src'])
+    if module.params['volume']:
+        volume_id = cloud.get_volume_id(module.params['volume'])
         if not volume_id:
-            module.fail_json(msg="Failed to find volume source '%s'" % module.params['volume_src'])
+            module.fail_json(msg="Failed to find volume '%s'" % module.params['volume'])
         volume_args['source_volid'] = volume_id
 
     volume = cloud.create_volume(
@@ -146,12 +146,12 @@ def main():
         display_description=dict(default=None, aliases=['description']),
         image=dict(default=None),
         snapshot_id=dict(default=None),
-        volume_src=dict(default=None),
+        volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['image', 'snapshot_id', 'volume_src'],
+            ['image', 'snapshot_id', 'volume'],
         ],
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
