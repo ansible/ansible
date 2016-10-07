@@ -269,7 +269,7 @@ def main():
             login_token=dict(required=False, no_log=True),
             name=dict(required=True),
             username=dict(required=True),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             email=dict(required=True),
             sshkey_name=dict(required=False),
             sshkey_file=dict(required=False),
