@@ -38,9 +38,9 @@ options:
     description:
       - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs. Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
     required: true
-  role_arn:
+  role:
     description:
-      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS) resources
+      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS) resources. You may use the bare ARN if the role belongs to the same AWS account.
     default: null
   handler:
     description:
@@ -110,7 +110,7 @@ tasks:
     state: present
     zip_file: '{{ item.zip_file }}'
     runtime: 'python2.7'
-    role_arn: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
+    role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
     handler: 'hello_python.my_handler'
     vpc_subnet_ids:
     - subnet-123abcde
@@ -197,7 +197,7 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         runtime=dict(type='str', required=True),
-        role_arn=dict(type='str', default=None),
+        role=dict(type='str', default=None),
         handler=dict(type='str', default=None),
         zip_file=dict(type='str', default=None, aliases=['src']),
         s3_bucket=dict(type='str'),
@@ -226,7 +226,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state').lower()
     runtime = module.params.get('runtime')
-    role_arn = module.params.get('role_arn')
+    role = module.params.get('role')
     handler = module.params.get('handler')
     s3_bucket = module.params.get('s3_bucket')
     s3_key = module.params.get('s3_key')
@@ -256,6 +256,18 @@ def main():
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
         module.fail_json(msg=str(e))
+
+    if role.startswith('arn:aws:iam'):
+        role_arn = role
+    else:
+        # get account ID and assemble ARN
+        try:
+            iam_client = boto3_conn(module, conn_type='client', resource='iam',
+                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+            module.fail_json(msg=str(e))
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
