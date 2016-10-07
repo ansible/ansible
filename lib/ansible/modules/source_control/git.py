@@ -200,7 +200,7 @@ notes:
 EXAMPLES = '''
 # Example git checkout from Ansible Playbooks
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
@@ -211,14 +211,14 @@ EXAMPLES = '''
 
 # Example just ensuring the repo checkout exists
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
