@@ -147,12 +147,12 @@ class BackendProp(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            opendj_bindir=dict(default="/opt/opendj/bin"),
+            opendj_bindir=dict(default="/opt/opendj/bin", type="path"),
             hostname=dict(required=True),
             port=dict(required=True),
             username=dict(default="cn=Directory Manager", required=False),
             password=dict(required=False, no_log=True),
-            passwordfile=dict(required=False),
+            passwordfile=dict(required=False, type="path"),
             backend=dict(required=True),
             name=dict(required=True),
             value=dict(required=True),
