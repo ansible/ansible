@@ -299,13 +299,12 @@ changed:
 # COMMON CODE FOR MIGRATION
 import re
 
+import ansible.module_utils.nxos
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.shell import ShellError
 
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
 
 
 def to_list(val):

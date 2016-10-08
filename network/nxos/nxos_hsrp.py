@@ -118,20 +118,15 @@ changed:
     sample: true
 '''
 
-import collections
 import json
 
 # COMMON CODE FOR MIGRATION
-import re
 
+import ansible.module_utils.nxos
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
+from ansible.module_utils.network import NetworkModule
 
 
 def to_list(val):
@@ -406,7 +401,7 @@ def get_interface_mode(interface, intf_type, module):
     return mode
 
 
-def get_hsrp_groups_on_interfaces(device):
+def get_hsrp_groups_on_interfaces(device, module):
     command = 'show hsrp all'
     body = execute_show_command(command, module)
     hsrp = {}
