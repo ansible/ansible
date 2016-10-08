@@ -372,7 +372,7 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
 .. versionadded:: 2.1
 
-You can specify a subset of gathered facts using the following option::
+You can specify a subset of gathered facts, via the play's gather_facts directive, using the following option::
 
     gather_subset = all
 
