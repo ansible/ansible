@@ -21,11 +21,11 @@ DOCUMENTATION = """
 module: sros_config
 version_added: "2.2"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage Nokia SROS device configuration
+short_description: Manage Nokia SR OS device configuration
 description:
-  - Nokia SROS configurations use a simple block indent file syntax
+  - Nokia SR OS configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
-    an implementation for working with SROS configuration sections in
+    an implementation for working with SR OS configuration sections in
     a deterministic way.
 extends_documentation_fragment: sros
 options:
