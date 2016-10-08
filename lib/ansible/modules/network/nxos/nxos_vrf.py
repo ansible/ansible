@@ -112,6 +112,8 @@ changed:
     sample: true
 '''
 
+import json
+
 # COMMON CODE FOR MIGRATION
 
 import re
@@ -121,12 +123,11 @@ import itertools
 import shlex
 import json
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
-
+import ansible.module_utils.nxos
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+from ansible.module_utils.network import NetworkModule
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 
@@ -903,11 +904,10 @@ def get_commands_to_config_vrf(delta, vrf):
 
 def get_vrf_description(vrf, module):
     command_type = 'cli_show_ascii'
-    command = ('show run section vrf | begin ^vrf\scontext\s{0} '
-               '| end ^vrf.*'.format(vrf))
+    command = (r'show run section vrf | begin ^vrf\scontext\s{0} | end ^vrf.*'.format(vrf))
 
     description = ''
-    descr_regex = ".*description\s(?P<descr>[\S+\s]+).*"
+    descr_regex = r".*description\s(?P<descr>[\S+\s]+).*"
     body = execute_show_command(command, module, command_type)
 
     try:
@@ -1022,7 +1022,7 @@ def main():
             if existing.get('vni') and existing.get('vni') != '':
                 commands.insert(1, 'no vni {0}'.format(existing['vni']))
         if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
+            module.exit_json(changed=True, commands=commands)
         else:
             execute_config_command(commands, module)
             changed = True

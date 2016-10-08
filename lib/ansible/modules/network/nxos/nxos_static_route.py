@@ -120,12 +120,10 @@ import collections
 import itertools
 import shlex
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
-
+import ansible.module_utils.nxos
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine, dumps
+from ansible.module_utils.network import NetworkModule
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 
@@ -309,7 +307,7 @@ class CustomNetworkConfig(object):
         try:
             section = self.get_section_objects(path)
             if self._device_os == 'junos':
-                return self.to_lines(section)
+                return dumps(section, output='lines')
             return self.to_block(section)
         except ValueError:
             return list()
@@ -928,10 +926,10 @@ def network_from_string(address, mask, module):
 def normalize_prefix(module, prefix):
     splitted_prefix = prefix.split('/')
 
+    address = splitted_prefix[0]
     if len(splitted_prefix) > 2:
         module.fail_json(msg='Incorrect address format.', address=address)
     elif len(splitted_prefix) == 2:
-        address = splitted_prefix[0]
         mask = splitted_prefix[1]
         network = network_from_string(address, mask, module)
 

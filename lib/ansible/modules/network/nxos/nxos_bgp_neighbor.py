@@ -253,12 +253,11 @@ import collections
 import itertools
 import shlex
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
-
+import ansible.module_utils.nxos
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.shell import ShellError
 
 DEFAULT_COMMENT_TOKENS = ['#', '!']
 

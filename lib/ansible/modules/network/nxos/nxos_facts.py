@@ -172,9 +172,11 @@ vlan_list:
 """
 import re
 
+import ansible.module_utils.nxos
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, AddCommandError
-from ansible.module_utils.nxos import NetworkModule, NetworkError
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.six import iteritems
 
 
 def add_command(runner, command, output=None):
@@ -192,6 +194,9 @@ class FactsBase(object):
         self.runner = runner
         self.facts = dict()
         self.commands()
+
+    def commands(self):
+        raise NotImplementedError
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -255,7 +260,7 @@ class Interfaces(FactsBase):
         ('state', 'state'),
         ('desc', 'description'),
         ('eth_bw', 'bandwidth'),
-        ('eth_duplex','duplex'),
+        ('eth_duplex', 'duplex'),
         ('eth_speed', 'speed'),
         ('eth_mode', 'mode'),
         ('eth_hw_addr', 'macaddress'),
@@ -511,7 +516,7 @@ def main():
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in iteritems(facts):
         # this is to maintain capability with nxos_facts 2.1
         if key.startswith('_'):
             ansible_facts[key[1:]] = value
