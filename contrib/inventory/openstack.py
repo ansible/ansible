@@ -219,6 +219,7 @@ def main():
             refresh=args.refresh,
             config_files=config_files,
             private=args.private,
+            cloud=os.environ.get('OS_CLOUD')
         )
         if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
             inventory_args.update(dict(
