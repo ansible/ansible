@@ -25,7 +25,7 @@ EUID := $(shell id -u -r)
 
 UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
-all: setup other non_destructive destructive
+all: setup other non_destructive destructive complex_destructive
 
 other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection test_async_conditional includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules test_hosts_field
 
@@ -125,6 +125,11 @@ test_connection_winrm: setup
 
 destructive: setup
 	ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+# Complex destructive tests.
+# Every test may required special setup for execution (e.g. run one playbook in normal mode, another in the check mode)
+complex_destructive: setup
+	$(MAKE) -C complex-tests/bug-service-enabled-during-check-run
 
 check_mode: setup
 	ansible-playbook check_mode.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v --check $(TEST_FLAGS)

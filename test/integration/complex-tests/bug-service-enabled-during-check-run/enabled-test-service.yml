@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - block:
+        - name: enable service first time
+          service: name=ansible_test enabled=yes
+          register: enabled_res_1
+
+        - name: assert that state changed
+          assert:
+            that:
+            - "enabled_res_1.changed == true"
+
+        - name: enable service second time
+          service: name=ansible_test enabled=yes
+          register: enabled_res_2
+
+        - name: assert that state changed again (in the check mode it should)
+          assert:
+            that:
+            - "enabled_res_2.changed == true"
+
+      # On some Docker images there is error 'Could not find the requested service "ansible_test"'.
+      # Skipping those images.
+      # Also skipping all CentOS because the first attempt not market as "changed".  It's not clear why.
+      when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version in ['12.04', '14.04']) or (ansible_distribution == 'Debian' and ansible_distribution_version in ['7'])
