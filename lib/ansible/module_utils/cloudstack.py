@@ -27,6 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import time
 
 try:
@@ -253,6 +254,8 @@ class AnsibleCloudStack(object):
 
         project = self.module.params.get('project')
         if not project:
+            project = os.environ.get('CLOUDSTACK_PROJECT')
+        if not project:
             return None
         args = {}
         args['account'] = self.get_account(key='name')
@@ -341,6 +344,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.zone)
 
         zone = self.module.params.get('zone')
+        if not zone:
+            zone = os.environ.get('CLOUDSTACK_ZONE')
         zones = self.cs.listZones()
 
         # use the first zone if no zone param given
@@ -398,6 +403,8 @@ class AnsibleCloudStack(object):
 
         account = self.module.params.get('account')
         if not account:
+            account = os.environ.get('CLOUDSTACK_ACCOUNT')
+        if not account:
             return None
 
         domain = self.module.params.get('domain')
@@ -420,6 +427,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.domain)
 
         domain = self.module.params.get('domain')
+        if not domain:
+            domain = os.environ.get('CLOUDSTACK_DOMAIN')
         if not domain:
             return None
 
