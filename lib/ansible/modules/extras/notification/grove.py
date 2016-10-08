@@ -91,7 +91,7 @@ def do_notify_grove(module, channel_token, service, message, url=None, icon_url=
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            channel_token = dict(type='str', required=True),
+            channel_token = dict(type='str', required=True, no_log=True),
             message = dict(type='str', required=True),
             service = dict(type='str', default='ansible'),
             url = dict(type='str', default=None),
