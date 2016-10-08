@@ -21,19 +21,19 @@ DOCUMENTATION = """
 module: sros_command
 version_added: "2.2"
 author: "Peter Sprygada (@privateip)"
-short_description: Run commands on remote devices running Nokia SROS
+short_description: Run commands on remote devices running Nokia SR OS
 description:
-  - Sends arbitrary commands to an SROS node and returns the results
+  - Sends arbitrary commands to an SR OS node and returns the results
     read from the device. This module includes an argument that will
     cause the module to wait for a specific condition before returning
     or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(sros_config) to configure SROS devices.
+    Please use M(sros_config) to configure SR OS devices.
 extends_documentation_fragment: sros
 options:
   commands:
     description:
-      - List of commands to send to the remote SROS device over the
+      - List of commands to send to the remote SR OS device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
