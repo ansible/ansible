@@ -118,23 +118,16 @@ changed:
     sample: true
 '''
 
-# COMMON CODE FOR MIGRATION
-
-import re
-import time
-import collections
-import itertools
-import shlex
+DEFAULT_COMMENT_TOKENS = ['#', '!']
 import json
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
+# COMMON CODE FOR MIGRATION
 
-
-DEFAULT_COMMENT_TOKENS = ['#', '!']
+import ansible.module_utils.nxos
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.shell import ShellError
+from ansible.module_utils.network import NetworkModule
 
 class ConfigLine(object):
 
@@ -922,7 +915,7 @@ def get_interface_mode(interface, intf_type, module):
     return mode
 
 
-def get_hsrp_groups_on_interfaces(device):
+def get_hsrp_groups_on_interfaces(device, module):
     command = 'show hsrp all'
     body = execute_show_command(command, module)
     hsrp = {}

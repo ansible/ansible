@@ -84,9 +84,12 @@ import itertools
 import shlex
 import itertools
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-
 DEFAULT_COMMENT_TOKENS = ['#', '!']
+import ansible.module_utils.nxos
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.shell import ShellError
 
 class ConfigLine(object):
 

@@ -208,11 +208,11 @@ backup_path:
   type: path
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
-import time
 
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.nxos import NetworkModule, NetworkError
+import ansible.module_utils.nxos
 from ansible.module_utils.basic import get_exception
+from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.netcfg import NetworkConfig, dumps
 
 def check_args(module, warnings):
     if module.params['force']:
