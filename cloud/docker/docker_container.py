@@ -1965,7 +1965,7 @@ def main():
         privileged=dict(type='bool', default=False),
         published_ports=dict(type='list', aliases=['ports']),
         pull=dict(type='bool', default=False),
-        purge_networks=dict(type='bool', deault=False),
+        purge_networks=dict(type='bool', default=False),
         read_only=dict(type='bool', default=False),
         recreate=dict(type='bool', default=False),
         restart=dict(type='bool', default=False),
