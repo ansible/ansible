@@ -1154,7 +1154,7 @@ def main():
             seq=dict(required=False, type='str'),
             name=dict(required=True, type='str'),
             action=dict(required=False, choices=['remark', 'permit', 'deny']),
-            remark=dict(requried=False, type='str'),
+            remark=dict(required=False, type='str'),
             proto=dict(required=False, type='str'),
             src=dict(required=False, type='str'),
             src_port_op=dict(required=False),

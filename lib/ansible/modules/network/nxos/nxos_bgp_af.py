@@ -1487,7 +1487,7 @@ def main():
             additional_paths_install=dict(required=False, type='bool'),
             additional_paths_receive=dict(required=False, type='bool'),
             additional_paths_selection=dict(required=False, type='str'),
-            additional_paths_send=dict(required=False, ype='bool'),
+            additional_paths_send=dict(required=False, type='bool'),
             advertise_l2vpn_evpn=dict(required=False, type='bool'),
             client_to_client=dict(required=False, type='bool'),
             dampen_igp_metric=dict(required=False, type='str'),
