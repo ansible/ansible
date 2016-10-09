@@ -188,7 +188,7 @@ def main():
         rollback_location=dict(),
 
         local_max_checkpoints=dict(type='int'),
-        remote_max_checkpionts=dict(type='int'),
+        remote_max_checkpoints=dict(type='int'),
 
         rescue_location=dict(),
 

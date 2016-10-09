@@ -330,7 +330,7 @@ def main():
             ec2_elbs={'default': None, 'required': False, 'type':'list'},
             enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
             wait={'required': False, 'default': True, 'type': 'bool'},
-            wait_timeout={'requred': False, 'default': 0, 'type': 'int'}
+            wait_timeout={'required': False, 'default': 0, 'type': 'int'}
         )
     )
 

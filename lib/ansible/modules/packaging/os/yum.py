@@ -986,7 +986,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     else:
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all"
-                " failed", changed=False, results='', errors='unepected state')
+                " failed", changed=False, results='', errors='unexpected state')
 
     return res
 

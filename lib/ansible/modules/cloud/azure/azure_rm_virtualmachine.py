@@ -573,7 +573,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             # Verify parameters and resolve any defaults
 
             if self.vm_size and not self.vm_size_is_valid():
-                self.fail("Parameter error: vm_size {0} is not valid for your subscription and location.".foramt(
+                self.fail("Parameter error: vm_size {0} is not valid for your subscription and location.".format(
                     self.vm_size
                 ))
 
