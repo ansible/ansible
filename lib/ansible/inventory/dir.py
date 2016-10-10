@@ -70,7 +70,7 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryYAMLParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append('Attempted to read "%s" as YAML: %s' % (hostsfile, to_native(e)))
+            myerr.append('Attempted to read "%s" as YAML: %s' % (to_native(hostsfile), to_native(e)))
 
     # ini
     if not processed and not shebang_present:
@@ -78,7 +78,7 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append('Attempted to read "%s" as ini file: %s ' % (hostsfile, to_native(e)))
+            myerr.append('Attempted to read "%s" as ini file: %s ' % (to_native(hostsfile), to_native(e)))
 
     if not processed and myerr:
         raise AnsibleError('\n'.join(myerr))
