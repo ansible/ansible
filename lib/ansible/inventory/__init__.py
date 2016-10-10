@@ -269,6 +269,8 @@ class Inventory(object):
                             [^\s:\[\]]  # (anything other than whitespace or ':[]'
                             |           # ...or...
                             \[[^\]]*\]  # a single complete bracketed expression)
+			    |		# ...or...
+			    :{3}	# ":::" which is used to identify an LXD container
                         )+              # occurring once or more
                     ''', pattern, re.X
                 )
