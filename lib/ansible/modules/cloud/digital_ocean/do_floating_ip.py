@@ -23,7 +23,7 @@ module: do_floating_ip
 short_description: Manage DigitalOcean Floating IPs
 description:
      - Create/delete/assign a floating IP.
-version_added: "2.2"
+version_added: "2.3"
 author: "Patrick Marques (@patrickfmarques)"
 options:
   state:
