@@ -41,7 +41,6 @@ options:
   api_token:
     description:
      - DigitalOcean api token.
-    required: true
   block_size:
     description:
     - The size of the Block Storage volume in gigabytes. Required when command=create and state=present.
@@ -62,7 +61,7 @@ options:
   timeout:
     description:
     - The timeout in seconds used for polling DigitalOcean's API.
-    default: 10
+    default: 60
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
@@ -115,17 +114,17 @@ id:
 '''
 
 import json
-import os
 import time
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
-
+from ansible.module_utils.basic import env_fallback
 
 class DOBlockStorageException(Exception):
     pass
 
+class RestException(Exception):
+    pass
 
 class Response(object):
 
@@ -167,7 +166,12 @@ class Rest(object):
 
         resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
 
-        return Response(resp, info)
+        response = Response(resp, info)
+
+        if response.status_code >= 500:
+            raise RestException('Unable to reach api.digitalocean.com')
+        else:
+            return response
 
     def get(self, path, data=None, headers=None):
         return self.send('GET', path, data, headers)
@@ -185,8 +189,7 @@ class Rest(object):
 class DOBlockStorage(object):
 
     def __init__(self, module):
-        api_token = module.params['api_token'] or \
-            os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
+        api_token = module.params['api_token']
         self.module = module
         self.rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
                          'Content-type': 'application/json'})
@@ -209,8 +212,10 @@ class DOBlockStorage(object):
                 if json['action']['status'] == 'completed':
                     return True
                 elif json['action']['status'] == 'errored':
-                    raise DOBlockStorageException(json['message'])
-        raise DOBlockStorageException('Unable to reach api.digitalocean.com')
+                    raise DOBlockStorageException('Request to api.digitalocean.com has failed')
+            elif status >= 400:
+                raise DOBlockStorageException(json['message'])
+        raise DOBlockStorageException('Unknown error occured')
 
     def get_attached_droplet_ID(self, volume_name, region):
         url = 'volumes?name={}&region={}'.format(volume_name, region)
@@ -224,8 +229,10 @@ class DOBlockStorage(object):
                 if len(droplet_ids) > 0:
                     return droplet_ids[0]
             return None
-        else:
+        elif status >= 400:
             raise DOBlockStorageException(json['message'])
+        else:
+            raise DOBlockStorageException('Unknown error occured')
 
     def attach_detach_block_storage(self, method, volume_name, region, droplet_id):
         data = {
@@ -241,10 +248,12 @@ class DOBlockStorage(object):
             return self.poll_action_for_complete_status(json['action']['id'])
         elif status == 200:
             return True
-        elif status == 422:
+        elif status in (404, 422):
             return False
-        else:
+        elif status >= 400:
             raise DOBlockStorageException(json['message'])
+        else:
+            raise DOBlockStorageException('Unknown error occured')
 
     def create_block_storage(self):
         block_size = self.get_key_or_fail('block_size')
@@ -264,8 +273,10 @@ class DOBlockStorage(object):
             self.module.exit_json(changed=True, id=json['volume']['id'])
         elif status == 409 and json['id'] == 'already_exists':
             self.module.exit_json(changed=False)
-        else:
+        elif status >= 400:
             raise DOBlockStorageException(json['message'])
+        else:
+            raise DOBlockStorageException('Unknown error occured')
 
     def delete_block_storage(self):
         volume_name = self.get_key_or_fail('volume_name')
@@ -281,8 +292,10 @@ class DOBlockStorage(object):
             self.module.exit_json(changed=True)
         elif status == 404:
             self.module.exit_json(changed=False)
-        else:
+        elif status >= 400:
             raise DOBlockStorageException(json['message'])
+        else:
+            raise DOBlockStorageException('Unknown error occured')
 
     def attach_block_storage(self):
         volume_name = self.get_key_or_fail('volume_name')
@@ -326,13 +339,18 @@ def main():
         argument_spec=dict(
             state = dict(choices=['present', 'absent'], required=True),
             command = dict(choices=['create', 'attach'], required=True),
-            api_token = dict(aliases=['API_TOKEN'], no_log=True),
+            api_token = dict(
+                aliases=['API_TOKEN'], 
+                no_log=True,
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY']),
+                required=True
+            ),
             block_size = dict(type='int'),
             volume_name = dict(type='str', required=True),
             description = dict(type='str'),
             region = dict(type='str', required=True),
             droplet_id = dict(type='int'),
-            timeout = dict(type='int', default=10),
+            timeout = dict(type='int', default=60),
         ),
     )
     try:
@@ -340,9 +358,15 @@ def main():
     except DOBlockStorageException:
         e = get_exception()
         module.fail_json(msg=e.message)
+    except RestException:
+        e = get_exception()
+        module.fail_json(msg=e.message)
     except KeyError:
         e = get_exception()
         module.fail_json(msg='Unable to load %s' % e.message)
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg=e.message)
 
 if __name__ == '__main__':
     main()
