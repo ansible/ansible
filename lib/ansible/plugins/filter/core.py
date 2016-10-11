@@ -67,7 +67,7 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if isinstance(o, HostVars):
             return dict(o)
         else:
-            return json.JSONEncoder.default(o)
+            return super(AnsibleJSONEncoder, self).default(o)
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
