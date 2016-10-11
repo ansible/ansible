@@ -2,6 +2,9 @@
 
 source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '../../..')))")
 
+# Hack to use custom mount.py for testing.
+cp "${source_root}/test/utils/shippable/mount.py" "${source_root}/lib/ansible/modules/core/system/mount.py"
+
 test_image="${IMAGE:-ansible/ansible:centos7}"
 test_privileged="${PRIVILEGED:-false}"
 test_flags="${TEST_FLAGS:-}"
@@ -58,6 +61,16 @@ function show_environment
 
 function cleanup
 {
+    ls -l "${controller_shared_dir}/shippable"
+
+    for path in "${controller_shared_dir}/shippable/"*.debug; do
+        echo
+        echo "---[ BEGIN: ${path} ]---"
+        cat "${path}"
+        echo "---[ END: ${path} ]---"
+        echo
+    done
+
     if [ "${controller_shared_dir}" ]; then
         cp -av "${controller_shared_dir}/shippable" "${SHIPPABLE_BUILD_DIR}"
         rm -rf "${controller_shared_dir}"
@@ -133,6 +146,9 @@ if [ "${test_python3}" ]; then
 fi
 
 docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults"
+
+docker exec "${container_id}" "${test_ansible_dir}/test/utils/shippable/mount.sh"
+
 docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
