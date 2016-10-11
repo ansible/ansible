@@ -84,6 +84,7 @@ options:
         description:
           - Optional deployment parameters that control how many tasks run during the deployment and the ordering of stopping and starting tasks.; format is '{"maximumPercent":<integer>, "minimumHealthyPercent":<integer>}
         required: false
+        version_added: 2.3
 
 
 extends_documentation_fragment:
