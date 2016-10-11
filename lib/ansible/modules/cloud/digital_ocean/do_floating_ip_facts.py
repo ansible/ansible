@@ -64,54 +64,91 @@ EXAMPLES = '''
     state: present
 '''
 
-def digitalocean_api_call(module, method, url, data=None, retry=0):
-    """ Get digitalocean floating ips """
+import json
+import os
 
-    headers = {
-        "Authorization" : "Bearer %s" % (module.params['oauth_token']),
-        "Content-Type"  : "application/json"
-    }
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
-    if data:
-        data = module.jsonify(data)
 
-    response, info = fetch_url(module, url, headers=headers, method=method, data=data)
+class Response(object):
 
-    if info['status'] == 204:
-        # 204 has no content
-        response = {}
-    elif info['status'] in [404, 422]:
+    def __init__(self, resp, info):
+        self.body = None
+        if resp:
+            self.body = resp.read()
+        self.info = info
+
+    @property
+    def json(self):
+        if not self.body:
+            if "body" in self.info:
+                return json.loads(self.info["body"])
+            return None
         try:
-            # TODO: Return as a message?
-            info['body'] = json.loads(info['body'])
-            response = {}
-        except Exception:
-            module.fail_json(changed=False, msg="Error parsing digitalocean response", response=response, info=info)
-    else:
-        try:
-            response = response.read()
-            response = json.loads(response)
-        except Exception:
-            module.fail_json(changed=False, msg="Error parsing digitalocean response", response=response, info=info)
+            return json.loads(self.body)
+        except ValueError:
+            return None
 
-    return info, response
+    @property
+    def status_code(self):
+        return self.info["status"]
 
-def list_floating_ips(module):
-    info, response = digitalocean_api_call(module, "GET", "https://api.digitalocean.com/v2/floating_ips?page=1&per_page=20")
+
+class Rest(object):
+
+    def __init__(self, module, headers):
+        self.module = module
+        self.headers = headers
+        self.baseurl = 'https://api.digitalocean.com/v2'
+
+    def _url_builder(self, path):
+        if path[0] == '/':
+            path = path[1:]
+        return '%s/%s' % (self.baseurl, path)
+
+    def send(self, method, path, data=None, headers=None):
+        url = self._url_builder(path)
+        data = self.module.jsonify(data)
+
+        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
+
+        return Response(resp, info)
+
+    def get(self, path, data=None, headers=None):
+        return self.send('GET', path, data, headers)
+
+    def put(self, path, data=None, headers=None):
+        return self.send('PUT', path, data, headers)
+
+    def post(self, path, data=None, headers=None):
+        return self.send('POST', path, data, headers)
+
+    def delete(self, path, data=None, headers=None):
+        return self.send('DELETE', path, data, headers)
+
+
+def core(module):
+    api_token = module.params['oauth_token']
+
+    rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
+                         'Content-type': 'application/json'})
 
     # TODO: recursive fetch!
-    floating_ips = response['floating_ips']
+    response = rest.get("floating_ips?page=1&per_page=20")
+    status_code = response.status_code
+    json = response.json
+    if status_code == 200:
+        module.exit_json(changed=False, data=json)
+    else:
+        module.fail_json(msg="Error fecthing facts [{}: {}]".format(
+            status_code, response.json["message"]))
 
-    return {
-        "changed": False,
-        "http_response": response,
-        "floating_ips": floating_ips,
-    }
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['present'], default='present'),
             oauth_token = dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
@@ -121,12 +158,10 @@ def main():
         ),
     )
 
-    result = list_floating_ips(module)
+    try:
+        core(module)
+    except Exception as e:
+        module.fail_json(msg=str(e))
 
-    module.exit_json(**result)
-
-# import module snippets
-from ansible.module_utils.urls import *
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
