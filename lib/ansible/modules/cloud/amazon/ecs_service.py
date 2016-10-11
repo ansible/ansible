@@ -33,6 +33,7 @@ version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
+    - "Stephane Maarek (@simplesteph)"
 requirements: [ json, boto, botocore, boto3 ]
 options:
     state:
@@ -79,6 +80,12 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    deployment_configuration:
+        description:
+          - Optional deployment parameters that control how many tasks run during the deployment and the ordering of stopping and starting tasks.; format is '{"maximumPercent":<integer>, "minimumHealthyPercent":<integer>}
+        required: false
+
+
 extends_documentation_fragment:
     - aws
     - ec2
@@ -104,6 +111,17 @@ EXAMPLES = '''
     name: default
     state: absent
     cluster: new_cluster
+
+# With custom deployment configuration
+- ecs_service:
+    name: test-service
+    cluster: test-cluster
+    task_definition: test-task-definition
+    desired_count: 3
+    deployment_configuration:
+      minimumHealthyPercent: 75
+      maximumPercent: 150
+    state: present
 '''
 
 RETURN = '''
@@ -165,6 +183,19 @@ service:
             description: list of service deployments
             returned: always
             type: list of complex
+        deploymentConfiguration:
+            description: dictionary of deploymentConfiguration
+            returned: always
+            type: complex
+            contains:
+                maximumPercent:
+                    description: maximumPercent param
+                    returned: always
+                    type: int
+                minimumHealthyPercent:
+                    description: minimumHealthyPercent param
+                    returned: always
+                    type: int
         events:
             description: lost of service events
             returned: always
@@ -260,7 +291,7 @@ class EcsServiceManager:
         return True
 
     def create_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+        load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -268,16 +299,18 @@ class EcsServiceManager:
             loadBalancers=load_balancers,
             desiredCount=desired_count,
             clientToken=client_token,
-            role=role)
+            role=role,
+            deploymentConfiguration=deployment_configuration)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+        load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
-            desiredCount=desired_count)
+            desiredCount=desired_count,
+            deploymentConfiguration=deployment_configuration)
         return self.jsonize(response['service'])
 
     def jsonize(self, service):
@@ -311,7 +344,8 @@ def main():
         client_token=dict(required=False, type='str' ),
         role=dict(required=False, type='str' ),
         delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
+        repeat=dict(required=False, type='int', default=10),
+        deployment_configuration=dict(required=False, type='dict')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -360,7 +394,15 @@ def main():
                     clientToken = ''
                 else:
                     clientToken = module.params['client_token']
-
+                if module.params['deployment_configuration'] is None:
+                    deploymentConfiguration = {}
+                else:
+                    deploymentConfiguration = module.params['deployment_configuration']
+                    if not ("minimumHealthyPercent" in deploymentConfiguration and
+                        "maximumPercent" in deploymentConfiguration):
+                        module.fail_json(msg="To use deployment_configuration, "
+                                             "you must specify both minimumHealthyPercent and maximumPercent."
+                                             "You currently have specified {}".format(deploymentConfiguration.keys()))
                 if update:
                     # update required
                     response = service_mgr.update_service(module.params['name'],
@@ -369,7 +411,8 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
@@ -378,7 +421,8 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration)
 
                 results['service'] = response
 
