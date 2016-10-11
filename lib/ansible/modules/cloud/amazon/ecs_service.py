@@ -82,7 +82,7 @@ options:
         default: 10
     deployment_configuration:
         description:
-          - Optional deployment parameters that control how many tasks run during the deployment and the ordering of stopping and starting tasks.; format is '{"maximumPercent":<integer>, "minimumHealthyPercent":<integer>}
+          - Optional parameters that control the deployment_configuration; format is '{"maximumPercent":<integer>, "minimumHealthyPercent":<integer>}
         required: false
         version_added: 2.3
 
