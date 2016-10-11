@@ -78,9 +78,9 @@ EXAMPLES = '''
 
 
 RETURN = '''
+# Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#floating-ips
 data:
     description: a DigitalOcean Floating IP resource
-    Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#floating-ips
     returned: success and no resource constraint
     type: dict
     sample: {
