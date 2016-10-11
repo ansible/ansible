@@ -387,6 +387,46 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def failed(*a, **kw):
+    ''' Test if task result yields failed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
+    rc = item.get('rc',0)
+    failed = item.get('failed',False)
+    if rc != 0 or failed:
+        return True
+    else:
+        return False
+
+def success(*a, **kw):
+    ''' Test if task result yields success '''
+    return not failed(*a, **kw)
+
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
+
+def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -467,4 +507,18 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # failure testing
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
+
+            # changed testing
+            'changed' : changed,
+            'change'  : changed,
+
+            # skip testing
+            'skipped' : skipped,
+            'skip'    : skipped,
         }
