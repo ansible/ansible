@@ -298,6 +298,7 @@ class VariableManager:
                 # as soon as we read one from the list. If none are found, we
                 # raise an error, which is silently ignored at this point.
                 try:
+                    files_not_found = list()
                     for vars_file in vars_file_list:
                         vars_file = templar.template(vars_file)
                         try:
@@ -308,18 +309,23 @@ class VariableManager:
                             break
                         except AnsibleFileNotFound as e:
                             # we continue on loader failures
+                            files_not_found.append(vars_file)
                             continue
                         except AnsibleParserError as e:
                             raise
                     else:
-                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
-                except (UndefinedError, AnsibleUndefinedVariable):
+                        msg = "\n".join(["vars file %s was not found." % filename for filename in files_not_found])
+                        if task and not include_delegate_to:
+                            display.warning(msg + "\nThis might be because templating resulted in a missing file when delegating to another host in task %s" % task)
+                        else:
+                            raise AnsibleFileNotFound(msg)
+                except (UndefinedError, AnsibleUndefinedVariable) as e:
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
+                        raise AnsibleUndefinedVariable("%s when attempting to template the vars_files item '%s'" % (str(e), vars_file_item), obj=vars_file_item)
                     else:
                         # we do not have a full context here, and the missing variable could be
                         # because of that, so just show a warning and continue
-                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+                        display.vvv("skipping vars_file '%s': %s" % (vars_file_item, str(e)))
                         continue
 
             # By default, we now merge in all vars from all roles in the play,
