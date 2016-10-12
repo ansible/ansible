@@ -118,27 +118,27 @@ EXAMPLES = '''
 
 RETURN = '''
 allow:
-    description: |
+    description: >
         Specifies, if you have enabled SSH access, the IP address or address
         range for other systems that can use SSH to communicate with this
         system.
     returned: changed
-    type: list
-    sample: "192.168.*.*"
+    type: string
+    sample: "192.0.2.*"
 banner:
     description: Whether the banner is enabled or not.
     returned: changed
     type: string
     sample: "true"
 banner_text:
-    description: |
+    description: >
         Specifies the text included on the pre-login banner that
         displays when a user attempts to login to the system using SSH.
     returned: changed and success
     type: string
     sample: "This is a corporate device. Connecting to it without..."
 inactivity_timeout:
-    description: |
+    description: >
         The number of seconds before inactivity causes an SSH.
         session to log out
     returned: changed
