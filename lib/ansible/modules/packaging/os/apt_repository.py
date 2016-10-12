@@ -84,22 +84,36 @@ requirements:
 
 EXAMPLES = '''
 # Add specified repository into sources list.
-apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner' state=present
+- apt_repository:
+    repo: 'deb http://archive.canonical.com/ubuntu hardy partner'
+    state: present
 
 # Add specified repository into sources list using specified filename.
-apt_repository: repo='deb http://dl.google.com/linux/chrome/deb/ stable main' state=present filename='google-chrome'
+- apt_repository:
+    repo: 'deb http://dl.google.com/linux/chrome/deb/ stable main'
+    state: present
+    filename: 'google-chrome'
 
 # Add source repository into sources list.
-apt_repository: repo='deb-src http://archive.canonical.com/ubuntu hardy partner' state=present
+- apt_repository:
+    repo: 'deb-src http://archive.canonical.com/ubuntu hardy partner'
+    state: present
 
 # Remove specified repository from sources list.
-apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner' state=absent
+- apt_repository:
+    repo: 'deb http://archive.canonical.com/ubuntu hardy partner'
+    state: absent
 
 # Add nginx stable repository from PPA and install its signing key.
 # On Ubuntu target:
-apt_repository: repo='ppa:nginx/stable'
+- apt_repository:
+    repo: 'ppa:nginx/stable'
+
 # On Debian target
-apt_repository: repo='ppa:nginx/stable' codename='trusty'
+- apt_repository:
+    repo: 'ppa:nginx/stable'
+    codename: 'trusty'
+    repo: 'ppa:nginx/stable'
 '''
 
 import glob
