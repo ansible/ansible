@@ -50,13 +50,25 @@ notes:  []
 
 EXAMPLES = '''
 # install package foo
-- apt_rpm: pkg=foo state=present
+- apt_rpm:
+    pkg: foo
+    state: present
+
 # remove package foo
-- apt_rpm: pkg=foo state=absent
-# description: remove packages foo and bar 
-- apt_rpm: pkg=foo,bar state=absent
-# description: update the package database and install bar (bar will be the updated if a newer version exists) 
-- apt_rpm: name=bar state=present update_cache=yes     
+- apt_rpm:
+    pkg: foo
+    state: absent
+
+# description: remove packages foo and bar
+- apt_rpm:
+    pkg: foo,bar
+    state: absent
+
+# description: update the package database and install bar (bar will be the updated if a newer version exists)
+- apt_rpm:
+    name: bar
+    state: present
+    update_cache: yes
 '''
 
 
