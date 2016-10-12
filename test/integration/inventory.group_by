@@ -1,3 +1,6 @@
+# ungrouped
+camel genus=camelus ansible_connection=local
+
 [lamini]
 alpaca genus=vicugna
 llama genus=lama
