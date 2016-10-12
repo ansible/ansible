@@ -34,7 +34,10 @@ notes:
 
 EXAMPLES = '''
 # Create groups based on the machine architecture
--  group_by: key=machine_{{ ansible_machine }}
+- group_by:
+    key: machine_{{ ansible_machine }}
+
 # Create groups like 'kvm-host'
--  group_by: key=virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
+- group_by:
+    key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 '''
