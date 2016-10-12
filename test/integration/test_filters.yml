@@ -1,5 +1,0 @@
-- hosts: testhost
-  connection: local
-  gather_facts: yes
-  roles:
-  - { role: test_filters }
