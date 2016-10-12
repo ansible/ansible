@@ -111,43 +111,89 @@ extends_documentation_fragment: mysql
 
 EXAMPLES = """
 # Removes anonymous user account for localhost
-- mysql_user: name='' host=localhost state=absent
+- mysql_user:
+    name: ''
+    host: localhost
+    state: absent
 
 # Removes all anonymous user accounts
-- mysql_user: name='' host_all=yes state=absent
+- mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
 
 # Create database user with name 'bob' and password '12345' with all database privileges
-- mysql_user: name=bob password=12345 priv=*.*:ALL state=present
+- mysql_user:
+    name: bob
+    password: 12345
+    priv: '*.*:ALL'
+    state: present
 
 # Create database user with name 'bob' and previously hashed mysql native password '*EE0D72C1085C46C5278932678FBE2C6A782821B4' with all database privileges
-- mysql_user: name=bob password='*EE0D72C1085C46C5278932678FBE2C6A782821B4' encrypted=yes priv=*.*:ALL state=present
+- mysql_user:
+    name: bob
+    password: '*EE0D72C1085C46C5278932678FBE2C6A782821B4'
+    encrypted: yes
+    priv: '*.*:ALL'
+    state: present
 
 # Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
-- mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
+- mysql_user:
+    name: bob
+    password: 12345
+    priv: '*.*:ALL,GRANT'
+    state: present
 
-# Modifiy user Bob to require SSL connections. Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
-- mysql_user: name=bob append_privs=true priv=*.*:REQUIRESSL state=present
+# Modify user Bob to require SSL connections. Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
+- mysql_user:
+    name: bob
+    append_privs: true
+    priv: '*.*:REQUIRESSL'
+    state: present
 
 # Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
-- mysql_user: login_user=root login_password=123456 name=sally state=absent
+- mysql_user:
+    login_user: root
+    login_password: 123456
+    name: sally
+    state: absent
 
 # Ensure no user named 'sally' exists at all
-- mysql_user: name=sally host_all=yes state=absent
+- mysql_user:
+    name: sally
+    host_all: yes
+    state: absent
 
 # Specify grants composed of more than one word
-- mysql_user: name=replication password=12345 priv="*.*:REPLICATION CLIENT" state=present
+- mysql_user:
+    name: replication
+    password: 12345
+    priv: "*.*:REPLICATION CLIENT"
+    state: present
 
 # Revoke all privileges for user 'bob' and password '12345'
-- mysql_user: name=bob password=12345 priv=*.*:USAGE state=present
+- mysql_user:
+    name: bob
+    password: 12345
+    priv: "*.*:USAGE"
+    state: present
 
 # Example privileges string format
 mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 
 # Example using login_unix_socket to connect to server
-- mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock
+- mysql_user:
+    name: root
+    password: abc123
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 
 # Example of skipping binary logging while adding user 'bob'
-- mysql_user: name=bob password=12345 priv=*.*:USAGE state=present sql_log_bin=no
+- mysql_user:
+    name: bob
+    password: 12345
+    priv: "*.*:USAGE"
+    state: present
+    sql_log_bin: no
 
 # Example .my.cnf file for setting the root password
 
