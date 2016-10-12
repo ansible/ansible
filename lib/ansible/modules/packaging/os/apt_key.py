@@ -83,28 +83,47 @@ options:
 
 EXAMPLES = '''
 # Add an apt key by id from a keyserver
-- apt_key: keyserver=keyserver.ubuntu.com id=36A1D7869245C8950F966E92D8576A8BA88D21E9
+- apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
 
 # Add an Apt signing key, uses whichever key is at the URL
-- apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present
+- apt_key:
+    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    state: present
 
 # Add an Apt signing key, will not download if present
-- apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present
+- apt_key:
+    id: 473041FA
+    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    state: present
 
 # Remove an Apt signing key, uses whichever key is at the URL
-- apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent
+- apt_key:
+    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    state: absent
 
 # Remove a Apt specific signing key, leading 0x is valid
-- apt_key: id=0x473041FA state=absent
+- apt_key:
+    id: 0x473041FA
+    state: absent
 
 # Add a key from a file on the Ansible server
-- apt_key: data="{{ lookup('file', 'apt.gpg') }}" state=present
+- apt_key:
+    data: "{{ lookup('file', 'apt.gpg') }}"
+    state: present
 
 # Add an Apt signing key to a specific keyring file
-- apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc keyring=/etc/apt/trusted.gpg.d/debian.gpg state=present
+- apt_key:
+    id: 473041FA
+    url: "https://ftp-master.debian.org/keys/archive-key-6.0.asc"
+    keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 # Add Apt signing key on remote server to keyring
-- apt_key: id=473041FA file=/tmp/apt.gpg state=present
+- apt_key:
+    id: 473041FA
+    file: /tmp/apt.gpg
+    state: present
 '''
 
 
