@@ -21,32 +21,32 @@ class ModuleDocFragment(object):
     # Standard documentation fragment
     RETURN= '''
 changed:
-    description: whether the module affected changes on the target
+    description: Whether the module affected changes on the target.
     returned: always
     type: bool
     sample: False
 failed:
-    description: whether the module failed to execute
+    description: Whether the module failed to execute.
     returned: always
     type: bool
     sample: True
 msg:
-    description: human-readable message
+    description: Human-readable message.
     returned: as needed
     type: string
     sample: "all ok"
 skipped:
-    description: whether the module was skipped
+    description: Whether the module was skipped.
     returned: always
     type: bool
     sample: False
 results:
-    description: list of module results,
-    returned: when using a loop
+    description: List of module results,
+    returned: when using a loop.
     type: list
     sample:[ {changed: True, msg: 'first item changed'}, {changed: False, msg: 'second item ok'}]
 exception:
-    description: optional information from a handled error
+    description: Optional information from a handled error.
     returned: on some errors
     type: string
     sample: 'Unknown error'
