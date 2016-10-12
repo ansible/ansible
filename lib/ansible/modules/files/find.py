@@ -118,19 +118,37 @@ options:
 
 EXAMPLES = '''
 # Recursively find /tmp files older than 2 days
-- find: paths="/tmp" age="2d" recurse=yes
+- find:
+    paths: "/tmp"
+    age: "2d"
+    recurse: yes
 
 # Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-- find: paths="/tmp" age="4w" size="1m" recurse=yes
+- find:
+    paths: "/tmp"
+    age: "4w"
+    size: "1m"
+    recurse: yes
 
 # Recursively find /var/tmp files with last access time greater than 3600 seconds
-- find: paths="/var/tmp" age="3600" age_stamp=atime recurse=yes
+- find:
+    paths: "/var/tmp"
+    age: "3600"
+    age_stamp: atime
+    recurse: yes
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-- find: paths="/var/tmp" patterns="*.old,*.log.gz" size="10m"
+- find:
+    paths: "/var/tmp"
+    patterns: "*.old,*.log.gz"
+    size: "10m"
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find: paths="/var/tmp" patterns="^.*?\.(?:old|log\.gz)$" size="10m" use_regex=True
+- find:
+    paths: "/var/tmp"
+    patterns: "^.*?\.(?:old|log\.gz)$"
+    size: "10m"
+    use_regex: True
 '''
 
 RETURN = '''
