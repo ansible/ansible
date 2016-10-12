@@ -47,7 +47,7 @@ options:
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force psuedo-tty allocation via -tt when scripts are executed. psuedo-ttys do not have a stderr channel and all stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
-author: 
+author:
     - Ansible Core Team
     - Michael DeHaan
 """
@@ -57,8 +57,12 @@ EXAMPLES = '''
 - script: /some/local/script.sh --some-arguments 1234
 
 # Run a script that creates a file, but only if the file is not yet created
-- script: /some/local/create_file.sh --some-arguments 1234 creates=/the/created/file.txt
+- script: /some/local/create_file.sh --some-arguments 1234
+  args:
+    creates: /the/created/file.txt
 
 # Run a script that removes a file, but only if the file is not yet removed
-- script: /some/local/remove_file.sh --some-arguments 1234 removes=/the/removed/file.txt
+- script: /some/local/remove_file.sh --some-arguments 1234
+  args:
+    removes: /the/removed/file.txt
 '''
