@@ -65,7 +65,7 @@ options:
         will use the basename of the source file, similar to the copy module.
         Obviously this is only handy if the filenames are unique.
 requirements: []
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 notes:
@@ -79,14 +79,25 @@ notes:
 
 EXAMPLES = '''
 # Store file into /tmp/fetched/host.example.com/tmp/somefile
-- fetch: src=/tmp/somefile dest=/tmp/fetched
+- fetch:
+    src: /tmp/somefile
+    dest: /tmp/fetched
 
 # Specifying a path directly
-- fetch: src=/tmp/somefile dest=/tmp/prefix-{{ inventory_hostname }} flat=yes
+- fetch:
+    src: /tmp/somefile
+    dest: /tmp/prefix-{{ inventory_hostname }}
+    flat: yes
 
 # Specifying a destination path
-- fetch: src=/tmp/uniquefile dest=/tmp/special/ flat=yes
+- fetch:
+    src: /tmp/uniquefile
+    dest: /tmp/special/
+    flat: yes
 
 # Storing in a path relative to the playbook
-- fetch: src=/tmp/uniquefile dest=special/prefix-{{ inventory_hostname }} flat=yes
+- fetch:
+    src: /tmp/uniquefile
+    dest: special/prefix-{{ inventory_hostname }}
+    flat: yes
 '''
