@@ -255,176 +255,69 @@ def load_config(module, candidate):
 # END OF COMMON CODE
 
 
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
+def get_value(module, arg, config):
+    existing = {}
+    if arg == 'group':
+        command = '.*snmp-server community {0} group (?P<group>\S+).*'.format(
+                  module.params['community'])
         try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0]:
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
+            match_group = re.match(command, config, re.DOTALL)
+            group = match_group.groupdict()['group']
+            existing['group'] = group
+            existing['community'] = module.params['community']
+        except AttributeError:
+            existing['group'] = ''
+    elif arg == 'acl':
+        command = '.*snmp-server community {0} use-acl (?P<acl>\S+).*'.format(
+                  module.params['community'])
         try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
+            match_acl = re.match(command, config, re.DOTALL)
+            acl = match_acl.groupdict()['acl']
+            existing['acl'] = acl
+            existing['community'] = module.params['community']
+        except AttributeError:
+            existing['acl'] = ''
+    return existing
 
 
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
+def get_existing(module):
+    existing = {}
+    config = str(get_config(module))
+    for arg in ['group', 'acl']:
+        existing.update(get_value(module, arg, config))
+    if existing.get('group') or existing.get('acl'):
+        existing['community'] = module.params['community']
+    existing = dict((key, value) for key, value in
+                    existing.iteritems() if value)
+    return existing
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
+def state_absent(module, existing, proposed, candidate):
+    commands = ['no snmp-server community {0}'.format(
+                module.params['community'])]
+    if commands:
+        candidate.add(commands, parents=[])
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
-
-
-def flatten_list(command_lists):
-    flat_command_list = []
-    for command in command_lists:
-        if isinstance(command, list):
-            flat_command_list.extend(command)
-        else:
-            flat_command_list.append(command)
-    return flat_command_list
-
-
-def get_snmp_groups(module):
-    command = 'show snmp group'
-    data = execute_show_command(command, module)[0]
-
-    group_list = []
-
-    try:
-        group_table = data['TABLE_role']['ROW_role']
-        for group in group_table:
-            group_list.append(group['role_name'])
-    except (KeyError, AttributeError):
-        return group_list
-
-    return group_list
-
-
-def get_snmp_community(module, find_filter=None):
-    command = 'show snmp community'
-    data = execute_show_command(command, module)[0]
-
-    community_dict = {}
-
-    community_map = {
-        'grouporaccess': 'group',
-        'aclfilter': 'acl'
-    }
-
-    try:
-        community_table = data['TABLE_snmp_community']['ROW_snmp_community']
-        for each in community_table:
-            community = apply_key_map(community_map, each)
-            key = each['community_name']
-            community_dict[key] = community
-    except (KeyError, AttributeError):
-        return community_dict
-
-    if find_filter:
-        find = community_dict.get(find_filter, None)
-
-    if find_filter is None or find is None:
-        return {}
-    else:
-        fix_find = {}
-        for (key, value) in find.iteritems():
-            if isinstance(value, str):
-                fix_find[key] = value.strip()
-            else:
-                fix_find[key] = value
-        return fix_find
-
-
-def config_snmp_community(delta, community):
+def state_present(module, existing, proposed, candidate):
     CMDS = {
-        'group': 'snmp-server community {0} group {group}',
-        'acl': 'snmp-server community {0} use-acl {acl}'
+        'group': 'snmp-server community {0} group {1}',
+        'acl': 'snmp-server community {0} use-acl {1}'
     }
     commands = []
-    for k, v in delta.iteritems():
-        cmd = CMDS.get(k).format(community, **delta)
-        if cmd:
-            commands.append(cmd)
-            cmd = None
-    return commands
+    community = module.params['community']
+    for key in ['group', 'acl']:
+        if proposed.get(key):
+            command = CMDS[key].format(community, proposed[key])
+            commands.append(command)
+    if commands:
+        candidate.add(commands, parents=[])
+
+
+def invoke(name, *args, **kwargs):
+    func = globals().get(name)
+    if func:
+        return func(*args, **kwargs)
 
 
 def main():
@@ -434,6 +327,9 @@ def main():
             group=dict(type='str'),
             acl=dict(type='str'),
             state=dict(choices=['absent', 'present'], default='present'),
+            include_defaults=dict(default=False),
+            config=dict(),
+            save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_one_of=[['access', 'group']],
@@ -442,8 +338,6 @@ def main():
 
     access = module.params['access']
     group = module.params['group']
-    community = module.params['community']
-    acl = module.params['acl']
     state = module.params['state']
 
     if access:
@@ -452,51 +346,35 @@ def main():
         elif access == 'rw':
             group = 'network-admin'
 
-    # group check - ensure group being configured exists on the device
-    configured_groups = get_snmp_groups(module)
-
-    if group not in configured_groups:
-        module.fail_json(msg="group not on switch."
-                             "please add before moving forward")
-
-    existing = get_snmp_community(module, community)
-    args = dict(group=group, acl=acl)
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
-
-    changed = False
+    args = ['community', 'acl']
+    proposed = dict((k, v) for k, v in module.params.iteritems()
+                    if v is not None and k in args)
+    proposed['group'] = group
+    existing = get_existing(module)
     end_state = existing
-    commands = []
 
-    if state == 'absent':
-        if existing:
-            command = "no snmp-server community {0}".format(community)
-            commands.append(command)
-        cmds = flatten_list(commands)
-    elif state == 'present':
-        if delta:
-            command = config_snmp_community(dict(delta), community)
-            commands.append(command)
-        cmds = flatten_list(commands)
+    result = {}
+    if state == 'present' or (state == 'absent' and existing):
+        candidate = CustomNetworkConfig(indent=3)
+        invoke('state_%s' % state, module, existing, proposed, candidate)
 
-    if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            execute_config_command(cmds, module)
-            end_state = get_snmp_community(module, community)
-            if 'configure' in cmds:
-                cmds.pop(0)
+        try:
+            response = load_config(module, candidate)
+            result.update(response)
+        except ShellError:
+            exc = get_exception()
+            module.fail_json(msg=str(exc))
+    else:
+        result['updates'] = []
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
+    result['connected'] = module.connected
+    if module._verbosity > 0:
+        end_state = invoke('get_existing', module)
+        result['end_state'] = end_state
+        result['existing'] = existing
+        result['proposed'] = proposed
 
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
