@@ -93,13 +93,21 @@ extends_documentation_fragment: files
 
 EXAMPLES = '''
 # Example from Ansible Playbooks
-- assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+- assemble:
+    src: /etc/someapp/fragments
+    dest: /etc/someapp/someapp.conf
 
 # When a delimiter is specified, it will be inserted in between each fragment
-- assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
+- assemble:
+    src: /etc/someapp/fragments
+    dest: /etc/someapp/someapp.conf
+    delimiter: '### START FRAGMENT ###'
 
 # Copy a new "sshd_config" file into place, after passing validation with sshd
-- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='/usr/sbin/sshd -t -f %s'
+- assemble:
+    src: /etc/ssh/conf.d/
+    dest: /etc/ssh/sshd_config
+    validate: '/usr/sbin/sshd -t -f %s'
 '''
 
 import codecs
