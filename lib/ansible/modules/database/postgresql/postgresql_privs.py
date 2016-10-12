@@ -143,90 +143,90 @@ EXAMPLES = """
 # On database "library":
 # GRANT SELECT, INSERT, UPDATE ON TABLE public.books, public.authors
 # TO librarian, reader WITH GRANT OPTION
-- postgresql_privs: >
-    database=library
-    state=present
-    privs=SELECT,INSERT,UPDATE
-    type=table
-    objs=books,authors
-    schema=public
-    roles=librarian,reader
-    grant_option=yes
+- postgresql_privs:
+    database: library
+    state: present
+    privs: SELECT,INSERT,UPDATE
+    type: table
+    objs: books,authors
+    schema: public
+    roles: librarian,reader
+    grant_option: yes
 
 # Same as above leveraging default values:
-- postgresql_privs: >
-    db=library
-    privs=SELECT,INSERT,UPDATE
-    objs=books,authors
-    roles=librarian,reader
-    grant_option=yes
+- postgresql_privs:
+    db: library
+    privs: SELECT,INSERT,UPDATE
+    objs: books,authors
+    roles: librarian,reader
+    grant_option: yes
 
 # REVOKE GRANT OPTION FOR INSERT ON TABLE books FROM reader
 # Note that role "reader" will be *granted* INSERT privilege itself if this
-# isn't already the case (since state=present).
-- postgresql_privs: >
-    db=library
-    state=present
-    priv=INSERT
-    obj=books
-    role=reader
-    grant_option=no
+# isn't already the case (since state: present).
+- postgresql_privs:
+    db: library
+    state: present
+    priv: INSERT
+    obj: books
+    role: reader
+    grant_option: no
 
 # REVOKE INSERT, UPDATE ON ALL TABLES IN SCHEMA public FROM reader
 # "public" is the default schema. This also works for PostgreSQL 8.x.
-- postgresql_privs: >
-    db=library
-    state=absent
-    privs=INSERT,UPDATE
-    objs=ALL_IN_SCHEMA
-    role=reader
+- postgresql_privs:
+    db: library
+    state: absent
+    privs: INSERT,UPDATE
+    objs: ALL_IN_SCHEMA
+    role: reader
 
 # GRANT ALL PRIVILEGES ON SCHEMA public, math TO librarian
-- postgresql_privs: >
-    db=library
-    privs=ALL
-    type=schema
-    objs=public,math
-    role=librarian
+- postgresql_privs:
+    db: library
+    privs: ALL
+    type: schema
+    objs: public,math
+    role: librarian
 
 # GRANT ALL PRIVILEGES ON FUNCTION math.add(int, int) TO librarian, reader
 # Note the separation of arguments with colons.
-- postgresql_privs: >
-    db=library
-    privs=ALL
-    type=function
-    obj=add(int:int)
-    schema=math
-    roles=librarian,reader
+- postgresql_privs:
+    db: library
+    privs: ALL
+    type: function
+    obj: add(int:int)
+    schema: math
+    roles: librarian,reader
 
 # GRANT librarian, reader TO alice, bob WITH ADMIN OPTION
 # Note that group role memberships apply cluster-wide and therefore are not
 # restricted to database "library" here.
-- postgresql_privs: >
-    db=library
-    type=group
-    objs=librarian,reader
-    roles=alice,bob
-    admin_option=yes
+- postgresql_privs:
+    db: library
+    type: group
+    objs: librarian,reader
+    roles: alice,bob
+    admin_option: yes
 
 # GRANT ALL PRIVILEGES ON DATABASE library TO librarian
-# Note that here "db=postgres" specifies the database to connect to, not the
+# Note that here "db: postgres" specifies the database to connect to, not the
 # database to grant privileges on (which is specified via the "objs" param)
-- postgresql_privs: >
-    db=postgres
-    privs=ALL
-    type=database
-    obj=library
-    role=librarian
+- postgresql_privs:
+    db: postgres
+    privs: ALL
+    type: database
+    obj: library
+    role: librarian
 
 # GRANT ALL PRIVILEGES ON DATABASE library TO librarian
 # If objs is omitted for type "database", it defaults to the database
 # to which the connection is established
-- postgresql_privs: >
-    db=library
-    privs=ALL
-    type=database
-    role=librarian
+- postgresql_privs:
+    db: library
+    privs: ALL
+    type: database
+    role: librarian
 """
 
 try:
