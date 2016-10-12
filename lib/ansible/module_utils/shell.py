@@ -224,7 +224,7 @@ class CliBase(object):
                 kickstart=kickstart,
                 prompts_re=self.CLI_PROMPTS_RE,
                 errors_re=self.CLI_ERRORS_RE,
-                ansi_re=self.CLI_ANSI_RE,
+                ansi_re=getattr(self, "CLI_ANSI_RE", ANSI_RE)
             )
             self.shell.open(
                 host, port=port, username=username, password=password,
