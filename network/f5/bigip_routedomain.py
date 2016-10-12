@@ -46,12 +46,13 @@ options:
       - The unique identifying integer representing the route domain.
     required: true
   parent:
-    description: |
+    description:
       Specifies the route domain the system searches when it cannot
       find a route in the configured domain.
+    required: false
   routing_protocol:
     description:
-      -  Dynamic routing protocols for the system to use in the route domain.
+      - Dynamic routing protocols for the system to use in the route domain.
     choices:
       - BFD
       - BGP
