@@ -200,7 +200,7 @@ dynamic when the include meets the following conditions:
 
 * The include does not use any loops
 * The included file name does not use any variables
-* The ``static`` option is not explicitly disabled (ie. ``static: no``)
+* The ``static`` option is not explicitly disabled, i.e., ``static: no`` is not present
 * The ansible.cfg options to force static includes (see below) are disabled
 
 Two options are available in the ansible.cfg configuration for static includes:
