@@ -76,11 +76,24 @@ options:
 """
 
 EXAMPLES = r"""
-- replace: dest=/etc/hosts regexp='(\s+)old\.host\.name(\s+.*)?$' replace='\1new.host.name\2' backup=yes
+- replace:
+    dest: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    backup: yes
 
-- replace: dest=/home/jdoe/.ssh/known_hosts regexp='^old\.host\.name[^\n]*\n' owner=jdoe group=jdoe mode=644
+- replace:
+    dest: /home/jdoe/.ssh/known_hosts
+    regexp: '^old\.host\.name[^\n]*\n'
+    owner: jdoe
+    group: jdoe
+    mode: 0644
 
-- replace: dest=/etc/apache/ports regexp='^(NameVirtualHost|Listen)\s+80\s*$' replace='\1 127.0.0.1:8080' validate='/usr/sbin/apache2ctl -f %s -t'
+- replace:
+    dest: /etc/apache/ports
+    regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
+    replace: '\1 127.0.0.1:8080'
+    validate: '/usr/sbin/apache2ctl -f %s -t'
 """
 
 def write_changes(module,contents,dest):
