@@ -185,60 +185,97 @@ author: "Timothy Appnel (@tima)"
 
 EXAMPLES = '''
 # Synchronization of src on the control machine to dest on the remote hosts
-synchronize: src=some/relative/path dest=/some/absolute/path
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
 
 # Synchronization using rsync protocol (push)
-synchronize: src=some/relative/path/ dest=rsync://somehost.com/path/
+- synchronize:
+    src: some/relative/path/
+    dest: rsync://somehost.com/path/
 
 # Synchronization using rsync protocol (pull)
-synchronize: mode=pull src=rsync://somehost.com/path/ dest=/some/absolute/path/
+- synchronize:
+    mode: pull
+    src: rsync://somehost.com/path/
+    dest: /some/absolute/path/
 
 # Synchronization using rsync protocol on delegate host (push)
-synchronize: >
-    src=/some/absolute/path/ dest=rsync://somehost.com/path/
-    delegate_to: delegate.host
+- synchronize:
+    src: /some/absolute/path/
+    dest: rsync://somehost.com/path/
+  delegate_to: delegate.host
 
 # Synchronization using rsync protocol on delegate host (pull)
-synchronize: >
-    mode=pull src=rsync://somehost.com/path/ dest=/some/absolute/path/
-    delegate_to: delegate.host
+- synchronize:
+    mode: pull
+    src: rsync://somehost.com/path/
+    dest: /some/absolute/path/
+  delegate_to: delegate.host
 
 # Synchronization without any --archive options enabled
-synchronize: src=some/relative/path dest=/some/absolute/path archive=no
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    archive: no
 
 # Synchronization with --archive options enabled except for --recursive
-synchronize: src=some/relative/path dest=/some/absolute/path recursive=no
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    recursive: no
 
 # Synchronization with --archive options enabled except for --times, with --checksum option enabled
-synchronize: src=some/relative/path dest=/some/absolute/path checksum=yes times=no
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    checksum: yes
+    times: no
 
 # Synchronization without --archive options enabled except use --links
-synchronize: src=some/relative/path dest=/some/absolute/path archive=no links=yes
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    archive: no
+    links: yes
 
 # Synchronization of two paths both on the control machine
-local_action: synchronize src=some/relative/path dest=/some/absolute/path
+- synchronize
+    src: some/relative/path
+    dest: /some/absolute/path
+  delegate_to: localhost
 
 # Synchronization of src on the inventory host to the dest on the localhost in pull mode
-synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
+- synchronize:
+    mode: pull
+    src: some/relative/path
+    dest: /some/absolute/path
 
 # Synchronization of src on delegate host to dest on the current inventory host.
-synchronize:
+- synchronize:
     src: /first/absolute/path
     dest: /second/absolute/path
-delegate_to: delegate.host
+  delegate_to: delegate.host
 
 # Synchronize two directories on one remote host.
-synchronize:
+- synchronize:
     src: /first/absolute/path
     dest: /second/absolute/path
-delegate_to: "{{ inventory_hostname }}"
+  delegate_to: "{{ inventory_hostname }}"
 
 # Synchronize and delete files in dest on the remote host that are not found in src of localhost.
-synchronize: src=some/relative/path dest=/some/absolute/path delete=yes recursive=yes
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    delete: yes
+    recursive: yes
 
 # Synchronize using an alternate rsync command
 # This specific command is granted su privileges on the destination
-synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="su -c rsync"
+- synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+    rsync_path: "su -c rsync"
 
 # Example .rsync-filter file in the source directory
 - var       # exclude any path whose last part is 'var'
@@ -246,7 +283,7 @@ synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="su -c r
 + /var/conf # include /var/conf even though it was previously excluded
 
 # Synchronize passing in extra rsync options
-synchronize:
+- synchronize:
     src: /tmp/helloworld
     dest: /var/www/helloworld
     rsync_opts:
