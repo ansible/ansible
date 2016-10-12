@@ -77,9 +77,11 @@ author: "Bruce Pennypacker (@bpennypacker)"
 EXAMPLES = '''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
-- stat: path=/etc/foo.conf
+- stat:
+    path: /etc/foo.conf
   register: st
-- fail: msg="Whoops! file ownership has changed"
+- fail:
+    msg: "Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
 # Determine if a path exists and is a symlink. Note that if the path does
@@ -87,30 +89,45 @@ EXAMPLES = '''
 # therefore, we must test whether it is defined.
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
-- stat: path=/path/to/something
+- stat:
+    path: /path/to/something
   register: sym
-- debug: msg="islnk isn't defined (path doesn't exist)"
+
+- debug:
+    msg: "islnk isn't defined (path doesn't exist)"
   when: sym.stat.islnk is not defined
-- debug: msg="islnk is defined (path must exist)"
+
+- debug:
+    msg: "islnk is defined (path must exist)"
   when: sym.stat.islnk is defined
-- debug: msg="Path exists and is a symlink"
+
+- debug:
+    msg: "Path exists and is a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk
-- debug: msg="Path exists and isn't a symlink"
+
+- debug:
+    msg: "Path exists and isn't a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
-- stat: path=/path/to/something
+- stat:
+    path: /path/to/something
   register: p
-- debug: msg="Path exists and is a directory"
+- debug:
+    msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
 # Don't do md5 checksum
-- stat: path=/path/to/myhugefile get_md5=no
+- stat:
+    path: /path/to/myhugefile
+    get_md5: no
 
 # Use sha256 to calculate checksum
-- stat: path=/path/to/something checksum_algorithm=sha256
+- stat:
+    path: /path/to/something
+    checksum_algorithm: sha256
 '''
 
 RETURN = '''
