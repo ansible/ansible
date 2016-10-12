@@ -83,9 +83,9 @@ try:
 except ImportError:
     pass
 except Exception as e:
-    display.warning("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'")
+    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
     import traceback
-    display.debug("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
+    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
 
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
