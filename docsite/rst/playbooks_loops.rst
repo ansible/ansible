@@ -459,7 +459,7 @@ That's how!
 Using register with a loop
 ``````````````````````````
 
-When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
+When using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
 Here is an example of using ``register`` with ``with_items``::
 
