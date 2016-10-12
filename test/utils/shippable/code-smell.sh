@@ -22,4 +22,5 @@ test/code-smell/boilerplate.sh
 test/code-smell/required-and-default-attributes.sh
 
 shellcheck \
+    test/integration/targets/*/*.sh \
     test/utils/shippable/*.sh

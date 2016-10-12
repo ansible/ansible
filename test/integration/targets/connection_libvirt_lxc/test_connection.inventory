@@ -1,0 +1,6 @@
+[libvirt_lxc]
+libvirt_lxc-pipelining    ansible_ssh_pipelining=true
+libvirt_lxc-no-pipelining ansible_ssh_pipelining=false
+[libvirt_lxc:vars]
+ansible_host=lv-ubuntu-wily-amd64
+ansible_connection=libvirt_lxc

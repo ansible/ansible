@@ -19,7 +19,6 @@
     - { role: test_lookups, tags: test_lookups }
     - { role: test_changed_when, tags: test_changed_when }
     - { role: test_failed_when, tags: test_failed_when }
-    - { role: test_handlers, tags: test_handlers }
     - { role: test_until, tags: test_until }
     - { role: test_copy, tags: test_copy }
     - { role: test_stat, tags: test_stat }
@@ -44,3 +43,4 @@
     - { role: test_binary, tags: test_binary }
     - { role: test_loops, tags: test_loops }
     - { role: test_mount, tags: [test_mount, needs_root, needs_privileged]}
+    - { role: test_include_vars, tags: test_include_vars }
