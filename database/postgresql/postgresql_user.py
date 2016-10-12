@@ -142,22 +142,41 @@ author: "Ansible Core Team"
 
 EXAMPLES = '''
 # Create django user and grant access to database and products table
-- postgresql_user: db=acme name=django password=ceec4eif7ya priv=CONNECT/products:ALL
+- postgresql_user:
+    db: acme
+    name: django
+    password: ceec4eif7ya
+    priv: CONNECT/products:ALL
 
 # Create rails user, grant privilege to create other databases and demote rails from super user status
-- postgresql_user: name=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
+- postgresql_user:
+    name: rails
+    password: secret
+    role_attr_flags: CREATEDB,NOSUPERUSER
 
 # Remove test user privileges from acme
-- postgresql_user: db=acme name=test priv=ALL/products:ALL state=absent fail_on_user=no
+- postgresql_user:
+    db: acme
+    name: test
+    priv: "ALL/products:ALL"
+    state: absent
+    fail_on_user: no
 
 # Remove test user from test database and the cluster
-- postgresql_user: db=test name=test priv=ALL state=absent
+- postgresql_user:
+    db: test
+    name: test
+    priv: ALL
+    state: absent
 
 # Example privileges string format
 INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 # Remove an existing user's password
-- postgresql_user: db=test user=test password=NULL
+- postgresql_user:
+    db: test
+    user: test
+    password: NULL
 '''
 
 import re
