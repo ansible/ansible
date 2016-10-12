@@ -67,7 +67,7 @@ non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 # Tests which can be run when running as root and a local SSH daemon is available.
-test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh
+test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh test_delegate_to
 
 # For tests running in our Docker containers (identified with "ENV container=docker").
 # These tests are run as root and have access to a local SSH daemon.
@@ -155,12 +155,6 @@ test_var_precedence:
 test_vault:
 	(cd targets/vault && ./runme.sh $(TEST_FLAGS))
 
-# test_delegate_to does not work unless we have permission to ssh to localhost.
-# Would take some more effort on our test systems to implement that -- probably
-# the test node should create an ssh public-private key pair that allows the
-# root user on a node to ssh to itself.  Until then, this is not in make all.
-# Have to run it manually.  Ordinary users should be able to run this test as
-# long as they have permissions to login to their local machine via ssh.
 test_delegate_to:
 	(cd targets/delegate_to && ./runme.sh $(TEST_FLAGS))
 
