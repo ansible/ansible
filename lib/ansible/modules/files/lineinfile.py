@@ -119,26 +119,61 @@ options:
 """
 
 EXAMPLES = r"""
-- lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=enforcing
+- lineinfile:
+    dest: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=enforcing'
 
-- lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
+- lineinfile:
+    dest: /etc/sudoers
+    state: absent
+    regexp: '^%wheel'
 
-- lineinfile: dest=/etc/hosts regexp='^127\.0\.0\.1' line='127.0.0.1 localhost' owner=root group=root mode=0644
+- lineinfile:
+    dest: /etc/hosts
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1 localhost'
+    owner: root
+    group: root
+    mode: 0644
 
-- lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"
+- lineinfile:
+    dest: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: 'Listen 8080'
 
-- lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
+- lineinfile:
+    dest: /etc/services
+    regexp: '^# port for http'
+    insertbefore: '^www.*80/tcp'
+    line: '# port for http by default'
 
 # Add a line to a file if it does not exist, without passing regexp
-- lineinfile: dest=/tmp/testfile line="192.168.1.99 foo.lab.net foo"
+- lineinfile:
+    dest: /tmp/testfile
+    line: '192.168.1.99 foo.lab.net foo'
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"
+- lineinfile: "
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
 
-- lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
+- lineinfile:
+    dest: /opt/jboss-as/bin/standalone.conf
+    regexp: '^(.*)Xms(\d+)m(.*)$'
+    line: '\1Xms${xms}m\3'
+    backrefs: yes
 
 # Validate the sudoers file before saving
-- lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
+- lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%ADMIN ALL='
+    line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
 """
 
 import re
