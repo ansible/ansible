@@ -104,10 +104,14 @@ EXAMPLES = '''
 - firewalld: masquerade=yes state=enabled permanent=true zone=dmz
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 fw = None
 fw_offline = False
 Rich_Rule = None
 FirewallClientZoneSettings = None
+
+module = None
 
 #####################
 # fw_offline helpers
@@ -362,6 +366,7 @@ def set_rich_rule_disabled_permanent(zone, rule):
 
 
 def main():
+    global module
 
     module = AnsibleModule(
         argument_spec = dict(
@@ -443,7 +448,7 @@ def main():
     if module.params['interface'] != None and module.params['zone'] == None:
         module.fail(msg='zone is a required parameter')
 
-    if module.params['immediate'] and fw_offiline:
+    if module.params['immediate'] and fw_offline:
         module.fail(msg='firewall is not currently running, unable to perform immediate actions without a running firewall daemon')
 
     ## Global Vars
@@ -721,7 +726,5 @@ def main():
     module.exit_json(changed=changed, msg=', '.join(msgs))
 
 
-#################################################
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
