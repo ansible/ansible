@@ -177,7 +177,7 @@ EXAMPLES = '''
   apt:
     upgrade: dist
     update_cache: yes
-    dpkg_options: force-confold,force-confdef
+    dpkg_options: 'force-confold,force-confdef'
 
 - name: Install a .deb package
   apt:
