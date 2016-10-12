@@ -393,9 +393,6 @@ class VariableManager:
         if host:
             variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
 
-            if self._inventory:
-                variables['groups']  = self._inventory.get_group_dict()
-
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
@@ -406,6 +403,7 @@ class VariableManager:
                 variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
+            variables['groups']  = self._inventory.get_group_dict()
             variables['inventory_dir'] = self._inventory.basedir()
             variables['inventory_file'] = self._inventory.src()
             if play:
