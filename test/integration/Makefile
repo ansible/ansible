@@ -27,7 +27,7 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: other non_destructive destructive
 
-other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_connection test_async_conditional includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix test_hosts_field args
+other: test_test_infra parsing test_var_precedence unicode test_templating_settings environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix test_hosts_field args
 
 test_test_infra:
 	(cd targets/test_infra && ./runme.sh $(TEST_FLAGS))
@@ -66,31 +66,70 @@ environment:
 non_destructive: setup
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-# For our Docker images, which identify themselves with "ENV container=docker", automatically run the test_async target.
-# Otherwise, skip it, since we don't know if local ssh is available. You can always run the test_async target manually.
-ifeq ($(container),docker)
-test_async_conditional: test_async
-else
-test_async_conditional:
-endif
+# Tests which can be run when running as root and a local SSH daemon is available.
+test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh
 
-# For our Docker images, which identify themselves with "ENV container=docker", use the test_docker inventory group.
-# Otherwise use the test_default inventory group, which runs fewer tests, but should work on any system.
+# For tests running in our Docker containers (identified with "ENV container=docker").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_docker: test_root_ssh test_async_extra_data
+
+# For tests running in our FreeBSD instances on EC2 (identified with "ENV container=freebsd").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_freebsd: test_root_ssh
+
+# For tests running in our OS X instances at MacStadium (identified with "ENV container=osx").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_osx: test_root_ssh
+
+# For tests running as root.
+# Login to a local SSH daemon assumed to be unavailable.
+test_as_root: test_connection_local test_connection_chroot
+
+# For tests not running as root.
+# Login to a local SSH daemon assumed to be unavailable.
+test_as_non_root: test_connection_local
+
+# Determine which of the above environments we're running in.
 ifeq ($(container),docker)
-TEST_CONNECTION_FILTER := 'test_docker'
+TEST_AS_TARGET := test_as_docker
 else ifeq ($(container),freebsd)
-TEST_CONNECTION_FILTER := 'test_freebsd'
+TEST_AS_TARGET := test_as_freebsd
+else ifeq ($(container),osx)
+TEST_AS_TARGET := test_as_osx
+else ifeq ($(EUID),0)
+TEST_AS_TARGET := test_as_root
 else
-TEST_CONNECTION_FILTER := 'test_default'
+TEST_AS_TARGET := test_as_non_root
 endif
 
-# Skip connection plugins which require root when not running as root.
-ifneq ($(EUID),0)
-TEST_CONNECTION_FILTER += !chroot
-endif
+test_as: $(TEST_AS_TARGET)
 
-test_connection:
-	(cd targets/connection_posix && ./runme.sh -l '$(TEST_CONNECTION_FILTER)' $(TEST_FLAGS))
+test_connection_local:
+	(cd targets/connection_local && ./runme.sh $(TEST_FLAGS))
+
+test_connection_chroot:
+	(cd targets/connection_chroot && ./runme.sh $(TEST_FLAGS))
+
+test_connection_docker:
+	(cd targets/connection_docker && ./runme.sh $(TEST_FLAGS))
+
+test_connection_libvirt_lxc:
+	(cd targets/connection_libvirt_lxc && ./runme.sh $(TEST_FLAGS))
+
+test_connection_jail:
+	(cd targets/connection_jail && ./runme.sh $(TEST_FLAGS))
+
+test_connection_ssh:
+	(cd targets/connection_ssh && ./runme.sh $(TEST_FLAGS))
+
+test_connection_paramiko_ssh:
+	(cd targets/connection_paramiko_ssh && ./runme.sh $(TEST_FLAGS))
+
+test_connection_lxd:
+	(cd targets/connection_lxd && ./runme.sh $(TEST_FLAGS))
+
+test_connection_lxc:
+	(cd targets/connection_lxc && ./runme.sh $(TEST_FLAGS))
 
 test_connection_winrm:
 	(cd targets/connection_winrm && ./runme.sh $(TEST_FLAGS))
@@ -268,7 +307,7 @@ test_binary_modules_winrm:
 test_binary_modules_posix:
 	(cd targets/binary_modules_posix && ./runme.sh $(TEST_FLAGS))
 
-test_async:
+test_async_extra_data:
 	(cd targets/async_extra_data && ./runme.sh $(TEST_FLAGS))
 
 test_hosts_field:
