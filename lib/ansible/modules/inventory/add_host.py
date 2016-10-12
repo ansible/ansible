@@ -44,18 +44,24 @@ author:
 
 EXAMPLES = '''
 # add host to group 'just_created' with variable foo=42
-- add_host: name={{ ip_from_ec2 }} groups=just_created foo=42
+- add_host:
+    name: "{{ ip_from_ec2 }}"
+    groups: just_created
+    foo: 42
 
 # add a host with a non-standard port local to your machines
-- add_host: name={{ new_ip }}:{{ new_port }}
+- add_host:
+    name: "{{ new_ip }}:{{ new_port }}"
 
 # add a host alias that we reach through a tunnel (Ansible <= 1.9)
-- add_host: hostname={{ new_ip }}
-            ansible_ssh_host={{ inventory_hostname }}
-            ansible_ssh_port={{ new_port }}
+- add_host:
+    hostname: "{{ new_ip }}"
+    ansible_ssh_host: "{{ inventory_hostname }}"
+    ansible_ssh_port: "{{ new_port }}"
 
 # add a host alias that we reach through a tunnel (Ansible >= 2.0)
-- add_host: hostname={{ new_ip }}
-            ansible_host={{ inventory_hostname }}
-            ansible_port={{ new_port }}
+- add_host:
+    hostname: "{{ new_ip }}"
+    ansible_host: "{{ inventory_hostname }}"
+    ansible_port: "{{ new_port }}"
 '''
