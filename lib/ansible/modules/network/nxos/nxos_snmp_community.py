@@ -58,6 +58,26 @@ options:
         required: true
         default: present
         choices: ['present','absent']
+    include_defaults:
+        description:
+            - Specify to use or not the complete runnning configuration
+              for module operations.
+        required: false
+        default: false
+        choices: ['true','false']
+    config:
+        description:
+            - Configuration string to be used for module operations. If not
+              specified, the module will use the current running configuration.
+        required: false
+        default: null
+    save:
+        description:
+            - Specify to save the running configuration after
+              module operations.
+        required: false
+        default: false
+        choices: ['true','false']
 '''
 
 EXAMPLES = '''
