@@ -63,13 +63,20 @@ author: "Brian Coca (@bcoca)"
 
 EXAMPLES = '''
 # Obtain the extended attributes  of /etc/foo.conf
-- xattr: name=/etc/foo.conf
+- xattr:
+    name: /etc/foo.conf
 
 # Sets the key 'foo' to value 'bar'
-- xattr: path=/etc/foo.conf key=user.foo value=bar
+- xattr:
+    path: /etc/foo.conf
+    key: user.foo
+    value: bar
 
 # Removes the key 'foo'
-- xattr: name=/etc/foo.conf key=user.foo state=absent
+- xattr:
+    name: /etc/foo.conf
+    key: user.foo
+    state: absent
 '''
 
 import operator
