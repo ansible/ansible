@@ -23,7 +23,7 @@ version_added: "1.4"
 short_description: create or terminate GCE instances
 description:
      - Creates or terminates Google Compute Engine (GCE) instances.  See
-       U(https://cloud.google.com/products/compute-engine) for an overview.
+       U(https://cloud.google.com/compute) for an overview.
        Full install/configuration instructions for the gce* modules can
        be found in the comments of ansible/test/gce_tests.py.
 options:
@@ -95,7 +95,8 @@ options:
     aliases: []
   name:
     description:
-      - identifier when working with a single instance
+      - identifier when working with a single instance.  Will be deprecated in a future release.
+        Please 'instance_names' instead.
     required: false
     aliases: []
   network:
@@ -177,96 +178,107 @@ requirements:
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
       >= 0.20.0 if using preemptible option"
 notes:
-  - Either I(name) or I(instance_names) is required.
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
+  - Either I(instance_names) or I(name) is required.
+  - JSON credentials strongly preferred.
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
 '''
 
 EXAMPLES = '''
-# Basic provisioning example.  Create a single Debian 7 instance in the
-# us-central1-a Zone of n1-standard-1 machine type.
-- local_action:
-    module: gce
-    name: test-instance
-    zone: us-central1-a
-    machine_type: n1-standard-1
-    image: debian-7
+# Basic provisioning example.  Create a single Debian 8 instance in the
+# us-central1-a Zone of the n1-standard-1 machine type.
+# Create multiple instances by specifying multiple names, seperated by
+# commas in the instance_names field
+# (e.g. my-test-instance1,my-test-instance2)
+    gce:
+      instance_names: my-test-instance1
+      zone: us-central1-a
+      machine_type: n1-standard-1
+      image: debian-8
+      state: present
+      service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+      credentials_file: "/path/to/your-key.json"
+      project_id: "your-project-name"
 
-# Example using defaults and with metadata to create a single 'foo' instance
-- local_action:
-    module: gce
-    name: foo
-    metadata: '{"db":"postgres", "group":"qa", "id":500}'
+# Create a single Debian 8 instance in the us-central1-a Zone
+# Use existing disks, custom network/subnetwork, set service account permissions
+# add tags and metadata.
+    gce:
+      instance_names: my-test-instance
+      zone: us-central1-a
+      machine_type: n1-standard-1
+      state: present
+      metadata: '{"db":"postgres", "group":"qa", "id":500}'
+      tags:
+        - http-server
+        - my-other-tag
+      disks:
+        - { 'name' : 'disk-2', 'mode': 'READ_WRITE' }
+        - { 'name' : 'disk-3', 'mode': 'READ_ONLY' }
+      disk_auto_delete: false
+      network: foobar-network
+      subnetwork: foobar-subnetwork-1
+      preemptible: true
+      ip_forward: true
+      service_account_permissions:
+        - storage-full
+        - taskqueue
+        - bigquery
+      service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+      credentials_file: "/path/to/your-key.json"
+      project_id: "your-project-name"
 
-
-# Launch instances from a control node, runs some tasks on the new instances,
-# and then terminate them
-# This example uses JSON credentials with the credentials_file parameter
-# rather than the deprecated pem_file option with PEM formatted credentials.
-
-- name: Create a sandbox instance
+# Example Playbook
+- name: Compute Engine Instance Examples
   hosts: localhost
   vars:
-    names: foo,bar
-    machine_type: n1-standard-1
-    image: debian-6
-    zone: us-central1-a
-    service_account_email: unique-email@developer.gserviceaccount.com
-    credentials_file: /path/to/json_file
-    project_id: project-id
+    service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+    credentials_file: "/path/to/your-key.json"
+    project_id: "your-project-name"
   tasks:
-    - name: Launch instances
-      local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}}
-                    service_account_email={{ service_account_email }}
-                    credentials_file={{ credentials_file }}
-                    project_id={{ project_id }}
+    - name: create multiple instances
+      # Basic provisioning example.  Create multiple Debian 8 instances in the
+      # us-central1-a Zone of n1-standard-1 machine type.
+      gce:
+        instance_names: test1,test2,test3
+        zone: us-central1-a
+        machine_type: n1-standard-1
+        image: debian-8
+        state: present
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"
+        metadata : '{ "startup-script" : "apt-get update" }'
       register: gce
-    - name: Wait for SSH to come up
-      local_action: wait_for host={{item.public_ip}} port=22 delay=10
-                    timeout=60 state=started
-      with_items: {{gce.instance_data}}
 
-- name: Configure instance(s)
-  hosts: launched
-  sudo: True
-  roles:
-    - my_awesome_role
-    - my_awesome_tasks
+    - name: Save host data
+      add_host: hostname={{ item.public_ip }} groupname=gce_instances_ips
+      with_items: "{{ gce.instance_data }}"
 
-- name: Terminate instances
-  hosts: localhost
-  connection: local
-  tasks:
-    - name: Terminate instances that were previously launched
-      local_action:
-        module: gce
-        state: 'absent'
-        instance_names: {{gce.instance_names}}
+    - name: Wait for SSH for instances
+      wait_for: delay=1 host={{ item.public_ip }} port=22 state=started timeout=30
+      with_items: "{{ gce.instance_data }}"
 
-# The deprecated PEM file credentials can be used as follows
-- name: Create a sandbox instance with PEM credentials
-  hosts: localhost
-  vars:
-    names: foo,bar
-    machine_type: n1-standard-1
-    image: debian-6
-    zone: us-central1-a
-    service_account_email: unique-email@developer.gserviceaccount.com
-    pem_file: /path/to/pem_file
-    project_id: project-id
-  tasks:
-    - name: Launch instances
-      local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}}
-                    service_account_email={{ service_account_email }}
-                    pem_file={{ pem_file }}
-                    project_id={{ project_id }}
-      register: gce
-    - name: Wait for SSH to come up
-      local_action: wait_for host={{item.public_ip}} port=22 delay=10
-                    timeout=60 state=started
-      with_items: {{gce.instance_data}}
+    - name: Configure Hosts
+      hosts: gce_instances_ips
+      become: yes
+      become_method: sudo
+      roles:
+        - my-role-one
+        - my-role-two
+      tags:
+        - config
 
+    - name: delete test-instances
+      # Basic termination of instance.
+      gce:
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"
+        instance_names: "{{ gce.instance_names }}"
+        zone: us-central1-a
+        state: absent
+      tags:
+        - delete
 '''
 
 import socket
