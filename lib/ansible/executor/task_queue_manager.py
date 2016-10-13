@@ -335,7 +335,25 @@ class TaskQueueManager:
                     defunct = True
         return defunct
 
+    def _callback_method_expand(self, method_name):
+        return [method_name, method_name.replace('v2_', '')]
+
+    def find_callback_method(self, callback_plugin, method_names):
+        for method_name in method_names:
+            gotit = getattr(callback_plugin, method_name, None)
+            if gotit is not None:
+                print(getattr(gotit, '_callback_disabled', '3333'))
+                if hasattr(gotit, '_callback_disabled'):
+                    continue
+                return gotit
+        return None
+
+    def find_cb_method_v1(self, callback_plugin, method_name):
+        method_names = self._callback_method_expand(method_name)
+        return self.find_callback_method(callback_plugin, method_names)
+
     def send_callback(self, method_name, *args, **kwargs):
+        display.v('SEND_CALLBAC: method_name=%s' % method_name)
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
@@ -344,12 +362,35 @@ class TaskQueueManager:
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
-            for possible in [method_name, 'v2_on_any']:
-                gotit = getattr(callback_plugin, possible, None)
-                if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
-                if gotit is not None:
-                    methods.append(gotit)
+            new_method = self.find_callback_method(callback_plugin, [method_name, method_name.replace('v2_', '')])
+            if new_method:
+                methods.append(new_method)
+
+            # if the plugin does not have any method that could match (ie, the correct one or the v1 version)
+            # then check for a 'v2_on_missing'.
+            # NOTE: a 'v2_on_missing' will be called if it exists in preference to 'v2_on_any'
+            new_method = self.find_callback_method(callback_plugin, ['v2_on_missing'])
+            if new_method:
+                methods.append(new_method)
+
+            # if there isn't a matching method and there is no 'v2_on_missing', then check for 'v2_on_any'
+            # In other worse, v2_on_any is not called if there is a v2_on_missing or a exact match.
+            # Note: Callback methods that subclass CallbackBase will provide most methods by default
+            if not methods:
+                new_method = self.find_callback_method(callback_plugin, ['v2_on_any', 'on_any'])
+                if new_method:
+                    methods.append(new_method)
+
+            # look for a 'v2_on_all' method. A 'v2_on_all' if it exists, will always be called. Even if
+            # there was an exact match, or a 'v2_on_missing', or a 'v2_on_any'. If it exists, it is always called.
+            # Note: If you are tracking any context based on callback methods, the 'v2_on_all' existing could be called
+            # in addition to another matching method. More than one method from a single callback plugin could be called
+            # if the plugin provides a 'v2_on_all'
+            # If there is a 'v2_on_all', always call it. Always.
+            new_method = self.find_callback_method(callback_plugin, ['v2_on_all'])
+            # There is no v1 'on_missing'
+            if new_method:
+                methods.append(new_method)
 
             for method in methods:
                 try:
