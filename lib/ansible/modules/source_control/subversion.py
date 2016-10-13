@@ -199,7 +199,7 @@ def main():
             revision=dict(default='HEAD', aliases=['rev', 'version']),
             force=dict(default='no', type='bool'),
             username=dict(required=False),
-            password=dict(required=False),
+            password=dict(required=False, no_log=True),
             executable=dict(default=None, type='path'),
             export=dict(default=False, required=False, type='bool'),
             switch=dict(default=True, required=False, type='bool'),
