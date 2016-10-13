@@ -144,6 +144,10 @@ If you want to suppress spurious warnings/errors, use::
 
     $ source ./hacking/env-setup -q
 
+If you want to make ansible always avaialble in your environment, add it to your shell's profile (assumes you already source'd this above to set $ANSIBLE_HOME)::
+
+    echo source $ANSIBLE_HOME/hacking/env-setup -q >> ~/.bash_profile
+
 If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
