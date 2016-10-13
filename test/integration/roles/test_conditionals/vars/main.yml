@@ -11,3 +11,7 @@ cond_list_of_items:
   - b
   - c
 
+things1:
+    - 1
+    - 2
+vars_file_var: 321

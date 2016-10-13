@@ -46,3 +46,9 @@
     that:
       - var_undefined.undefined_variable == 'VARIABLE IS NOT DEFINED!'
       - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
+
+- name: cleanup temporary template output
+  file: path={{output_dir}}/foo.templated state=absent
+
+- name: cleanup temporary copy
+  file: path={{output_dir}}/foo.txt state=absent
