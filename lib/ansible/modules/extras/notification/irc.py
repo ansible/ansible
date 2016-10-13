@@ -289,7 +289,8 @@ def main():
 
     try:
         send_msg(msg, server, port, channel, nick_to, key, topic, nick, color, passwd, timeout, use_ssl, part, style)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
     module.exit_json(changed=False, channel=channel, nick=nick,
@@ -297,4 +298,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
