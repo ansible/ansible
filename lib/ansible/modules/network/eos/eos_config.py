@@ -223,6 +223,11 @@ def check_args(module, warnings):
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
+    if not module.connection.supports_sessions():
+        warnings.append('The current version of EOS on the remote device does '
+                        'not support configuration sessions.  The commit '
+                        'argument will be ignored')
+
 def get_candidate(module):
     candidate = NetworkConfig(indent=3)
     if module.params['src']:
@@ -245,8 +250,10 @@ def load_config(module, commands, result):
 
     diff = module.config.load_config(commands, replace=replace, commit=commit)
 
-    if diff:
+    if diff and module.connection.supports_sessions():
         result['diff'] = dict(prepared=diff)
+        result['changed'] = True
+    elif diff:
         result['changed'] = True
 
 def run(module, result):
@@ -273,6 +280,7 @@ def run(module, result):
 
             result['updates'] = commands
 
+        module.log('commands: %s' % commands)
         load_config(module, commands, result)
 
     if module.params['save']:
@@ -314,7 +322,6 @@ def main():
                    ('replace', 'config', ['src'])]
 
     module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
