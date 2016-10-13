@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import boto
 import botocore
 import boto3
 
@@ -33,6 +34,38 @@ class RetryTestCase(unittest.TestCase):
 
         r = no_failures()
         self.assertEqual(self.counter, 1)
+
+    def test_extend_boto3_failures(self):
+        self.counter = 0
+        err_msg = {'Error': {'Code': 'MalformedPolicyDocument'}}
+
+        @AWSRetry.backoff(tries=2, delay=0.1, added_exceptions=['MalformedPolicyDocument'])
+        def extend_failures():
+            self.counter += 1
+            if self.counter < 2:
+                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+            else:
+                return 'success'
+
+        r = extend_failures()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
+
+    def test_extend_boto_failures(self):
+        self.counter = 0
+        err_msg = {'Error': {'Code': 'MalformedPolicy'}}
+
+        @AWSRetry.backoff(tries=2, delay=0.1, added_exceptions=['MalformedPolicy'])
+        def extend_failures():
+            self.counter += 1
+            if self.counter < 2:
+                raise boto.exception.S3ResponseError(200, 'Could not find you', body=err_msg)
+            else:
+                return 'success'
+
+        r = extend_failures()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
 
     def test_retry_once(self):
         self.counter = 0

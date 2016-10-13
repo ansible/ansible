@@ -69,20 +69,33 @@ def _botocore_exception_maybe():
 
 
 class AWSRetry(CloudRetry):
-    base_class = _botocore_exception_maybe()
+    @staticmethod
+    def base_class(error):
+        if isinstance(error, botocore.exceptions.ClientError):
+            return botocore.exceptions.ClientError
+
+        elif isinstance(error, boto.compat.StandardError):
+            return boto.compat.StandardError
+
+        else:
+            return type(None)
 
     @staticmethod
     def status_code_from_exception(error):
-        return error.response['Error']['Code']
+        if isinstance(error, botocore.exceptions.ClientError):
+            return error.response['Error']['Code']
+        else:
+            return error.error_code
 
     @staticmethod
-    def found(response_code):
+    def found(response_code, added_exceptions):
         # This list of failures is based on this API Reference
         # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
         retry_on = [
             'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
             'InternalFailure', 'InternalError'
         ]
+        retry_on.extend(added_exceptions)
 
         not_found = re.compile(r'^\w+.NotFound')
         if response_code in retry_on or not_found.search(response_code):
