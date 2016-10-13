@@ -72,18 +72,6 @@ class CallbackBase:
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
-    def _copy_result_exclude(self, result, exclude):
-        values = []
-        for e in exclude:
-            values.append(getattr(result, e))
-            setattr(result, e, None)
-
-        result_copy = deepcopy(result)
-        for i,e in enumerate(exclude):
-            setattr(result, e, values[i])
-
-        return result_copy
-
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
