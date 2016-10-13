@@ -102,13 +102,15 @@ class ActionModule(ActionBase):
             temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
             temp_vars['template_uid']      = template_uid
             temp_vars['template_fullpath'] = os.path.abspath(source)
+            temp_vars['template_relpath']  = os.path.relpath(temp_vars['template_fullpath'], os.path.abspath(playbook_dir))
             temp_vars['template_run_date'] = datetime.datetime.now()
 
             managed_default = C.DEFAULT_MANAGED_STR
             managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
+                host    = temp_vars['template_host'],
+                uid     = temp_vars['template_uid'],
+                file    = to_bytes(temp_vars['template_path']),
+                relfile = temp_vars['template_relpath']
             )
             temp_vars['ansible_managed'] = time.strftime(
                 managed_str,

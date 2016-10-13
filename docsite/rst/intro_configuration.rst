@@ -114,6 +114,8 @@ The default configuration shows who modified a file and when::
 
     ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
 
+{relpath} can be used instead of {file} to not express the absolute path of the template.
+
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
 
 Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
