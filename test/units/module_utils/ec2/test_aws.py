@@ -16,11 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-import botocore
-import boto3
+try:
+    import boto3
+    import botocore
+    HAS_BOTO3 = True
+except:
+    HAS_BOTO3 = False
 
+from nose.plugins.skip import SkipTest
+
+from ansible.compat.tests import unittest
 from ansible.module_utils.ec2 import AWSRetry
+
+if not HAS_BOTO3:
+    raise SkipTest("test_aws.py requires the python modules 'boto3' and 'botocore'")
+
 
 class RetryTestCase(unittest.TestCase):
 
