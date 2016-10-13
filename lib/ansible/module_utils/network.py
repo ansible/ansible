@@ -147,6 +147,8 @@ class NetworkModule(AnsibleModule):
                 self.connection.connect(self.params)
                 if self.params['authorize']:
                     self.connection.authorize(self.params)
+                self.log('connected to %s:%s using %s' % (self.params['host'],
+                         self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
             self.fail_json(msg=exc.message)
@@ -155,6 +157,7 @@ class NetworkModule(AnsibleModule):
         try:
             if self.connected:
                 self.connection.disconnect()
+            self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
             self.fail_json(msg=exc.message)
