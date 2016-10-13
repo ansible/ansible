@@ -344,7 +344,7 @@ class TaskQueueManager:
             if gotit is not None:
                 if hasattr(gotit, '_callback_disabled'):
                     continue
-                return gotit, method_name
+                return gotit
         return None
 
     def send_callback(self, method_name, *args, **kwargs):
@@ -359,14 +359,15 @@ class TaskQueueManager:
             methods = []
             new_method = self.find_callback_method(callback_plugin, [method_name, method_name.replace('v2_', '')])
             if new_method:
-                methods.append(new_method)
+                # no method called_as/alias
+                methods.append((new_method, None))
 
             # if the plugin does not have any method that could match (ie, the correct one or the v1 version)
             # then check for a 'v2_on_missing'.
             # NOTE: a 'v2_on_missing' will be called if it exists in preference to 'v2_on_any'
             new_method = self.find_callback_method(callback_plugin, ['v2_on_missing'])
             if new_method:
-                methods.append(new_method)
+                methods.append((new_method, method_name))
 
             # if there isn't a matching method and there is no 'v2_on_missing', then check for 'v2_on_any'
             # In other worse, v2_on_any is not called if there is a v2_on_missing or a exact match.
@@ -374,7 +375,7 @@ class TaskQueueManager:
             if not methods:
                 new_method = self.find_callback_method(callback_plugin, ['v2_on_any', 'on_any'])
                 if new_method:
-                    methods.append(new_method)
+                    methods.append((new_method, method_name))
 
             # look for a 'v2_on_all' method. A 'v2_on_all' if it exists, will always be called. Even if
             # there was an exact match, or a 'v2_on_missing', or a 'v2_on_any'. If it exists, it is always called.
@@ -385,11 +386,21 @@ class TaskQueueManager:
             new_method = self.find_callback_method(callback_plugin, ['v2_on_all'])
             # There is no v1 'on_missing'
             if new_method:
-                methods.append(new_method)
+                methods.append((new_method, method_name))
 
-            for method, method_name in methods:
+            for method, method_alias in methods:
                 # add origin method name to kwargs if the method has the right attribute
-                kwargs['_callback_method_name'] = method_name
+                # methods that are being called via an alias (ie, exact method name match) will
+                # provide a method_alias of None.
+                #
+                # Non-wildcard methods dont take kwargs, so only change kwargs if method_alias is used and truthy
+                # kwargs is shared across invoking the method for multiple plugins, some may be 'real', some may be 'wildcard'
+                # so use a copy of kwargs to pass to the methods, so we can dont change the shared one
+                kwargs_copy = kwargs.copy()
+                if method_alias:
+                    kwargs_copy['_callback_method_name'] = method_alias
+
+
                 try:
                     # temporary hack, required due to a change in the callback API, so
                     # we don't break backwards compatibility with callbacks which were
@@ -399,11 +410,11 @@ class TaskQueueManager:
                         import inspect
                         (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
                         if 'playbook' in f_args:
-                            method(*args, **kwargs)
+                            method(*args, **kwargs_copy)
                         else:
                             method()
                     else:
-                        method(*args, **kwargs)
+                        method(*args, **kwargs_copy)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
