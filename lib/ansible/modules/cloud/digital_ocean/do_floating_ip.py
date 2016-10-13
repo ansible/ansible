@@ -121,6 +121,7 @@ data:
 
 import json
 import os
+import time
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.basic import AnsibleModule
@@ -184,6 +185,23 @@ class Rest(object):
         return self.send('DELETE', path, data, headers)
 
 
+def wait_action(module, rest, ip, action_id, timeout=10):
+    end_time = time.time() + 10
+    while time.time() < end_time:
+        response = rest.get('floating_ips/{}/actions/{}'.format(ip, action_id))
+        status_code = response.status_code
+        status = response.json['action']['status']
+        # TODO: check status_code == 200?
+        if status == 'completed':
+            return True
+        elif status == 'errored':
+            module.fail_json(msg='Floating ip action error [ip: {}: action: {}]'.format(
+                ip, action_id), data=json)
+
+    module.fail_json(msg='Floating ip action timeout [ip: {}: action: {}]'.format(
+        ip, action_id), data=json)
+
+
 def core(module):
     api_token = module.params['oauth_token']
     state = module.params['state']
@@ -238,6 +256,8 @@ def assign_floating_id_to_droplet(module, rest):
     status_code = response.status_code
     json = response.json
     if status_code == 201:
+        wait_action(module, rest, ip,  json['action']['id'])
+
         module.exit_json(changed=True, data=response.json)
     else:
         module.fail_json(msg="Error creating floating ip [{}: {}]".format(
