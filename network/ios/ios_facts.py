@@ -195,12 +195,12 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     def commands(self):
-        add_command(self.runner, 'dir all-filesystems | include Directory')
+        add_command(self.runner, 'dir | include Directory')
         add_command(self.runner, 'show version')
         add_command(self.runner, 'show memory statistics | include Processor')
 
     def populate(self):
-        data = self.runner.get_command('dir all-filesystems | include Directory')
+        data = self.runner.get_command('dir | include Directory')
         self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.runner.get_command('show memory statistics | include Processor')
