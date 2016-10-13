@@ -1,5 +1,5 @@
-- include: docker-setup-rht.yml
-  when: ansible_distribution in ['Fedora']
+#- include: docker-setup-rht.yml
+#  when: ansible_distribution in ['Fedora']
 #- include: docker-setup-rht.yml
   # Packages on RHEL and CentOS 7 are broken, broken, broken.  Revisit when
   # they've got that sorted out
@@ -10,14 +10,14 @@
 #- include: docker-setup-debian.yml
 #  when: ansible_distribution in ['Ubuntu']
 
-- include: docker-tests.yml
+#- include: docker-tests.yml
   # Add other distributions as the proper packages become available
-  when: ansible_distribution in ['Fedora']
+#  when: ansible_distribution in ['Fedora']
 
 #- include: docker-tests.yml
 #  when: ansible_distribution in ['RedHat', 'CentOS'] and ansible_lsb.major_release|int == 6
 
-- include: registry-tests.yml
+#- include: registry-tests.yml
   # Add other distributions as the proper packages become available
-  when: ansible_distribution in ['Fedora']
+#  when: ansible_distribution in ['Fedora']
 

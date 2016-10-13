@@ -66,7 +66,7 @@
 - assert:
     that:
       - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips != True
+  when: ansible_fips|bool != True
 
 - name: make a symlink
   file:
@@ -166,5 +166,5 @@
 - assert:
     that:
       - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips != True
+  when: ansible_fips|bool != True
 
