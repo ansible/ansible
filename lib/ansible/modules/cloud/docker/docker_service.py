@@ -423,7 +423,7 @@ actions:
                           returned: always
                           type: string
                       id:
-                          desription: image hash
+                          description: image hash
                           returned: always
                           type: string
 

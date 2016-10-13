@@ -1460,7 +1460,7 @@ def main():
     if module.params['vrf'] != 'default':
         for param, inserted_value in module.params.iteritems():
             if param in GLOBAL_PARAMS and inserted_value:
-                module.fail_json(msg='Global params can be modifed only'
+                module.fail_json(msg='Global params can be modified only'
                                      ' under "default" VRF.',
                                      vrf=module.params['vrf'],
                                      global_param=param)

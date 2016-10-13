@@ -94,7 +94,7 @@ EXAMPLES = """
     src: config.j2
     force: yes
 
-- name: provide the base configuration for comparision
+- name: provide the base configuration for comparison
   ios_template:
     host: hostname
     username: foo

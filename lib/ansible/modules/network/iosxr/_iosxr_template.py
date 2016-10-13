@@ -19,7 +19,7 @@ DOCUMENTATION = """
 ---
 module: iosxr_template
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco IOSXR device configurations over SSH
 description:
   - Manages network device configurations over SSH.  This module
@@ -97,7 +97,7 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 """

@@ -69,7 +69,7 @@ options:
 
   ipam_driver:
     description:
-      - Specifiy an IPAM driver.
+      - Specify an IPAM driver.
     default: null
 
   ipam_options:

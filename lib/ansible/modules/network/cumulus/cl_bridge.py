@@ -109,7 +109,7 @@ cl_bridge: name=bridge ports='swp1-12' vlan_aware='yes' vids='1-100'
 notify: reload networking
 
 # define cl_bridge once in tasks file
-# then write inteface config in variables file
+# then write interface config in variables file
 # with just the options you want.
 cl_bridge:
   name: "{{ item.key }}"

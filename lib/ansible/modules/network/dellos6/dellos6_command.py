@@ -38,7 +38,7 @@ options:
     description:
       - List of commands to send to the remote dellos6 device over the
         configured provider. The resulting output from the command
-        is returned. If the I(waitfor) argument is provided, the
+        is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of I(retries) as expired.
     required: true
@@ -56,7 +56,7 @@ options:
       - Specifies the number of retries a command should be tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        I(waitfor) conditions.
+        I(wait_for) conditions.
     required: false
     default: 10
   interval:
@@ -80,7 +80,7 @@ vars:
     transport: cli
 
 tasks:
- - name: run show verion on remote devices
+ - name: run show version on remote devices
    dellos6_command:
      commands: show version
      provider "{{ cli }}"

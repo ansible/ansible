@@ -135,7 +135,7 @@ options:
     version_added: "1.8"
   stickiness:
     description:
-      - An associative array of stickness policy settings. Policy will be applied to all listeners ( see example )
+      - An associative array of stickiness policy settings. Policy will be applied to all listeners ( see example )
     required: false
     version_added: "2.0"
   wait:
@@ -314,7 +314,7 @@ EXAMPLES = """
       - load_balancer_port: 80
       - instance_port: 80
 
-# Create an ELB with load balanacer stickiness enabled
+# Create an ELB with load balancer stickiness enabled
 - local_action:
     module: ec2_elb_lb
     name: "New ELB"

@@ -88,7 +88,7 @@ EXAMPLES = '''
 # Dumps all databases to hostname.sql
 - mysql_db: state=dump name=all target=/tmp/{{ inventory_hostname }}.sql
 
-# Imports file.sql similiar to mysql -u <username> -p <password> < hostname.sql
+# Imports file.sql similar to mysql -u <username> -p <password> < hostname.sql
 - mysql_db: state=import name=all target=/tmp/{{ inventory_hostname }}.sql
 '''
 

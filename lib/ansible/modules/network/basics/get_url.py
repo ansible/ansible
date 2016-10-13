@@ -100,7 +100,7 @@ options:
         If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.  The third party hashlib
         library can be installed for access to additional algorithms.
-        Additionaly, if a checksum is passed to this parameter, and the file exist under
+        Additionally, if a checksum is passed to this parameter, and the file exist under
         the C(dest) location, the destination_checksum would be calculated, and if
         checksum equals destination_checksum, the file download would be skipped
         (unless C(force) is true). '
@@ -237,7 +237,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
             if os.path.exists(tmp_dest):
                 module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
             else:
-                module.fail_json(msg="%s directoy does not exist." % tmp_dest)
+                module.fail_json(msg="%s directory does not exist." % tmp_dest)
 
         fd, tempname = tempfile.mkstemp(dir=tmp_dest)
     else:

@@ -207,7 +207,7 @@ class ElbManager:
                     self.changed = True
                 break
             elif self._is_instance_state_pending(instance_state):
-                # If it's pending, we'll skip further checks andd continue waiting
+                # If it's pending, we'll skip further checks and continue waiting
                 pass
             elif (awaited_state == 'InService'
                   and instance_state.reason_code == "Instance"
@@ -215,7 +215,7 @@ class ElbManager:
                 # If the reason_code for the instance being out of service is
                 # "Instance" this indicates a failure state, e.g. the instance
                 # has failed a health check or the ELB does not have the
-                # instance's availabilty zone enabled. The exact reason why is
+                # instance's availability zone enabled. The exact reason why is
                 # described in InstantState.description.
                 msg = ("The instance %s could not be put in service on %s."
                        " Reason: %s")

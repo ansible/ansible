@@ -492,9 +492,9 @@ def terminate_virtual_machine(module, azure):
         except AzureException as e:
             module.fail_json(msg="failed to delete the deployment %s, error was: %s" % (deployment.name, str(e)))
 
-        # It's unclear when disks associated with terminated deployment get detatched.
+        # It's unclear when disks associated with terminated deployment get detached.
         # Thus, until the wait_timeout is reached, we continue to delete disks as they
-        # become detatched by polling the list of remaining disks and examining the state.
+        # become detached by polling the list of remaining disks and examining the state.
         try:
             _delete_disks_when_detached(azure, wait_timeout, disk_names)
         except (AzureException, TimeoutError) as e:

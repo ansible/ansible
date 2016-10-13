@@ -867,7 +867,7 @@ def main():
     remote_exists = remote_file_exists(module, pkg, file_system=file_system)
 
     if not remote_exists:
-        module.fail_json(msg="The requested package does't exist "
+        module.fail_json(msg="The requested package doesn't exist "
                              "on the device")
 
     commands = get_commands(module, pkg, file_system)

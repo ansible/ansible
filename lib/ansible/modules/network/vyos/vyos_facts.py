@@ -35,7 +35,7 @@ options:
         to a given subset.  Possible values for this argument include
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
-        with an initial M(!) to specify that a specific subset should
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
     default: "!config"
@@ -70,7 +70,7 @@ ansible_net_config:
   returned: when config is configured
   type: str
 ansible_net_commits:
-  descrption: The set of available configuration revisions
+  description: The set of available configuration revisions
   returned: when present
   type: list
 ansible_net_hostname:

@@ -77,7 +77,7 @@ options:
     default: None
   lc_check:
     description:
-      - Check to make sure instances that are being replaced with replace_instances do not aready have the current launch_config.
+      - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
     required: false
     version_added: "1.8"
     default: True
@@ -118,7 +118,7 @@ options:
     version_added: "2.0"
   wait_timeout:
     description:
-      - how long before wait instances to become viable when replaced.  Used in concjunction with instance_ids option.
+      - how long before wait instances to become viable when replaced.  Used in conjunction with instance_ids option.
     default: 300
     version_added: "1.8"
   wait_for_instances:
@@ -130,6 +130,7 @@ options:
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
+        - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the current termination policies are maintained.
     required: false
     default: Default. Eg, when used to create a new autoscaling group, the “Default” value is used. When used to change an existent autoscaling group, the current termination policies are mantained
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
@@ -373,7 +374,7 @@ def wait_for_elb(asg_connection, module, group_name):
     as_group = asg_connection.get_all_groups(names=[group_name])[0]
 
     if as_group.load_balancers and as_group.health_check_type == 'ELB':
-        log.debug("Waiting for ELB to consider intances healthy.")
+        log.debug("Waiting for ELB to consider instances healthy.")
         try:
             elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
         except boto.exception.NoAuthHandlerFound as e:
@@ -631,7 +632,7 @@ def replace(connection, module):
     if desired_capacity is None:
         desired_capacity = as_group.desired_capacity
     # set temporary settings and wait for them to be reached
-    # This should get overriden if the number of instances left is less than the batch size.
+    # This should get overwritten if the number of instances left is less than the batch size.
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     update_size(as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)

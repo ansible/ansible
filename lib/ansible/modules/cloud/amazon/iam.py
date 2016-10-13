@@ -82,7 +82,7 @@ options:
     aliases: []
   access_key_ids:
     description:
-      - A list of the keys that you want impacted by the access_key_state paramter.
+      - A list of the keys that you want impacted by the access_key_state parameter.
   groups:
     description:
       - A list of groups the user should belong to. When update, will gracefully remove groups not listed.
@@ -340,7 +340,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(str(err))
                 if 'Password does not conform to the account password policy' in error_msg:
-                    module.fail_json(changed=False, msg="Passsword doesn't conform to policy")
+                    module.fail_json(changed=False, msg="Password doesn't conform to policy")
                 else:
                     module.fail_json(msg=error_msg)
 
@@ -397,7 +397,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
 
 def set_users_groups(module, iam, name, groups, updated=None,
 new_name=None):
-    """ Sets groups for a user, will purge groups not explictly passed, while
+    """ Sets groups for a user, will purge groups not explicitly passed, while
         retaining pre-existing groups that also are in the new list.
     """
     changed = False
@@ -630,7 +630,7 @@ def main():
 
     if iam_type == 'role' and state == 'update':
         module.fail_json(changed=False, msg="iam_type: role, cannot currently be updated, "
-                             "please specificy present or absent")
+                             "please specify present or absent")
 
     # check if trust_policy is present -- it can be inline JSON or a file path to a JSON file
     if trust_policy_filepath:

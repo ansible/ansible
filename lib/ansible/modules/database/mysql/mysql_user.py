@@ -103,7 +103,7 @@ notes:
      without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
-   - Currently, there is only support for the `mysql_native_password` encryted password hash module.
+   - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
 
 author: "Jonathan Mainguy (@Jmainguy)"
 extends_documentation_fragment: mysql

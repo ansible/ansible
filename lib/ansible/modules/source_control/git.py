@@ -551,7 +551,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     if os.path.isfile(repo_path):
         try:
             gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
-            # There is a posibility the .git file to have an absolute path.
+            # There is a possibility the .git file to have an absolute path.
             if os.path.isabs(gitdir):
                 repo_path = gitdir
             else:
@@ -590,7 +590,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
         label = "set a new url %s for %s" % (repo, remote)
         module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
-    # Return False if remote_url is None to maintain previous bevhavior
+    # Return False if remote_url is None to maintain previous behavior
     # for Git versions prior to 1.7.5 that lack required functionality.
     return remote_url is not None
 
@@ -614,7 +614,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             refspecs.append(currenthead)
         elif is_remote_branch(git_path, module, dest, repo, version):
             if currenthead != version:
-                # this workaroung is only needed for older git versions
+                # this workaround is only needed for older git versions
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
                 refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))

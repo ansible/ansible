@@ -90,7 +90,7 @@ EXAMPLES = """
     src: config.j2
     force: yes
 
-- name: provide the base configuration for comparision
+- name: provide the base configuration for comparison
   nxos_template:
     src: candidate_config.txt
     config: current_config.txt
@@ -105,7 +105,7 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 """

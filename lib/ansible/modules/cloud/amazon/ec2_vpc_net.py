@@ -25,7 +25,7 @@ author: Jonathan Davila (@defionscode)
 options:
   name:
     description:
-      - The name to give your VPC. This is used in combination with the cidr_block paramater to determine if a VPC already exists.
+      - The name to give your VPC. This is used in combination with the cidr_block parameter to determine if a VPC already exists.
     required: yes
   cidr_block:
     description:

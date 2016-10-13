@@ -28,7 +28,7 @@ extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - If C(state=absent), the moudle will attempt to remove the given key configuration.
+    - If C(state=absent), the module will attempt to remove the given key configuration.
       If a matching key configuration isn't found on the device, the module will fail.
     - If C(state=absent) and C(authentication=on), authentication will be turned off.
     - If C(state=absent) and C(authentication=off), authentication will be turned on.
@@ -59,7 +59,7 @@ options:
         choices: ['true', 'false']
     authentication:
         description:
-            - Turns NTP authenication on or off.
+            - Turns NTP authentication on or off.
         required: false
         default: null
         choices: ['on', 'off']
@@ -96,7 +96,7 @@ existing:
     type: dict
     sample: {"authentication": "off", "trusted_key": "false"}
 end_state:
-    description: k/v pairs of ntp autherntication after module execution
+    description: k/v pairs of ntp authentication after module execution
     returned: always
     type: dict
     sample: {"authentication": "off", "key_id": "32",

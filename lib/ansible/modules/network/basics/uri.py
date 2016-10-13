@@ -66,7 +66,7 @@ options:
   body:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
-        to 'json' it will take an already formated JSON string or convert a data structure
+        to 'json' it will take an already formatted JSON string or convert a data structure
         into JSON.
     required: false
     default: null
@@ -383,7 +383,7 @@ def main():
     dict_headers = module.params['headers']
 
     if body_format == 'json':
-        # Encode the body unless its a string, then assume it is preformatted JSON
+        # Encode the body unless its a string, then assume it is pre-formatted JSON
         if not isinstance(body, basestring):
             body = json.dumps(body)
         dict_headers['Content-Type'] = 'application/json'

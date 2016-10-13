@@ -73,7 +73,7 @@ def read_current_int_dir(module):
     module.custom_currentportlist = os.listdir(module.params.get('location'))
 
 
-# take the allowed list and conver it to into a list
+# take the allowed list and convert it to into a list
 # of ports.
 def convert_allowed_list_to_port_range(module):
     allowedlist = module.params.get('allowed')

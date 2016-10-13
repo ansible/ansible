@@ -29,7 +29,7 @@ extends_documentation_fragment: nxos
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - C(transpot=cli) may cause timeout errors.
+    - C(transport=cli) may cause timeout errors.
     - The C(element_key1) and C(element_key2) parameter specify the tags used
       to distinguish among row entries. In most cases, only the element_key1
       parameter needs to specified to be able to distinguish among row entries.

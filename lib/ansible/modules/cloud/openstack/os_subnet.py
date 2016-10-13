@@ -42,7 +42,7 @@ options:
    network_name:
      description:
         - Name of the network to which the subnet should be attached
-        - requried when I(state) is 'present'
+        - Required when I(state) is 'present'
      required: false
    name:
      description:

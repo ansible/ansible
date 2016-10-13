@@ -229,7 +229,7 @@ def ensure_user_exists(keystone, user_name, password, email, tenant_name,
                        check_mode):
     """ Check if user exists
 
-        Return (True, id) if a new user was created, (False, id) user alrady
+        Return (True, id) if a new user was created, (False, id) user already
         exists
     """
 

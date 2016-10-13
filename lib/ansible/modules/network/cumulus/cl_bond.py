@@ -154,7 +154,7 @@ cl_bond: name=bond1 slaves="swp1s0 swp2s0" clag_id=1
 notify: reload networking
 
 # define cl_bond once in tasks file
-# then write inteface config in variables file
+# then write interface config in variables file
 # with just the options you want.
 cl_bond:
   name: "{{ item.key }}"

@@ -363,6 +363,7 @@ def get_udld_interface(module, interface):
         table = body['TABLE_interface']['ROW_interface']
 
         status = str(table.get('mib-port-status', None))
+        # Note: 'mib-aggresive-mode' is NOT a typo
         agg = str(table.get('mib-aggresive-mode', 'disabled'))
 
         if agg == 'enabled':

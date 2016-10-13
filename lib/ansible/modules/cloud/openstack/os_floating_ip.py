@@ -186,7 +186,7 @@ def main():
                     # Requirements are met
                     module.exit_json(changed=False, floating_ip=f_ip)
 
-                # Requirments are vague enough to ignore exisitng f_ip and try
+                # Requirements are vague enough to ignore existing f_ip and try
                 # to create a new f_ip to the server.
 
             server = cloud.add_ips_to_server(

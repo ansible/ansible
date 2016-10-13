@@ -253,7 +253,7 @@ owner_id:
     type: string
     sample: "435210894375"
 platform:
-    description: plaform of image
+    description: platform of image
     returned: when AMI is created or already exists
     type: string
     sample: null

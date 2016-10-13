@@ -769,7 +769,7 @@ def create_block_device(module, ec2, volume):
             if int(volume['iops']) > MAX_IOPS_TO_SIZE_RATIO * size:
                 module.fail_json(msg = 'IOPS must be at most %d times greater than size' % MAX_IOPS_TO_SIZE_RATIO)
         if 'encrypted' in volume:
-            module.fail_json(msg = 'You can not set encyrption when creating a volume from a snapshot')
+            module.fail_json(msg = 'You can not set encryption when creating a volume from a snapshot')
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
             module.fail_json(msg = 'Cannot set both ephemeral and snapshot')
@@ -1023,7 +1023,7 @@ def create_instances(module, ec2, vpc, override_count=None):
             if ebs_optimized:
               params['ebs_optimized'] = ebs_optimized
 
-            # 'tenancy' always has a default value, but it is not a valid parameter for spot instance resquest
+            # 'tenancy' always has a default value, but it is not a valid parameter for spot instance request
             if not spot_price:
               params['tenancy'] = tenancy
 
