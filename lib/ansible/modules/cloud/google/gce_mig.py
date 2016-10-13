@@ -596,7 +596,6 @@ def get_mig(gce, name, zone):
 
 
 def main():
-
     module = AnsibleModule(argument_spec=dict(
         name=dict(required=True),
         template=dict(),
@@ -619,7 +618,13 @@ def main():
             msg="GCE module requires python's 'ast' module, python v2.6+")
     if not HAS_LIBCLOUD:
         module.fail_json(
-            msg='libcloud with GCE Managed Instance Group support (1.1+) required for this module.')
+            msg='libcloud with GCE Managed Instance Group support (1.2+) required for this module.')
+
+    gce = gce_connect(module)
+    if not hasattr(gce, 'ex_create_instancegroupmanager'):
+        module.fail_json(
+            msg='libcloud with GCE Managed Instance Group support (1.2+) required for this module.',
+            changed=False)
 
     params = {}
     params['state'] = module.params.get('state')
@@ -634,7 +639,6 @@ def main():
     if not valid_autoscaling:
         module.fail_json(msg=as_msg, changed=False)
 
-    gce = gce_connect(module)
     changed = False
     json_output = {'state': params['state'], 'zone': params['zone']}
     mig = get_mig(gce, params['name'], params['zone'])
