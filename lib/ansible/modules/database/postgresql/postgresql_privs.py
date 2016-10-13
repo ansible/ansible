@@ -537,7 +537,7 @@ def main():
             port=dict(type='int', default=5432),
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'])
+            password=dict(default='', aliases=['login_password'], no_log=True)
         ),
         supports_check_mode = True
     )
