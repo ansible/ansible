@@ -251,7 +251,7 @@ class ZipArchive(object):
             try:
                 for member in archive.namelist():
                     if member not in self.excludes:
-                        self._files_in_archive.append(member)
+                        self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -623,7 +623,7 @@ class TgzArchive(object):
 #            filename = filename.decode('string_escape')
             filename = codecs.escape_decode(filename)[0]
             if filename and filename not in self.excludes:
-                self._files_in_archive.append(filename)
+                self._files_in_archive.append(to_native(filename))
         return self._files_in_archive
 
     def is_unarchived(self):
@@ -863,5 +863,7 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils._text import to_native
+
 if __name__ == '__main__':
     main()
