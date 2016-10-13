@@ -313,7 +313,11 @@ class DataLoader():
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
                     else:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
+                        # don't add dirname if user already is using it in source
+                        if b_source.split(b'/')[0] == b_dirname:
+                            search.append(os.path.join(b_upath, b_source))
+                        else:
+                            search.append(os.path.join(b_upath, b_dirname, b_source))
                         search.append(os.path.join(b_upath, b'tasks', b_source))
                 elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
