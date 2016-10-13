@@ -220,7 +220,7 @@ class TCPConnectionInfo(object):
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
             module.fail_json(msg="psutil module required for wait_for")
-        if (module.params['ignore_time_wait'] is None):
+        if module.params['ignore_time_wait'] is None:
             connection_states['06'] = 'TIME_WAIT'
 
     def _get_exclude_ips(self):
@@ -402,7 +402,7 @@ def main():
             delay=dict(default=0, type='int'),
             port=dict(default=None, type='int'),
             path=dict(default=None, type='path'),
-            ignore_time_wait=dict(default=None),
+            ignore_time_wait=dict(required=False, default=False, type='bool'),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
             exclude_hosts=dict(default=None, type='list'),
