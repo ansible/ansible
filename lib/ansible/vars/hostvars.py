@@ -39,6 +39,8 @@ STATIC_VARS = [
     'play_hosts',
     'role_names',
     'ungrouped',
+    'child_groups',
+    'parent_groups',
 ]
 
 try:
