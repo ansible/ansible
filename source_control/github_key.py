@@ -199,7 +199,7 @@ def ensure_key_present(session, name, pubkey, force, check_mode):
 
 def main():
     argument_spec = {
-        'token': {'required': True},
+        'token': {'required': True, 'no_log': True},
         'name': {'required': True},
         'pubkey': {},
         'state': {'choices': ['present', 'absent'], 'default': 'present'},
