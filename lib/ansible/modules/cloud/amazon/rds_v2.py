@@ -15,7 +15,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
-module: rds_boto3
+module: rds_v2
 short_description: Create and delete AWS VPN Virtual Gateways.
 description:
   - Creates RDS instances
@@ -616,7 +616,6 @@ DBSnapshots:
 '''
 
 try:
-    import json
     import time
     import botocore
     import boto3
@@ -718,7 +717,7 @@ def create_db_instance(client, module):
                   'preferred_maintenance_window', 'db_parameter_group_name', 'backup_retention_period', 'preferred_backup_window',
                   'port', 'multi_az', 'engine_version', 'auto_minor_version_upgrade', 'license_model', 'iops',
                   'option_group_name', 'publicly_accessible', 'character_set_name', 'storage_encrypted', 'kms_key_id', 'tags',
-                  'db_cluster_identifier', 'copy_tags_to_snapshot', 'monitoring_interval']
+                  'db_cluster_identifier', 'copy_tags_to_snapshot', 'monitoring_interval', 'storage_type']
 
     params = validate_parameters(required_vars, valid_vars, module)
     # Check if the db instance already exists
@@ -841,7 +840,7 @@ def delete_db_instance_or_snapshot(client, module):
         params = validate_parameters(required_vars, valid_vars, module)
 
     if module.params.get('db_snapshot_identifier'):
-        # Check if the db instance exists before attempting to delete it
+        # Check if the db snapshot exists before attempting to delete it
         db_snapshot = get_db_snapshot(client, module, module.params.get('db_snapshot_identifier'))
         if not db_snapshot:
             response = None
@@ -917,17 +916,24 @@ def reboot_db_instance(client, module):
 
     params = validate_parameters(required_vars, valid_vars, module)
 
-    try:
-        response = client.reboot_db_instance(**params)
-        changed = True
-    except botocore.exceptions.ClientError as e:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    # check if instance exists before attempting to reboot
+    db_instance = get_db_instance(client, module)
+    
+    if db_instance:
+        try:
+            response = client.reboot_db_instance(**params)
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            e = get_exception()
+            module.fail_json(msg=str(e))
 
-    if module.params.get('wait'):
-        status_achieved, response = wait_for_status(client, module, 'available')
-        if not status_achieved:
-            module.fail_json(msg='Error waiting for RDS instance creation - please check the AWS console')
+        if module.params.get('wait'):
+            status_achieved, response = wait_for_status(client, module, 'available')
+            if not status_achieved:
+                module.fail_json(msg='Error waiting for RDS instance creation - please check the AWS console')
+    
+    else:
+        module.fail_json(msg='Error attempting to reboot an instance that doesnt exist')
 
     result = response
     return changed, result
@@ -972,7 +978,7 @@ def promote_db_instance(client, module):
 
     params = validate_parameters(required_vars, valid_vars, module)
 
-    #check if instance already exists. If so, do nothing and return the instance
+    # check if instance already exists. If so, do nothing and return the instance
     db_instance = get_db_instance(client, module)
     if not db_instance:
         module.fail_json(msg="DB Instance %s does not exist" % instance_name)
