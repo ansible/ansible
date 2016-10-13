@@ -342,15 +342,10 @@ class TaskQueueManager:
         for method_name in method_names:
             gotit = getattr(callback_plugin, method_name, None)
             if gotit is not None:
-                print(getattr(gotit, '_callback_disabled', '3333'))
                 if hasattr(gotit, '_callback_disabled'):
                     continue
-                return gotit
+                return gotit, method_name
         return None
-
-    def find_cb_method_v1(self, callback_plugin, method_name):
-        method_names = self._callback_method_expand(method_name)
-        return self.find_callback_method(callback_plugin, method_names)
 
     def send_callback(self, method_name, *args, **kwargs):
         display.v('SEND_CALLBAC: method_name=%s' % method_name)
@@ -392,7 +387,9 @@ class TaskQueueManager:
             if new_method:
                 methods.append(new_method)
 
-            for method in methods:
+            for method, method_name in methods:
+                # add origin method name to kwargs if the method has the right attribute
+                kwargs['_callback_method_name'] = method_name
                 try:
                     # temporary hack, required due to a change in the callback API, so
                     # we don't break backwards compatibility with callbacks which were
