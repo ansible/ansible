@@ -542,7 +542,7 @@ def main():
             management_cert_path=dict(),
             endpoints=dict(default='22'),
             user=dict(),
-            password=dict(),
+            password=dict(no_log=True),
             image=dict(),
             virtual_network_name=dict(default=None),
             state=dict(default='present'),
