@@ -1,24 +1,23 @@
 validate-modules
-===============
+================
 
 Python program to help test or validate Ansible modules.
-
 
 Originally developed by Matt Martz (@sivel)
 
 Usage
 ~~~~~
 
-::
-    # If you are running Ansible from source
-    source /path/to/ansible/hacking/env-setup
+.. code:: shell
 
-    validate-modules /path/to/ansible-modules-extras
+    cd /path/to/ansible/source
+    source hacking/env-setup
+    test/sanity/validate-modules/validate-modules /path/to/modules
 
 Help
 ~~~~
 
-::
+.. code:: shell
 
     usage: validate-modules [-h] [-w] [--exclude EXCLUDE] modules
 
@@ -31,7 +30,7 @@ Help
       --exclude EXCLUDE  RegEx exclusion pattern
 
 Current Validations
--------------------
+===================
 
 Modules
 ~~~~~~~
@@ -50,8 +49,8 @@ Errors
 #. Tabbed indentation
 #. Use of ``sys.exit()`` instead of ``exit_json`` or ``fail_json``
 #. Missing GPLv3 license header in module
-#. Powershell module missing ``WANT_JSON``
-#. Powershell module missing ``POWERSHELL_COMMON``
+#. PowerShell module missing ``WANT_JSON``
+#. PowerShell module missing ``POWERSHELL_COMMON``
 #. New modules have the correct ``version_added``
 #. New arguments have the correct ``version_added``
 #. Modules should not import requests, instead use ``ansible.module_utils.urls``
@@ -69,4 +68,3 @@ Module Directories (Python Packages)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Missing ``__init__.py``
-
