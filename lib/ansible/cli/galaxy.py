@@ -388,11 +388,16 @@ class GalaxyCLI(CLI):
             display.vvv('Installing role %s ' % role.name)
             # query the galaxy API for the role data
 
-            if role.install_info is not None and not force:
+            if role.install_info is not None:
                 if role.install_info['version'] != role.version:
-                    display.display('- changing role %s from %s to %s' %
-                            (role.name, role.install_info['version'], role.version or "unspecified"))
-                    role.remove()
+                    if force:
+                        display.display('- changing role %s from %s to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        role.remove()
+                    else:
+                        display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        continue
                 else:
                     display.display('- %s is already installed, skipping.' % str(role))
                     continue
