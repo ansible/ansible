@@ -733,7 +733,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
 
     try:
         if not vmTarget:
-            cloneArgs = dict(resourcepool=rpmor, power_on=power_on_after_clone)
+            cloneArgs = dict(resourcepool=rpmor, power_on=False)
 
             if snapshot_to_clone is not None:
                 #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
@@ -745,6 +745,18 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
                 cloneArgs["folder"] = vm_extra_config.get("folder")
 
             vmTemplate.clone(guest, **cloneArgs)
+
+            vm = vsphere_client.get_vm_by_name(guest)
+
+            # VM was created. If there is any extra config options specified, set
+            if vm_extra_config:
+                vm.set_extra_config(vm_extra_config)
+
+            # Power on if asked
+            if power_on_after_clone == True:
+                state = 'powered_on'
+                power_state(vm, state, True)
+
             changed = True
         else:
             changed = False
