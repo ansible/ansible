@@ -65,7 +65,7 @@
   assert:
     that:
       - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  when: ansible_fips != True
+  when: ansible_fips|bool != True
 
 - name: check the stat results of the file
   stat: path={{output_file}}
@@ -87,7 +87,7 @@
   assert:
     that:
       - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
-  when: ansible_fips != True
+  when: ansible_fips|bool != True
 
 - name: overwrite the file via same means
   copy: src=foo.txt dest={{output_file}}

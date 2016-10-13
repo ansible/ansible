@@ -19,5 +19,5 @@
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 - include: 'yum.yml'
-  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora'] and ansible_python.version.major == 2
 
