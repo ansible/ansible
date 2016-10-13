@@ -7,7 +7,7 @@
     release_date: "{{lookup('pipe', 'date +\"%m-%d-%Y\"')}}"
     rpm_spec_line: |
 
-      * {{lookup('pipe', 'date +"%a %b %d %Y"')}} Ansible, Inc. <support@ansible.com> - {{ansible_release_version}}-{{ansible_release_string}}
+      * {{lookup('pipe', 'date +"%a %b %d %Y"')}} Ansible, Inc. <info@ansible.com> - {{ansible_release_version}}-{{ansible_release_string}}
       - Release {{ansible_release_version}}-{{ansible_release_string}}
     deb_changelog_line: |
 
@@ -15,7 +15,7 @@
 
         * {{ansible_release_version}}
 
-       -- Ansible, Inc. <support@ansible.com>  {{lookup('pipe', 'date -R')}}
+       -- Ansible, Inc. <info@ansible.com>  {{lookup('pipe', 'date -R')}}
 
   vars_prompt:
   - name: ansible_release_branch
@@ -99,7 +99,7 @@
         dest: "{{release_dir}}/packaging/debian/changelog"
         regexp: "^ansible ({{ansible_release_version}})"
         line: "{{deb_changelog_line}}"
-        insertafter: "-- Ansible, Inc. <support@ansible.com>  %DATE%"
+        insertafter: "-- Ansible, Inc. <info@ansible.com>  %DATE%"
     - name: Update RELEASES.txt
       template:
         dest: "{{release_dir}}/RELEASES.txt"

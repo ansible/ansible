@@ -17,7 +17,7 @@ setup(name='ansible',
       version=__version__,
       description='Radically simple IT automation',
       author=__author__,
-      author_email='support@ansible.com',
+      author_email='info@ansible.com',
       url='http://ansible.com/',
       license='GPLv3',
       # Ansible will also make use of a system copy of python-six if installed but use a
