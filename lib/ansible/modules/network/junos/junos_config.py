@@ -217,7 +217,7 @@ def diff_commands(commands, config):
     updates = list()
     visited = set()
 
-    for item in commands.split('\n'):
+    for item in commands:
         if len(item) > 0:
             if not item.startswith('set') and not item.startswith('delete'):
                 raise ValueError('line must start with either `set` or `delete`')
@@ -235,6 +235,8 @@ def diff_commands(commands, config):
 
 def load_config(module, result):
     candidate =  module.params['lines'] or module.params['src']
+    if isinstance(candidate, basestring):
+        candidate = candidate.split('\n')
 
     kwargs = dict()
     kwargs['comment'] = module.params['comment']
