@@ -46,7 +46,7 @@ options:
         default: null
     peer_link:
         description:
-            - Set to true/false for peer link config on assoicated portchannel
+            - Set to true/false for peer link config on associated portchannel.
         required: false
         default: null
     state:

@@ -185,7 +185,7 @@ blob:
         "type": "BlockBlob"
     }
 container:
-    description: Facts about the current state of the selcted container.
+    description: Facts about the current state of the selected container.
     returned: always
     type: dict
     sample: {

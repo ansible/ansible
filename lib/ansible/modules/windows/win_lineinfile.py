@@ -118,10 +118,7 @@ options:
   newline:
     required: false
     description:
-      - Specifies the line separator style to use for the modified file. This defaults 
-        to the windows line separator (\r\n). Note that the indicated line separator 
-        will be used for file output regardless of the original line seperator that 
-        appears in the input file.
+      - "Specifies the line separator style to use for the modified file. This defaults to the windows line separator (\r\n). Note that the indicated line separator will be used for file output regardless of the original line separator that appears in the input file."
     choices: [ "windows", "unix" ]
     default: "windows"
 
@@ -138,7 +135,7 @@ EXAMPLES = r"""
 
 - win_lineinfile: dest=C:\\temp\\services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
 
-# Create file if it doesnt exist with a specific encoding
+# Create file if it doesn't exist with a specific encoding
 - win_lineinfile: dest=C:\\temp\\utf16.txt create="yes" encoding="utf-16" line="This is a utf-16 encoded file"
 
 # Add a line to a file and ensure the resulting file uses unix line separators

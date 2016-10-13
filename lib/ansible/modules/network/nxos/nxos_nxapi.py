@@ -277,7 +277,7 @@ def main():
 
         sandbox=dict(aliases=['enable_sandbox'], default=False, type='bool'),
 
-        # Only allow configuration of NXAPI using cli transpsort
+        # Only allow configuration of NXAPI using cli transport
         transport=dict(required=True, choices=['cli']),
 
         config=dict(),

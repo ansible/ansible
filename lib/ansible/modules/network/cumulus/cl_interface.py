@@ -131,7 +131,7 @@ cl_interface: name=bond0.100  alias_name='my bond' ipv4=10.1.1.1/24
 notify: reload networking
 
 # define cl_interfaces once in tasks
-# then write intefaces in variables file
+# then write interfaces in variables file
 # with just the options you want.
 cl_interface:
   name: "{{ item.key }}"

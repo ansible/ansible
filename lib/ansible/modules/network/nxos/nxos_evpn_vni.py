@@ -27,8 +27,8 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - default, where supported, restores params default value
-    - RD override is not permitted. You should set it to the defalt values
+    - default, where supported, restores params default value.
+    - RD override is not permitted. You should set it to the default values
       first and then reconfigure it.
     - route_target_both, route_target_import and route_target_export valid
       values are a list of extended communities, (i.e. ['1.2.3.4:5', '33:55'])

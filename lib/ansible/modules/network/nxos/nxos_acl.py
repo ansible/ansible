@@ -38,8 +38,8 @@ notes:
       there is any difference, what is in Ansible will be pushed (configured
       options will be overridden).  This is to improve security, but at the
       same time remember an ACE is removed, then re-added, so if there is a
-      change, the new ACE will be exacty what params you are sending to the
-      module.
+      change, the new ACE will be exactly what parameters you are sending to
+      the module.
 options:
     seq:
         description:

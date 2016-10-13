@@ -473,7 +473,7 @@ def main():
 
     if privacy and encrypt:
         if not pwd and authentication:
-            module.fail_json(msg='pwd and authentication must be proviced '
+            module.fail_json(msg='pwd and authentication must be provided '
                                  'when using privacy and encrypt')
 
     if group and group not in get_snmp_groups(module):

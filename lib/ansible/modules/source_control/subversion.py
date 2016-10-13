@@ -174,7 +174,7 @@ class Subversion(object):
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?X]')
-        # Has local mods if more than 0 modifed revisioned files.
+        # Has local mods if more than 0 modified revisioned files.
         return len(filter(regex.match, lines)) > 0
 
     def needs_update(self):

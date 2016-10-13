@@ -71,7 +71,7 @@ options:
      default: present
    name:
      description:
-        - Name to be assigned to the nework
+        - Name to be assigned to the network
      required: true
      default: None
    provider_network_type:

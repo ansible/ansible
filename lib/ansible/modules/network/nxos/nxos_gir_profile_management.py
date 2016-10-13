@@ -39,7 +39,7 @@ options:
         default: null
     mode:
         description:
-            - Configure the profile as Maintenance or Normale mode.
+            - Configure the profile as Maintenance or Normal mode.
         required: true
         choices: ['maintenance', 'normal']
     state:

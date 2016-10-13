@@ -259,7 +259,7 @@ EXAMPLES = '''
     vm_extra_config:
       folder: MyFolder
 
-# Task to gather facts from a vSphere cluster only if the system is a VMWare guest
+# Task to gather facts from a vSphere cluster only if the system is a VMware guest
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local

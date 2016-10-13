@@ -289,7 +289,7 @@ options:
     required: false
   pid_mode:
     description:
-      - Set the PID namespace mode for the container. Currenly only supports 'host'.
+      - Set the PID namespace mode for the container. Currently only supports 'host'.
     default: null
     required: false
   privileged:
@@ -361,7 +361,7 @@ options:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
         Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
-      - Ommitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
+      - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
     default: null
     required: false
   security_opts:
@@ -411,7 +411,7 @@ options:
     description:
       - If true, skip image verification.
     default: false
-    requried: false
+    required: false
   tty:
     description:
       - Allocate a psuedo-TTY.
@@ -514,7 +514,7 @@ EXAMPLES = '''
     image: ubuntu:14.04
     command: sleep infinity 
 
-- name: Stop a contianer
+- name: Stop a container
   docker_container:
     name: mycontainer
     state: stopped
@@ -1799,7 +1799,7 @@ class ContainerManager(DockerBaseClass):
             self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
             if not self.check_mode:
                 try:
-                    self.log("Connecting conainer to network %s" % diff['parameter']['id'])
+                    self.log("Connecting container to network %s" % diff['parameter']['id'])
                     self.log(params, pretty_print=True)
                     self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
                 except Exception as exc:

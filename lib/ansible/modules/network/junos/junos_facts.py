@@ -45,7 +45,7 @@ options:
         format of the configuration file.  Devices support three
         configuration file formats.  By default, the configuration
         from the device is returned as text.  The other options include
-        set and xml.  If the xml option is choosen, the configuration file
+        set and xml.  If the xml option is chosen, the configuration file
         is returned as both xml and json.
     required: false
     default: text
@@ -81,7 +81,7 @@ EXAMPLES = """
 
 RETURN = """
 ansible_facts:
-  descrption: Returns the facts collect from the device
+  description: Returns the facts collect from the device
   returned: always
   type: dict
 """

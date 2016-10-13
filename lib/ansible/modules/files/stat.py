@@ -172,7 +172,7 @@ stat:
             type: int
             sample: 1003
         size:
-            description: Size in bytes for a plain file, ammount of data for some special files
+            description: Size in bytes for a plain file, amount of data for some special files
             returned: success, path exists and user can read stats
             type: int
             sample: 203

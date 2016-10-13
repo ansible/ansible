@@ -60,7 +60,7 @@ EXAMPLES = '''
 
 RETURN = '''
 transfer_status:
-    description: Whether a file was transfered. "No Transfer" or "Sent".
+    description: Whether a file was transferred. "No Transfer" or "Sent".
     returned: success
     type: string
     sample: 'Sent'

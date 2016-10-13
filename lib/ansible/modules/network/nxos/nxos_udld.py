@@ -28,7 +28,7 @@ extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - When C(state=absent), it unconfigures existing setings C(msg_time) and set it
+    - When C(state=absent), it unconfigures existing settings C(msg_time) and set it
       to its default value of 15.  It is cleaner to always use C(state=present).
     - Module will fail if the udld feature has not been previously enabled.
 options:

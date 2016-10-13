@@ -174,7 +174,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                         changed = ini_lines[index] != newline
                         ini_lines[index] = newline
                         if changed:
-                            # remove all possible option occurences from the rest of the section
+                            # remove all possible option occurrences from the rest of the section
                             index = index + 1
                             while index < len(ini_lines):
                                 line = ini_lines[index]

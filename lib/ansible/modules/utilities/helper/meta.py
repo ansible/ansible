@@ -40,7 +40,7 @@ options:
     required: true
     default: null
 notes:
-    - meta is not really a module nor action_plugin as such it cannot be overriden.
+    - meta is not really a module nor action_plugin as such it cannot be overwritten.
 author:
     - "Ansible Core Team"
 '''

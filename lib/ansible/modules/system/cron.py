@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Cron Plugin: The goal of this plugin is to provide an indempotent method for
+# Cron Plugin: The goal of this plugin is to provide an idempotent method for
 # setting up cron jobs on a host. The script will play well with other manually
 # entered crons. Each cron job entered will be preceded with a comment
 # describing the job so that it can be found later, which is required to be
@@ -139,8 +139,8 @@ options:
   env:
     description:
       - If set, manages a crontab's environment variable. New variables are added on top of crontab.
-        "name" and "value" paramenters are the name and the value of environment variable.
-    version_added: "2"
+        "name" and "value" parameters are the name and the value of environment variable.
+    version_added: "2.1"
     required: false
     default: "no"
     choices: [ "yes", "no" ]

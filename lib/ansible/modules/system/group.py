@@ -258,7 +258,7 @@ class DarwinGroup(Group):
       - group_add()
       - group_mod()
 
-    group manupulation are done using dseditgroup(1).
+    group manipulation are done using dseditgroup(1).
     """
 
     platform = 'Darwin'
