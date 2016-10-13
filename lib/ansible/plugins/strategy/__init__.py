@@ -396,7 +396,7 @@ class StrategyBase:
                                     for listening_handler_name in self._listening_handlers[handler_name]:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
                                         if listening_handler is None:
-                                            raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                                            display.warning("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
@@ -420,7 +420,7 @@ class StrategyBase:
 
                                         # and if none were found, then we raise an error
                                         if not found:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
+                                            display.warning("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
 
 
                     if 'add_host' in result_item:
