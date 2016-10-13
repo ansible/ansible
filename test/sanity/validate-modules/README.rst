@@ -1,31 +1,26 @@
-ansible-testing
+validate-modules
 ===============
 
-Python module to help test or validate Ansible, specifically ansible
-modules
+Python program to help test or validate Ansible modules.
 
-Installation
-------------
 
-This module must be installed alongside the current development
-release of Ansible to appropriately test the current development
-state of modules.
+Originally developed by Matt Martz (@sivel)
 
 Usage
 ~~~~~
 
 ::
+    # If you are running Ansible from source
+    source /path/to/ansible/hacking/env-setup
 
-    pip install git+https://github.com/ansible/ansible.git@devel#egg=ansible
-    pip install git+https://github.com/sivel/ansible-testing.git#egg=ansible_testing
-    ansible-validate-modules /path/to/ansible-modules-extras
+    validate-modules /path/to/ansible-modules-extras
 
 Help
 ~~~~
 
 ::
 
-    usage: ansible-validate-modules [-h] [-w] [--exclude EXCLUDE] modules
+    usage: validate-modules [-h] [-w] [--exclude EXCLUDE] modules
 
     positional arguments:
       modules            Path to module or module directory
