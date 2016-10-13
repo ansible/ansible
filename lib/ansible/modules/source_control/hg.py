@@ -95,11 +95,19 @@ requirements: [ ]
 
 EXAMPLES = '''
 # Ensure the current working copy is inside the stable branch and deletes untracked files if any.
-- hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes
+- hg:
+    repo: 'https://bitbucket.org/user/repo1'
+    dest: /home/user/repo1
+    revision: stable
+    purge: yes
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
-- hg: repo=git://bitbucket.org/user/repo dest=/srv/checkout clone=no update=no
+- hg:
+    repo: 'git://bitbucket.org/user/repo'
+    dest: /srv/checkout
+    clone: no
+    update: no
 '''
 
 import os
