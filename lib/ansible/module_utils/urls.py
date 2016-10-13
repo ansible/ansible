@@ -793,9 +793,11 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # use this username/password combination for  urls
             # for which `theurl` is a super-url
             authhandler = urllib_request.HTTPBasicAuthHandler(passman)
+            digestauthhandler = urllib_request.HTTPDigestAuthHandler(passman)
 
             # create the AuthHandler
             handlers.append(authhandler)
+            handlers.append(digestauthhandler)
 
         elif username and force_basic_auth:
             headers["Authorization"] = basic_auth_header(username, password)
