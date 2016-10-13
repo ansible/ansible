@@ -50,7 +50,7 @@ class EosConfigMixin(object):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         cmds.append('end')
-        responses = self.execute(commands)
+        responses = self.execute(cmds)
         return responses[1:-1]
 
     def get_config(self, include_defaults=False, **kwargs):
@@ -60,6 +60,12 @@ class EosConfigMixin(object):
         return self.execute([cmd])[0]
 
     def load_config(self, config, commit=False, replace=False):
+        if self.supports_sessions():
+            return self.load_config_session(config, commit, replace)
+        else:
+            return self.configure(config)
+
+    def load_config_session(self, config, commit=False, replace=False):
         """ Loads the configuration into the remote device
         """
         session = 'ansible_%s' % int(time.time())
@@ -115,6 +121,17 @@ class EosConfigMixin(object):
     def abort_config(self, session):
         commands = ['configure session %s' % session, 'abort']
         self.execute(commands)
+
+    def supports_sessions(self):
+        try:
+            if isinstance(self, Eapi):
+                self.execute('show configuration sessions', output='text')
+            else:
+                self.execute('show configuration sessions')
+            return True
+        except NetworkError:
+            return False
+
 
 
 class Eapi(EosConfigMixin):
