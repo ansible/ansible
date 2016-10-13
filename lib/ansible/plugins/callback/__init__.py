@@ -67,7 +67,7 @@ class CallbackBase:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
+            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, self.__class__.__module__))
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
@@ -257,8 +257,6 @@ class CallbackBase:
         pass
 
     ####### V2 METHODS, by default they call v1 counterparts if possible ######
-    def v2_on_any(self, *args, **kwargs):
-        self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         host = result._host.get_name()
@@ -361,3 +359,42 @@ class CallbackBase:
 
     def v2_runner_retry(self, result):
         pass
+
+    # The existences of the following methods matter, so they are not included in the base plugin class.
+    # callback plugins can implement them to get various 'wildcard' behaviors.
+
+    # 'v2_on_missing'
+    #
+    # if the plugin does not have any method that could match (ie, the correct one or the v1 version)
+    # then check for a 'v2_on_missing'.
+    # If a plugin class doesn't find an exact match, it will call v2_on_missing.
+    # if 'v2_on_missing' exists, it will be call in preference to 'v2_on_any'.
+    # Existence of 'v2_on_missing' will stop 'v2_on_any' from being called. In the cases
+    # where 'v2_on_any' would have been called previously, if there is a 'v2_on_missing', it will
+    # be called instead. If there is no 'v2_on_missing', then 'v2_on_any' will be tried.
+    #def v2_on_missing(self, *args, **kwargs):
+    #    self.on_missing(args, kwargs)
+
+    # 'v2_on_any'
+    #
+    # if there isn't a matching method and there is no 'v2_on_missing', then check for 'v2_on_any'
+    # In other worse, v2_on_any is not called if there is a v2_on_missing or a exact match.
+    # Note: Callback methods that subclass CallbackBase will provide most methods by default
+    # methods that a callback plugin could provide, but are not required
+
+    #def v2_on_any(self, *args, **kwargs):
+    #    self.on_any(args, kwargs)
+
+    # 'v2_on_all'
+    #
+    # This method will always be invoked for every callback method invocation
+    # (if it exists).
+    #
+    # A 'v2_on_all' if it exists, will always be called. Always. Even if
+    # there was an exact match, or a 'v2_on_missing', or a 'v2_on_any'. If it exists, it is always called.
+    # Note: If you are tracking any context based on callback methods, the 'v2_on_all' method could be called
+    # in _addition_ to another matching method. More than one method from a single callback plugin could be called
+    # if the plugin provides a 'v2_on_all'
+
+    #def v2_on_all(self, *args, **kwargs):
+    #    self.on_missing(args, kwargs)
