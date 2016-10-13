@@ -1,4 +1,4 @@
-# (c) 2016, Ansible by Red Hat <support@ansible.com>
+# (c) 2016, Ansible by Red Hat <info@ansible.com>
 #
 # This file is part of Ansible
 #
