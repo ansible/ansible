@@ -404,7 +404,7 @@ def get_vtp_password(module):
 
 def main():
     argument_spec = dict(
-            vtp_password=dict(type='str'),
+            vtp_password=dict(type='str', no_log=True),
             state=dict(choices=['absent', 'present'],
                        default='present'),
     )
