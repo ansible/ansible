@@ -519,11 +519,11 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             login_user=dict(default="postgres"),
-            login_password=dict(default=""),
+            login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             login_unix_socket=dict(default=""),
             user=dict(required=True, aliases=['name']),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
             db=dict(default=''),
