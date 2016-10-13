@@ -92,7 +92,7 @@ class Cli(CliBase):
         cmd = 'show running-config'
         if include == 'passwords':
             cmd = 'more system:running-config'
-        elif include_defaults:
+        elif include == 'defaults':
             cmd = 'show running-config all'
         else:
             cmd = 'show running-config'
