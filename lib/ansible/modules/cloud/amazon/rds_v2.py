@@ -25,7 +25,7 @@ description:
   - Deletes RDS snapshots
   - Deletes RDS instances
   - Reboots RDS instances
-version_added: "2.2"
+version_added: "2.3"
 requirements: [ boto3 ]
 options:
   command:
