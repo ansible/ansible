@@ -230,17 +230,6 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def load_backup(module):
-    try:
-        module.cli(['exit', 'config replace flash:/ansible-rollback force'])
-    except NetworkError:
-        module.fail_json(msg='unable to load backup configuration')
-
-def backup_config(module):
-    cmd = 'copy running-config flash:/ansible-rollback'
-    cmd = Command(cmd, prompt=re.compile('\? $'), response='\n')
-    module.cli(cmd)
-
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -268,19 +257,11 @@ def run(module, result):
 
             result['updates'] = commands
 
-        # create a backup copy of the current running-config on
-        # device flash drive
-        backup_config(module)
-
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
             module.config(commands)
         result['changed'] = True
-
-        # remove the backup copy of the running-config since its
-        # no longer needed
-        module.cli('delete /force flash:/ansible-rollback')
 
     if module.params['save']:
         if not module.check_mode:
@@ -340,7 +321,6 @@ def main():
     try:
         run(module, result)
     except NetworkError:
-        load_backup(module)
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
