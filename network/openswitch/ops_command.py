@@ -20,7 +20,7 @@ DOCUMENTATION = """
 ---
 module: ops_command
 version_added: "2.1"
-author: "Peter sprygada (@privateip)"
+author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary commands on OpenSwitch devices.
 description:
   - Sends arbitrary commands to an OpenSwitch node and returns the results
@@ -33,7 +33,7 @@ options:
     description:
       - List of commands to send to the remote ops device over the
         configured provider. The resulting output from the command
-        is returned. If the I(waitfor) argument is provided, the
+        is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retires as expired.
     required: true
@@ -65,7 +65,7 @@ options:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
-        I(waitfor) conditions.
+        I(wait_for) conditions.
     required: false
     default: 10
   interval:
@@ -122,7 +122,7 @@ stdout_lines:
 
 failed_conditions:
   description: the conditionals that failed
-  retured: failed
+  returned: failed
   type: list
   sample: ['...', '...']
 """

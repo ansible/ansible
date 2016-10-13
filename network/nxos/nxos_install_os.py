@@ -36,7 +36,7 @@ notes:
     - You must know if your platform supports taking a kickstart image as a
       parameter. If supplied but not supported, errors may occur.
     - This module attempts to install the software immediately,
-      wich may trigger a reboot.
+      which may trigger a reboot.
     - In check mode, the module tells you if the current boot images are set
       to the desired images.
 author:
@@ -364,7 +364,7 @@ def set_boot_options(module, image_name, kickstart=None):
     Args:
         The main system image file name.
     Keyword Args: many implementors may choose
-        to supply a kickstart parameter to specicify a kickstart image.
+        to supply a kickstart parameter to specify a kickstart image.
     """
     commands = ['terminal dont-ask']
     if kickstart is None:

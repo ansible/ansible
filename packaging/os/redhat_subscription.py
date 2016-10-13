@@ -71,7 +71,7 @@ options:
         default: null
     org_id:
         description:
-            - Organisation ID to use in conjunction with activationkey
+            - Organization ID to use in conjunction with activationkey
         required: False
         default: null
         version_added: "2.0"

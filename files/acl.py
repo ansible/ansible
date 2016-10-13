@@ -78,7 +78,7 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
@@ -202,7 +202,7 @@ def acl_changed(module, cmd):
     if get_platform().lower() == 'freebsd':
         return True
 
-    cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
+    cmd = cmd[:]  # lists are mutables so cmd would be overwritten without this
     cmd.insert(1, '--test')
     lines = run_acl(module, cmd)
 

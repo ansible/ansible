@@ -266,8 +266,8 @@ def package_version_compare(version, other_version):
 def package_status(m, pkgname, version, cache, state):
     try:
         # get the package from the cache, as well as the
-        # the low-level apt_pkg.Package object which contains
-        # state fields not directly acccesible from the
+        # low-level apt_pkg.Package object which contains
+        # state fields not directly accessible from the
         # higher-level apt.package.Package object.
         pkg = cache[pkgname]
         ll_pkg = cache._cache[pkgname] # the low-level package object
@@ -819,7 +819,7 @@ def main():
                 updated_cache = True
                 mtimestamp, updated_cache_time = get_updated_cache_time()
 
-            # If theres nothing else to do exit. This will set state as
+            # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.
             if not p['package'] and not p['upgrade'] and not p['deb']:
                 module.exit_json(
@@ -879,7 +879,7 @@ def main():
             # Store when the update time was last
             retvals['cache_update_time'] = updated_cache_time
             # If the cache was updated and the general state change was set to
-            #  False make sure that the change in cache state is acurately
+            #  False make sure that the change in cache state is accurately
             #  updated by setting the general changed state to the same as
             #  the cache state.
             if updated_cache and not retvals['changed']:

@@ -29,7 +29,7 @@ notes:
     - VTP feature must be active on the device to use this module.
     - This module is used to manage only VTP domain names.
     - VTP domain names are case-sensible.
-    - If it's never been configured before, VTP version is setted to 1 by default.
+    - If it's never been configured before, VTP version is set to 1 by default.
       Otherwise, it leaves the previous configured version untouched.
       Use M(nxos_vtp_version) to change it.
     - Use this in combination with M(nxos_vtp_password) and M(nxos_vtp_version)

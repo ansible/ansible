@@ -39,7 +39,7 @@ options:
       default: "present"
       choices: [present, absent]
       description:
-          - Wheather the key will be imported or removed from the rpm db.
+          - If the key will be imported or removed from the rpm db.
     validate_certs:
       description:
           - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated. This should only be used

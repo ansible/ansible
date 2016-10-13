@@ -1528,7 +1528,7 @@ class DarwinUser(User):
     def _change_user_password(self):
         '''Change password for SELF.NAME against SELF.PASSWORD.
 
-        Please note that password must be cleatext.
+        Please note that password must be cleartext.
         '''
         # some documentation on how is stored passwords on OSX:
         # http://blog.lostpassword.com/2012/07/cracking-mac-os-x-lion-accounts-passwords/
@@ -1560,7 +1560,7 @@ class DarwinUser(User):
 
     def __modify_group(self, group, action):
         '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
-        ACTION can be 'add' or 'remove' otherwhise 'remove' is assumed. '''
+        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. '''
         if action == 'add':
             option = '-a'
         else:
@@ -1574,7 +1574,7 @@ class DarwinUser(User):
 
     def _modify_group(self):
         '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
-        ACTION can be 'add' or 'remove' otherwhise 'remove' is assumed. '''
+        ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. '''
 
         rc = 0
         out = ''

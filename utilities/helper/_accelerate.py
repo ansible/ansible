@@ -255,7 +255,7 @@ class LocalSocketThread(Thread):
                             conn.sendall("EXISTS\n")
 
                         # update the last event time so the server doesn't
-                        # shutdown sooner than expected for new cliets
+                        # shutdown sooner than expected for new clients
                         try:
                             self.server.last_event_lock.acquire()
                             self.server.last_event = datetime.datetime.now()

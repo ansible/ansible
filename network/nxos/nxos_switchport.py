@@ -487,7 +487,7 @@ def get_switchport_config_commands(interface, existing, proposed, module):
 def is_switchport_default(existing):
     """Determines if switchport has a default config based on mode
     Args:
-        existing (dict): existing switcport configuration from Ansible mod
+        existing (dict): existing switchport configuration from Ansible mod
     Returns:
         boolean: True if switchport has OOB Layer 2 config, i.e.
            vlan 1 and trunk all and mode is access

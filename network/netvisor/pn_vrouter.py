@@ -97,7 +97,7 @@ options:
         1 and 255 or 0 to unset.
   pn_bgp_options:
     description:
-      - Specify other BGP options as a whitespaces separted string within
+      - Specify other BGP options as a whitespaces separated string within
         single quotes ''.
   pn_rip_redistribute:
     description:

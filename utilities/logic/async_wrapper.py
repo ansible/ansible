@@ -222,7 +222,7 @@ if __name__ == '__main__':
         if pid:
             # Notify the overlord that the async process started
 
-            # we need to not return immmediately such that the launched command has an attempt
+            # we need to not return immediately such that the launched command has an attempt
             # to initialize PRIOR to ansible trying to clean up the launch directory (and argsfile)
             # this probably could be done with some IPC later.  Modules should always read
             # the argsfile at the very first start of their execution anyway

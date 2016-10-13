@@ -35,7 +35,7 @@ options:
         to a given subset.  Possible values for this argument include
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
-        with an initial M(!) to specify that a specific subset should
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
     default: '!config'
@@ -87,7 +87,7 @@ ansible_net_image:
 
 # hardware
 ansible_net_filesystems:
-  description: All file system names availabe on the device
+  description: All file system names available on the device
   returned: when hardware is configured
   type: list
 ansible_net_memfree_mb:

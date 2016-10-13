@@ -158,7 +158,7 @@ options:
         required: false
     public_ip_allocation_method:
         description:
-            - If a public IP address is created when creating the VM (beacuse a Network Interface was not provided),
+            - If a public IP address is created when creating the VM (because a Network Interface was not provided),
               determines if the public IP address remains permanently associated with the Network Interface. If set
               to 'Dynamic' the public IP address may change any time the VM is rebooted or power cycled.
         choices:
@@ -300,7 +300,7 @@ deleted_network_interfaces:
     type: list
     example: ["testvm1001"]
 deleted_public_ips:
-    description: List of deleted publid IP addrees names.
+    description: List of deleted public IP address names.
     returned: 'on delete'
     type: list
     example: ["testvm1001"]
@@ -913,7 +913,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     interface_dict['name'] = int_dict['networkInterfaces']
                     interface_dict['properties'] = nic_dict['properties']
 
-        # Expand public IPs to include config porperties
+        # Expand public IPs to include config properties
         for interface in  result['properties']['networkProfile']['networkInterfaces']:
             for config in interface['properties']['ipConfigurations']:
                 if config['properties'].get('publicIPAddress'):

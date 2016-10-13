@@ -80,7 +80,7 @@ options:
         choices: ['present','absent']
     include_defaults:
         description:
-            - Specify to use or not the complete runnning configuration
+            - Specify to use or not the complete running configuration
               for module operations.
         required: false
         default: true
