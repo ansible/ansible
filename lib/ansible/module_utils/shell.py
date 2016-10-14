@@ -21,6 +21,7 @@ import re
 import socket
 import time
 
+
 # py2 vs py3; replace with six via ansiballz
 try:
     from StringIO import StringIO
@@ -218,6 +219,11 @@ class CliBase(object):
         password = params.get('password')
         key_file = params.get('ssh_keyfile')
         timeout = params['timeout']
+        allow_agent = params.get('allow_agent') or False
+
+        f = open("/tmp/afile", 'w')
+        f.write(str(params))
+        f.close()
 
         try:
             self.shell = Shell(
@@ -227,7 +233,7 @@ class CliBase(object):
             )
             self.shell.open(
                 host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
+                key_filename=key_file, timeout=timeout, allow_agent=allow_agent,
             )
         except ShellError:
             exc = get_exception()
