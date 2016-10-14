@@ -36,7 +36,6 @@
 /cloud/misc/ovirt.py
 /cloud/misc/proxmox.py
 /cloud/misc/proxmox_template.py
-/cloud/misc/virt.py
 /cloud/misc/virt_net.py
 /cloud/misc/virt_pool.py
 /cloud/profitbricks/profitbricks.py
