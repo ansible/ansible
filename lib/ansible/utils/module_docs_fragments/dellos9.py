@@ -40,28 +40,28 @@ options:
     description:
       - User to authenticate the SSH session to the remote device. If the
         value is not specified in the task, the value of environment variable
-        ANSIBLE_NET_USERNAME will be used instead.
+        C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
       - Password to authenticate the SSH session to the remote device. If the
         value is not specified in the task, the value of environment variable
-        ANSIBLE_NET_PASSWORD will be used instead.
+        C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
       - Path to an ssh key used to authenticate the SSH session to the remote
         device.  If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+        environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
     required: false
   authorize:
     description:
-      - Instructs the module to enter priviledged mode on the remote device
+      - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode. If the value
+        attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
-        ANSIBLE_NET_AUTHORIZE will be used instead.
+        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -70,7 +70,7 @@ options:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
     required: false
     default: none
   timeout:
@@ -82,7 +82,7 @@ options:
     default: 10
   provider:
     description:
-      - Convenience method that allows all M(dellos9) arguments to be passed as
+      - Convenience method that allows all I(dellos9) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false

@@ -41,7 +41,7 @@ options:
   username:
     description:
       - Configures the username to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+        the remote device.  This value is used to authenticate
         either the CLI login or the eAPI authentication depending on which
         transport is used. Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of

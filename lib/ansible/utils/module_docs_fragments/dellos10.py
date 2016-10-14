@@ -3,7 +3,8 @@
 #
 # Copyright (c) 2016 Dell Inc.
 #
-# This file is part of Ansible 
+# This file is part of Ansible
+#
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -37,23 +38,22 @@ options:
     default: 22
   username:
     description:
-      - This value I(username) is used to authenticate the SSH session to the
-        remote device. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+      - User to authenticate the SSH session to the remote device. If the
+        value is not specified in the task, the value of environment variable
+        C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
-      - This value I(password) is used to authenticate the SSH session to 
-        the remote device. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+      - Password to authenticate the SSH session to the remote device. If the
+        value is not specified in the task, the value of environment variable
+        C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
-      - This value I(ssh_keyfile) is the path to the key used to authenticate 
-        the SSH session to the remote device.  If the value is not specified
-        in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
-        will be used instead.
+      - Path to an ssh key used to authenticate the SSH session to the remote
+        device.  If the value is not specified in the task, the value of
+        environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
     required: false
   timeout:
     description:
@@ -64,7 +64,7 @@ options:
     default: 10
   provider:
     description:
-      - Convenience method that allows all M(dellos10) arguments to be passed as
+      - Convenience method that allows all I(dellos10) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
