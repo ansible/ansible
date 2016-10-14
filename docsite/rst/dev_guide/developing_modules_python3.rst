@@ -22,29 +22,27 @@ Minimum Version of Python-3.x and Python-2.x
 In controller side code, we support Python-3.5 or greater and Python-2.6 or
 greater.
 
-Modules (and by extension, module_utils) is more complex.  The short answer is
-Python-3.5 and Python-2.4 but please read on for more information.
+For modules (and by extension, module_utils) we support
+Python-3.5 and Python-2.4. Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
+adopted as the default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).  
+Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead of the 
+Python-3 version.
 
-Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
-adopted as the default Python by a Long Term Support (LTS) Linux distribution.
-In this case, Ubuntu-16.04.  Previous LTS Linux distros shipped with
-a Python-2 version which users can rely upon instead of the Python-3 version.
-
-For Python-2 the default is for modules to run on Python-2.4.  This allows
+For Python-2, the default is for modules to run on Python-2.4.  This allows
 users with older distributions that are stuck on Python-2.4 to manage their
 machines.  Modules are allowed to drop support for Python-2.4 when one of
-their dependent libraries require a higher version of Python.  This is not an
+their dependent libraries requires a higher version of Python.  This is not an
 invitation to add unnecessary dependent libraries in order to force your
-module to be usable only with a newer version of Python.  Instead it is an
+module to be usable only with a newer version of Python.; instead it is an
 acknowledgment that some libraries (for instance, boto3 and docker-py) will
-only function with newer Python.
+only function with a newer version of Python.
 
-.. note:: When will we drop support for Python-2.4?
+.. note:: Python-2.4 Support:
 
-    The only long term supported distro that we know of with Python-2.4 is
-    RHEL5 (and its rebuilds like CentOS5)  which is supported until April of
+    The only long term supported distro that we know of with Python-2.4 support is
+    RHEL5 (and its rebuilds like CentOS5), which is supported until April of
     2017.  For Ansible, that means Ansible-2.3 will be the last major release
-    that supports Python-2.4 on the module-side.  Ansible-2.4 will require
+    that supports Python-2.4 for modules.  Ansible-2.4 will require
     Python-2.6 or greater for modules.
 
 -----------------------------------
@@ -66,42 +64,41 @@ Background
 ----------
 
 One of the most essential things to decide upon for porting code to Python-3
-is what String Model to use.  Strings can be an array of bytes like in C or
+is what string model to use.  Strings can be an array of bytes (like in C) or
 they can be an array of text.  Text is what we think of as letters, digits,
 numbers, other printable symbols, and a small number of unprintable "symbols"
 (control codes).
 
 In Python-2, the two types for these (:class:`str` for bytes and
 :class:`unicode` for text) are often used interchangably.  When dealing only
-with ascii characters, the strings can be combined, compared, and converted
-from one type to another automatically.  When non-ascii characters are
+with ASCII characters, the strings can be combined, compared, and converted
+from one type to another automatically.  When non-ASCII characters are
 introduced, Python starts throwing exceptions due to not knowing what encoding
-the non-ascii characters should be in.
+the non-ASCII characters should be in.
 
-Python-3 changes this by making the separation between bytes (:class:`bytes`)
+Python-3 changes this behavior by making the separation between bytes (:class:`bytes`)
 and text (:class:`str`) more strict.  Python will throw an exception when
 trying to combine and compare the two types.  The programmer has to explicitly
 convert from one type to the other to mix values from each.
 
 This change makes it immediately apparent to the programmer when code is
-mixing the types inappropriately instead of working until one of their users
-starts using non-ascii input and things then breaking.  However, it forces the
+mixing the types inappropriately, rather than working until one of their users
+causes an exception by entering non-ASCII input.  However, it forces the
 programmer to proactively define a strategy for working with strings in their
 program so that they don't mix text and byte strings unintentionally.
 
-Unicode Sandwch
+Unicode Sandwich
 ---------------
 
-In Controller-side code we use a strategy known as the Unicode Sandwich (named
+In controller-side code we use a strategy known as the Unicode Sandwich (named
 after Python-2's :class:`unicode` text type).  For Unicode Sandwich we know that
-at the border of our code and the outside world (File and network IO,
-environment variables, some library calls, etc) we are going to receive bytes.
+at the border of our code and the outside world (for example, file and network IO,
+environment variables, and some library calls) we are going to receive bytes.
 We need to transform these bytes into text and use that throughout the
 internal portions of our code.  When we have to send those strings back out to
-the outside world we convert the text back into bytes and then send them on.
-Visualizing this, you see is a top and bottom layer of bytes, a layer of
-conversion between, and all text type in the center.  Thus the sandwich
-metaphor.
+the outside world we first convert the text back into bytes.
+To visual this, imagine a 'sandwich' consisting of a top and bottom layer of bytes, a layer of
+conversion between, and all text type in the center. 
 
 Common Borders
 --------------
@@ -114,7 +111,7 @@ Reading and writing to files
 
 In Python-2, reading from files yields bytes.  In Python-3, it can yield text.
 To make code that's portable to both we don't make use of Python-3's ability
-yield text but do the conversion explicitly ourselves::
+to yield text but instead do the conversion explicitly ourselves. For example::
 
     from ansible.module_utils._text import to_text
 
@@ -128,7 +125,7 @@ yield text but do the conversion explicitly ourselves::
             # of code.
 
 .. note:: Much of Ansible assumes that all encoded text is UTF-8.  At some
-    point, if there is demand for other encodings we may change that but for
+    point, if there is demand for other encodings we may change that, but for
     now it is safe to assume that bytes are UTF-8.
 
 Writing to files is the opposite process::
@@ -145,12 +142,12 @@ to UTF-8.
 Filesystem Interaction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Dealing with filenames often involves dropping back to bytes as, on UNIX-like
-systems, filenames are bytes.  On Python-2, if we pass a text string to these
+Dealing with filenames often involves dropping back to bytes because on UNIX-like
+systems filenames are bytes.  On Python-2, if we pass a text string to these
 functions, the text string will be converted to a byte string inside of the
-function and a traceback will occur if non-ascii characters are present.  In
+function and a traceback will occur if non-ASCII characters are present.  In
 Python-3, a traceback will only occur if the text string can't be decoded in
-the current locale but it's still good to be explicit and have code which
+the current locale, but it's still good to be explicit and have code which
 works on both versions::
 
     import os.path
@@ -167,18 +164,18 @@ works on both versions::
 When you are only manipulating a filename as a string without talking to the
 filesystem (or a C library which talks to the filesystem) you can often get
 away without converting to bytes.  If the code needs to manipulate the
-filename and also talk to the filesystem it can be more convenient to
-transform to bytes right away and manipulate in bytes, though::
+filename and also talk to the filesystem, it can be more convenient to
+transform to bytes right away and manipulate in bytes. For example::
 
     import os.path
 
     os.path.join(u'/var/tmp/café', u'くらとみ')
     os.path.split(u'/var/tmp/café/くらとみ')
 
-.. warn:: Make sure all variables input into a function are the same type.
+.. warn:: Make sure all variables passed to a function are the same type.
     If you're working with something like :func:`os.path.join` which takes
     multiple strings and uses them in combination, you need to make sure that
-    all the types are the same (all bytes type or all text type).  Mixing
+    all the types are the same (either all bytes or all text).  Mixing
     bytes and text will cause tracebacks.
 
 Interacting with Other Programs
@@ -200,7 +197,7 @@ transform the output into text strings.
 Tips, tricks, and idioms to adopt
 =================================
 
-Forwards Compat Boilerplate
+Forwards Compatability Boilerplate
 ---------------------------
 
 Use the following boilerplate code at the top of all controller-side modules
@@ -240,8 +237,8 @@ prefixing any variable holding bytes with ``b_``.  For instance::
     with open(b_filename) as f:
         data = f.read()
 
-Why not prefix the text strings instead?  The reason is that we only operate
-on byte strings at the borders so there are fewer variables that need bytes
+We do not recommend prefixing the text strings instead because we only operate
+on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
 ---------------------------
@@ -252,8 +249,8 @@ Ansible modules are not the usual Python-3 porting exercise.  There are two
 factors that make it harder to port them than most code:
 
 1. Many modules need to run on Python-2.4 in addition to Python-3.
-2. A lot of mocking has to go into unittesting a Python-3 module.  So it's
-   harder to test that your porting has fixed everything or to make sure that
+2. A lot of mocking has to go into unit testing a Python-3 module, so it's
+   harder to test that your porting has fixed everything or to to make sure that
    later commits haven't regressed.
 
 Module String Strategy
@@ -263,46 +260,8 @@ There are a large number of modules in Ansible.  Most of those are maintained
 by the Ansible community at large, not by a centralized team.  To make life
 easier on them, it was decided not to break backwards compatibility by
 mandating that all strings inside of modules are text and converting between
-text and bytes at the borders.  Instead, we're using a native string strategy
+text and bytes at the borders; instead, we're using a native string strategy
 for now.
-
-Supporting only Python-2 or only Python-3
-=========================================
-
-Sometimes a module's dependent libraries only run on Python-2 or only run on
-Python-3.  We do not yet have a strategy for these modules but we'll need to
-come up with one.  I see three possibilities:
-
-1. We treat these libraries like any other libraries that may not be installed
-   on the system.  When we import them we check if the import was successful.
-   If so, then we continue.  If not we return an error about the library being
-   missing.  Users will have to find out that the library is unavailable on
-   their version of Python either by searching for the library on their own or
-   reading the requirements section in :command:`ansible-doc`.
-
-2. The shebang line is the only metadata that Ansible extracts from a module
-   so we may end up using that to specify what we mean.  Something like
-   ``#!/usr/bin/python`` means the module will run on both Python-2 and
-   Python-3, ``#!/usr/bin/python2`` means the module will only run on
-   Python-2, and ``#!/usr/bin/python3`` means the module will only run on
-   Python-3.  Ansible's code will need to be modified to accommodate this.
-   For :command:`python2`, if ``ansible_python2_interpreter`` is not set, it
-   will have to fallback to `` ansible_python_interpreter`` and if that's not
-   set, fallback to ``/usr/bin/python``.  For :command:`python3`,  Ansible
-   will have to first try ``ansible_python3_interpreter`` and then fallback to
-   ``/usr/bin/python3`` as normal.
-
-3. We add a way for Ansible to retrieve metadata about modules.  The metadata
-   will include the version of Python that is required.
-
-Methods 2 and 3 will both require that we modify modules or otherwise add this
-additional information somewhere.  2 needs only a little code changes in
-executor/module_common.py to parse.  3 will require a lot of work.  This is
-probably not worthwhile if this is the only change but could be worthwhile if
-there's other things as well.  1 requires that we port all modules to work
-with python3 syntax but only the code path to get to the library import being
-attempted and then a fail_json() being called because the libraries are
-unavailable needs to actually work.
 
 Tips, tricks, and idioms to adopt
 =================================
@@ -310,9 +269,9 @@ Tips, tricks, and idioms to adopt
 Exceptions
 ----------
 
-In code which already needs Python-2.6+ (For instance, because a library it
+In code which already needs Python-2.6+ (for instance, because a library it
 depends on only runs on Python >= 2.6) it is okay to port directly to the new
-exception catching syntax::
+exception-catching syntax::
 
     try:
         a = 2/0
