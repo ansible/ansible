@@ -56,7 +56,7 @@ class StrategyModule(StrategyBase):
         # the last host to be given a task
         last_host = 0
 
-        result = True
+        result = self._tqm.RUN_OK
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
@@ -175,7 +175,7 @@ class StrategyModule(StrategyBase):
                     variable_manager=self._variable_manager
                 )
             except AnsibleError as e:
-                return False
+                return self._tqm.RUN_ERROR
 
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
