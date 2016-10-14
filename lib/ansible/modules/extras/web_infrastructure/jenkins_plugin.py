@@ -251,7 +251,6 @@ EXAMPLES = '''
         state: restarted
       when: jenkins_restart_required
 
-    # Requires python-httplib2 to be installed on the guest
     - name: Wait for Jenkins to start up
       uri:
         url: http://localhost:8080
