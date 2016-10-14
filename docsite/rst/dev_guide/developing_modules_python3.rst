@@ -16,8 +16,9 @@ porting:
 Much of the knowledge of porting code will be usable on all three of these
 pieces but there are some special considerations for some of it as well.
 
+--------------------------------------------
 Minimum Version of Python-3.x and Python-2.x
-============================================
+--------------------------------------------
 
 In controller side code, we support Python-3.5 or greater and Python-2.6 or
 greater.
@@ -55,7 +56,7 @@ to port code is `Lennart Regebro's book: Porting to Python 3 <http://python3port
 
 The book describes several strategies for porting to Python 3.  The one we're
 using is `to support Python-2 and Python-3 from a single code base
-http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion`_
+<http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
 
 Controller String Strategy
 ==========================
@@ -88,7 +89,7 @@ programmer to proactively define a strategy for working with strings in their
 program so that they don't mix text and byte strings unintentionally.
 
 Unicode Sandwich
----------------
+----------------
 
 In controller-side code we use a strategy known as the Unicode Sandwich (named
 after Python-2's :class:`unicode` text type).  For Unicode Sandwich we know that
@@ -97,8 +98,8 @@ environment variables, and some library calls) we are going to receive bytes.
 We need to transform these bytes into text and use that throughout the
 internal portions of our code.  When we have to send those strings back out to
 the outside world we first convert the text back into bytes.
-To visual this, imagine a 'sandwich' consisting of a top and bottom layer of bytes, a layer of
-conversion between, and all text type in the center. 
+To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
+of bytes, a layer of conversion between, and all text type in the center.
 
 Common Borders
 --------------
@@ -163,16 +164,18 @@ works on both versions::
 
 When you are only manipulating a filename as a string without talking to the
 filesystem (or a C library which talks to the filesystem) you can often get
-away without converting to bytes.  If the code needs to manipulate the
-filename and also talk to the filesystem, it can be more convenient to
-transform to bytes right away and manipulate in bytes. For example::
+away without converting to bytes::
 
     import os.path
 
     os.path.join(u'/var/tmp/café', u'くらとみ')
     os.path.split(u'/var/tmp/café/くらとみ')
 
-.. warn:: Make sure all variables passed to a function are the same type.
+On the other hand, if the code needs to manipulate the filename and also talk
+to the filesystem, it can be more convenient to transform to bytes right away
+and manipulate in bytes.
+
+.. warning:: Make sure all variables passed to a function are the same type.
     If you're working with something like :func:`os.path.join` which takes
     multiple strings and uses them in combination, you need to make sure that
     all the types are the same (either all bytes or all text).  Mixing
@@ -197,8 +200,8 @@ transform the output into text strings.
 Tips, tricks, and idioms to adopt
 =================================
 
-Forwards Compatability Boilerplate
----------------------------
+Forwards Compatibility Boilerplate
+----------------------------------
 
 Use the following boilerplate code at the top of all controller-side modules
 to make certain constructs act the same way on Python-2 and Python-3::
@@ -225,8 +228,8 @@ The ``__future__`` imports do the following:
     * `PEP 0238: Division <https://www.python.org/dev/peps/pep-0238>`_
     * `PEP 3105: Print function <https://www.python.org/dev/peps/pep-3105>`_
 
-Prefix byte strings with "b_"
------------------------------
+Prefix byte strings with "b\_"
+------------------------------
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by
@@ -237,7 +240,7 @@ prefixing any variable holding bytes with ``b_``.  For instance::
     with open(b_filename) as f:
         data = f.read()
 
-We do not recommend prefixing the text strings instead because we only operate
+We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
