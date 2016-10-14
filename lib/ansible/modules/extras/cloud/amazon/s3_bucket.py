@@ -198,32 +198,28 @@ def _create_or_update_bucket(connection, module, location):
 
     # Policy
     try:
-        current_policy = bucket.get_policy()
+        current_policy = json.loads(bucket.get_policy())
     except S3ResponseError as e:
         if e.error_code == "NoSuchBucketPolicy":
-            current_policy = None
+            current_policy = {}
         else:
             module.fail_json(msg=e.message)
+    if policy is not None:
+        if isinstance(policy, basestring):
+            policy = json.loads(policy)
 
-    if current_policy is not None:
-        if policy == {}:
+        if not policy:
+            bucket.delete_policy()
+            # only show changed if there was already a policy
+            changed = bool(current_policy)
+
+        elif current_policy != policy:
             try:
-                bucket.delete_policy()
+                bucket.set_policy(json.dumps(policy))
                 changed = True
-                current_policy = bucket.get_policy()
+                current_policy = json.loads(bucket.get_policy())
             except S3ResponseError as e:
-                if e.error_code == "NoSuchBucketPolicy":
-                    current_policy = None
-                else:
-                    module.fail_json(msg=e.message)
-        if policy is not None:
-            if json.loads(current_policy) != json.loads(policy):
-                try:
-                    bucket.set_policy(policy)
-                    changed = True
-                    current_policy = bucket.get_policy()
-                except S3ResponseError as e:
-                    module.fail_json(msg=e.message)
+                module.fail_json(msg=e.message)
 
     # Tags
     try:
@@ -352,7 +348,7 @@ def main():
     argument_spec.update(
         dict(
             force=dict(required=False, default='no', type='bool'),
-            policy=dict(required=False, type='json'),
+            policy=dict(required=False, default=None, type='json'),
             name=dict(required=True, type='str'),
             requester_pays=dict(default='no', type='bool'),
             s3_url=dict(aliases=['S3_URL'], type='str'),
