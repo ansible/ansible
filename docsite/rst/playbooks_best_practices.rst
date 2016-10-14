@@ -77,7 +77,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
 
     inventories/
        production/
-          hosts.ini           # inventory file for production servers
+          hosts               # inventory file for production servers
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""
@@ -86,7 +86,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              hostname2        # ""
 
        staging/
-          hosts.ini           # inventory file for staging environment
+          hosts               # inventory file for staging environment
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""
