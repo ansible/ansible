@@ -28,6 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.playbook.role_include import IncludeRole
 
 from ansible.utils.boolean import boolean
 
@@ -265,9 +266,18 @@ class PlayIterator:
             else:
                 return old_s.cur_dep_chain != task.get_dep_chain()
 
+        def _role_is_child(r):
+            parent = task._parent
+            while parent:
+                if hasattr(parent, '_role') and parent._role == r and isinstance(parent, IncludeRole):
+                    return True
+                parent = parent._parent
+            return False
+
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and not peek:
+            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and \
+               not _role_is_child(s.cur_role) and not peek:
                 s.cur_role._completed[host.name] = True
             s.cur_role = task._role
             s.cur_dep_chain = task.get_dep_chain()
