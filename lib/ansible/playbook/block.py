@@ -251,7 +251,7 @@ class Block(Base, Become, Conditional, Taggable):
                 p = TaskInclude()
             elif parent_type == 'HandlerTaskInclude':
                 p = HandlerTaskInclude()
-            p.deserialize(pb_data)
+            p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
 
