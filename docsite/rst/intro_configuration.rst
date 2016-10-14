@@ -349,7 +349,7 @@ forks
 =====
 
 This is the default number of parallel processes to spawn when communicating with remote hosts.  Since Ansible 1.3,
-the fork number is automatically limited to the number of possible hosts, so this is really a limit of how much
+the fork number is automatically limited to the number of possible hosts at runtime, so this is really a limit of how much
 network and CPU load you think you can handle.  Many users may set this to 50, some set it to 500 or more.  If you
 have a large number of hosts, higher values will make actions across all of those hosts complete faster.  The default
 is very very conservative::
