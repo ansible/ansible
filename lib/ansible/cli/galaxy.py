@@ -448,11 +448,6 @@ class GalaxyCLI(CLI):
         return 0
 
     def _display_role(self, role, label):
-        if not role.metadata:
-            display.error('%s not found: %s' % (label, role))
-            display.display("- the role %s was not found" % label)
-            return
-
         if not role.install_info:
             return
 
@@ -463,6 +458,101 @@ class GalaxyCLI(CLI):
     def _display_roles(self, role_list):
         for role, label in role_list:
             self._display_role(role, label)
+
+    def _build_roles_paths_errors(self, err_msg_lines, roles_paths, verbosity=None, fatal=None):
+        if not err_msg_lines:
+            return None
+
+        err_msg_header = "The following paths in roles paths are not valid:"
+        if fatal:
+            err_msg_header = "None of the following paths in roles paths are valid:"
+
+        # verbosity decides if we display the current configured paths as well
+        # Include it in the error msg instead of direct to display.v so that exception will include it
+        err_msg_current_roles_path_msg = []
+        if verbosity:
+            err_msg_current_roles_path_msg = ["The current roles paths are:"] + ['\t%s' % x for x in roles_paths]
+
+        err_msg_footer = "Please specify a valid path with --roles-path."
+
+        all_err_msg_lines = [err_msg_header] + err_msg_lines + [err_msg_footer] + err_msg_current_roles_path_msg
+        err_msg = '\n'.join(all_err_msg_lines)
+        return err_msg
+
+    def _verify_roles_paths(self, roles_paths, full_roles_dir_paths, verbosity=None):
+        '''Check a list of roles paths to see if they exist and are directories.
+
+        Raises an AnsibleOptionsError if there are no valid roles paths.
+        '''
+
+        err_msg_lines = []
+
+        # filter out missing or non-dirs
+        filtered_full_roles_dir_paths = []
+        missing_dirs = []
+        not_dirs = []
+        for path in full_roles_dir_paths:
+            if not os.path.exists(path):
+                missing_dirs.append(path)
+                continue
+            elif not os.path.isdir(path):
+                not_dirs.append(path)
+                continue
+            filtered_full_roles_dir_paths.append(path)
+
+        for missing_dir in missing_dirs:
+            err_msg_lines.append("\t%s  [path does not exist]" % missing_dir)
+
+        for not_dir in not_dirs:
+            err_msg_lines.append("\t%s  [path is not a directory]" % not_dir)
+
+        # TODO: sort missing_dir and not_dir?
+
+        # Got at least some valid roles paths, warn about invalid ones
+        if filtered_full_roles_dir_paths:
+            # skip if there are no per path warnings
+            # TODO: maybe skip the warning if we are not -v ?
+            err_msg = self._build_roles_paths_errors(err_msg_lines, roles_paths, verbosity, fatal=False)
+            if err_msg:
+                display.warning(err_msg, formatted=True)
+        else:
+            # Looks like none of the paths were valid
+            err_msg = self._build_roles_paths_errors(err_msg_lines, verbosity, fatal=True)
+            if err_msg:
+                raise AnsibleOptionsError(err_msg)
+
+        return filtered_full_roles_dir_paths
+
+    # TODO: lots of this code could be converted to generators and iterators
+    def _find_roles_paths(self, roles_paths):
+        return [os.path.expanduser(x) for x in roles_paths]
+
+    def _find_roles_in_roles_paths(self, roles_dir_paths):
+        label_and_full_path_list = []
+        found_roles = []
+
+        for roles_dir_path in roles_dir_paths:
+            # build a list of tuples of (basename, full_path)
+            label_and_full_path_list += [(x, os.path.join(roles_dir_path, x)) for x in os.listdir(roles_dir_path)]
+
+        for label, full_path in label_and_full_path_list:
+            gr = GalaxyRole(self.galaxy, label)
+            found_roles.append((gr, full_path))
+
+        return found_roles
+
+    # TODO: could be generator
+    def _find_roles_to_display(self, roles_dir_paths):
+        roles_to_display = []
+
+        found_roles = self._find_roles_in_roles_paths(roles_dir_paths)
+        for role, full_path in found_roles:
+            if not role.metadata:
+                display.warning('The role at %s is missing metadata' % full_path)
+                continue
+            roles_to_display.append((role, full_path))
+
+        return roles_to_display
 
     def execute_list(self):
         """
@@ -475,83 +565,28 @@ class GalaxyCLI(CLI):
         if len(self.args) > 1:
             raise AnsibleOptionsError("- please specify only one role to list, or specify no roles to see a full list")
 
+        roles_to_display = []
+
         if len(self.args) == 1:
             # show only the request role, if it exists
             name = self.args.pop()
             gr = GalaxyRole(self.galaxy, name)
-            self._display_role(gr, name)
+            roles_to_display.append((gr, name))
         else:
             # show all valid roles in the roles_path directory
             roles_paths = self.get_opt('roles_path')
-            full_roles_dir_paths = []
-            missing_dirs = []
-            not_dirs = []
 
-            for path in roles_paths:
-                role_path = os.path.expanduser(path)
+            unverified_full_roles_dir_paths = self._find_roles_paths(roles_paths)
 
-                if not os.path.exists(role_path):
-                    missing_dirs.append(role_path)
-                    continue
-                elif not os.path.isdir(role_path):
-                    not_dirs.append(role_path)
-                    continue
+            # NOTE: will raise AnsibleOptionsError if none of the roles paths are valid
+            full_roles_dir_paths = self._verify_roles_paths(roles_paths, unverified_full_roles_dir_paths, verbosity=self.options.verbosity)
 
-                full_roles_dir_paths.append(role_path)
+            # TODO: sort missing_dir and not_dir for consistency between configured roles path list and reported list
 
-            err_msg_lines = []
+            # look for all roles on all the paths, ignoring those with no metadata (but warning...)
+            roles_to_display = self._find_roles_to_display(full_roles_dir_paths)
 
-            err_msg_header = "The following paths in roles paths are not valid:"
-            err_msg_fatal_header = "None of the following paths in roles paths are valid:"
-
-            if self.options.verbosity:
-                err_msg_current_roles_path_msg = ["The current roles paths are:"] + ['\t%s' % x for x in roles_paths]
-            else:
-                err_msg_current_roles_path_msg = []
-
-            err_msg_footer = "Please specify a valid path with --roles-path."
-
-            for missing_dir in missing_dirs:
-                err_msg_lines.append("\t%s  [path does not exist]" % missing_dir)
-
-            for not_dir in not_dirs:
-                err_msg_lines.append("\t%s  [path is not a directory]" % not_dir)
-
-            # TODO: sort missing_dir and not_dir?
-
-            # Got at least some valid roles paths, warn about invalid ones
-            if full_roles_dir_paths:
-                # skip if there are no per path warnings
-                # TODO: maybe skip the warning if we are not -v ?
-                if err_msg_lines:
-                    err_msg_lines = [err_msg_header] + err_msg_lines + [err_msg_footer] + err_msg_current_roles_path_msg
-                    err_msg = '\n'.join(err_msg_lines)
-                    display.warning(err_msg, formatted=True)
-            else:
-                # Looks like none of the paths were valid
-                err_msg_lines = [err_msg_fatal_header] + err_msg_lines + [err_msg_footer] + err_msg_current_roles_path_msg
-                err_msg = '\n'.join(err_msg_lines)
-                raise AnsibleOptionsError(err_msg)
-
-            full_role_file_paths_and_label = []
-            for full_roles_dir_path in full_roles_dir_paths:
-                path_files = os.listdir(full_roles_dir_path)
-                for path_file in path_files:
-                    print('path_file=%s full_roles_dir_path=%s' % (path_file, full_roles_dir_path))
-                    full_role_file_path = os.path.join(full_roles_dir_path, path_file)
-                    print('path_file=%s full_roles_dir_path=%s  %s' % (path_file, full_roles_dir_path, full_role_file_path))
-                    full_role_file_paths_and_label.append((path_file, full_role_file_path))
-
-            role_info_blurbs = []
-            roles_to_display = []
-            for label, full_role_file_path in full_role_file_paths_and_label:
-                gr = GalaxyRole(self.galaxy, label)
-                if not gr.metadata:
-                    display.warning('The role at %s is missing metadata' % full_role_file_path)
-                    continue
-                roles_to_display.append((gr, full_role_file_path))
-
-            self._display_roles(roles_to_display)
+        self._display_roles(roles_to_display)
 
         return 0
 
