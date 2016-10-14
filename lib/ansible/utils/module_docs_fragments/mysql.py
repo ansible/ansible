@@ -24,7 +24,7 @@ class ModuleDocFragment(object):
 options:
   login_user:
     description:
-u      - The username used to authenticate with.
+      - The username used to authenticate with.
     required: false
     default: null
   login_password:
