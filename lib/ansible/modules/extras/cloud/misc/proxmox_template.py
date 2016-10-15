@@ -184,12 +184,12 @@ def main():
   if not api_password:
     try:
       api_password = os.environ['PROXMOX_PASSWORD']
-    except KeyError, e:
+    except KeyError as e:
       module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
 
   try:
     proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
-  except Exception, e:
+  except Exception as e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
   if state == 'present':
@@ -209,7 +209,7 @@ def main():
 
       if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
         module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
 
   elif state == 'absent':
@@ -224,7 +224,7 @@ def main():
 
       if delete_template(module, proxmox, node, storage, content_type, template, timeout):
         module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
-    except Exception, e:
+    except Exception as e:
       module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
 
 # import module snippets
