@@ -327,7 +327,7 @@ class NailGun(object):
         products = params['products']
         del params['products']
 
-        sync_plan = SyncPlan(
+        sync_plan = self._entities.SyncPlan(
             self._server,
             name=params['name'],
             organization=org
@@ -392,8 +392,8 @@ class NailGun(object):
         env = self.find_lifecycle_environment(environment, organization)
         content_view = self.find_content_view(name, organization)
 
-        content_view_version = ContentViewVersion(self._server, content_view=content_view)
-        response = content_view_version.search(set('content_view'), {'environment_id': env.id})
+        content_view_version = self._entities.ContentViewVersion(self._server, content_view=content_view)
+        response = content_view_version.search(['content_view'], {'environment_id': env.id})
 
         if len(response) == 1:
             return response[0]
