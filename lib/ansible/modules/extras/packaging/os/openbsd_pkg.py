@@ -176,11 +176,14 @@ def package_present(name, installed_state, pkg_spec, module):
                 # "file:/local/package/directory/ is empty" message on stderr
                 # while still installing the package, so we need to look for
                 # for a message like "packagename-1.0: ok" just in case.
-                match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+                if pkg_spec['style'] == 'branch':
+                    match = re.search("\W%s-[^:]+: ok\W" % pkg_spec['pkgname'], stdout)
+                else:
+                    match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+
                 if match:
                     # It turns out we were able to install the package.
-                    module.debug("package_present(): we were able to install package")
-                    pass
+                    module.debug("package_present(): we were able to install the package")
                 else:
                     # We really did fail, fake the return code.
                     module.debug("package_present(): we really did fail")
@@ -352,6 +355,10 @@ def parse_package_name(name, pkg_spec, module):
             module.fail_json(msg="package name using 'branch' syntax requires at least OpenBSD %s: %s" % (branch_release, name))
 
         pkg_spec['style'] = 'branch'
+
+        # Key names from description in pkg_add(1).
+        pkg_spec['pkgname'] = pkg_spec['stem'].split('%')[0]
+        pkg_spec['branch'] = pkg_spec['stem'].split('%')[1]
 
     # Sanity check that there are no trailing dashes in flavor.
     # Try to stop strange stuff early so we can be strict later.
