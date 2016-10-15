@@ -156,7 +156,8 @@ def remove_tags(gce, module, instance_name, tags):
         node = gce.ex_get_node(instance_name, zone=zone)
     except ResourceNotFoundError:
         module.fail_json(msg='Instance %s not found in zone %s' % (instance_name, zone), changed=False)
-    except GoogleBaseError, e:
+    except GoogleBaseError:
+        e = get_exception()
         module.fail_json(msg=str(e), changed=False)
 
     node_tags = node.extra['tags']
