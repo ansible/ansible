@@ -63,7 +63,6 @@
 /monitoring/circonus_annotation.py
 /monitoring/datadog_monitor.py
 /monitoring/rollbar_deployment.py
-/monitoring/sensu_check.py
 /monitoring/stackdriver.py
 /monitoring/zabbix_group.py
 /monitoring/zabbix_host.py
