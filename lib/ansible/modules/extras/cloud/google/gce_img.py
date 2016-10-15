@@ -111,7 +111,6 @@ EXAMPLES = '''
     state: absent
 '''
 
-import sys
 
 try:
   import libcloud
@@ -124,6 +123,9 @@ try:
   has_libcloud = True
 except ImportError:
   has_libcloud = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 
 GCS_URI = 'https://storage.googleapis.com/'
@@ -152,7 +154,7 @@ def create_image(gce, name, module):
     except ResourceNotFoundError:
       module.fail_json(msg='Disk %s not found in zone %s' % (source, zone),
                        changed=False)
-    except GoogleBaseError, e:
+    except GoogleBaseError as e:
       module.fail_json(msg=str(e), changed=False)
 
   gce_extra_args = {}
@@ -166,8 +168,7 @@ def create_image(gce, name, module):
     return True
   except ResourceExistsError:
     return False
-  except GoogleBaseError:
-    e = get_exception()
+  except GoogleBaseError as e:
     module.fail_json(msg=str(e), changed=False)
   finally:
     gce.connection.timeout = old_timeout
@@ -180,7 +181,7 @@ def delete_image(gce, name, module):
     return True
   except ResourceNotFoundError:
     return False
-  except GoogleBaseError, e:
+  except GoogleBaseError as e:
     module.fail_json(msg=str(e), changed=False)
 
 
@@ -224,8 +225,5 @@ def main():
 
   module.exit_json(changed=changed, name=name)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
-
-main()
+if __name__ == '__main__':
+    main()
