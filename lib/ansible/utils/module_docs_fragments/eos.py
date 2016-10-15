@@ -64,7 +64,7 @@ options:
       - Specifies whether to allow SSH agents to be used.  This argument
         is only used for the I(cli) transport.  If the value is not specified in
         the task, the value of the variable C(ANSIBLE_NET_ALLOW_AGENT) will be used
-        instead
+        instead.
     required: false
     default: false
   authorize:

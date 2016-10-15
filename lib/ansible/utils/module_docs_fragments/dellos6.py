@@ -59,7 +59,7 @@ options:
     description:
       - Specifies whether to allow SSH agents to be used.  If the value is not
         specified in the task, the value of the variable C(ANSIBLE_NET_ALLOW_AGENT)
-        will be used instead
+        will be used instead.
     required: false
     default: false
   authorize:
