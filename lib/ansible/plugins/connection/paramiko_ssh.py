@@ -308,7 +308,7 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self._play_context.become and self._play_context.become_pass:
-                        chan.sendall(self._play_context.become_pass + '\n')
+                        chan.sendall(to_bytes(self._play_context.become_pass, errors='strict') + b'\n')
                     else:
                         raise AnsibleError("A password is reqired but none was supplied")
                 else:
