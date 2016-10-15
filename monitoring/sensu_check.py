@@ -206,7 +206,8 @@ def sensu_check(module, path, name, state='present', backup=False):
         try:
             stream = open(path, 'r')
             config = json.load(stream)
-        except IOError, e:
+        except IOError:
+            e = get_exception()
             if e.errno is 2:  # File not found, non-fatal
                 if state == 'absent':
                     reasons.append('file did not exist and state is `absent\'')
@@ -327,7 +328,8 @@ def sensu_check(module, path, name, state='present', backup=False):
             try:
                 stream = open(path, 'w')
                 stream.write(json.dumps(config, indent=2) + '\n')
-            except IOError, e:
+            except IOError:
+                e = get_exception()
                 module.fail_json(msg=str(e))
         finally:
             if stream:
@@ -381,4 +383,5 @@ def main():
     module.exit_json(path=path, changed=changed, msg='OK', name=name, reasons=reasons)
 
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
