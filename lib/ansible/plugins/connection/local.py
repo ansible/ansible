@@ -106,7 +106,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError('privilege output closed while waiting for password prompt:\n' + become_output)
                 become_output += chunk
             if not self.check_become_success(become_output):
-                p.stdin.write(self._play_context.become_pass + '\n')
+                p.stdin.write(to_bytes(self._play_context.become_pass, errors='surrogate_or_strict') + b'\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
