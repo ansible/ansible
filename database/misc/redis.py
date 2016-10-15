@@ -210,7 +210,8 @@ def main():
                               password=login_password)
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         #Check if we are already in the mode that we want
@@ -269,7 +270,8 @@ def main():
                               db=db)
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         # Do the stuff
@@ -296,13 +298,15 @@ def main():
 
         try:
             r.ping()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         
         try:
             old_value = r.config_get(name)[name]
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to read config: %s" % e)
         changed = old_value != value
 
@@ -311,7 +315,8 @@ def main():
         else:
             try:
                 r.config_set(name, value)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="unable to write config: %s" % e)
             module.exit_json(changed=changed, name=name, value=value)
     else:
@@ -319,4 +324,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
