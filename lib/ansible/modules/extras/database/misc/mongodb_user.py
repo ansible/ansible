@@ -185,7 +185,7 @@ def check_compatibility(module, client):
     elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
         module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
 
-    elif loose_srv_version >= LooseVersion('2.6') and loose_srv_version <= LooseVersion('2.7'):
+    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
         module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
 
     elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
