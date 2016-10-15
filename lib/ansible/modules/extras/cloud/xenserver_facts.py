@@ -170,7 +170,7 @@ def main():
     obj = XenServerFacts()
     try:
         session = get_xenapi_session()
-    except XenAPI.Failure, e:
+    except XenAPI.Failure as e:
         module.fail_json(msg='%s' % e)
 
     data = {
