@@ -461,7 +461,7 @@ def main():
     #initialize connection
     try:
         c = conn(url+"/api", user, password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e)
 
     if state == 'present':
@@ -469,14 +469,14 @@ def main():
             if resource_type == 'template':
                 try:
                     create_vm_template(c, vmname, image, zone)
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg='%s' % e)
                 module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmname,image))
             elif resource_type == 'new':
                 # FIXME: refactor, use keyword args.
                 try:
                     create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int)
-                except Exception, e:
+                except Exception as e:
                     module.fail_json(msg='%s' % e)
                 module.exit_json(changed=True, msg="deployed VM %s from scratch"  % vmname)
             else:
