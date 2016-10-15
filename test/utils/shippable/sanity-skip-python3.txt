@@ -31,8 +31,6 @@
 /cloud/centurylink/clc_aa_policy.py
 /cloud/centurylink/clc_group.py
 /cloud/centurylink/clc_publicip.py
-/cloud/google/gce_img.py
-/cloud/google/gce_tag.py
 /cloud/misc/proxmox.py
 /cloud/misc/proxmox_template.py
 /cloud/misc/virt_net.py
