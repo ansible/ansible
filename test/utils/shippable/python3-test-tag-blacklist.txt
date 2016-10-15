@@ -9,5 +9,4 @@ test_pip
 test_service
 test_subversion
 test_synchronize
-test_unarchive
 test_uri
