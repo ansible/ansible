@@ -166,7 +166,8 @@ def create_image(gce, name, module):
     return True
   except ResourceExistsError:
     return False
-  except GoogleBaseError, e:
+  except GoogleBaseError:
+    e = get_exception()
     module.fail_json(msg=str(e), changed=False)
   finally:
     gce.connection.timeout = old_timeout
