@@ -34,7 +34,7 @@ version_added: "2.0"
 short_description: return a list of files based on specific criteria
 requirements: []
 description:
-    - Return a list files based on specific criteria. Multiple criteria are AND'd together.
+    - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
 options:
     age:
         required: false
@@ -139,13 +139,13 @@ files:
     returned: success
     type: list of dictionaries
     sample: [
-        { path="/var/tmp/test1",
-          mode=0644,
-          ...,
-          checksum=16fac7be61a6e4591a33ef4b729c5c3302307523
+        { path: "/var/tmp/test1",
+          mode: "0644",
+          "...": "...",
+          checksum: 16fac7be61a6e4591a33ef4b729c5c3302307523
         },
-        { path="/var/tmp/test2",
-          ...
+        { path: "/var/tmp/test2",
+          "...": "..."
         },
         ]
 matched:
