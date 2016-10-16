@@ -446,8 +446,7 @@ class AnsibleDockerClient(Client):
         '''
         self.log("Pulling image %s:%s" % (name, tag))
         try:
-            for line in self.pull(name, tag=tag, stream=True):
-                line = json.loads(line)
+            for line in self.pull(name, tag=tag, stream=True, decode=True):
                 self.log(line, pretty_print=True)
                 if line.get('error'):
                     if line.get('errorDetail'):

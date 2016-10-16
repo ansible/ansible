@@ -28,6 +28,7 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.module_utils._text import to_native
 
 
 __all__ = ['RoleInclude']
@@ -49,7 +50,9 @@ class RoleInclude(RoleDefinition):
     @staticmethod
     def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None):
 
-        assert isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)
+        if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
+            raise AnsibleParserError("Invalid role definition: %s" % to_native(data))
+
         if isinstance(data, string_types) and ',' in data:
             data = RoleRequirement.role_spec_parse(data)
 

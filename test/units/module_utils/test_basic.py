@@ -27,13 +27,9 @@ import os
 import sys
 from io import BytesIO, StringIO
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
+from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 
@@ -1032,5 +1028,5 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
 
         # invalid modes
-        mock_stat.st_mode = 0o0400000
+        mock_stat.st_mode = 0o040000
         self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

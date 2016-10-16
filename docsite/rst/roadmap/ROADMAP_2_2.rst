@@ -6,9 +6,9 @@ Target: September 2016
 **********************
 - **Docker** (lead by Chris Houseknecht)
 
-  - Docker_network
-  - Docker_volume
-  - Docker_file
+  - Docker_network: **done**
+  - Docker_volume: Not in this release
+  - Docker_file: Not in this release.
   - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_.)
   - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_)
 
@@ -23,8 +23,7 @@ Target: September 2016
 
 - **Tweaks/Fixes**
 
-  - Add the ability to set_fact to deal with updating arrays and hashes (Jimi)
-  - Connection handling stuff. (Toshio K. and Brian C.): This is a stretch goal for 2.2.  It may go into 2.3
+  - Connection handling stuff. (Toshio K. and Brian C.): This is a stretch goal for 2.2.  **This work got pushed out**
 
     - Change connection polling to avoid resource limitations, see `<https://github.com/ansible/ansible/issues/14143>`_
     - `<https://docs.python.org/3/library/selectors.html#module-selectors>`_

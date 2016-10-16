@@ -20,19 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
-import sys
 
 from jinja2 import Undefined as j2undefined
 
 from ansible import constants as C
-from ansible.inventory.host import Host
 from ansible.template import Templar
 
 STATIC_VARS = [
-  'inventory_hostname', 'inventory_hostname_short',
-  'inventory_file', 'inventory_dir', 'playbook_dir',
-  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
-  'ansible_version', 'omit', 'role_names'
+    'inventory_hostname', 'inventory_hostname_short',
+    'inventory_file', 'inventory_dir', 'playbook_dir',
+    'ansible_play_hosts', 'play_hosts', 'groups',
+    'ungrouped', 'group_names', 'ansible_version', 'omit', 'role_names'
 ]
 
 try:
@@ -103,15 +101,15 @@ class HostVars(collections.Mapping):
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
             yield host
 
     def __len__(self):
-        return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
+        return len(self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True))
 
     def __repr__(self):
         out = {}
-        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+        for host in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
             name = host.name
             out[name] = self.get(name)
         return repr(out)

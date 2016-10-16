@@ -1,5 +1,4 @@
 test_apache2_module
-test_assemble
 test_authorized_key
 test_filters
 test_gem
@@ -10,5 +9,4 @@ test_pip
 test_service
 test_subversion
 test_synchronize
-test_unarchive
 test_uri

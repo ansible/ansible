@@ -10,7 +10,7 @@ matrix:
   include:
     - env: TEST=remote TARGET=all PLATFORM=osx VERSION=10.11
 
-    - env: TEST=remote TARGET=all PLATFORM=freebsd VERSION=10.3-STABLE
+    - env: TEST=remote TARGET=all PLATFORM=freebsd VERSION=10.3-STABLE PRIVILEGED=true
 
     - env: TEST=remote TARGET=ci_win1 PLATFORM=windows VERSION=2012-R2_RTM
     - env: TEST=remote TARGET=ci_win2 PLATFORM=windows VERSION=2012-R2_RTM
@@ -27,14 +27,14 @@ matrix:
     - env: TEST=integration TARGET=destructive IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1
 
     - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos6
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora-rawhide
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora23
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuseleap
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1204
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1404
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604
-    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:centos7 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora-rawhide PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:fedora23 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:opensuseleap PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1204 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1404 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604 PRIVILEGED=true
+    - env: TEST=integration TARGET=non_destructive IMAGE=ansible/ansible:ubuntu1604py3 PYTHON3=1 PRIVILEGED=true
 
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos6
     - env: TEST=integration TARGET=other IMAGE=ansible/ansible:centos7

@@ -28,6 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.playbook.role_include import IncludeRole
 
 from ansible.utils.boolean import boolean
 
@@ -80,7 +81,7 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s, did start at task? %s" % (
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did start at task? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
@@ -198,7 +199,7 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache:
+            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get('module_setup', False):
                 host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -265,9 +266,18 @@ class PlayIterator:
             else:
                 return old_s.cur_dep_chain != task.get_dep_chain()
 
+        def _role_is_child(r):
+            parent = task._parent
+            while parent:
+                if hasattr(parent, '_role') and parent._role == r and isinstance(parent, IncludeRole):
+                    return True
+                parent = parent._parent
+            return False
+
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and not peek:
+            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and \
+               not _role_is_child(s.cur_role) and not peek:
                 s.cur_role._completed[host.name] = True
             s.cur_role = task._role
             s.cur_dep_chain = task.get_dep_chain()
@@ -499,6 +509,10 @@ class PlayIterator:
     def _check_failed_state(self, state):
         if state is None:
             return False
+        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
+            return True
+        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
+            return True
         elif state.fail_state != self.FAILED_NONE:
             if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
                 return False
@@ -512,10 +526,6 @@ class PlayIterator:
                 return False
             else:
                 return True
-        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
-            return True
-        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
-            return True
         return False
 
     def is_failed(self, host):

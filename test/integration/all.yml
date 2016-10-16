@@ -1,6 +1,0 @@
-- include: test_setup.yml
-- include: non_destructive.yml
-- include: destructive.yml
-- include: rackspace.yml
-- include: amazon.yml
-- include: good_parsing.yml

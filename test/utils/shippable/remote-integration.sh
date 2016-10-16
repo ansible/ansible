@@ -14,7 +14,7 @@ test_flags="${TEST_FLAGS:-}"
 force_color="${FORCE_COLOR:-1}"
 
 # FIXME: these tests fail
-skip_tags='test_unarchive,test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
+skip_tags='test_service,test_postgresql,test_mysql_db,test_mysql_user,test_mysql_variables,test_uri,test_get_url'
 
 cd ~/
 
@@ -37,6 +37,7 @@ if [ "${container}" = "freebsd" ]; then
     pkg install -y \
         bash \
         devel/ruby-gems \
+        gtar \
         mercurial \
         rsync \
         ruby \
@@ -147,7 +148,10 @@ if [ "${container}" = "osx" ]; then
     sed -i '' 's/ test_gathering_facts / /;' Makefile
 
     # FIXME: these tests fail
-    skip_tags="${skip_tags},test_iterators,test_template,test_git"
+    skip_tags="${skip_tags},test_iterators,test_git"
+
+    # test_template assumes the group 'root' exists if this variable is not set
+    export GROUP=wheel
 fi
 
 # TODO: support httptester via reverse ssh tunnel

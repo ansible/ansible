@@ -136,9 +136,12 @@ class Netconf(object):
 
         for index, cmd in enumerate(commands):
             if cmd.output == 'xml':
-                responses[index] = etree.tostring(responses[index])
+                responses[index] = xml_to_json(responses[index])
             elif cmd.args.get('command_type') == 'rpc':
                 responses[index] = str(responses[index].text).strip()
+            elif 'RpcError' in responses[index]:
+                raise NetworkError(responses[index])
+
 
         return responses
 
@@ -166,16 +169,22 @@ class Netconf(object):
         ele = self.rpc('get_configuration', output=config_format)
 
         if config_format == 'text':
-            return str(ele.text).strip()
+            return unicode(ele.text).strip()
         else:
             return ele
 
     def load_config(self, config, commit=False, replace=False, confirm=None,
-                    comment=None, config_format='text'):
+                    comment=None, config_format='text', overwrite=False):
+
+        if all([replace, overwrite]):
+            self.raise_exc('setting both replace and overwrite to True is invalid')
 
         if replace:
             merge = False
-            overwrite = True
+            overwrite = False
+        elif overwrite:
+            merge = True
+            overwrite = False
         else:
             merge = True
             overwrite = False

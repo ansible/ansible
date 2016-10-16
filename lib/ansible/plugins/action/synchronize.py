@@ -32,6 +32,9 @@ class ActionModule(ActionBase):
     def _get_absolute_path(self, path):
         original_path = path
 
+        if path.startswith('rsync://'):
+            return path
+
         if self._task._role is not None:
             path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
         else:
@@ -111,7 +114,7 @@ class ActionModule(ActionBase):
         # connection to the remote host
         if 'ansible_syslog_facility' in task_vars:
             del task_vars['ansible_syslog_facility']
-        for key in task_vars.keys():
+        for key in list(task_vars.keys()):
             if key.startswith("ansible_") and key.endswith("_interpreter"):
                 del task_vars[key]
 

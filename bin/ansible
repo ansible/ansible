@@ -126,9 +126,11 @@ if __name__ == '__main__':
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % to_text(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()))
+            log_only = False
         else:
             display.display("to see the full traceback, use -vvv")
+            log_only = True 
+        display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
         exit_code = 250
     finally:
         # Remove ansible tempdir

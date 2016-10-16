@@ -28,7 +28,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='2.1'
+VERSION='2.2'
 AUTHOR='Ansible, Inc'
 
 
@@ -110,8 +110,8 @@ rst_epilog = """
 .. |ac| replace:: Ansible Core
 .. |acversion| replace:: Ansible Core Version 2.1
 .. |acversionshort| replace:: Ansible Core 2.1
-.. |versionshortest| replace:: 2.1
-.. |versiondev| replace:: 2.2
+.. |versionshortest| replace:: 2.2
+.. |versiondev| replace:: 2.3
 .. |pubdate| replace:: July 19, 2016
 .. |rhel| replace:: Red Hat Enterprise Linux
 

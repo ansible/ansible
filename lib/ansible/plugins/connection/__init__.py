@@ -140,6 +140,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
             return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
         except AttributeError:
+            # In Python3, shlex.split doesn't work on a byte string.
             return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty

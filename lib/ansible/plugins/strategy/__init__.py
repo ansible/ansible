@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import threading
 import time
 
@@ -27,6 +26,7 @@ from collections import deque
 from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
+from ansible import constants as C
 from ansible.compat.six.moves import queue as Queue
 from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
@@ -35,7 +35,6 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.module_utils.facts import Facts
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -73,14 +72,12 @@ class SharedPluginLoaderObj:
 
 _sentinel = object()
 def results_thread_main(strategy):
-    #print("RESULT THREAD STARTING: %s" % threading.current_thread())
     while True:
         try:
             result = strategy._final_q.get()
             if type(result) == object:
                 break
             else:
-                #print("result in thread is: %s" % result._result)
                 strategy._results_lock.acquire()
                 strategy._results.append(result)
                 strategy._results_lock.release()
@@ -88,7 +85,6 @@ def results_thread_main(strategy):
             break
         except Queue.Empty:
             pass
-    #print("RESULT THREAD EXITED: %s" % threading.current_thread())
 
 class StrategyBase:
 
@@ -123,7 +119,7 @@ class StrategyBase:
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
 
-        #print("creating thread for strategy %s" % id(self))
+        # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
         self._results_thread.daemon = True
         self._results_thread.start()
@@ -318,7 +314,6 @@ class StrategyBase:
                 continue
 
             if original_task.register:
-                #print("^ REGISTERING RESULT %s" % original_task.register)
                 if original_task.run_once:
                     host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
                 else:
@@ -393,6 +388,7 @@ class StrategyBase:
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for handler_name in result_item['_ansible_notify']:
+                                found = False
                                 # Find the handler using the above helper.  First we look up the
                                 # dependency chain of the current task (if it's from a role), otherwise
                                 # we just look through the list of handlers in the current play/all
@@ -400,15 +396,15 @@ class StrategyBase:
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_name in self._listening_handlers[handler_name]:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
-                                        if listening_handler is None:
-                                            raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                                        if listening_handler is not None:
+                                            found = True
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
-
                                 else:
                                     target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
                                     if target_handler is not None:
+                                        found = True
                                         if original_host not in self._notified_handlers[target_handler]:
                                             self._notified_handlers[target_handler].append(original_host)
                                             # FIXME: should this be a callback?
@@ -416,17 +412,19 @@ class StrategyBase:
                                     else:
                                         # As there may be more than one handler with the notified name as the
                                         # parent, so we just keep track of whether or not we found one at all
-                                        found = False
                                         for target_handler in self._notified_handlers:
                                             if parent_handler_match(target_handler, handler_name):
                                                 self._notified_handlers[target_handler].append(original_host)
                                                 display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
                                                 found = True
 
-                                        # and if none were found, then we raise an error
-                                        if not found:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
-
+                                # and if none were found, then we raise an error
+                                if not found:
+                                  msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                  if C.ERROR_ON_MISSING_HANDLER:
+                                      raise AnsibleError(msg)
+                                  else:
+                                      display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -438,28 +436,33 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     elif 'ansible_facts' in result_item:
-                        loop_var = 'item'
+
+                        # set correct loop var
                         if original_task.loop_control:
                             loop_var = original_task.loop_control.loop_var or 'item'
+                        else:
+                            loop_var = 'item'
 
                         item = result_item.get(loop_var, None)
+
+                        # if delegated fact and we are delegating facts, we need to change target host for them
+                        if original_task.delegate_to is not None and original_task.delegate_facts:
+                            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=original_host, task=original_task)
+                            self.add_tqm_variables(task_vars, play=iterator._play)
+                            if item is not None:
+                                task_vars[loop_var] = item
+                            templar = Templar(loader=self._loader, variables=task_vars)
+                            host_name = templar.template(original_task.delegate_to)
+                            actual_host = self._inventory.get_host(host_name)
+                            if actual_host is None:
+                                actual_host = Host(name=host_name)
+                        else:
+                            actual_host = original_host
 
                         if original_task.action == 'include_vars':
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually refering too here, which may
                                 # be a host that is not really in inventory at all
-                                if original_task.delegate_to is not None and original_task.delegate_facts:
-                                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=original_task)
-                                    self.add_tqm_variables(task_vars, play=iterator._play)
-                                    if item is not None:
-                                        task_vars[loop_var] = item
-                                    templar = Templar(loader=self._loader, variables=task_vars)
-                                    host_name = templar.template(original_task.delegate_to)
-                                    actual_host = self._inventory.get_host(host_name)
-                                    if actual_host is None:
-                                        actual_host = Host(name=host_name)
-                                else:
-                                    actual_host = original_host
 
                                 if original_task.run_once:
                                     host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
@@ -472,7 +475,7 @@ class StrategyBase:
                             if original_task.run_once:
                                 host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
                             else:
-                                host_list = [original_host]
+                                host_list = [actual_host]
 
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
@@ -530,6 +533,8 @@ class StrategyBase:
 
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
+            if self._pending_results > 0:
+                time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         display.debug("no more pending results, returning what we have")
 

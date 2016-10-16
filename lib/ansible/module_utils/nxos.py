@@ -60,7 +60,10 @@ class NxapiConfigMixin(object):
             self.execute(['no checkpoint %s' % checkpoint])
 
     def save_config(self, **kwargs):
-        self.execute(['copy running-config startup-config'])
+        try:
+            self.execute(['copy running-config startup-config'], output='text')
+        except TypeError:
+            self.execute(['copy running-config startup-config'])
 
     def load_checkpoint(self, checkpoint):
         try:
@@ -269,7 +272,8 @@ class Cli(NxapiConfigMixin, CliBase):
         cmds = list(prepare_commands(commands))
         responses = self.execute(cmds)
         for index, cmd in enumerate(commands):
-            if cmd.output == 'json' and cmd.args.get('raw') is False:
+            raw = cmd.args.get('raw') or False
+            if cmd.output == 'json' and not raw:
                 try:
                     responses[index] = json.loads(responses[index])
                 except ValueError:

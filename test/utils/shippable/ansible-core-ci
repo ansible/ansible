@@ -334,9 +334,13 @@ class HttpRequest:
     def request(self, method, url, data=None, headers=None):
         args = ['/usr/bin/curl', '-s', '-S', '-i', '-X', method]
 
-        if headers is not None:
-            for header in headers:
-                args += ['-H', '%s: %s' % (header, headers[header])]
+        if headers is None:
+            headers = {}
+
+        headers['Expect'] = ''  # don't send expect continue header
+
+        for header in headers:
+            args += ['-H', '%s: %s' % (header, headers[header])]
 
         if data is not None:
             args += ['-d', data]
@@ -359,7 +363,10 @@ class HttpResponse:
         self.response = response
 
     def json(self):
-        return json.loads(self.response)
+        try:
+            return json.loads(self.response)
+        except ValueError:
+            raise ValueError('Cannot parse response as JSON:\n%s' % self.response)
 
 
 requests = HttpRequest()

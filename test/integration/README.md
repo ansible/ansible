@@ -9,6 +9,12 @@ Some tests may require credentials.  Credentials may be specified with `credenti
 
 Tests should be run as root.
 
+Quick Start
+===========
+
+To get started quickly using Docker containers for testing,
+see [Tests in Docker containers](#tests-in-docker-containers).
+
 Configuration
 =============
 
@@ -94,20 +100,54 @@ Run the tests:
 Tests in Docker containers
 ==========================
 
-It is possible to run tests in Docker containers.
+If you have a Linux system with Docker installed, running integration tests using the same Docker containers used by
+the Ansible continuous integration (CI) system is recommended.
 
-For example, to run test `test_ping` from non_destructive suite on Ubuntu 14.04 container:
+> Using Docker Engine to run Docker on a non-Linux host is not recommended. Some tests, such as those that manage
+> services or use local SSH connections are known to fail in such an environment. For best results, install Docker on a
+> full Linux distribution such as Ubuntu, running on real hardware or in a virtual machine.
+
+## Running Integration Tests
+
+To run all integration test targets with the default settings in a Centos 7 container, run `make integration` from the repository root.
+
+You can also run specific tests or select a different Linux distribution.
+For example, to run the test `test_ping` from the non_destructive target on a Ubuntu 14.04 container:
 
 - go to the repository root
-- and execute `TARGET=ubuntu1404 MAKE_TARGET=non_destructive TEST_FLAGS='--tags test_ping' ./test/utils/run_tests.sh`
+- and execute `make integration IMAGE=ansible/ansible:ubuntu1404 TARGET=non_destructive TEST_FLAGS='--tags test_ping'`
 
-Available targets (containers):
+## Container Images
+
+Use the prefix `ansible/ansible:` with the image names below.
+
+> Running `make integration` will automatically download the container image you have specified, if it is not already 
+> available. However, you will be responsible for keeping the container images up-to-date using `docker pull`.
+
+### Python 2
+
+Most container images are for testing with Python 2:
 
   - centos6
   - centos7
   - fedora-rawhide
   - fedora23
   - opensuseleap
-  - ubuntu1204
-  - ubuntu1404
+  - ubuntu1204 (requires `PRIVILEGED=true`)
+  - ubuntu1404 (requires `PRIVILEGED=true`)
   - ubuntu1604
+
+### Python 3
+
+To test with Python 3 you must set `PYTHON3=1` and use the following images:
+
+  - ubuntu1604py3
+
+## Additional Options
+
+There are additional environment variables that can be used. A few of the more useful ones:
+
+  - `KEEP_CONTAINERS=onfailure` - Containers will be preserved if tests fail.
+  - `KEEP_CONTAINERS=1` - Containers will always be preserved.
+  - `SHARE_SOURCE=1` - Changes to source from the host or container will be shared between host and container.
+                       _**CAUTION:** Files created by the container will be owned by root on the host._

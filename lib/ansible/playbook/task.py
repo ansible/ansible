@@ -75,7 +75,6 @@ class Task(Base, Conditional, Taggable, Become):
     _delegate_to          = FieldAttribute(isa='string')
     _delegate_facts       = FieldAttribute(isa='bool', default=False)
     _failed_when          = FieldAttribute(isa='list', default=[])
-    _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True, inherit=False)
     _loop_args            = FieldAttribute(isa='list', private=True, inherit=False)
     _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
@@ -270,12 +269,12 @@ class Task(Base, Conditional, Taggable, Become):
                 env = []
                 for env_item in value:
                     if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                        env[env_item] = templar.template(env_item, convert_bare=True)
+                        env[env_item] = templar.template(env_item, convert_bare=False)
         elif isinstance(value, dict):
             env = dict()
             for env_item in value:
                 if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                    env[env_item] = templar.template(value[env_item], convert_bare=True)
+                    env[env_item] = templar.template(value[env_item], convert_bare=False)
 
         # at this point it should be a simple string
         return templar.template(value, convert_bare=True)
@@ -319,7 +318,7 @@ class Task(Base, Conditional, Taggable, Become):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action == 'include':
+        if self.action in ('include', 'include_role'):
             all_vars.update(self.vars)
         return all_vars
 

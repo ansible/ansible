@@ -179,17 +179,6 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
-.. _stdout_callback:
-
-stdout_callback
-===============
-
-.. versionadded:: 2.0
-
-This setting allows you to override the default stdout callback for ansible-playbook::
-
-    stdout_callback = skippy
-
 .. _callback_whitelist:
 
 callback_whitelist
@@ -360,7 +349,7 @@ forks
 =====
 
 This is the default number of parallel processes to spawn when communicating with remote hosts.  Since Ansible 1.3,
-the fork number is automatically limited to the number of possible hosts, so this is really a limit of how much
+the fork number is automatically limited to the number of possible hosts at runtime, so this is really a limit of how much
 network and CPU load you think you can handle.  Many users may set this to 50, some set it to 500 or more.  If you
 have a large number of hosts, higher values will make actions across all of those hosts complete faster.  The default
 is very very conservative::
@@ -383,7 +372,7 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
 .. versionadded:: 2.1
 
-You can specify a subset of gathered facts using the following option::
+You can specify a subset of gathered facts, via the play's gather_facts directive, using the following option::
 
     gather_subset = all
 
@@ -442,6 +431,20 @@ As described in :doc:`intro_getting_started`, host key checking is on by default
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
+
+.. _internal_poll_interval:
+
+internal_poll_interval
+======================
+
+.. versionadded:: 2.2
+
+This sets the interval (in seconds) of Ansible internal processes polling each other.
+Lower values improve performance with large playbooks at the expense of extra CPU load.
+Higher values are more suitable for Ansible usage in automation scenarios, when UI responsiveness is not required but CPU usage might be a concern.
+Default corresponds to the value hardcoded in Ansible ≤ 2.1::
+
+    internal_poll_interval=0.001
 
 .. _inventory_file:
 
@@ -522,6 +525,23 @@ different locations::
     lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _merge_multiple_cli_tags:
+
+merge_multiple_cli_tags
+=======================
+
+.. versionadded:: 2.3
+
+This allows changing how multiple --tags and --skip-tags arguments are handled
+on the command line.  In Ansible up to and including 2.3, specifying --tags
+more than once will only take the last value of --tags.  Setting this config
+value to True will mean that all of the --tags options will be merged
+together.  The same holds true for --skip-tags.
+
+.. note:: The default value for this in 2.3 is False.  In 2.4, the
+    default value will be True.  After 2.4, the option is going away.
+    Multiple --tags and multiple --skip-tags will always be merged together.
 
 .. _module_set_locale:
 
@@ -700,10 +720,21 @@ Instead of calling the module once for each item, the module is called once with
 
 The default value for this setting is only for certain package managers, but it can be used for any module::
 
-    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+    squash_actions = apk,apt,dnf,homebrew,package,pacman,pkgng,yum,zypper
 
 Currently, this is only supported for modules that have a name parameter, and only when the item is the
 only thing being passed to the parameter.
+
+.. _stdout_callback:
+
+stdout_callback
+===============
+
+.. versionadded:: 2.0
+
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _cfg_strategy_plugins:
 
@@ -967,6 +998,19 @@ sudoers configurations that have requiretty (the default on many distros), but i
 recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
 
     pipelining=False
+
+.. _ssh_executable:
+
+ssh_executable
+==============
+
+.. versionadded:: 2.2
+
+This is the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in ``$PATH``. This config can also be overridden with ``ansible_ssh_executable`` inventory variable::
+
+  ssh_executable="/usr/local/bin/ssh"
+
+This option is usually not required, it might be useful when access to system ssh is restricted, or when using ssh wrappers to connect to remote hosts. 
 
 .. _accelerate_settings:
 

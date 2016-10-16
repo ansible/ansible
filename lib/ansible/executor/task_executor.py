@@ -276,7 +276,7 @@ class TaskExecutor:
 
             if label is not None:
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
-                res['_ansible_item_label'] = templar.template(label, fail_on_undefined=False)
+                res['_ansible_item_label'] = templar.template(label)
 
             self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
             results.append(res)
@@ -539,12 +539,12 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
+                result['attempts'] = attempt
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
                     if attempt < retries:
-                        result['attempts'] = attempt
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
@@ -553,6 +553,7 @@ class TaskExecutor:
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
+                result['attempts'] = retries - 1
                 result['failed'] = True
 
         # do the final update of the local variables here, for both registered
@@ -619,14 +620,24 @@ class TaskExecutor:
         while time_left > 0:
             time.sleep(self._task.poll)
 
-            async_result = normal_handler.run(task_vars=task_vars)
-            # We do not bail out of the loop in cases where the failure
-            # is associated with a parsing error. The async_runner can
-            # have issues which result in a half-written/unparseable result
-            # file on disk, which manifests to the user as a timeout happening
-            # before it's time to timeout.
-            if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
-                break
+            try:
+                async_result = normal_handler.run(task_vars=task_vars)
+                # We do not bail out of the loop in cases where the failure
+                # is associated with a parsing error. The async_runner can
+                # have issues which result in a half-written/unparseable result
+                # file on disk, which manifests to the user as a timeout happening
+                # before it's time to timeout.
+                if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
+                    break
+            except Exception as e:
+                # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
+                # On an exception, call the connection's reset method if it has one (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
+                display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
+                display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
+                try:
+                    normal_handler._connection._reset()
+                except AttributeError:
+                    pass
 
             time_left -= self._task.poll
 

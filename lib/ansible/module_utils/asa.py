@@ -35,8 +35,6 @@ from ansible.module_utils.network import to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.netcli import Command
 
-add_argument('show_command', dict(default='show running-config',
-             choices=['show running-config', 'more system:running-config']))
 add_argument('context', dict(required=False))
 
 
@@ -88,10 +86,16 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self, include_defaults=False):
+    def get_config(self, include=None):
+        if include not in [None, 'defaults', 'passwords']:
+            raise ValueError('include must be one of None, defaults, passwords')
         cmd = 'show running-config'
-        if include_defaults:
-            cmd += ' all'
+        if include == 'passwords':
+            cmd = 'more system:running-config'
+        elif include == 'defaults':
+            cmd = 'show running-config all'
+        else:
+            cmd = 'show running-config'
         return self.run_commands(cmd)[0]
 
     def load_config(self, commands):
