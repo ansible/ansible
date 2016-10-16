@@ -118,7 +118,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             login_user=dict(default="postgres"),
-            login_password=dict(default=""),
+            login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=True),
