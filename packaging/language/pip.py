@@ -114,6 +114,8 @@ options:
         example C(pip-3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
         It cannot be specified together with the 'virtualenv' parameter (added in 2.1).
+        By default, it will take the appropriate version for the python interpreter
+        use by ansible, e.g. pip3 on python 3, and pip2 or pip on python 2.
     version_added: "1.3"
     required: false
     default: null
@@ -132,6 +134,8 @@ notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
+   - By default, this module will use the appropriate version of pip for the
+     interpreter used by ansible (e.g. pip3 when using python 3, pip2 otherwise)
 requirements: [ "virtualenv", "pip" ]
 author: "Matt Wright (@mattupstate)"
 '''
@@ -188,7 +192,7 @@ import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-
+from ansible.module_utils.six import PY3
 
 #: Python one-liners to be run at the command line that will determine the
 # installed version for these special libraries.  These are libraries that
@@ -264,7 +268,13 @@ def _get_pip(module, env=None, executable=None):
     # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
     # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
     # There, pip is just pip.
-    candidate_pip_basenames = ['pip', 'python-pip', 'pip-python']
+    # On python 3.4, pip should be default, cf PEP 453
+    # By default, it will try to use pip required for the current python
+    # interpreter, so people can use pip to install modules dependencies
+    candidate_pip_basenames = ['pip2', 'pip', 'python-pip', 'pip-python']
+    if PY3:
+        candidate_pip_basenames = ['pip3']
+
     pip = None
     if executable is not None:
         executable = os.path.expanduser(executable)
