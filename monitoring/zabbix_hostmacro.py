@@ -129,7 +129,7 @@ class HostMacro(object):
             else:
                 host_id = host_list[0]['hostid']
                 return host_id
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to get the host %s id: %s." % (host_name, e))
 
     # get host macro
@@ -140,7 +140,7 @@ class HostMacro(object):
             if len(host_macro_list) > 0:
                 return host_macro_list[0]
             return None
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to get host macro %s: %s" % (macro_name, e))
 
     # create host macro
@@ -150,7 +150,7 @@ class HostMacro(object):
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.create({'hostid': host_id, 'macro': '{$' + macro_name + '}', 'value': macro_value})
             self._module.exit_json(changed=True, result="Successfully added host macro %s " % macro_name)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to create host macro %s: %s" % (macro_name, e))
 
     # update host macro
@@ -163,7 +163,7 @@ class HostMacro(object):
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.update({'hostmacroid': host_macro_id, 'value': macro_value})
             self._module.exit_json(changed=True, result="Successfully updated host macro %s " % macro_name)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to updated host macro %s: %s" % (macro_name, e))
 
     # delete host macro
@@ -174,7 +174,7 @@ class HostMacro(object):
                 self._module.exit_json(changed=True)
             self._zapi.usermacro.delete([host_macro_id])
             self._module.exit_json(changed=True, result="Successfully deleted host macro %s " % macro_name)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to delete host macro %s: %s" % (macro_name, e))
 
 def main():
@@ -213,7 +213,7 @@ def main():
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     host_macro_class_obj = HostMacro(module, zbx)
