@@ -175,7 +175,7 @@ class Subversion(object):
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?X]')
         # Has local mods if more than 0 modified revisioned files.
-        return len(filter(regex.match, lines)) > 0
+        return len(list(filter(regex.match, lines))) > 0
 
     def needs_update(self):
         curr, url = self.get_revision()
