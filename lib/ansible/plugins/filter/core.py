@@ -199,25 +199,32 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
+def rand(environment, end, start=None, step=None, seed=None):
     r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
             start = 0
         if not step:
             step = 1
+		if seed:
+			r.seed(seed)
         return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise errors.AnsibleFilterError('start and step can only be used with integer values')
+		if seed:
+			r.seed(seed)
         return r.choice(end)
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
-def randomize_list(mylist):
+def randomize_list(mylist, seed=None):
     try:
+		r = SystemRandom()
         mylist = list(mylist)
-        shuffle(mylist)
+		if seed:
+			r.seed(seed)
+        r.shuffle(mylist)
     except:
         pass
     return mylist
