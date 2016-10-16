@@ -95,7 +95,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.parser.set_defaults(cwd='*')
 
-        super(AdHocCLI, self).parse()
+        super(ConsoleCLI, self).parse()
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
