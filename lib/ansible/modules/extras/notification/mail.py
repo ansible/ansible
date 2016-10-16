@@ -218,7 +218,8 @@ def main():
             smtp = smtplib.SMTP_SSL(host, port=int(port))
         except (smtplib.SMTPException, ssl.SSLError):
             smtp = smtplib.SMTP(host, port=int(port))
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
 
     smtp.ehlo()
@@ -283,14 +284,16 @@ def main():
 
                 part.add_header('Content-disposition', 'attachment', filename=os.path.basename(file))
                 msg.attach(part)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" % (file, e))
 
     composed = msg.as_string()
 
     try:
         smtp.sendmail(sender_addr, set(addr_list), composed)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(rc=1, msg='Failed to send mail to %s: %s' % (", ".join(addr_list), e))
 
     smtp.quit()
@@ -299,4 +302,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
