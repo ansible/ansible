@@ -243,25 +243,22 @@ def parseoptions(module, options):
     '''
     options_dict = keydict() #ordered dict
     if options:
-        try:
-            # the following regex will split on commas while
-            # ignoring those commas that fall within quotes
-            regex = re.compile(r'''((?:[^,"']|"[^"]*"|'[^']*')+)''')
-            parts = regex.split(options)[1:-1]
-            for part in parts:
-                if "=" in part:
-                    (key, value) = part.split("=", 1)
-                    if options_dict.has_key(key):
-                        if isinstance(options_dict[key], list):
-                            options_dict[key].append(value)
-                        else:
-                            options_dict[key] = [options_dict[key], value]
+        # the following regex will split on commas while
+        # ignoring those commas that fall within quotes
+        regex = re.compile(r'''((?:[^,"']|"[^"]*"|'[^']*')+)''')
+        parts = regex.split(options)[1:-1]
+        for part in parts:
+            if "=" in part:
+                (key, value) = part.split("=", 1)
+                if options_dict.has_key(key):
+                    if isinstance(options_dict[key], list):
+                        options_dict[key].append(value)
                     else:
-                        options_dict[key] = value
-                elif part != ",":
-                    options_dict[part] = None
-        except:
-            module.fail_json(msg="invalid option string: %s" % options)
+                        options_dict[key] = [options_dict[key], value]
+                else:
+                    options_dict[key] = value
+            elif part != ",":
+                options_dict[part] = None
 
     return options_dict
 
