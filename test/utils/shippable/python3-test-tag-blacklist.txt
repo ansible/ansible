@@ -1,4 +1,3 @@
-test_authorized_key
 test_filters
 test_git
 test_hg
