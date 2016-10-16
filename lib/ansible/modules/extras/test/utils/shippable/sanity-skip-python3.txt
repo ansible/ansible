@@ -56,10 +56,6 @@
 /monitoring/datadog_monitor.py
 /monitoring/rollbar_deployment.py
 /monitoring/stackdriver.py
-/monitoring/zabbix_group.py
-/monitoring/zabbix_host.py
-/monitoring/zabbix_hostmacro.py
-/monitoring/zabbix_screen.py
 /network/citrix/netscaler.py
 /network/cloudflare_dns.py
 /network/dnsmadeeasy.py
