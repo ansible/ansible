@@ -24,7 +24,7 @@ module: yarn
 short_description: Manage node.js packages with Yarn
 description:
   - Manage node.js packages with Yarn (https://yarnpkg.com/)
-version_added: "2.0"
+version_added: "2.3"
 author: 
   - "David Gunter (@dsgunter)" 
   - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
@@ -102,6 +102,37 @@ description: Update packages based on package.json to their latest version.
 
 description: Install packages based on package.json using the yarn installed with nvm v0.10.1.
 - yarn: path=/app/location executable=/opt/nvm/v0.10.1/bin/yarn state=present
+'''
+
+RETURN = '''
+changed:
+    description: Whether Yarn changed any package data
+    returned: always
+    type: boolean
+    sample: true
+msg:
+    description: Provides an error message if Yarn syntax was incorrect
+    returned: failure
+    type: string
+    sample: "path must be specified when not using global"
+invocation:
+    description: Parameters and values used during execution
+    returned: success
+    type: dictionary
+    sample: {
+            "module_args": {
+                "executable": null, 
+                "global": false, 
+                "ignore_scripts": false, 
+                "name": null, 
+                "path": "/some/path/folder", 
+                "production": false, 
+                "registry": null, 
+                "state": "present", 
+                "version": null
+            }
+        } 
+...
 '''
 
 import os
