@@ -40,8 +40,6 @@
 /clustering/consul_kv.py
 /clustering/consul_session.py
 /database/mysql/mysql_replication.py
-/database/postgresql/postgresql_ext.py
-/database/postgresql/postgresql_lang.py
 /database/vertica/vertica_configuration.py
 /database/vertica/vertica_facts.py
 /database/vertica/vertica_role.py
