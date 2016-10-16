@@ -216,7 +216,7 @@ class Host(object):
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
                 return host_list['hostids'][0]
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
     def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id):
@@ -253,7 +253,7 @@ class Host(object):
                     remove_interface_ids.append(interface_id)
                 if len(remove_interface_ids) > 0:
                     self._zapi.hostinterface.delete(remove_interface_ids)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to update host %s: %s" % (host_name, e))
 
     def delete_host(self, host_id, host_name):
@@ -261,7 +261,7 @@ class Host(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.host.delete([host_id])
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to delete host %s: %s" % (host_name, e))
 
     # get host by host name
@@ -385,7 +385,7 @@ class Host(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.host.update(request_str)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to link template to host: %s" % e)
 
     # Update the host inventory_mode
@@ -408,7 +408,7 @@ class Host(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.host.update(request_str)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to set inventory_mode to host: %s" % e)
 
 def main():
@@ -460,7 +460,7 @@ def main():
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     host = Host(module, zbx)

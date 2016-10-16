@@ -354,7 +354,7 @@ def main():
     try:
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     screen = Screen(module, zbx)

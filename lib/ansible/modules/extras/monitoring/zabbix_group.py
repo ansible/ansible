@@ -136,7 +136,7 @@ class HostGroup(object):
                     except Already_Exists:
                         return group_add_list
             return group_add_list
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to create host group(s): %s" % e)
 
     # delete host group(s)
@@ -145,7 +145,7 @@ class HostGroup(object):
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             self._zapi.hostgroup.delete(group_ids)
-        except Exception, e:
+        except Exception as e:
             self._module.fail_json(msg="Failed to delete host group(s), Exception: %s" % e)
 
     # get group ids by name
@@ -192,7 +192,7 @@ def main():
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
         zbx.login(login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     hostGroup = HostGroup(module, zbx)
