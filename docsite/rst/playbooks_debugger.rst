@@ -3,12 +3,10 @@ Playbook Debugger
 
 .. contents:: Topics
 
-In 2.1 we added a ``debug`` strategy. This strategy enables you to invoke a debugger when a task is
-failed, and check several info, such as the value of a variable. Also, it is possible to update module
-arguments in the debugger, and run the failed task again with new arguments to consider how you
-can fix an issue.
+In 2.1 we added a ``debug`` strategy. This strategy enables you to invoke a debugger when a task has
+failed.  You have access to all of the features of the debugger in the context of the failed task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the failed task with the new variables and arguments to help resolve the cause of the failure.
 
-To use ``debug`` strategy, change ``strategy`` attribute like this::
+To use the ``debug`` strategy, change the ``strategy`` attribute like this::
 
     - hosts: test
       strategy: debug
@@ -26,8 +24,9 @@ For example, run the playbook below::
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-The debugger is invoked since *wrong_var* variable is undefined. Let's change the module's args,
-and run the task again::
+The debugger is invoked since the *wrong_var* variable is undefined. 
+
+Let's change the module's arguments and run the task again::
 
     PLAY ***************************************************************************
 
