@@ -1,7 +1,6 @@
 test_apache2_module
 test_authorized_key
 test_filters
-test_gem
 test_git
 test_hg
 test_lookups
