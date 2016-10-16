@@ -39,8 +39,6 @@
 /clustering/consul_acl.py
 /clustering/consul_kv.py
 /clustering/consul_session.py
-/database/misc/mongodb_parameter.py
-/database/misc/mongodb_user.py
 /database/mysql/mysql_replication.py
 /database/postgresql/postgresql_ext.py
 /database/postgresql/postgresql_lang.py
