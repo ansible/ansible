@@ -5,4 +5,3 @@ test_hg
 test_lookups
 test_pip
 test_service
-test_uri
