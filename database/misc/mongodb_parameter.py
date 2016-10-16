@@ -184,7 +184,8 @@ def main():
     try:
         if param_type == 'int':
             value = int(value)
-    except ValueError, e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(msg="value '%s' is not %s" % (value, param_type))
 
     try:
@@ -204,14 +205,16 @@ def main():
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password, source=login_database)
 
-    except ConnectionFailure, e:
+    except ConnectionFailure:
+        e = get_exception()
         module.fail_json(msg='unable to connect to database: %s' % str(e))
 
     db = client.admin
 
     try:
         after_value = db.command("setParameter", **{param: int(value)})
-    except OperationFailure, e:
+    except OperationFailure:
+        e = get_exception()
         module.fail_json(msg="unable to change parameter: %s" % str(e))
 
     if "was" not in after_value:
@@ -223,6 +226,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ ==  '__main__':
      main()
