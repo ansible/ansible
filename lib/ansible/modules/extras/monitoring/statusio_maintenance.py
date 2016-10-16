@@ -152,7 +152,7 @@ automation to stop the maintenance.
     title: "Routine maintenance"
     desc: "Some security updates"
     components:
-      - "server1.example.com
+      - "server1.example.com"
       - "server2.example.com"
     minutes: "60"
     api_id: "api_id"
