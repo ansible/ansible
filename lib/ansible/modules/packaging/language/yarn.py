@@ -24,8 +24,10 @@ module: yarn
 short_description: Manage node.js packages with Yarn
 description:
   - Manage node.js packages with Yarn (https://yarnpkg.com/)
-version_added: 0.15
-author: "David Gunter (@dsgunter) and Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
+version_added: "2.0"
+author: 
+  - "David Gunter (@dsgunter)" 
+  - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
 options:
   name:
     description:
