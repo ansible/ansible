@@ -168,18 +168,27 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+Provide a seed to get a repeatable result::
+
+    {{ 59 |random(seed=ansible_fqdn) }} * * * * root /script/from/cron
+
 
 Shuffle Filter
 --------------
 
 .. versionadded:: 1.8
 
-This filter will randomize an existing list, giving a different order every invocation.
+This filter will randomize an existing list.
 
-To get a random list from an existing  list::
+To get a random list from an existing list, giving a different order every invocation::
 
     {{ ['a','b','c']|shuffle }} => ['c','a','b']
     {{ ['a','b','c']|shuffle }} => ['b','c','a']
+
+To get a random list from an existing list, giving a repeatable order every invocation::
+
+    {{ ['a','b','c']|shuffle(seed=ansible_fqdn) }} => ['c','a','b']
+    {{ ['a','b','c']|shuffle(seed=ansible_fqdn) }} => ['b','c','a']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
 
