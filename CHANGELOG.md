@@ -282,6 +282,8 @@ Ansible Changes By Release
 * Fix a problem with the pip module updating the python pip package itself.
 * ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
 * ansible_play_batch is a new magic variable meant to substitute the current play_hosts.
+* The subversion module from core now marks its password parameter as no_log so
+  the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
   login_password as no_log so the password is obscured when logging.
 
