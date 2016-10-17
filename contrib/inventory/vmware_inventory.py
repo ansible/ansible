@@ -58,6 +58,8 @@ try:
 except ImportError:
     pass
 
+class VMwareMissingHostException(Exception):
+    pass
 
 class VMWareInventory(object):
 
@@ -318,6 +320,9 @@ class VMWareInventory(object):
             instances.append(child)
         self.debugl("# total instances retrieved %s" % len(instances))
 
+        if self.args.host:
+            instances = [x for x in instances if x.name == self.args.host]
+
         instance_tuples = []    
         for instance in sorted(instances):    
             ifacts = self.facts_from_vobj(instance)
@@ -543,7 +548,22 @@ class VMWareInventory(object):
         
         ''' Return hostvars for a single host '''
 
-        return self.inventory['_meta']['hostvars'][host]
+        if host in self.inventory['_meta']['hostvars']:
+            return self.inventory['_meta']['hostvars'][host]
+        elif self.args.host and self.inventory['_meta']['hostvars']:
+            # check if the machine has the name requested
+            keys = self.inventory['_meta']['hostvars'].keys()
+            match = None
+            for k,v in self.inventory['_meta']['hostvars'].iteritems():
+                if self.inventory['_meta']['hostvars'][k]['name'] == self.args.host:
+                    match = k
+                    break
+            if match:
+                return self.inventory['_meta']['hostvars'][match]
+            else:
+                raise VMwareMissingHostException('%s not found' % host)
+        else:
+            raise VMwareMissingHostException('%s not found' % host)
 
 
 if __name__ == "__main__":
