@@ -58,7 +58,6 @@
 /monitoring/stackdriver.py
 /network/citrix/netscaler.py
 /network/cloudflare_dns.py
-/network/dnsmadeeasy.py
 /network/f5/bigip_gtm_virtual_server.py
 /network/f5/bigip_gtm_wide_ip.py
 /network/nmcli.py
