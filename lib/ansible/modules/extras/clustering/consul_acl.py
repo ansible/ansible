@@ -124,7 +124,7 @@ try:
     import consul
     from requests.exceptions import ConnectionError
     python_consul_installed = True
-except ImportError, e:
+except ImportError:
     python_consul_installed = False
 
 try:
@@ -180,11 +180,11 @@ def update_acl(module):
                 token = consul.acl.create(
                     name=name, type=token_type, rules=rules)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(
                     msg="No token returned, check your managment key and that \
                          the host is in the acl datacenter %s" % e)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Could not create/update acl %s" % e)
 
     module.exit_json(changed=changed,
@@ -216,7 +216,7 @@ def load_rules_for_token(module, consul_api, token):
                 for pattern, policy in rule_set[rule_type].iteritems():
                     rules.add_rule(rule_type, Rule(pattern, policy['policy']))
         return rules
-    except Exception, e:
+    except Exception as e:
         module.fail_json(
             msg="Could not load rule list from retrieved rule data %s, %s" % (
                     token, e))
@@ -351,10 +351,10 @@ def main():
 
     try:
         execute(module)
-    except ConnectionError, e:
+    except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
                             module.params.get('host'), module.params.get('port'), str(e)))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
 # import module snippets

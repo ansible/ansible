@@ -219,7 +219,7 @@ try:
     import consul
     from requests.exceptions import ConnectionError
     python_consul_installed = True
-except ImportError, e:
+except ImportError:
     python_consul_installed = False
 
 def register_with_consul(module):
@@ -560,10 +560,10 @@ def main():
 
     try:
         register_with_consul(module)
-    except ConnectionError, e:
+    except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
                             module.params.get('host'), module.params.get('port'), str(e)))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
 # import module snippets
