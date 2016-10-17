@@ -122,7 +122,7 @@ class VMWareInventory(object):
             if self.args.refresh_cache or not cache_valid:
                 self.do_api_calls_update_cache()
             else:
-                self.debugl('# loading inventory from cache')
+                self.debugl('loading inventory from cache')
                 self.inventory = self.get_inventory_from_cache()
 
     def debugl(self, text):
@@ -131,10 +131,11 @@ class VMWareInventory(object):
                 text = str(text)
             except UnicodeEncodeError:
                 text = text.encode('ascii','ignore')                            
-            print(text)
+            print('%s %s' % (datetime.datetime.now(), text))
 
     def show(self):
         # Data to print
+        self.debugl('dumping results')
         data_to_print = None
         if self.args.host:
             data_to_print = self.get_host_info(self.args.host)
@@ -310,7 +311,7 @@ class VMWareInventory(object):
         instances = []
         si = SmartConnect(**inkwargs)
 
-        self.debugl('# retrieving instances')            
+        self.debugl('retrieving all instances')
         if not si:
             print("Could not connect to the specified host using specified "
                 "username and password")
@@ -319,6 +320,7 @@ class VMWareInventory(object):
         content = si.RetrieveContent()
 
         # Create a search container for virtualmachines
+        self.debugl('creating containerview for virtualmachines')
         container = content.rootFolder
         viewType = [vim.VirtualMachine]
         recursive = True
@@ -330,7 +332,7 @@ class VMWareInventory(object):
                 if len(instances) >= (self.args.max_instances):
                     break
             instances.append(child)
-        self.debugl("# total instances retrieved %s" % len(instances))
+        self.debugl("%s total instances in container view" % len(instances))
 
         if self.args.host:
             instances = [x for x in instances if x.name == self.args.host]
@@ -339,6 +341,7 @@ class VMWareInventory(object):
         for instance in sorted(instances):    
             ifacts = self.facts_from_vobj(instance)
             instance_tuples.append((instance, ifacts))
+        self.debugl('facts collected for all instances')
         return instance_tuples
 
 
@@ -346,6 +349,7 @@ class VMWareInventory(object):
 
         ''' Convert a list of vm objects into a json compliant inventory '''
 
+        self.debugl('re-indexing instances based on ini settings')
         inventory = self._empty_inventory()
         inventory['all'] = {}
         inventory['all']['hosts'] = []
@@ -397,14 +401,14 @@ class VMWareInventory(object):
             inventory['all']['hosts'].remove(k)
             inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('# pre-filtered hosts:')
+        self.debugl('pre-filtered hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl('#   * %s' % i)
+            self.debugl('  * %s' % i)
         # Apply host filters
         for hf in self.host_filters:
             if not hf:
                 continue
-            self.debugl('# filter: %s' % hf)
+            self.debugl('filter: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
             for k,v in filter_map.iteritems():
                 if not v:
@@ -412,9 +416,9 @@ class VMWareInventory(object):
                     inventory['all']['hosts'].remove(k)
                     inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('# post-filter hosts:')
+        self.debugl('post-filter hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl('#   * %s' % i)
+            self.debugl('  * %s' % i)
 
         # Create groups
         for gbp in self.groupby_patterns:
@@ -471,7 +475,7 @@ class VMWareInventory(object):
 
         if level == 0:
             try:
-                self.debugl("# get facts: %s" % vobj.name)
+                self.debugl("get facts for %s" % vobj.name)
             except Exception as e:
                 self.debugl(e)
 
