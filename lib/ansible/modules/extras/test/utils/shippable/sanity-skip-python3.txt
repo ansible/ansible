@@ -58,4 +58,3 @@
 /network/nmcli.py
 /network/openvswitch_bridge.py
 /network/openvswitch_port.py
-/notification/jabber.py
