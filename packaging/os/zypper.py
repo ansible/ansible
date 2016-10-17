@@ -267,15 +267,16 @@ def get_cmd(m, subcommand):
 def set_diff(m, retvals, result):
     # TODO: if there is only one package, set before/after to version numbers
     packages = {'installed': [], 'removed': [], 'upgraded': []}
-    for p in result:
-        group = result[p]['group']
-        if group == 'to-upgrade':
-            versions = ' (' + result[p]['oldversion'] + ' => ' + result[p]['version'] + ')'
-            packages['upgraded'].append(p + versions)
-        elif group == 'to-install':
-            packages['installed'].append(p)
-        elif group == 'to-remove':
-            packages['removed'].append(p)
+    if result:
+        for p in result:
+            group = result[p]['group']
+            if group == 'to-upgrade':
+                versions = ' (' + result[p]['oldversion'] + ' => ' + result[p]['version'] + ')'
+                packages['upgraded'].append(p + versions)
+            elif group == 'to-install':
+                packages['installed'].append(p)
+            elif group == 'to-remove':
+                packages['removed'].append(p)
 
     output = ''
     for state in packages:
