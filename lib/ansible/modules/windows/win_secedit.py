@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_secedit
-version_added: 2.3
+version_added: '2.3'
 notes:
     - If the target server is joined to a DC then it will error as any secedit modifications would be overwritten by GPO.
     - SecEdit does not error out when you try to modify a key value with an improper value, such as passing in a string when a valid value would be an integer.
@@ -39,16 +39,20 @@ options:
         This can things like System Access, Event Audit, etc. 
         If you supply an invalid category the module will error out and let you know what the valid categories are for that particular system. 
     required: true
+    default: null
   key:
     description:
       - The key under the category for which you wish to modify the value. For example: under the System Access category there is a key MinimumPasswordAge that could be targeted. 
       - Just like with category, if an invalid key is specified, the module will error out and show what the valid keys for the given category are.
     required: true
+    default: null
   value:
     description:
       - The value to assign to the key. 
     required: true
-author: Jonathan Davila <@defionscode> 
+    default: null
+author:
+    - Jonathan Davila (@defionscode) 
 '''
 
 EXAMPLES = '''
