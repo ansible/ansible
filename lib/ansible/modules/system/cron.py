@@ -645,10 +645,10 @@ def main():
                 crontab.remove_env(name)
                 changed = True
     else:
-        job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
         old_job = crontab.find_job(name)
 
         if do_install:
+            job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
             if len(old_job) == 0:
                 crontab.add_job(name, job)
                 changed = True
