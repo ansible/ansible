@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 2.1.3 "The Song Remains the Same" - TBD
+
+###Minor Changes:
+* The postgresql_lang and postgresql_ext modules from extras now mark
+  login_password as no_log so the password is obscured when logging.
+
 ## 2.1.2 "The Song Remains the Same" - 09-29-2016
 
 ###Minor Changes:
