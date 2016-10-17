@@ -19,9 +19,6 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-########
-
-
 Set-StrictMode -Version Latest
 
 function Get-IniFile {
