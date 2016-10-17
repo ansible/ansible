@@ -156,7 +156,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         if needs_change:
             try:
                 balancer.add_ssl_termination(**ssl_attrs)
-            except pyrax.exceptions.PyraxException, e:
+            except pyrax.exceptions.PyraxException as e:
                 module.fail_json(msg='%s' % e.message)
             changed = True
     elif state == 'absent':
@@ -164,7 +164,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         if existing_ssl:
             try:
                 balancer.delete_ssl_termination()
-            except pyrax.exceptions.PyraxException, e:
+            except pyrax.exceptions.PyraxException as e:
                 module.fail_json(msg='%s' % e.message)
             changed = True
 
@@ -176,7 +176,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
 
         try:
             balancer.update(httpsRedirect=https_redirect)
-        except pyrax.exceptions.PyraxException, e:
+        except pyrax.exceptions.PyraxException as e:
             module.fail_json(msg='%s' % e.message)
         changed = True
 
