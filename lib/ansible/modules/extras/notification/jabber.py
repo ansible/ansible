@@ -155,11 +155,13 @@ def main():
             conn.send(msg)
         time.sleep(1)
         conn.disconnect()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to send msg: %s" % e)
 
     module.exit_json(changed=False, to=to, user=user, msg=msg.getBody())
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
