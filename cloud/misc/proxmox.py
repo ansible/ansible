@@ -164,7 +164,7 @@ options:
     default: present
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
-requirements: [ "proxmoxer", "requests" ]
+requirements: [ "proxmoxer", "python >= 2.7", "requests" ]
 author: "Sergei Antipov @UnderGreen"
 '''
 
