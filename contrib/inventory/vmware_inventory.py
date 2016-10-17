@@ -82,14 +82,20 @@ class VMWareInventory(object):
     host_filters = []
     groupby_patterns = []
 
-    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
     if (sys.version_info > (3, 0)):
         safe_types = [int, bool, str, float, None]
     else:
         safe_types = [int, long, bool, str, float, None]
     iter_types = [dict, list]
-    skip_keys = ['dynamicproperty', 'dynamictype', 'managedby', 'childtype']
 
+    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
+    skip_keys = ['declaredalarmstate',
+                 'disabledmethod',
+                 'dynamicproperty',
+                 'dynamictype',
+                 'managedby',
+                 'parent',
+                 'childtype']
 
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
@@ -468,6 +474,7 @@ class VMWareInventory(object):
         methods = dir(vobj)
         methods = [str(x) for x in methods if not x.startswith('_')]
         methods = [x for x in methods if not x in self.bad_types]
+        methods = [x for x in methods if not x.lower() in self.skip_keys]
         methods = sorted(methods)
 
         for method in methods:
@@ -476,17 +483,22 @@ class VMWareInventory(object):
                 methodToCall = getattr(vobj, method)
             except Exception as e:
                 continue
+
             # Skip callable methods
             if callable(methodToCall):
                 continue
+
             if self.lowerkeys:
                 method = method.lower()
-            rdata[method] = self._process_object_types(methodToCall)
+
+            #if method == 'config':
+            #    import epdb; epdb.st()
+            rdata[method] = self._process_object_types(methodToCall, inkey=method)
 
         return rdata
 
 
-    def _process_object_types(self, vobj, level=0):
+    def _process_object_types(self, vobj, inkey=None, level=0):
         ''' Serialize an object '''
         rdata = {}
 
@@ -519,11 +531,16 @@ class VMWareInventory(object):
                         rdata.append(vid)
         elif issubclass(type(vobj), dict):
             pass
+
         elif issubclass(type(vobj), object):
             methods = dir(vobj)
             methods = [str(x) for x in methods if not x.startswith('_')]
             methods = [x for x in methods if not x in self.bad_types]
+            methods = [x for x in methods if not x.lower() in self.skip_keys]
             methods = sorted(methods)
+
+            #if inkey == 'config':
+            #    import epdb; epdb.st()
 
             for method in methods:
                 # Attempt to get the method, skip on fail
