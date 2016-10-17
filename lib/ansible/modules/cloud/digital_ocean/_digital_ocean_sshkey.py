@@ -21,6 +21,7 @@ description:
      - Create/delete an SSH key.
 version_added: "1.6"
 author: "Michael Gregson (@mgregson)"
+deprecated: Deprecated in 2.3. Use do_sshkeys instead
 options:
   state:
     description:
