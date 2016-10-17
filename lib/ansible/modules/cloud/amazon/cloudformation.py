@@ -200,6 +200,8 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+# import a class, otherwise we'll use a fully qualified path
+from ansible.module_utils.ec2 import AWSRetry
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -219,7 +221,7 @@ def boto_version_required(version_tuple):
     try:
         for part in parts:
             boto_version.append(int(part))
-    except:
+    except ValueError:
         boto_version.append(-1)
     return tuple(boto_version) >= tuple(version_tuple)
 
@@ -251,13 +253,14 @@ def get_stack_events(cfn, stack_name):
 def stack_operation(cfn, stack_name, operation):
     '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
-    operation_complete = False
-    while operation_complete == False:
+    while True:
         try:
             stack = get_stack_facts(cfn, stack_name)
             existed.append('yes')
         except:
-            if 'yes' in existed or operation=='DELETE': # stacks may delete fast, look in a few ways.
+            # If the stack previously existed, and now can't be found then it's
+            # been deleted successfully.
+            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name)
                 ret.update({ 'changed': True, 'output': 'Stack Deleted'})
                 return ret
@@ -424,6 +427,7 @@ def main():
         # don't need to be updated.
         try:
             cfn.update_stack(**stack_params)
+            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
         except Exception as err:
             error_msg = boto_exception(err)
             if 'No updates are to be performed.' in error_msg:
@@ -432,7 +436,6 @@ def main():
                 module.fail_json(msg=error_msg)
                 #return {'error': error_msg}
                 #module.fail_json(msg=error_msg)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
         if not result: module.fail_json(msg="empty result")
 
     # check the status of the stack while we are creating/updating it.
@@ -478,8 +481,6 @@ def main():
 from ansible.module_utils.basic import AnsibleModule
 import ansible.module_utils.ec2
 
-# import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry
 
 if __name__ == '__main__':
     main()
