@@ -156,11 +156,13 @@ def main():
                     hostname=server,
                     port=port,
                     auth=auth)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
 
     module.exit_json(changed=False, topic=topic)
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
