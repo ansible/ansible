@@ -24,7 +24,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args;
 
-$days_of_week = Get-AnsibleParam $params -anem "days_of_week"
+$days_of_week = Get-AnsibleParam $params -name "days_of_week"
 $enabled = Get-AnsibleParam $params -name "enabled" -default $true
 $enabled = $enabled | ConvertTo-Bool
 $description = Get-AnsibleParam $params -name "description" -default " "
