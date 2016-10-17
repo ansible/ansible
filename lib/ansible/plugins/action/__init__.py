@@ -817,6 +817,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             to get back the first existing file found.
         '''
 
+        # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()
 
         result = self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
