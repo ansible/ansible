@@ -8,11 +8,15 @@ MANPATH=${MANPATH-""}
 PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
 PYTHON_BIN=${PYTHON_BIN-$PYTHON}
 
-verbosity=${1-info} # Defaults to `info' if unspecified
+verbosity=info # Defaults to `info' if unspecified
+background=no
 
-if [ "$verbosity" = -q ]; then
-    verbosity=silent
-fi
+for opt in "$@"; do
+    case $opt in
+      -q ) verbosity=silent ;;
+      -b ) background=yes ;;
+    esac
+done
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
@@ -79,4 +83,8 @@ if [ "$verbosity" != silent ] ; then
 	EOF
 fi
 
-unset PREFIX_PATH PREFIX_MANPATH PREFIX_PYTHONPATH
+if [ $background = no ]; then
+  wait >/dev/null 2>&1
+fi
+
+unset PREFIX_PATH PREFIX_MANPATH PREFIX_PYTHONPATH HACKING_DIR PYTHON FULL_PATH verbosity background
