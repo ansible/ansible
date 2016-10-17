@@ -196,7 +196,7 @@ def core(module):
 
         elif status_code == 200:
             # If key found was found, check if name needs to be updated
-            if json['ssh_key']['name'] == name:
+            if name is None or json['ssh_key']['name'] == name:
                 module.exit_json(changed=False, data=json)
 
             if module.check_mode:
