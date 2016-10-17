@@ -29,7 +29,6 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 add_argument('use_ssl', dict(default=False, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
-add_argument('timeout', dict(default=10, type='int'))
 
 class NxapiConfigMixin(object):
 
