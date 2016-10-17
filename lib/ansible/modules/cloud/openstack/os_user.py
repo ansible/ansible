@@ -120,18 +120,39 @@ user:
             sample: "demouser"
 '''
 
-def _needs_update(module, user):
-    keys = ('email', 'default_project', 'domain', 'enabled')
-    for key in keys:
-        if module.params[key] is not None and module.params[key] != user.get(key):
+def _needs_update(params_dict, user):
+    for k, v in params_dict.items():
+        if k != 'password' and user[k] != v:
             return True
 
     # We don't get password back in the user object, so assume any supplied
     # password is a change.
-    if module.params['password'] is not None:
+    if params_dict['password'] is not None:
         return True
 
     return False
+
+def _get_domain_id(cloud, domain):
+    try:
+        # We assume admin is passing domain id
+        domain_id = cloud.get_domain(domain)['id']
+    except:
+        # If we fail, maybe admin is passing a domain name.
+        # Note that domains have unique names, just like id.
+        try:
+            domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
+        except:
+            # Ok, let's hope the user is non-admin and passing a sane id
+            domain_id = domain
+
+    return domain_id
+
+def _get_default_project_id(cloud, default_project):
+    project = cloud.get_project(default_project)
+    if not project:
+        module.fail_json(msg='Default project %s is not valid' % default_project)
+
+    return project['id']
 
 def main():
 
@@ -165,41 +186,33 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
         user = cloud.get_user(name)
 
+        domain_id = None
         if domain:
             opcloud = shade.operator_cloud(**module.params)
-            try:
-                # We assume admin is passing domain id
-                dom = opcloud.get_domain(domain)['id']
-                domain = dom
-            except:
-                # If we fail, maybe admin is passing a domain name.
-                # Note that domains have unique names, just like id.
-                try:
-                    dom = opcloud.search_domains(filters={'name': domain})[0]['id']
-                    domain = dom
-                except:
-                    # Ok, let's hope the user is non-admin and passing a sane id
-                    pass
+            domain_id = _get_domain_id(opcloud, domain)
 
         if state == 'present':
-            project_id = None
+            default_project_id = None
             if default_project:
-                project = cloud.get_project(default_project)
-                if not project:
-                    module.fail_json(msg='Default project %s is not valid' % default_project)
-                project_id = project['id']
+                default_project_id = _get_default_project_id(cloud, default_project)
 
             if user is None:
                 user = cloud.create_user(
                     name=name, password=password, email=email,
-                    default_project=default_project, domain_id=domain,
+                    default_project=default_project_id, domain_id=domain_id,
                     enabled=enabled)
                 changed = True
             else:
-                if _needs_update(module, user):
+                params_dict = {'email': email, 'enabled': enabled, 'password': password}
+                if domain_id is not None:
+                    params_dict['domain_id'] = domain_id
+                if default_project_id is not None:
+                    params_dict['default_project_id'] = default_project_id
+
+                if _needs_update(params_dict, user):
                     user = cloud.update_user(
                         user['id'], password=password, email=email,
-                        default_project=project_id, domain_id=domain,
+                        default_project=default_project_id, domain_id=domain_id,
                         enabled=enabled)
                     changed = True
                 else:
