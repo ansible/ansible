@@ -32,7 +32,7 @@ import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import SystemRandom, Random
 from datetime import datetime
 import uuid
 
@@ -200,30 +200,32 @@ def from_yaml(data):
 
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
-    r = SystemRandom()
+    if seed:
+        r = Random(seed)
+    else:
+        r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
             start = 0
         if not step:
             step = 1
-		if seed:
-			r.seed(seed)
+        if seed:
+            r.seed(seed)
         return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise errors.AnsibleFilterError('start and step can only be used with integer values')
-		if seed:
-			r.seed(seed)
         return r.choice(end)
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 def randomize_list(mylist, seed=None):
     try:
-		r = SystemRandom()
+        if seed:
+            r = Random(seed)
+        else:
+            r = SystemRandom()
         mylist = list(mylist)
-		if seed:
-			r.seed(seed)
         r.shuffle(mylist)
     except:
         pass
