@@ -73,6 +73,12 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
+  timeout:
+    description:
+      - Specifies idle timeout for the connection.  NX-API can be slow to 
+        return on long-running commands (sh mac, sh bgp, etc).
+    required: false
+    default: 10
   provider:
     description:
       - Convenience method that allows all I(nxos) arguments to be passed as
