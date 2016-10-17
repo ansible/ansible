@@ -272,7 +272,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._low_level_execute_command(cmd, sudoable=False)
 
     def _transfer_file(self, local_path, remote_path):
-        self._connection.put_file(local_path, remote_path)
+        cwd = os.getcwd()
+        os.chdir(self._loader.get_basedir())
+        try:
+            self._connection.put_file(local_path, remote_path)
+        finally:
+            os.chdir(cwd)
         return remote_path
 
     def _transfer_data(self, remote_path, data):
@@ -719,15 +724,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 
-        # Change directory to basedir of task for command execution when connection is local
-        if self._connection.transport == 'local':
-            cwd = os.getcwd()
-            os.chdir(self._loader.get_basedir())
+        cwd = os.getcwd()
+        os.chdir(self._loader.get_basedir())
         try:
             rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         finally:
-            if self._connection.transport == 'local':
-                os.chdir(cwd)
+            os.chdir(cwd)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
