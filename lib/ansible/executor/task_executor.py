@@ -85,9 +85,6 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
-            # get search path for this task to pass to lookup plugins
-            self._job_vars['ansible_search_path'] = self._task.get_search_path()
-
             items = self._get_loop_items()
             if items is not None:
                 if len(items) > 0:
@@ -173,6 +170,10 @@ class TaskExecutor:
                 old_vars[k] = self._job_vars[k]
             self._job_vars[k] = play_context_vars[k]
 
+        # get search path for this task to pass to lookup plugins
+        self._job_vars['ansible_search_path'] = self._task.get_search_path()
+
+
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
@@ -212,6 +213,11 @@ class TaskExecutor:
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
+
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
+            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
+
         return items
 
     def _run_loop(self, items):
