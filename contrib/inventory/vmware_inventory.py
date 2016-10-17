@@ -93,9 +93,15 @@ class VMWareInventory(object):
                  'disabledmethod',
                  'dynamicproperty',
                  'dynamictype',
+                 'environmentbrowser',
                  'managedby',
                  'parent',
                  'childtype']
+
+    vimTable = {
+        vim.Datastore: ['_moId', 'name'],
+        vim.ResourcePool: ['_moId', 'name'],
+    }
 
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
@@ -491,19 +497,27 @@ class VMWareInventory(object):
             if self.lowerkeys:
                 method = method.lower()
 
-            #if method == 'config':
-            #    import epdb; epdb.st()
-            rdata[method] = self._process_object_types(methodToCall, inkey=method)
+            rdata[method] = self._process_object_types(
+                                methodToCall, 
+                                thisvm=vobj, 
+                                inkey=method
+                            )
 
         return rdata
 
 
-    def _process_object_types(self, vobj, inkey=None, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
         ''' Serialize an object '''
         rdata = {}
 
         if vobj is None:
             rdata = None
+
+        elif type(vobj) in self.vimTable:
+            rdata = {}
+            for key in self.vimTable[type(vobj)]:
+                rdata[key] = getattr(vobj, key)
+
         elif issubclass(type(vobj), str) or isinstance(vobj, str):
             if vobj.isalnum():
                 rdata = vobj
@@ -523,12 +537,21 @@ class VMWareInventory(object):
                 vobj = sorted(vobj)
             except Exception as e:
                 pass
-            for vi in vobj:
+
+            for idv, vii in enumerate(vobj):
+
                 if (level+1 <= self.maxlevel):
-                    #vid = self.facts_from_vobj(vi, level=(level+1))
-                    vid = self._process_object_types(vi, level=(level+1))
+
+                    vid = self._process_object_types(
+                                vii, 
+                                thisvm=thisvm, 
+                                inkey=inkey+'['+str(idv)+']', 
+                                level=(level+1)
+                          )
+
                     if vid:
                         rdata.append(vid)
+
         elif issubclass(type(vobj), dict):
             pass
 
@@ -538,9 +561,6 @@ class VMWareInventory(object):
             methods = [x for x in methods if not x in self.bad_types]
             methods = [x for x in methods if not x.lower() in self.skip_keys]
             methods = sorted(methods)
-
-            #if inkey == 'config':
-            #    import epdb; epdb.st()
 
             for method in methods:
                 # Attempt to get the method, skip on fail
@@ -553,12 +573,15 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
                 if (level+1 <= self.maxlevel):
-                    rdata[method] = self._process_object_types(methodToCall, level=(level+1))
+                    rdata[method] = self._process_object_types(
+                                        methodToCall, 
+                                        thisvm=thisvm, 
+                                        inkey=inkey+'.'+method, 
+                                        level=(level+1)
+                                    )
         else:
             pass
 
-        if not rdata:
-            rdata = None
         return rdata
 
     def get_host_info(self, host):
