@@ -395,7 +395,8 @@ class StrategyModule(StrategyBase):
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
-                        if s.run_state != iterator.ITERATING_RESCUE:
+                        if s.run_state != iterator.ITERATING_RESCUE or \
+                           s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")
@@ -414,6 +415,13 @@ class StrategyModule(StrategyBase):
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for max_fail_percentage")
+
+                display.debug("checking to see if all hosts have failed and the running result is not ok")
+                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
+                    display.debug("^ not ok, so returning result now")
+                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    return result
+                display.debug("done checking to see if all hosts have failed")
 
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
