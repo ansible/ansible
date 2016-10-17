@@ -4,6 +4,8 @@ Ansible Changes By Release
 ## 2.1.3 "The Song Remains the Same" - TBD
 
 ###Minor Changes:
+* The subversion module from core now marks its password parameter as no_log so
+  the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
   login_password as no_log so the password is obscured when logging.
 
