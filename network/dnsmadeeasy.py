@@ -121,7 +121,8 @@ try:
     from time import strftime, gmtime
     import hashlib
     import hmac
-except ImportError, e:
+except ImportError:
+    e = get_exception()
     IMPORT_ERROR = str(e)
 
 class DME2:
@@ -170,7 +171,7 @@ class DME2:
 
         try:
             return json.load(response)
-        except Exception, e:
+        except Exception:
             return {}
 
     def getDomain(self, domain_id):
