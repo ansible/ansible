@@ -66,4 +66,3 @@
 /network/openvswitch_port.py
 /notification/jabber.py
 /notification/mail.py
-/notification/mqtt.py
