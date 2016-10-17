@@ -170,11 +170,13 @@ def main():
             module.exit_json(changed=True, **deployment)
         else:
             module.fail_json(msg=json.dumps(info))
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 if __name__ == '__main__':
     main()
