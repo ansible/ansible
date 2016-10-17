@@ -127,44 +127,70 @@ notes:
 '''
 
 EXAMPLES = '''
-# Update repositories cache and install "foo" package
-- apt: name=foo update_cache=yes
+- name: Update repositories cache and install "foo" package
+  apt:
+    name: foo
+    update_cache: yes
 
-# Remove "foo" package
-- apt: name=foo state=absent
+- name: Remove "foo" package
+  apt:
+    name: foo
+    state: absent
 
-# Install the package "foo"
-- apt: name=foo state=present
+- name: Install the package "foo"
+  apt:
+    name: foo
+    state: present
 
-# Install the version '1.00' of package "foo"
-- apt: name=foo=1.00 state=present
+- name: Install the version '1.00' of package "foo"
+  apt:
+    name: foo=1.00
+    state: present
 
-# Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-- apt: name=nginx state=latest default_release=squeeze-backports update_cache=yes
+- name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
+  apt:
+    name: nginx
+    state: latest
+    default_release: squeeze-backports
+    update_cache: yes
 
-# Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-- apt: name=openjdk-6-jdk state=latest install_recommends=no
+- name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
+  apt:
+    name: openjdk-6-jdk
+    state: latest
+    install_recommends: no
 
-# Update all packages to the latest version
-- apt: upgrade=dist
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
 
-# Run the equivalent of "apt-get update" as a separate step
-- apt: update_cache=yes
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
 
-# Only run "update_cache=yes" if the last one is more than 3600 seconds ago
-- apt: update_cache=yes cache_valid_time=3600
+- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
 
-# Pass options to dpkg on run
-- apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
+- name: Pass options to dpkg on run
+  apt:
+    upgrade: dist
+    update_cache: yes
+    dpkg_options: force-confold,force-confdef
 
-# Install a .deb package
-- apt: deb=/tmp/mypackage.deb
+- name: Install a .deb package
+  apt:
+    deb: /tmp/mypackage.deb
 
-# Install the build dependencies for package "foo"
-- apt: pkg=foo state=build-dep
+- name: Install the build dependencies for package "foo"
+  apt:
+    pkg: foo
+    state: build-dep
 
-# Install a .deb package from the internet.
-- apt: deb=https://example.com/python-ppq_0.1-1_all.deb
+- name: Install a .deb package from the internet.
+  apt:
+    deb: https://example.com/python-ppq_0.1-1_all.deb
 '''
 
 RETURN = '''
