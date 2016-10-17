@@ -273,7 +273,7 @@ def main():
 
     if module.params['template'] is None and module.params['template_url'] is None:
         if state == 'present':
-            module.fail_json('Module parameter "template" or "template_url" is required if "state" is "present"')
+            module.fail_json(msg='Module parameter "template" or "template_url" is required if "state" is "present"')
 
     if module.params['template'] is not None:
         template_body = open(module.params['template'], 'r').read()
