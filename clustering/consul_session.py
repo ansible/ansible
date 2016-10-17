@@ -137,7 +137,7 @@ try:
     import consul
     from requests.exceptions import ConnectionError
     python_consul_installed = True
-except ImportError, e:
+except ImportError:
     python_consul_installed = False
 
 def execute(module):
@@ -185,7 +185,7 @@ def lookup_sessions(module):
                              session_id=session_id,
                              sessions=session_by_id)
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Could not retrieve session info %s" % e)
 
 
@@ -216,7 +216,7 @@ def update_session(module):
                          delay=delay,
                          checks=checks,
                          node=node)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Could not create/update session %s" % e)
 
 
@@ -233,7 +233,7 @@ def remove_session(module):
 
         module.exit_json(changed=True,
                          session_id=session_id)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Could not remove session with id '%s' %s" % (
                          session_id, e))
 
@@ -270,10 +270,10 @@ def main():
 
     try:
         execute(module)
-    except ConnectionError, e:
+    except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
                             module.params.get('host'), module.params.get('port'), str(e)))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
 # import module snippets
