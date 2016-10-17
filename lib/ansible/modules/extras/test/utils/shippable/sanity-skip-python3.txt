@@ -35,7 +35,6 @@
 /cloud/misc/virt_pool.py
 /cloud/profitbricks/profitbricks.py
 /cloud/profitbricks/profitbricks_volume.py
-/cloud/rackspace/rax_clb_ssl.py
 /clustering/consul.py
 /clustering/consul_acl.py
 /clustering/consul_kv.py
