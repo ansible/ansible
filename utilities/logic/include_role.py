@@ -44,6 +44,11 @@ options:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     required: False
+    default: None
+  allow_duplicates:
+    description:
+      - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
+    required: False
     default: True
   private:
     description:
