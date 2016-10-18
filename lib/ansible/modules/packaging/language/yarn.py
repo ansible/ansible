@@ -285,21 +285,21 @@ def main():
         installed, missing = yarn.list()
         if len(missing):
             changed = True
-            out = yarn.install()
+            yarn.install()
     elif state == 'latest':
         installed, missing = yarn.list()
         outdated = yarn.list_outdated()
         if len(missing):
             changed = True
-            out = yarn.install()
+            yarn.install()
         if len(outdated):
             changed = True
-            out = yarn.update()
+            yarn.update()
     else: #absent
         installed, missing = yarn.list()
         if name in installed:
             changed = True
-            out = yarn.uninstall()
+            yarn.uninstall()
 
     module.exit_json(changed=changed)
 
