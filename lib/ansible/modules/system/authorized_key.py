@@ -250,7 +250,7 @@ def parseoptions(module, options):
         for part in parts:
             if "=" in part:
                 (key, value) = part.split("=", 1)
-                if options_dict.has_key(key):
+                if key in options_dict:
                     if isinstance(options_dict[key], list):
                         options_dict[key].append(value)
                     else:
