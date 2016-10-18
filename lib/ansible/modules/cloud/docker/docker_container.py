@@ -124,7 +124,8 @@ options:
     required: false
   exposed_ports:
     description:
-      - List of additional container ports to expose for port mappings or links.
+      - List of additional container ports which informs Docker that the container
+        listens on the specified network ports at runtime.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
         need to be exposed again.
     default: null
