@@ -47,6 +47,7 @@ class IncludeRole(Task):
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
+    _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _static = FieldAttribute(isa='bool', default=None, private=True)
     _private = FieldAttribute(isa='bool', default=None, private=True)
 
@@ -73,6 +74,7 @@ class IncludeRole(Task):
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
+        actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         # compile role
         blocks = actual_role.compile(play=myplay)
@@ -107,7 +109,7 @@ class IncludeRole(Task):
 
         #TODO: find a way to make this list come from object ( attributes does not work as per below)
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in ['static', 'private']:
+        for option in ['static', 'private', 'allow_duplicates']:
             if option in ir.args:
                 setattr(ir, option, ir.args.get(option))
 
