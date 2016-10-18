@@ -58,11 +58,14 @@ try:
 except ImportError:
     pass
 
+class VMwareMissingHostException(Exception):
+    pass
 
 class VMWareInventory(object):
 
     __name__ = 'VMWareInventory'
 
+    guest_props = False
     instances = []
     debug = False
     load_dumpfile = None
@@ -80,14 +83,30 @@ class VMWareInventory(object):
     host_filters = []
     groupby_patterns = []
 
-    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
     if (sys.version_info > (3, 0)):
         safe_types = [int, bool, str, float, None]
     else:
         safe_types = [int, long, bool, str, float, None]
     iter_types = [dict, list]
-    skip_keys = ['dynamicproperty', 'dynamictype', 'managedby', 'childtype']
 
+    bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
+    skip_keys = ['declaredalarmstate',
+                 'disabledmethod',
+                 'dynamicproperty',
+                 'dynamictype',
+                 'environmentbrowser',
+                 'managedby',
+                 'parent',
+                 'childtype']
+
+    # translation table for attributes to fetch for known vim types
+    if not HAS_PYVMOMI:
+        vimTable = {}
+    else:
+        vimTable = {
+            vim.Datastore: ['_moId', 'name'],
+            vim.ResourcePool: ['_moId', 'name'],
+        }
 
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
@@ -108,7 +127,7 @@ class VMWareInventory(object):
             if self.args.refresh_cache or not cache_valid:
                 self.do_api_calls_update_cache()
             else:
-                self.debugl('# loading inventory from cache')
+                self.debugl('loading inventory from cache')
                 self.inventory = self.get_inventory_from_cache()
 
     def debugl(self, text):
@@ -117,10 +136,11 @@ class VMWareInventory(object):
                 text = str(text)
             except UnicodeEncodeError:
                 text = text.encode('ascii','ignore')                            
-            print(text)
+            print('%s %s' % (datetime.datetime.now(), text))
 
     def show(self):
         # Data to print
+        self.debugl('dumping results')
         data_to_print = None
         if self.args.host:
             data_to_print = self.get_host_info(self.args.host)
@@ -222,30 +242,46 @@ class VMWareInventory(object):
         # set the cache filename and max age
         cache_name = config.get('vmware', 'cache_name')
         self.cache_path_cache = self.cache_dir + "/%s.cache" % cache_name
+        self.debugl('cache path is %s' % self.cache_path_cache)
         self.cache_max_age = int(config.getint('vmware', 'cache_max_age'))
 
         # mark the connection info 
         self.server =  os.environ.get('VMWARE_SERVER', config.get('vmware', 'server'))
+        self.debugl('server is %s' % self.server)
         self.port = int(os.environ.get('VMWARE_PORT', config.get('vmware', 'port')))
         self.username = os.environ.get('VMWARE_USERNAME', config.get('vmware', 'username'))
+        self.debugl('username is %s' % self.username)
         self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password'))
         self.validate_certs = os.environ.get('VMWARE_VALIDATE_CERTS', config.get('vmware', 'validate_certs'))
         if self.validate_certs in ['no', 'false', 'False', False]:
             self.validate_certs = False
         else:
             self.validate_certs = True
+        self.debugl('cert validation is %s' % self.validate_certs)
 
         # behavior control
         self.maxlevel = int(config.get('vmware', 'max_object_level'))
+        self.debugl('max object level is %s' % self.maxlevel)
         self.lowerkeys = config.get('vmware', 'lower_var_keys')
         if type(self.lowerkeys) != bool:
             if str(self.lowerkeys).lower() in ['yes', 'true', '1']:
                 self.lowerkeys = True
             else:    
                 self.lowerkeys = False
+        self.debugl('lower keys is %s' % self.lowerkeys)
 
         self.host_filters = list(config.get('vmware', 'host_filters').split(','))
+        self.debugl('host filters are %s' % self.host_filters)
         self.groupby_patterns = list(config.get('vmware', 'groupby_patterns').split(','))
+        self.debugl('groupby patterns are %s' % self.groupby_patterns)
+
+        # Special feature to disable the brute force serialization of the
+        # virtulmachine objects. The key name for these properties does not
+        # matter because the values are just items for a larger list.
+        if config.has_section('properties'):
+            self.guest_props = []
+            for prop in config.items('properties'):
+                self.guest_props.append(prop[1])
 
         # save the config
         self.config = config    
@@ -296,7 +332,7 @@ class VMWareInventory(object):
         instances = []
         si = SmartConnect(**inkwargs)
 
-        self.debugl('# retrieving instances')            
+        self.debugl('retrieving all instances')
         if not si:
             print("Could not connect to the specified host using specified "
                 "username and password")
@@ -305,6 +341,7 @@ class VMWareInventory(object):
         content = si.RetrieveContent()
 
         # Create a search container for virtualmachines
+        self.debugl('creating containerview for virtualmachines')
         container = content.rootFolder
         viewType = [vim.VirtualMachine]
         recursive = True
@@ -316,12 +353,19 @@ class VMWareInventory(object):
                 if len(instances) >= (self.args.max_instances):
                     break
             instances.append(child)
-        self.debugl("# total instances retrieved %s" % len(instances))
+        self.debugl("%s total instances in container view" % len(instances))
+
+        if self.args.host:
+            instances = [x for x in instances if x.name == self.args.host]
 
         instance_tuples = []    
         for instance in sorted(instances):    
-            ifacts = self.facts_from_vobj(instance)
+            if self.guest_props != False:
+                ifacts = self.facts_from_proplist(instance)
+            else:
+                ifacts = self.facts_from_vobj(instance)
             instance_tuples.append((instance, ifacts))
+        self.debugl('facts collected for all instances')
         return instance_tuples
 
 
@@ -329,6 +373,7 @@ class VMWareInventory(object):
 
         ''' Convert a list of vm objects into a json compliant inventory '''
 
+        self.debugl('re-indexing instances based on ini settings')
         inventory = self._empty_inventory()
         inventory['all'] = {}
         inventory['all']['hosts'] = []
@@ -380,14 +425,14 @@ class VMWareInventory(object):
             inventory['all']['hosts'].remove(k)
             inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('# pre-filtered hosts:')
+        self.debugl('pre-filtered hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl('#   * %s' % i)
+            self.debugl('  * %s' % i)
         # Apply host filters
         for hf in self.host_filters:
             if not hf:
                 continue
-            self.debugl('# filter: %s' % hf)
+            self.debugl('filter: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
             for k,v in filter_map.iteritems():
                 if not v:
@@ -395,9 +440,9 @@ class VMWareInventory(object):
                     inventory['all']['hosts'].remove(k)
                     inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('# post-filter hosts:')
+        self.debugl('post-filter hosts:')
         for i in inventory['all']['hosts']:
-            self.debugl('#   * %s' % i)
+            self.debugl('  * %s' % i)
 
         # Create groups
         for gbp in self.groupby_patterns:
@@ -439,6 +484,55 @@ class VMWareInventory(object):
             mapping[k] = newkey
         return mapping
 
+    def facts_from_proplist(self, vm):
+        '''Get specific properties instead of serializing everything'''
+
+        rdata = {}
+        for prop in self.guest_props:
+            self.debugl('getting %s property for %s' % (prop, vm.name))
+            key = prop
+            if self.lowerkeys:
+                key = key.lower()
+
+            if not '.' in prop:
+                # props without periods are direct attributes of the parent
+                rdata[key] = getattr(vm, prop)
+            else:
+                # props with periods are subkeys of parent attributes
+                parts = prop.split('.')
+                total = len(parts) - 1
+
+                # pointer to the current object
+                val = None
+                # pointer to the current result key
+                lastref = rdata
+
+                for idx,x in enumerate(parts):
+
+                    # if the val wasn't set yet, get it from the parent
+                    if not val:
+                        val = getattr(vm, x)
+                    else:
+                        # in a subkey, get the subprop from the previous attrib
+                        try:
+                            val = getattr(val, x)
+                        except AttributeError as e:
+                            self.debugl(e)
+
+                    # lowercase keys if requested
+                    if self.lowerkeys:
+                        x = x.lower()
+
+                    # change the pointer or set the final value
+                    if idx != total:
+                        if x not in lastref:
+                            lastref[x] = {}
+                        lastref = lastref[x]
+                    else:
+                        lastref[x] = val
+
+        return rdata
+
 
     def facts_from_vobj(self, vobj, level=0):
 
@@ -454,7 +548,7 @@ class VMWareInventory(object):
 
         if level == 0:
             try:
-                self.debugl("# get facts: %s" % vobj.name)
+                self.debugl("get facts for %s" % vobj.name)
             except Exception as e:
                 self.debugl(e)
 
@@ -463,6 +557,7 @@ class VMWareInventory(object):
         methods = dir(vobj)
         methods = [str(x) for x in methods if not x.startswith('_')]
         methods = [x for x in methods if not x in self.bad_types]
+        methods = [x for x in methods if not x.lower() in self.skip_keys]
         methods = sorted(methods)
 
         for method in methods:
@@ -471,22 +566,35 @@ class VMWareInventory(object):
                 methodToCall = getattr(vobj, method)
             except Exception as e:
                 continue
+
             # Skip callable methods
             if callable(methodToCall):
                 continue
+
             if self.lowerkeys:
                 method = method.lower()
-            rdata[method] = self._process_object_types(methodToCall)
+
+            rdata[method] = self._process_object_types(
+                                methodToCall, 
+                                thisvm=vobj, 
+                                inkey=method
+                            )
 
         return rdata
 
 
-    def _process_object_types(self, vobj, level=0):
+    def _process_object_types(self, vobj, thisvm=None, inkey=None, level=0):
         ''' Serialize an object '''
         rdata = {}
 
         if vobj is None:
             rdata = None
+
+        elif type(vobj) in self.vimTable:
+            rdata = {}
+            for key in self.vimTable[type(vobj)]:
+                rdata[key] = getattr(vobj, key)
+
         elif issubclass(type(vobj), str) or isinstance(vobj, str):
             if vobj.isalnum():
                 rdata = vobj
@@ -506,18 +614,29 @@ class VMWareInventory(object):
                 vobj = sorted(vobj)
             except Exception as e:
                 pass
-            for vi in vobj:
+
+            for idv, vii in enumerate(vobj):
+
                 if (level+1 <= self.maxlevel):
-                    #vid = self.facts_from_vobj(vi, level=(level+1))
-                    vid = self._process_object_types(vi, level=(level+1))
+
+                    vid = self._process_object_types(
+                                vii, 
+                                thisvm=thisvm, 
+                                inkey=inkey+'['+str(idv)+']', 
+                                level=(level+1)
+                          )
+
                     if vid:
                         rdata.append(vid)
+
         elif issubclass(type(vobj), dict):
             pass
+
         elif issubclass(type(vobj), object):
             methods = dir(vobj)
             methods = [str(x) for x in methods if not x.startswith('_')]
             methods = [x for x in methods if not x in self.bad_types]
+            methods = [x for x in methods if not x.lower() in self.skip_keys]
             methods = sorted(methods)
 
             for method in methods:
@@ -531,19 +650,37 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
                 if (level+1 <= self.maxlevel):
-                    rdata[method] = self._process_object_types(methodToCall, level=(level+1))
+                    rdata[method] = self._process_object_types(
+                                        methodToCall, 
+                                        thisvm=thisvm, 
+                                        inkey=inkey+'.'+method, 
+                                        level=(level+1)
+                                    )
         else:
             pass
 
-        if not rdata:
-            rdata = None
         return rdata
 
     def get_host_info(self, host):
         
         ''' Return hostvars for a single host '''
 
-        return self.inventory['_meta']['hostvars'][host]
+        if host in self.inventory['_meta']['hostvars']:
+            return self.inventory['_meta']['hostvars'][host]
+        elif self.args.host and self.inventory['_meta']['hostvars']:
+            # check if the machine has the name requested
+            keys = self.inventory['_meta']['hostvars'].keys()
+            match = None
+            for k,v in self.inventory['_meta']['hostvars'].iteritems():
+                if self.inventory['_meta']['hostvars'][k]['name'] == self.args.host:
+                    match = k
+                    break
+            if match:
+                return self.inventory['_meta']['hostvars'][match]
+            else:
+                raise VMwareMissingHostException('%s not found' % host)
+        else:
+            raise VMwareMissingHostException('%s not found' % host)
 
 
 if __name__ == "__main__":
