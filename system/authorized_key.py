@@ -159,7 +159,7 @@ class keydict(dict):
 
     def __init__(self, *args, **kw):
         super(keydict,self).__init__(*args, **kw)
-        self.itemlist = super(keydict,self).keys()
+        self.itemlist = list(super(keydict,self).keys())
     def __setitem__(self, key, value):
         self.itemlist.append(key)
         super(keydict,self).__setitem__(key, value)
