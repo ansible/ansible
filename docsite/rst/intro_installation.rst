@@ -144,7 +144,7 @@ You can use *-q* if you want to suppress spurious warnings/errors, and *-b* to b
 
     $ source ./hacking/env-setup -q
 
-If you want to make ansible always avaialble in your environment, add it to your shell's profile (assumes you already source'd this above to set $ANSIBLE_HOME)::
+If you want to make ansible always available in your environment, add it to your shell's profile (assumes you already source'd this above to set $ANSIBLE_HOME)::
 
     echo source $ANSIBLE_HOME/hacking/env-setup -q -b >> ~/.bash_profile
 
