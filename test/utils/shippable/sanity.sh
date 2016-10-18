@@ -7,11 +7,11 @@ install_deps="${INSTALL_DEPS:-}"
 cd "${source_root}"
 
 if [ "${install_deps}" != "" ]; then
-    add-apt-repository ppa:fkrull/deadsnakes && apt-get update -qq && apt-get install python2.4 -qq
-
+    add-apt-repository ppa:fkrull/deadsnakes
     apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
     apt-get update -qq
-    apt-get install shellcheck
+
+    apt-get install -qq shellcheck python2.4
 
     pip install git+https://github.com/ansible/ansible.git@devel#egg=ansible
     pip install git+https://github.com/sivel/ansible-testing.git#egg=ansible_testing
