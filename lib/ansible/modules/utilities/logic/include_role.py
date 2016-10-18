@@ -42,6 +42,11 @@ options:
       - Gives Ansible a hint if this is a 'static' include or not. If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options.
     required: False
     default: None
+  allow_duplicates:
+    description:
+      - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
+    required: False
+    default: True
   private:
     description:
       - If True the variables from defaults/ and vars/ in a role will not be made available to the rest of the play.
