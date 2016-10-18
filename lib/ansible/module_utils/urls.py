@@ -674,7 +674,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                         credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
                         s.sendall('Proxy-Authorization: Basic %s\r\n' % credentials.encode('base64').strip())
                     s.sendall('\r\n')
-                    connect_result = s.recv(4096)
+                    connect_result = ""
+                    while connect_result.find("\r\n\r\n") <= 0:
+                        connect_result += s.recv(4096)
+                        # 128 kilobytes of headers should be enough for everyone.
+                        if len(connect_result) > 131072:
+                            raise ProxyError('Proxy sent too verbose headers. Only 128KiB allowed.')
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
