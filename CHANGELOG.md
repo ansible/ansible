@@ -286,6 +286,9 @@ Ansible Changes By Release
   the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
   login_password as no_log so the password is obscured when logging.
+* Fix for yum module incorrectly thinking it succeeded in installing packages
+* Make the default ansible_managed template string into a static string since
+  all of the replacable values lead to non-idempotent behaviour.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
