@@ -170,20 +170,24 @@ log:
   returned: always
   type: list
   sample: ["updating stack"]
-  stack_resources:
-    description: AWS stack resources and their status. List of dictionaries, one dict per resource.
-    type: list
-    sample: [
-            {
-                "last_updated_time": "2016-10-11T19:40:14.979000+00:00",
-                "logical_resource_id": "CFTestSg",
-                "physical_resource_id": "cloudformation2-CFTestSg-16UQ4CYQ57O9F",
-                "resource_type": "AWS::EC2::SecurityGroup",
-                "status": "UPDATE_COMPLETE",
-                "status_reason": null
-            }
-        ]
-
+stack_resources:
+  description: AWS stack resources and their status. List of dictionaries, one dict per resource.
+  type: list
+  sample: [
+          {
+              "last_updated_time": "2016-10-11T19:40:14.979000+00:00",
+              "logical_resource_id": "CFTestSg",
+              "physical_resource_id": "cloudformation2-CFTestSg-16UQ4CYQ57O9F",
+              "resource_type": "AWS::EC2::SecurityGroup",
+              "status": "UPDATE_COMPLETE",
+              "status_reason": null
+          }
+      ]
+stack_outputs:
+  type: dict
+  description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
+  returned: always
+  sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''
 
 import json
@@ -227,13 +231,13 @@ def boto_version_required(version_tuple):
 
 def get_stack_events(cfn, stack_name):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
-    ret = { 'events':[], 'log':[] }
+    ret = {'events':[], 'log':[]}
 
     try:
         events = cfn.describe_stack_events(StackName=stack_name)
-    except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
-        if 'does not exist'.format(stack_name) in error_msg:
+        if 'does not exist' in error_msg:
             # missing stack, don't bail.
             ret['log'].append('Stack does not exist.')
             return ret
@@ -262,36 +266,35 @@ def stack_operation(cfn, stack_name, operation):
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name)
-                ret.update({ 'changed': True, 'output': 'Stack Deleted'})
+                ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
         ret = get_stack_events(cfn, stack_name)
         if not stack:
-            if 'yes' in existed or operation=='DELETE': # stacks may delete fast, look in a few ways.
+            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name)
-                ret.update({ 'changed': True, 'output': 'Stack Deleted'})
+                ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
-                ret.update({'changed':False, 'failed':True, 'output' : 'Stack not found.'})
+                ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
         elif stack['StackStatus'].endswith('_ROLLBACK_COMPLETE'):
-            ret.update({'changed':True, 'failed':True, 'output' : 'Problem with %s. Rollback complete' % operation})
+            ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
-            ret.update({'changed':True, 'output' : 'Stack %s complete' % operation })
+            ret.update({'changed': True, 'output' : 'Stack %s complete' % operation })
             return ret
         elif stack['StackStatus'].endswith('_ROLLBACK_FAILED'):
-            ret.update({'changed':True, 'failed':True, 'output' : 'Stack %s rollback failed' % operation})
+            ret.update({'changed': True, 'failed': True, 'output': 'Stack %s rollback failed' % operation})
             return ret
         # note the ordering of ROLLBACK_FAILED and FAILED, because otherwise FAILED will match both cases.
         elif stack['StackStatus'].endswith('_FAILED'):
-            ret.update({'changed':True, 'failed':True, 'output': 'Stack %s failed' % operation})
+            ret.update({'changed': True, 'failed': True, 'output': 'Stack %s failed' % operation})
             return ret
         else:
             # this can loop forever :/
-            #return dict(changed=True, failed=True, output = str(stack), operation=operation)
             time.sleep(5)
     return {'failed': True, 'output':'Failed for unknown reasons.'}
 
@@ -356,7 +359,7 @@ def main():
         mutually_exclusive=[['template_url', 'template']],
     )
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
+        module.fail_json(msg='boto3 and botocore are required for this module')
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
@@ -443,6 +446,9 @@ def main():
 
     if state == 'present' or update:
         stack = get_stack_facts(cfn, stack_params['StackName'])
+        if result.get('stack_outputs') is None:
+            # always define stack_outputs, but it may be empty
+            result['stack_outputs'] = {}
         for output in stack.get('Outputs', []):
             result['stack_outputs'][output['OutputKey']] = output['OutputValue']
         stack_resources = []
@@ -467,7 +473,7 @@ def main():
         try:
             stack = get_stack_facts(cfn, stack_params['StackName'])
             if not stack:
-                result = dict(changed=False, output='Stack not found.')
+                result = {'changed': False, 'output': 'Stack not found.'}
             else:
                 cfn.delete_stack(StackName=stack_params['StackName'])
                 result = stack_operation(cfn, stack_params['StackName'], 'DELETE')
