@@ -295,13 +295,12 @@ class StrategyModule(StrategyBase):
                             if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
                                 continue
 
-                            role_vars = include_result.get('include_variables', dict())
-                            if loop_var and loop_var in include_result:
-                                role_vars[loop_var] = include_result[loop_var]
-
                             display.debug("generating all_blocks data for role")
                             new_ir = hr._task.copy()
-                            new_ir.args.update(role_vars)
+                            new_ir.vars.update(include_result.get('include_variables', dict()))
+                            if loop_var and loop_var in include_result:
+                                new_ir.vars[loop_var] = include_result[loop_var]
+
                             all_role_blocks.extend(new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader))
 
                 if len(all_role_blocks) > 0:
