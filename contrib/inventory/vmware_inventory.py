@@ -482,28 +482,53 @@ class VMWareInventory(object):
 
     def facts_from_proplist(self, vm):
         '''Get specific properties instead of serializing everything'''
+
         rdata = {}
         for prop in self.guest_props:
             self.debugl('getting %s property for %s' % (prop, vm.name))
             key = prop
             if self.lowerkeys:
                 key = key.lower()
+
             if not '.' in prop:
+                # props without periods are direct attributes of the parent
                 rdata[key] = getattr(vm, prop)
             else:
+                # props with periods are subkeys of parent attributes
                 parts = prop.split('.')
+                total = len(parts) - 1
+
+                # pointer to the current object
                 val = None
+                # pointer to the current result key
+                lastref = rdata
+
                 for idx,x in enumerate(parts):
+
+                    # if the val wasn't set yet, get it from the parent
                     if not val:
                         val = getattr(vm, x)
                     else:
+                        # in a subkey, get the subprop from the previous attrib
                         try:
                             val = getattr(val, x)
                         except AttributeError as e:
                             self.debugl(e)
-                rdata[key] = val
+
+                    # lowercase keys if requested
+                    if self.lowerkeys:
+                        x = x.lower()
+
+                    # change the pointer or set the final value
+                    if idx != total:
+                        if x not in lastref:
+                            lastref[x] = {}
+                        lastref = lastref[x]
+                    else:
+                        lastref[x] = val
 
         return rdata
+
 
     def facts_from_vobj(self, vobj, level=0):
 
