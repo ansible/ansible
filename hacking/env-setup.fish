@@ -57,7 +57,6 @@ if [ $QUIET ]
 else
     python setup.py egg_info
 end
-mv ansible*egg-info $PREFIX_PYTHONPATH
 find . -type f -name "*.pyc" -delete
 popd
 
