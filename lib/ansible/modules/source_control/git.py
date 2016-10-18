@@ -786,7 +786,11 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    cmd = "%s verify-commit %s" % (git_path, version)
+    if version in get_tags(git_path, module, dest):
+        git_sub = "verify-tag"
+    else:
+        git_sub = "verify-commit"
+    cmd = "%s %s %s" % (git_path, git_sub, version)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
