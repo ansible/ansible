@@ -104,28 +104,28 @@ options:
             - If a build creation for this project should be available or not.
         choices: ["true", "false"]
         default: false
-        version_added: "2.2"
+        version_added: "2.3"
     public_builds:
         description:
             - If true, builds can be viewed by non-project-members.
             - Will only work if "builds_enabled" is set to True.
         choices: ["true", "false"]
         default: false
-        version_added: "2.2"
+        version_added: "2.3"
     only_allow_merge_if_build_succeeds:
         description:
             - Set whether merge requests can only be merged with successful builds.
             - Will only work if "builds_enabled" is set to True.
         choices: ["true", "false"]
         default: false
-        version_added: "2.2"
+        version_added: "2.3"
     container_registry_enabled:
         description:
             - Enable container registry for this project.
             - Will only work if "builds_enabled" is set to True.
         choices: ["true", "false"]
         default: false
-        version_added: "2.2"
+        version_added: "2.3"
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
