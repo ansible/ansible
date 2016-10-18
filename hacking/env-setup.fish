@@ -9,11 +9,11 @@ set PREFIX_PATH $ANSIBLE_HOME/bin
 set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
 # set quiet flag
-if set -q argv
+if test (count $argv) -ge 1
     switch $argv
-    case '-q' '--quiet'
-        set QUIET "true"
-    case '*'
+        case '-q' '--quiet'
+            set QUIET "true"
+        case '*'
     end
 end
 
