@@ -204,7 +204,8 @@ class OVSPort(object):
                 changed = True
             else:
                 changed = False
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
         self.module.exit_json(changed=changed)
 
@@ -235,7 +236,8 @@ class OVSPort(object):
                         external_id = fmt_opt % (self.port, key, value)
                         changed = self.set(external_id) or changed
                 ##
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
         self.module.exit_json(changed=changed)
 
@@ -269,4 +271,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
