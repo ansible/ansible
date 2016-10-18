@@ -99,10 +99,14 @@ class VMWareInventory(object):
                  'parent',
                  'childtype']
 
-    vimTable = {
-        vim.Datastore: ['_moId', 'name'],
-        vim.ResourcePool: ['_moId', 'name'],
-    }
+    # translation table for attributes to fetch for known vim types
+    if not HAS_PYVMOMI:
+        vimTable = {}
+    else:
+        vimTable = {
+            vim.Datastore: ['_moId', 'name'],
+            vim.ResourcePool: ['_moId', 'name'],
+        }
 
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
