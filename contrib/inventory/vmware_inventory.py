@@ -65,6 +65,7 @@ class VMWareInventory(object):
 
     __name__ = 'VMWareInventory'
 
+    guest_props = False
     instances = []
     debug = False
     load_dumpfile = None
@@ -237,30 +238,46 @@ class VMWareInventory(object):
         # set the cache filename and max age
         cache_name = config.get('vmware', 'cache_name')
         self.cache_path_cache = self.cache_dir + "/%s.cache" % cache_name
+        self.debugl('cache path is %s' % self.cache_path_cache)
         self.cache_max_age = int(config.getint('vmware', 'cache_max_age'))
 
         # mark the connection info 
         self.server =  os.environ.get('VMWARE_SERVER', config.get('vmware', 'server'))
+        self.debugl('server is %s' % self.server)
         self.port = int(os.environ.get('VMWARE_PORT', config.get('vmware', 'port')))
         self.username = os.environ.get('VMWARE_USERNAME', config.get('vmware', 'username'))
+        self.debugl('username is %s' % self.username)
         self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password'))
         self.validate_certs = os.environ.get('VMWARE_VALIDATE_CERTS', config.get('vmware', 'validate_certs'))
         if self.validate_certs in ['no', 'false', 'False', False]:
             self.validate_certs = False
         else:
             self.validate_certs = True
+        self.debugl('cert validation is %s' % self.validate_certs)
 
         # behavior control
         self.maxlevel = int(config.get('vmware', 'max_object_level'))
+        self.debugl('max object level is %s' % self.maxlevel)
         self.lowerkeys = config.get('vmware', 'lower_var_keys')
         if type(self.lowerkeys) != bool:
             if str(self.lowerkeys).lower() in ['yes', 'true', '1']:
                 self.lowerkeys = True
             else:    
                 self.lowerkeys = False
+        self.debugl('lower keys is %s' % self.lowerkeys)
 
         self.host_filters = list(config.get('vmware', 'host_filters').split(','))
+        self.debugl('host filters are %s' % self.host_filters)
         self.groupby_patterns = list(config.get('vmware', 'groupby_patterns').split(','))
+        self.debugl('groupby patterns are %s' % self.groupby_patterns)
+
+        # Special feature to disable the brute force serialization of the
+        # virtulmachine objects. The key name for these properties does not
+        # matter because the values are just items for a larger list.
+        if config.has_section('properties'):
+            self.guest_props = []
+            for prop in config.items('properties'):
+                self.guest_props.append(prop[1])
 
         # save the config
         self.config = config    
@@ -339,7 +356,10 @@ class VMWareInventory(object):
 
         instance_tuples = []    
         for instance in sorted(instances):    
-            ifacts = self.facts_from_vobj(instance)
+            if self.guest_props != False:
+                ifacts = self.facts_from_proplist(instance)
+            else:
+                ifacts = self.facts_from_vobj(instance)
             instance_tuples.append((instance, ifacts))
         self.debugl('facts collected for all instances')
         return instance_tuples
@@ -460,6 +480,30 @@ class VMWareInventory(object):
             mapping[k] = newkey
         return mapping
 
+    def facts_from_proplist(self, vm):
+        '''Get specific properties instead of serializing everything'''
+        rdata = {}
+        for prop in self.guest_props:
+            self.debugl('getting %s property for %s' % (prop, vm.name))
+            key = prop
+            if self.lowerkeys:
+                key = key.lower()
+            if not '.' in prop:
+                rdata[key] = getattr(vm, prop)
+            else:
+                parts = prop.split('.')
+                val = None
+                for idx,x in enumerate(parts):
+                    if not val:
+                        val = getattr(vm, x)
+                    else:
+                        try:
+                            val = getattr(val, x)
+                        except AttributeError as e:
+                            self.debugl(e)
+                rdata[key] = val
+
+        return rdata
 
     def facts_from_vobj(self, vobj, level=0):
 
