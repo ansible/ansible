@@ -143,7 +143,8 @@ class OVSBridge(object):
                 changed = True
             elif self.state == 'present' and not self.exists():
                 changed = True
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
 
         # pylint: enable=W0703
@@ -189,7 +190,8 @@ class OVSBridge(object):
                            self.set_external_id(key, None)):
                             changed = True
 
-        except Exception, earg:
+        except Exception:
+            earg = get_exception()
             self.module.fail_json(msg=str(earg))
         # pylint: enable=W0703
         self.module.exit_json(changed=changed)
@@ -267,4 +269,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
