@@ -393,6 +393,22 @@ class StrategyBase:
                                 # dependency chain of the current task (if it's from a role), otherwise
                                 # we just look through the list of handlers in the current play/all
                                 # roles and use the first one that matches the notify name
+                                target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
+                                if target_handler is not None:
+                                    found = True
+                                    if original_host not in self._notified_handlers[target_handler]:
+                                        self._notified_handlers[target_handler].append(original_host)
+                                        # FIXME: should this be a callback?
+                                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                else:
+                                    # As there may be more than one handler with the notified name as the
+                                    # parent, so we just keep track of whether or not we found one at all
+                                    for target_handler in self._notified_handlers:
+                                        if parent_handler_match(target_handler, handler_name):
+                                            self._notified_handlers[target_handler].append(original_host)
+                                            display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                            found = True
+
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_name in self._listening_handlers[handler_name]:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
@@ -401,22 +417,6 @@ class StrategyBase:
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
-                                else:
-                                    target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                                    if target_handler is not None:
-                                        found = True
-                                        if original_host not in self._notified_handlers[target_handler]:
-                                            self._notified_handlers[target_handler].append(original_host)
-                                            # FIXME: should this be a callback?
-                                            display.vv("NOTIFIED HANDLER %s" % (handler_name,))
-                                    else:
-                                        # As there may be more than one handler with the notified name as the
-                                        # parent, so we just keep track of whether or not we found one at all
-                                        for target_handler in self._notified_handlers:
-                                            if parent_handler_match(target_handler, handler_name):
-                                                self._notified_handlers[target_handler].append(original_host)
-                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
-                                                found = True
 
                                 # and if none were found, then we raise an error
                                 if not found:
