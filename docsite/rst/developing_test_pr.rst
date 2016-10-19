@@ -110,6 +110,17 @@ Ansible modules are in separate repositories, which are managed as Git submodule
 8. cd /path/to/ansible/clone
 9. git submodule update --recursive
 
+Checking Out Pull Requests For Extras and Core Submodules
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+When you want to test a pull request from either the ansible-modules-extras or ansible-modules-core repos you'll want to do the following (this example is for core)::
+   
+   ## Note that XXXX represents the pull request number
+
+   cd $ANSIBLE_MAIN_REPO_DIR/lib/ansible/modules/core
+   git fetch origin pull/XXXX/head:testing_PRXXXX
+   git checkout testing_PRXXXX
+
 For Those About To Test, We Salute You
 ++++++++++++++++++++++++++++++++++++++
 
