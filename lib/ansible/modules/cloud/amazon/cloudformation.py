@@ -15,7 +15,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # upcoming features:
-# - AWS-native YAML support
 # - Ted's multifile YAML concatenation
 # - changesets (and blocking/waiting for them)
 # - finish AWSRetry conversion
@@ -92,7 +91,7 @@ options:
     version_added: "2.0"
   template_format:
     description:
-    - For local templates, allows specification of json or yaml format
+    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format. This parameter is ignored since Ansible 2.3.
     default: json
     choices: [ json, yaml ]
     required: false
@@ -349,7 +348,7 @@ def main():
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
-            template_format=dict(default='json', choices=['json', 'yaml'], required=False),
+            template_format=dict(default=None, choices=['json', 'yaml'], required=False),
             tags=dict(default=None, type='dict')
         )
     )
@@ -374,12 +373,6 @@ def main():
 
     if module.params['template'] is not None:
         stack_params['TemplateBody'] = open(module.params['template'], 'r').read()
-
-    if module.params['template_format'] == 'yaml':
-        if not stack_params.get('TemplateBody'):
-            module.fail_json(msg='yaml format only supported for local templates')
-        else:
-            stack_params['TemplateBody'] = json.dumps(yaml.load(stack_params['TemplateBody']), indent=2)
 
     if module.params.get('notification_arns'):
         stack_params['NotificationARNs'] = module.params['notification_arns'].split(',')
@@ -480,6 +473,10 @@ def main():
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
+    if module.params['template_format'] is not None:
+        result['warnings'] = [('Argument `template_format` is deprecated '
+            'since Ansible 2.3, JSON and YAML templates are now passed '
+            'directly to the CloudFormation API.')]
     module.exit_json(**result)
 
 
