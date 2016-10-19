@@ -46,7 +46,6 @@
 /monitoring/datadog_monitor.py
 /monitoring/rollbar_deployment.py
 /monitoring/stackdriver.py
-/network/citrix/netscaler.py
 /network/cloudflare_dns.py
 /network/f5/bigip_gtm_virtual_server.py
 /network/f5/bigip_gtm_wide_ip.py
