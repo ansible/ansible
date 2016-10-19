@@ -169,7 +169,7 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
-    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    # The following is necessary for Python 2.7.5+ when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
