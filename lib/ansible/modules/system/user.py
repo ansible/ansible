@@ -245,7 +245,10 @@ import grp
 import platform
 import socket
 import time
+import shutil
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     import spwd
@@ -2231,6 +2234,5 @@ def main():
     module.exit_json(**result)
 
 # import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
