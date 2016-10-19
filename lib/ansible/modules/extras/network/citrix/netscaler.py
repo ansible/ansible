@@ -173,7 +173,8 @@ def main():
     rc = 0
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
     if rc != 0:
@@ -186,4 +187,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 main()
