@@ -31,6 +31,7 @@
     repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
     repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
     repo_depth_url: 'https://github.com/ansible-test-robinro/git-test-shallow-depth'
+    repo_verify: 'https://github.com/pixelrebel/ansible-git-test.git'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -45,6 +46,10 @@
 - name: get git version, only newer than {{git_version_supporting_depth}} has fixed git depth
   shell: git --version | grep 'git version' | sed 's/git version //'
   register: git_version
+
+- name: get gpg version
+  shell: gpg --version 2>1 | head -1 | sed -e 's/gpg (GnuPG) //'
+  register: gpg_version
 
 - name: set dummy git config
   shell: git config --global user.email "noreply@example.com"; git config --global user.name "Ansible Test Runner"
@@ -659,3 +664,57 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
+
+  # Test for tag verification
+  # clone a repo checkout signed tag, verify tag
+
+- name: Import Jamie Evans GPG key
+  command: gpg --keyserver pgp.mit.edu --recv-key 61107C8E
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
+  
+- name: Copy ownertrust
+  copy: "content='2D55902D66FEEBCEA4447C93E79A36DA61107C8E:6:\n' dest=/tmp/ownertrust-git.txt"
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
+
+- name: Import ownertrust
+  command: gpg --import-ownertrust /tmp/ownertrust-git.txt
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
+
+- name: Clone signed repo and verify tag
+  git: repo={{ repo_verify }} dest={{ checkout_dir }} version=v0.0 verify_commit=yes
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
+
+- name: Remove Jamie Evans GPG key
+  command: gpg --batch --yes --delete-key 61107C8E
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
+
+- name: Clean up files
+  file: path="{{ item }}" state=absent
+  with_items:
+    - "{{ checkout_dir }}"
+    - /tmp/ownertrust-git.txt
+  when: >
+    not gpg_version.stderr and
+    gpg_version.stdout and
+    (git_version.stdout | version_compare("2.1.0", '>=') or
+    gpg_version.stdout | version_compare("1.4.16", '>='))
