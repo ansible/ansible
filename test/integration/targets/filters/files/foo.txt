@@ -11,7 +11,7 @@ Dumping the same structure to YAML
 
 Dumping the same structure to JSON, but don't pretty print
 
-["this is a list element", {"this": "is a hash element in a list", "where": "endor", "warp": 9}]
+["this is a list element", {"this": "is a hash element in a list", "warp": 9, "where": "endor"}]
 
 Dumping the same structure to YAML, but don't pretty print
 
