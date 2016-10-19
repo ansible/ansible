@@ -73,6 +73,8 @@ EXAMPLES = '''
 '''
 
 import operator
+import re
+import os
 
 def get_xattr_keys(module,path,follow):
     cmd = [ module.get_bin_path('getfattr', True) ]
@@ -202,7 +204,7 @@ def main():
     module.exit_json(changed=changed, msg=msg, xattr=res)
 
 # import module snippets
-from ansible.module_utils.basic import *
-
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 if __name__ == '__main__':
     main()
