@@ -2550,6 +2550,7 @@ class GenericBsdIfconfigNetwork(Network):
 
         default_ipv4, default_ipv6 = self.get_default_interfaces(route_path)
         interfaces, ips = self.get_interfaces_info(ifconfig_path)
+        self.detect_type_media(interfaces)
         self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
         self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
         self.facts['interfaces'] = interfaces.keys()
@@ -2563,6 +2564,12 @@ class GenericBsdIfconfigNetwork(Network):
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
 
         return self.facts
+
+    def detect_type_media(self, interfaces):
+        for iface in interfaces:
+            if 'media' in interfaces[iface]:
+                if 'ether' in interfaces[iface]['media'].lower():
+                    interfaces[iface]['type'] = 'ether'
 
     def get_default_interfaces(self, route_path):
 
@@ -2636,6 +2643,8 @@ class GenericBsdIfconfigNetwork(Network):
                     self.parse_inet_line(words, current_if, ips)
                 elif words[0] == 'inet6':
                     self.parse_inet6_line(words, current_if, ips)
+                elif words[0] == 'tunnel':
+                    self.parse_tunnel_line(words, current_if, ips)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
 
@@ -2645,6 +2654,8 @@ class GenericBsdIfconfigNetwork(Network):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
         current_if['flags']  = self.get_options(words[1])
+        if 'LOOPBACK' in current_if['flags']:
+            current_if['type'] = 'loopback'
         current_if['macaddress'] = 'unknown'    # will be overwritten later
 
         if len(words) >= 5 :  # Newer FreeBSD versions
@@ -2665,6 +2676,7 @@ class GenericBsdIfconfigNetwork(Network):
 
     def parse_ether_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
+        current_if['type'] = 'ether'
 
     def parse_media_line(self, words, current_if, ips):
         # not sure if this is useful - we also drop information
@@ -2722,6 +2734,9 @@ class GenericBsdIfconfigNetwork(Network):
         if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
         current_if['ipv6'].append(address)
+
+    def parse_tunnel_line(self, words, current_if, ips):
+        current_if['type'] = 'tunnel'
 
     def parse_unknown_line(self, words, current_if, ips):
         # we are going to ignore unknown lines here - this may be
@@ -2970,6 +2985,7 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork):
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
+        current_if['type'] = 'ether'
 
 class NetBSDNetwork(GenericBsdIfconfigNetwork):
     """
