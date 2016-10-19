@@ -64,7 +64,7 @@ environment:
 	(cd targets/environment && ./runme.sh $(TEST_FLAGS))
 
 non_destructive: setup
-	ANSIBLE_ROLES_PATH=targets ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 # Tests which can be run when running as root and a local SSH daemon is available.
 test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh test_delegate_to
@@ -135,7 +135,7 @@ test_connection_winrm:
 	(cd targets/connection_winrm && ./runme.sh $(TEST_FLAGS))
 
 destructive: setup
-	ANSIBLE_ROLES_PATH=targets ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 check_mode:
 	(cd targets/check_mode && ./runme.sh $(TEST_FLAGS))
@@ -171,13 +171,13 @@ ci_win3: test_win_group3 test_connection_winrm
 test_winrm: test_win_group1 test_win_group2 test_win_group3
 
 test_win_group1:
-	ANSIBLE_ROLES_PATH=targets ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_win_group2:
-	ANSIBLE_ROLES_PATH=targets ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_win_group3:
-	ANSIBLE_ROLES_PATH=targets ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags:
 	(cd targets/tags && ./runme.sh $(TEST_FLAGS))
