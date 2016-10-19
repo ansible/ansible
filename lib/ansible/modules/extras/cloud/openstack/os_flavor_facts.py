@@ -49,7 +49,7 @@ requirements:
 options:
    name:
      description:
-       - A flavor name. Cannot be used with I(ram) or I(vcpus).
+       - A flavor name. Cannot be used with I(ram) or I(vcpus) or I(ephemeral).
      required: false
      default: None
    ram:
@@ -80,6 +80,13 @@ options:
          returned by default.
      required: false
      default: None
+   ephemeral:
+     description:
+       - A string used for filtering flavors based on the amount of ephemeral
+         storage. Format is the same as the I(ram) parameter
+     required: false
+     default: false
+     version_added: "2.3"
 extends_documentation_fragment: openstack
 '''
 
@@ -115,6 +122,14 @@ EXAMPLES = '''
     cloud: mycloud
     ram: ">=1024"
     vcpus: "2"
+
+# Get all flavors with 1024 MB of RAM or more, exactly 2 virtual CPUs, and
+# less than 30gb of ephemeral storage.
+- os_flavor_facts:
+    cloud: mycloud
+    ram: ">=1024"
+    vcpus: "2"
+    ephemeral: "<30"
 '''
 
 
@@ -173,11 +188,13 @@ def main():
         ram=dict(required=False, default=None),
         vcpus=dict(required=False, default=None),
         limit=dict(required=False, default=None, type='int'),
+        ephemeral=dict(required=False, default=None),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
             ['name', 'ram'],
             ['name', 'vcpus'],
+            ['name', 'ephemeral']
         ]
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -188,6 +205,7 @@ def main():
     name = module.params['name']
     vcpus = module.params['vcpus']
     ram = module.params['ram']
+    ephemeral = module.params['ephemeral']
     limit = module.params['limit']
 
     try:
@@ -202,6 +220,8 @@ def main():
                 filters['vcpus'] = vcpus
             if ram:
                 filters['ram'] = ram
+            if ephemeral:
+                filters['ephemeral'] = ephemeral
             if filters:
                 # Range search added in 1.5.0
                 if StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
