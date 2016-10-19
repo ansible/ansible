@@ -13,3 +13,4 @@
 /univention/
 /web_infrastructure/letsencrypt.py
 /infrastructure/foreman/
+/network/nmcli.py
