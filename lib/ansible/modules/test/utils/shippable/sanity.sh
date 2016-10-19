@@ -8,7 +8,7 @@ cd "${source_root}"
 
 # FIXME REPOMERGE: No need to checkout ansible
 build_dir=$(mktemp -d)
-trap 'rm -rf "{$build_dir}"' EXIT
+trap 'rm -rf "${build_dir}"' EXIT
 
 git clone "https://github.com/ansible/ansible.git" "${build_dir}" --recursive
 source "${build_dir}/hacking/env-setup"
