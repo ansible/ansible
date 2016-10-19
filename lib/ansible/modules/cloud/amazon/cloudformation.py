@@ -191,7 +191,6 @@ stack_outputs:
 
 import json
 import time
-import yaml
 import sys
 import traceback
 
