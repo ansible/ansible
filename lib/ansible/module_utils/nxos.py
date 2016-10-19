@@ -158,10 +158,7 @@ class Nxapi(NxapiConfigMixin):
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        try:
-            timeout = self.url_args.params['timeout']
-        except:
-            timeout = 10
+        timeout = self.url_args.params['timeout']
         for req in requests:
             if self._nxapi_auth:
                 headers['Cookie'] = self._nxapi_auth
