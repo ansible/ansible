@@ -2890,6 +2890,13 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork):
     def parse_lladdr_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
 
+class NetBSDNetwork(GenericBsdIfconfigNetwork):
+    """
+    This is the NetBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork
+    """
+    platform = 'NetBSD'
+
 class SunOSNetwork(GenericBsdIfconfigNetwork):
     """
     This is the SunOS Network Class.
