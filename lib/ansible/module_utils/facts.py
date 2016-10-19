@@ -34,22 +34,8 @@ import pwd
 
 from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.six import PY3, iteritems
+from ansible.module_utils.six.moves import configparser, StringIO
 from ansible.module_utils._text import to_native
-
-# py2 vs py3; replace with six via ansiballz
-try:
-    # python2
-    import ConfigParser as configparser
-except ImportError:
-    # python3
-    import configparser
-
-try:
-    # python2
-    from StringIO import StringIO
-except ImportError:
-    # python3
-    from io import StringIO
 
 try:
     # python2
