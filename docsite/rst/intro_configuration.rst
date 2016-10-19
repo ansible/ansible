@@ -105,18 +105,50 @@ It is useful when becoming an unprivileged user::
 ansible_managed
 ===============
 
-Ansible-managed is a string that can be inserted into files written by Ansible's config templating system, if you use
-a string like::
+``ansible_managed`` is a string that can be inserted into files written by
+Ansible's config templating system when you use a string like::
 
    {{ ansible_managed }}
 
-The default configuration shows who modified a file and when::
+The default value only says that Ansible is managing this file::
 
-    ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
+    ansible_managed = Ansible managed
 
-This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
+This can be helpful to inform people looking at the file that they should not
+edit it in-place; they need to edit it in Ansible otherwise their changes will
+be overwritten.
 
-Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
+There are several special values that, when placed in the string, will be
+replaced with useful information.  These are not in the default
+``ansible_managed`` string because they can cause Ansible to think that the
+template has changed when it's only the ansible_managed string which has
+changed.  These values, along with the situations which can lead Ansible to
+report a template as changed when they are used are:
+
+* Standard directives that can be used with :func:~time.strftime:.
+  The time referred to is the modification time of the template file.  Many
+  revision control systems timestamp files according to when they are checked
+  out, not the last time the file was modified.  That means Ansible will think
+  the file has been modified anytime there is a fresh checkout.
+
+.. If intersphinx isn't turned on, manually make strftime link to
+   https://docs.python.org/2/library/time.html#time.strftime
+
+* ``{file}``: expands to the name of the full path to the template file.  If
+  Ansible is run with multiple checkouts of the same configuration repository
+  (for instance, in each sysadmin's home directory), then the path will differ
+  in each checkout causing Ansible to think the file has been modified.  path
+  will be different in each
+* ``{host}``: expands to the hostname of the machine :program:`ansible` is run
+  on.  If :program:`ansible` is invoked on multiple machines (for instance,
+  each sysadmin can checkout the configuration repository on their workstation
+  and run :program:`ansible` there), then the host will vary on each of these
+  machines.  This will cause Ansible to think the file has been modified.
+* ``{uid}``: expands to the owner of the template file.  If Ansible is run
+  on checkouts of the configuration repository made by separate users (for
+  instance, if multiple system administrators are making checkouts of the
+  repository with their own accounts) then this will cause Ansible to think
+  the file has been modified.
 
 .. _ask_pass:
 
