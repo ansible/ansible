@@ -248,8 +248,7 @@ class LookupModule(LookupBase):
                 _write_password_file(b_path, content)
 
             if params['encrypt']:
-                password = do_encrypt(plaintext_password, params['encrypt'],
-                                      salt=to_bytes(salt, encoding='ascii', errors='strict'))
+                password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
                 ret.append(password)
             else:
                 ret.append(plaintext_password)
