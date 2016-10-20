@@ -53,7 +53,17 @@ Plugins are loaded in alphanumeric order; for example, a plugin implemented in a
 
 Callbacks need to be whitelisted in your `ansible.cfg` file in order to function. For example::
   
-  #callback_whitelist = timer, mail, myplugin
+  #callback_whitelist = timer, mail, mycallbackplugin
+
+
+Writing to stdout
+`````````````````
+
+If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
+
+  #stdout_callback = mycallbackplugin
+
+
 
 .. _callback_development:
 
@@ -109,12 +119,7 @@ The following example shows how Ansible's timer plugin is implemented::
           runtime = end_time - self.start_time
           self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
 
-Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
-
-  #stdout_callback = mycallbackplugin
-
-
-
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. 
 
 .. _developing_connection_type_plugins:
 
@@ -135,10 +140,62 @@ More documentation on writing connection plugins is pending, though you can jump
 Lookup Plugins
 --------------
 
-Language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.  Just like other plugin types, you can write your own.
+Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks for both looping - playbook language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins - and to return values into a variable or parameter. 
 
-More documentation on writing lookup plugins is pending, though you can jump into `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_ and figure
-things out pretty easily.
+Here's a simple lookup plugin implementation - this lookup returns the contents of a text file as a variable::
+
+  from ansible.errors import AnsibleError, AnsibleParserError
+  from ansible.plugins.lookup import LookupBase
+
+  try:
+      from __main__ import display
+  except ImportError:
+      from ansible.utils.display import Display
+      display = Display()
+
+
+  class LookupModule(LookupBase):
+
+      def run(self, terms, variables=None, **kwargs):
+
+          ret = []
+
+          for term in terms:
+              display.debug("File lookup term: %s" % term)
+
+              # Find the file in the expected search path
+              lookupfile = self.find_file_in_search_path(variables, 'files', term)
+              display.vvvv(u"File lookup using %s as file" % lookupfile)
+              try:
+                  if lookupfile:
+                      contents, show_data = self._loader._get_file_contents(lookupfile)
+                      ret.append(contents.rstrip())
+                  else:
+                      raise AnsibleParserError()
+              except AnsibleParserError:
+                  raise AnsibleError("could not locate file in lookup: %s" % term)
+
+          return ret
+
+An example of how this lookup is called::
+
+  ---
+  - hosts: all
+    vars:
+       contents: "{{ lookup('file', '/etc/foo.txt') }}"
+
+    tasks:
+
+       - debug: msg="the value of foo.txt is {{ contents }}"
+
+Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type becasue the strings will be run through jinja2.  To do this, you can use::
+
+    from ansible.module_utils._text import to_text
+    result_string = to_text(result_string)
+
+For more example lookup plugins, check out the source code for the lookup plugins that are included with Ansible here: `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_.
+
+For usage examples of lookup plugins, see `Using Lookups <http://docs.ansible.com/ansible/playbooks_lookups.html>`_.
 
 .. _developing_vars_plugins:
 
@@ -171,15 +228,15 @@ Distributing Plugins
 Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
 to /usr/share/ansible/plugins, in a subfolder for each plugin type::
 
-    * action
-    * lookup
-    * callback
-    * connection
-    * filter
-    * strategy
-    * cache
-    * test
-    * shell
+    * action_plugins
+    * lookup_plugins
+    * callback_plugins
+    * connection_plugins
+    * filter_plugins
+    * strategy_plugins
+    * cache_plugins
+    * test_plugins
+    * shell_plugins
 
 To change this path, edit the ansible configuration file.
 

@@ -85,9 +85,6 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
-            # get search path for this task to pass to lookup plugins
-            self._job_vars['ansible_search_path'] = self._task.get_search_path()
-
             items = self._get_loop_items()
             if items is not None:
                 if len(items) > 0:
@@ -173,6 +170,10 @@ class TaskExecutor:
                 old_vars[k] = self._job_vars[k]
             self._job_vars[k] = play_context_vars[k]
 
+        # get search path for this task to pass to lookup plugins
+        self._job_vars['ansible_search_path'] = self._task.get_search_path()
+
+
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
@@ -212,6 +213,11 @@ class TaskExecutor:
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
+
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
+            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
+
         return items
 
     def _run_loop(self, items):
@@ -416,14 +422,10 @@ class TaskExecutor:
             include_file = templar.template(include_file)
             return dict(include=include_file, include_variables=include_variables)
 
-        # TODO: not needed?
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
             include_variables = self._task.args.copy()
-            role = templar.template(self._task._role_name)
-            if not role:
-                return dict(failed=True, msg="No role was specified to include")
-            return dict(include_role=role, include_variables=include_variables)
+            return dict(include_role=self._task, include_variables=include_variables)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)

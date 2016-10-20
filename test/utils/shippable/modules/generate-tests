@@ -38,6 +38,9 @@ def main():
 
     C.DEPRECATION_WARNINGS = False
 
+    C.DEFAULT_ROLES_PATH = [os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                         '..', '..', '..', 'integration', 'targets'))]
+
     posix_targets = [
         'non_destructive',
         'destructive',

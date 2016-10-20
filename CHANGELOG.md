@@ -18,6 +18,10 @@ Ansible Changes By Release
 
 ###New Modules:
 - archive
+- f5
+  * bigip_gtm_facts
+  * bigip_hostname
+  * bigip_snat_pool
 
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 

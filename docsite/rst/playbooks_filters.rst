@@ -509,7 +509,7 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
-To get date object from string use the `to_datetime` filter, (new in version in 2.2):
+To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
     # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
     {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}

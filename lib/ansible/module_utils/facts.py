@@ -670,7 +670,7 @@ class Distribution(object):
         self.facts['distribution'] = self.system
         self.facts['distribution_release'] = platform.release()
         self.facts['distribution_version'] = platform.version()
-        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'FreeBSD', 'OpenBSD', 'SunOS', 'DragonFly')
+        systems_implemented = ('AIX', 'HP-UX', 'Darwin', 'FreeBSD', 'OpenBSD', 'SunOS', 'DragonFly', 'NetBSD')
 
         self.facts['distribution'] = self.system
 
@@ -776,6 +776,9 @@ class Distribution(object):
 
     def get_distribution_DragonFly(self):
         pass
+
+    def get_distribution_NetBSD(self):
+        self.facts['distribution_major_version'] = self.facts['distribution_release'].split('.')[0]
 
     def get_distribution_Slackware(self, name, data, path):
         if 'Slackware' not in data:
