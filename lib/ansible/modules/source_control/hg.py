@@ -41,6 +41,7 @@ options:
     dest:
         description:
             - Absolute path of where the repository should be cloned to.
+              This parameter is required, unless clone and update are set to no
         required: true
         default: null
     revision:
@@ -70,6 +71,13 @@ options:
         version_added: "2.0"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+    clone:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "2.3"
+        description:
+            - If C(no), do not clone the repository if it does not exist locally.
     executable:
         required: false
         default: null
@@ -88,6 +96,10 @@ requirements: [ ]
 EXAMPLES = '''
 # Ensure the current working copy is inside the stable branch and deletes untracked files if any.
 - hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes
+
+# Example just get information about the repository whether or not it has
+# already been cloned locally.
+- hg: repo=git://bitbucket.org/user/repo dest=/srv/checkout clone=no update=no
 '''
 
 import os
@@ -126,6 +138,13 @@ class Hg(object):
         (rc, out, err) = self._command(['id', '-b', '-i', '-t', '-R', self.dest])
         if rc != 0:
             self.module.fail_json(msg=err)
+        else:
+            return to_native(out).strip('\n')
+
+    def get_remote_revision(self):
+        (rc, out, err) = self._command(['id', self.repo])
+        if rc != 0:
+            self.module_fail_json(msg=err)
         else:
             return to_native(out).strip('\n')
 
@@ -215,11 +234,12 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             repo = dict(required=True, aliases=['name']),
-            dest = dict(required=True, type='path'),
+            dest = dict(type='path'),
             revision = dict(default=None, aliases=['version']),
             force = dict(default='no', type='bool'),
             purge = dict(default='no', type='bool'),
             update = dict(default='yes', type='bool'),
+            clone = dict(default='yes', type='bool'),
             executable = dict(default=None),
         ),
     )
@@ -229,22 +249,33 @@ def main():
     force = module.params['force']
     purge = module.params['purge']
     update = module.params['update']
+    clone = module.params['clone']
     hg_path = module.params['executable'] or module.get_bin_path('hg', True)
-    hgrc = os.path.join(dest, '.hg/hgrc')
+    if dest is not None:
+        hgrc = os.path.join(dest, '.hg/hgrc')
 
     # initial states
     before = ''
     changed = False
     cleaned = False
 
+    if not dest and (clone or update):
+        module.fail_json(msg="the destination directory must be specified unless clone=no and update=no")
+
     hg = Hg(module, dest, repo, revision, hg_path)
 
     # If there is no hgrc file, then assume repo is absent
     # and perform clone. Otherwise, perform pull and update.
+    if not clone and not update:
+        out = hg.get_remote_revision()
+        module.exit_json(after=out, changed=False)
     if not os.path.exists(hgrc):
-        (rc, out, err) = hg.clone()
-        if rc != 0:
-            module.fail_json(msg=err)
+        if clone:
+            (rc, out, err) = hg.clone()
+            if rc != 0:
+                module.fail_json(msg=err)
+        else:
+            module.exit_json(changed=False)
     elif not update:
         # Just return having found a repo already in the dest path
         before = hg.get_revision()
