@@ -1,6 +1,5 @@
 test_filters
 test_git
 test_hg
-test_pip
 test_service
 test_uri
