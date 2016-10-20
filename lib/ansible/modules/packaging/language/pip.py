@@ -79,7 +79,7 @@ options:
     description:
       - The Python executable used for creating the virtual environment.
         For example C(python3.5), C(python2.7). When not specified, the
-        system Python version is used.
+        Python version used to run the ansible module is used.
     required: false
     default: null
   state:
@@ -415,6 +415,14 @@ def main():
 
                 if virtualenv_python:
                     cmd += ' -p%s' % virtualenv_python
+                elif PY3:
+                    # Ubuntu currently has a patch making virtualenv always
+                    # try to use python2.  Since Ubuntu16 works without
+                    # python2 installed, this is a problem.  This code mimics
+                    # the upstream behaviour of using the python which invoked
+                    # virtualenv to determine which python is used inside of
+                    # the virtualenv (when none are specified).
+                    cmd += ' -p%s' % sys.executable
 
                 cmd = "%s %s" % (cmd, env)
                 rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
