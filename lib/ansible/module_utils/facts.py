@@ -2999,7 +2999,12 @@ class Virtual(Facts):
             return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
     def populate(self):
+        self.get_virtual_facts()
         return self.facts
+
+    def get_virtual_facts(self):
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
 
 class LinuxVirtual(Virtual):
     """
@@ -3008,10 +3013,6 @@ class LinuxVirtual(Virtual):
     - virtualization_role
     """
     platform = 'Linux'
-
-    def populate(self):
-        self.get_virtual_facts()
-        return self.facts
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
@@ -3184,14 +3185,6 @@ class FreeBSDVirtual(Virtual):
     """
     platform = 'FreeBSD'
 
-    def populate(self):
-        self.get_virtual_facts()
-        return self.facts
-
-    def get_virtual_facts(self):
-        self.facts['virtualization_type'] = ''
-        self.facts['virtualization_role'] = ''
-
 class DragonFlyVirtual(FreeBSDVirtual):
     platform = 'DragonFly'
 
@@ -3202,10 +3195,6 @@ class OpenBSDVirtual(Virtual):
     - virtualization_role
     """
     platform = 'OpenBSD'
-
-    def populate(self):
-        self.get_virtual_facts()
-        return self.facts
 
     def get_virtual_facts(self):
         sysctl_path = self.module.get_bin_path('sysctl')
@@ -3251,10 +3240,6 @@ class HPUXVirtual(Virtual):
     """
     platform = 'HP-UX'
 
-    def populate(self):
-        self.get_virtual_facts()
-        return self.facts
-
     def get_virtual_facts(self):
         if os.path.exists('/usr/sbin/vecheck'):
             rc, out, err = self.module.run_command("/usr/sbin/vecheck")
@@ -3287,10 +3272,6 @@ class SunOSVirtual(Virtual):
     - container
     """
     platform = 'SunOS'
-
-    def populate(self):
-        self.get_virtual_facts()
-        return self.facts
 
     def get_virtual_facts(self):
 
