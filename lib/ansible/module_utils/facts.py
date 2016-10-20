@@ -2260,6 +2260,11 @@ class LinuxNetwork(Network):
     - ipv4_address and ipv6_address: the first non-local address for each family.
     """
     platform = 'Linux'
+    INTERFACE_TYPE = {
+        '1': 'ether',
+        '512': 'ppp',
+        '772': 'loopback',
+    }
 
     def populate(self):
         ip_path = self.module.get_bin_path('ip')
@@ -2333,12 +2338,7 @@ class LinuxNetwork(Network):
                 interfaces[device]['module'] = os.path.basename(os.path.realpath(os.path.join(path, 'device', 'driver', 'module')))
             if os.path.exists(os.path.join(path, 'type')):
                 _type = get_file_content(os.path.join(path, 'type'))
-                if _type == '1':
-                    interfaces[device]['type'] = 'ether'
-                elif _type == '512':
-                    interfaces[device]['type'] = 'ppp'
-                elif _type == '772':
-                    interfaces[device]['type'] = 'loopback'
+                interfaces[device]['type'] = self.INTERFACE_TYPE.get(_type, 'unknown')
             if os.path.exists(os.path.join(path, 'bridge')):
                 interfaces[device]['type'] = 'bridge'
                 interfaces[device]['interfaces'] = [ os.path.basename(b) for b in glob.glob(os.path.join(path, 'brif', '*')) ]
