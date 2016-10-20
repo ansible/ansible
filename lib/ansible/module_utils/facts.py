@@ -2264,6 +2264,7 @@ class LinuxNetwork(Network):
         '1': 'ether',
         '512': 'ppp',
         '772': 'loopback',
+        '65534': 'tunnel',
     }
 
     def populate(self):
