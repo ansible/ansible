@@ -72,6 +72,20 @@ options:
     description:
       - Path to svn executable to use. If not supplied,
         the normal mechanism for resolving binary paths will be used.
+  checkout:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    version_added: "2.3"
+    description:
+     - If no, do not check out the repository if it does not exist locally
+  update:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    version_added: "2.3"
+    description:
+     - If no, do not retrieve new revisions from the origin repository
   export:
     required: false
     default: "no"
@@ -94,6 +108,10 @@ EXAMPLES = '''
 
 # Export subversion directory to folder
 - subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/export export=True
+
+# Example just get information about the repository whether or not it has
+# already been cloned locally.
+- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/srv/checkout checkout=no update=no
 '''
 
 import re
@@ -168,6 +186,12 @@ class Subversion(object):
         url = re.search(r'^URL:.*$', text, re.MULTILINE).group(0)
         return rev, url
 
+    def get_remote_revision(self):
+        '''Revision and URL of subversion working directory.'''
+        text = '\n'.join(self._exec(["info", self.repo]))
+        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
+        return rev
+
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
         lines = self._exec(["status", "--quiet", "--ignore-externals",  self.dest])
@@ -194,7 +218,7 @@ class Subversion(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, type='path'),
+            dest=dict(type='path'),
             repo=dict(required=True, aliases=['name', 'repository']),
             revision=dict(default='HEAD', aliases=['rev', 'version']),
             force=dict(default='no', type='bool'),
@@ -202,6 +226,8 @@ def main():
             password=dict(required=False, no_log=True),
             executable=dict(default=None, type='path'),
             export=dict(default=False, required=False, type='bool'),
+            checkout=dict(default=True, required=False, type='bool'),
+            update=dict(default=True, required=False, type='bool'),
             switch=dict(default=True, required=False, type='bool'),
         ),
         supports_check_mode=True
@@ -216,19 +242,28 @@ def main():
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
     export = module.params['export']
     switch = module.params['switch']
+    checkout = module.params['checkout']
+    update = module.params['update']
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
     module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
 
+    if not dest and (checkout or update or export):
+        module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
+
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
+    if not export and not update and not checkout:
+        module.exit_json(changed=False, after=svn.get_remote_revision())
     if export or not os.path.exists(dest):
         before = None
         local_mods = False
         if module.check_mode:
             module.exit_json(changed=True)
-        if not export:
+        elif not export and not checkout:
+            module.exit_json(changed=False)
+        if not export and checkout:
             svn.checkout()
         else:
             svn.export(force=force)
@@ -236,7 +271,7 @@ def main():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
-        if module.check_mode:
+        if module.check_mode or not update:
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()
