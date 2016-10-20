@@ -143,7 +143,6 @@ EXAMPLES = '''
 #
 # see example in examples/playbooks
 
-import sys
 import os
 import pwd
 import os.path
@@ -151,26 +150,74 @@ import tempfile
 import re
 import shlex
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
 class keydict(dict):
 
-    """ a dictionary that maintains the order of keys as they are added """
+    """ a dictionary that maintains the order of keys as they are added
+
+    This has become an abuse of the dict interface.  Probably should be
+    rewritten to be an entirely custom object with methods instead of
+    bracket-notation.
+
+    Our requirements are for a data structure that:
+    * Preserves insertion order
+    * Can store multiple values for a single key.
+
+    The present implementation has the following functions used by the rest of
+    the code:
+
+    * __setitem__(): to add a key=value.  The value can never be disassociated
+      with the key, only new values can be added in addition.
+    * items(): to retrieve the key, value pairs.
+
+    Other dict methods should work but may be surprising.  For instance, there
+    will be multiple keys that are the same in keys() and __getitem__() will
+    return a list of the values that have been set via __setitem__.
+    """
 
     # http://stackoverflow.com/questions/2328235/pythonextend-the-dict-class
 
     def __init__(self, *args, **kw):
         super(keydict,self).__init__(*args, **kw)
         self.itemlist = list(super(keydict,self).keys())
+
     def __setitem__(self, key, value):
         self.itemlist.append(key)
-        super(keydict,self).__setitem__(key, value)
+        if key in self:
+            self[key].append(value)
+        else:
+            super(keydict, self).__setitem__(key, [value])
+
     def __iter__(self):
         return iter(self.itemlist)
+
     def keys(self):
-        return list(set(self.itemlist))
-    def values(self):
-        return [self[key] for key in self]
+        return self.itemlist
+
+    def _item_generator(self):
+        indexes = {}
+        for key in self.itemlist:
+            if key in indexes:
+                indexes[key] += 1
+            else:
+                indexes[key] = 0
+            yield key, self[key][indexes[key]]
+
+    def iteritems(self):
+        return self._item_generator()
+
+    def items(self):
+        return list(self.iteritems())
+
     def itervalues(self):
-        return (self[key] for key in self)
+        return (item[1] for item in self.iteritems())
+
+    def values(self):
+        return list(self.itervalues())
+
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
@@ -250,13 +297,7 @@ def parseoptions(module, options):
         for part in parts:
             if "=" in part:
                 (key, value) = part.split("=", 1)
-                if key in options_dict:
-                    if isinstance(options_dict[key], list):
-                        options_dict[key].append(value)
-                    else:
-                        options_dict[key] = [options_dict[key], value]
-                else:
-                    options_dict[key] = value
+                options_dict[key] = value
             elif part != ",":
                 options_dict[part] = None
 
@@ -346,15 +387,11 @@ def writekeys(module, filename, keys):
                 option_str = ""
                 if options:
                     option_strings = []
-                    for option_key in options.keys():
-                        if options[option_key]:
-                            if isinstance(options[option_key], list):
-                                for value in options[option_key]:
-                                    option_strings.append("%s=%s" % (option_key, value))
-                            else:
-                                option_strings.append("%s=%s" % (option_key, options[option_key]))
-                        else:
+                    for option_key, value in options.items():
+                        if value is None:
                             option_strings.append("%s" % option_key)
+                        else:
+                            option_strings.append("%s=%s" % (option_key, value))
                     option_str = ",".join(option_strings)
                     option_str += " "
                 key_line = "%s%s %s %s\n" % (option_str, type, keyhash, comment)
@@ -379,7 +416,6 @@ def enforce_state(module, params):
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
     exclusive   = params.get("exclusive", False)
-    validate_certs = params.get("validate_certs", True)
     error_msg   = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
@@ -416,12 +452,10 @@ def enforce_state(module, params):
             parsed_options = parseoptions(module, key_options)
             parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
-        present = False
         matched = False
         non_matching_keys = []
 
         if parsed_new_key[0] in existing_keys:
-            present = True
             # Then we check if everything matches, including
             # the key type and options. If not, we append this
             # existing key to the non-matching list
@@ -471,7 +505,6 @@ def enforce_state(module, params):
     return params
 
 def main():
-
     module = AnsibleModule(
         argument_spec = dict(
            user        = dict(required=True, type='str'),
@@ -490,8 +523,5 @@ def main():
     results = enforce_state(module, module.params)
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.pycompat24 import get_exception
-main()
+if __name__ == '__main__':
+    main()
