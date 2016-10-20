@@ -95,10 +95,17 @@ options:
     aliases: []
   name:
     description:
-      - identifier when working with a single instance.  Will be deprecated in a future release.
-        Please 'instance_names' instead.
+      - either a name of a single instance or when used with 'num_instances',
+        the base name of a cluster of nodes
     required: false
-    aliases: []
+    aliases: ['base_name']
+  num_instances:
+    description:
+      - can be used with 'name', specifies
+        the number of nodes to provision using 'name'
+        as a base name
+    required: false
+    version_added: "2.3"
   network:
     description:
       - name of the network, 'default' will be used if not specified
@@ -349,7 +356,7 @@ def get_instance_info(inst):
     })
 
 
-def create_instances(module, gce, instance_names):
+def create_instances(module, gce, instance_names, number):
     """Creates new instances. Attributes other than instance_names are picked
     up from 'module'
 
@@ -459,40 +466,62 @@ def create_instances(module, gce, instance_names):
         module.fail_json(msg='Missing required create instance variable',
                          changed=False)
 
-    for name in instance_names:
-        pd = None
-        if lc_disks:
-            pd = lc_disks[0]
-        elif persistent_boot_disk:
+    gce_args = dict(
+        location=lc_zone,
+        ex_network=network, ex_tags=tags, ex_metadata=metadata,
+        ex_can_ip_forward=ip_forward,
+        external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
+        ex_service_accounts=ex_sa_perms
+    )
+    if preemptible is not None:
+        gce_args['ex_preemptible'] = preemptible
+    if subnetwork is not None:
+        gce_args['ex_subnetwork'] = subnetwork
+
+    if isinstance(instance_names, str) and not number:
+        instance_names = [instance_names]
+
+    if isinstance(instance_names, str) and number:
+        instance_responses = gce.ex_create_multiple_nodes(instance_names, lc_machine_type,
+                                                          lc_image(), number, **gce_args)
+        for resp in instance_responses:
+            n = resp
+            if isinstance(resp, libcloud.compute.drivers.gce.GCEFailedNode):
+                try:
+                    n = gce.ex_get_node(n.name, lc_zone)
+                except ResourceNotFoundError:
+                    pass
+            else:
+                # Assure that at least one node has been created to set changed=True
+                changed = True
+            new_instances.append(n)
+    else:
+        for instance in instance_names:
+            pd = None
+            if lc_disks:
+                pd = lc_disks[0]
+            elif persistent_boot_disk:
+                try:
+                    pd = gce.ex_get_volume("%s" % instance, lc_zone)
+                except ResourceNotFoundError:
+                    pd = gce.create_volume(None, "%s" % instance, image=lc_image())
+            gce_args['ex_boot_disk'] = pd
+
+            inst = None
             try:
-                pd = gce.ex_get_volume("%s" % name, lc_zone)
+                inst = gce.ex_get_node(instance, lc_zone)
             except ResourceNotFoundError:
-                pd = gce.create_volume(None, "%s" % name, image=lc_image())
+                inst = gce.create_node(
+                    instance, lc_machine_type, lc_image(), **gce_args
+                )
+                changed = True
+            except GoogleBaseError as e:
+                module.fail_json(msg='Unexpected error attempting to create ' +
+                                 'instance %s, error: %s' % (instance, e.value))
+            if inst:
+                new_instances.append(inst)
 
-        gce_args = dict(
-            location=lc_zone,
-            ex_network=network, ex_tags=tags, ex_metadata=metadata,
-            ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
-            external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
-            ex_service_accounts=ex_sa_perms
-        )
-        if preemptible is not None:
-            gce_args['ex_preemptible'] = preemptible
-        if subnetwork is not None:
-            gce_args['ex_subnetwork'] = subnetwork
-
-        inst = None
-        try:
-            inst = gce.ex_get_node(name, lc_zone)
-        except ResourceNotFoundError:
-            inst = gce.create_node(
-                name, lc_machine_type, lc_image(), **gce_args
-            )
-            changed = True
-        except GoogleBaseError as e:
-            module.fail_json(msg='Unexpected error attempting to create ' +
-                             'instance %s, error: %s' % (name, e.value))
-
+    for inst in new_instances:
         for i, lc_disk in enumerate(lc_disks):
             # Check whether the disk is already attached
             if (len(inst.extra['disks']) > i):
@@ -515,9 +544,6 @@ def create_instances(module, gce, instance_names):
                 inst.extra['disks'].append(
                     {'source': lc_disk.extra['selfLink'], 'index': i})
 
-        if inst:
-            new_instances.append(inst)
-
     instance_names = []
     instance_json_data = []
     for inst in new_instances:
@@ -527,7 +553,7 @@ def create_instances(module, gce, instance_names):
 
     return (changed, instance_json_data, instance_names)
 
-def change_instance_state(module, gce, instance_names, zone_name, state):
+def change_instance_state(module, gce, instance_names, number, zone_name, state):
     """Changes the state of a list of instances. For example,
     change from started to stopped, or started to absent.
 
@@ -541,31 +567,46 @@ def change_instance_state(module, gce, instance_names, zone_name, state):
 
     """
     changed = False
-    changed_instance_names = []
-    for name in instance_names:
+    nodes = []
+    state_instance_names = []
+
+    if isinstance(instance_names, str) and number:
+        node_names = ['%s-%03d' % (instance_names, i) for i in range(number)]
+    elif isinstance(instance_names, str) and not number:
+        node_names = [instance_names]
+    else:
+        node_names = instance_names
+
+    for name in node_names:
         inst = None
         try:
             inst = gce.ex_get_node(name, zone_name)
         except ResourceNotFoundError:
-            pass
+            state_instance_names.append(name)
         except Exception as e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
-        if inst and state in ['absent', 'deleted']:
-            gce.destroy_node(inst)
-            changed_instance_names.append(inst.name)
-            changed = True
-        elif inst and state == 'started' and \
-                  inst.state == libcloud.compute.types.NodeState.STOPPED:
-            gce.ex_start_node(inst)
-            changed_instance_names.append(inst.name)
-            changed = True
-        elif inst and state in ['stopped', 'terminated'] and \
-                  inst.state == libcloud.compute.types.NodeState.RUNNING:
-            gce.ex_stop_node(inst)
-            changed_instance_names.append(inst.name)
-            changed = True
+        else:
+            nodes.append(inst)
+            state_instance_names.append(name)
 
-    return (changed, changed_instance_names)
+    if state in ['absent', 'deleted'] and number:
+        changed_nodes = gce.ex_destroy_multiple_nodes(nodes) or [False]
+        changed = reduce(lambda x, y: x or y, changed_nodes)
+    else:
+        for node in nodes:
+            if state in ['absent', 'deleted']:
+                gce.destroy_node(node)
+                changed = True
+            elif state == 'started' and \
+                      node.state == libcloud.compute.types.NodeState.STOPPED:
+                gce.ex_start_node(node)
+                changed = True
+            elif state in ['stopped', 'terminated'] and \
+                      node.state == libcloud.compute.types.NodeState.RUNNING:
+                gce.ex_stop_node(node)
+                changed = True
+
+    return (changed, state_instance_names)
 
 def main():
     module = AnsibleModule(
@@ -574,7 +615,8 @@ def main():
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
-            name = dict(),
+            name = dict(aliases=['base_name']),
+            num_instances = dict(type='int'),
             network = dict(default='default'),
             subnetwork = dict(),
             persistent_boot_disk = dict(type='bool', default=False),
@@ -593,7 +635,8 @@ def main():
             external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
             preemptible = dict(type='bool', default=None),
-        )
+        ),
+        mutually_exclusive=[('instance_names', 'name')]
     )
 
     if not HAS_PYTHON26:
@@ -608,6 +651,7 @@ def main():
     machine_type = module.params.get('machine_type')
     metadata = module.params.get('metadata')
     name = module.params.get('name')
+    number = module.params.get('num_instances')
     network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
     persistent_boot_disk = module.params.get('persistent_boot_disk')
@@ -618,13 +662,13 @@ def main():
     preemptible = module.params.get('preemptible')
     changed = False
 
-    inames = []
+    inames = None
     if isinstance(instance_names, list):
         inames = instance_names
     elif isinstance(instance_names, str):
         inames = instance_names.split(',')
     if name:
-        inames.append(name)
+        inames = name
     if not inames:
         module.fail_json(msg='Must specify a "name" or "instance_names"',
                          changed=False)
@@ -642,20 +686,20 @@ def main():
     json_output = {'zone': zone}
     if state in ['absent', 'deleted', 'started', 'stopped', 'terminated']:
         json_output['state'] = state
-        (changed, changed_instance_names) = change_instance_state(
-            module, gce, inames, zone, state)
+        (changed, state_instance_names) = change_instance_state(
+            module, gce, inames, number, zone, state)
 
         # based on what user specified, return the same variable, although
         # value could be different if an instance could not be destroyed
-        if instance_names:
-            json_output['instance_names'] = changed_instance_names
+        if instance_names or name and number:
+            json_output['instance_names'] = state_instance_names
         elif name:
             json_output['name'] = name
 
     elif state in ['active', 'present']:
         json_output['state'] = 'present'
         (changed, instance_data, instance_name_list) = create_instances(
-            module, gce, inames)
+            module, gce, inames, number)
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
