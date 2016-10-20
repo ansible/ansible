@@ -386,15 +386,17 @@ def main():
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
-    # When we don't have a group specified, we create a repository for the current user.
-    if group_name is None:
-        project = GitLabProject(module, git)
-        group_id, group_name = project.getUserData()
-        project_data = project.existsProject(group=group_name, project=project_name)
+    project = GitLabProject(module, git)
+    if state == "present":
+        # Gather information if we have a group, or we have to add the project to the current user.
+        if group_name is None:
+            group_id, group_name = project.getUserData()
+            project_data = project.existsProject(group=group_name, project=project_name)
+        else:
+            project_data = project.existsProject(group=group_name, project=project_name)
+            group_id = project.getGroupId()
     else:
-        project = GitLabProject(module, git)
-        project_data = project.existsProject(group=group_name, project=project_name)
-        group_id = project.getGroupId()
+        project_data = False
 
     if project_path is None:
         project_path = project_name.replace(" ", "_")
