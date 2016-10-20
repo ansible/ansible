@@ -1,0 +1,6 @@
+tox
+pyyaml
+jinja2
+setuptools
+mock
+voluptuous==0.8.8
