@@ -208,7 +208,7 @@ class Role(Base, Become, Conditional, Taggable):
             if self._loader.path_exists(main_file):
                 return self._loader.load_from_file(main_file)
             elif main is not None:
-                raise AnsibleParserError("Could not find specified file in role: %s" % main)
+                raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir,main))
         return None
 
     def _resolve_main(self, basepath, main=None):
