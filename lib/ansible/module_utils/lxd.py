@@ -121,6 +121,8 @@ class LXDClient(object):
             if resp_type == 'error':
                 if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
                     return resp_json
+                if resp_json['error'] == "Certificate already in trust store":
+                    return resp_json
                 self._raise_err_from_json(resp_json)
             return resp_json
         except socket.error as e:
