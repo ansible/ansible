@@ -28,7 +28,7 @@ version_added: "1.4"
 options:
   service:
     description:
-      - "Name of a service to add/remove to/from firewalld - service must be listed in /etc/services."
+      - "Name of a service to add/remove to/from firewalld - service must be listed in output of firewall-cmd --get-services."
     required: false
     default: null
   port:
