@@ -269,7 +269,7 @@ Random Choices
 ``````````````
 
 The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer (there are modules
-for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
+for those), it can somewhat be used as a poor man's load balancer in a MacGyver like situation::
 
     - debug: msg={{ item }}
       with_random_choice:
@@ -585,7 +585,7 @@ When using complex data structures for looping the display might get a bit too "
         - name: server1
           disks: 3gb
           ram: 15Gb
-          netowrk:
+          network:
             nic01: 100Gb
             nic02: 10Gb
             ...
@@ -640,7 +640,7 @@ for `item`::
 Writing Your Own Iterators
 ``````````````````````````
 
-While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read :doc:`developing_plugins` for some starter
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary data structures, you can read :doc:`developing_plugins` for some starter
 information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
 
 .. seealso::
