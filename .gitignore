@@ -8,7 +8,7 @@ ansible.egg-info/
 AUTHORS.TXT
 build
 
-# RPM stuff... #
+# RPM #
 dist
 MANIFEST
 rpm-build
@@ -29,31 +29,31 @@ venv
 
 ## IDE's ##
 
-# Eclipse/PyDev stuff... #
+# Eclipse/PyDev #
 .project
 .pydevproject
 
-# Emacs backup files... #
+# Emacs backup #
 *~
 .\#*
 
-# IntelliJ IDEA stuff.. #
+# IntelliJ IDEA #
 *.iml
 
-# PyCharm stuff... #
+# PyCharm #
 .idea
 
-# Sublime stuff #
+# Sublime #
 *.sublime-project
 *.sublime-workspace
 
-# Vim swap files #
+# Vim swap #
 *.swo
 *.swp
 
 ## Operating System ##
 
-# Mac OS X stuff...
+# Mac OS X #
 .DS_Store
 
 ## Virtualization ##
@@ -84,7 +84,7 @@ results.xml
 #### Documentation ####
 #######################
 
-## Docsite stuff... ##
+## Docsite ##
 
 docs-api/_build/
 docs-api/rst/
