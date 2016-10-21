@@ -121,6 +121,7 @@ options:
     starting_date:
         required: false
         format: 2016--12--01T00:00:00Z
+        description: starting date for the schedule
         note:
         -   required when action == 'create'
         -   Please use two '-' in the above format, or you may see the following error:
