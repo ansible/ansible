@@ -756,11 +756,12 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
     else:
         # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
+            if depth and not is_local_branch(git_path, module, dest, version):
+                # git clone --depth implies --single-branch, which makes
+                # the checkout fail if the version changes
+                # fetch the remote branch, to be able to check it out next
+                set_remote_branch(git_path, module, dest, remote, version, depth)
             if not is_local_branch(git_path, module, dest, version):
-                if depth:
-                    # git clone --depth implies --single-branch, which makes
-                    # the checkout fail if the version changes
-                    set_remote_branch(git_path, module, dest, remote, version, depth)
                 cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
             else:
                 (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
