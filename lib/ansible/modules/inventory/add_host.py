@@ -37,7 +37,7 @@ options:
 notes:
     - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
       to iterate use a with\_ directive.
-author: 
+author:
     - "Ansible Core Team"
     - "Seth Vidal"
 '''
@@ -49,8 +49,13 @@ EXAMPLES = '''
 # add a host with a non-standard port local to your machines
 - add_host: name={{ new_ip }}:{{ new_port }}
 
-# add a host alias that we reach through a tunnel
+# add a host alias that we reach through a tunnel (Ansible <= 1.9)
 - add_host: hostname={{ new_ip }}
             ansible_ssh_host={{ inventory_hostname }}
             ansible_ssh_port={{ new_port }}
+
+# add a host alias that we reach through a tunnel (Ansible >= 2.0)
+- add_host: hostname={{ new_ip }}
+            ansible_host={{ inventory_hostname }}
+            ansible_port={{ new_port }}
 '''
