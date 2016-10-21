@@ -27,8 +27,8 @@ Directory Layout
 
 The top level of the directory would contain files and directories like so::
 
-    production                # inventory file for production servers
-    staging                   # inventory file for staging environment 
+    production                # inventory file for production servers (or directory that contains hosts.yml)
+    staging                   # inventory file for staging environment (or directory that contains hosts.yml)
 
     group_vars/
        group1                 # here we assign variables to particular groups
@@ -77,7 +77,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
 
     inventories/
        production/
-          hosts.ini           # inventory file for production servers
+          hosts.yml           # inventory file for production servers
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""
@@ -86,7 +86,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              hostname2        # ""
 
        staging/
-          hosts.ini           # inventory file for staging environment
+          hosts.yml           # inventory file for staging environment
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""
