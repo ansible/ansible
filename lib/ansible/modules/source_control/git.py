@@ -222,7 +222,7 @@ from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.known_hosts import add_git_host_key
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -536,8 +536,8 @@ def is_local_branch(git_path, module, dest, branch):
 
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
-    for b in branches:
-        if b.startswith('* ') and ('no branch' in b or 'detached from' in b):
+    for branch in branches:
+        if branch.startswith('* ') and ('no branch' in branch or 'detached from' in branch):
             return True
     return False
 
@@ -556,17 +556,23 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
         try:
-            ### FIXME: This introduces another dep that we don't want.  We
-            # probably need to take a look at the format of this file and do
-            # our own parsing.
-            import yaml
-            gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+            git_conf = open(repo_path, 'rb')
+            for line in git_conf:
+                config_val = line.split(b(':'), 1)
+                if config_val[0].strip() == b('gitdir'):
+                    gitdir = to_native(config_val[1].strip(), errors='surrogate_or_strict')
+                    break
+            else:
+                # No repo path found
+                return ''
+
             # There is a possibility the .git file to have an absolute path.
             if os.path.isabs(gitdir):
                 repo_path = gitdir
             else:
                 repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
         except (IOError, AttributeError):
+            # No repo path found
             return ''
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
