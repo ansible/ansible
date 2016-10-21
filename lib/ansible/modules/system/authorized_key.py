@@ -391,13 +391,22 @@ def parsekey(module, raw_key, rank=None):
     return (key, key_type, options, comment, rank)
 
 def readkeys(module, filename):
+    return parsekeys(module, readkeys(filename))
+
+def readfile(filename):
 
     if not os.path.isfile(filename):
-        return {}
+        return ''
 
-    keys = {}
     f = open(filename)
-    for rank_index, line in enumerate(f.readlines()):
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+def parsekeys(module, lines):
+    keys = {}
+    for rank_index, line in enumerate(lines.splitlines(True)):
         key_data = parsekey(module, line, rank=rank_index)
         if key_data:
             # use key as identifier
@@ -406,7 +415,6 @@ def readkeys(module, filename):
             # for an invalid line, just set the line
             # dict key to the line so it will be re-output later
             keys[line] = (line, 'skipped', None, None, rank_index)
-    f.close()
     return keys
 
 def writekeys(module, filename, keys):
