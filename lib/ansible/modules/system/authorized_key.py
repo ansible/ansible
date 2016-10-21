@@ -498,7 +498,9 @@ def enforce_state(module, params):
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
-    existing_keys = readkeys(module, params["keyfile"])
+    existing_content = readfile(params["keyfile"])
+    existing_keys = parsekeys(module, existing_content)
+
     # Add a place holder for keys that should exist in the state=present and
     # exclusive=true case
     keys_to_exist = []
@@ -566,10 +568,19 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
+        filename = keyfile(module, user, do_write, path, manage_dir)
+        new_content = serialize(existing_keys)
+        diff = {
+            'before_header': params['keyfile'],
+            'after_header': filename,
+            'before': existing_content,
+            'after': new_content,
+        }
         if module.check_mode:
-            module.exit_json(changed=True)
-        writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
+            module.exit_json(changed=True, diff=diff)
+        writefile(module, filename, new_content)
         params['changed'] = True
+        params['diff'] = diff
     else:
         if module.check_mode:
             module.exit_json(changed=False)
