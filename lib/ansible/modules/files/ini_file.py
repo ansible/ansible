@@ -185,10 +185,10 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                                 else:
                                     index = index + 1
                         break
-                else:
-                    # comment out the existing option line
+                elif state == 'absent':
+                    # delete the existing line
                     if match_active_opt(option, line):
-                        ini_lines[index] = '#%s' % ini_lines[index]
+                        del ini_lines[index]
                         changed = True
                         break
 
