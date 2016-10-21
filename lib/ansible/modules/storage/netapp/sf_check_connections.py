@@ -24,10 +24,11 @@ DOCUMENTATION = '''
 module: sf_check_connections
 
 short_description: Check connectivity to MVIP and SVIP.
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Used to test the management connection to the cluster.
-The test pings the MVIP and SVIP, and executes a simple API method to verify connectivity.
+- The test pings the MVIP and SVIP, and executes a simple API method to verify connectivity.
 
 options:
 
@@ -55,16 +56,34 @@ options:
   mvip:
     required: false
     description:
-    -   Optionally, use to test connection of a different MVIP.
-        This is not needed to test the connection to the target cluster.
+    - Optionally, use to test connection of a different MVIP.
+    - This is not needed to test the connection to the target cluster.
 
   svip:
     required: false
     description:
-    -   Optionally, use to test connection of a different SVIP.
-        This is not needed to test the connection to the target cluster.
+    - Optionally, use to test connection of a different SVIP.
+    - This is not needed to test the connection to the target cluster.
 
 '''
+
+
+EXAMPLES = """
+   - name: Check connections to MVIP and SVIP
+     sf_check_connections:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+"""
+
+RETURN = """
+msg:
+    description: Successful
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 import sys
 import json

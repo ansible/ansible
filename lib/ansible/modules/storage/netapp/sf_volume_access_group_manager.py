@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_volume_access_group_manager
 
 short_description: Manage SolidFire Volume Access Groups
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update volume access groups on SolidFire
     - auth_basic
@@ -53,7 +54,8 @@ options:
         choices: ['create', 'delete', 'update']
 
     name:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         - Name of the volume access group. It is not required to be unique, but recommended.
 
@@ -61,27 +63,25 @@ options:
         required: false
         type: str[]
         description:
-        - List of initiators to include in the volume access group. If unspecified, the access
-          group will start out without configured initiators.
+        - List of initiators to include in the volume access group. If unspecified, the access group will start out without configured initiators.
 
     volumes:
         required: false
         type: int[]
         description:
-        -  List of volumes to initially include in the volume access group. If unspecified,
-           the access group will start without any volumes.
+        - List of volumes to initially include in the volume access group. If unspecified, the access group will start without any volumes.
 
     virtual_network_id:
         required: false
         type: int[]
         description:
-        -  The ID of the SolidFire Virtual Network ID to associate the volume access group with.
+        - The ID of the SolidFire Virtual Network ID to associate the volume access group with.
 
     virtual_network_tags:
         required: false
         type: int[]
         description:
-        -  The ID of the VLAN Virtual Network Tag to associate the volume access group with.
+        - The ID of the VLAN Virtual Network Tag to associate the volume access group with.
 
     attributes:
         required: false
@@ -94,6 +94,56 @@ options:
         - The ID of the volume access group to modify or delete.
 
 '''
+
+EXAMPLES = """
+   - name: Create Volume Access Group
+     sf_volume_access_group_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       name: AnsibleVolumeAccessGroup
+       volumes: 7,8
+
+   - name: Modify Volume Access Group
+     sf_volume_access_group_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: update
+       volume_access_group_id: 1
+       name: AnsibleVolumeAccessGroup-Renamed
+
+   - name: Delete Volume Access Group
+     sf_volume_access_group_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       volume_access_group_id: 1
+"""
+
+RETURN = """
+msg:
+    description: Successful creation of Volume Access Group
+    returned: success
+    type: string
+    sample: '{"changed": true, "key": value}'
+
+msg:
+    description: Successful update of Volume Access Group
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful removal of Volume Access Group
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
+
 
 '''
         Before updating a volume access group, check the previous (current) attributes to currently report

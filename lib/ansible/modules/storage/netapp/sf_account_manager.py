@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_account_manager
 
 short_description: Manage SolidFire accounts
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update accounts on SolidFire
     - auth_basic
@@ -62,16 +63,17 @@ options:
         type: CHAPSecret
         description:
         - CHAP secret to use for the initiator. Should be 12-16 characters long and impenetrable.
-        The CHAP initiator secrets must be unique and cannot be the same as the target CHAP secret.
-        If not specified, a random secret is created.
+        - The CHAP initiator secrets must be unique and cannot be the same as the target CHAP secret.
+        - If not specified, a random secret is created.
 
     target_secret:
         required: false
         type: CHAPSecret
         description:
-        - CHAP secret to use for the target (mutual CHAP authentication). Should be 12-16 characters
-        long and impenetrable. The CHAP target secrets must be unique and cannot be the same as the
-        initiator CHAP secret. If not specified, a random secret is created.
+        - CHAP secret to use for the target (mutual CHAP authentication).
+        - Should be 12-16 characters long and impenetrable.
+        - The CHAP target secrets must be unique and cannot be the same as the initiator CHAP secret.
+        - If not specified, a random secret is created.
 
     attributes:
         required: false
@@ -90,6 +92,54 @@ options:
         - Status of the account
 
 '''
+
+EXAMPLES = """
+    - name: Create Account
+      sf_account_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       name: AnsibleUser
+
+    - name: Modify Account
+     sf_account_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: update
+       account_id: 7
+       name: AnsibleUser-Renamed
+
+    - name: Delete Account
+     sf_account_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       account_id: 7
+"""
+
+RETURN = """
+msg:
+    description: Successful creation
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful update
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful deletion
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 '''
     Todo:

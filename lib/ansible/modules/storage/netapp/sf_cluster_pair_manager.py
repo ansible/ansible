@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_cluster_pair_manager
 
 short_description: Manage Cluster pairing
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, delete, or update Cluster pairs
     - auth_basic
@@ -56,13 +57,61 @@ options:
 
     cluster_pairing_key:
         required: true when action == create
-        -  A string of characters that is returned from the "StartClusterPairing" API method
+        description:
+        - A string of characters that is returned from the "StartClusterPairing" API method
 
     cluster_pair_id:
         required: true when action == delete
+        description:
         -  Unique identifier used to pair two clusters.
 
 '''
+
+EXAMPLES = """
+   - name: Get Cluster Key
+     sf_cluster_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: get_key
+
+   - name: Create Cluster Pair
+     sf_cluster_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       cluster_pair_key: {{ cluster pair key }}
+
+   - name: Delete Cluster Pair
+     sf_cluster_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       cluster_pair_id: {{ cluster pair id }}
+"""
+
+RETURN = """
+msg:
+    description: Successfully generated key
+    returned: success
+    type: string
+    sample: '{"changed": true, "key": value}'
+
+msg:
+    description: Successful creation of cluster pair
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful removal of cluster pair
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 import sys
 import json

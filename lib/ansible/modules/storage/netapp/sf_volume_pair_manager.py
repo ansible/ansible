@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_volume_pair_manager
 
 short_description: Manage Volume pairing
-
+author: Sumit Kumar (sumit4@netapp.com)
+version_added: '2.3'
 description:
 - Create, delete, or update Volume pairs
     - auth_basic
@@ -53,11 +54,15 @@ options:
         choices: ['create', 'delete', 'update']
 
     first_volume_id:
-        required: true when action == create or when action == delete
+        required: false
+        note: required when action == create or when action == delete
+        description:
         -  The ID of the volume on which to start the pairing process.
 
     second_volume_id:
-        required: true when action == create or when action == delete
+        required: false
+        note: required when action == create or when action == delete
+        description:
         -  The ID of volume on which to complete the pairing process.
 
     pause:
@@ -72,19 +77,65 @@ options:
         - The mode of the volume on which to start the pairing process.
         - The mode can only be set if the volume is the source volume.
         choices: ['Async', 'Sync', 'SnapshotsOnly']
-
-            Async:
-                    (default if no mode parameter specified) Writes are acknowledged when they complete locally.
-                    The cluster does not wait for writes to be replicated to the target cluster.
-
-            Sync:
-                    Source acknowledges write when the data is stored locally and on the remote cluster.
-
-            SnapshotsOnly:
-                    Only snapshots created on the source cluster will be replicated.
-                    Active writes from the source volume will not be replicated.
+        choices_description:
+        - Async: (default if no mode parameter specified) Writes are acknowledged when they complete locally. The cluster does not wait for writes to be replicated to the target cluster.
+        - Sync: Source acknowledges write when the data is stored locally and on the remote cluster.
+        - SnapshotsOnly: Only snapshots created on the source cluster will be replicated. Active writes from the source volume will not be replicated.
 
 '''
+
+
+EXAMPLES = """
+   - name: Create Volume Pair
+     sf_volume_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       first_volume_id: 7
+       second_volume_id: 8
+       mode:
+
+   - name: Update Volume Pair
+     sf_volume_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: update
+       pause: false
+       first_volume_id: 7
+       mode: SnapshotsOnly
+
+   - name: Delete Volume Pair
+     sf_volume_pair_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       first_volume_id: 7
+       second_volume_id: 8
+"""
+
+RETURN = """
+msg:
+    description: Successful creation of Volume Pair
+    returned: success
+    type: string
+    sample: '{"changed": true, "key": value}'
+
+msg:
+    description: Successful update of Volume Pair
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful removal of Volume Pair
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 import sys
 import json

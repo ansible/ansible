@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_snapshot_schedule_manager
 
 short_description: Manage SolidFire snapshot schedules
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update accounts on SolidFire
     - auth_basic
@@ -65,27 +66,10 @@ options:
         - Define if the schedule should recur
 
     interval:
-        Important : This parameter is currently not supported by this module.
-
         required: true when action == 'create'
         description:
         -   In order for automatic snapshots to be taken, you need to create a schedule.
-            There are three types of schedules that can be created:
         choices: ['time_interval']
-
-                Time Interval Schedule : This type of schedule will base snapshots on a time interval frequency.
-                Each snapshot will be taken after the specified amount of time has passed.
-                Control the duration by setting days, hours, and minutes.
-
-                'Weekly' and 'Monthly' scheduling is currently not supported by this module.
-
-                Days Of Week Schedule : This type of schedule will base snapshots on a weekly frequency.
-                Each snapshot will be taken on the specified weekdays at the time specified in the hours and minutes
-                properties. Control the schedule by setting weekdays, hours, and minutes
-
-                Days Of Month Schedule : This type of schedule will base snapshots on a monthly frequency.
-                Each snapshot will be taken on the specified month days at the time specified in the hours and
-                minutes properties. Control the schedule by setting month-days, hours, and minutes
 
     time_interval_days:
         required: false
@@ -115,7 +99,7 @@ options:
         type: list
         description:
         - Volume IDs that you want to set the snapshot schedule for.
-        At least 1 volume ID is required for creating a new schedule.
+        - At least 1 volume ID is required for creating a new schedule.
 
     retention:
         required: false
@@ -130,11 +114,64 @@ options:
     starting_date:
         required: true when action == 'create'
         format: 2016--12--01T00:00:00Z
-        note: Please use two '-' in the above format, or you may see the following error:
-                    TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable
+        note:
+        -   Please use two '-' in the above format, or you may see the following error:
+        -   TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable
         description: The starting date and time for the schedule.
 
 '''
+
+EXAMPLES = """
+   - name: Create Snapshot schedule
+     sf_snapshot_schedule_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       name: AnsibleSnapshotSchedule
+       time_interval_days: 1
+       starting_date: 2016--12--01T00:00:00Z
+       volumes: 7
+
+   - name: Update Snapshot schedule
+     sf_snapshot_schedule_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: update
+       schedule_id: 6
+       recurring: True
+       snapshot_name: AnsibleSnapshots
+
+   - name: Delete Snapshot schedule
+     sf_snapshot_schedule_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       schedule_id: 6
+"""
+
+RETURN = """
+msg:
+    description: Successful creation of schedule
+    returned: success
+    type: string
+    sample: '{"changed": true, "key": value}'
+
+msg:
+    description: Successful update of schedule
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful removal of schedule
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 '''
 

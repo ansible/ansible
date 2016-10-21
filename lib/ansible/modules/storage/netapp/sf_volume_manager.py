@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: sf_volume_manager
 
 short_description: Manage SolidFire volumes
-
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update volumes on SolidFire
     - auth_basic
@@ -53,18 +54,21 @@ options:
         choices: ['create', 'delete', 'update']
 
     name:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         - The name of the volume to manage
 
     account_id:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         type: int
         description:
         - account_id for the owner of this volume
 
     enable512e:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         type: bool
         description:
         - Should the volume provides 512-byte sector emulation?
@@ -79,12 +83,14 @@ options:
         description: List of Name/Value pairs in JSON object format.
 
     volume_id:
-        required: true when action == 'delete' or action == 'update'
+        required: false
+        note: required when action == 'delete' or action == 'update'
         description:
         - The ID of the volume to manage or update
 
     size:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         - The size of the volume in (size_unit)
 
@@ -100,17 +106,12 @@ options:
         description:
         - Access allowed for the volume
         choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
-
-                readOnly: Only read operations are allowed.
-
-                readWrite: Reads and writes are allowed.
-
-                locked: No reads or writes are allowed.
-
-                replicationTarget: Identify a volume as the target volume for a paired set of volumes.
-                                   If the volume is not paired, the access status is locked.
-
-                If unspecified, the access settings of the clone will be the same as the source.
+        access_type_description:
+        - readOnly: Only read operations are allowed.
+        - readWrite: Reads and writes are allowed.
+        - locked: No reads or writes are allowed.
+        - replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked.
+        - If unspecified, the access settings of the clone will be the same as the source.
 
     set_create_time:
         required: false
@@ -119,6 +120,58 @@ options:
         - Identify the time at which the volume was created.
 
 '''
+
+EXAMPLES = """
+   - name: Create Volume
+     sf_volume_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: create
+       name: AnsibleVol
+       account_id: 3
+       enable512e: False
+       size: 1
+       size_unit: gb
+
+   - name: Update Volume
+     sf_volume_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: update
+       volume_id: 2
+       access: readWrite
+
+   - name: Delete Volume
+     sf_volume_manager:
+       hostname: "{{ solidfire_hostname }}"
+       username: "{{ solidfire_username }}"
+       password: "{{ solidfire_password }}"
+       action: delete
+       volume_id: 2
+"""
+
+RETURN = """
+msg:
+    description: Successful creation of Volume
+    returned: success
+    type: string
+    sample: '{"changed": true, "key": value}'
+
+msg:
+    description: Successful update of Volume
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+msg:
+    description: Successful removal of Volume
+    returned: success
+    type: string
+    sample: '{"changed": true}'
+
+"""
 
 '''
     Todo:
