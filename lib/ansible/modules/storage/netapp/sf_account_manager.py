@@ -54,7 +54,8 @@ options:
         choices: ['create', 'delete', 'update']
 
     name:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         - Unique username for this account. (May be 1 to 64 characters in length).
 
@@ -81,7 +82,8 @@ options:
         description: List of Name/Value pairs in JSON object format.
 
     account_id:
-        required: true when action == 'delete' or action == 'update'
+        required: false
+        note: required when action == 'delete' or action == 'update'
         description:
         - The ID of the account to manage or update
 

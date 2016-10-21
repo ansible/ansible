@@ -66,26 +66,31 @@ options:
         - Define if the schedule should recur
 
     interval:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         -   In order for automatic snapshots to be taken, you need to create a schedule.
         choices: ['time_interval']
 
     time_interval_days:
+        description: time interval in days
         required: false
         type: int
 
     time_interval_hours:
+        description: time interval in hours
         required: false
         type: int
 
     time_interval_minutes:
+        description: time interval in minutes
         required: false
         type: int
 
 
     name:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         description:
         - Name for the snapshot
 
@@ -95,7 +100,8 @@ options:
         - Name for the created snapshots
 
     volumes:
-        required: true when action == create
+        required: false
+        note: required when action == create
         type: list
         description:
         - Volume IDs that you want to set the snapshot schedule for.
@@ -107,12 +113,14 @@ options:
         description: Retention period for the snapshot.
 
     schedule_id:
-        required: true when action == 'update'
+        required: false
+        note: required when action == 'update'
         description:
         - The schedule ID for the schedule that you want to update or delete.
 
     starting_date:
-        required: true when action == 'create'
+        required: false
+        note: required when action == 'create'
         format: 2016--12--01T00:00:00Z
         note:
         -   Please use two '-' in the above format, or you may see the following error:

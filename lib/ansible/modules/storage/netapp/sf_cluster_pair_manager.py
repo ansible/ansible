@@ -56,12 +56,14 @@ options:
         choices: ['create', 'delete', 'get_key']
 
     cluster_pairing_key:
-        required: true when action == create
+        required: false
+        note: required when action == create
         description:
         - A string of characters that is returned from the "StartClusterPairing" API method
 
     cluster_pair_id:
-        required: true when action == delete
+        required: false
+        note: required when action == delete
         description:
         -  Unique identifier used to pair two clusters.
 

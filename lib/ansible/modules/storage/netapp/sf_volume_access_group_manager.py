@@ -89,7 +89,8 @@ options:
         description: List of Name/Value pairs in JSON object format.
 
     volume_access_group_id:
-        required: true when action == 'delete' or action == 'update'
+        required: false
+        note: required when action == 'delete' or action == 'update'
         description:
         - The ID of the volume access group to modify or delete.
 
