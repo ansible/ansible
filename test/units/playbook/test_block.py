@@ -75,3 +75,14 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
 
+    def test_deserialize(self):
+        ds = dict(
+           block = [dict(action='block')],
+           rescue = [dict(action='rescue')],
+           always = [dict(action='always')],
+        )
+        b = Block.load(ds)
+        data = dict(parent = ds, parent_type = 'Block')
+        b.deserialize(data)
+        self.assertIsInstance(b._parent, Block)
+
