@@ -93,6 +93,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -151,8 +152,9 @@ class SolidFireClusterPairing(object):
         try:
             self.sfe.start_volume_pairing(volume_id=self.first_volume_id, mode=self.mode)
 
-        except Exception as e:
-            logger.exception('Error starting volume pairing : %s', e)
+        except:
+            err = get_exception()
+            logger.exception('Error starting volume pairing : %s', str(err))
 
     def complete_volume_pair(self, pairing_key):
         logger.debug('Completing volume pair')
@@ -161,8 +163,9 @@ class SolidFireClusterPairing(object):
             result = self.sfe.complete_volume_pairing(volume_pairing_key=pairing_key, volume_id=self.second_volume_id)
             return result
 
-        except Exception as e:
-            logger.exception('Error completing volume pair : %s', e)
+        except:
+            err = get_exception()
+            logger.exception('Error completing volume pair : %s', str(err))
             raise
 
     def delete_volume_pair(self):
@@ -171,9 +174,10 @@ class SolidFireClusterPairing(object):
         try:
             self.sfe.remove_volume_pair(volume_id=self.first_volume_id)
             self.sfe.remove_volume_pair(volume_id=self.second_volume_id)
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error removing volume pair between %s and %s: %s', self.first_volume_id,
-                             self.second_volume_id, e)
+                             self.second_volume_id, str(err))
             raise
 
     def update_volume_pair(self):
@@ -182,8 +186,9 @@ class SolidFireClusterPairing(object):
         try:
             self.sfe.modify_volume_pair(volume_id=self.first_volume_id, paused_manual=self.pause, mode=self.mode)
 
-        except Exception as e:
-            logger.exception('Error updating volume pair for %s: %s', self.first_volume_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error updating volume pair for %s: %s', self.first_volume_id, str(err))
             raise
 
     def apply(self):
@@ -209,8 +214,9 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
 main()

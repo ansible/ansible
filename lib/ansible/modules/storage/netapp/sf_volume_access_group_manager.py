@@ -107,6 +107,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -176,9 +177,10 @@ class SolidFireVolumeAccessGroup(object):
                                                 virtual_network_id=self.virtual_network_id,
                                                 virtual_network_tags=self.virtual_network_tags,
                                                 attributes=self.attributes)
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error creating volume access group %s : %s',
-                             self.name, e)
+                             self.name, str(err))
             raise
 
     def delete_volume_access_group(self):
@@ -187,8 +189,9 @@ class SolidFireVolumeAccessGroup(object):
         try:
             self.sfe.delete_volume_access_group(volume_access_group_id=self.volume_access_group_id)
 
-        except Exception as e:
-            logger.exception('Error deleting volume access group %s : %s', self.volume_access_group_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error deleting volume access group %s : %s', self.volume_access_group_id, str(err))
             raise
 
     def update_volume_access_group(self):
@@ -200,8 +203,9 @@ class SolidFireVolumeAccessGroup(object):
                                                 virtual_network_tags=self.virtual_network_tags,
                                                 name=self.name, initiators=self.initiators,
                                                 volumes=self.volumes, attributes=self.attributes)
-        except Exception as e:
-            logger.exception('Error updating volume access group %s : %s', self.volume_access_group_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error updating volume access group %s : %s', self.volume_access_group_id, str(err))
             raise
 
     def apply(self):
@@ -227,8 +231,9 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
 main()

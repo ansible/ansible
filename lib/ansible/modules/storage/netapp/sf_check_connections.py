@@ -73,6 +73,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -127,9 +128,10 @@ class SolidFireConnection(object):
             self.sfe = ElementFactory.create(self.hostname, self.username, self.password, port=442)
             return True
 
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error establishing connection to SolidFire cluster: %s',
-                             e)
+                             str(err))
             return False
 
     def check_mvip_connection(self):
@@ -145,9 +147,10 @@ class SolidFireConnection(object):
             # Todo - Log details about the test
             return result
 
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error checking connection to MVIP: %s',
-                             e)
+                             str(err))
             return False
 
     def check_svip_connection(self):
@@ -163,9 +166,10 @@ class SolidFireConnection(object):
             # Todo - Log details about the test
             return result
 
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error checking connection to SVIP: %s',
-                             e)
+                             str(err))
             return False
 
     def check(self):
@@ -220,8 +224,9 @@ def main():
 
     try:
         v.check()
-    except Exception as e:
-        logger.debug("Exception in check(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in check(): \n%s" % format_exc(err))
         raise
 
 main()

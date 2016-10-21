@@ -135,6 +135,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -234,9 +235,10 @@ class SolidFireVolume(object):
                                                           qos=self.qos,
                                                           attributes=self.attributes)
 
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error provisioning volume %s of size %s : %s',
-                             self.name, self.size, e)
+                             self.name, self.size, str(err))
             raise
 
     def delete_volume(self):
@@ -245,8 +247,9 @@ class SolidFireVolume(object):
         try:
             self.sfe.delete_volume(volume_id=self.volume_id)
 
-        except Exception as e:
-            logger.exception('Error deleting volume %s : %s', self.volume_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error deleting volume %s : %s', self.volume_id, str(err))
             raise
 
     def update_volume(self):
@@ -258,8 +261,9 @@ class SolidFireVolume(object):
                                    qos=self.qos, total_size=self.size,
                                    attributes=self.attributes)
 
-        except Exception as e:
-            logger.exception('Error updating volume %s : %s', self.volume_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error updating volume %s : %s', self.volume_id, str(err))
             raise
 
     def apply(self):
@@ -285,8 +289,9 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
 main()

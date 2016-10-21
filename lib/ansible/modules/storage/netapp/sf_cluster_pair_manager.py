@@ -71,6 +71,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -127,8 +128,9 @@ class SolidFireClusterPairing(object):
         try:
             self.sfe.complete_cluster_pairing(cluster_pairing_key=self.cluster_pairing_key)
 
-        except Exception as e:
-            logger.exception('Error creating cluster pair : %s', e)
+        except:
+            err = get_exception()
+            logger.exception('Error creating cluster pair : %s', str(err))
             raise
 
     def delete_cluster_pair(self):
@@ -137,8 +139,9 @@ class SolidFireClusterPairing(object):
         try:
             self.sfe.remove_cluster_pair(cluster_pair_id=self.cluster_pair_id)
 
-        except Exception as e:
-            logger.exception('Error removing cluster pair %s: %s', self.cluster_pair_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error removing cluster pair %s: %s', self.cluster_pair_id, str(err))
             raise
 
     def start_cluster_pairing(self):
@@ -153,8 +156,9 @@ class SolidFireClusterPairing(object):
             result = self.sfe.start_cluster_pairing()
             self.generated_cluster_pairing_key = result.cluster_pairing_key
 
-        except Exception as e:
-            logger.exception('Error starting cluster pairing : %s', e)
+        except:
+            err = get_exception()
+            logger.exception('Error starting cluster pairing : %s', str(err))
 
     def apply(self):
         changed = False
@@ -179,8 +183,9 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
 main()

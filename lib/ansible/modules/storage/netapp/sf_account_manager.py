@@ -106,6 +106,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -170,9 +171,10 @@ class SolidFireAccount(object):
         try:
             self.sfe.add_account(username=self.name, initiator_secret=self.initiator_secret,
                                  target_secret=self.target_secret, attributes=self.attributes)
-        except Exception as e:
+        except:
+            err = get_exception()
             logger.exception('Error creating account %s : %s',
-                             self.name, e)
+                             self.name, str(err))
             raise
 
     def delete_account(self):
@@ -181,8 +183,9 @@ class SolidFireAccount(object):
         try:
             self.sfe.remove_account(account_id=self.account_id)
 
-        except Exception as e:
-            logger.exception('Error deleting account %s : %s', self.account_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error deleting account %s : %s', self.account_id, str(err))
             raise
 
     def update_account(self):
@@ -193,8 +196,9 @@ class SolidFireAccount(object):
                                     initiator_secret=self.initiator_secret, target_secret=self.target_secret,
                                     attributes=self.attributes)
 
-        except Exception as e:
-            logger.exception('Error updating account %s : %s', self.account_id, e)
+        except:
+            err = get_exception()
+            logger.exception('Error updating account %s : %s', self.account_id, str(err))
             raise
 
     def apply(self):
@@ -220,8 +224,9 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
+    except:
+        err = get_exception()
+        logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
 main()
