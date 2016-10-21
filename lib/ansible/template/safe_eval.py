@@ -26,12 +26,6 @@ from ansible.compat.six.moves import builtins
 from ansible import constants as C
 from ansible.plugins import filter_loader, test_loader
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
     This is intended for allowing things like:
@@ -143,7 +137,6 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return (expr, None)
         return expr
     except Exception as e:
-        display.warning('Exception in safe_eval() on expr: %s (%s)' % (expr, e))
         if include_exceptions:
             return (expr, e)
         return expr
