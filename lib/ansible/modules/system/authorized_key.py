@@ -98,7 +98,7 @@ options:
       - If no comment is specified, the existing comment will be kept.
     required: false
     default: null
-    version_added: "2.2"
+    version_added: "2.3"
 author: "Ansible Core Team"
 '''
 
