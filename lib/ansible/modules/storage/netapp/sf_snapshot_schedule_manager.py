@@ -120,12 +120,11 @@ options:
 
     starting_date:
         required: false
-        note: required when action == 'create'
         format: 2016--12--01T00:00:00Z
         note:
+        -   required when action == 'create'
         -   Please use two '-' in the above format, or you may see the following error:
-        -   TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable
-        description: The starting date and time for the schedule.
+        -   TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable description. The starting date and time for the schedule.
 
 '''
 
