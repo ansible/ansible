@@ -418,47 +418,54 @@ def parsekeys(module, lines):
     return keys
 
 def writekeys(module, filename, keys):
+    writefile(module, filename, serialize(keys))
+
+def writefile(module, filename, content):
 
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
 
-    # FIXME: only the f.writelines() needs to be in try clause
     try:
-        new_keys = keys.values()
-        # order the new_keys by their original ordering, via the rank item in the tuple
-        ordered_new_keys = sorted(new_keys, key=itemgetter(4))
-
-        for key in ordered_new_keys:
-            try:
-                (keyhash, key_type, options, comment, rank) = key
-
-                option_str = ""
-                if options:
-                    option_strings = []
-                    for option_key, value in options.items():
-                        if value is None:
-                            option_strings.append("%s" % option_key)
-                        else:
-                            option_strings.append("%s=%s" % (option_key, value))
-                    option_str = ",".join(option_strings)
-                    option_str += " "
-
-                # comment line or invalid line, just leave it
-                if not key_type:
-                    key_line = key
-
-                if key_type == 'skipped':
-                    key_line = key[0]
-                else:
-                    key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
-            except:
-                key_line = key
-            f.writelines(key_line)
+        f.write(content)
     except IOError:
         e = get_exception()
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
+
+def serialize(keys):
+    lines = []
+    new_keys = keys.values()
+    # order the new_keys by their original ordering, via the rank item in the tuple
+    ordered_new_keys = sorted(new_keys, key=itemgetter(4))
+
+    for key in ordered_new_keys:
+        try:
+            (keyhash, key_type, options, comment, rank) = key
+
+            option_str = ""
+            if options:
+                option_strings = []
+                for option_key, value in options.items():
+                    if value is None:
+                        option_strings.append("%s" % option_key)
+                    else:
+                        option_strings.append("%s=%s" % (option_key, value))
+                option_str = ",".join(option_strings)
+                option_str += " "
+
+            # comment line or invalid line, just leave it
+            if not key_type:
+                key_line = key
+
+            if key_type == 'skipped':
+                key_line = key[0]
+            else:
+                key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
+        except:
+            key_line = key
+        lines.append(key_line)
+    return ''.join(lines)
 
 def enforce_state(module, params):
     """
