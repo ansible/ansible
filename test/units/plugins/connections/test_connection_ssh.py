@@ -308,6 +308,19 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.return_value = (0, '', '')
         conn.host = "some_host"
 
+        # Test with C.DEFAULT_SCP_IF_SSH set to smart
+        # Test when SFTP works
+        C.DEFAULT_SCP_IF_SSH = 'smart'
+        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
+        # Test when SFTP doesn't work but SCP does
+        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._run.side_effect = None
+
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
@@ -327,6 +340,7 @@ class TestConnectionBaseClass(unittest.TestCase):
             to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
@@ -348,25 +362,38 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.return_value = (0, '', '')
         conn.host = "some_host"
 
+        # Test with C.DEFAULT_SCP_IF_SSH set to smart
+        # Test when SFTP works
+        C.DEFAULT_SCP_IF_SSH = 'smart'
+        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
+        # Test when SFTP doesn't work but SCP does
+        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._run.side_effect = None
+
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None)
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None)
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
             to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
             to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
