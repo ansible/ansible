@@ -105,25 +105,24 @@ It is useful when becoming an unprivileged user::
 ansible_managed
 ===============
 
-``ansible_managed`` is a string that can be inserted into files written by
-Ansible's config templating system when you use a string like::
+The ``ansible_managed`` string can be inserted into files written by
+Ansible's config templating system::
 
    {{ ansible_managed }}
 
-The default value only says that Ansible is managing this file::
+The default value indicates that Ansible is managing a file::
 
     ansible_managed = Ansible managed
 
-This can be helpful to inform people looking at the file that they should not
-edit it in-place; they need to edit it in Ansible otherwise their changes will
-be overwritten.
+This string can be helpful to indicate that a file should not
+be directly edited because Ansible may overwrite the contents of the file.
 
-There are several special values that, when placed in the string, will be
-replaced with useful information.  These are not in the default
-``ansible_managed`` string because they can cause Ansible to think that the
-template has changed when it's only the ansible_managed string which has
-changed.  These values, along with the situations which can lead Ansible to
-report a template as changed when they are used are:
+There are several special placeholder values that be placed in the ``ansible_managed`` string to act as macros.  These are not in the default ``ansible_managed`` string because they can cause Ansible to behave as though the
+entire template has changed when only the ansible_managed string which has
+changed.  
+
+These placeholder values, along with the situations which can lead Ansible to
+report a template as changed when they are used, are listed below:
 
 * Standard directives that can be used with :func:~time.strftime:.
   The time referred to is the modification time of the template file.  Many
@@ -137,17 +136,16 @@ report a template as changed when they are used are:
 * ``{file}``: expands to the name of the full path to the template file.  If
   Ansible is run with multiple checkouts of the same configuration repository
   (for instance, in each sysadmin's home directory), then the path will differ
-  in each checkout causing Ansible to think the file has been modified.  path
-  will be different in each
+  in each checkout causing Ansible to behave as though the file has been modified.  
 * ``{host}``: expands to the hostname of the machine :program:`ansible` is run
   on.  If :program:`ansible` is invoked on multiple machines (for instance,
   each sysadmin can checkout the configuration repository on their workstation
   and run :program:`ansible` there), then the host will vary on each of these
-  machines.  This will cause Ansible to think the file has been modified.
+  machines.  This will cause Ansible to behave as though the file has been modified.
 * ``{uid}``: expands to the owner of the template file.  If Ansible is run
   on checkouts of the configuration repository made by separate users (for
   instance, if multiple system administrators are making checkouts of the
-  repository with their own accounts) then this will cause Ansible to think
+  repository with their own accounts) then this will cause Ansible to behave as if
   the file has been modified.
 
 .. _ask_pass:
@@ -370,7 +368,7 @@ force_handlers
 
 This option causes notified handlers to run on a host even if a failure occurs on that host::
 
-		force_handlers = True
+    force_handlers = True
 
 The default is False, meaning that handlers will not run if a failure has occurred on a host.
 This can also be set per play or on the command line. See :ref:`handlers_and_failure` for more details.
@@ -1158,4 +1156,6 @@ ignore_certs
 ============
 
 If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.
+ver with a self-signed certificate
 .
