@@ -20,9 +20,9 @@ DOCUMENTATION = '''
 ---
 module: synchronize
 version_added: "1.4"
-short_description: Uses rsync to make synchronizing file paths in your playbooks quick and easy.
+short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy.
 description:
-    - C(synchronize) is a wrapper around the rsync command, meant to make common tasks with rsync easier. It is run and originates on the local host where Ansible is being run. Of course, you could just use the command action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case. C(synchronize) does not provide access to the full power of rsync, but does make most invocations easier to follow.
+    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
 options:
   src:
     description:
@@ -130,7 +130,7 @@ options:
     required: false
   rsync_timeout:
     description:
-      - Specify a --timeout for the rsync command in seconds. 
+      - Specify a --timeout for the rsync command in seconds.
     default: 0
     required: false
   set_remote_user:
@@ -174,11 +174,11 @@ notes:
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
-   - To exclude files and directories from being synchronized, you may add 
+   - To exclude files and directories from being synchronized, you may add
      C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using
      rsync protocol in source or destination path.
-
+   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
 
 author: "Timothy Appnel (@tima)"
 '''
@@ -397,7 +397,7 @@ def main():
     if private_key is None:
         private_key = ''
     else:
-        private_key = '-i '+ private_key 
+        private_key = '-i '+ private_key
 
     ssh_opts = '-S none'
 
@@ -433,9 +433,9 @@ def main():
 
     # expand the paths
     if '@' not in source:
-        source = os.path.expanduser(source) 
+        source = os.path.expanduser(source)
     if '@' not in dest:
-        dest = os.path.expanduser(dest) 
+        dest = os.path.expanduser(dest)
 
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
@@ -446,7 +446,7 @@ def main():
         changed = changed_marker in out
         out_clean=out.replace(changed_marker,'')
         out_lines=out_clean.split('\n')
-        while '' in out_lines: 
+        while '' in out_lines:
             out_lines.remove('')
         if module._diff:
             diff = {'prepared': out_clean}
@@ -461,4 +461,3 @@ def main():
 from ansible.module_utils.basic import *
 
 main()
-
