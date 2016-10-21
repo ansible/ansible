@@ -16,3 +16,11 @@ users:
       - host: host_c
         password: default
       - host: host_d
+
+some_dict_structure:
+  foo:
+    name: jack
+    age: 10
+  bar:
+    name: averell
+    age: 20
