@@ -131,6 +131,7 @@ def main():
     pesize = module.params['pesize']
     vgoptions = module.params['vg_options'].split()
 
+    dev_list = []
     if module.params['pvs']:
         dev_list = module.params['pvs']
     elif state == 'present':
