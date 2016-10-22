@@ -289,7 +289,7 @@ def main():
         current_version = None
 
         # Update function configuration
-        func_kwargs = {'FunctionName': name, 'Publish': True}
+        func_kwargs = {'FunctionName': name}
 
         # Update configuration if needed
         if role_arn and current_config['Role'] != role_arn:
