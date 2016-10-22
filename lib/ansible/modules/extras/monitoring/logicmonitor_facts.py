@@ -19,7 +19,6 @@
 
 
 import socket
-import sys
 import types
 import urllib
 
@@ -61,7 +60,7 @@ description:
     - LogicMonitor is a hosted, full-stack, infrastructure monitoring platform.
     - This module collects facts about hosts abd host groups within your LogicMonitor account.
 version_added: "2.2"
-author: Ethan Culler-Mayeno, Jeff Wozniak
+author: [Ethan Culler-Mayeno (@ethanculler), Jeff Wozniak (@woz5999)]
 notes:
   - You must have an existing LogicMonitor account for this module to function.
 requirements: ["An existing LogicMonitor account", "Linux"]
@@ -74,31 +73,31 @@ options:
         choices: ['host', 'hostgroup']
     company:
         description:
-            - The LogicMonitor account company name. If you would log in to your account at "superheroes.logicmonitor.com" you would use "superheroes"
+            - The LogicMonitor account company name. If you would log in to your account at "superheroes.logicmonitor.com" you would use "superheroes".
         required: true
         default: null
     user:
         description:
-            - A LogicMonitor user name. The module will authenticate and perform actions on behalf of this user
+            - A LogicMonitor user name. The module will authenticate and perform actions on behalf of this user.
         required: true
         default: null
     password:
         description:
-            - The password for the chosen LogicMonitor User
-            - If an md5 hash is used, the digest flag must be set to true
+            - The password for the chosen LogicMonitor User.
+            - If an md5 hash is used, the digest flag must be set to true.
         required: true
         default: null
     collector:
         description:
             - The fully qualified domain name of a collector in your LogicMonitor account.
-            - This is optional for querying a LogicMonitor host when a displayname is specified
-            - This is required for querying a LogicMonitor host when a displayname is not specified
+            - This is optional for querying a LogicMonitor host when a displayname is specified.
+            - This is required for querying a LogicMonitor host when a displayname is not specified.
         required: false
         default: null
     hostname:
         description:
             - The hostname of a host in your LogicMonitor account, or the desired hostname of a device to add into monitoring.
-            - Required for managing hosts (target=host)
+            - Required for managing hosts (target=host).
         required: false
         default: 'hostname -f'
     displayname:
@@ -108,9 +107,9 @@ options:
         default: 'hostname -f'
     fullpath:
         description:
-            - The fullpath of the hostgroup object you would like to manage
-            - Recommend running on a single ansible host
-            - Required for management of LogicMonitor host groups (target=hostgroup)
+            - The fullpath of the hostgroup object you would like to manage.
+            - Recommend running on a single ansible host.
+            - Required for management of LogicMonitor host groups (target=hostgroup).
         required: false
         default: null
 ...
@@ -236,7 +235,10 @@ class LogicMonitor(object):
             else:
                 return raw
         except IOError:
-            self.fail(msg="Error: Unknown exception making RPC call")
+            ioe = get_exception()
+            self.fail(msg="Error: Exception making RPC call to " +
+                          "https://" + self.company + "." + self.lm_url +
+                          "/rpc/" + action + "\nException" + str(ioe))
 
     def get_collectors(self):
         """Returns a JSON object containing a list of
