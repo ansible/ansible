@@ -58,7 +58,8 @@ class ActionModule(ActionBase):
         if path.startswith('rsync://'):
             return path
 
-        if user:
+        # If using docker, do not add user information
+        if self._remote_transport not in [ 'docker' ] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -158,6 +159,15 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        # Store remote connection type
+        self._remote_transport = self._connection.transport
+
+        # Handle docker connection options
+        if self._remote_transport == 'docker':
+            self._docker_cmd = self._connection.docker_cmd
+            if self._play_context.docker_extra_args:
+                self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
+
         # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
         # between the controller and the delegate_to host or the controller
@@ -172,11 +182,11 @@ class ActionModule(ActionBase):
         except (AttributeError, KeyError):
             delegate_to = None
 
-        # ssh paramiko and local are fully supported transports.  Anything
+        # ssh paramiko docker and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local'):
+        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local', 'docker'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
+            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
             return result
 
         use_ssh_args = self._task.args.pop('use_ssh_args', None)
@@ -340,6 +350,11 @@ class ActionModule(ActionBase):
                 getattr(self._play_context, 'ssh_extra_args', ''),
             ]
             self._task.args['ssh_args'] = ' '.join([a for a in ssh_args if a])
+
+        # If launching synchronize against docker container
+        # use rsync_opts to support container to override rsh options
+        if self._remote_transport in [ 'docker' ]:
+            self._task.args['rsync_opts'] = "--rsh='%s exec -i'" % self._docker_cmd
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', task_vars=task_vars))
