@@ -190,7 +190,7 @@ EXAMPLES = '''
 
 # Create or update a template deployment based on an inline template and parameters
 - name: Create Azure Deploy
-  azure_rm_deploy:
+  azure_rm_deployment:
     state: present
     subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     resource_group_name: dev-ops-cle
