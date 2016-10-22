@@ -205,9 +205,9 @@ import time
 
 #TODO: get this info from API
 STATES = ['present', 'absent']
-DATACENTERS = ['ams01','ams03','dal01','dal05','dal06','dal09','fra02','hkg02','hou02','lon02','mel01','mex01','mil01','mon01','par01','sjc01','sjc03','sao01','sea01','sng01','syd01','tok02','tor01','wdc01','wdc04']
-CPU_SIZES = [1,2,4,8,16]
-MEMORY_SIZES = [1024,2048,4096,6144,8192,12288,16384,32768,49152,65536]
+DATACENTERS = ['ams01','ams03','che01','dal01','dal05','dal06','dal09','dal10','fra02','hkg02','hou02','lon02','mel01','mex01','mil01','mon01','osl01','par01','sjc01','sjc03','sao01','sea01','sng01','syd01','tok02','tor01','wdc01','wdc04']
+CPU_SIZES = [1,2,4,8,16,32,56]
+MEMORY_SIZES = [1024,2048,4096,6144,8192,12288,16384,32768,49152,65536,131072,247808]
 INITIALDISK_SIZES = [25,100]
 LOCALDISK_SIZES = [25,100,150,200,300]
 SANDISK_SIZES = [10,20,25,30,40,50,75,100,125,150,175,200,250,300,350,400,500,750,1000,1500,2000]
