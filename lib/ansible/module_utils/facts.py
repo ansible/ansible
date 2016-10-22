@@ -2163,6 +2163,20 @@ class Darwin(Hardware):
         if rc == 0:
             self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[1]) / 1024 / 1024
 
+class HurdHardware(LinuxHardware):
+    """
+    GNU Hurd specific subclass of Hardware. Define memory and mount facts
+    based on procfs compatibility translator mimicking the interface of 
+    the Linux kernel.
+    """
+
+    platform = 'GNU'
+
+    def populate(self):
+        self.get_uptime_facts()
+        self.get_memory_facts()
+        self.get_mount_facts()
+        return self.facts
 
 class Network(Facts):
     """
