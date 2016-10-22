@@ -289,6 +289,9 @@ Ansible Changes By Release
 * Fix for yum module incorrectly thinking it succeeded in installing packages
 * Make the default ansible_managed template string into a static string since
   all of the replacable values lead to non-idempotent behaviour.
+* apt_key fixes for when the user specifies a longer key id.  These allow more
+  specific targetting of keys to download while still working around
+  limitations in the apt-key tool that require shorter key id strings.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
