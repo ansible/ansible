@@ -1009,11 +1009,11 @@ class LinuxHardware(Hardware):
             key = data[0]
             if key in self.ORIGINAL_MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
-                self.facts["%s_mb" % key.lower()] = int(val) / 1024
+                self.facts["%s_mb" % key.lower()] = int(val) // 1024
 
             if key in self.MEMORY_FACTS:
                  val = data[1].strip().split(' ')[0]
-                 memstats[key.lower()] = int(val) / 1024
+                 memstats[key.lower()] = int(val) // 1024
 
         if None not in (memstats.get('memtotal'), memstats.get('memfree')):
             memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
@@ -1538,10 +1538,10 @@ class SunOSHardware(Hardware):
         reserved = int(out.split()[5][:-1])
         used = int(out.split()[8][:-1])
         free = int(out.split()[10][:-1])
-        self.facts['swapfree_mb'] = free / 1024
-        self.facts['swaptotal_mb'] = (free + used) / 1024
-        self.facts['swap_allocated_mb'] = allocated / 1024
-        self.facts['swap_reserved_mb'] = reserved / 1024
+        self.facts['swapfree_mb'] = free // 1024
+        self.facts['swaptotal_mb'] = (free + used) // 1024
+        self.facts['swap_allocated_mb'] = allocated // 1024
+        self.facts['swap_reserved_mb'] = reserved // 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1612,8 +1612,8 @@ class OpenBSDHardware(Hardware):
         #  0 0 0  47512   28160   51   0   0   0   0   0   1   0  116    89   17  0  1 99
         rc, out, err = self.module.run_command("/usr/bin/vmstat")
         if rc == 0:
-            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) / 1024
-            self.facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) / 1024 / 1024
+            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) // 1024
+            self.facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) // 1024 // 1024
 
         # Get swapctl info. swapctl output looks like:
         # total: 69268 1K-blocks allocated, 0 used, 69268 available
@@ -1623,8 +1623,8 @@ class OpenBSDHardware(Hardware):
         if rc == 0:
             swaptrans = maketrans(' ', ' ')
             data = out.split()
-            self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans, "kmg")) / 1024
-            self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans, "kmg")) / 1024
+            self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans, "kmg")) // 1024
+            self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans, "kmg")) // 1024
 
     def get_processor_facts(self):
         processor = []
@@ -1699,8 +1699,8 @@ class FreeBSDHardware(Hardware):
                 pagecount = int(data[1])
             if 'vm.stats.vm.v_free_count' in line:
                 freecount = int(data[1])
-        self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
-        self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
+        self.facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
+        self.facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
         # Get swapinfo.  swapinfo output looks like:
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
@@ -1711,8 +1711,8 @@ class FreeBSDHardware(Hardware):
             lines.pop()
         data = lines[-1].split()
         if data[0] != 'Device':
-            self.facts['swaptotal_mb'] = int(data[1]) / 1024
-            self.facts['swapfree_mb'] = int(data[3]) / 1024
+            self.facts['swaptotal_mb'] = int(data[1]) // 1024
+            self.facts['swapfree_mb'] = int(data[3]) // 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1841,7 +1841,7 @@ class NetBSDHardware(Hardware):
             key = data[0]
             if key in NetBSDHardware.MEMORY_FACTS:
                 val = data[1].strip().split(' ')[0]
-                self.facts["%s_mb" % key.lower()] = int(val) / 1024
+                self.facts["%s_mb" % key.lower()] = int(val) // 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1911,8 +1911,8 @@ class AIX(Hardware):
                 pagecount = int(data[0])
             if 'free pages' in line:
                 freecount = int(data[0])
-        self.facts['memtotal_mb'] = pagesize * pagecount / 1024 / 1024
-        self.facts['memfree_mb'] = pagesize * freecount / 1024 / 1024
+        self.facts['memtotal_mb'] = pagesize * pagecount // 1024 // 1024
+        self.facts['memfree_mb'] = pagesize * freecount // 1024 // 1024
         # Get swapinfo.  swapinfo output looks like:
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
@@ -2053,12 +2053,12 @@ class HPUX(Hardware):
         pagesize = 4096
         rc, out, err = self.module.run_command("/usr/bin/vmstat | tail -1", use_unsafe_shell=True)
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
-        self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
+        self.facts['memfree_mb'] = pagesize * data // 1024 // 1024
         if self.facts['architecture'] == '9000/800':
             try:
                 rc, out, err = self.module.run_command("grep Physical /var/adm/syslog/syslog.log")
                 data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
-                self.facts['memtotal_mb'] = int(data) / 1024
+                self.facts['memtotal_mb'] = int(data) // 1024
             except AttributeError:
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
                 #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
@@ -2149,11 +2149,11 @@ class Darwin(Hardware):
             self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
 
     def get_memory_facts(self):
-        self.facts['memtotal_mb'] = int(self.sysctl['hw.memsize']) / 1024 / 1024
+        self.facts['memtotal_mb'] = int(self.sysctl['hw.memsize']) // 1024 // 1024
 
         rc, out, err = self.module.run_command("sysctl hw.usermem")
         if rc == 0:
-            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[1]) / 1024 / 1024
+            self.facts['memfree_mb'] = int(out.splitlines()[-1].split()[1]) // 1024 // 1024
 
 
 class Network(Facts):
