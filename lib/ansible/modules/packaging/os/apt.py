@@ -216,18 +216,22 @@ stderr:
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
 '''
 
-import traceback
 # added to stave off future warnings about apt api
 import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
-import os
 import datetime
 import fnmatch
 import itertools
+import os
+import re
 import sys
+import time
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -392,16 +396,19 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
         if frozenset('*?[]!').intersection(pkgname_pattern):
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
-            if not ":" in pkgname_pattern:
+            if ":" not in pkgname_pattern:
+                # Filter the multiarch packages from the cache only once
                 try:
                     pkg_name_cache = _non_multiarch
                 except NameError:
-                    pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if not ':' in pkg.name]
+                    pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
             else:
+                # Create a cache of pkg_names including multiarch only once
                 try:
                     pkg_name_cache = _all_pkg_names
                 except NameError:
-                    pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]
+                    pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
+
             matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
             if len(matches) == 0:
@@ -445,12 +452,13 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
-        name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if build_dep:
             # Let apt decide what to install
             pkg_list.append("'%s'" % package)
             continue
+
+        name, version = package_split(package)
+        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if not installed or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
         if installed and upgradable and version:
@@ -823,7 +831,6 @@ def main():
             # reopen cache w/ modified config
             cache.open(progress=None)
 
-
         mtimestamp, updated_cache_time = get_updated_cache_time()
         # Cache valid time is default 0, which will update the cache if
         #  needed and `update_cache` was set to true
@@ -923,9 +930,6 @@ def main():
     except apt.cache.FetchFailedException:
         module.fail_json(msg="Could not fetch updated apt files")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == "__main__":
     main()
