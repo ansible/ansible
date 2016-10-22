@@ -260,7 +260,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
         # Private IP Address
         if config.has_option('digital_ocean', 'use_private_network'):
-            self.use_private_network = config.get('digital_ocean', 'use_private_network')
+            self.use_private_network = config.getboolean('digital_ocean', 'use_private_network')
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
