@@ -118,7 +118,7 @@ This string can be helpful to indicate that a file should not
 be directly edited because Ansible may overwrite the contents of the file.
 
 There are several special placeholder values that can be placed in the ``ansible_managed`` string.  These are not in the default ``ansible_managed`` string because they can cause Ansible to behave as though the
-entire template has changed when only the ansible_managed string which has
+entire template has changed when only the ansible_managed string has
 changed.  
 
 These placeholder values, along with the situations which can lead Ansible to
