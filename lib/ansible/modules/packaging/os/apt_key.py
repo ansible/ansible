@@ -288,7 +288,7 @@ def main():
     short_format = False
     if key_id:
         try:
-            key_id, fingerprint, short_key_id = parse_key_id(key_id)
+            short_key_id, fingerprint, key_id = parse_key_id(key_id)
         except ValueError:
             module.fail_json(msg='Invalid key_id', id=key_id)
 
