@@ -37,16 +37,17 @@ options:
         default: none
         description:
             - identifier of key. Including this allows check mode to correctly report the changed state.
+            - "If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead."
     data:
         required: false
         default: none
         description:
-            - keyfile contents
+            - keyfile contents to add to the keyring
     file:
         required: false
         default: none
         description:
-            - keyfile path
+            - path to a keyfile to add to the keyring
     keyring:
         required: false
         default: none
@@ -106,29 +107,69 @@ EXAMPLES = '''
 
 # FIXME: standardize into module_common
 from traceback import format_exc
-from re import compile as re_compile
-# FIXME: standardize into module_common
-from distutils.spawn import find_executable
-from os import environ
-from sys import exc_info
-import traceback
 
-match_key = re_compile("^gpg:.*key ([0-9a-fA-F]+):.*$")
-
-REQUIRED_EXECUTABLES=['gpg', 'grep', 'apt-key']
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
 
 
-def check_missing_binaries(module):
-    missing = [e for e in REQUIRED_EXECUTABLES if not find_executable(e)]
-    if len(missing):
-        module.fail_json(msg="binaries are missing", names=missing)
+apt_key_bin = None
+
+
+def find_needed_binaries(module):
+    global apt_key_bin
+
+    apt_key_bin = module.get_bin_path('apt-key', required=True)
+
+    ### FIXME: Is there a reason that gpg and grep are checked?  Is it just
+    # cruft or does the apt .deb package not require them (and if they're not
+    # installed, /usr/bin/apt-key fails?)
+    module.get_bin_path('gpg', required=True)
+    module.get_bin_path('grep', required=True)
+
+
+def parse_key_id(key_id):
+    """validate the key_id and break it into segments
+
+    :arg key_id: The key_id as supplied by the user.  A valid key_id will be
+        8, 16, or more hexadecimal chars with an optional leading ``0x``.
+    :returns: The portion of key_id suitable for apt-key del, the portion
+        suitable for comparisons with --list-public-keys, and the portion that
+        can be used with --recv-key.  If key_id is long enough, these will be
+        the last 8 characters of key_id, the last 16 characters, and all of
+        key_id.  If key_id is not long enough, some of the values will be the
+        same.
+
+    * apt-key del <= 1.10 has a bug with key_id != 8 chars
+    * apt-key adv --list-public-keys prints 16 chars
+    * apt-key adv --recv-key can take more chars
+
+    """
+    # Make sure the key_id is valid hexadecimal
+    int(key_id, 16)
+
+    key_id = key_id.upper()
+    if key_id.startswith('0X'):
+        key_id = key_id[2:]
+
+    key_id_len = len(key_id)
+    if (key_id_len != 8 and key_id_len != 16) and key_id_len <= 16:
+        raise ValueError('key_id must be 8, 16, or 16+ hexadecimal characters in length')
+
+    short_key_id = key_id[-8:]
+
+    fingerprint = key_id
+    if key_id_len > 16:
+        fingerprint = key_id[-16:]
+
+    return short_key_id, fingerprint, key_id
 
 
 def all_keys(module, keyring, short_format):
     if keyring:
-        cmd = "apt-key --keyring %s adv --list-public-keys --keyid-format=long" % keyring
+        cmd = "%s --keyring %s adv --list-public-keys --keyid-format=long" % (apt_key_bin, keyring)
     else:
-        cmd = "apt-key adv --list-public-keys --keyid-format=long"
+        cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
     (rc, out, err) = module.run_command(cmd)
     results = []
     lines = to_native(out).split('\n')
@@ -172,32 +213,37 @@ def download_key(module, url):
 
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
-        cmd = "apt-key --keyring %s adv --keyserver %s --recv %s" % (keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
-        cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
+        cmd = "%s adv --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
     for retry in range(5):
-        (rc, out, err) = module.run_command(cmd)
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
         if rc == 0:
             break
     else:
         # Out of retries
-        module.fail_json(cmd=cmd, msg="error fetching key from keyserver: %s" % keyserver,
-                         rc=rc, stdout=out, stderr=err)
+        if rc == 2 and 'not found on keyserver' in out:
+            msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
+            module.fail_json(cmd=cmd, msg=msg)
+        else:
+            msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
+            module.fail_json(cmd=cmd, msg=msg, rc=rc, stdout=out, stderr=err)
     return True
 
 
 def add_key(module, keyfile, keyring, data=None):
     if data is not None:
         if keyring:
-            cmd = "apt-key --keyring %s add -" % keyring
+            cmd = "%s --keyring %s add -" % (apt_key_bin, keyring)
         else:
-            cmd = "apt-key add -"
+            cmd = "%s add -" % apt_key_bin
         (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
     else:
         if keyring:
-            cmd = "apt-key --keyring %s add %s" % (keyring, keyfile)
+            cmd = "%s --keyring %s add %s" % (apt_key_bin, keyring, keyfile)
         else:
-            cmd = "apt-key add %s" % (keyfile)
+            cmd = "%s add %s" % (apt_key_bin, keyfile)
         (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
@@ -205,9 +251,9 @@ def add_key(module, keyfile, keyring, data=None):
 def remove_key(module, key_id, keyring):
     # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
     if keyring:
-        cmd = 'apt-key --keyring %s del %s' % (keyring, key_id)
+        cmd = '%s --keyring %s del %s' % (apt_key_bin, keyring, key_id)
     else:
-        cmd = 'apt-key del %s' % key_id
+        cmd = '%s del %s' % (apt_key_bin, key_id)
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
@@ -218,14 +264,15 @@ def main():
             id=dict(required=False, default=None),
             url=dict(required=False),
             data=dict(required=False),
-            file=dict(required=False),
+            file=dict(required=False, type='path'),
             key=dict(required=False),
-            keyring=dict(required=False),
+            keyring=dict(required=False, type='path'),
             validate_certs=dict(default='yes', type='bool'),
             keyserver=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=(('filename', 'keyserver', 'data', 'url'),),
     )
 
     key_id          = module.params['id']
@@ -237,64 +284,70 @@ def main():
     keyserver       = module.params['keyserver']
     changed         = False
 
-    # we use the "short" id: key_id[-8:], short_format=True
-    # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
-
+    fingerprint = short_key_id = key_id
+    short_format = False
     if key_id:
         try:
-            _ = int(key_id, 16)
-            if key_id.startswith('0x'):
-                key_id = key_id[2:]
-            key_id = key_id.upper()[-8:]
+            key_id, fingerprint, short_key_id = parse_key_id(key_id)
         except ValueError:
-            module.fail_json(msg="Invalid key_id", id=key_id)
+            module.fail_json(msg='Invalid key_id', id=key_id)
 
-    # FIXME: I think we have a common facility for this, if not, want
-    check_missing_binaries(module)
+        if len(fingerprint) == 8:
+            short_format = True
 
-    short_format = True
+    find_needed_binaries(module)
+
     keys = all_keys(module, keyring, short_format)
     return_values = {}
 
     if state == 'present':
-        if key_id and key_id in keys:
+        if fingerprint and fingerprint in keys:
             module.exit_json(changed=False)
+        elif fingerprint and fingerprint not in keys and module.check_mode:
+            ### TODO: Someday we could go further -- write keys out to
+            # a temporary file and then extract the key id from there via gpg
+            # to decide if the key is installed or not.
+            module.exit_json(changed=True)
         else:
             if not filename and not data and not keyserver:
                 data = download_key(module, url)
-            if key_id and key_id in keys:
-                module.exit_json(changed=False)
+
+            if filename:
+                add_key(module, filename, keyring)
+            elif keyserver:
+                import_key(module, keyring, keyserver, key_id)
             else:
-                if module.check_mode:
-                    module.exit_json(changed=True)
-                if filename:
-                    add_key(module, filename, keyring)
-                elif keyserver:
-                    import_key(module, keyring, keyserver, key_id)
-                else:
-                    add_key(module, "-", keyring, data)
-                changed=False
-                keys2 = all_keys(module, keyring, short_format)
-                if len(keys) != len(keys2):
-                    changed=True
-                if key_id and not key_id in keys2:
-                    module.fail_json(msg="key does not seem to have been added", id=key_id)
-                module.exit_json(changed=changed)
+                add_key(module, "-", keyring, data)
+
+            changed = False
+            keys2 = all_keys(module, keyring, short_format)
+            if len(keys) != len(keys2):
+                changed=True
+
+            if fingerprint and fingerprint not in keys2:
+                module.fail_json(msg="key does not seem to have been added", id=key_id)
+            module.exit_json(changed=changed)
+
     elif state == 'absent':
         if not key_id:
             module.fail_json(msg="key is required")
-        if key_id in keys:
+        if fingerprint in keys:
             if module.check_mode:
                 module.exit_json(changed=True)
-            if remove_key(module, key_id, keyring):
-                changed=True
+
+            # we use the "short" id: key_id[-8:], short_format=True
+            # it's a workaround for https://bugs.launchpad.net/ubuntu/+source/apt/+bug/1481871
+            if remove_key(module, short_key_id, keyring):
+                keys = all_keys(module, keyring, short_format)
+                if fingerprint in keys:
+                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)", id=key_id)
+                changed = True
             else:
-                # FIXME: module.fail_json  or exit-json immediately at point of failure
+                # FIXME: module.fail_json or exit-json immediately at point of failure
                 module.fail_json(msg="error removing key_id", **return_values)
 
     module.exit_json(changed=changed, **return_values)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+
+if __name__ == '__main__':
+    main()
