@@ -331,8 +331,7 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
 
 
-def format_output(module, path, st, follow, get_md5, get_checksum,
-                  checksum_algorithm, mimetype=None, charset=None):
+def format_output(module, path, st):
     mode = st.st_mode
 
     # back to ansible
@@ -367,37 +366,30 @@ def format_output(module, path, st, follow, get_md5, get_checksum,
         xoth=bool(mode & stat.S_IXOTH),
         isuid=bool(mode & stat.S_ISUID),
         isgid=bool(mode & stat.S_ISGID),
-        readable=os.access(path, os.R_OK),
-        writeable=os.access(path, os.W_OK),
-        executable=os.access(path, os.X_OK),
     )
 
-    if stat.S_ISLNK(mode):
-        output['lnk_source'] = os.path.realpath(path)
+    # Platform dependant flags:
+    for other in [
+            # Some Linux
+            ('st_blocks','blocks'),
+            ('st_blksize', 'block_size'),
+            ('st_rdev','device_type'),
+            ('st_flags', 'flags'),
+            # Some Berkley based
+            ('st_gen', 'generation'),
+            ('st_birthtime', 'birthtime'),
+            # RISCOS
+            ('st_ftype', 'file_type'),
+            ('st_attrs', 'attributes'),
+            ('st_obtype', 'object_type'),
+            # OS X
+            ('st_rsize', 'real_size'),
+            ('st_creator', 'creator'),
+            ('st_type', 'file_type'),
+        ]:
+        if hasattr(st, other[0]):
+            output[other[1]] = getattr(st, other[0])
 
-    if stat.S_ISREG(mode) and get_md5 and os.access(path, os.R_OK):
-        # Will fail on FIPS-140 compliant systems
-        try:
-            output['md5'] = module.md5(path)
-        except ValueError:
-            output['md5'] = None
-
-    if stat.S_ISREG(mode) and get_checksum and os.access(path, os.R_OK):
-        output['checksum'] = module.digest_from_file(path, checksum_algorithm)
-
-    try:
-        pw = pwd.getpwuid(st.st_uid)
-
-        output['pw_name'] = pw.pw_name
-
-        grp_info = grp.getgrgid(st.st_gid)
-        output['gr_name'] = grp_info.gr_name
-    except:
-        pass
-
-    if not (mimetype is None and charset is None):
-        output['mime_type'] = mimetype
-        output['charset'] = charset
 
     return output
 
@@ -425,6 +417,7 @@ def main():
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
 
+    # main stat data
     try:
         if follow:
             st = os.stat(b_path)
@@ -438,25 +431,53 @@ def main():
 
         module.fail_json(msg=e.strerror)
 
-    mimetype = None
-    charset = None
-    if get_mime:
-        mimetype = 'unknown'
-        charset = 'unknown'
+    # process base results
+    output = format_output(module, path, st)
 
+    # resolved permissions
+    for perm in [('readable', os.R_OK), ('writeable', os.W_OK), ('executable', os.X_OK)]:
+        output[perm[0]] = os.access(path, perm[1])
+
+    # symlink info
+    if output.get('islnk'):
+        output['lnk_source'] = os.path.realpath(path)
+
+    try: # user data
+        pw = pwd.getpwuid(st.st_uid)
+        output['pw_name'] = pw.pw_name
+    except:
+        pass
+
+    try: # group data
+        grp_info = grp.getgrgid(st.st_gid)
+        output['gr_name'] = grp_info.gr_name
+    except:
+        pass
+
+    # checksums
+    if output.get('isreg') and output.get('readable'):
+        if get_md5:
+            # Will fail on FIPS-140 compliant systems
+            try:
+                output['md5'] = module.md5(path)
+            except ValueError:
+                output['md5'] = None
+
+        if get_checksum:
+            output['checksum'] = module.digest_from_file(path, checksum_algorithm)
+
+    # try to get mime data if requested
+    if get_mime:
+        output['mimetype'] = output['charset'] = 'unknown'
         filecmd = [module.get_bin_path('file', True), '-i', path]
         try:
             rc, out, err = module.run_command(filecmd)
             if rc == 0:
                 mimetype, charset = out.split(':')[1].split(';')
-                mimetype = mimetype.strip()
-                charset = charset.split('=')[1].strip()
+                output['mimetype'] = mimetype.strip()
+                output['charset'] = charset.split('=')[1].strip()
         except:
             pass
-
-    output = format_output(module, path, st, follow, get_md5, get_checksum,
-                           checksum_algorithm, mimetype=mimetype,
-                           charset=charset)
 
     module.exit_json(changed=False, stat=output)
 
