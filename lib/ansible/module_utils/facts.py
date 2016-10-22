@@ -1281,7 +1281,11 @@ class LinuxHardware(Hardware):
         return bind_mounts
 
     def _mtab_entries(self):
-        mtab = get_file_content('/etc/mtab', '')
+        mtab_file = '/etc/mtab'
+        if not os.path.exists(mtab_file):
+            mtab_file = '/proc/mounts'
+
+        mtab = get_file_content(mtab_file, '')
         mtab_entries = []
         for line in mtab.splitlines():
             fields = line.split()
