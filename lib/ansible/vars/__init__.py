@@ -548,7 +548,7 @@ class VariableManager:
             names.sort()
 
             # do not parse hidden files or dirs, e.g. .svn/
-            paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
+            paths = [os.path.join(path, name) for name in names if not name.startswith('.') and not name.endswith('~')]
             for p in paths:
                 results = self._load_inventory_file(path=p, loader=loader)
                 if results is not None:
