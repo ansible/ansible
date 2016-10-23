@@ -159,6 +159,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+
 def create_lifecycle_rule(connection, module):
 
     name = module.params.get("name")
@@ -174,13 +177,13 @@ def create_lifecycle_rule(connection, module):
 
     try:
         bucket = connection.get_bucket(name)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         module.fail_json(msg=e.message)
 
     # Get the bucket's current lifecycle rules
     try:
         current_lifecycle_obj = bucket.get_lifecycle_config()
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code == "NoSuchLifecycleConfiguration":
             current_lifecycle_obj = Lifecycle()
         else:
@@ -243,7 +246,7 @@ def create_lifecycle_rule(connection, module):
     # Write lifecycle to bucket
     try:
         bucket.configure_lifecycle(lifecycle_obj)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed)
@@ -305,13 +308,13 @@ def destroy_lifecycle_rule(connection, module):
 
     try:
         bucket = connection.get_bucket(name)
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         module.fail_json(msg=e.message)
 
     # Get the bucket's current lifecycle rules
     try:
         current_lifecycle_obj = bucket.get_lifecycle_config()
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code == "NoSuchLifecycleConfiguration":
             module.exit_json(changed=changed)
         else:
@@ -343,7 +346,7 @@ def destroy_lifecycle_rule(connection, module):
             bucket.configure_lifecycle(lifecycle_obj)
         else:
             bucket.delete_lifecycle_configuration()
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed)
@@ -397,7 +400,7 @@ def main():
         # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
         if connection is None:
             connection = boto.connect_s3(**aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
     expiration_date = module.params.get("expiration_date")
@@ -409,13 +412,13 @@ def main():
     if expiration_date is not None:
         try:
             datetime.datetime.strptime(expiration_date, "%Y-%m-%dT%H:%M:%S.000Z")
-        except ValueError, e:
+        except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
     if transition_date is not None:
         try:
             datetime.datetime.strptime(transition_date, "%Y-%m-%dT%H:%M:%S.000Z")
-        except ValueError, e:
+        except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
     boto_required_version = (2,40,0)
@@ -427,8 +430,6 @@ def main():
     elif state == 'absent':
         destroy_lifecycle_rule(connection, module)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -133,6 +133,8 @@ table_status:
     sample: ACTIVE
 '''
 
+import traceback
+
 try:
     import boto
     import boto.dynamodb2
@@ -151,6 +153,10 @@ try:
 
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
 
 DYNAMO_TYPE_DEFAULT = 'STRING'
 INDEX_REQUIRED_OPTIONS = ['name', 'type', 'hash_key_name']
@@ -244,7 +250,7 @@ def dynamo_table_exists(table):
         table.describe()
         return True
 
-    except JSONResponseError, e:
+    except JSONResponseError as e:
         if e.message and e.message.startswith('Requested resource not found'):
             return False
         else:
@@ -281,7 +287,7 @@ def update_dynamo_table(table, throughput=None, check_mode=False, global_indexes
             # todo: remove try once boto has https://github.com/boto/boto/pull/3447 fixed
             try:
                 global_indexes_changed = table.update_global_secondary_index(global_indexes=index_throughput_changes) or global_indexes_changed
-            except ValidationException as e:
+            except ValidationException:
                 pass
         else:
             global_indexes_changed = True
@@ -398,7 +404,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
-    except (NoAuthHandlerFound, AnsibleAWSError), e:
+    except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
@@ -407,10 +413,6 @@ def main():
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

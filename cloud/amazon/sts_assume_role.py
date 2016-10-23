@@ -91,6 +91,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
 
 def assume_role_policy(connection, module):
 
@@ -106,7 +109,7 @@ def assume_role_policy(connection, module):
     try:
         assumed_role = connection.assume_role(role_arn, role_session_name, policy, duration_seconds, external_id, mfa_serial_number, mfa_token)
         changed = True
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg=e)
 
     module.exit_json(changed=changed, sts_creds=assumed_role.credentials.__dict__, sts_user=assumed_role.user.__dict__)
@@ -135,20 +138,16 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.sts, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
 
     try:
         assume_role_policy(connection, module)
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg=e)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

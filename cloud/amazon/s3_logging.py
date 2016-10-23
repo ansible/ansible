@@ -72,6 +72,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+
 
 def compare_bucket_logging(bucket, target_bucket, target_prefix):
 
@@ -162,7 +165,7 @@ def main():
         # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
         if connection is None:
             connection = boto.connect_s3(**aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
     state = module.params.get("state")
@@ -172,8 +175,6 @@ def main():
     elif state == 'absent':
         disable_bucket_logging(connection, module)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

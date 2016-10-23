@@ -163,6 +163,11 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
+        boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
+        ec2_argument_spec, get_aws_connection_info)
+
 
 def list_ec2_snapshots(connection, module):
 
@@ -173,7 +178,7 @@ def list_ec2_snapshots(connection, module):
 
     try:
         snapshots = connection.describe_snapshots(SnapshotIds=snapshot_ids, OwnerIds=owner_ids, RestorableByUserIds=restorable_by_user_ids, Filters=filters)
-    except ClientError, e:
+    except ClientError as e:
         module.fail_json(msg=e.message)
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
@@ -219,8 +224,6 @@ def main():
 
     list_ec2_snapshots(connection, module)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
