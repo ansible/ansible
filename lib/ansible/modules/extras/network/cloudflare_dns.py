@@ -18,16 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-import urllib
-
 DOCUMENTATION = '''
 ---
 module: cloudflare_dns
@@ -269,6 +259,22 @@ record:
             sample: sample.com
 '''
 
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
+import urllib
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
+
 class CloudflareAPI(object):
 
     cf_api_endpoint = 'https://api.cloudflare.com/client/v4'
@@ -315,8 +321,9 @@ class CloudflareAPI(object):
         if payload:
             try:
                 data = json.dumps(payload)
-            except Exception, e:
-                self.module.fail_json(msg="Failed to encode payload as JSON: {0}".format(e))
+            except Exception:
+                e = get_exception()
+                self.module.fail_json(msg="Failed to encode payload as JSON: %s " % str(e))
 
         resp, info = fetch_url(self.module,
                                self.cf_api_endpoint + api_call,
@@ -636,9 +643,6 @@ def main():
         changed = cf_api.delete_dns_records(solo=False)
         module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

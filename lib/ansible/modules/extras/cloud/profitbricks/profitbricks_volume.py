@@ -135,7 +135,6 @@ EXAMPLES = '''
 '''
 
 import re
-import uuid
 import time
 
 HAS_PB_SDK = True
@@ -144,6 +143,10 @@ try:
     from profitbricks.client import ProfitBricksService, Volume
 except ImportError:
     HAS_PB_SDK = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 uuid_match = re.compile(
     '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
@@ -253,7 +256,8 @@ def create_volume(module, profitbricks):
 
         try:
             name % 0
-        except TypeError, e:
+        except TypeError:
+            e = get_exception()
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
@@ -354,7 +358,8 @@ def _attach_volume(module, profitbricks, datacenter, volume):
 
         try:
             return profitbricks.attach_volume(datacenter, server, volume)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to attach volume: %s' % str(e))
 
 
@@ -403,7 +408,8 @@ def main():
         try:
             (changed) = delete_volume(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to set volume state: %s' % str(e))
 
     elif state == 'present':
@@ -415,9 +421,10 @@ def main():
         try:
             (volume_dict_array) = create_volume(module, profitbricks)
             module.exit_json(**volume_dict_array)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to set volume state: %s' % str(e))
 
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

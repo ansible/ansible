@@ -78,6 +78,11 @@ EXAMPLES = '''
 
 import urllib
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
+
 def main():
 
     module = AnsibleModule(
@@ -120,7 +125,8 @@ def main():
     try:
         data = urllib.urlencode(params)
         response, info = fetch_url(module, url, data=data)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg='Unable to notify Rollbar: %s' % e)
     else:
         if info['status'] == 200:
@@ -128,7 +134,6 @@ def main():
         else:
             module.fail_json(msg='HTTP result code: %d connecting to %s' % (info['status'], url))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == '__main__':
+    main()

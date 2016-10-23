@@ -74,6 +74,10 @@ except ImportError:
 else:
     pyodbc_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
+
 class NotSupportedError(Exception):
     pass
 
@@ -232,24 +236,23 @@ def main():
     if module.params['db']:
         db = module.params['db']
 
-    changed = False
-
     try:
         dsn = (
             "Driver=Vertica;"
-            "Server={0};"
-            "Port={1};"
-            "Database={2};"
-            "User={3};"
-            "Password={4};"
-            "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
+            "Server=%s;"
+            "Port=%s;"
+            "Database=%s;"
+            "User=%s;"
+            "Password=%s;"
+            "ConnectionLoadBalance=%s"
+            ) % (module.params['cluster'], module.params['port'], db,
                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception, e:
-        module.fail_json(msg="Unable to connect to database: {0}.".format(e))
-        
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg="Unable to connect to database: %s." % str(e))
+
     try:
         schema_facts = get_schema_facts(cursor)
         user_facts = get_user_facts(cursor)
@@ -262,15 +265,16 @@ def main():
                            'vertica_roles': role_facts,
                            'vertica_configuration': configuration_facts,
                            'vertica_nodes': node_facts})
-    except NotSupportedError, e:
+    except NotSupportedError:
+        e = get_exception()
         module.fail_json(msg=str(e))
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=e)
 
-# import ansible utilities
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

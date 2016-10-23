@@ -102,6 +102,10 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
 
 def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_to=None, repository=None):
     """Send a deploy event to Stackdriver"""
@@ -195,7 +199,8 @@ def main():
             module.fail_json(msg="revision_id required for deploy events")
         try:
             send_deploy_event(module, key, revision_id, deployed_by, deployed_to, repository)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to sent deploy event: %s" % e)
 
     if event == 'annotation':
@@ -203,14 +208,13 @@ def main():
             module.fail_json(msg="msg required for annotation events")
         try:
             send_annotation_event(module, key, msg, annotated_by, level, instance_id, event_epoch)
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg="unable to sent annotation event: %s" % e)
 
     changed = True
     module.exit_json(changed=changed, deployed_by=deployed_by)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
-main()
+if __name__ == '__main__':
+    main()
