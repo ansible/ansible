@@ -100,8 +100,8 @@ description: Install packages based on package.json.
 description: Update packages based on package.json to their latest version.
 - yarn: path=/app/location state=latest
 
-description: Install packages based on package.json using the yarn installed with nvm v0.10.1.
-- yarn: path=/app/location executable=/opt/nvm/v0.10.1/bin/yarn state=present
+description: Install packages based on package.json using a specific yarn executable
+- yarn: path=/app/location executable=/Users/someuser/.yarn/bin state=present
 '''
 
 RETURN = '''
@@ -132,6 +132,11 @@ invocation:
                 "version": null
             }
         } 
+out:
+    description: Output generated from Yarn with emojis removed.
+    returned: always
+    type: string
+    sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4] Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
 ...
 '''
 
@@ -184,13 +189,16 @@ class Yarn(object):
                 cmd.append('--registry')
                 cmd.append(self.registry)
 
+            # always run Yarn without emojis when called via Ansible
+            cmd.append('--no-emoji')
+
             #If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
                 if not os.path.exists(self.path):
                     os.makedirs(self.path)
                 if not os.path.isdir(self.path):
-                    self.module.fail_json(msg="path %s is not a directory" % self.path)
+                    self.module.fail_json(msg="Path provided %s is not a directory" % self.path)
                 cwd = self.path
 
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
@@ -273,9 +281,9 @@ def main():
     ignore_scripts = module.params['ignore_scripts']
 
     if not path and not glbl:
-        module.fail_json(msg='path must be specified when not using global')
+        module.fail_json(msg='Path must be specified when not using global arg')
     if state == 'absent' and not name:
-        module.fail_json(msg='uninstalling a package is only available for named packages')
+        module.fail_json(msg='Uninstalling a package is only available for named packages')
 
     yarn = Yarn(module, name=name, path=path, version=version, glbl=glbl, production=production, \
               executable=executable, registry=registry, ignore_scripts=ignore_scripts)
@@ -285,23 +293,23 @@ def main():
         installed, missing = yarn.list()
         if len(missing):
             changed = True
-            yarn.install()
+            out = yarn.install()
     elif state == 'latest':
         installed, missing = yarn.list()
         outdated = yarn.list_outdated()
         if len(missing):
             changed = True
-            yarn.install()
+            out = yarn.install()
         if len(outdated):
             changed = True
-            yarn.update()
+            out = yarn.update()
     else: #absent
         installed, missing = yarn.list()
         if name in installed:
             changed = True
-            yarn.uninstall()
+            out = yarn.uninstall()
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, out=out)
 
 # import module snippets
 from ansible.module_utils.basic import *
