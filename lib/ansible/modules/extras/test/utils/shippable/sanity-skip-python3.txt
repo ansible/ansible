@@ -28,9 +28,6 @@
 /cloud/amazon/sqs_queue.py
 /cloud/amazon/sts_assume_role.py
 /cloud/amazon/sts_session_token.py
-/cloud/centurylink/clc_aa_policy.py
-/cloud/centurylink/clc_group.py
-/cloud/centurylink/clc_publicip.py
 /cloud/misc/virt_net.py
 /cloud/misc/virt_pool.py
 /cloud/profitbricks/profitbricks.py

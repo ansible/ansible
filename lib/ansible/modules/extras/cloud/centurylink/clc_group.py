@@ -212,6 +212,7 @@ group:
 
 __version__ = '${version}'
 
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -233,6 +234,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcGroup(object):
@@ -362,7 +365,7 @@ class ClcGroup(object):
         group, parent = self.group_dict.get(group_name)
         try:
             response = group.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to delete group :{0}. {1}'.format(
                 group_name, ex.response_text
             ))
@@ -423,7 +426,7 @@ class ClcGroup(object):
         (parent, grandparent) = self.group_dict[parent]
         try:
             response = parent.Create(name=group, description=description)
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to create group :{0}. {1}'.format(
                 group, ex.response_text))
         return response
@@ -508,6 +511,6 @@ def main():
     clc_group = ClcGroup(module)
     clc_group.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()
