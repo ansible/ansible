@@ -46,6 +46,7 @@ extends_documentation_fragment:
 requirements:
     - boto3
     - botocore
+    - python >= 2.6
 '''
 
 RETURN = """
@@ -92,6 +93,10 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+
+
 def normalize_credentials(credentials):
     access_key = credentials.get('AccessKeyId', None)
     secret_key = credentials.get('SecretAccessKey', None)
@@ -121,7 +126,7 @@ def get_session_token(connection, module):
     try:
         response = connection.get_session_token(**args)
         changed = True
-    except ClientError, e:
+    except ClientError as e:
         module.fail_json(msg=e)
 
     credentials = normalize_credentials(response.get('Credentials', {}))
@@ -150,10 +155,6 @@ def main():
 
     get_session_token(connection, module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

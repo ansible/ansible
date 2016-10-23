@@ -122,12 +122,14 @@ task:
 '''
 
 try:
-    import json
     import botocore
     import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
 # Common fields for the default rule that is contained within every VPC NACL.
@@ -179,7 +181,6 @@ def subnets_added(nacl_id, subnets, client, module):
 
 def subnets_changed(nacl, client, module):
     changed = False
-    response = {}
     vpc_id = module.params.get('vpc_id')
     nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
     subnets = subnets_to_associate(nacl, client, module)
@@ -528,9 +529,9 @@ def main():
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
-    
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json(msg="Can't authorize connection - %s" % str(e))
+
     invocations = {
         "present": setup_network_acl,
         "absent": remove_network_acl
@@ -538,9 +539,6 @@ def main():
     (changed, results) = invocations[state](client, module)
     module.exit_json(changed=changed, nacl_id=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -127,12 +127,17 @@ EXAMPLES = '''
     kms_key_id: arn:aws:kms:us-east-1:XXXXXXXXXXXX:key/746de6ea-50a4-4bcb-8fbc-e3b29f2d367b
 '''
 
+import time
+
 try:
     import boto
     import boto.ec2
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect, get_aws_connection_info
 
 
 def copy_image(module, ec2):
@@ -163,7 +168,7 @@ def copy_image(module, ec2):
         }
 
         image_id = ec2.copy_image(**params).image_id
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     img = wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait)
@@ -201,7 +206,7 @@ def wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait):
     for i in range(wait_timeout):
         try:
             return ec2.get_image(image_id)
-        except boto.exception.EC2ResponseError, e:
+        except boto.exception.EC2ResponseError as e:
             # This exception we expect initially right after registering the copy with EC2 API
             if 'InvalidAMIID.NotFound' in e.error_code and wait:
                 time.sleep(1)
@@ -234,12 +239,12 @@ def main():
 
     try:
         ec2 = ec2_connect(module)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
 
     try:
         region, ec2_url, boto_params = get_aws_connection_info(module)
-    except boto.exception.NoAuthHandlerFound, e:
+    except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
 
     if not region:
@@ -248,9 +253,6 @@ def main():
     copy_image(module, ec2)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
-main()
+if __name__ == '__main__':
+    main()
 

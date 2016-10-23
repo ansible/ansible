@@ -103,6 +103,9 @@ EXAMPLES = '''
     state: absent
 '''
 
+import json
+import traceback
+
 try:
     import boto.sqs
     from boto.exception import BotoServerError, NoAuthHandlerFound
@@ -110,6 +113,9 @@ try:
 
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 def create_or_update_sqs_queue(connection, module):
@@ -255,7 +261,7 @@ def main():
     try:
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
 
-    except (NoAuthHandlerFound, AnsibleAWSError), e:
+    except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
@@ -264,10 +270,6 @@ def main():
     elif state == 'absent':
         delete_sqs_queue(connection, module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

@@ -115,6 +115,10 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+
+
 class EcsClusterManager:
     """Handles ECS Clusters"""
 
@@ -127,8 +131,8 @@ class EcsClusterManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg="Can't authorize connection - "+str(e))
+        except boto.exception.NoAuthHandlerFound as e:
+            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
 
     def find_in_array(self, array_of_clusters, cluster_name, field_name='clusterArn'):
         for c in array_of_clusters:
@@ -180,7 +184,7 @@ def main():
     cluster_mgr = EcsClusterManager(module)
     try:
         existing = cluster_mgr.describe_cluster(module.params['name'])
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Exception describing cluster '"+module.params['name']+"': "+str(e))
 
     results = dict(changed=False)
@@ -230,9 +234,6 @@ def main():
 
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

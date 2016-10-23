@@ -101,6 +101,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_ec2_creds
+
+
 class CloudTrailManager:
     """Handles cloudtrail configuration"""
 
@@ -112,7 +116,7 @@ class CloudTrailManager:
 
         try:
             self.conn = connect_to_aws(boto.cloudtrail, self.region, **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except boto.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg=str(e))
 
     def view_status(self, name):
@@ -222,8 +226,6 @@ def main():
 
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

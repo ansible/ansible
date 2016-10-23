@@ -106,8 +106,6 @@ zone_id:
     sample: "Z6JQG9820BEFMW"
 '''
 
-import time
-
 try:
     import boto
     import boto.ec2
@@ -117,6 +115,9 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
 def main():
@@ -148,7 +149,7 @@ def main():
     # connect to the route53 endpoint
     try:
         conn = Route53Connection(**aws_connect_kwargs)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg=e.error_message)
 
     results = conn.get_all_hosted_zones()
@@ -216,7 +217,5 @@ def main():
     elif state == 'absent':
         module.exit_json(changed=False)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
-main()
+if __name__ == '__main__':
+    main()
