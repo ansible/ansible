@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: hostname
 author:
-    - "Hiroaki Nakamura (@hnakamur)"
+    - "Adrian Likins (@alikins)"
     - "Hideki Saito (@saito-hideki)"
 version_added: "1.4"
 short_description: Manage hostname
