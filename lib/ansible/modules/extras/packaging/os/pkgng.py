@@ -114,7 +114,7 @@ def query_package(module, pkgng_path, name, dir_arg):
 def pkgng_older_than(module, pkgng_path, compare_version):
 
     rc, out, err = module.run_command("%s -v" % pkgng_path)
-    version = map(lambda x: int(x), re.split(r'[\._]', out))
+    version = [int(x) for x in re.split(r'[\._]', out)]
 
     i = 0
     new_pkgng = True
