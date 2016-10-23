@@ -124,6 +124,7 @@ server_ids:
 
 __version__ = '${version}'
 
+import os
 from distutils.version import LooseVersion
 
 try:
@@ -145,6 +146,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcPublicIp(object):
@@ -241,7 +244,7 @@ class ClcPublicIp(object):
         result = None
         try:
             result = server.PublicIPs().Add(ports_to_expose)
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to add public ip to the server : {0}. {1}'.format(
                 server.id, ex.response_text
             ))
@@ -278,7 +281,7 @@ class ClcPublicIp(object):
         try:
             for ip_address in server.PublicIPs().public_ips:
                     result = ip_address.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to remove public ip from the server : {0}. {1}'.format(
                 server.id, ex.response_text
             ))
@@ -358,6 +361,6 @@ def main():
     clc_public_ip = ClcPublicIp(module)
     clc_public_ip.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
+
 if __name__ == '__main__':
     main()
