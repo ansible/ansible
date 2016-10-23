@@ -123,7 +123,6 @@ EXAMPLES = '''
 
 '''
 
-import time
 import uuid
 
 try:
@@ -135,6 +134,11 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+
 
 # Things that can't get changed:
 #  protocol
@@ -316,7 +320,7 @@ def main():
     # connect to the route53 endpoint
     try:
         conn = Route53Connection(**aws_connect_kwargs)
-    except boto.exception.BotoServerError, e:
+    except boto.exception.BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
     changed = False
@@ -349,8 +353,6 @@ def main():
 
     module.exit_json(changed=changed, health_check=dict(id=check_id), action=action)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

@@ -122,7 +122,6 @@ sns_topic:
       attributes_set: []
 '''
 
-import sys
 import time
 import json
 import re
@@ -133,6 +132,9 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 class SnsTopicManager(object):
@@ -176,7 +178,7 @@ class SnsTopicManager(object):
         try:
             return connect_to_aws(boto.sns, self.region,
                 **self.aws_connect_params)
-        except BotoServerError, err:
+        except BotoServerError as err:
             self.module.fail_json(msg=err.message)
 
     def _get_all_topics(self):
@@ -185,8 +187,8 @@ class SnsTopicManager(object):
         while True:
             try:
                 response = self.connection.get_all_topics(next_token)
-            except BotoServerError, err:
-                module.fail_json(msg=err.message)
+            except BotoServerError as err:
+                self.module.fail_json(msg=err.message)
             topics.extend(response['ListTopicsResponse']['ListTopicsResult']['Topics'])
             next_token = response['ListTopicsResponse']['ListTopicsResult']['NextToken']
             if not next_token:
@@ -399,9 +401,6 @@ def main():
 
     module.exit_json(**sns_facts)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
