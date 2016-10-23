@@ -988,7 +988,7 @@ class FreeBsdService(Service):
         # and hope for the best.
         for rcvar in rcvars:
             if '=' in rcvar:
-                self.rcconf_key = rcvar.split('=')[0]
+                self.rcconf_key, default_rcconf_value = rcvar.split('=', 1)
                 break
 
         if self.rcconf_key is None:
@@ -997,8 +997,10 @@ class FreeBsdService(Service):
         if self.sysrc_cmd: # FreeBSD >= 9.2
 
             rc, current_rcconf_value, stderr = self.execute_command("%s -n %s" % (self.sysrc_cmd, self.rcconf_key))
+            # it can happen that rcvar is not set (case of a system coming from the ports collection)
+            # so we will fallback on the default
             if rc != 0:
-                self.module.fail_json(msg="unable to get current rcvar value", stdout=stdout, stderr=stderr)
+                current_rcconf_value = default_rcconf_value
 
             if current_rcconf_value.strip().upper() != self.rcconf_value:
 
