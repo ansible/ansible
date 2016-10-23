@@ -86,6 +86,10 @@ except ImportError:
 else:
     bigsuds_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.f5 import bigip_api, f5_argument_spec
+
 
 def server_exists(api, server):
     # hack to determine if virtual server exists
@@ -93,7 +97,8 @@ def server_exists(api, server):
     try:
         api.GlobalLB.Server.get_object_status([server])
         result = True
-    except bigsuds.OperationFailed, e:
+    except bigsuds.OperationFailed:
+        e = get_exception()
         if "was not found" in str(e):
             result = False
         else:
@@ -109,7 +114,8 @@ def virtual_server_exists(api, name, server):
         virtual_server_id = {'name': name, 'server': server}
         api.GlobalLB.VirtualServerV2.get_object_status([virtual_server_id])
         result = True
-    except bigsuds.OperationFailed, e:
+    except bigsuds.OperationFailed:
+        e = get_exception()
         if "was not found" in str(e):
             result = False
         else:
@@ -222,14 +228,12 @@ def main():
                 else:
                     result = {'changed': True}
 
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
 
 if __name__ == '__main__':
     main()

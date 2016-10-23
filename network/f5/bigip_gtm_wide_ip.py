@@ -71,6 +71,11 @@ except ImportError:
 else:
     bigsuds_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.f5 import bigip_api, f5_argument_spec
+
+
 def get_wide_ip_lb_method(api, wide_ip):
     lb_method = api.GlobalLB.WideIP.get_lb_method(wide_ips=[wide_ip])[0]
     lb_method = lb_method.strip().replace('LB_METHOD_', '').lower()
@@ -79,8 +84,9 @@ def get_wide_ip_lb_method(api, wide_ip):
 def get_wide_ip_pools(api, wide_ip):
     try:
         return api.GlobalLB.WideIP.get_wideip_pool([wide_ip])
-    except Exception, e:
-        print e
+    except Exception:
+        e = get_exception()
+        print(e)
 
 def wide_ip_exists(api, wide_ip):
     # hack to determine if wide_ip exists
@@ -88,7 +94,8 @@ def wide_ip_exists(api, wide_ip):
     try:
         api.GlobalLB.WideIP.get_object_status(wide_ips=[wide_ip])
         result = True
-    except bigsuds.OperationFailed, e:
+    except bigsuds.OperationFailed:
+        e = get_exception()
         if "was not found" in str(e):
             result = False
         else:
@@ -145,14 +152,12 @@ def main():
             else:
                 result = {'changed': True}
 
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
 
 if __name__ == '__main__':
     main()
