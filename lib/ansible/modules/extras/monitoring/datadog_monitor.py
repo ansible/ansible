@@ -19,13 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # import module snippets
 
-# Import Datadog
-try:
-    from datadog import initialize, api
-    HAS_DATADOG = True
-except:
-    HAS_DATADOG = False
-
 DOCUMENTATION = '''
 ---
 module: datadog_monitor
@@ -144,6 +137,16 @@ datadog_monitor:
   app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
 '''
 
+# Import Datadog
+try:
+    from datadog import initialize, api
+    HAS_DATADOG = True
+except:
+    HAS_DATADOG = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def main():
     module = AnsibleModule(
@@ -211,7 +214,8 @@ def _post_monitor(module, options):
             module.fail_json(msg=str(msg['errors']))
         else:
             module.exit_json(changed=True, msg=msg)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 def _equal_dicts(a, b, ignore_keys):
@@ -234,7 +238,8 @@ def _update_monitor(module, monitor, options):
             module.exit_json(changed=False, msg=msg)
         else:
             module.exit_json(changed=True, msg=msg)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 
@@ -269,7 +274,8 @@ def delete_monitor(module):
     try:
         msg = api.Monitor.delete(monitor['id'])
         module.exit_json(changed=True, msg=msg)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 
@@ -288,7 +294,8 @@ def mute_monitor(module):
         else:
             msg = api.Monitor.mute(id=monitor['id'], silenced=module.params['silenced'])
         module.exit_json(changed=True, msg=msg)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 
@@ -301,10 +308,10 @@ def unmute_monitor(module):
     try:
         msg = api.Monitor.unmute(monitor['id'])
         module.exit_json(changed=True, msg=msg)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()

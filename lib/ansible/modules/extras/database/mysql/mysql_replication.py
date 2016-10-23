@@ -125,6 +125,10 @@ except ImportError:
 else:
     mysqldb_found = True
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def get_master_status(cursor):
     cursor.execute("SHOW MASTER STATUS")
@@ -212,10 +216,6 @@ def main():
             ssl_ca=dict(default=None),
         )
     )
-    user = module.params["login_user"]
-    password = module.params["login_password"]
-    host = module.params["login_host"]
-    port = module.params["login_port"]
     mode = module.params["mode"]
     master_host = module.params["master_host"]
     master_user = module.params["master_user"]
@@ -250,7 +250,8 @@ def main():
     try:
         cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor',
                                connect_timeout=connect_timeout)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
         else:
@@ -324,9 +325,11 @@ def main():
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
             changemaster(cursor, chm, chm_params)
-        except MySQLdb.Warning, e:
-                result['warning'] = str(e)
-        except Exception, e:
+        except MySQLdb.Warning:
+            e = get_exception()
+            result['warning'] = str(e)
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (e, chm))
         result['changed']=True
         module.exit_json(**result)
@@ -355,8 +358,7 @@ def main():
         else:
             module.exit_json(msg="Slave already reset", changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.mysql import *
-main()
-warnings.simplefilter("ignore")
+
+if __name__ == '__main__':
+    main()
+    warnings.simplefilter("ignore")

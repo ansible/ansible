@@ -206,6 +206,10 @@ try:
 except ImportError:
     HAS_PB_SDK = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
+
 LOCATIONS = ['us/las',
              'de/fra',
              'de/fkb']
@@ -325,7 +329,7 @@ def _startstop_machine(module, profitbricks, datacenter_id, server_id):
 
         return True
     except Exception as e:
-        module.fail_json(msg="failed to start or stop the virtual machine %s: %s" % (name, str(e)))
+        module.fail_json(msg="failed to start or stop the virtual machine %s at %s: %s" % (server_id, datacenter_id, str(e)))
 
 
 def _create_datacenter(module, profitbricks):
@@ -390,7 +394,8 @@ def create_virtual_machine(module, profitbricks):
 
         try:
             name % 0
-        except TypeError, e:
+        except TypeError:
+            e = get_exception()
             if e.message.startswith('not all'):
                 name = '%s%%d' % name
             else:
@@ -475,7 +480,8 @@ def remove_virtual_machine(module, profitbricks):
             # Remove the server
             try:
                 server_response = profitbricks.delete_server(datacenter_id, server_id)
-            except Exception as e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="failed to terminate the virtual server: %s" % str(e))
             else:
                 changed = True
@@ -491,7 +497,8 @@ def _remove_boot_volume(module, profitbricks, datacenter_id, server_id):
         server = profitbricks.get_server(datacenter_id, server_id)
         volume_id = server['properties']['bootVolume']['id']
         volume_response = profitbricks.delete_volume(datacenter_id, volume_id)
-    except Exception as e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="failed to remove the server's boot volume: %s" % str(e))
 
 
@@ -609,8 +616,6 @@ def main():
 
     subscription_user = module.params.get('subscription_user')
     subscription_password = module.params.get('subscription_password')
-    wait = module.params.get('wait')
-    wait_timeout = module.params.get('wait_timeout')
 
     profitbricks = ProfitBricksService(
         username=subscription_user,
@@ -626,7 +631,8 @@ def main():
         try:
             (changed) = remove_virtual_machine(module, profitbricks)
             module.exit_json(changed=changed)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to set instance state: %s' % str(e))
 
     elif state in ('running', 'stopped'):
@@ -636,7 +642,8 @@ def main():
         try:
             (changed) = startstop_machine(module, profitbricks, state)
             module.exit_json(changed=changed)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to set instance state: %s' % str(e))
 
     elif state == 'present':
@@ -654,9 +661,10 @@ def main():
         try:
             (machine_dict_array) = create_virtual_machine(module, profitbricks)
             module.exit_json(**machine_dict_array)
-        except Exception as e:
+        except Exception:
+            e = get_exception()
             module.fail_json(msg='failed to set instance state: %s' % str(e))
 
-from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

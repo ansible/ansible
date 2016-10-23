@@ -128,8 +128,6 @@ VIRT_FAILED = 1
 VIRT_SUCCESS = 0
 VIRT_UNAVAILABLE=2
 
-import sys
-
 try:
     import libvirt
 except ImportError:
@@ -143,6 +141,9 @@ except ImportError:
     HAS_XML = False
 else:
     HAS_XML = True
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop', 'build', 'delete',
@@ -397,7 +398,7 @@ class LibvirtConnection(object):
             return self.conn.storagePoolDefineXML(xml)
         else:
             try:
-                state = self.find_entry(entryid)
+                self.find_entry(entryid)
             except:
                 return self.module.exit_json(changed=True)
 
@@ -514,23 +515,23 @@ class VirtStoragePool(object):
 
                 try:
                     results[entry]["host"] = self.conn.get_host(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     results[entry]["source_path"] = self.conn.get_source_path(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     results[entry]["format"] = self.conn.get_format(entry)
-                except ValueError as e:
+                except ValueError:
                     pass
 
                 try:
                     devices = self.conn.get_devices(entry)
                     results[entry]["devices"] = devices
-                except ValueError as e:
+                except ValueError:
                     pass
 
             else:
@@ -642,7 +643,7 @@ def core(module):
             return VIRT_SUCCESS, res
 
         else:
-            module.fail_json(msg="Command %s not recognized" % basecmd)
+            module.fail_json(msg="Command %s not recognized" % command)
 
     if autostart is not None:
         if not name:
@@ -691,7 +692,7 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
     if rc != 0: # something went wrong emit the msg
@@ -700,6 +701,5 @@ def main():
         module.exit_json(**result)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
