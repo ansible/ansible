@@ -131,6 +131,8 @@ policy:
 
 __version__ = '${version}'
 
+import os
+
 from distutils.version import LooseVersion
 
 try:
@@ -152,6 +154,8 @@ except ImportError:
     clc_sdk = None
 else:
     CLC_FOUND = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class ClcAntiAffinityPolicy:
@@ -267,7 +271,7 @@ class ClcAntiAffinityPolicy:
             return self.clc.v2.AntiAffinity.Create(
                 name=p['name'],
                 location=p['location'])
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to create anti affinity policy : {0}. {1}'.format(
                 p['name'], ex.response_text
             ))
@@ -281,7 +285,7 @@ class ClcAntiAffinityPolicy:
         try:
             policy = self.policy_dict[p['name']]
             policy.Delete()
-        except CLCException, ex:
+        except CLCException as ex:
             self.module.fail_json(msg='Failed to delete anti affinity policy : {0}. {1}'.format(
                 p['name'], ex.response_text
             ))
@@ -346,6 +350,5 @@ def main():
     clc_aa_policy = ClcAntiAffinityPolicy(module)
     clc_aa_policy.process_request()
 
-from ansible.module_utils.basic import *  # pylint: disable=W0614
 if __name__ == '__main__':
     main()
