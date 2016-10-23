@@ -33,10 +33,10 @@ Ansible Changes By Release
 * Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
   * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
   * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
-  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not familiar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
   * scp_if_ssh now supports True, False and "smart". "smart" is the default and will retry failed sftp transfers with scp.
 * Network:
-  * Refactored all network modules to remove dulicate code and take advantage of Ansiballz implementation
+  * Refactored all network modules to remove duplicate code and take advantage of Ansiballz implementation
   * All functionality from *_template network modules have been combined into *_config module
   * Network *_command modules not longer allow configuration mode statements
 
@@ -301,7 +301,7 @@ Ansible Changes By Release
     Ansible.  The feature it was intended to support has now been implemented
     without using this.
   * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
-    and was relaced by VaultAES256 less than a week later, now has a deprecation
+    and was replaced by VaultAES256 less than a week later, now has a deprecation
     warning.  **It will be removed in 2.3**.  In the unlikely event that you
     wrote a vault file in that 1 week window and have never modified the file
     since (ansible-vault automatically re-encrypts the file using VaultAES256
