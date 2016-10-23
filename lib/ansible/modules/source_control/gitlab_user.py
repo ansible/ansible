@@ -31,7 +31,7 @@ description:
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
+    - python-gitlab python module
 options:
     server_url:
         description:
@@ -78,59 +78,148 @@ options:
     sshkey_name:
         description:
             - The name of the sshkey
+            - Is deprecated and replaced with sshkeys.
         required: false
         default: null
     sshkey_file:
         description:
             - The ssh key itself.
+            - Is deprecated and replaced with sshkeys.
         required: false
         default: null
+    sshkeys:
+        description:
+            - A list with all sshkeys for the user.
+            - The list should contain the keys name, sshkey and state.
+            - When state is not provided, default setting is that the key will be created (present).
+        required: false
+        default: null
+        version_added: "2.3"
+    projects_limit:
+        description:
+            - The amount of project you can create.
+        required: false
+        default: 10
+        version_added: "2.3"
+    twitter:
+        description:
+            - The twitter name.
+        required: false
+        default: null
+        version_added: "2.3"
+    linkedin:
+        description:
+            - The linkedin name.
+        required: false
+        default: null
+        version_added: "2.3"
+    skype:
+        description:
+            - The skype name.
+        required: false
+        default: null
+        version_added: "2.3"
+    location:
+        description:
+            - The location of the user.
+        required: false
+        default: null
+        version_added: "2.3"
+    can_create_group:
+        description:
+            - If the user can create groups.
+        required: false
+        default: "false"
+        version_added: "2.3"
+        choices: ["true", "false"]
+    external:
+        description:
+            - If the user is an external user.
+            - External users can only access projects to which they are explicitly granted access, thus hiding all other internal or private ones from them
+        required: false
+        default: "false"
+        version_added: "2.3"
+        choices: ["true", "false"]
     group:
         description:
             - Add user as an member to this group.
+            - Is deprecated and replaced with groupss
         required: false
         default: null
+    groups:
+        description:
+            - A list structure with all groups where this user belongs to.
+            - This list should contain the keys name, access_level and state.
+            - The groups should already be available, otherwise the module complains user can not be created because group not exist.
+            - See at access_level which access_levels are available.
+            - When state is not provided, default setting is that the user will be added to the group (present).
+        required: false
+        default: null
+        version_added: "2.3"
     access_level:
         description:
-            - The access level to the group. One of the following can be used.
-            - guest
-            - reporter
-            - developer
-            - master
-            - owner
+            - The access level to the group.
+            - Is deprecated and replaced with groups.
         required: false
-        default: null
+        default: "guest"
+        choices: ["guest", "reporter", "developer", "master", "owner"]
     state:
         description:
-            - create or delete group.
-            - Possible values are present and absent.
+            - create or delete user.
+            - Or when a user is created, you can set the user with state blocked or unblocked
         required: false
         default: present
-        choices: ["present", "absent"]
+        choices: ["present", "absent", "blocked", "unblocked"]
 '''
 
 EXAMPLES = '''
 - name: "Delete Gitlab User"
-  local_action: gitlab_user
-                server_url="http://gitlab.dj-wasabi.local"
-                validate_certs=false
-                login_token="WnUzDsxjy8230-Dy_k"
-                username=myusername
-                state=absent
+  local_action:
+    module: gitlab_user
+    server_url: "http://gitlab.dj-wasabi.local"
+    validate_certs: false
+    login_token: "WnUzDsxjy8230-Dy_k"
+    username: myusername
+    state: absent
 
 - name: "Create Gitlab User"
-  local_action: gitlab_user
-                server_url="https://gitlab.dj-wasabi.local"
-                validate_certs=true
-                login_user=dj-wasabi
-                login_password="MySecretPassword"
-                name=My Name
-                username=myusername
-                password=mysecretpassword
-                email=me@home.com
-                sshkey_name=MySSH
-                sshkey_file=ssh-rsa AAAAB3NzaC1yc...
-                state=present
+  local_action:
+    module: gitlab_user
+    server_url: "https://gitlab.dj-wasabi.local"
+    validate_certs: true
+    login_user: dj-wasabi
+    login_password: "MySecretPassword"
+    name: My Name
+    username: myusername
+    password: mysecretpassword
+    sshkeys:
+      - name: MyKey
+        sshkey: rsa sasa
+        state: present
+    email: me@home.com
+    state: present
+
+- name: "Create Gitlab User with groups"
+  local_action:
+    module: gitlab_user
+    server_url: "https://gitlab.dj-wasabi.local"
+    validate_certs: true
+    login_user: dj-wasabi
+    login_password: "MySecretPassword"
+    name: My Name
+    username: myusername
+    password: mysecretpassword
+    email: me@home.com
+    groups:
+      - name: my_first_group
+        access_level: guest
+        state: present
+      - name: my_second_group
+        access_level: developer
+      - name: my_third_group
+        access_level: guest
+        state: absent
+    state: present
 '''
 
 RETURN = '''# '''
@@ -141,7 +230,7 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.pycompat24 import get_exception
+# from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import *
 
 
@@ -149,121 +238,235 @@ class GitLabUser(object):
     def __init__(self, module, git):
         self._module = module
         self._gitlab = git
+        self.userObject = None
+        self.groupObject = None
+        self.sshkeyObject = None
 
-    def addToGroup(self, group_id, user_id, access_level):
-        if access_level == "guest":
-            level = 10
-        elif access_level == "reporter":
-            level = 20
-        elif access_level == "developer":
-            level = 30
-        elif access_level == "master":
-            level = 40
-        elif access_level == "owner":
-            level = 50
-        return self._gitlab.addgroupmember(group_id, user_id, level)
+    def createOrUpdateUser(self, name, username, password, email, projects_limit, twitter, linkedin, skype, external,
+                           can_create_group, state, groups=None, sshkeys=None):
+        """Create a user in gitlab"""
+        changed = False
+        if self.userObject is None:
+            self.createUser(name=name, username=username, password=password, email=email)
+            changed = True
 
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level):
-        group_id = ''
-        arguments = {"name": user_name,
-                     "username": user_username,
-                     "email": user_email}
+        if state is not None:
+            if self.stateUser(state=state):
+                changed = True
+        if self.updateUser(username=username, email=email, name=name, projects_limit=projects_limit, twitter=twitter,
+                           linkedin=linkedin, skype=skype, external=external, can_create_group=can_create_group):
+            changed = True
+        if self.createOrUpdateMember(groups=groups):
+            changed = True
+        if self.createOrDeleteSSHKeys(sshkeys=sshkeys):
+            changed = True
 
-        if group_name is not None:
-            if self.existsGroup(group_name):
-                group_id = self.getGroupId(group_name)
-
-        if self.existsUser(user_username):
-            self.updateUser(group_id, user_sshkey_name, user_sshkey_file, access_level, arguments)
+        if changed:
+            return True
         else:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            self.createUser(group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, arguments)
+            return False
 
-    def createUser(self, group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, arguments):
-        user_changed = False
+    def createOrDeleteSSHKeys(self, sshkeys):
+        """Create or delete sshkeys"""
+        changed = False
 
-        # Create the user
-        user_username = arguments['username']
-        user_name = arguments['name']
-        user_email = arguments['email']
-        if self._gitlab.createuser(password=user_password, **arguments):
-            user_id = self.getUserId(user_username)
-            if self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
-                user_changed = True
-            # Add the user to the group if group_id is not empty
-            if group_id != '':
-                if self.addToGroup(group_id, user_id, access_level):
-                    user_changed = True
-            user_changed = True
+        for ssh in sshkeys:
+            if 'name' not in ssh:
+                self._module.fail_json(msg="There is no 'name' key specified.")
+            if 'sshkey' not in ssh:
+                self._module.fail_json(msg="There is no 'sshkey' key specified.")
+            if 'state' not in ssh:
+                state = "present"
+            else:
+                state = ssh['state']
 
-        # Exit with change to true or false
-        if user_changed:
-            self._module.exit_json(changed=True, result="Created the user")
-        else:
-            self._module.exit_json(changed=False)
+            key_exists = self.existsSSHKey(name=ssh['name'])
+            if key_exists and state == "present":
+                changed = False
+            elif not key_exists and state == "present":
+                if self.createSSHKey(name=ssh['name'], sshkey=ssh['sshkey']):
+                    changed = True
+            elif not key_exists and state == "absent":
+                changed = False
+            else:
+                if self.deleteSSHKey():
+                    changed = True
+        return changed
 
-    def deleteUser(self, user_username):
-        user_id = self.getUserId(user_username)
+    def existsSSHKey(self, name):
+        """Check if userssh keys exists"""
+        user = self.userObject
+        keys = user.keys.list()
 
-        if self._gitlab.deleteuser(user_id):
-            self._module.exit_json(changed=True, result="Successfully deleted user %s" % user_username)
-        else:
-            self._module.exit_json(changed=False, result="User %s already deleted or something went wrong" % user_username)
-
-    def existsGroup(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
-                return True
+        if len(keys) >= 1:
+            for key in keys:
+                if key.title == name:
+                    self.sshkeyObject = key
+                    return True
+        self.sshkeyObject = None
         return False
 
-    def existsUser(self, username):
-        found_user = self._gitlab.getusers(search=username)
-        for user in found_user:
-            if user['id'] != '':
-                return True
+    def createSSHKey(self, name, sshkey):
+        """Create ssh key"""
+        user = self.userObject
+        if user.keys.create({'title': name, 'key': sshkey}):
+            return True
+        else:
+            return False
+
+    def deleteSSHKey(self):
+        """Delete ssh key"""
+        key = self.sshkeyObject
+        if key.delete():
+            return True
+        else:
+            return False
+
+    def getAccessLevel(self, access_level):
+        """Returns the correct access_level number"""
+        access = {'guest': 10, 'reporter': 20, 'developer': 30, 'master': 40, 'owner': 50}
+        if access_level in ['guest', 'reporter', 'developer', 'master', 'owner']:
+            return access[access_level]
+        else:
+            self._module.exit_json(changed=False, result="The given access_level %s is not correct." % access_level)
+
+    def createOrUpdateMember(self, groups):
+        changed = False
+        user_id = self.userObject.id
+        user_name = self.userObject.username
+
+        for group in groups:
+            self.groupObject = None
+
+            if 'name' not in group:
+                self._module.fail_json(msg="There is no 'name' specified for group.")
+            if 'access_level' not in group:
+                self._module.fail_json(msg="There is no 'access_level' specified for group.")
+            if 'state' not in group:
+                state = "present"
+            else:
+                state = group['state']
+
+            if self.existsGroup(name=group['name']):
+                member = self.memberInGroup(group=group['name'], username=user_name)
+                access = self.getAccessLevel(access_level=group['access_level'])
+                if member:
+                    if state == "present":
+                        if member.access_level != access:
+                            member.access_level = access
+                            member.save()
+                            changed = True
+                    elif state == "absent":
+                        member.delete()
+                        changed = True
+                else:
+                    if state == "present":
+                        self._gitlab.group_members.create({'user_id': user_id, 'group_id': self.groupObject.id, 'access_level': access})
+                        changed = True
+        return changed
+
+    def memberInGroup(self, group, username):
+        """Check if the user is in a group"""
+        # groups = self._gitlab.groups.search(group)
+        group = self.groupObject
+
+        members = group.members.list()
+        for member in members:
+            if member.username == username:
+                self.groupObject = group
+                return member
         return False
 
-    def getGroupId(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
-                return group['id']
+    def createUser(self, name, username, password, email):
+        """Create user in gitlab"""
+        user = self._gitlab.users.create({'email': email,
+                                          'password': password,
+                                          'username': username,
+                                          'name': name})
+        self.userObject = user
 
-    def getUserId(self, username):
-        found_user = self._gitlab.getusers(search=username)
-        for user in found_user:
-            if user['id'] != '':
-                return user['id']
+    def updateUser(self, username, email, name, projects_limit, twitter, linkedin, skype, external,
+                   can_create_group):
+        """Update the user"""
+        changed = False
+        user = self.userObject
 
-    def updateUser(self, group_id, user_sshkey_name, user_sshkey_file, access_level, arguments):
-        user_changed = False
-        user_username = arguments['username']
-        user_id = self.getUserId(user_username)
-        user_data = self._gitlab.getuser(user_id=user_id)
+        if user.email != email:
+            user.email = email
+            changed = True
+        if user.username != username:
+            user.username = username
+            changed = True
+        if user.name != name:
+            user.name = name
+            changed = True
+        if user.projects_limit != projects_limit:
+            user.projects_limit = projects_limit
+        if twitter is not None:
+            if user.twitter != twitter:
+                user.twitter = twitter
+                changed = True
+        if linkedin is not None:
+            if user.linkedin != linkedin:
+                user.linkedin = linkedin
+                changed = True
+        if skype is not None:
+            if user.skype != skype:
+                user.skype = skype
+                changed = True
+        if user.external != external:
+            user.external = external
+            changed = True
+        if user.can_create_group != can_create_group:
+            user.can_create_group = can_create_group
+            changed = True
 
-        # Lets check if we need to update the user
-        for arg_key, arg_value in arguments.items():
-            if user_data[arg_key] != arg_value:
-                user_changed = True
-
-        if user_changed:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            self._gitlab.edituser(user_id=user_id, **arguments)
-            user_changed = True
-        if self._module.check_mode or self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
-            user_changed = True
-        if group_id != '':
-            if self._module.check_mode or self.addToGroup(group_id, user_id, access_level):
-                user_changed = True
-        if user_changed:
-            self._module.exit_json(changed=True, result="The user %s is updated" % user_username)
+        if changed:
+            user.save()
+            self.userObject = user
+            return True
         else:
-            self._module.exit_json(changed=False, result="The user %s is already up2date" % user_username)
+            return False
+
+    def stateUser(self, state):
+        """Block or unblock a user."""
+        user = self.userObject
+        if state == "blocked":
+            user.block()
+            return True
+        if state == "unblocked":
+            user.unblock()
+            return True
+        return False
+
+    def userExists(self, username):
+        """Find user and if exists, return object"""
+        users = self._gitlab.users.list(username=username)
+        if len(users) == 1:
+            self.userObject = users[0]
+            return True
+        else:
+            return False
+
+    def existsGroup(self, name):
+        """When group/user exists, object will be stored in self.groupObject."""
+        groups = self._gitlab.groups.search(name)
+        if len(groups) == 1:
+            self.groupObject = groups[0]
+            return True
+        else:
+            return False
+
+    def deleteUser(self):
+        """Delete the user"""
+        user = self.userObject
+        if user.delete():
+            return True
+        else:
+            return False
 
 
 def main():
-    global user_id
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(required=True),
@@ -275,17 +478,25 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             email=dict(required=True),
+            groups=dict(required=False, type='list', default=[]),
+            sshkeys=dict(required=False, type='list', default=[]),
+            projects_limit=dict(required=False, default=10, type='int'),
+            twitter=dict(required=False, default=None, type='str'),
+            linkedin=dict(required=False, default=None, type='str'),
+            skype=dict(required=False, default=None, type='str'),
+            external=dict(required=False, default=False, type='bool'),
+            can_create_group=dict(default=False, type='bool'),
+            state=dict(default="present", choices=["present", "absent", "blocked", "unblocked"]),
             sshkey_name=dict(required=False),
             sshkey_file=dict(required=False),
-            group=dict(required=False),
-            access_level=dict(required=False, choices=["guest", "reporter", "developer", "master", "owner"]),
-            state=dict(default="present", choices=["present", "absent"]),
+            group=dict(required=False, type='str'),
+            access_level=dict(required=False, default="guest",
+                              choices=["guest", "reporter", "developer", "master", "owner"])
         ),
         supports_check_mode=True
     )
-
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -296,13 +507,24 @@ def main():
     user_username = module.params['username']
     user_password = module.params['password']
     user_email = module.params['email']
+    groups = module.params['groups']
+    projects_limit = module.params['projects_limit']
+    twitter = module.params['twitter']
+    linkedin = module.params['linkedin']
+    skype = module.params['skype']
+    external = module.params['external']
+    can_create_group = module.params['can_create_group']
+    sshkeys = module.params['sshkeys']
+    state = module.params['state']
+    use_credentials = None
+
+    # Not used anymore, is replaced by groups and sshkeys
     user_sshkey_name = module.params['sshkey_name']
     user_sshkey_file = module.params['sshkey_file']
     group_name = module.params['group']
     access_level = module.params['access_level']
-    state = module.params['state']
 
-    # We need both login_user and login_password or login_token, otherwise we fail.
+    # Validate some credentials configuration parameters.
     if login_user is not None and login_password is not None:
         use_credentials = True
     elif login_token is not None:
@@ -310,45 +532,53 @@ def main():
     else:
         module.fail_json(msg="No login credentials are given. Use login_user with login_password, or login_token")
 
-    # Check if vars are none
-    if user_sshkey_file is not None and user_sshkey_name is not None:
-        use_sshkey = True
-    else:
-        use_sshkey = False
+    if login_token and login_user:
+        module.fail_json(msg="You can either use 'login_token' or 'login_user' and 'login_password'")
 
-    if group_name is not None and access_level is not None:
-        add_to_group = True
-        group_name = group_name.lower()
-    else:
-        add_to_group = False
-
-    user_username = user_username.lower()
-
-    # Lets make an connection to the Gitlab server_url, with either login_user and login_password
-    # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url)
-            git.login(user=login_user, password=login_password)
+            git = gitlab.Gitlab(server_url, email=login_user, password=login_password, ssl_verify=verify_ssl)
+            git.auth()
         else:
-            git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
+            git = gitlab.Gitlab(server_url, private_token=login_token, ssl_verify=verify_ssl)
+            git.auth()
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
-    # Validate if group exists and take action based on "state"
+    user_username = user_username.lower()
     user = GitLabUser(module, git)
+    user_exists = user.userExists(username=user_username)
 
-    # Check if user exists, if not exists and state = absent, we exit nicely.
-    if not user.existsUser(user_username) and state == "absent":
-        module.exit_json(changed=False, result="User already deleted or does not exists")
-    else:
-        # User exists,
+    if user_exists:
         if state == "absent":
-            user.deleteUser(user_username)
+            if module.check_mode:
+                module.exit_json(changed=True, result="User should have been deleted.")
+            if user.deleteUser():
+                module.exit_json(changed=True, result="User is deleted.")
+            else:
+                module.exit_json(changed=False, result="Something went wrong with deleting the user.")
         else:
-            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level)
-
+            if user.createOrUpdateUser(name=user_name, username=user_username, password=user_password, email=user_email,
+                                       state=state, groups=groups, sshkeys=sshkeys, projects_limit=projects_limit,
+                                       twitter=twitter, linkedin=linkedin, skype=skype, external=external,
+                                       can_create_group=can_create_group):
+                module.exit_json(changed=True, result="We updated the user.")
+            else:
+                module.exit_json(changed=False, result="There was no need for updating the user")
+    else:
+        if state == "absent":
+            module.exit_json(changed=False, result="User already deleted or does not exists")
+        else:
+            if module.check_mode:
+                module.exit_json(changed=True, result="User should have been created.")
+            if user.createOrUpdateUser(name=user_name, username=user_username, password=user_password, email=user_email,
+                                       state=None, groups=groups, sshkeys=sshkeys, projects_limit=projects_limit,
+                                       twitter=twitter, linkedin=linkedin, skype=skype, external=external,
+                                       can_create_group=can_create_group):
+                module.exit_json(changed=True, result="User is created.")
+            else:
+                module.exit_json(changed=False, result="Something went wrong in deleting.")
 
 
 if __name__ == '__main__':
