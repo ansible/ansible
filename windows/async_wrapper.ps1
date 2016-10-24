@@ -397,7 +397,7 @@ Function Start-Watchdog {
     $exec_cmd = [Ansible.Async.NativeProcessUtil]::SearchPath("powershell.exe")
     $exec_args = "`"$exec_cmd`" -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
 
-    If(-not [Ansible.Async.NativeProcessUtil]::CreateProcess($exec_cmd, $exec_args, [IntPtr]::Zero, [IntPtr]::Zero, $true, $pstartup_flags, [IntPtr]::Zero, $PSScriptRoot, [ref]$si, [ref]$pi)) {
+    If(-not [Ansible.Async.NativeProcessUtil]::CreateProcess($exec_cmd, $exec_args, [IntPtr]::Zero, [IntPtr]::Zero, $true, $pstartup_flags, [IntPtr]::Zero, $env:windir, [ref]$si, [ref]$pi)) {
         #throw New-Object System.ComponentModel.Win32Exception
         throw "create bang $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
     }
