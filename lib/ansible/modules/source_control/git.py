@@ -223,7 +223,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.known_hosts import add_git_host_key
 from ansible.module_utils.six import b, string_types
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -519,7 +519,7 @@ def get_tags(git_path, module, dest):
 def is_remote_branch(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-    if to_bytes(version, errors='surrogate_or_strict') in out:
+    if to_native(version, errors='surrogate_or_strict') in out:
         return True
     else:
         return False
