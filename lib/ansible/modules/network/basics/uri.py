@@ -437,9 +437,11 @@ def main():
 
     # Transmogrify the headers, replacing '-' with '_', since variables dont
     # work with dashes.
+    # In python3, the headers are title cased.  Lowercase them to be
+    # compatible with the python2 behaviour.
     uresp = {}
     for key, value in six.iteritems(resp):
-        ukey = key.replace("-", "_")
+        ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
     try:
@@ -449,14 +451,8 @@ def main():
 
     # Default content_encoding to try
     content_encoding = 'utf-8'
-    content_type_key = None
-    for key in uresp:
-        # Py2: content_type; Py3: Content_type
-        if 'content_type' == key.lower():
-            content_type_key = key
-            break
-    if content_type_key is not None:
-        content_type, params = cgi.parse_header(uresp[content_type_key])
+    if 'content_type' in uresp:
+        content_type, params = cgi.parse_header(uresp['content_type'])
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
