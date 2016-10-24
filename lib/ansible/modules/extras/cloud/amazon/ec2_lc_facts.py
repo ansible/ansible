@@ -20,7 +20,7 @@ module: ec2_lc_facts
 short_description: Gather facts about AWS Autoscaling Launch Configurations
 description:
     - Gather facts about AWS Autoscaling Launch Configurations
-version_added: "2.2"
+version_added: "2.3"
 author: "Loïc Latreille (@psykotox)"
 requirements: [ boto3 ]
 options:
@@ -136,7 +136,7 @@ security_groups:
     description: Security groups to associated
     type: list
     sample: "[
-        'web'                        
+        'web'
     ]"
 user_data:
     description: User data available
