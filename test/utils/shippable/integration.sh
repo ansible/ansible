@@ -8,6 +8,8 @@ test_flags="${TEST_FLAGS:-}"
 test_target="${TARGET:-all}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
 test_python3="${PYTHON3:-}"
+interactive="${INTERACTIVE:-}"
+interactive_shell="${INTERACTIVE_SHELL:-/bin/bash}"
 
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
@@ -133,8 +135,14 @@ if [ "${test_python3}" ]; then
 fi
 
 docker exec "${container_id}" mkdir -p "${test_shared_dir}/shippable/testresults"
-docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
+if [ "${interactive}" ]; then
+    docker exec -t -i "${container_id}" /bin/sh -i -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
+          JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
+          HTTPTESTER=1 TEST_FLAGS='${test_flags}' TEST_COMMAND='make ${test_target}' LC_ALL=en_US.utf-8 ${interactive_shell}"
+else
+    docker exec "${container_id}" /bin/sh -c "cd '${test_ansible_dir}' && . hacking/env-setup && cd test/integration && \
     JUNIT_OUTPUT_DIR='${test_shared_dir}/shippable/testresults' ANSIBLE_CALLBACK_WHITELIST=junit \
     HTTPTESTER=1 TEST_FLAGS='${test_flags}' LC_ALL=en_US.utf-8 make ${test_target}"
+fi
 
 tests_completed=1
