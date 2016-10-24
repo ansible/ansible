@@ -66,27 +66,33 @@ EXAMPLES = '''
 RETURN = '''# '''
 
 
-def format_params(params):
-    return [k + '=' + str(v) for k, v in params.iteritems()]
+def run_command(command, module, check_rc=True):
+    """
+    Run a command using the module, return
+    the result code and std{err,out} content.
+
+    :param command: list of command arguments
+    :param module: Ansible make module instance
+    :return: return code, stdout content, stderr content
+    """
+    rc, out, err = module.run_command(command, check_rc=check_rc, cwd=module.params['chdir'])
+    return rc, sanitize_output(out), sanitize_output(err)
 
 
-def push_arguments(cmd, args):
-    if args['target'] != None:
-        cmd.append(args['target'])
-    if args['params'] != None:
-        cmd.extend(format_params(args['params']))
-    return cmd
+def sanitize_output(output):
+    """
+    Sanitize the output string before we
+    pass it to module.fail_json. Defaults
+    the string to empty if it is None, else
+    strips trailing newlines.
 
-
-def check_changed(make_path, module, args):
-    cmd = push_arguments([make_path, '--question'], args)
-    rc, _, __ = module.run_command(cmd, check_rc=False, cwd=args['chdir'])
-    return (rc != 0)
-
-
-def run_make(make_path, module, args):
-    cmd = push_arguments([make_path], args)
-    module.run_command(cmd, check_rc=True, cwd=args['chdir'])
+    :param output: output to sanitize
+    :return: sanitized output
+    """
+    if output is None:
+        return b('')
+    else:
+        return output.rstrip(b("\r\n"))
 
 
 def main():
@@ -98,28 +104,48 @@ def main():
             chdir=dict(required=True, default=None, type='str'),
         ),
     )
-    args = dict(
-        changed=False,
+    # Build up the invocation of `make` we are going to use
+    make_path = module.get_bin_path('make', True)
+    make_target = module.params['target']
+    if module.params['params'] is not None:
+        make_parameters = [k + '=' + str(v) for k, v in module.params['params'].iteritems()]
+    else:
+        make_parameters = []
+
+    base_command = [make_path, make_target]
+    base_command.extend(make_parameters)
+
+    # Check if the target is already up to date
+    rc, out, err = run_command(base_command + ['--question'], module, check_rc=False)
+    if module.check_mode:
+        # If we've been asked to do a dry run, we only need
+        # to report whether or not the target is up to date
+        changed = (rc != 0)
+    else:
+        if rc == 0:
+            # The target is up to date, so we don't have to
+            #  do anything
+            changed = False
+        else:
+            # The target isn't upd to date, so we need to run it
+            rc, out, err = run_command(base_command, module)
+            changed = True
+
+    # We don't report the return code, as if this module failed
+    # we would be calling fail_json from run_command, so even if
+    # we had a non-zero return code, we did not fail. However, if
+    # we report a non-zero return code here, we will be marked as
+    # failed regardless of what we signal using the failed= kwarg.
+    module.exit_json(
+        changed=changed,
         failed=False,
+        stdout=out,
+        stderr=err,
         target=module.params['target'],
         params=module.params['params'],
-        chdir=module.params['chdir'],
+        chdir=module.params['chdir']
     )
-    make_path = module.get_bin_path('make', True)
 
-    # Check if target is up to date
-    args['changed'] = check_changed(make_path, module, args)
-
-    # Check only; don't modify
-    if module.check_mode:
-        module.exit_json(changed=args['changed'])
-
-    # Target is already up to date
-    if args['changed'] == False:
-        module.exit_json(**args)
-
-    run_make(make_path, module, args)
-    module.exit_json(**args)
 
 from ansible.module_utils.basic import *
 
