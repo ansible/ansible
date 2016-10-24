@@ -12,6 +12,7 @@ Other Notable Changes:
 ## 1.9.7 "Dancing in the Street" - TBD
 
 * Fix for lxc_container backport which was broken because it tried to use a feature from ansible-2.x
+* Fix for apt_key not deleting keys when given a long key_id.
 
 ## 1.9.6 "Dancing in the Street" - Apr 15, 2016
 
