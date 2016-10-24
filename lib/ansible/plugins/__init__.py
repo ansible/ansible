@@ -353,6 +353,7 @@ class PluginLoader:
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
 
+        path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
         all_matches = []
 
@@ -362,6 +363,10 @@ class PluginLoader:
         for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
             name, _ = os.path.splitext(path)
             if '__init__' in name:
+                continue
+
+            if path_only:
+                yield path
                 continue
 
             if path not in self._module_cache:
