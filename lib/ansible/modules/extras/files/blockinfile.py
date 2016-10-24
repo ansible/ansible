@@ -149,7 +149,9 @@ EXAMPLES = r"""
 import re
 import os
 import tempfile
-
+from ansible.module_utils.six import b
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 def write_changes(module, contents, dest):
 
@@ -227,8 +229,8 @@ def main():
 
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
-    block = params['block']
-    marker = params['marker']
+    block = to_bytes(params['block'])
+    marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
 
     if not present and not path_exists:
@@ -244,8 +246,8 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(r'{mark}', 'BEGIN', marker)
-    marker1 = re.sub(r'{mark}', 'END', marker)
+    marker0 = re.sub(b(r'{mark}'), b('BEGIN'), marker)
+    marker1 = re.sub(b(r'{mark}'), b('END'), marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
@@ -284,9 +286,9 @@ def main():
     lines[n0:n0] = blocklines
 
     if lines:
-        result = '\n'.join(lines)
-        if original is None or original.endswith('\n'):
-            result += '\n'
+        result = b('\n').join(lines)
+        if original is None or original.endswith(b('\n')):
+            result += b('\n')
     else:
         result = ''
     if original == result:
@@ -313,7 +315,6 @@ def main():
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
