@@ -41,19 +41,56 @@ Function Start-Watchdog {
         [switch]$start_suspended
     )
 
+# BEGIN Ansible.Async native type definition
     $native_process_util = @"
         using Microsoft.Win32.SafeHandles;
         using System;
         using System.ComponentModel;
         using System.Diagnostics;
+        using System.IO;
         using System.Linq;
         using System.Runtime.InteropServices;
+        using System.Text;
         using System.Threading;
 
         namespace Ansible.Async {
 
             public static class NativeProcessUtil
             {
+                [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
+                public static extern bool CreateProcess(
+                    string lpApplicationName,
+                    string lpCommandLine,
+                    IntPtr lpProcessAttributes,
+                    IntPtr lpThreadAttributes,
+                    bool bInheritHandles,
+                    uint dwCreationFlags,
+                    IntPtr lpEnvironment,
+                    string lpCurrentDirectory,
+                    [In] ref STARTUPINFO lpStartupInfo,
+                    out PROCESS_INFORMATION lpProcessInformation);
+
+                [DllImport("kernel32.dll", SetLastError = true, CharSet=CharSet.Unicode)]
+                public static extern uint SearchPath (
+                    string lpPath,
+                    string lpFileName,
+                    string lpExtension,
+                    int nBufferLength,
+                    [MarshalAs (UnmanagedType.LPTStr)]
+                    StringBuilder lpBuffer,
+                    out IntPtr lpFilePart);
+
+                public static string SearchPath(string findThis)
+                {
+                    StringBuilder sbOut = new StringBuilder(1024);
+                    IntPtr filePartOut;
+
+                    if(SearchPath(null, findThis, null, sbOut.Capacity, sbOut, out filePartOut) == 0)
+                        throw new FileNotFoundException("Couldn't locate " + findThis + " on path");
+
+                    return sbOut.ToString();
+                }
+
                 [DllImport("kernel32.dll", SetLastError=true)]
                 static extern SafeFileHandle OpenThread(
                     ThreadAccessRights dwDesiredAccess,
@@ -62,12 +99,6 @@ Function Start-Watchdog {
 
                 [DllImport("kernel32.dll", SetLastError=true)]
                 static extern int ResumeThread(SafeHandle hThread);
-
-                [Flags]
-                enum ThreadAccessRights : uint
-                {
-                    SUSPEND_RESUME = 0x0002
-                }
 
                 public static void ResumeThreadById(int threadId)
                 {
@@ -104,8 +135,46 @@ Function Start-Watchdog {
                         ResumeThreadById(thread.Id);
                 }
             }
+
+            [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+            public struct STARTUPINFO
+            {
+                public Int32 cb;
+                public string lpReserved;
+                public string lpDesktop;
+                public string lpTitle;
+                public Int32 dwX;
+                public Int32 dwY;
+                public Int32 dwXSize;
+                public Int32 dwYSize;
+                public Int32 dwXCountChars;
+                public Int32 dwYCountChars;
+                public Int32 dwFillAttribute;
+                public Int32 dwFlags;
+                public Int16 wShowWindow;
+                public Int16 cbReserved2;
+                public IntPtr lpReserved2;
+                public IntPtr hStdInput;
+                public IntPtr hStdOutput;
+                public IntPtr hStdError;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct PROCESS_INFORMATION
+            {
+                public IntPtr hProcess;
+                public IntPtr hThread;
+                public int dwProcessId;
+                public int dwThreadId;
+            }
+
+            [Flags]
+            enum ThreadAccessRights : uint
+            {
+                SUSPEND_RESUME = 0x0002
+            }
         }
-"@
+"@ # END Ansible.Async native type definition
 
     Add-Type -TypeDefinition $native_process_util
 
@@ -304,31 +373,36 @@ Function Start-Watchdog {
 
     $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($raw_script))
 
-    $exec_path = "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
+    # FUTURE: create under new job to ensure all children die on exit?
 
-    # FUTURE: create under new job to ensure we kill all children on exit?
-
+    # FUTURE: move these flags into C# enum
     # start process suspended + breakaway so we can record the watchdog pid without worrying about a completion race
     Set-Variable CREATE_BREAKAWAY_FROM_JOB -Value ([uint32]0x01000000) -Option Constant
     Set-Variable CREATE_SUSPENDED -Value ([uint32]0x00000004) -Option Constant
+    Set-Variable CREATE_UNICODE_ENVIRONMENT -Value ([uint32]0x000000400) -Option Constant
+    Set-Variable CREATE_NEW_CONSOLE -Value ([uint32]0x00000010) -Option Constant
 
-    $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB
+    $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE
     If($start_suspended) {
         $pstartup_flags = $pstartup_flags -bor $CREATE_SUSPENDED
     }
 
-    $pstartup = ([wmiclass]"Win32_ProcessStartup")
-    $pstartup.Properties['CreateFlags'].Value = $pstartup_flags
-
     # execute the dynamic watchdog as a breakway process, which will in turn exec the module
-    # FUTURE: use CreateProcess + stream redirection to watch for/return quick watchdog failures?
-    $result = $([wmiclass]"Win32_Process").Create($exec_path, $null, $pstartup)
+    $si = New-Object Ansible.Async.STARTUPINFO
+    $si.cb = [System.Runtime.InteropServices.Marshal]::SizeOf([type][Ansible.Async.STARTUPINFO])
 
-    # On fast + idle machines, the process never starts without this delay. Hopefully the switch to
-    # Win32 process launch will make this unnecessary.
-    Sleep -Seconds 1
+    $pi = New-Object Ansible.Async.PROCESS_INFORMATION
 
-    $watchdog_pid = $result.ProcessId
+    # FUTURE: direct cmdline CreateProcess path lookup fails- this works but is sub-optimal
+    $exec_cmd = [Ansible.Async.NativeProcessUtil]::SearchPath("powershell.exe")
+    $exec_args = "`"$exec_cmd`" -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded_command"
+
+    If(-not [Ansible.Async.NativeProcessUtil]::CreateProcess($exec_cmd, $exec_args, [IntPtr]::Zero, [IntPtr]::Zero, $true, $pstartup_flags, [IntPtr]::Zero, $PSScriptRoot, [ref]$si, [ref]$pi)) {
+        #throw New-Object System.ComponentModel.Win32Exception
+        throw "create bang $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+    }
+
+    $watchdog_pid = $pi.dwProcessId
 
     return $watchdog_pid
 }
