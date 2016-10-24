@@ -464,6 +464,7 @@ class ConsulConfig(dict):
       '''get an instance of the api based on the supplied configuration'''
       host = 'localhost'
       port =  8500
+      scheme = 'http'
       token = None
 
       if hasattr(self, 'url'):
@@ -473,11 +474,13 @@ class ConsulConfig(dict):
               host = o.hostname
           if o.port:
               port = o.port
+          if o.scheme:
+              scheme = o.scheme
 
       if hasattr(self, 'token'):
           token = self.token
           if not token:
               token = 'anonymous'
-      return consul.Consul(host=host, port=port, token=token)
+      return consul.Consul(host=host, port=port, scheme=scheme, token=token)
 
 ConsulInventory()
