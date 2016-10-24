@@ -130,7 +130,7 @@ def main():
 
     params = module.params
     dest = os.path.expanduser(params['dest'])
-    diff = dict()
+    res_args = dict()
 
     if os.path.isdir(dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
@@ -142,12 +142,6 @@ def main():
         contents = f.read()
         f.close()
 
-    if module._diff:
-        diff = {
-            'before_header': dest,
-            'before': contents,
-        }
-
     mre = re.compile(params['regexp'], re.MULTILINE)
     result = re.subn(mre, params['replace'], contents, 0)
 
@@ -155,22 +149,25 @@ def main():
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
-            diff['after_header'] = dest
-            diff['after'] = result[0]
+            res_args['diff'] = {
+                'before_header': dest,
+                'before': contents,
+                'after_header': dest,
+                'after': result[0],
+            }
     else:
         msg = ''
         changed = False
-        diff = dict()
 
     if changed and not module.check_mode:
         if params['backup'] and os.path.exists(dest):
-            module.backup_local(dest)
+            res_args['backup_file'] = module.backup_local(dest)
         if params['follow'] and os.path.islink(dest):
             dest = os.path.realpath(dest)
         write_changes(module, result[0], dest)
 
-    msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, msg=msg, diff=diff)
+    res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
+    module.exit_json(**res_args)
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
