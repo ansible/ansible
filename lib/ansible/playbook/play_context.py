@@ -117,6 +117,7 @@ b_SU_PROMPT_LOCALIZATIONS = [
     to_bytes('හස්පදය'),
     to_bytes('密码'),
     to_bytes('密碼'),
+    to_bytes('口令'),
 ]
 
 TASK_ATTRIBUTE_OVERRIDES = (
@@ -517,7 +518,10 @@ class PlayContext(Base):
 
                 # passing code ref to examine prompt as simple string comparisson isn't good enough with su
                 def detect_su_prompt(b_data):
-                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b"|".join([b'(\w+\'s )?' + x + b' ?: ?' for x in b_SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
+                    b_password_string = b"|".join([b'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
+                    # Colon or unicode fullwidth colon
+                    b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
+                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b_password_string, flags=re.IGNORECASE)
                     return bool(b_SU_PROMPT_LOCALIZATIONS_RE.match(b_data))
                 prompt = detect_su_prompt
 
