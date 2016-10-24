@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_say
-version_added: "2.2"
+version_added: "2.3"
 short_description: Text to speech module for Windows to speak messages and optionally play sounds
 description:
     - Uses .NET libraries to convert text to speech and optionally play .wav sounds.  Audio Service needs to be running and some kind of speakers or headphones need to be attached to the windows target(s) for the speech to be audible.
