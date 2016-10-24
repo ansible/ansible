@@ -3,6 +3,12 @@ Ansible Changes By Release
 
 ## 2.1.3 "The Song Remains the Same" - TBD
 
+* Security fix to apt_key module.  The apt_key module was always using a short
+  id (8 characters) to install keys even if a long id or fingerprint were given
+  (16 or more characters).  As the chance for a collision goes down the longer
+  the id, using all of the characters that the user specified in the the key id when
+  downloading a key is one good safety precaution.
+
 ###Minor Changes:
 * The subversion module from core now marks its password parameter as no_log so
   the password is obscured when logging.
