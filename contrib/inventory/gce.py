@@ -220,7 +220,7 @@ class GceInventory(object):
             'libcloud_secrets': '',
             'inventory_ip_type': '',
             'cache_path': '~/.ansible/tmp',
-            'cache_max_age': 60
+            'cache_max_age': '300'
         })
         if 'gce' not in config.sections():
             config.add_section('gce')
