@@ -35,7 +35,19 @@ options:
     bridge:
         required: true
         description:
-            - Name of bridge to manage
+            - Name of bridge or fake bridge to manage
+    parent:
+        version_added: 2.2
+        required: false
+        default: None
+        description:
+            - Bridge parent of the fake bridge to manage
+    vlan:
+        version_added: 2.2
+        required: false
+        default: None
+        description:
+            - The VLAN id of the fake bridge to manage (must be between 0 and 4095)
     state:
         required: false
         default: "present"
@@ -67,6 +79,9 @@ EXAMPLES = '''
 # Create a bridge named br-int
 - openvswitch_bridge: bridge=br-int state=present
 
+# Create a fake bridge named br-int within br-parent on the VLAN 405
+- openvswitch_bridge: bridge=br-int parent=br-parent vlan=405 state=present
+
 # Create an integration bridge
 - openvswitch_bridge: bridge=br-int state=present fail_mode=secure
   args:
@@ -80,9 +95,17 @@ class OVSBridge(object):
     def __init__(self, module):
         self.module = module
         self.bridge = module.params['bridge']
+        self.parent = module.params['parent']
+        self.vlan = module.params['vlan']
         self.state = module.params['state']
         self.timeout = module.params['timeout']
         self.fail_mode = module.params['fail_mode']
+
+        if self.parent and self.vlan is None:
+            self.module.fail_json(msg='VLAN id must be set when parent is defined')
+
+        if self.vlan < 0 or self.vlan > 4095:
+            self.module.fail_json(msg='Invalid VLAN ID (must be between 0 and 4095)')
 
     def _vsctl(self, command):
         '''Run ovs-vsctl command'''
@@ -100,7 +123,11 @@ class OVSBridge(object):
 
     def add(self):
         '''Create the bridge'''
-        rtc, _, err = self._vsctl(['add-br', self.bridge])
+        if self.parent and self.vlan: # Add fake bridge
+            rtc, _, err = self._vsctl(['add-br', self.bridge, self.parent, self.vlan])
+        else:
+            rtc, _, err = self._vsctl(['add-br', self.bridge])
+
         if rtc != 0:
             self.module.fail_json(msg=err)
         if self.fail_mode:
@@ -249,6 +276,8 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'bridge': {'required': True},
+            'parent': {'default': None},
+            'vlan': {'default': None, 'type': 'int'},
             'state': {'default': 'present', 'choices': ['present', 'absent']},
             'timeout': {'default': 5, 'type': 'int'},
             'external_ids': {'default': None, 'type': 'dict'},
