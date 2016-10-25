@@ -54,7 +54,7 @@ options:
     description: Proxy through cloudflare network or just use DNS
     required: false
     default: no
-    version_added: "2.2"
+    version_added: "2.3"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)

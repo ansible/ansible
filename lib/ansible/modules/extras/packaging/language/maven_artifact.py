@@ -107,7 +107,7 @@ options:
             - Specifies a timeout in seconds for the connection attempt
         required: false
         default: 10
-        version_added: '2.2'
+        version_added: "2.3"
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
