@@ -50,6 +50,11 @@ options:
     required: false
     choices: [ 'tcp', 'udp' ]
     default: null
+  proxied:
+    description: Proxy through cloudflare network or just use DNS
+    required: false
+    default: no
+    version_added: "2.2"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
@@ -141,6 +146,16 @@ EXAMPLES = '''
     type: CNAME
     value: example.com
     state: absent
+    account_email: test@example.com
+    account_api_token: dummyapitoken
+
+# create a my.com CNAME record to example.com and proxy through cloudflare's network
+- cloudflare_dns:
+    zone: my.com
+    type: CNAME
+    value: example.com
+    state: present
+    proxied: yes
     account_email: test@example.com
     account_api_token: dummyapitoken
 
@@ -287,6 +302,7 @@ class CloudflareAPI(object):
         self.port              = module.params['port']
         self.priority          = module.params['priority']
         self.proto             = module.params['proto']
+        self.proxied           = module.params['proxied']
         self.record            = module.params['record']
         self.service           = module.params['service']
         self.is_solo           = module.params['solo']
@@ -493,7 +509,7 @@ class CloudflareAPI(object):
 
     def ensure_dns_record(self,**kwargs):
         params = {}
-        for param in ['port','priority','proto','service','ttl','type','record','value','weight','zone']:
+        for param in ['port','priority','proto','proxied','service','ttl','type','record','value','weight','zone']:
           if param in kwargs:
               params[param] = kwargs[param]
           else:
@@ -522,6 +538,9 @@ class CloudflareAPI(object):
                 "content": params['value'],
                 "ttl": params['ttl']
             }
+
+        if (params['type'] in [ 'A', 'AAAA', 'CNAME' ]):
+            new_record["proxied"] = params["proxied"]
 
         if params['type'] == 'MX':
             for attr in [params['priority'],params['value']]:
@@ -591,6 +610,7 @@ def main():
             port              = dict(required=False, default=None, type='int'),
             priority          = dict(required=False, default=1, type='int'),
             proto             = dict(required=False, default=None, choices=[ 'tcp', 'udp' ], type='str'),
+            proxied           = dict(required=False, default=False, type='bool'),
             record            = dict(required=False, default='@', aliases=['name'], type='str'),
             service           = dict(required=False, default=None, type='str'),
             solo              = dict(required=False, default=None, type='bool'),
