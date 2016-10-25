@@ -281,6 +281,22 @@ class PyVmomiHelper(object):
         self.folder_map = self._build_folder_map(self.folders)
         return (self.folders, self.folder_map)
 
+    def compile_folder_path_for_object(self, vobj):
+        ''' make a /vm/foo/bar/baz like folder path for an object '''
+        paths = []
+        if type(vobj) == vim.Folder:
+            paths.append(vobj.name)
+
+        thisobj = vobj
+        while hasattr(thisobj, 'parent'):
+            thisobj = thisobj.parent
+            if type(thisobj) == vim.Folder:
+                paths.append(thisobj.name)
+        paths.reverse()
+        if paths[0] == 'Datacenters':
+            paths.remove('Datacenters')
+        return '/' + '/'.join(paths)
+
     def get_datacenter(self):
         self.datacenter = get_obj(self.content, [vim.Datacenter], 
                                    self.params['datacenter'])
@@ -292,6 +308,7 @@ class PyVmomiHelper(object):
 
         vm = None
         folder_path = None
+        searchpath = None
 
         if uuid:
             vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
@@ -302,7 +319,6 @@ class PyVmomiHelper(object):
                 self.params['folder'] = self.params['folder'][0:-1]
 
             # Build the absolute folder path to pass into the search method
-            searchpath = None
             if self.params['folder'].startswith('/vm'):
                 searchpath = '%s' % self.params['datacenter']
                 searchpath += self.params['folder']
@@ -333,9 +349,24 @@ class PyVmomiHelper(object):
                             vm = cObj
                             break
 
-        else:
+        if not vm:
+
             # FIXME - this is unused if folder has a default value
             vmList = get_all_objs(self.content, [vim.VirtualMachine])
+
+            # narrow down by folder
+            if folder:
+                if not self.folders:
+                    self.getfolders()
+
+                # compare the folder path of each VM against the search path
+                for item in vmList.items():
+                    vobj = item[0]
+                    if not type(vobj.parent) == vim.Folder:
+                        continue
+                    if self.compile_folder_path_for_object(vobj) == searchpath:
+                        return vobj
+
             if name_match:
                 if name_match == 'first':
                     vm = get_obj(self.content, [vim.VirtualMachine], name)
@@ -527,9 +558,18 @@ class PyVmomiHelper(object):
         # grab the folder vim object
         destfolder = folders[0][1]
 
-        # FIXME: cluster or hostsystem ... ?
-        #cluster = get_obj(self.content, [vim.ClusterComputeResource], self.params['esxi']['hostname'])
-        hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
+        # if the user wants a cluster, get the list of hosts for the cluster and use the first one
+        if self.params['cluster']:
+            cluster = get_obj(self.content, [vim.ClusterComputeResource], self.params['cluster'])
+            if not cluster:
+                self.module.fail_json(msg="Failed to find a cluster named %s" % self.params['cluster'])
+            #resource_pool = cluster.resourcePool
+            hostsystems = [x for x in cluster.host]
+            hostsystem = hostsystems[0]
+        else:
+            hostsystem = get_obj(self.content, [vim.HostSystem], self.params['esxi_hostname'])
+            if not hostsystem:
+                self.module.fail_json(msg="Failed to find a host named %s" % self.params['esxi_hostname'])
 
         # set the destination datastore in the relocation spec
         datastore_name = None
@@ -556,6 +596,10 @@ class PyVmomiHelper(object):
         resource_pool = None
         resource_pools = get_all_objs(self.content, [vim.ResourcePool])
         for rp in resource_pools.items():
+            if not rp[0]:
+                continue
+            if not hasattr(rp[0], 'parent'):
+                continue
             if rp[0].parent == hostsystem.parent:
                 resource_pool = rp[0]    
                 break
@@ -895,6 +939,7 @@ def main():
             force=dict(required=False, type='bool', default=False),
             datacenter=dict(required=False, type='str', default=None),
             esxi_hostname=dict(required=False, type='str', default=None),
+            cluster=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=True)
         ),
         supports_check_mode=True,
