@@ -250,6 +250,19 @@ deb: deb-src
 	done
 	@echo "#############################################"
 
+# Build package outside of pbuilder, with locally installed dependencies.
+# Install BuildRequires as noted in packaging/debian/control.
+local_deb: debian
+	@for DIST in $(DEB_DIST) ; do \
+	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+	@echo "#############################################"
+
 deb-src: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -S) ; \
