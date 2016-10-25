@@ -29,48 +29,23 @@ short_description: Manage A10 Networks devices' virtual servers
 description:
     - Manage slb virtual server objects on A10 Networks devices via aXAPI
 author: "Mischa Peters (@mischapeters)"
-notes:
-    - Requires A10 Networks aXAPI 2.1
-requirements: []
+extends_documentation_fragment: a10
 options:
-  host:
-    description:
-      - hostname or ip of your A10 Networks device
-    required: true
-    default: null
-    aliases: []
-    choices: []
-  username:
-    description:
-      - admin account of your A10 Networks device
-    required: true
-    default: null
-    aliases: ['user', 'admin']
-    choices: []
-  password:
-    description:
-      - admin password of your A10 Networks device
-    required: true
-    default: null
-    aliases: ['pass', 'pwd']
-    choices: []
   virtual_server:
     description:
-      - slb virtual server name
+      - SLB virtual server name.
     required: true
     default: null
     aliases: ['vip', 'virtual']
-    choices: []
   virtual_server_ip:
     description:
-      - slb virtual server ip address
+      - SLB virtual server IP address.
     required: false
     default: null
     aliases: ['ip', 'address']
-    choices: []
   virtual_server_status:
     description:
-      - slb virtual server status
+      - SLB virtual server status.
     required: false
     default: enable
     aliases: ['status']
@@ -82,22 +57,6 @@ options:
         specify the C(service_group:) as well as the C(status:). See the examples
         below for details. This parameter is required when C(state) is C(present).
     required: false
-  write_config:
-    description:
-      - If C(yes), any changes will cause a write of the running configuration
-        to non-volatile memory. This will save I(all) configuration changes,
-        including those that may have been made manually or through other modules,
-        so care should be taken when specifying C(yes).
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled devices using self-signed certificates.
-    required: false
-    default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 

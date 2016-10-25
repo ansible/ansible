@@ -29,37 +29,22 @@ short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
     - Manage slb server objects on A10 Networks devices via aXAPI
 author: "Mischa Peters (@mischapeters)"
-notes:
-    - Requires A10 Networks aXAPI 2.1
+extends_documentation_fragment: a10
 options:
-  host:
-    description:
-      - hostname or ip of your A10 Networks device
-    required: true
-  username:
-    description:
-      - admin account of your A10 Networks device
-    required: true
-    aliases: ['user', 'admin']
-  password:
-    description:
-      - admin password of your A10 Networks device
-    required: true
-    aliases: ['pass', 'pwd']
   server_name:
     description:
-      - slb server name
+      - SLB server name.
     required: true
     aliases: ['server']
   server_ip:
     description:
-      - slb server IP address
+      - SLB server IP address.
     required: false
     default: null
     aliases: ['ip', 'address']
   server_status:
     description:
-      - slb virtual server status
+      - SLB virtual server status.
     required: false
     default: enabled
     aliases: ['status']
@@ -74,28 +59,10 @@ options:
     default: null
   state:
     description:
-      - create, update or remove slb server
+      - Create, update or remove slb server.
     required: false
     default: present
     choices: ['present', 'absent']
-  write_config:
-    description:
-      - If C(yes), any changes will cause a write of the running configuration
-        to non-volatile memory. This will save I(all) configuration changes,
-        including those that may have been made manually or through other modules,
-        so care should be taken when specifying C(yes).
-    required: false
-    version_added: 2.2
-    default: "no"
-    choices: ["yes", "no"]
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled devices using self-signed certificates.
-    required: false
-    version_added: 2.2
-    default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 

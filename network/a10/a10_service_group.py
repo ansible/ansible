@@ -30,47 +30,25 @@ description:
     - Manage slb service-group objects on A10 Networks devices via aXAPI
 author: "Mischa Peters (@mischapeters)"
 notes:
-    - Requires A10 Networks aXAPI 2.1
     - When a server doesn't exist and is added to the service-group the server will be created
+extends_documentation_fragment: a10
 options:
-  host:
-    description:
-      - hostname or ip of your A10 Networks device
-    required: true
-    default: null
-    aliases: []
-    choices: []
-  username:
-    description:
-      - admin account of your A10 Networks device
-    required: true
-    default: null
-    aliases: ['user', 'admin']
-    choices: []
-  password:
-    description:
-      - admin password of your A10 Networks device
-    required: true
-    default: null
-    aliases: ['pass', 'pwd']
-    choices: []
   service_group:
     description:
-      - slb service-group name
+      - SLB service-group name.
     required: true
     default: null
     aliases: ['service', 'pool', 'group']
-    choices: []
   service_group_protocol:
     description:
-      - slb service-group protocol
+      - SLB service-group protocol.
     required: false
     default: tcp
     aliases: ['proto', 'protocol']
     choices: ['tcp', 'udp']
   service_group_method:
     description:
-      - slb service-group loadbalancing method
+      - SLB service-group loadbalancing method.
     required: false
     default: round-robin
     aliases: ['method']
@@ -82,24 +60,6 @@ options:
         specify the C(status:). See the examples below for details.
     required: false
     default: null
-    aliases: []
-    choices: []
-  write_config:
-    description:
-      - If C(yes), any changes will cause a write of the running configuration
-        to non-volatile memory. This will save I(all) configuration changes,
-        including those that may have been made manually or through other modules,
-        so care should be taken when specifying C(yes).
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled devices using self-signed certificates.
-    required: false
-    default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
