@@ -38,13 +38,11 @@ from collections import defaultdict
 from six.moves import configparser
 from time import time
 
-HAS_PYVMOMI = False
 try:
     from pyVmomi import vim
     from pyVim.connect import SmartConnect, Disconnect
-    HAS_PYVMOMI = True
 except ImportError:
-    pass
+    sys.exit("ERROR: This inventory script requires the 'pyVmomi' python library and it was not able to load it.")
 
 try:
     import json
@@ -100,13 +98,10 @@ class VMWareInventory(object):
                  'childtype']
 
     # translation table for attributes to fetch for known vim types
-    if not HAS_PYVMOMI:
-        vimTable = {}
-    else:
-        vimTable = {
-            vim.Datastore: ['_moId', 'name'],
-            vim.ResourcePool: ['_moId', 'name'],
-        }
+    vimTable = {
+        vim.Datastore: ['_moId', 'name'],
+        vim.ResourcePool: ['_moId', 'name'],
+    }
 
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
