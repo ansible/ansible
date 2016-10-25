@@ -55,6 +55,12 @@ options:
       - for another states will be autodiscovered
     default: null
     required: false
+  pool:
+    description:
+      - Proxmox VE resource pool
+    default: null
+    required: false
+    version_added: "2.3"
   password:
     description:
       - the instance root password
@@ -306,6 +312,7 @@ def main():
       vmid = dict(required=True),
       validate_certs = dict(type='bool', default='no'),
       node = dict(),
+      pool = dict(),
       password = dict(no_log=True),
       hostname = dict(),
       ostemplate = dict(),
@@ -374,6 +381,7 @@ def main():
                          % (module.params['ostemplate'], node, template_store))
 
       create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout,
+                      pool = module.params['pool'],
                       password = module.params['password'],
                       hostname = module.params['hostname'],
                       ostemplate = module.params['ostemplate'],
