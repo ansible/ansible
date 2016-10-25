@@ -82,7 +82,7 @@ group:
         vpc_id:
             description: Id of the VPC where the subnet is located
             returned: success
-            type: stering
+            type: string
             sample: "vpc-aabb1122"
 '''
 
