@@ -124,11 +124,14 @@
     - cmdout|failed
     - cmdout.rc == 254
 
-- name: write large buffer to stdout
-  win_command: powershell /c "$ba = New-Object byte[] 16384; (New-Object System.Random 32).NextBytes($ba); [Convert]::ToBase64String($ba) | Write-Output"
+- name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)
+  win_command: powershell /c "$ba = New-Object byte[] 4096; (New-Object System.Random 32).NextBytes($ba); $text = [Convert]::ToBase64String($ba); Write-Output startout; Write-Error starterror; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Output doneout Write-Error doneerror"
   register: cmdout
 
-# TODO: fix small buffer deadlock on large write to stderr before stdout has been consumed
-#- name: write large buffer to stderr
-#  win_shell: $ba = New-Object byte[] 16384; (New-Object System.Random 32).NextBytes($ba); [Convert]::ToBase64String($ba) | Write-Error; Write-Output test
-#  register: cmdout
+- name: ensure that the entirety of both streams were read
+  assert:
+    that:
+    - cmdout.stdout is search("startout")
+    - cmdout.stdout is search("doneout")
+    - cmdout.stderr is search("starterror")
+    - cmdout.stderr is search("doneerror")
