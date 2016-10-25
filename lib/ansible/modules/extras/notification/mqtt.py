@@ -75,6 +75,36 @@ options:
         retained message immediately.
     required: false
     default: False
+  ca_certs:
+    description:
+      - The path to the Certificate Authority certificate files that are to be
+        treated as trusted by this client. If this is the only option given
+        then the client will operate in a similar manner to a web browser. That
+        is to say it will require the broker to have a certificate signed by the
+        Certificate Authorities in ca_certs and will communicate using TLS v1,
+        but will not attempt any form of authentication. This provides basic
+        network encryption but may not be sufficient depending on how the broker
+        is configured.
+    required: False
+    default: None
+    version_added: 2.3
+  certfile:
+    description:
+      - The path pointing to the PEM encoded client certificate. If this is not
+        None it will be used as client information for TLS based
+        authentication. Support for this feature is broker dependent.
+    required: False
+    default: None
+    version_added: 2.3
+  keyfile:
+    description:
+      - The path pointing to the PEM encoded client private key. If this is not
+        None it will be used as client information for TLS based
+        authentication. Support for this feature is broker dependent.
+    required: False
+    default: None
+    version_added: 2.3
+
 
 # informational: requirements for nodes
 requirements: [ mosquitto ]
@@ -121,6 +151,9 @@ def main():
             retain = dict(default=False, type='bool'),
             username = dict(default = None),
             password = dict(default = None, no_log=True),
+            ca_certs = dict(default = None, type='path'),
+            certfile = dict(default = None, type='path'),
+            keyfile = dict(default = None, type='path'),
         ),
         supports_check_mode=True
     )
@@ -137,6 +170,9 @@ def main():
     retain     = module.params.get("retain")
     username   = module.params.get("username", None)
     password   = module.params.get("password", None)
+    ca_certs   = module.params.get("ca_certs", None)
+    certfile   = module.params.get("certfile", None)
+    keyfile    = module.params.get("keyfile", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -148,6 +184,11 @@ def main():
     if username is not None:
         auth = { 'username' : username, 'password' : password }
 
+    tls=None
+    if ca_certs is not None:
+        tls = {'ca_certs': ca_certs, 'certfile': certfile,
+               'keyfile': keyfile}
+
     try:
         rc = mqtt.single(topic, payload,
                     qos=qos,
@@ -155,7 +196,8 @@ def main():
                     client_id=client_id,
                     hostname=server,
                     port=port,
-                    auth=auth)
+                    auth=auth,
+                    tls=tls)
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
