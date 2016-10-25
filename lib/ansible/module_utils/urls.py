@@ -105,8 +105,6 @@ import platform
 import tempfile
 import base64
 
-from ansible.module_utils.basic import get_distribution, get_exception
-
 try:
     import httplib
 except ImportError:
@@ -115,7 +113,9 @@ except ImportError:
 
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
+from ansible.module_utils._text import to_bytes
 
 try:
     # python3
@@ -672,10 +672,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
-                        s.sendall('Proxy-Authorization: Basic %s\r\n' % credentials.encode('base64').strip())
-                    s.sendall('\r\n')
-                    connect_result = ""
-                    while connect_result.find("\r\n\r\n") <= 0:
+                        s.sendall(b('Proxy-Authorization: Basic %s\r\n') % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
+                    s.sendall(b('\r\n'))
+                    connect_result = b("")
+                    while connect_result.find(b("\r\n\r\n")) <= 0:
                         connect_result += s.recv(4096)
                         # 128 kilobytes of headers should be enough for everyone.
                         if len(connect_result) > 131072:
@@ -883,7 +883,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
 
 def basic_auth_header(username, password):
-    return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+    """Takes a username and password and returns a byte string suitable for
+    using as value of an Authorization header to do basic auth.
+    """
+    return b("Basic %s") % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
 
 
 def url_argument_spec():
