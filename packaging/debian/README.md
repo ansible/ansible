@@ -13,6 +13,16 @@ git submodule update --init
 DEB_DIST='xenial trusty precise' make deb
 ```
 
+Building in Docker:
+
+```
+git clone git://github.com/ansible/ansible.git
+cd ansible
+git submodule update --init
+docker build -t ansible-deb-builder -f packaging/debian/Dockerfile .
+docker run --privileged -e DEB_DIST='trusty' -v $(pwd):/ansible ansible-deb-builder
+```
+
 The debian package file will be placed in the `deb-build` directory. This can then be added to an APT repository or installed with `dpkg -i <package-file>`.
 
 Note that `dpkg -i` does not resolve dependencies.
