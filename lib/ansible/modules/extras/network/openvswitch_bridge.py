@@ -37,13 +37,13 @@ options:
         description:
             - Name of bridge or fake bridge to manage
     parent:
-        version_added: 2.2
+        version_added: "2.3"
         required: false
         default: None
         description:
             - Bridge parent of the fake bridge to manage
     vlan:
-        version_added: 2.2
+        version_added: "2.3"
         required: false
         default: None
         description:
