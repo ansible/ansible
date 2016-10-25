@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import json
 import os
+import stat
 import tempfile
 
 from ansible.errors import AnsibleError
@@ -147,6 +148,9 @@ class ActionModule(ActionBase):
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
 
+        # Keep original value for mode parameter
+        mode_value = self._task.args.get('mode', None)
+
         diffs = []
         for source_full, source_rel in source_files:
 
@@ -154,6 +158,12 @@ class ActionModule(ActionBase):
 
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
+
+            # Get the local mode and set if user wanted it preserved
+            # https://github.com/ansible/ansible-modules-core/issues/1124
+            if self._task.args.get('mode', None) == 'preserve':
+                lmode = '0%03o' % stat.S_IMODE(os.stat(source_full).st_mode)
+                self._task.args['mode'] = lmode
 
             # If local_checksum is not defined we can't find the file so we should fail out.
             if local_checksum is None:
@@ -294,6 +304,9 @@ class ActionModule(ActionBase):
             # the copy module uses 'dest', so add it if it's not there
             if 'path' in module_return and 'dest' not in module_return:
                 module_return['dest'] = module_return['path']
+
+            # reset the mode
+            self._task.args['mode'] = mode_value
 
         # Delete tmp path if we were recursive or if we did not execute a module.
         if not delete_remote_tmp or (delete_remote_tmp and not module_executed):
