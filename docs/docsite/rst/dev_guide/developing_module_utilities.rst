@@ -46,3 +46,4 @@ The following is a list of module_utils files and a general description. The mod
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
 - vyos.py - Definitions and functions for working with VyOS networking
  
+- netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
