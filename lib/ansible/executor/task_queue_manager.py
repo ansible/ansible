@@ -222,7 +222,7 @@ class TaskQueueManager:
         )
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
-        num_hosts = len(self._inventory.get_hosts(new_play.hosts))
+        num_hosts = len(self._inventory.get_hosts(new_play.hosts, ignore_restrictions=True))
 
         max_serial = 0
         if new_play.serial:
