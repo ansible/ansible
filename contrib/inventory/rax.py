@@ -148,7 +148,6 @@ Examples:
 import os
 import re
 import sys
-import inspect
 import argparse
 import warnings
 import collections
@@ -171,10 +170,6 @@ from time import time
 
 from ansible.constants import get_config, mk_boolean
 
-get_config_args = inspect.getargspec(get_config)
-NEW_GET_CONFIG = False
-if 'value_type' in get_config_args:
-    NEW_GET_CONFIG = True
 
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
 
@@ -231,17 +226,19 @@ def _list_into_cache(regions):
 
     prefix = get_config(p, 'rax', 'meta_prefix', 'RAX_META_PREFIX', 'meta')
 
-    if NEW_GET_CONFIG:
+    try:
+        # Ansible 2.3+
         networks = get_config(p, 'rax', 'access_network',
                 'RAX_ACCESS_NETWORK', 'public', value_type='list')
-    else:
+    except TypeError:
+        # Ansible 2.2.x and below
         networks = get_config(p, 'rax', 'access_network',
                 'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
-        if NEW_GET_CONFIG:
+        try:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                 'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
-        else:
+        except TypeError:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                 'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
@@ -434,10 +431,12 @@ def setup():
     if region:
         regions.append(region)
     else:
-        if NEW_GET_CONFIG:
+        try:
+            # Ansible 2.3+
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
                     value_type='list')
-        else:
+        except TypeError:
+            # Ansible 2.2.x and below
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
                     islist=True)
 
