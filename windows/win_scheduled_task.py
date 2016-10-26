@@ -79,7 +79,7 @@ options:
     required: false
   path:
     description:
-      - Folder path of scheduled task
+      - Task folder in which this task will be stored
     default: '\'
 '''
 
