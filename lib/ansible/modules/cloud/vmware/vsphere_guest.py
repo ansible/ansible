@@ -24,6 +24,7 @@ try:
     import json
 except ImportError:
     import simplejson as json
+    from datetime import datetime
 
 HAS_PYSPHERE = False
 try:
@@ -1507,8 +1508,86 @@ def delete_vm(vsphere_client, module, guest, vm, force):
         e = get_exception()
         module.fail_json(
             msg='Failed to delete vm %s : %s' % (guest, e))
+        
 
-
+def snapshot_vm(vsphere_client, module, guest, vm, snapshot_op):
+    """
+    To perform snapshot operations create/delete/list/revert.
+    """
+    
+    try:
+        snapshot_op_name = snapshot_op['op_type']
+    except KeyError:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Specify op_type - list_all/remove/create/revert")
+    
+    if snapshot_op_name == 'list_all':
+        snapshot_data = []
+        snaptext = ''
+        try:
+            snapshot_list = vm.get_snapshots()
+            if len(snapshot_list) > 0:
+                for snapshot in snapshot_list:
+                    snap_time = snapshot.get_create_time()
+                    snap_time_formatted = datetime.datetime(*snap_time[:6])
+                    snap_time_formatted = snap_time_formatted.strftime('%Y-%m-%d %H:%M:%S')
+                    snaptext = 'Id: %s; Name: %s; Description: %s; Created: %s; State: %s; Path: %s' %(snapshot._mor
+                                            , snapshot.get_name(), snapshot.get_description(), snap_time_formatted
+                                            , snapshot.get_state(), snapshot.get_path() )
+                    snapshot_data.append(snaptext)
+                module.exit_json(changed=False, msg="Snapshot List %s" % snapshot_data)
+            else:
+                module.exit_json(changed=False, msg="No snapshot exists for guest %s" % guest)
+        except Exception:
+            module.fail_json(msg='Failed to list snapshot for guest %s : %s' % (guest, get_exception()))
+    
+    elif snapshot_op_name == 'remove':
+        try:
+            snapname = snapshot_op['name']
+        except KeyError:
+            vsphere_client.disconnect()
+            module.fail_json(msg="specify name to delete snapshot")
+        try:
+            vm.delete_named_snapshot(snapname, remove_children=False, sync_run=False)
+            module.exit_json(changed=True, msg="Deleted snapshot %s for guest %s" % (snapname, guest))
+        except Exception:
+            e = get_exception()
+            module.fail_json(msg='Failed to delete snapshot %s for guest %s : %s' % (snapname, guest, e))
+            
+    elif snapshot_op_name == 'create':
+        try:
+            snapname = snapshot_op['name']
+            snapdesc = snapshot_op['description']
+        except KeyError:
+            vsphere_client.disconnect()
+            module.fail_json(msg="specify name & description to create snapshot")
+        try:
+            vm.create_snapshot(snapname, description=snapdesc, sync_run=False)
+            module.exit_json(changed=True, msg="Snapshot create task running asynchronously")
+        except Exception:
+            module.fail_json(msg='Failed to create snapshot for guest %s : %s' % (guest, get_exception()))
+            
+    elif snapshot_op_name == 'revert':
+        try:
+            snapname = snapshot_op['name']
+        except KeyError:
+            module.fail_json(msg="specify name to revert snapshot")
+        try:
+            vm.revert_to_named_snapshot(snapname, sync_run=False)
+            module.exit_json(changed=True, msg="Snapshot revert task running asynchronously")
+        except Exception:
+            module.fail_json(msg='Failed to revert snapshot for guest %s : %s' % (guest, get_exception()))
+            
+    elif snapshot_op_name == "list_current_snapshot":
+        try:
+            current_snap = vm.get_current_snapshot_name()
+            module.exit_json(changed=False, msg="Guest %s current snapshot - %s" %(guest, current_snap))
+        except Exception:
+            module.fail_json(msg='Failed to get current snapshot for guest %s : %s' % (guest, get_exception()))
+    else:
+        vsphere_client.disconnect()
+        module.fail_json(msg="Specify op_type - list_all/remove/create/revert")
+        
 def power_state(vm, state, force):
     """
     Correctly set the power status for a VM determined by the current and
@@ -1719,6 +1798,7 @@ def main():
             template_src=dict(required=False, type='str'),
             snapshot_to_clone=dict(required=False, default=None, type='str'),
             guest=dict(required=True, type='str'),
+            snapshot_op=dict(required=False, type='dict', default={}),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
             vm_hardware=dict(required=False, type='dict', default={}),
@@ -1758,6 +1838,7 @@ def main():
     state = module.params['state']
     guest = module.params['guest']
     force = module.params['force']
+    snapshot_op = module.params['snapshot_op']
     vm_disk = module.params['vm_disk']
     vm_nic = module.params['vm_nic']
     vm_hardware = module.params['vm_hardware']
@@ -1810,6 +1891,16 @@ def main():
                 e = get_exception()
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
+                
+        #Snapshot operations
+        elif snapshot_op:
+            snapshot_result = snapshot_vm(
+                vsphere_client=viserver,
+                module=module,
+                guest=guest,
+                vm=vm,
+                snapshot_op=snapshot_op)
+            
         # Power Changes
         elif state in ['powered_on', 'powered_off', 'restarted']:
             state_result = power_state(vm, state, force)
@@ -1848,6 +1939,7 @@ def main():
                 guest=guest,
                 vm=vm,
                 force=force)
+            
 
     # VM doesn't exist
     else:
