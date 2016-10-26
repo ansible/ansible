@@ -696,7 +696,19 @@ class TaskExecutor:
                 if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION
+        # attribute to True), then we use the persistent connection plugion. Otherwise load the
+        # requested connection plugin
+        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False) or conn_type == 'persistent':
+            # if someone did `connection: persistent`, default it to using a
+            # persistent paramiko connection to avoid problems
+            if conn_type == 'persistent':
+                self._play_context.connection = 'paramiko'
+
+            connection = self._shared_loader_obj.connection_loader.get('persistent', self._play_context, self._new_stdin)
+        else:
+            connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 

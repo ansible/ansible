@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import cPickle
+import sys
+from cStringIO import StringIO
+from ansible.playbook.play_context import PlayContext
+
+p = PlayContext()
+p.connection = 'paramiko_ssh'
+p.remote_addr = '192.168.122.100'
+p.port = 22
+p.remote_user = 'root'
+p.password = ''
+
+src = StringIO()
+cPickle.dump(p.serialize(), src)
+sys.stdout.write(src.getvalue())
+sys.stdout.write('\n#END_INIT#\n')
+sys.stdout.flush()
+
+while True:
+    data = sys.stdin.readline()
+    if data == '':
+        break
+    if data.strip() != '':
+        sys.stdout.write(data)
+        sys.stdout.flush()
