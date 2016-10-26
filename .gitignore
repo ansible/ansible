@@ -43,7 +43,7 @@ docsite/htmlout
 docs-api/rst/
 docs-api/_build/
 # deb building stuff...
-debian/
+/debian/
 deb-build
 # Vim swap files
 *.swp
