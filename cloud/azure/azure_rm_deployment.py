@@ -42,7 +42,7 @@ options:
       - In incremental mode, resources are deployed without deleting existing resources that are not included in the template. 
         In complete mode resources are deployed and existing resources in the resource group not included in the template are deleted.
     required: false
-    default: complete
+    default: incremental
     choices:
         - complete
         - incremental
@@ -405,7 +405,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             template_link=dict(type='str', default=None),
             parameters_link=dict(type='str', default=None),
             location=dict(type='str', default="westus"),
-            deployment_mode=dict(type='str', default='complete', choices=['complete', 'incremental']),
+            deployment_mode=dict(type='str', default='incremental', choices=['complete', 'incremental']),
             deployment_name=dict(type='str', default="ansible-arm"),
             wait_for_deployment_completion=dict(type='bool', default=True),
             wait_for_deployment_polling_period=dict(type='int', default=10)
