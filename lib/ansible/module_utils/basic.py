@@ -1960,13 +1960,21 @@ class AnsibleModule(object):
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
+                except TypeError:
+                    # We expect that this is happening because python3.4.x and
+                    # below can't handle byte strings in mkstemp().  Traceback
+                    # would end in something like:
+                    #     file = _os.path.join(dir, pre + name + suf)
+                    # TypeError: can't concat bytes to str
+                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=sys.exc_info())
+
                 b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
                 try:
                     try:
                         # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
                         os.close(tmp_dest_fd)
-                        # leaves tmp file behind when sudo and  not root
+                        # leaves tmp file behind when sudo and not root
                         if switched_user and os.getuid() != 0:
                             # cleanup will happen by 'rm' of tempdir
                             # copy2 will preserve some metadata
