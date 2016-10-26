@@ -24,9 +24,10 @@ import os
 from ansible.compat.tests import unittest
 from ansible.compat.tests import BUILTINS
 
-from ansible.compat.tests.mock import mock_open, patch, MagicMock
+from ansible.compat.tests.mock import patch, MagicMock
 
-from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
+from ansible.plugins import loader
+
 
 class TestErrors(unittest.TestCase):
 
@@ -36,16 +37,16 @@ class TestErrors(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):
         mock_method.return_value = ['/path/one', '/path/two', '/path/three']
-        pl = PluginLoader('foo', 'foo', '', 'test_plugins')
+        pl = loader.PluginLoader('foo', 'foo', '', 'test_plugins')
         paths = pl.print_paths()
         expected_paths = os.pathsep.join(['/path/one', '/path/two', '/path/three'])
         self.assertEqual(paths, expected_paths)
 
     def test_plugins__get_package_paths_no_package(self):
-        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        pl = loader.PluginLoader('test', '', 'test', 'test_plugin')
         self.assertEqual(pl._get_package_paths(), [])
 
     def test_plugins__get_package_paths_with_package(self):
@@ -59,12 +60,12 @@ class TestErrors(unittest.TestCase):
         bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
         bar.bam = bam
         foo.return_value.bar = bar
-        pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
+        pl = loader.PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
         with patch('{0}.__import__'.format(BUILTINS), foo):
             self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):
-        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        pl = loader.PluginLoader('test', '', 'test', 'test_plugin')
         pl._paths = ['/path/one', '/path/two']
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
@@ -80,7 +81,7 @@ class TestErrors(unittest.TestCase):
         #    pass
 
     def assertPluginLoaderConfigBecomes(self, arg, expected):
-        pl = PluginLoader('test', '', arg, 'test_plugin')
+        pl = loader.PluginLoader('test', '', arg, 'test_plugin')
         self.assertEqual(pl.config, expected)
 
     def test_plugin__init_config_list(self):
