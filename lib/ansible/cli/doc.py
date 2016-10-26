@@ -124,6 +124,8 @@ class DocCLI(CLI):
             try:
                 # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
                 filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
+                if filename is None and loader == module_loader:
+                    filename = action_loader.find_plugin(module, mod_type='.py')
                 if filename is None:
                     display.warning("%s %s not found in %s\n" % (plugin_type, plugin, DocCLI.print_paths(loader)))
                     continue
@@ -217,6 +219,8 @@ class DocCLI(CLI):
             # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
             filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True)
 
+            if filename is None and loader == module_loader:
+                filename = action_loader.find_plugin(module, mod_type='.py')
             if filename is None:
                 continue
             if filename.endswith(".ps1"):
