@@ -30,7 +30,7 @@ from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.compat.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import fragment_loader
+from ansible.plugins.loaders import fragment_loader
 
 try:
     from __main__ import display

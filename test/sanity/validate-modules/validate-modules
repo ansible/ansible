@@ -31,7 +31,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.plugins import module_loader
+from ansible.plugins.loaders import module_loader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
 from module_args import get_argument_spec

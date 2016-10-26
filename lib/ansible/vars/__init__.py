@@ -37,7 +37,7 @@ from ansible.cli import CLI
 from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
-from ansible.plugins import lookup_loader
+from ansible.plugins.loaders import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms

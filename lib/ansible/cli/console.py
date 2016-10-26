@@ -45,7 +45,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins import module_loader
+from ansible.plugins.loaders import module_loader
 from ansible.utils import module_docs
 from ansible.utils.color import stringc
 from ansible.vars import VariableManager

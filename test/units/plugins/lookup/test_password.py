@@ -28,7 +28,7 @@ from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
-from ansible.plugins import loader
+from ansible.plugins.loaders import loader
 from ansible.utils import encrypt
 
 from units.mock.loader import DictDataLoader

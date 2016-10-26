@@ -24,7 +24,8 @@ from ansible.compat.six import string_types
 from ansible.compat.six.moves import builtins
 
 from ansible import constants as C
-from ansible.plugins import filter_loader, test_loader
+from ansible.plugins.loaders import filter_loader, test_loader
+
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''

@@ -28,7 +28,7 @@ from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins import module_loader, action_loader
+from ansible.plugins.loaders import module_loader, action_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 

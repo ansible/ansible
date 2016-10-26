@@ -24,7 +24,7 @@ import time
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
-from ansible.plugins import action_loader
+from ansible.plugins.loaders import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text

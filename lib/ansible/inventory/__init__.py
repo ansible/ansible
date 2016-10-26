@@ -36,7 +36,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins import vars_loader
+from ansible.plugins.loaders import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import unfrackpath
 
