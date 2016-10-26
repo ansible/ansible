@@ -28,7 +28,7 @@ from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins.loaders import module_loader, action_loader
+from ansible.plugins.loaders import module_loader, ActionLoader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
@@ -117,6 +117,7 @@ class DocCLI(CLI):
                 if doc is not None:
 
                     # is there corresponding action plugin?
+                    action_loader = ActionLoader()
                     if module in action_loader:
                         doc['action'] = True
                     else:

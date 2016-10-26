@@ -39,7 +39,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.plugins.loaders import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins.loaders import ActionLoader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars import combine_vars, strip_internal_keys
 from ansible.module_utils._text import to_text
@@ -767,6 +767,7 @@ class StrategyBase:
 
         run_once = False
         try:
+            action_loader = ActionLoader()
             action = action_loader.get(handler.action, class_only=True)
             if handler.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
                 run_once = True
