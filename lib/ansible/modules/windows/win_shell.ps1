@@ -22,6 +22,44 @@
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
+$helper_def = @"
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+
+namespace Ansible.Shell
+{
+    public class ProcessUtil
+    {
+        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
+        {
+            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
+            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+            string so = null, se = null;
+
+            ThreadPool.QueueUserWorkItem((s)=>
+            {
+                so = stdoutStream.ReadToEnd();
+                sowait.Set();
+            });
+
+            ThreadPool.QueueUserWorkItem((s) =>
+            {
+                se = stderrStream.ReadToEnd();
+                sewait.Set();
+            });
+
+            foreach(var wh in new WaitHandle[] { sowait, sewait })
+                wh.WaitOne();
+
+            stdout = so;
+            stderr = se;
+        }
+    }
+}
+"@
+
 $parsed_args = Parse-Args $args $false
 
 $raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
@@ -39,6 +77,8 @@ If($creates -and $(Test-Path $creates)) {
 If($removes -and -not $(Test-Path $removes)) {
     Exit-Json @{cmd=$raw_command_line; msg="skipped, since $removes does not exist"; changed=$false; skipped=$true; rc=0}
 }
+
+Add-Type -TypeDefinition $helper_def
 
 $exec_args = $null
 
@@ -80,11 +120,12 @@ Catch [System.ComponentModel.Win32Exception] {
     Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
 }
 
-# TODO: resolve potential deadlock here if stderr fills buffer (~4k) before stdout is closed,
-# perhaps some async stream pumping with Process Output/ErrorDataReceived events...
+$stdout = $stderr = [string] $null
 
-$result.stdout = $proc.StandardOutput.ReadToEnd()
-$result.stderr = $proc.StandardError.ReadToEnd()
+[Ansible.Shell.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
+
+$result.stdout = $stdout
+$result.stderr = $stderr
 
 # TODO: decode CLIXML stderr output (and other streams?)
 
