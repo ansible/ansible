@@ -171,6 +171,7 @@ class PlayIterator:
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
+        setup_task.name   = 'Gathers facts about remote hosts'
         setup_task.tags   = ['always']
         setup_task.args   = {
           'gather_subset': gather_subset,
