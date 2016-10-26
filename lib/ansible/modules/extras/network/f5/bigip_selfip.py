@@ -64,6 +64,13 @@ options:
     description:
       - The VLAN that the new self IPs will be on.
     required: true
+  route_domain:
+    description:
+        - The route domain id of the system.
+          If none, id of the route domain will be "0" (default route domain)
+    required: false
+    default: none
+    version_added: 2.3
 notes:
   - Requires the f5-sdk Python package on the host. This is as easy as pip
     install f5-sdk.
@@ -87,6 +94,20 @@ EXAMPLES = '''
       user: "admin"
       validate_certs: "no"
       vlan: "vlan1"
+  delegate_to: localhost
+
+- name: Create Self IP with a Route Domain
+  bigip_selfip:
+      server: "lb.mydomain.com"
+      user: "admin"
+      password: "secret"
+      validate_certs: "no"
+      name: "self1"
+      address: "10.10.10.10"
+      netmask: "255.255.255.0"
+      vlan: "vlan1"
+      route_domain: "10"
+      allow_service: "default"
   delegate_to: localhost
 
 - name: Delete Self IP
@@ -278,10 +299,15 @@ class BigIpSelfIp(object):
         )
 
         if hasattr(r, 'address'):
+            p['route_domain'] = str(None)
+            if '%' in r.address:
+                ipaddr = []
+                ipaddr = r.address.split('%', 1)
+                rdmask = ipaddr[1].split('/', 1)
+                r.address = "%s/%s" % (ipaddr[0], rdmask[1])
+                p['route_domain'] = str(rdmask[0])
             ipnet = IPNetwork(r.address)
             p['address'] = str(ipnet.ip)
-        if hasattr(r, 'address'):
-            ipnet = IPNetwork(r.address)
             p['netmask'] = str(ipnet.netmask)
         if hasattr(r, 'trafficGroup'):
             p['traffic_group'] = str(r.trafficGroup)
@@ -397,6 +423,7 @@ class BigIpSelfIp(object):
         partition = self.params['partition']
         traffic_group = self.params['traffic_group']
         vlan = self.params['vlan']
+        route_domain = self.params['route_domain']
 
         if address is not None and address != current['address']:
             raise F5ModuleError(
@@ -411,12 +438,19 @@ class BigIpSelfIp(object):
 
                 new_addr = "%s/%s" % (address.ip, netmask)
                 nipnet = IPNetwork(new_addr)
+                if route_domain is not None:
+                    nipnet = "%s%s%s" % (address.ip, route_domain, netmask)
 
                 cur_addr = "%s/%s" % (current['address'], current['netmask'])
                 cipnet = IPNetwork(cur_addr)
+                if route_domain is not None:
+                    cipnet = "%s%s%s" % (current['address'], current['route_domain'], current['netmask'])
 
                 if nipnet != cipnet:
-                    address = "%s/%s" % (nipnet.ip, nipnet.prefixlen)
+                    if route_domain is not None:
+                        address = "%s%s%s/%s" % (address.ip, '%', route_domain, netmask)
+                    else:
+                        address = "%s/%s" % (nipnet.ip, nipnet.prefixlen)
                     params['address'] = address
             except AddrFormatError:
                 raise F5ModuleError(
@@ -516,6 +550,7 @@ class BigIpSelfIp(object):
         partition = self.params['partition']
         traffic_group = self.params['traffic_group']
         vlan = self.params['vlan']
+        route_domain = self.params['route_domain']
 
         if address is None or netmask is None:
             raise F5ModuleError(
@@ -532,7 +567,10 @@ class BigIpSelfIp(object):
         try:
             ipin = "%s/%s" % (address, netmask)
             ipnet = IPNetwork(ipin)
-            params['address'] = "%s/%s" % (ipnet.ip, ipnet.prefixlen)
+            if route_domain is not None:
+                params['address'] = "%s%s%s/%s" % (ipnet.ip, '%', route_domain, ipnet.prefixlen)
+            else:
+                params['address'] = "%s/%s" % (ipnet.ip, ipnet.prefixlen)
         except AddrFormatError:
             raise F5ModuleError(
                 'The provided address/netmask value was invalid'
@@ -631,7 +669,8 @@ def main():
         name=dict(required=True),
         netmask=dict(required=False, default=None),
         traffic_group=dict(required=False, default=None),
-        vlan=dict(required=False, default=None)
+        vlan=dict(required=False, default=None),
+        route_domain=dict(required=False, default=None)
     )
     argument_spec.update(meta_args)
 
