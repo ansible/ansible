@@ -163,7 +163,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         return obj
 
     if errors in (None, 'surrogate_or_replace'):
-        if HAS_SURROGATEESCAPE:
+        if HAS_SURROGATEESCAPE or PY3:
             errors = 'surrogateescape'
         else:
             errors = 'replace'
@@ -172,12 +172,6 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
             errors = 'surrogateescape'
         else:
             errors = 'strict'
-
-    if errors is None:
-        if PY3:
-            errors = 'surrogateescape'
-        else:
-            errors = 'replace'
 
     if isinstance(obj, binary_type):
         return obj.decode(encoding, errors)
