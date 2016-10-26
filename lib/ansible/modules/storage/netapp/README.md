@@ -452,3 +452,139 @@ your playbooks.
         api_password: "{{ netapp_api_password }}"
       when: amg_sync
 ```
+## Clustered Data ONTAP Modules
+The modules prefixed with *netapp\_cdot* are built to support the Clustered Data ONTAP storage platform.  
+
+### Prerequisites
+
+Note: This has been tested with Ansible (2.1.0.0)
+
+* A physical or virtual clustered Data ONTAP system
+* netapp-lib (2015.9.25)
+
+### Installation
+
+Install solidfire-sdk-python
+
+```sh
+$ pip install netapp-lib
+```
+
+### Examples
+These examples are not comprehensive but are intended to help you get started when integrating storage provisioning into your playbooks.
+```yml
+- name: NetApp Sample Playbook
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    netapp_hostname: # Your hostname
+    netapp_username: # Username
+    netapp_password: # Password
+
+  tasks:
+    - name: License Manager
+      na_cdot_license:
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        remove_unused: false
+        remove_expired: true
+        serial_number: #################
+        licenses:
+          nfs: #################
+          # To remove a license, use the 'remove' keyword
+          # nfs: remove
+          cifs: #################
+          iscsi: #################
+          fcp: #################
+          snaprestore: #################
+          flexclone: #################
+
+    - name: Aggregate Manager
+      na_cdot_aggregate:
+        state: absent
+        name: ansibleAggr
+        #new_name: ansibleAggrRenamed
+        disk_count: 1
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: SVM Manager
+      na_cdot_svm:
+        state: present
+        name: ansibleVServer
+        #new_name: ansibleVServerRenamed
+        root_volume: vol1
+        root_volume_aggregate: aggr1
+        root_volume_security_style: mixed
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: User Role Manager
+      na_cdot_user_role:
+        state: present
+        name: ansibleRole
+        command_directory_name: DEFAULT
+        access_level: none
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: User Manager
+      na_cdot_user:
+        state: present
+        name: Sample
+        application: ssh
+        authentication_method: password
+        set_password: apn1242183u1298u41
+        role_name: vsadmin
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: Volume Manager
+      na_cdot_volume:
+        state: present
+        name: ansibleVolume
+        #new_name: ansibleVolumeRenamed
+        #is_infinite: False
+        #is_online: True
+        aggregate_name: aggr1
+        size: 20
+        size_unit: mb
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: QTree Manager
+      na_cdot_qtree:
+        state: present
+        name: ansibleQTree
+        #new_name: ansibleQTreeRenamed
+        flexvol_name: ansibleVolume
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: LUN Manager
+      na_cdot_lun:
+        state: present
+        name: ansibleLUN
+        force_resize: True
+        force_remove: False
+        force_remove_fenced: False
+        flexvol_name: ansibleVolume
+        vserver: ansibleVServer
+        size: 5
+        size_unit: mb
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+```
