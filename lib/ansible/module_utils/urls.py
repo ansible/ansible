@@ -401,15 +401,14 @@ class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
         urllib_request.HTTPSHandler.__init__(self, *args, **kwargs)
         self.client_cert = client_cert
         self.client_cert_key = client_cert_key
-        self.ctx = kwargs.get('context')
 
     def https_open(self, req):
-        return self.do_open(self.getConnection, req)
-
-    def getConnection(self, *args, **kwargs):
-        return httplib.HTTPSConnection(*args, key_file=self.client_cert_key,
-                                       cert_file=self.client_cert,
-                                       context=self.ctx, **kwargs)
+        kwargs = {
+            'cert_file': self.client_cert,
+            'key_file': self.client_cert_key,
+            'context': self._context,
+        }
+        return self.do_open(httplib.HTTPSConnection, req, **kwargs)
 
 
 def generic_urlparse(parts):
