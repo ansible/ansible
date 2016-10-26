@@ -505,7 +505,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

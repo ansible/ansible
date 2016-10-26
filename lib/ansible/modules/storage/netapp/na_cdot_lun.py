@@ -329,7 +329,7 @@ class NetAppCDOTLUN(object):
 
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error provisioning lun %s of size %s. Error '
                              'code: %s', self.name, self.size, str(e.code))
             raise
@@ -368,7 +368,7 @@ class NetAppCDOTLUN(object):
                              'force': str(self.force_resize)})
         try:
             self.server.invoke_successfully(lun_resize, enable_tunneling=True)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             if str(e.code) == "9042":
                 # Error 9042 denotes the new LUN size being the same as the
                 # old LUN size. This happens when there's barely any difference
@@ -443,7 +443,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

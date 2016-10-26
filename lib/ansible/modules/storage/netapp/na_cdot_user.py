@@ -249,7 +249,7 @@ class NetAppCDOTUser(object):
         try:
             result = self.server.invoke_successfully(security_login_get_iter,
                                                      enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             # Error 16034 denotes a user not being found.
             if str(e.code) == "16034":
                 return False
@@ -278,7 +278,7 @@ class NetAppCDOTUser(object):
         try:
             self.server.invoke_successfully(user_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error creating user %s. Error code: '
                              '%s', self.name, str(e.code))
             raise
@@ -296,7 +296,7 @@ class NetAppCDOTUser(object):
         try:
             self.server.invoke_successfully(user_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error removing user %s. Error code: %s ',
                              self.name, str(e.code))
             raise
@@ -318,7 +318,7 @@ class NetAppCDOTUser(object):
         try:
             self.server.invoke_successfully(modify_password,
                                             enable_tunneling=True)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             if str(e.code) == '13114':
                 return False
             else:
@@ -375,7 +375,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

@@ -300,7 +300,7 @@ class NetAppCDOTSVM(object):
         try:
             self.server.invoke_successfully(vserver_rename,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error renaming SVM %s. Error : %s',
                              self.name, str(e.code))
             raise
@@ -354,7 +354,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

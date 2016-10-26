@@ -199,7 +199,7 @@ class NetAppCDOTUserRole(object):
         try:
             result = self.server.invoke_successfully(
                 security_login_role_get_iter, enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             # Error 16031 denotes a role not being found.
             if str(e.code) == "16031":
                 return False
@@ -226,7 +226,7 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error creating role %s. Error code: '
                              '%s', self.name, str(e.code))
             raise
@@ -243,7 +243,7 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error removing role %s. Error code: %s ',
                              self.name, str(e.code))
             raise
@@ -293,7 +293,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

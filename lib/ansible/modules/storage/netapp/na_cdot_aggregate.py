@@ -116,6 +116,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
 
 import socket
 logger = logging.getLogger(__name__)
@@ -194,7 +195,7 @@ class NetAppCDOTAggregate(object):
         try:
             result = self.server.invoke_successfully(aggr_get_iter,
                                                      enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             # Error 13040 denotes an aggregate not being found.
             if str(e.code) == "13040":
                 return False
@@ -217,7 +218,7 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error provisioning aggregate %s. Error code: '
                              '%s', self.name, str(e.code))
             raise
@@ -231,7 +232,7 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_destroy,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except zapi.NaApiError, e:
             logger.exception('Error removing aggregate %s', self.name)
             raise
 
@@ -244,7 +245,7 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_rename,
                                             enable_tunneling=False)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception(
                 'Error renaming aggregate %s. Error code: '
                 '%s', self.name, str(e.code))
@@ -305,7 +306,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

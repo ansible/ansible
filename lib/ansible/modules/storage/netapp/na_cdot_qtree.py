@@ -227,7 +227,7 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error provisioning qtree %s. Error code: %s',
                              self.name, str(e.code))
             raise
@@ -256,7 +256,7 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
-        except zapi.NaApiError as e:
+        except zapi.NaApiError, e:
             logger.exception('Error renaming qtree %s. Error code: %s',
                              self.name, str(e.code))
             raise
@@ -314,7 +314,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 

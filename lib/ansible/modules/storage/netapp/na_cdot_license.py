@@ -205,7 +205,7 @@ class NetAppCDOTLicense(object):
         try:
             result = self.server.invoke_successfully(license_status,
                                                      enable_tunneling=False)
-        except zapi.NaApiError:
+        except zapi.NaApiError, e:
             logger.exception('Error checking license status: %s',
                              zapi.NaApiError.message)
             raise
@@ -237,7 +237,7 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(license_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except zapi.NaApiError, e:
             logger.exception('Error removing license : %s',
                              zapi.NaApiError.message)
             raise
@@ -250,7 +250,7 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(remove_unused,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except zapi.NaApiError, e:
             logger.exception('Error removing unused licenses : %s',
                              zapi.NaApiError.message)
             raise
@@ -263,7 +263,7 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(remove_expired,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except zapi.NaApiError, e:
             logger.exception('Error removing expired licenses : %s',
                              zapi.NaApiError.message)
             raise
@@ -304,7 +304,7 @@ class NetAppCDOTLicense(object):
             try:
                 self.server.invoke_successfully(license_add,
                                                 enable_tunneling=False)
-            except zapi.NaApiError:
+            except zapi.NaApiError, e:
                 logger.exception('Error adding licenses : %s',
                                  zapi.NaApiError.message)
                 raise
@@ -327,7 +327,7 @@ def main():
 
     try:
         v.apply()
-    except Exception as e:
+    except Exception, e:
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
