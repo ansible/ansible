@@ -102,6 +102,10 @@ options:
     description:
       - Source network address policy
     required: false
+    choices:
+      - None
+      - Automap
+      - Name of a SNAT pool (eg "/Common/snat_pool_name") to enable SNAT with the specific pool
     default: None
   default_persistence_profile:
     description:
@@ -355,6 +359,7 @@ def set_snat(api, name, snat):
     updated = False
     try:
         current_state = get_snat_type(api, name)
+        current_snat_pool = get_snat_pool(api, name)
         if snat is None:
             return updated
         elif snat == 'None' and current_state != 'SRC_TRANS_NONE':
@@ -367,6 +372,11 @@ def set_snat(api, name, snat):
                 virtual_servers=[name]
             )
             updated = True
+        elif snat_settings_need_updating(snat, current_state, current_snat_pool):
+            api.LocalLB.VirtualServer.set_source_address_translation_snat_pool(
+                virtual_servers=[name],
+                pools=[snat]
+            )
         return updated
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting snat : %s' % e)
@@ -376,6 +386,23 @@ def get_snat_type(api, name):
     return api.LocalLB.VirtualServer.get_source_address_translation_type(
         virtual_servers=[name]
     )[0]
+
+
+def get_snat_pool(api, name):
+    return api.LocalLB.VirtualServer.get_source_address_translation_snat_pool(
+        virtual_servers=[name]
+    )[0]
+
+
+def snat_settings_need_updating(snat, current_state, current_snat_pool):
+    if snat == 'None' or snat == 'Automap':
+        return False
+    elif snat and current_state != 'SRC_TRANS_SNATPOOL':
+        return True
+    elif snat and current_state == 'SRC_TRANS_SNATPOOL' and current_snat_pool != snat:
+        return True
+    else:
+        return False
 
 
 def get_pool(api, name):
