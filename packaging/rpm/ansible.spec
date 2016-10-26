@@ -76,6 +76,7 @@ Requires: python-six
 %endif
 
 Requires: sshpass
+Requires: tar
 
 %description
 
