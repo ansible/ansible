@@ -108,27 +108,22 @@ RETURN = '''
 
 # TODO:
 #  1) Add support for starting RAID with some missing disks
-#  2) Check md_rc from all executions
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-import os
-import subprocess
-import sys
-import datetime
-import syslog
+#  3) It seems that mdadm returns different hash if it creates raid
+#       device and when it's already created.
+#
 
 RAID_CONF = {
-    0:{'min_dev': 1, 'redundancy': 0 },
-    1:{'min_dev': 2, 'redundancy': 1 },
-    5:{'min_dev': 3, 'redundancy': 1 },
-    6:{'min_dev': 4, 'redundancy': 2 },
+    0:{'min_dev': 1, 'redundancy': 0},
+    1:{'min_dev': 2, 'redundancy': 1},
+    5:{'min_dev': 3, 'redundancy': 1},
+    6:{'min_dev': 4, 'redundancy': 2},
+    10:{'min_dev': 4, 'redundancy': 2}
 }
 
 class MdManager(object):
+    '''
+    MDADM raid manager class
+    '''
     def __init__(self, module, md_device, level, raid_devices, spares):
         self.module = module
         self.level = level
@@ -155,46 +150,49 @@ class MdManager(object):
         # Starting Number of devices in RAID Array can be lower that min_dev - redundancy
         if (min_dev - disk_red) > len(self.raid_devices):
             self.module.fail_json(msg="Not enough RAID disks provided '%d' for level '%d', minimum is '%d'"
-              % (len(self.raid_devices), self.level, (min_dev - disk_red)), level=self.level,
-              raid_devices=self.raid_devices)
+                                  % (len(self.raid_devices), self.level, (min_dev - disk_red)),
+                                  level=self.level, raid_devices=self.raid_devices)
 
         return True
 
-    def test_raid_disks(self, level):
+    def test_raid_disks(self, level, md_device):
         ''' Check if there is a raid superblock already present on given disks '''
 
         for disk in self.raid_devices:
-            test_cmd="mdadm --examine --test %s" % disk
+            test_cmd = "mdadm --examine --test %s" % disk
             (md_rc, md_out, md_err) = self.module.run_command(test_cmd, check_rc=False)
 
             # if run was successfull it means there is a array on give device and we can't proceed
             if not md_rc:
                 disk_info = self.get_raid_info(disk)
+                md_info = self.get_md_info(md_device)
                 raid_level = disk_info.get('level')
 
                 if raid_level == 'raid%s' % (level):
                     self.module.exit_json(changed=False,
-                        msg="Disk device %s already contains raid with same level: %s as requested" % (disk, raid_level),
-                        disk=disk, **disk_info)
+                        msg="Disk device %s already contains raid with same level: %s as requested on md: %s" %
+                                          (disk, raid_level, md_device),
+                                          disk=disk, md_device=md_device, disk_info=disk_info,
+                                          md_info=md_info, array=md_info['devices'])
                 else:
                     self.module.fail_json(msg="Disk device '%s' already contains RAID array with level %s" % (disk, raid_level),
-                        disk=disk, **disk_info)
+                                          disk=disk, stderr=md_err, stdout=md_out, **disk_info)
             elif 'No such file' in md_err:
                 self.module.fail_json(msg="Disk device '%s' doesn't exist." % (disk),
-                    disk=disk)
+                                      disk=disk, stderr=md_err, stdout=md_out)
 
     def get_raid_info(self, disk):
         ''' Get MD info from given disk '''
-        md_cmd="mdadm --examine --brief --verbose %s" % disk
+        md_cmd = "mdadm --examine --brief --verbose %s" % disk
 
         (md_rc, md_out, md_err) = self.module.run_command(md_cmd, check_rc=False)
 
-        fix_md_out=md_out.replace('ARRAY ', 'ARRAY=')
+        fix_md_out = md_out.replace('ARRAY ', 'ARRAY=')
 
         # Return hash containing info about array on a given disk
 
         if fix_md_out:
-            return dict((k, v) for k,v in (item.split('=') for item in fix_md_out.split()))
+            return dict((k, v) for k, v in (item.split('=') for item in fix_md_out.split()))
         else:
             return dict(array='There is no raid array present on %s disk' % disk)
 
@@ -202,19 +200,19 @@ class MdManager(object):
         ''' Get MD info from given raid disk '''
 
         if md_disk == 'auto':
-            md_cmd="mdadm --detail --verbose --scan"
+            md_cmd = "mdadm --detail --verbose --scan"
         else:
-            md_cmd="mdadm --detail --verbose --brief %s" % md_disk
+            md_cmd = "mdadm --detail --verbose --brief %s" % md_disk
 
         (md_rc, md_out, md_err) = self.module.run_command(md_cmd, check_rc=False)
 
-        fix_md_out=md_out.replace('ARRAY ', 'ARRAY=').split('\n')
+        fix_md_out = md_out.replace('\n   ', ' ').replace('ARRAY ', 'ARRAY=').split('\n')
 
         md_info = {}
         # Return hash containing info about array on a given disk
         for md_dev in fix_md_out:
             if md_dev:
-                md_info = (dict((k.lower(), v) for k,v in (item.split('=') for item in md_dev.split())))
+                md_info = (dict((k.lower(), v) for k, v in (item.split('=') for item in md_dev.split())))
                 #md_info[md.get('array')] = md
 
         # Return hash containing info about array on a given disk
@@ -250,10 +248,15 @@ class MdManager(object):
         if self.level == 0:
             spare_param = ''
 
-        md_cmd = "mdadm --create %s --level %d --raid-devices %d --run %s %s %s %s" % (dev_name,
-            self.level, len(self.raid_devices), spare_param, force_flag, clean_flag, dev_list)
+        md_cmd = "mdadm --create %s --level %d --raid-devices %d --run %s %s %s %s" % (
+            dev_name, self.level, len(self.raid_devices), spare_param,
+            force_flag, clean_flag, dev_list)
 
         (md_rc, md_out, md_err) = self.module.run_command(md_cmd, check_rc=True)
+
+        if md_rc:
+            self.module.fail_json(msg="Raid creation failed for device '%s'" % (self.md_device),
+                                  raid=self.md_device, error=md_err, stdout=md_out)
 
     def stop_md_raid(self, force):
         ''' Stop running md raid '''
@@ -268,13 +271,14 @@ class MdManager(object):
 
         # If raid odens't exist don't fail module
         if 'No such file' in md_err:
-            self.module.exit_json(changed=False, msg="MD device %s is not running" % (self.md_device))
+            self.module.exit_json(changed=False, msg="MD device %s is not running" %
+                                  (self.md_device))
             return
 
         # Fail for any other error
         if md_rc:
             self.module.fail_json(msg="Raid device '%s' didn't stop." % (self.md_device),
-                                  raid=self.md_device, error=md_err)
+                                  raid=self.md_device, error=md_err, stdout=md_out)
 
     def zero_md_raid(self, disk, force):
         ''' Zero superblock on a device '''
@@ -288,7 +292,8 @@ class MdManager(object):
         (md_rc, md_out, md_err) = self.module.run_command(md_cmd, check_rc=True)
 
         if 'Unrecognised md component device' in md_err:
-            self.module.exit_json(changed=False, msg="Disk MD is not a MD device" % (disk), disk=disk, error=md_err)
+            self.module.exit_json(changed=False, msg="Disk MD is not a MD device" %
+                                  (disk), disk=disk, error=md_err, stdout=md_out)
             return
 
     def scan_raid_disks(self):
@@ -301,8 +306,9 @@ class MdManager(object):
 
 def main():
     argument_spec = dict(
-        state=dict(required=False, default='present', choices=['present', 'absent', 'examine', 'scan']),
-        level=dict(required=False, default=1, choices=[0, 1, 5, 6], type='int'),
+        state=dict(required=False, default='present',
+                   choices=['present', 'absent', 'examine', 'scan']),
+        level=dict(required=False, default=1, choices=[0, 1, 5, 6, 10], type='int'),
         md_device=dict(required=False, type='str'),
         spare_devices=dict(required=False, default=0, type='int'),
         raid_devices=dict(required=False, default=None, type='list'),
@@ -336,7 +342,7 @@ def main():
             module.exit_json(changed=False, **dict(raid_devices=disk_list))
     elif state == 'present':
         if not force:
-            md.test_raid_disks(level)
+            md.test_raid_disks(level, md_device)
         md.test_raid_level_disks_number()
         md.create_md_raid(force, assume_clean)
         module.exit_json(changed=True, **md.get_md_info(md_device))
@@ -346,7 +352,8 @@ def main():
         for disk in raid_devices:
             md.zero_md_raid(disk, force)
         module.exit_json(changed=True,
-                         msg="Raid device '%s' was removed and wiped from disks '%s'" % (md_device, ' '.join(raid_devices)),
+                         msg="Raid device '%s' was removed and wiped from disks '%s'" %
+                         (md_device, ' '.join(raid_devices)),
                          md_device=md_device, raid_devices=raid_devices)
     elif state == 'scan':
         module.exit_json(changed=False, md_devices=md.scan_raid_disks())
