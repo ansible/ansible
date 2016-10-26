@@ -1,24 +1,106 @@
-# build products...
+#### Building ####
+
+## General ##
+
+# Build products.. #
 *.py[co]
-build
+ansible.egg-info/
 AUTHORS.TXT
-# Emacs backup files...
-*~
-.\#*
-# RPM stuff...
-MANIFEST
+build
+
+# RPM #
 dist
+MANIFEST
 rpm-build
-# Eclipse/PyDev stuff...
+
+## Operating systems ##
+
+# Debian #
+deb-build
+debian/
+
+#### Development ####
+#####################
+
+## Python ##
+
+# Virtualenv #
+venv
+
+## IDE's ##
+
+# Eclipse/PyDev #
 .project
 .pydevproject
-# PyCharm stuff...
-.idea
-#IntelliJ IDEA stuff..
+
+# Emacs backup #
+*~
+.\#*
+
+# IntelliJ IDEA #
 *.iml
-# Mac OS X stuff...
+
+# PyCharm #
+.idea
+
+# Sublime #
+*.sublime-project
+*.sublime-workspace
+
+# Vim swap #
+*.swo
+*.swp
+
+## Operating System ##
+
+# Mac OS X #
 .DS_Store
-# manpage build stuff...
+
+## Virtualization ##
+
+# Vagrent #
+.vagrant
+Vagrantfile
+
+## Testing ##
+
+# Code coverage #
+.coverage
+coverage.xml
+/test/units/cover-html
+
+# In progress tests ?? #
+/test/develop
+
+# Shipable #
+/shippable/
+
+# Tox #
+*.out
+*.retry
+.tox
+results.xml
+
+#### Documentation ####
+#######################
+
+## Docsite ##
+
+docs-api/_build/
+docs-api/rst/
+docsite/*.html
+docsite/htmlout
+docsite/rst/list_of_*.rst
+docsite/rst/*_module.rst
+docsite/rst/modules_by_category.rst
+docsite/rst/playbooks_directives.rst
+docsite/searchindex.js
+docsite/_static/*.gif
+docsite/_static/*.png
+docsite/_static/websupport.js
+
+## Manpage build stuff... ##
+
 docs/man/man1/ansible.1
 docs/man/man1/ansible-doc.1
 docs/man/man1/ansible-galaxy.1
@@ -26,41 +108,10 @@ docs/man/man1/ansible-playbook.1
 docs/man/man1/ansible-pull.1
 docs/man/man1/ansible-vault.1
 docs/man/man3/*
-# Sublime stuff
-*.sublime-project
-*.sublime-workspace
-# docsite stuff...
-docsite/rst/modules_by_category.rst
-docsite/rst/playbooks_directives.rst
-docsite/rst/list_of_*.rst
-docsite/rst/*_module.rst
-docsite/*.html
-docsite/_static/*.gif
-docsite/_static/*.png
-docsite/_static/websupport.js
-docsite/searchindex.js
-docsite/htmlout
-docs-api/rst/
-docs-api/_build/
-# deb building stuff...
-debian/
-deb-build
-# Vim swap files
-*.swp
-*.swo
+
+#### Secrets ####
+
+## Build ##
+
+# Concourse ?? #
 credentials.yml
-# test output
-*.retry
-*.out
-.coverage
-.tox
-results.xml
-coverage.xml
-/test/units/cover-html
-# Development
-/test/develop
-venv
-Vagrantfile
-.vagrant
-ansible.egg-info/
-/shippable/
