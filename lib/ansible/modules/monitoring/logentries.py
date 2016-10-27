@@ -64,6 +64,9 @@ EXAMPLES = '''
     state: absent
 '''
 
+import platform
+import os.path
+
 def query_log_status(module, le_path, path, state="present"):
     """ Returns whether a log is followed or not. """
 
@@ -103,7 +106,7 @@ def follow_log(module, le_path, logs, name=None, logtype=None):
 
     module.exit_json(changed=False, msg="logs(s) already followed")
 
-def unfollow_log(module, le_path, logs):
+def unfollow_log(module, le_path, logs, name=None):
     """ Unfollows one or more logs if followed. """
 
     removed_count = 0
@@ -116,7 +119,8 @@ def unfollow_log(module, le_path, logs):
 
         if module.check_mode:
             module.exit_json(changed=True)
-        rc, out, err = module.run_command([le_path, 'rm', log])
+        le_entity = 'hosts/%s/%s' % (platform.node(), name or os.path.basename(log))
+        rc, out, err = module.run_command([le_path, 'rm', le_entity])
 
         if query_log_status(module, le_path, log):
             module.fail_json(msg="failed to remove '%s': %s" % (log, err.strip()))
@@ -151,7 +155,7 @@ def main():
         follow_log(module, le_path, logs, name=p['name'], logtype=p['logtype'])
 
     elif p["state"] in ["absent", "unfollowed"]:
-        unfollow_log(module, le_path, logs)
+        unfollow_log(module, le_path, logs, name=p['name'])
 
 # import module snippets
 from ansible.module_utils.basic import *
