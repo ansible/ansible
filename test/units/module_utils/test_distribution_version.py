@@ -403,6 +403,25 @@ VERSION_ID="12.04"
                    'distribution_version': u'12.04'}
     },
     {
+        "platform.dist": [
+            "neon",
+            "16.04",
+            "xenial"
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nVERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n",
+            "/etc/lsb-release": "DISTRIB_ID=neon\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"KDE neon User Edition 5.8\"\n"
+        },
+        "name": "KDE neon 16.04",
+        "result": {
+            "distribution_release": "xenial",
+            "distribution": "Neon",
+            "distribution_major_version": "16",
+            "os_family": "Debian",
+            "distribution_version": "16.04"
+        }
+    },
+    {
         'name': 'Core OS',
         'input': {
             '/etc/os-release':"""
