@@ -286,13 +286,13 @@ def ensure(module, base, state, names):
 
         if state in ['installed', 'present']:
             # Install files.
-            for filename in filenames:
+            for filename in (f.strip() for f in filenames):
                 base.package_install(base.add_remote_rpm(filename))
             # Install groups.
-            for group in groups:
+            for group in (g.strip() for g in groups):
                 base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
             # Install packages.
-            for pkg_spec in pkg_specs:
+            for pkg_spec in (p.strip() for p in pkg_specs):
                 _mark_package_install(module, base, pkg_spec)
 
         elif state == 'latest':
@@ -337,9 +337,9 @@ def ensure(module, base, state, names):
         base.do_transaction()
         response = {'changed': True, 'results': []}
         for package in base.transaction.install_set:
-            response['results'].append("Installed: {}".format(package))
+            response['results'].append("Installed: {0}".format(package))
         for package in base.transaction.remove_set:
-            response['results'].append("Removed: {}".format(package))
+            response['results'].append("Removed: {0}".format(package))
 
         module.exit_json(**response)
 
