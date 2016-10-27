@@ -23,7 +23,7 @@ module: influxdb_user
 short_description: Manage InfluxDB users
 description:
     - Manage InfluxDB users
-version_added: 2.2
+version_added: 2.3
 author: "Adam Hamsik (@haad)"
 requirements:
     - "python >= 2.6"
