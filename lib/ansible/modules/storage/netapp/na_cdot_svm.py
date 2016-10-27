@@ -64,19 +64,15 @@ options:
     required: false
     note: required when state == 'present'
     description:
-    -   Security Style of the root volume. When specified as part of the 
+    -   Security Style of the root volume. When specified as part of the
     -   vserver-create, this field represents the security style for the
     -   Vserver root volume. When specified as part of vserver-get-iter
     -   call, this will return the list of matching Vservers. Possible
     -   values are 'unix', 'ntfs', 'mixed'. The 'unified' security style,
-    -   which applies only to Infinite Volumes, cannot be applied to a
-    -   Vserver's root volume.
+    -   which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
+    -   Valid options are "unix" for NFS, "ntfs" for CIFS, "mixed" for Mixed, "unified" for Unified
     choices: ['unix', 'ntfs', 'mixed', 'unified']
-    details:
-    -   "unix" NFS
-    -   "ntfs" CIFS
-    -   "mixed" Mixed
-    -   "unified" Unified
+
 
   hostname:
     required: true
