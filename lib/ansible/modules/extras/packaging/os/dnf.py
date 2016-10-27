@@ -126,17 +126,43 @@ import os
 
 try:
     import dnf
-    from dnf import cli, const, exceptions, subject, util
+    import dnf
+    import dnf.cli
+    import dnf.const
+    import dnf.exceptions
+    import dnf.subject
+    import dnf.util
     HAS_DNF = True
 except ImportError:
     HAS_DNF = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY2
 
-def _fail_if_no_dnf(module):
-    """Fail if unable to import dnf."""
+
+def _ensure_dnf(module):
     if not HAS_DNF:
-        module.fail_json(
-            msg="`python2-dnf` is not installed, but it is required for the Ansible dnf module.")
+        if PY2:
+            package = 'python2-dnf'
+        else:
+            package = 'python3-dnf'
+
+        if module.check_mode:
+            module.fail_json(msg="`{0}` is not installed, but it is required"
+                    " for the Ansible dnf module.".format(package))
+
+        module.run_command(['dnf', 'install', '-y', package], check_rc=True)
+        global dnf
+        try:
+            import dnf
+            import dnf.cli
+            import dnf.const
+            import dnf.exceptions
+            import dnf.subject
+            import dnf.util
+        except ImportError:
+            module.fail_json(msg="Could not import the dnf python module."
+                    " Please install `{0}` package.".format(package))
 
 
 def _configure_base(module, base, conf_file, disable_gpg_check):
@@ -225,7 +251,7 @@ def list_items(module, base, command):
             for repo in base.repos.iter_enabled()]
     # Return any matching packages
     else:
-        packages = subject.Subject(command).get_best_query(base.sack)
+        packages = dnf.subject.Subject(command).get_best_query(base.sack)
         results = [_package_dict(package) for package in packages]
 
     module.exit_json(results=results)
@@ -235,7 +261,7 @@ def _mark_package_install(module, base, pkg_spec):
     """Mark the package for install."""
     try:
         base.install(pkg_spec)
-    except exceptions.MarkingError:
+    except dnf.exceptions.MarkingError:
         module.fail_json(msg="No package {} available.".format(pkg_spec))
 
 
@@ -244,7 +270,7 @@ def ensure(module, base, state, names):
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
-        pkg_specs, group_specs, filenames = cli.commands.parse_spec_group_file(
+        pkg_specs, group_specs, filenames = dnf.cli.commands.parse_spec_group_file(
             names)
         if group_specs:
             base.read_comps()
@@ -264,7 +290,7 @@ def ensure(module, base, state, names):
                 base.package_install(base.add_remote_rpm(filename))
             # Install groups.
             for group in groups:
-                base.group_install(group, const.GROUP_PACKAGE_TYPES)
+                base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
             # Install packages.
             for pkg_spec in pkg_specs:
                 _mark_package_install(module, base, pkg_spec)
@@ -276,9 +302,9 @@ def ensure(module, base, state, names):
             for group in groups:
                 try:
                     base.group_upgrade(group)
-                except exceptions.CompsError:
+                except dnf.exceptions.CompsError:
                     # If not already installed, try to install.
-                    base.group_install(group, const.GROUP_PACKAGE_TYPES)
+                    base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
             for pkg_spec in pkg_specs:
                 # best effort causes to install the latest package
                 # even if not previously installed
@@ -338,7 +364,8 @@ def main():
         supports_check_mode=True)
     params = module.params
 
-    _fail_if_no_dnf(module)
+    _ensure_dnf(module)
+
     if params['list']:
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
@@ -347,7 +374,7 @@ def main():
     else:
         # Note: base takes a long time to run so we want to check for failure
         # before running it.
-        if not util.am_i_root():
+        if not dnf.util.am_i_root():
             module.fail_json(msg="This command has to be run under the root user.")
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
@@ -356,7 +383,5 @@ def main():
         ensure(module, base, params['state'], params['name'])
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
