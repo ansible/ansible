@@ -88,7 +88,7 @@ class EosConfigMixin(object):
                 self.execute(['no configure session %s' % session])
         except NetworkError:
             exc = get_exception()
-            if 'timeout trying to send command' in exc.message:
+            if 'timeout trying to send command' in str(exc):
                 # try to get control back and get out of config mode
                 if isinstance(self, Cli):
                     self.execute(['\x03', 'end'])

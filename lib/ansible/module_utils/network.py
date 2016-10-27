@@ -105,7 +105,7 @@ class NetworkModule(AnsibleModule):
             self.fail_json(msg='Unknown transport or no default transport specified')
         except (TypeError, NetworkError):
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=str(exc))
 
         if connect_on_load:
             self.connect()
@@ -151,7 +151,7 @@ class NetworkModule(AnsibleModule):
                          self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=str(exc))
 
     def disconnect(self):
         try:
@@ -160,7 +160,7 @@ class NetworkModule(AnsibleModule):
             self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=str(exc))
 
 def register_transport(transport, default=False):
     def register(cls):

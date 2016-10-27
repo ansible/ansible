@@ -51,7 +51,6 @@ class ShellError(Exception):
 
     def __init__(self, msg, command=None):
         super(ShellError, self).__init__(msg)
-        self.message = msg
         self.command = command
 
 
@@ -155,7 +154,7 @@ class Shell(object):
             raise ShellError("timeout trying to send command: %s" % cmd)
         except socket.error:
             exc = get_exception()
-            raise ShellError("problem sending command to host: %s" % exc.message)
+            raise ShellError("problem sending command to host: %s" % str(exc))
         return responses
 
     def close(self):
@@ -247,7 +246,7 @@ class CliBase(object):
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
-            raise NetworkError(exc.message, commands=commands)
+            raise NetworkError(str(exc), commands=commands)
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
