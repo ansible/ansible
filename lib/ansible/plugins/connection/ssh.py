@@ -451,6 +451,14 @@ class Connection(ConnectionBase):
                 b_chunk = p.stdout.read()
                 if b_chunk == b'':
                     rpipes.remove(p.stdout)
+                    # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
+                    # first connection goes into the background and we never see EOF
+                    # on stderr. If we see EOF on stdout, lower the select timeout
+                    # to reduce the time wasted selecting on stderr if we observe
+                    # that the process has not yet existed after this EOF. Otherwise
+                    # we may spend a long timeout period waiting for an EOF that is
+                    # not going to arrive until the persisted connection closes.
+                    timeout = 1
                 b_tmp_stdout += b_chunk
                 display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
 
@@ -534,18 +542,11 @@ class Connection(ConnectionBase):
             if p.poll() is not None:
                 if not rpipes or not rfd:
                     break
-
-                # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
-                # first connection goes into the background and we never see EOF
-                # on stderr. If we see EOF on stdout and the process has exited,
-                # we're probably done. We call select again with a zero timeout,
-                # just to make certain we don't miss anything that may have been
-                # written to stderr between the time we called select() and when
-                # we learned that the process had finished.
-
-                if p.stdout not in rpipes:
-                    timeout = 0
-                    continue
+                # We should not see further writes to the stdout/stderr file
+                # descriptors after the process has closed, set the select
+                # timeout to gather any last writes we may have missed.
+                timeout = 0
+                continue
 
             # If the process has not yet exited, but we've already read EOF from
             # its stdout and stderr (and thus removed both from rpipes), we can
