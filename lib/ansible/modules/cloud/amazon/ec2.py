@@ -29,6 +29,13 @@ options:
     required: false
     default: null
     aliases: ['keypair']
+  id:        
+    version_added: "1.1"
+    description:        
+      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).        
+    required: false        
+    default: null        
+    aliases: []        
   group:
     description:
       - security group (or list of groups) to use with the instance
