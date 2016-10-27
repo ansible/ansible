@@ -7,15 +7,15 @@ Plugins are pieces of code that augment Ansible's core functionality. Ansible sh
 
 The following types of plugins are available:
 
-- *Action* plugins, are 'front ends' to modules and can execute actions on the controller before calling the modules themselves.
-- *Cache* plugins, are used to keep a cache of 'facts' to avoid costly fact gathering operations.
+- *Action* plugins are front ends to modules and can execute actions on the controller before calling the modules themselves.
+- *Cache* plugins are used to keep a cache of 'facts' to avoid costly fact-gathering operations.
 - *Callback* plugins enable you to hook into Ansible events for display or logging purposes.
 - *Connection* plugins define how to communicate with inventory hosts.
-- *Filters* plugins allow you to manipulate data inside Ansible plays and/or templates. This is a Jinja2 feature, Ansible ships extra ones.
+- *Filters* plugins allow you to manipulate data inside Ansible plays and/or templates. This is a Jinja2 feature; Ansible ships extra filter plugins.
 - *Lookup* plugins are used to pull data from an external source. These are implemented using a custom Jinja2 function.
 - *Strategy* plugins control the flow of a play and execution logic.
-- *Shell* plugins deal with low level commands and formatting for the different shells Ansible can encounter on remote hosts.
-- *Test* plugins allow you to validate data inside Ansible plays and/or templates. This is a Jinja2 feature, Ansible ships extra ones.
+- *Shell* plugins deal with low-level commands and formatting for the different shells Ansible can encounter on remote hosts.
+- *Test* plugins allow you to validate data inside Ansible plays and/or templates. This is a Jinja2 feature; Ansible ships extra test plugins.
 - *Vars* plugins inject additional variable data into Ansible runs that did not come from an inventory, playbook, or the command line.
 
 This section describes the various types of plugins and how to implement them.
