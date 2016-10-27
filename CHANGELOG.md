@@ -18,10 +18,14 @@ Ansible Changes By Release
 
 ###New Modules:
 - archive
+- aws
+  * ec2_lc_facts
 - f5
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
+- windows
+  * win_say
 
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
@@ -36,7 +40,7 @@ Ansible Changes By Release
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or background tasks.
-* Windows `environment:` support for setting module environment vars in play/task. 
+* Windows `environment:` support for setting module environment vars in play/task.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
