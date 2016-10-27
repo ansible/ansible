@@ -24,7 +24,7 @@ short_description: Module for gathering facts about auth0 users.
 description:
     - Auth0 user gathering facts module. It can search for a given user and
       return it's payload.
-version_added: "2.2"
+version_added: 2.3
 options:
   query:
     description:

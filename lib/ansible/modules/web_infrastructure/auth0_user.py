@@ -25,7 +25,7 @@ description:
     - Auth0 user managing module. It can search for a given user and
       return it's payload, create/delete user and update application
       metadata.
-version_added: "2.2"
+version_added: 2.3
 options:
   state:
     description:
