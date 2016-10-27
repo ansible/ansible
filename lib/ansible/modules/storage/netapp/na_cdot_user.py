@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_users
 
 short_description: useradmin configuration and management
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 -
@@ -54,17 +56,16 @@ options:
     choices: ['community', 'password', 'publickey', 'domain', 'nsswitch', 'usm']
     notes:
     -   Not all authentication methods are valid for an application.
-    -   Valid authentication methods for each application are:
-        -  'password' for 'console' application.
-        -   'password', 'domain', 'nsswitch', 'cert' for 'http' application.
-        -   'password', 'domain', 'nsswitch', 'cert'  for 'ontapi' application.
-        -   'community' for 'snmp' application (when creating SNMPv1 and
-        -   SNMPv2 users).
-        -   'usm' and 'community' for 'snmp' application (when creating SNMPv3 users).
-        -   'password' for 'sp' application.
-        -   'password' for 'rsh' application.
-        -   'password' for 'telnet' application.
-        -   'password', 'publickey', 'domain', 'nsswitch' for 'ssh' application.
+    -   Valid authentication methods for each application are
+    -       'password' for 'console' application.
+    -       'password', 'domain', 'nsswitch', 'cert' for 'http' application.
+    -       'password', 'domain', 'nsswitch', 'cert'  for 'ontapi' application.
+    -       'community' for 'snmp' application (when creating SNMPv1 and SNMPv2 users).
+    -       'usm' and 'community' for 'snmp' application (when creating SNMPv3 users).
+    -       'password' for 'sp' application.
+    -       'password' for 'rsh' application.
+    -       'password' for 'telnet' application.
+    -       'password', 'publickey', 'domain', 'nsswitch' for 'ssh' application.
 
   set_password:
     required: false

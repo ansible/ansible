@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_svm
 
 short_description: Manage NetApp cDOT svm
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create or destroy svm on NetApp cDOT
@@ -63,7 +65,7 @@ options:
     -   vserver-create, this field represents the security style for the
     -   Vserver root volume. When specified as part of vserver-get-iter
     -   call, this will return the list of matching Vservers. Possible
-    -   values: 'unix', 'ntfs', 'mixed'. The 'unified' security style,
+    -   values are 'unix', 'ntfs', 'mixed'. The 'unified' security style,
     -   which applies only to Infinite Volumes, cannot be applied to a
     -   Vserver's root volume.
     choices: ['unix', 'ntfs', 'mixed', 'unified']

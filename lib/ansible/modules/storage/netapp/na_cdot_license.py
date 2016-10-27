@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_license
 
 short_description: Manage NetApp cDOT protocol and feature licenses
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Add or remove licenses on NetApp cDOT

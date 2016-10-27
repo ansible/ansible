@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_lun
 
 short_description: Manage  NetApp cDOT luns
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create, destroy, resize luns on NetApp cDOT
@@ -42,12 +44,14 @@ options:
     - The name of the lun to manage
 
   flexvol_name:
-    required: when state == 'present'
+    required: false
+    notes: required when state == 'present'
     description:
     - The name of the flexvol the lun should exist on
 
   size:
-    required: when state == 'present'
+    required: false
+    notes: required when state == 'present'
     description:
     - The size of the lun in (size_unit)
 

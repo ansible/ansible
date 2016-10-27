@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_user_role
 
 short_description: useradmin configuration and management
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 -

@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_aggregate
 
 short_description: Manage NetApp cDOT aggregates
+version_added: '2.3'
+author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create or destroy aggregates on NetApp cDOT
@@ -47,7 +49,8 @@ options:
     - Rename the aggregate
 
   disk_count:
-    required: when state == 'present'
+    required: false
+    notes: required when state == 'present'
     description:
     - Number of disks to place into the aggregate, including parity disks.
     - The disks in this newly-created aggregate come from the spare disk pool.
