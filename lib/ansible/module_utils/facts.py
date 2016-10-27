@@ -328,24 +328,33 @@ class Facts(object):
         #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, runit, etc
         # also other OSs other than linux might need to check across several possible candidates
 
+        # Mapping of proc_1 values to more useful names
+        proc_1_map = {
+            'procd': 'openwrt_init',
+        }
+
         # try various forms of querying pid 1
         proc_1 = get_file_content('/proc/1/comm')
         if proc_1 is None:
             rc, proc_1, err = self.module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
-        else:
-            proc_1 = os.path.basename(proc_1)
+            # If the output of the command starts with what looks like a PID, then the 'ps' command
+            # probably didn't work the way we wanted, probably because it's busybox
+            if re.match(r' *[0-9]+ ', proc_1):
+                proc_1 = None
 
         if proc_1 is not None:
+            proc_1 = os.path.basename(proc_1)
             proc_1 = to_native(proc_1)
             proc_1 = proc_1.strip()
 
-        if proc_1 == 'init' or proc_1.endswith('sh'):
+        if proc_1 is not None and (proc_1 == 'init' or proc_1.endswith('sh')):
             # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
             proc_1 = None
 
         # if not init/None it should be an identifiable or custom init, so we are done!
         if proc_1 is not None:
-            self.facts['service_mgr'] = proc_1
+            # Lookup proc_1 value in map and use proc_1 value itself if no match
+            self.facts['service_mgr'] = proc_1_map.get(proc_1, proc_1)
 
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':
@@ -362,6 +371,8 @@ class Facts(object):
         elif self.facts['system'] == 'SunOS':
             #FIXME: smf?
             self.facts['service_mgr'] = 'svcs'
+        elif self.facts['distribution'] == 'OpenWrt':
+            self.facts['service_mgr'] = 'openwrt_init'
         elif self.facts['system'] == 'Linux':
             if self.is_systemd_managed():
                 self.facts['service_mgr'] = 'systemd'
