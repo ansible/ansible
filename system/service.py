@@ -1365,9 +1365,9 @@ class SunOSService(Service):
         elif self.action == 'stop':
             subcmd = "disable -st"
         elif self.action == 'reload':
-            subcmd = "refresh"
+            subcmd = "refresh -s"
         elif self.action == 'restart' and status == 'online':
-            subcmd = "restart"
+            subcmd = "restart -s"
         elif self.action == 'restart' and status != 'online':
             subcmd = "enable -rst"
 
