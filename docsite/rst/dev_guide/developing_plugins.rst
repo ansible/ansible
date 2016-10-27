@@ -26,7 +26,7 @@ This section describes the various types of plugins and how to implement them.
 Callback Plugins
 ----------------
 
-Callback plugins enable adding new behaviors to Ansible when responding to events. By default they are in charge of most of the output you see when running the command line programs.
+Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs.
 
 .. _callback_examples:
 
@@ -53,7 +53,7 @@ and is guaranteed to entertain and/or annoy coworkers.
 Configuring Callback Plugins
 ++++++++++++++++++++++++++++
 
-You have a couple of ways to activate a custom callback. You can drop it in a callback_plugins directory adjacent to your play or inside a role. Also you can put it in one of the callback directory sources configured in `ansible.cfg`.
+You can activate a custom callback by either dropping it into a callback_plugins directory adjacent to your play or inside a role or by putting it in one of the callback directory sources configured in `ansible.cfg`.
 
 Plugins are loaded in alphanumeric order; for example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
@@ -65,7 +65,7 @@ Most callbacks shipped with Ansible are disabled by default and need to be white
 Managing stdout
 ```````````````
 
-You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then the stdout plugin needs to be configured in `ansible.cfg`. For example::
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in `ansible.cfg`. For example::
 
   #stdout_callback = mycallbackplugin
 
@@ -145,8 +145,7 @@ More documentation on writing connection plugins is pending, though you can jump
 Lookup Plugins
 --------------
 
-Lookup plugins are used to pull in data from external sources. They can be used within playbooks and templates to return values for variables or other expressions.
-Also they are used for looping - playbook language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.
+Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks for both looping - playbook language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins - and to return values into a variable or parameter. 
 
 Here's a simple lookup plugin implementation - this lookup returns the contents of a text file as a variable::
 
@@ -222,27 +221,27 @@ If you find yourself wanting to write a vars_plugin, it's more likely you should
 Filter Plugins
 --------------
 
-These plugins are for manipulating data, they are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As all plugins, they can be easily extended, but instead of having a file for each one you can have several per file, most of those shipped with Ansible reside in a `core.py`.
+Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a `core.py`.
 
-Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
 
 .. _developing_test_plugins:
 
 Test Plugins
 ------------
 
-These plugins are for verifying data, they are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As all plugins, they can be easily extended, but instead of having a file for each one you can have several per file, most of those shipped with Ansible reside in a `core.py`. These are specially useful in conjunction with some filter plugins like `map` and `select`, they are also available for conditional directives (`when:`).
+Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a `core.py`. These are specially useful in conjunction with some filter plugins like `map` and `select`; they are also available for conditional directives like `when:`.
 
-Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
 
 .. _distributing_plugins:
 
 Distributing Plugins
 --------------------
 
-Plugins are loaded from the library installed path and configured plugins directory (check your `ansible.cfg`).
-These can vary depending on how you installed Ansible (pip, rpm, deb, etc) and even then again by the OS/Distribution/Packager.
-Also they are automatically loaded when you have one of the following subfolders adjacent to your playbook or inside a role::
+Plugins are loaded from the library installed path and the configured plugins directory (check your `ansible.cfg`).
+The location can vary depending on how you installed Ansible (pip, rpm, deb, etc) or by the OS/Distribution/Packager.
+Plugins are automatically loaded when you have one of the following subfolders adjacent to your playbook or inside a role::
 
     * action_plugins
     * lookup_plugins
