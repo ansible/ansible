@@ -27,7 +27,7 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
--
+- Create or destroy users
     - auth_basic
 
 options:

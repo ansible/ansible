@@ -72,11 +72,11 @@ options:
     -   which applies only to Infinite Volumes, cannot be applied to a
     -   Vserver's root volume.
     choices: ['unix', 'ntfs', 'mixed', 'unified']
-        details:
-        -   "unix"      - NFS,
-        -   "ntfs"      - CIFS,
-        -   "mixed"     - Mixed,
-        -   "unified"   - Unified
+    details:
+    -   "unix"       NFS,
+    -   "ntfs"       CIFS,
+    -   "mixed"      Mixed,
+    -   "unified"    Unified
 
   hostname:
     required: true
