@@ -20,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: java_cert
-version_added: "2.2"
+version_added: 2.3
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
   - This is a wrapper module around keytool. Which can be used to import/remove certificates from a given java keystore.
