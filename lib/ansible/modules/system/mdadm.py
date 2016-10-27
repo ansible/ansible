@@ -20,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: mdadm
-version_added: "2.2"
+version_added: 2.3
 short_description: Initialize and manage linux mdadm array
 description: Create, Manage linux software raid
 requirements: [ python json ]
