@@ -55,12 +55,14 @@ options:
     - Root volume of the svm.
 
   root_volume_aggregate:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     - The aggregate on which the root volume will be created.
 
   root_volume_security_style:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     -   Security Style of the root volume. When specified as part of the 
     -   vserver-create, this field represents the security style for the
