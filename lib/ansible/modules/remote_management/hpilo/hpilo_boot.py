@@ -28,7 +28,7 @@ description:
   - "This module boots a system through its HP iLO interface. The boot media
     can be one of: cdrom, floppy, hdd, network or usb."
   - This module requires the hpilo python module.
-version_added: "2.2"
+version_added: 2.3
 options:
   host:
     description:

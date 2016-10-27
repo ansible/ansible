@@ -29,7 +29,7 @@ description:
       These facts include hardware and network related information useful
       for provisioning (e.g. macaddress, uuid).
     - This module requires the hpilo python module.
-version_added: "2.2"
+version_added: 2.3
 options:
     host:
         description:
