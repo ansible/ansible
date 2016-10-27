@@ -7,10 +7,16 @@ Plugins are pieces of code that augment Ansible's core functionality. Ansible sh
 
 The following types of plugins are available:
 
+- *Action* plugins are front ends to modules and can execute actions on the controller before calling the modules themselves.
+- *Cache* plugins are used to keep a cache of 'facts' to avoid costly fact-gathering operations.
 - *Callback* plugins enable you to hook into Ansible events for display or logging purposes.
 - *Connection* plugins define how to communicate with inventory hosts.
-- *Lookup* plugins are used to pull data from an external source.
-- *Vars* plugins inject additional variable data into Ansible runs that did not come from an inventory, playbook, or the command line. 
+- *Filters* plugins allow you to manipulate data inside Ansible plays and/or templates. This is a Jinja2 feature; Ansible ships extra filter plugins.
+- *Lookup* plugins are used to pull data from an external source. These are implemented using a custom Jinja2 function.
+- *Strategy* plugins control the flow of a play and execution logic.
+- *Shell* plugins deal with low-level commands and formatting for the different shells Ansible can encounter on remote hosts.
+- *Test* plugins allow you to validate data inside Ansible plays and/or templates. This is a Jinja2 feature; Ansible ships extra test plugins.
+- *Vars* plugins inject additional variable data into Ansible runs that did not come from an inventory, playbook, or the command line.
 
 This section describes the various types of plugins and how to implement them.
 
@@ -20,7 +26,7 @@ This section describes the various types of plugins and how to implement them.
 Callback Plugins
 ----------------
 
-Callback plugins enable adding new behaviors to Ansible when responding to events.
+Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs.
 
 .. _callback_examples:
 
@@ -47,19 +53,19 @@ and is guaranteed to entertain and/or annoy coworkers.
 Configuring Callback Plugins
 ++++++++++++++++++++++++++++
 
-To activate a callback, drop it in a callback directory as configured in `ansible.cfg`. 
+You can activate a custom callback by either dropping it into a callback_plugins directory adjacent to your play or inside a role or by putting it in one of the callback directory sources configured in `ansible.cfg`.
 
 Plugins are loaded in alphanumeric order; for example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Callbacks need to be whitelisted in your `ansible.cfg` file in order to function. For example::
-  
+Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your `ansible.cfg` file in order to function. For example::
+
   #callback_whitelist = timer, mail, mycallbackplugin
 
 
-Writing to stdout
-`````````````````
+Managing stdout
+```````````````
 
-If your callback plugin needs to write to stdout, you should define CALLBACK_TYPE = stdout in the subclass, and then the stdout plugin needs to be configured in `ansible.cfg` to override the default. For example::
+You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in `ansible.cfg`. For example::
 
   #stdout_callback = mycallbackplugin
 
@@ -119,15 +125,14 @@ The following example shows how Ansible's timer plugin is implemented::
           runtime = end_time - self.start_time
           self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
 
-Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required. 
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required for properly functioning plugins for Ansible >=2.0.
 
-.. _developing_connection_type_plugins:
+.. _developing_connection_plugins:
 
-Connection Type Plugins
------------------------
+Connection Plugins
+------------------
 
-By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used
-in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
+By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
 are covered in the :doc:`intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
@@ -186,7 +191,7 @@ An example of how this lookup is called::
 
     tasks:
 
-       - debug: msg="the value of foo.txt is {{ contents }}"
+       - debug: msg="the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}"
 
 Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type becasue the strings will be run through jinja2.  To do this, you can use::
 
@@ -216,17 +221,27 @@ If you find yourself wanting to write a vars_plugin, it's more likely you should
 Filter Plugins
 --------------
 
-If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, we'll just include them in 'core.py' instead.
+Filter plugins are used for manipulating data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the filter plugins shipped with Ansible reside in a `core.py`.
 
-Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+
+.. _developing_test_plugins:
+
+Test Plugins
+------------
+
+Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a `core.py`. These are specially useful in conjunction with some filter plugins like `map` and `select`; they are also available for conditional directives like `when:`.
+
+See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
 
 .. _distributing_plugins:
 
 Distributing Plugins
 --------------------
 
-Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
-to /usr/share/ansible/plugins, in a subfolder for each plugin type::
+Plugins are loaded from the library installed path and the configured plugins directory (check your `ansible.cfg`).
+The location can vary depending on how you installed Ansible (pip, rpm, deb, etc) or by the OS/Distribution/Packager.
+Plugins are automatically loaded when you have one of the following subfolders adjacent to your playbook or inside a role::
 
     * action_plugins
     * lookup_plugins
@@ -238,12 +253,7 @@ to /usr/share/ansible/plugins, in a subfolder for each plugin type::
     * test_plugins
     * shell_plugins
 
-To change this path, edit the ansible configuration file.
-
-In addition, plugins can be shipped in a subdirectory relative to a top-level playbook, in folders named the same as indicated above.
-
-They can also be shipped as part of a role, in a subdirectory named as indicated above. The plugin will be availiable as soon as the role
-is called.
+When shipped as part of a role, the plugin will be available as soon as the role is called in the play.
 
 .. seealso::
 
