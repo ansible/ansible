@@ -49,7 +49,8 @@ options:
     - Rename the qtree
 
   flexvol_name:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     - The name of the flexvol the qtree should exist on
 

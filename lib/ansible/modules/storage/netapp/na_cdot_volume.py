@@ -68,12 +68,14 @@ options:
     default: 'True'
 
   aggregate_name:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     - The name of the aggregate the flexvol should exist on
 
   size:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     - The size of the volume in (size_unit)
 

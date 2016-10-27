@@ -49,7 +49,8 @@ options:
     - Rename the SVM
 
   root_volume:
-    required: when state == 'present'
+    required: false
+    note: required when state == 'present'
     description:
     - Root volume of the svm.
 

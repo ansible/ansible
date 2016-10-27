@@ -57,15 +57,15 @@ options:
     notes:
     -   Not all authentication methods are valid for an application.
     -   Valid authentication methods for each application are
-    -       'password' for 'console' application.
-    -       'password', 'domain', 'nsswitch', 'cert' for 'http' application.
-    -       'password', 'domain', 'nsswitch', 'cert'  for 'ontapi' application.
-    -       'community' for 'snmp' application (when creating SNMPv1 and SNMPv2 users).
-    -       'usm' and 'community' for 'snmp' application (when creating SNMPv3 users).
-    -       'password' for 'sp' application.
-    -       'password' for 'rsh' application.
-    -       'password' for 'telnet' application.
-    -       'password', 'publickey', 'domain', 'nsswitch' for 'ssh' application.
+    -   'password' for 'console' application.
+    -   'password', 'domain', 'nsswitch', 'cert' for 'http' application.
+    -   'password', 'domain', 'nsswitch', 'cert'  for 'ontapi' application.
+    -   'community' for 'snmp' application (when creating SNMPv1 and SNMPv2 users).
+    -   'usm' and 'community' for 'snmp' application (when creating SNMPv3 users).
+    -   'password' for 'sp' application.
+    -   'password' for 'rsh' application.
+    -   'password' for 'telnet' application.
+    -   'password', 'publickey', 'domain', 'nsswitch' for 'ssh' application.
 
   set_password:
     required: false

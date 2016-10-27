@@ -52,11 +52,7 @@ options:
     required: false
     notes: required when state == 'present'
     description:
-    - Number of disks to place into the aggregate, including parity disks.
-    - The disks in this newly-created aggregate come from the spare disk pool.
-    - The smallest disks in this pool join the aggregate first, unless the
-    - "disk-size" argument is provided. Either "disk-count" or "disks" must be
-    - supplied. Range [0..2^31-1].
+    - Number of disks to place into the aggregate, including parity disks. The disks in this newly-created aggregate come from the spare disk pool. The smallest disks in this pool join the aggregate first, unless the "disk-size" argument is provided. Either "disk-count" or "disks" must be supplied. Range [0..2^31-1].
 
   hostname:
     required: true
