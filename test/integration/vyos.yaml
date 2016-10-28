@@ -1,0 +1,12 @@
+---
+- hosts: vyos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: vyos_command, when: "limit_to in ['*', 'vyos_command']" }
+    - { role: vyos_config, when: "limit_to in ['*', 'vyos_config']" }

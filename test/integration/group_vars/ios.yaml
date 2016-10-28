@@ -1,0 +1,6 @@
+---
+cli:
+  host: "{{ inventory_hostname }}"
+  username: "{{ ios_cli_user | default('cisco') }}"
+  password: "{{ ios_cli_pass | default('cisco') }}"
+  transport: cli
