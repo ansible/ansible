@@ -1,0 +1,8 @@
+---
+cli:
+  host: "{{ ansible_ssh_host }}"
+  username: vyos
+  password: vyos
+  transport: cli
+
+
