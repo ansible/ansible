@@ -12,5 +12,3 @@
     - { role: iosxr_config, when: "limit_to in ['*', 'iosxr_config']" }
     - { role: iosxr_facts, when: "limit_to in ['*', 'iosxr_facts']" }
     - { role: iosxr_template, when: "limit_to in ['*', 'iosxr_template']" }
-
-

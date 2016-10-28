@@ -11,5 +11,3 @@
    - { role: dellos9_command, when: "limit_to in ['*', 'dellos9_command']" }
    - { role: dellos9_config, when: "limit_to in ['*', 'dellos9_config']" }
    - { role: dellos9_facts, when: "limit_to in ['*', 'dellos9_facts']" }
-
-

@@ -7,19 +7,9 @@
     limit_to: "*"
     debug: false
 
-  pre_tasks:
-    - name: enable nxapi on remote device
-      nxos_config:
-        lines:
-          - feature nxapi
-        provider: "{{ cli }}"
-
-
   roles:
     - { role: nxos_command, when: "limit_to in ['*', 'nxos_command']" }
-    - { role: nxos_config, when: "limit_to in ['*', 'nxos_config']"}
+    - { role: nxos_config, when: "limit_to in ['*', 'nxos_config']" }
     - { role: nxos_facts, when: "limit_to in ['*', 'nxos_facts']" }
     - { role: nxos_template, when: "limit_to in ['*', 'nxos_template']" }
     - { role: nxos_nxapi, when: "limit_to in ['*', 'nxos_nxapi']" }
-
-
