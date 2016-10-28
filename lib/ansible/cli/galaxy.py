@@ -26,9 +26,10 @@ import os.path
 import sys
 import yaml
 import time
+import shutil
 
 from collections import defaultdict
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader
 
 import ansible.constants as C
 from ansible.cli import CLI
@@ -85,6 +86,8 @@ class GalaxyCLI(CLI):
         elif self.action == "init":
             self.parser.set_usage("usage: %prog init [options] role_name")
             self.parser.add_option('-p', '--init-path', dest='init_path', default="./", help='The path in which the skeleton role will be created. The default is the current working directory.')
+            self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
+                                   help='Initialize the skeleton role with default contents for a Container Enabled role.')
         elif self.action == "install":
             self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
             self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False, help='Ignore errors and continue with the next specified role.')
@@ -188,79 +191,58 @@ class GalaxyCLI(CLI):
                             "however it will reset any main.yml files that may have\n"
                             "been modified there already." % role_path)
 
-        # create default README.md
+        platforms = []
+        if not offline:
+            platforms = self.api.get_list("platforms") or []
+
+        # group the list of platforms from the api based
+        # on their names, with the release field being
+        # appended to a list of versions
+        platform_groups = defaultdict(list)
+        for platform in platforms:
+            platform_groups[platform['name']].append(platform['release'])
+            platform_groups[platform['name']].sort()
+
+        inject_data = dict(
+            role_name=role_name,
+            author='your name',
+            description='your description',
+            company='your company (optional)',
+            license='license (GPLv2, CC-BY, etc)',
+            issue_tracker_url='http://example.com/issue/tracker',
+            min_ansible_version='1.2',
+            platforms=platform_groups,
+            container_enabled=self.options.container_enabled
+        )
+
+        # create role directory
         if not os.path.exists(role_path):
             os.makedirs(role_path)
-        readme_path = os.path.join(role_path, "README.md")
-        f = open(readme_path, "wb")
-        f.write(to_bytes(self.galaxy.default_readme))
-        f.close()
 
-        # create default .travis.yml
-        travis = Environment().from_string(self.galaxy.default_travis).render()
-        f = open(os.path.join(role_path, '.travis.yml'), 'w')
-        f.write(travis)
-        f.close()
+        role_skeleton = self.galaxy.default_role_skeleton_path
+        role_skeleton = os.path.expanduser(role_skeleton)
+        template_env = Environment(loader=FileSystemLoader(role_skeleton))
 
-        for dir in GalaxyRole.ROLE_DIRS:
-            dir_path = os.path.join(init_path, role_name, dir)
-            main_yml_path = os.path.join(dir_path, 'main.yml')
+        for root, dirs, files in os.walk(role_skeleton, topdown=True):
+            rel_root = os.path.relpath(root, role_skeleton)
+            in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
+            for f in files:
+                filename, ext = os.path.splitext(f)
+                if ext == ".j2" and not in_templates_dir:
+                    src_template = os.path.join(rel_root, f)
+                    dest_file = os.path.join(role_path, rel_root, filename)
+                    template_env.get_template(src_template).stream(inject_data).dump(dest_file)
+                else:
+                    display.display("root: %s f: %s role_skeleton: %s" % (root, f, role_skeleton))
+                    f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
+                    display.display("f_rel_path: %s" % f_rel_path)
+                    shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
 
-            # create the directory if it doesn't exist already
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+            for d in dirs:
+                dir_path = os.path.join(role_path, rel_root, d)
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path)
 
-            # now create the main.yml file for that directory
-            if dir == "meta":
-                # create a skeleton meta/main.yml with a valid galaxy_info
-                # datastructure in place, plus with all of the available
-                # platforms included (but commented out), the galaxy_tags
-                # list, and the dependencies section
-                platforms = []
-                if not offline:
-                    platforms = self.api.get_list("platforms") or []
-
-                # group the list of platforms from the api based
-                # on their names, with the release field being
-                # appended to a list of versions
-                platform_groups = defaultdict(list)
-                for platform in platforms:
-                    platform_groups[platform['name']].append(platform['release'])
-                    platform_groups[platform['name']].sort()
-
-                inject = dict(
-                    author = 'your name',
-                    description = 'your description',
-                    company = 'your company (optional)',
-                    license = 'license (GPLv2, CC-BY, etc)',
-                    issue_tracker_url = 'http://example.com/issue/tracker',
-                    min_ansible_version = '1.2',
-                    platforms = platform_groups,
-                )
-                rendered_meta = Environment().from_string(self.galaxy.default_meta).render(inject)
-                f = open(main_yml_path, 'w')
-                f.write(rendered_meta)
-                f.close()
-                pass
-            elif dir == "tests":
-                # create tests/test.yml
-                inject = dict(
-                    role_name = role_name
-                )
-                playbook = Environment().from_string(self.galaxy.default_test).render(inject)
-                f = open(os.path.join(dir_path, 'test.yml'), 'w')
-                f.write(playbook)
-                f.close()
-
-                # create tests/inventory
-                f = open(os.path.join(dir_path, 'inventory'), 'w')
-                f.write('localhost')
-                f.close()
-            elif dir not in ('files','templates'):
-                # just write a (mostly) empty YAML file for main.yml
-                f = open(main_yml_path, 'w')
-                f.write('---\n# %s file for %s\n' % (dir,role_name))
-                f.close()
         display.display("- %s was created successfully" % role_name)
 
     def execute_info(self):
