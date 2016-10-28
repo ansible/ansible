@@ -335,7 +335,20 @@ class TaskQueueManager:
                     defunct = True
         return defunct
 
+    def _callback_method_expand(self, method_name):
+        return [method_name, method_name.replace('v2_', '')]
+
+    def find_callback_method(self, callback_plugin, method_names):
+        for method_name in method_names:
+            gotit = getattr(callback_plugin, method_name, None)
+            if gotit is not None:
+                if hasattr(gotit, '_callback_disabled'):
+                    continue
+                return gotit
+        return None
+
     def send_callback(self, method_name, *args, **kwargs):
+        display.v('SEND_CALLBAC: method_name=%s' % method_name)
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
@@ -344,14 +357,50 @@ class TaskQueueManager:
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
-            for possible in [method_name, 'v2_on_any']:
-                gotit = getattr(callback_plugin, possible, None)
-                if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
-                if gotit is not None:
-                    methods.append(gotit)
+            new_method = self.find_callback_method(callback_plugin, [method_name, method_name.replace('v2_', '')])
+            if new_method:
+                # no method called_as/alias
+                methods.append((new_method, None))
 
-            for method in methods:
+            # if the plugin does not have any method that could match (ie, the correct one or the v1 version)
+            # then check for a 'v2_on_missing'.
+            # NOTE: a 'v2_on_missing' will be called if it exists in preference to 'v2_on_any'
+            new_method = self.find_callback_method(callback_plugin, ['v2_on_missing'])
+            if new_method:
+                methods.append((new_method, method_name))
+
+            # if there isn't a matching method and there is no 'v2_on_missing', then check for 'v2_on_any'
+            # In other worse, v2_on_any is not called if there is a v2_on_missing or a exact match.
+            # Note: Callback methods that subclass CallbackBase will provide most methods by default
+            if not methods:
+                new_method = self.find_callback_method(callback_plugin, ['v2_on_any', 'on_any'])
+                if new_method:
+                    methods.append((new_method, method_name))
+
+            # look for a 'v2_on_all' method. A 'v2_on_all' if it exists, will always be called. Even if
+            # there was an exact match, or a 'v2_on_missing', or a 'v2_on_any'. If it exists, it is always called.
+            # Note: If you are tracking any context based on callback methods, the 'v2_on_all' existing could be called
+            # in addition to another matching method. More than one method from a single callback plugin could be called
+            # if the plugin provides a 'v2_on_all'
+            # If there is a 'v2_on_all', always call it. Always.
+            new_method = self.find_callback_method(callback_plugin, ['v2_on_all'])
+            # There is no v1 'on_missing'
+            if new_method:
+                methods.append((new_method, method_name))
+
+            for method, method_alias in methods:
+                # add origin method name to kwargs if the method has the right attribute
+                # methods that are being called via an alias (ie, exact method name match) will
+                # provide a method_alias of None.
+                #
+                # Non-wildcard methods dont take kwargs, so only change kwargs if method_alias is used and truthy
+                # kwargs is shared across invoking the method for multiple plugins, some may be 'real', some may be 'wildcard'
+                # so use a copy of kwargs to pass to the methods, so we can dont change the shared one
+                kwargs_copy = kwargs.copy()
+                if method_alias:
+                    kwargs_copy['_callback_method_name'] = method_alias
+
+
                 try:
                     # temporary hack, required due to a change in the callback API, so
                     # we don't break backwards compatibility with callbacks which were
@@ -361,11 +410,11 @@ class TaskQueueManager:
                         import inspect
                         (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
                         if 'playbook' in f_args:
-                            method(*args, **kwargs)
+                            method(*args, **kwargs_copy)
                         else:
                             method()
                     else:
-                        method(*args, **kwargs)
+                        method(*args, **kwargs_copy)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
