@@ -4,5 +4,3 @@ cli:
   username: vyos
   password: vyos
   transport: cli
-
-

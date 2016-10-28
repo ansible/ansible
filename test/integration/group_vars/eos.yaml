@@ -13,5 +13,3 @@ eapi:
   transport: eapi
   use_ssl: no
   authorize: yes
-
-
