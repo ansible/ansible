@@ -21,11 +21,6 @@ import re
 import socket
 import time
 
-# py2 vs py3; replace with six via ansiballz
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 try:
     import paramiko
@@ -36,6 +31,7 @@ except ImportError:
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
+from ansible.module_utils.six.moves import StringIO
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
