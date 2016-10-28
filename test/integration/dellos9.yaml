@@ -6,7 +6,6 @@
   vars:
     limit_to: "*"
     debug: false
-    items: ""
 
   roles:
    - { role: dellos9_command, when: "limit_to in ['*', 'dellos9_command']" }
