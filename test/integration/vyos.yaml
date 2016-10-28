@@ -5,6 +5,7 @@
 
   vars:
     limit_to: "*"
+    debug: false
 
   roles:
     - { role: vyos_command, when: "limit_to in ['*', 'vyos_command']" }
