@@ -198,9 +198,18 @@ The above will create the following directory structure in the current working d
    vars/
        main.yml
 
+Force
+=====
 
 If a directory matching the name of the role already exists in the current working directory, the init command will result in an error. To ignore the error 
 use the *--force* option. Force will create the above subdirectories and files, replacing anything that matches.
+
+Container Enabled
+=================
+
+If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
+with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
+the role using [Ansible Container](https://github.com/ansible/ansible-container), and the meta directory includes a *container.yml* file.
 
 Search for roles
 ----------------
@@ -350,9 +359,21 @@ By default the command will wait for Galaxy to complete the import process, disp
     Import completed
     Status SUCCESS : warnings=0 errors=0
 
+Branch
+======
+
 Use the *--branch* option to import a specific branch. If not specified, the default branch for the repo will be used.
 
-If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site 
+Role name
+=========
+
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name
+option to override this and set the name.
+
+No wait
+=======
+
+If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site
 by visiting *My Imports*.
 
 Delete a role
