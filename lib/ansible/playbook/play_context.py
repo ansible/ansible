@@ -426,17 +426,18 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value
-        # to that of the currently logged in user, to ensure any become settings
-        # are obeyed correctly
-        # additionally, we need to do this check after final connection has been
-        # correctly set above ...
+        # this needs to happen after final connection is set (above)
+        # if the connection type is local, reset the remote_user value to that of the currently logged in user,
+        # this ensures any become settings are obeyed correctly
+        # also set the python executable as this can/will vary from the initial host
         if new_info.connection == 'local':
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
-            if not new_info.get(ansible_python_interpreter):
-                mypython = sys.executable()
-                if mypython: # in some corner cases sys.executable is blank so we avoid rewriting modules
-                    new_info['ansible_python_interpreter'] = mypython
+            mypython = sys.executable()
+            if mypython: # in some corner cases sys.executable is blank so we avoid rewriting modules
+                new_info['ansible_python_interpreter'] = mypython
+            else:
+                display.warning('Unable to determine python interpreter from sys.executablem for local execution, using defaults.'
+                                'You can control this by setting ansible_python_interpreter.')
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
