@@ -179,10 +179,10 @@ EXAMPLES = '''
 - hosts: localhost
   connection: local
   tasks:
-    - name: Restart a container
+    - name: Delete a container
       lxd_container:
         name: mycontainer
-        state: restarted
+        state: absent
 
 # An example for restarting a container
 - hosts: localhost
