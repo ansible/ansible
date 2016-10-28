@@ -1,0 +1,13 @@
+---
+- hosts: asa
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: asa_command, when: "limit_to in ['*', 'asa_command']" }
+    - { role: asa_config, when: "limit_to in ['*', 'asa_config']" }
+    - { role: asa_acl, when: "limit_to in ['*', 'asa_acl']" }

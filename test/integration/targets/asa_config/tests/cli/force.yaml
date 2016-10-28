@@ -1,0 +1,41 @@
+---
+- debug: msg="START cli/force.yaml"
+
+- name: setup
+  asa_config:
+    commands:
+      - no object-group network OG-ANSIBLE-TEMPLATE-DEFAULT
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: configure device with config
+  asa_config:
+    src: basic/config.j2
+    provider: "{{ cli }}"
+    match: none
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is defined"
+
+- name: check device with config
+  asa_config:
+    src: basic/config.j2
+    provider: "{{ cli }}"
+    match: none
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is defined"
+
+- name: teardown
+  asa_config:
+    commands:
+      - no object-group network OG-ANSIBLE-TEMPLATE-DEFAULT
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/force.yaml"

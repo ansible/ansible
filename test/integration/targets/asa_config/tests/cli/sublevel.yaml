@@ -1,0 +1,40 @@
+---
+- debug: msg="START cli/sublevel.yaml"
+
+- name: setup test
+  asa_config:
+    lines:
+      - 'no object-group network OG-ANSIBLE-SUBLEVEL'
+    provider: "{{ cli }}"
+
+- name: configure sub level command
+  asa_config:
+    lines: ['network-object host 192.168.10.1']
+    parents: ['object-group network OG-ANSIBLE-SUBLEVEL']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'object-group network OG-ANSIBLE-SUBLEVEL' in result.updates"
+      - "'network-object host 192.168.10.1' in result.updates"
+
+- name: configure sub level command idempotent check
+  asa_config:
+    lines: ['network-object host 192.168.10.1']
+    parents: ['object-group network OG-ANSIBLE-SUBLEVEL']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  asa_config:
+    lines:
+      - 'no object-group network OG-ANSIBLE-SUBLEVEL'
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/sublevel.yaml"

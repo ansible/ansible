@@ -22,8 +22,6 @@ Integration test layer, constructed using playbooks.
 Some tests may require cloud credentials, others will not, and destructive tests are separated from non-destructive so a subset
 can be run on development machines.
 
-Tests for network modules can be found in https://github.com/ansible/test-network-modules/
-
 learn more
 ----------
 
