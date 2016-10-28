@@ -55,6 +55,13 @@ options:
         device.  If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
     required: false
+  allow_agent:
+    description:
+      - Specifies whether to allow SSH agents to be used. If the value is not
+        specified in the task, the value of the variable C(ANSIBLE_NET_ALLOW_AGENT)
+        will be used instead.
+    required: false
+    default: false
   timeout:
     description:
       - Specifies idle timeout (in seconds) for the connection. Useful if the
