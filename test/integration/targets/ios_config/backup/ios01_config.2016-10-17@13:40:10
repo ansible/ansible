@@ -1,0 +1,193 @@
+Building configuration...
+
+Current configuration : 4399 bytes
+!
+! Last configuration change at 12:30:53 UTC Sun Oct 16 2016 by ********
+!
+version 15.6
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname ios01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+enable password ********
+!
+no aaa new-model
+ethernet lmi ce
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip domain lookup source-interface GigabitEthernet0/0
+ip domain name eng.ansible.com
+ip name-server vrf Mgmt-intf 172.26.1.1
+ip name-server 172.26.1.1
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+archive
+ path flash0:
+username ******** privilege 15 secret 5 $1$.c.h$vsZCXNpKp4QcaIYGebR1N0
+username ansible privilege 15 secret 5 $1$TZ54$ojHnTRY/cmY1.uqT/Hdo91
+username admin secret 5 $1$quDo$YIkjdZ33nlMLCjvqGDbuX1
+!
+redundancy
+!
+lldp run
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description Loopback
+ ip address 192.168.0.4 255.255.255.255
+!
+interface Loopback100
+ description this is a test
+ no ip address
+!
+interface Loopback101
+ description this is a test
+ no ip address
+ shutdown
+!
+interface Loopback999
+ no ip address
+!
+interface GigabitEthernet0/0
+ description OOB Management
+ vrf forwarding Mgmt-intf
+ ip address 172.26.4.30 255.255.255.0
+ duplex full
+ speed auto
+ media-type rj45
+ no lldp transmit
+ no lldp receive
+!
+interface GigabitEthernet0/1
+ ip address 10.0.0.9 255.255.255.252
+ duplex full
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/2
+ description test interface
+ no ip address
+ shutdown
+ duplex full
+ speed auto
+ media-type rj45
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+ip dns view vrf Mgmt-intf default
+ip route vrf Mgmt-intf 172.26.0.0 255.255.0.0 172.26.4.1
+ip ssh pubkey-chain
+  username ansible
+ip ssh server algorithm authentication password
+!
+ip access-list extended AllowTraffic
+ permit ip any any
+ip access-list extended AllowedTraffic
+ permit tcp any eq www any
+ permit tcp any any eq www
+ deny   tcp any any log
+ deny   ip any any log
+!
+!
+snmp-server location data center
+snmp-server chassis-id 
+!
+access-list 1 permit 1.2.3.44
+access-list 1 permit any log
+access-list 1 deny   any
+access-list 1 permit 0.2.3.4 255.0.0.0 log
+!
+control-plane
+!
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!
+line con 0
+ password ********
+line aux 0
+line vty 0 4
+ exec-timeout 720 0
+ password ********
+ login local
+ transport input telnet ssh
+!
+no scheduler allocate
+!
+end
