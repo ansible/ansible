@@ -69,7 +69,7 @@ class Shell(object):
 
     def open(self, host, port=22, username=None, password=None, timeout=10,
              key_filename=None, pkey=None, look_for_keys=None,
-             allow_agent=False, key_policy="loose"):
+             allow_agent=False, key_policy="ignore"):
 
         self.ssh = paramiko.SSHClient()
         if key_policy != "ignore":
