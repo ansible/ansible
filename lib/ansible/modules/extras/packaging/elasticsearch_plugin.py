@@ -142,7 +142,10 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     cmd = " ".join(cmd_args)
 
-    rc, out, err = module.run_command(cmd)
+    if module.check_mode:
+        rc, out, err = 0, "check mode", ""
+    else:
+        rc, out, err = module.run_command(cmd)
 
     if rc != 0:
         reason = parse_error(out)
@@ -155,7 +158,10 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     cmd = " ".join(cmd_args)
 
-    rc, out, err = module.run_command(cmd)
+    if module.check_mode:
+        rc, out, err = 0, "check mode", ""
+    else:
+        rc, out, err = module.run_command(cmd)
 
     if rc != 0:
         reason = parse_error(out)
@@ -175,7 +181,8 @@ def main():
             proxy_host=dict(default=None),
             proxy_port=dict(default=None),
             version=dict(default=None)
-        )
+        ),
+        supports_check_mode=True
     )
 
     name        = module.params["name"]
