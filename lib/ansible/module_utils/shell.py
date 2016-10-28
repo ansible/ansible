@@ -32,6 +32,7 @@ except ImportError:
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
 from ansible.module_utils.six.moves import StringIO
+from ansible.module_utils._text import to_native
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
@@ -154,7 +155,7 @@ class Shell(object):
             raise ShellError("timeout trying to send command: %s" % cmd)
         except socket.error:
             exc = get_exception()
-            raise ShellError("problem sending command to host: %s" % str(exc))
+            raise ShellError("problem sending command to host: %s" % to_native(exc))
         return responses
 
     def close(self):
@@ -227,7 +228,7 @@ class CliBase(object):
         except ShellError:
             exc = get_exception()
             raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
+                msg='failed to connect to %s:%s' % (host, port), exc=to_native(exc)
             )
 
         self._connected = True
@@ -246,7 +247,7 @@ class CliBase(object):
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
-            raise NetworkError(str(exc), commands=commands)
+            raise NetworkError(to_native(exc), commands=commands)
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
