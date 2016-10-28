@@ -659,7 +659,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # pre-split stdout into lines, if stdout is in the data and there
         # isn't already a stdout_lines value there
         if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', u'').splitlines()
+            stdout = data.get('stdout', u'')
+            if isinstance(stdout, list):
+                data['stdout_lines'] = [l.splitlines() for l in stdout]
+            else:
+                data['stdout_lines'] = stdout.splitlines()
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data

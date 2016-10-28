@@ -50,9 +50,10 @@ def to_list(val):
 
 class ShellError(Exception):
 
-    def __init__(self, msg, command=None):
+    def __init__(self, msg, command=None, stdout=None):
         super(ShellError, self).__init__(msg)
         self.command = command
+        self.stdout = stdout
 
 
 class Shell(object):
@@ -125,7 +126,14 @@ class Shell(object):
         handled = False
 
         while True:
-            data = self.shell.recv(200)
+            try:
+                data = self.shell.recv(200)
+            except socket.timeout:
+                exc = get_exception()
+                exc.command = cmd
+
+                raise ShellError("timeout waiting for next prompt from remote device",
+                                 stdout = recv.getvalue())
 
             recv.write(data)
             recv.seek(recv.tell() - 200)
@@ -247,7 +255,7 @@ class CliBase(object):
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
-            raise NetworkError(to_native(exc), commands=commands)
+            raise NetworkError(to_native(exc), command=exc.command, stdout=exc.stdout)
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
