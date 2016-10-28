@@ -175,8 +175,8 @@ $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml --tags="cli" -e "
 
 Test cases are added to roles based on the module being testing. Test cases
 should include both `cli` and `eapi` test cases. Cli test cases should be
-added to `role/tests/cli` and eapi tests should be added to
-`role/tests/eapi`.
+added to `targets/modulename/tests/cli` and eapi tests should be added to
+`targets/modulename/tests/eapi`.
 
 ### Conventions
 
