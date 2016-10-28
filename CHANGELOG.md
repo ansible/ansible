@@ -24,7 +24,7 @@ Ansible Changes By Release
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
-- windows
+- openwrt_init
 - windows:
   * win_say
 
