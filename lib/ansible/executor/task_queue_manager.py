@@ -353,19 +353,7 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    # temporary hack, required due to a change in the callback API, so
-                    # we don't break backwards compatibility with callbacks which were
-                    # designed to use the original API
-                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
-                    if method_name == 'v2_playbook_on_start':
-                        import inspect
-                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                        if 'playbook' in f_args:
-                            method(*args, **kwargs)
-                        else:
-                            method()
-                    else:
-                        method(*args, **kwargs)
+                    method(*args, **kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
