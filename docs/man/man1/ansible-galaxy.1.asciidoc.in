@@ -277,6 +277,10 @@ Provide a specific branch to import. When a branch is not specified the
 branch found in meta/main.yml is used. If no branch is specified in
 meta/main.yml, the repo's default branch (usually master) is used.
 
+*--role-name*::
+
+Set the name of the role. Otherwise, the name is derived from the
+name of the GitHub repository.
 
 DELETE
 ------

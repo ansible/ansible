@@ -350,9 +350,21 @@ By default the command will wait for Galaxy to complete the import process, disp
     Import completed
     Status SUCCESS : warnings=0 errors=0
 
+Branch
+======
+
 Use the *--branch* option to import a specific branch. If not specified, the default branch for the repo will be used.
 
-If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site 
+Role name
+=========
+
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name
+option to override this and set the name.
+
+No wait
+=======
+
+If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site
 by visiting *My Imports*.
 
 Delete a role
