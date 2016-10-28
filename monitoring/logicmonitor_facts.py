@@ -58,7 +58,7 @@ module: logicmonitor_facts
 short_description: Collect facts about LogicMonitor objects
 description:
     - LogicMonitor is a hosted, full-stack, infrastructure monitoring platform.
-    - This module collects facts about hosts abd host groups within your LogicMonitor account.
+    - This module collects facts about hosts and host groups within your LogicMonitor account.
 version_added: "2.2"
 author: [Ethan Culler-Mayeno (@ethanculler), Jeff Wozniak (@woz5999)]
 notes:
