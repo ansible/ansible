@@ -433,6 +433,10 @@ class PlayContext(Base):
         # correctly set above ...
         if new_info.connection == 'local':
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+            if not new_info.get(ansible_python_interpreter):
+                mypython = sys.executable()
+                if mypython: # in some corner cases sys.executable is blank so we avoid rewriting modules
+                    new_info['ansible_python_interpreter'] = mypython
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
