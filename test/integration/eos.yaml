@@ -1,0 +1,28 @@
+---
+- hosts: eos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+
+  pre_tasks:
+    - name: enable cli on remote device
+      eos_eapi:
+        enable_http: yes
+        enable_https: yes
+        enable_local_http: yes
+        enable_socket: yes
+        provider: "{{ cli }}"
+      register: eos_eapi_output
+      connection: local
+
+
+  roles:
+    - { role: eos_command, when: "limit_to in ['*', 'eos_command']" }
+    - { role: eos_config, when: "limit_to in ['*', 'eos_config']" }
+    - { role: eos_template, when: "limit_to in ['*', 'eos_template']" }
+    - { role: eos_facts, when: "limit_to in ['*', 'eos_facts']" }
+    - { role: eos_eapi, debug: yes, when: "limit_to in ['*', 'eos_eapi']"}
+
+
