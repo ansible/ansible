@@ -80,6 +80,7 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog import [options] github_user github_repo")
             self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True, help='Don\'t wait for import results.')
             self.parser.add_option('--branch', dest='reference', help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
+            self.parser.add_option('--role-name', dest='role_name', help='The name the role should have, if different than the repo name')
             self.parser.add_option('--status', dest='check_status', action='store_true', default=False, help='Check the status of the most recent import request for given github_user/github_repo.')
         elif self.action == "info":
             self.parser.set_usage("usage: %prog info [options] role_name[,version]")
@@ -567,7 +568,7 @@ class GalaxyCLI(CLI):
             task = self.api.get_import_task(github_user=github_user, github_repo=github_repo)
         else:
             # Submit an import request
-            task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference)
+            task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference, role_name=self.options.role_name)
 
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
