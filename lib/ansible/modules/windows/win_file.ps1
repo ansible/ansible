@@ -102,7 +102,7 @@ Else
 
     If ( $state -eq "directory" )
     {
-        New-Item -ItemType directory -Path $path
+        New-Item -ItemType directory -Path $path | Out-Null
         $result.changed = $TRUE
     }
 
