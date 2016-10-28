@@ -234,9 +234,7 @@ class GalaxyCLI(CLI):
                     dest_file = os.path.join(role_path, rel_root, filename)
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
                 else:
-                    display.display("root: %s f: %s role_skeleton: %s" % (root, f, role_skeleton))
                     f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
-                    display.display("f_rel_path: %s" % f_rel_path)
                     shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
 
             for d in dirs:
