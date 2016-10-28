@@ -156,13 +156,13 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['enabled', 'disabled'] },
-        name={'required': True, 'type': 'str' },
-        s3_bucket_name={'required': False, 'type': 'str' },
-        s3_key_prefix={'default':'', 'required': False, 'type': 'str' },
-        include_global_events={'default':True, 'required': False, 'type': 'bool' },
+        state={'required': True, 'choices': ['enabled', 'disabled']},
+        name={'required': True, 'type': 'str'},
+        s3_bucket_name={'required': False, 'type': 'str'},
+        s3_key_prefix={'default': '', 'required': False, 'type': 'str'},
+        include_global_events={'default': True, 'required': False, 'type': 'bool'},
     ))
-    required_together = ( ['state', 's3_bucket_name'] )
+    required_together = (['state', 's3_bucket_name'])
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 
@@ -180,6 +180,7 @@ def main():
     s3_bucket_name = module.params['s3_bucket_name']
     # remove trailing slash from the key prefix, really messes up the key structure.
     s3_key_prefix = module.params['s3_key_prefix'].rstrip('/')
+
     include_global_events = module.params['include_global_events']
 
     #if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
@@ -194,7 +195,7 @@ def main():
             results['view'] = cf_man.view(ct_name)
             # only update if the values have changed.
             if results['view']['S3BucketName']              != s3_bucket_name or \
-              results['view']['S3KeyPrefix']                != s3_key_prefix  or \
+              results['view'].get('S3KeyPrefix', '')      != s3_key_prefix  or \
               results['view']['IncludeGlobalServiceEvents'] != include_global_events:
                 if not module.check_mode:
                     results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
