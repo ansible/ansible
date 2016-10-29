@@ -163,7 +163,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         return obj
 
     if errors in (None, 'surrogate_or_replace'):
-        if HAS_SURROGATEESCAPE or PY3:
+        if HAS_SURROGATEESCAPE:
             errors = 'surrogateescape'
         else:
             errors = 'replace'
