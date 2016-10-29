@@ -173,12 +173,6 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'strict'
 
-    if errors is None:
-        if PY3:
-            errors = 'surrogateescape'
-        else:
-            errors = 'replace'
-
     if isinstance(obj, binary_type):
         return obj.decode(encoding, errors)
 
