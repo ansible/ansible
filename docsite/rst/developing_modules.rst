@@ -528,7 +528,7 @@ your debugging session will start::
         "ping": "debugging_session"
     }
 
-Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILE` to ``1`` tells Ansible to keep the
+Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` tells Ansible to keep the
 remote module files instead of deleting them after the module finishes
 executing.  Giving Ansible the ``-vvv`` optin makes Ansible more verbose.
 That way it prints the file name of the temporary module file for you to see.
