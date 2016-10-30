@@ -1,4 +1,4 @@
-# (C) 2016, Joel, http://github.com/jjshoe 
+# (C) 2016, Joel, http://github.com/jjshoe
 # (C) 2015, Tom Paine, <github@aioue.net>
 # (C) 2014, Jharrod LaFon, @JharrodLaFon
 # (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
@@ -32,6 +32,9 @@ from ansible.plugins.callback import CallbackBase
 # define start time
 t0 = tn = time.time()
 
+# define display_width
+display_width = 80
+
 def secondsToStr(t):
     # http://bytes.com/topic/python/answers/635958-handy-short-cut-formatting-elapsed-time-floating-point-seconds
     rediv = lambda ll, b: list(divmod(ll[0], b)) + ll[1:]
@@ -40,10 +43,10 @@ def secondsToStr(t):
 
 def filled(msg, fchar="*"):
     if len(msg) == 0:
-        width = 79
+        width = display_width
     else:
         msg = "%s " % msg
-        width = 79 - len(msg)
+        width = display_width - len(msg)
     if width < 3:
         width = 3
     filler = fchar * width
@@ -86,7 +89,7 @@ class CallbackModule(CallbackBase):
         if self.task_output_limit == 'all':
             self.task_output_limit = None
         else:
-            self.task_output_limit = int(self.task_output_limit) 
+            self.task_output_limit = int(self.task_output_limit)
 
         super(CallbackModule, self).__init__()
 
@@ -118,7 +121,7 @@ class CallbackModule(CallbackBase):
 
         timestamp(self)
 
-        results = self.stats.items() 
+        results = self.stats.items()
 
         # Sort the tasks by the specified sort
         if self.sort_order != 'none':
@@ -128,12 +131,12 @@ class CallbackModule(CallbackBase):
                 reverse=self.sort_order,
             )
 
-        # Display the number of tasks specified or the default of 20 
+        # Display the number of tasks specified or the default of 20
         results = results[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:
-            msg=u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
+            msg=u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['time']),display_width-9)
             if 'path' in result:
-                msg += u"\n{0:-<79}".format(result['path'] + u' ')
+                msg += u"\n{0:-<{1}}".format(result['path'] + u' ',display_width)
             self._display.display(msg)
