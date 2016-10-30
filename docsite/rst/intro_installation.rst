@@ -54,7 +54,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of version 2.0, Ansible uses a few more file handles to manage its forks. Mac OS X by default is configured for a small amound of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
+    As of version 2.0, Ansible uses a few more file handles to manage its forks. Mac OS X by default is configured for a small amount of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
