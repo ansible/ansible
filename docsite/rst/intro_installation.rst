@@ -244,6 +244,26 @@ You may also wish to run from source to get the latest, which is covered above.
 
 .. _from_pkg:
 
+Latest Releases Via Apt (Debian)
+++++++++++++++++++++++++++++++++
+
+Debian users may leverage the same source as the Ubuntu PPA.
+
+Add the following line to /etc/apt/sources.list:
+
+.. code-block:: bash
+
+    deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
+
+Then run these commands:
+
+.. code-block:: bash
+
+    $ sudo apt-get update
+    $ sudo apt-get install ansible
+
+.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
+
 Latest Releases Via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
 
