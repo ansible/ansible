@@ -3309,6 +3309,7 @@ class OpenBSDVirtual(Virtual):
     - virtualization_role
     """
     platform = 'OpenBSD'
+    DMESG_BOOT = '/var/run/dmesg.boot'
 
     def get_virtual_facts(self):
         sysctl_path = self.module.get_bin_path('sysctl')
@@ -3345,6 +3346,18 @@ class OpenBSDVirtual(Virtual):
                         if out.rstrip() == 'QEMU':
                             self.facts['virtualization_type'] = 'kvm'
                             self.facts['virtualization_role'] = 'guest'
+                        if out.rstrip() == 'OpenBSD':
+                            self.facts['virtualization_type'] = 'vmm'
+                            self.facts['virtualization_role'] = 'guest'
+
+        # Check the dmesg if vmm(4) attached, indicating the host is
+        # capable of virtualization.
+        dmesg_boot = get_file_content(OpenBSDVirtual.DMESG_BOOT)
+        for line in dmesg_boot.splitlines():
+            match = re.match('^vmm0 at mainbus0: (SVM/RVI|VMX/EPT)$', line)
+            if match:
+                self.facts['virtualization_type'] = 'vmm'
+                self.facts['virtualization_role'] = 'host'
 
 class HPUXVirtual(Virtual):
     """
