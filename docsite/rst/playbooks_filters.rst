@@ -168,7 +168,7 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
-Provide a seed to get a repeatable result::
+Provide a seed to get a repeatable result (new in version 2.3)::
 
     {{ 59 |random(seed=ansible_fqdn) }} * * * * root /script/from/cron
 
@@ -185,7 +185,7 @@ To get a random list from an existing list, giving a different order every invoc
     {{ ['a','b','c']|shuffle }} => ['c','a','b']
     {{ ['a','b','c']|shuffle }} => ['b','c','a']
 
-To get a random list from an existing list, giving a repeatable order every invocation::
+To get a random list from an existing list, giving a repeatable order every invocation (new in version 2.3)::
 
     {{ ['a','b','c']|shuffle(seed=ansible_fqdn) }} => ['c','a','b']
     {{ ['a','b','c']|shuffle(seed=ansible_fqdn) }} => ['b','c','a']
