@@ -486,6 +486,10 @@ class VaultEditor:
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
+        # This is more or less an assert, see #18247
+        if new_password is None:
+            raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
+
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
 
