@@ -116,7 +116,7 @@ class PlaybookCLI(CLI):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
             loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             loader.set_vault_password(vault_pass)
 
         # create the variable manager, which will be shared throughout
