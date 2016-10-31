@@ -103,8 +103,6 @@ class Display:
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
 
-        # FIXME: this needs to be implemented
-        #msg = utils.sanitize_output(msg)
         nocolor = msg
         if color:
             msg = stringc(msg, color)
@@ -175,8 +173,6 @@ class Display:
             self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
-        # FIXME: this needs to be implemented
-        #msg = utils.sanitize_output(msg)
         if self.verbosity > caplevel:
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE)
@@ -222,12 +218,11 @@ class Display:
         if C.SYSTEM_WARNINGS:
             self.warning(msg)
 
-    def banner(self, msg, color=None):
+    def banner(self, msg, color=None, cows=True):
         '''
-        Prints a header-looking line with stars taking up to 80 columns
-        of width (3 columns, minimum)
+        Prints a header-looking line with cowsay or stars wit hlength depending on terminal width (3 minimum)
         '''
-        if self.b_cowsay:
+        if self.b_cowsay and cows:
             try:
                 self.banner_cowsay(msg)
                 return
@@ -235,8 +230,8 @@ class Display:
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = (79 - len(msg))
-        if star_len < 0:
+        star_len = self.columns - len(msg)
+        if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
         self.display(u"\n%s %s" % (msg, stars), color=color)
@@ -337,4 +332,4 @@ class Display:
             tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             tty_size = 0
-        self.columns = max(79, tty_size)
+        self.columns = max(79, tty_size - 1)
