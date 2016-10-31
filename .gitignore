@@ -54,6 +54,7 @@ credentials.yml
 *.out
 .coverage
 .tox
+.cache
 results.xml
 coverage.xml
 /test/units/cover-html

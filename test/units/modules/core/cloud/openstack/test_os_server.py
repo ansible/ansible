@@ -4,7 +4,7 @@ import yaml
 import inspect
 import collections
 
-from cloud.openstack import os_server
+from ansible.modules.core.cloud.openstack import os_server
 
 
 class AnsibleFail(Exception):
@@ -180,6 +180,8 @@ class TestCreateServer(object):
             flavor: m1.tiny
             nics:
               - net-name: network1
+            meta:
+              - key: value
         '''
         with pytest.raises(AnsibleExit):
             os_server._create_server(self.module, self.cloud)
