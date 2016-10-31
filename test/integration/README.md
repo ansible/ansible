@@ -65,6 +65,7 @@ named `credentials.yml`.  A sample credentials file named
 
 
 Provide cloud credentials:
+
     cp credentials.template credentials.yml
     ${EDITOR:-vi} credentials.yml
 
@@ -91,6 +92,7 @@ Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
     Enable-PSRemoting -Force
 
 Define Windows inventory:
+
     cp inventory.winrm.template inventory.winrm
     ${EDITOR:-vi} inventory.winrm
 
@@ -156,9 +158,10 @@ Network Tests
 =============
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
+```
 
 *NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
-```
+
 
 To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
 
