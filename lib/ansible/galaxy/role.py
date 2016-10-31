@@ -222,6 +222,7 @@ class GalaxyRole(object):
                     display.warning("%s is a Container App role and should only be installed using Ansible "
                                     "Container" % self.name)
 
+
                 role_versions = api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
@@ -237,7 +238,7 @@ class GalaxyRole(object):
                     else:
                         self.version = 'master' 
                 elif self.version != 'master':
-                    if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
 
                 tmp_file = self.fetch(role_data)
