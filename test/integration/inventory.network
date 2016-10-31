@@ -14,7 +14,7 @@ iosxr01
 
 [ios]
 ios01
-csr01
+#csr01
 
 [junos]
 vsrx01
