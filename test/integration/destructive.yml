@@ -7,6 +7,7 @@
     - { role: pip, tags: test_pip }
     - { role: gem, tags: test_gem }
     - { role: yum, tags: test_yum }
+    - { role: dnf, tags: test_dnf }
     - { role: apt, tags: test_apt }
     - { role: apt_repository, tags: [test_apt_repository, test_apt_key] }
     - { role: postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user, needs_privileged] }
