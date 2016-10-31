@@ -222,7 +222,6 @@ class GalaxyRole(object):
                     display.warning("%s is a Container App role and should only be installed using Ansible "
                                     "Container" % self.name)
 
-
                 role_versions = api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
