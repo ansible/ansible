@@ -284,18 +284,19 @@ def main():
                 directory_args['mode'] = None
             adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
+    if os.path.isdir(b_dest):
+        basename = os.path.basename(src)
+        if original_basename:
+            basename = original_basename
+        dest = os.path.join(dest, basename)
+        b_dest = to_bytes(dest, errors='surrogate_or_strict')
+
     if os.path.exists(b_dest):
         if os.path.islink(b_dest) and follow:
             b_dest = os.path.realpath(b_dest)
             dest = to_native(b_dest, errors='surrogate_or_strict')
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if os.path.isdir(b_dest):
-            basename = os.path.basename(src)
-            if original_basename:
-                basename = original_basename
-            dest = os.path.join(dest, basename)
-            b_dest = to_bytes(dest, errors='surrogate_or_strict')
         if os.access(b_dest, os.R_OK):
             checksum_dest = module.sha1(dest)
     else:
