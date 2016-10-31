@@ -525,4 +525,7 @@ class FilterModule(object):
             # skip testing
             'skipped' : skipped,
             'skip'    : skipped,
+
+            # debug
+            'type': lambda o: o.__class__.__name__,
         }

@@ -514,6 +514,18 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
     {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
 
+Debugging Filters
+-----------------
+
+.. versionadded:: 2.3
+
+Use the ``type`` filter to display the underlying Python type of a variable.
+This can be useful in debugging in situations where you may need to know the exact
+type of a variable::
+
+    {{ myvar | type }}
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
