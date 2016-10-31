@@ -265,13 +265,35 @@ def _mark_package_install(module, base, pkg_spec):
         module.fail_json(msg="No package {} available.".format(pkg_spec))
 
 
+def _parse_spec_group_file(names):
+    pkg_specs, grp_specs, filenames = [], [], []
+    for name in names:
+        if name.endswith(".rpm"):
+            filenames.append(name)
+        elif name.startswith("@"):
+            grp_specs.append(name[1:])
+        else:
+            pkg_specs.append(name)
+    return pkg_specs, grp_specs, filenames
+
+
+def _install_remote_rpms(base, filenames):
+    if int(dnf.__version__.split(".")[0]) >= 2:
+        pkgs = list(sorted(base.add_remote_rpms(list(filenames)), reverse=True))
+    else:
+        pkgs = []
+        for filename in filenames:
+            pkgs.append(base.add_remote_rpm(filename))
+    for pkg in pkgs:
+        base.package_install(pkg)
+
+
 def ensure(module, base, state, names):
     allow_erasing = False
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
-        pkg_specs, group_specs, filenames = dnf.cli.commands.parse_spec_group_file(
-            names)
+        pkg_specs, group_specs, filenames = _parse_spec_group_file(names)
         if group_specs:
             base.read_comps()
 
@@ -286,8 +308,7 @@ def ensure(module, base, state, names):
 
         if state in ['installed', 'present']:
             # Install files.
-            for filename in (f.strip() for f in filenames):
-                base.package_install(base.add_remote_rpm(filename))
+            _install_remote_rpms(base, (f.strip() for f in filenames))
             # Install groups.
             for group in (g.strip() for g in groups):
                 base.group_install(group, dnf.const.GROUP_PACKAGE_TYPES)
@@ -297,8 +318,7 @@ def ensure(module, base, state, names):
 
         elif state == 'latest':
             # "latest" is same as "installed" for filenames.
-            for filename in filenames:
-                base.package_install(base.add_remote_rpm(filename))
+            _install_remote_rpms(base, filenames)
             for group in groups:
                 try:
                     base.group_upgrade(group)
