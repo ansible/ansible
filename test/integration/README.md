@@ -156,19 +156,21 @@ Network Tests
 =============
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
+
+*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
 ```
 
 To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
 
 ```
-$ ANSIBLE_ROLES_PATH=targets ansible-playbook all.yaml -e "limit_to=eos_command"
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network all.yaml -e "limit_to=eos_command"
 ```
 
 To filter a singular test case set the tags options to eapi or cli, set limit_to to the test group,
 and test_cases to the name of the test:  
 
 ```
-$ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
 ```
 
 ## Contributing Test Cases 
