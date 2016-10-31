@@ -157,8 +157,10 @@ Network Tests
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 
-*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
 ```
+
+*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
+
 
 To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
 
