@@ -100,7 +100,7 @@ class ActionModule(ActionBase):
         self._mutually_exclusive()
 
     def run(self, tmp=None, task_vars=None):
-        """ Load yml files recursively from a directory.
+        """ Load yml files recursively from a directory. The filenames must have a yaml, yml, or json extension. 
         """
         self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
         if not task_vars:
@@ -267,7 +267,7 @@ class ActionModule(ActionBase):
             var_files: (list): List of files to iterate over and load into a dictionary.
 
         Returns:
-            Tuple (bool, str, dict)
+            Tuple (bool, str, dict) 
         """
         results = dict()
         failed = False
