@@ -95,6 +95,14 @@ class PlaybookCLI(CLI):
         vault_pass = None
         passwords = {}
 
+        # initial error check, to make sure all specified playbooks are accessible
+        # before we start running anything through the playbook executor
+        for playbook in self.args:
+            if not os.path.exists(playbook):
+                raise AnsibleError("the playbook: %s could not be found" % playbook)
+            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
         # don't deal with privilege escalation or passwords when we don't need to
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
@@ -110,14 +118,6 @@ class PlaybookCLI(CLI):
         elif self.options.ask_vault_pass:
             vault_pass = self.ask_vault_passwords()[0]
             loader.set_vault_password(vault_pass)
-
-        # initial error check, to make sure all specified playbooks are accessible
-        # before we start running anything through the playbook executor
-        for playbook in self.args:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
