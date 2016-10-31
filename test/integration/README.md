@@ -151,3 +151,46 @@ There are additional environment variables that can be used. A few of the more u
   - `KEEP_CONTAINERS=1` - Containers will always be preserved.
   - `SHARE_SOURCE=1` - Changes to source from the host or container will be shared between host and container.
                        _**CAUTION:** Files created by the container will be owned by root on the host._
+
+Network Tests
+=============
+```
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
+
+*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
+```
+
+To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
+
+```
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network all.yaml -e "limit_to=eos_command"
+```
+
+To filter a singular test case set the tags options to eapi or cli, set limit_to to the test group,
+and test_cases to the name of the test:  
+
+```
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
+```
+
+## Contributing Test Cases 
+
+Test cases are added to roles based on the module being testing. Test cases
+should include both `cli` and `eapi` test cases. Cli test cases should be
+added to `targets/modulename/tests/cli` and eapi tests should be added to
+`targets/modulename/tests/eapi`.
+
+### Conventions
+
+- Each test case should generally follow the pattern:
+
+  >setup —> test —> assert —> test again (idempotent) —> assert —> -teardown (if needed) -> done
+
+  This keeps test playbooks from becoming monolithic and difficult to
+  troubleshoot.
+
+- Include a name for each task that is not an assertion. (It's OK to add names
+  to assertions too. But to make it easy to identify the broken task within a failed
+  test, at least provide a helpful name for each task.)
+
+- Files containing test cases must end in `.yaml`
