@@ -1,9 +1,20 @@
 #!/usr/bin/python
 
-import boto3
+from nose.plugins.skip import SkipTest
+
+try:
+    import boto3
+    import botocore
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
+if not HAS_BOTO3:
+    raise SkipTest("test_kinesis_stream.py requires the python module 'boto3' and 'botocore'")
+
 import unittest
 
-import cloud.amazon.kinesis_stream as kinesis_stream
+import ansible.modules.extras.cloud.amazon.kinesis_stream as kinesis_stream
 
 aws_region = 'us-west-2'
 
@@ -19,7 +30,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'StreamStatus': 'ACTIVE'
         }
         converted_example = kinesis_stream.convert_to_lower(example)
-        keys = converted_example.keys()
+        keys = list(converted_example.keys())
         keys.sort()
         for i in range(len(keys)):
             if i == 0:
@@ -81,7 +92,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
 
     def test_get_tags(self):
         client = boto3.client('kinesis', region_name=aws_region)
-        success, err_msg, tags = kinesis_stream.get_tags(client, 'test', True)
+        success, err_msg, tags = kinesis_stream.get_tags(client, 'test', check_mode=True)
         self.assertTrue(success)
         should_return = [
             {
@@ -168,7 +179,7 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'env': 'development',
             'service': 'web'
         }
-        success, err_msg = (
+        success, changed, err_msg = (
             kinesis_stream.update_tags(
                 client, 'test', tags, check_mode=True
             )
