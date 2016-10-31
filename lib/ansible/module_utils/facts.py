@@ -1585,7 +1585,8 @@ class OpenBSDHardware(Hardware):
     - processor_cores
     - processor_count
     - processor_speed
-    - devices
+
+    In addition, it also defines number of DMI facts and device facts.
     """
     platform = 'OpenBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
@@ -1664,6 +1665,25 @@ class OpenBSDHardware(Hardware):
         devices = []
         devices.extend(self.sysctl['hw.disknames'].split(','))
         self.facts['devices'] = devices
+
+    def get_dmi_facts(self):
+        # We don't use dmidecode(1) here because:
+        # - it would add dependency on an external package
+        # - dmidecode(1) can only be ran as root
+        # So instead we rely on sysctl(8) to provide us the information on a
+        # best-effort basis. As a bonus we also get facts on non-amd64/i386
+        # platforms this way.
+        sysctl_to_dmi = {
+            'hw.product':  'product_name',
+            'hw.version':  'product_version',
+            'hw.uuid':     'product_uuid',
+            'hw.serialno': 'product_serial',
+            'hw.vendor':   'system_vendor',
+        }
+
+        for mib in sysctl_to_dmi:
+          if mib in self.sysctl:
+            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class FreeBSDHardware(Hardware):
     """
