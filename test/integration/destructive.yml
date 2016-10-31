@@ -9,6 +9,7 @@
     - { role: test_pip, tags: test_pip, when: ansible_fips != True }
     - { role: test_gem, tags: test_gem }
     - { role: test_yum, tags: test_yum, when: ansible_python.version.major == '2' }
+    - { role: test_dnf, tags: test_dnf }
     - { role: test_apt, tags: test_apt }
     - { role: test_apt_repository, tags: [test_apt_repository, test_apt_key] }
     - { role: test_postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user, needs_privileged] }
