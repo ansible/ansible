@@ -764,12 +764,13 @@ class Distribution(object):
             self.facts['distribution_version'] = '%s.%s' % (data.group(1), data.group(2))
 
     def get_distribution_OpenBSD(self):
+        self.facts['distribution_version'] = platform.release()
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
         match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
         if match:
-            self.facts['distribution_version'] = match.groups()[0]
+            self.facts['distribution_release'] = match.groups()[0]
         else:
-            self.facts['distribution_version'] = 'release'
+            self.facts['distribution_release'] = 'release'
 
     def get_distribution_DragonFly(self):
         pass
