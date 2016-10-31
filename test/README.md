@@ -4,8 +4,8 @@ Ansible Test System
 Folders
 =======
 
-unit
-----
+units
+-----
 
 Unit tests that test small pieces of code not suited for the integration test layer, usually very API based, and should leverage
 mock interfaces rather than producing side effects.
