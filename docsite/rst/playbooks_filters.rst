@@ -519,8 +519,8 @@ Debugging Filters
 
 .. versionadded:: 2.3
 
-Use the ``type`` filter to display the underlying python type of a variable.
-Useful in debugging in some situations where you may need to know the exact
+Use the ``type`` filter to display the underlying Python type of a variable.
+This can be useful in debugging in situations where you may need to know the exact
 type of a variable::
 
     {{ myvar | type }}
