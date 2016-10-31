@@ -201,7 +201,8 @@ class CollinsInventory(object):
                 response = open_url(query_url,
                         timeout=self.collins_timeout_secs,
                         url_username=self.collins_username,
-                        url_password=self.collins_password)
+                        url_password=self.collins_password,
+                        force_basic_auth=True)
                 json_response = json.loads(response.read())
                 # Adds any assets found to the array of assets.
                 assets += json_response['data']['Data']
