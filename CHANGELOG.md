@@ -403,20 +403,6 @@ Module fixes:
   Use `_fixup_perms2` if support for previous releases is not required.
   Otherwise use `_fixup_perms` with `recursive=False`.
 
-## 2.1.2 "The Song Remains the Same"
-
-###Deprecations:
-
-* Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
-  This change only impacts custom action plugins using `_fixup_perms`.
-
-###Incompatible Changes:
-
-* Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
-  Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
-  Use `_fixup_perms2` if support for previous releases is not required.
-  Otherwise use `_fixup_perms` with `recursive=False`.
-
 ## 2.1 "The Song Remains the Same"
 
 ###Major Changes:
