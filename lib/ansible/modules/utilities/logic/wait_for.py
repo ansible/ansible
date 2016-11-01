@@ -106,11 +106,11 @@ options:
     description:
       - list of hosts or IPs to ignore when looking for active TCP connections for C(drained) state
   sleep:
-    version_added: "2.1"
+    version_added: "2.3"
     required: false
     default: 1
     description:
-      - Number of seconds to sleep between checks, before 2.1 this was hardcoded to 1 second.
+      - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
