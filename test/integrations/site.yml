@@ -1,3 +1,0 @@
-- hosts: 127.0.0.1
-  roles:
-    - { role: ec2_vpc_nat_gateway }
