@@ -444,7 +444,7 @@ def main():
         if not matching:
             if not module.check_mode:
                 if module.params['load_balancers'] is None:
-                    loadBalancers = []
+                    load_balancers = []
                 if module.params['role'] is None:
                     role = ''
                 else:
