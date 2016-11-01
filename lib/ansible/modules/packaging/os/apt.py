@@ -755,6 +755,31 @@ def get_updated_cache_time():
     return mtimestamp, updated_cache_time
 
 
+# https://github.com/ansible/ansible-modules-core/issues/2951
+def get_cache(module):
+    '''Attempt to get the cache object and update till it works'''
+    cache = None
+    try:
+        cache = apt.Cache()
+    except SystemError:
+        e = get_exception()
+        if '/var/lib/apt/lists/' in str(e).lower():
+            # update cache until files are fixed or retries exceeded
+            retries = 0
+            while retries < 2:
+                (rc, so, se) = module.run_command(['apt-get', 'update', '-q'])
+                retries += 1
+                if rc == 0:
+                    break
+            if rc != 0:
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))    
+            # try again
+            cache = apt.Cache()
+        else:
+            module.fail_json(msg=str(e))
+    return cache
+ 
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -821,8 +846,10 @@ def main():
     if p['state'] == 'removed':
         p['state'] = 'absent'
 
+    # Get the cache object
+    cache = get_cache(module)
+
     try:
-        cache = apt.Cache()
         if p['default_release']:
             try:
                 apt_pkg.config['APT::Default-Release'] = p['default_release']
