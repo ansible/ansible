@@ -1098,6 +1098,9 @@ class AnsibleModule(object):
 
     def set_attributes_if_different(self, path, attributes, changed, diff=None):
 
+        if attributes is None:
+            return changed
+
         b_path = to_bytes(path, errors='surrogate_or_strict')
         b_path = os.path.expanduser(os.path.expandvars(b_path))
         existing = self.get_file_attributes(b_path)
