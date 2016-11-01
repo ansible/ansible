@@ -1,10 +1,12 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
+## 2.2 "The Battle of Evermore" - 11-01-2016
 
 ###Major Changes:
 
+* Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
+* Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Major performance improvements.
 * Added support for binary modules
@@ -289,9 +291,6 @@ Ansible Changes By Release
 * Fix for yum module incorrectly thinking it succeeded in installing packages
 * Make the default ansible_managed template string into a static string since
   all of the replacable values lead to non-idempotent behaviour.
-* apt_key fixes for when the user specifies a longer key id.  These allow more
-  specific targetting of keys to download while still working around
-  limitations in the apt-key tool that require shorter key id strings.
 
 ###For custom front ends using the API:
 * ansible.parsing.vault:
