@@ -28,6 +28,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+from ansible.module_utils.six import iteritems
 
 try:
     from cs import CloudStack, CloudStackException, read_config
