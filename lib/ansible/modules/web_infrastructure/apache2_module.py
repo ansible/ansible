@@ -95,7 +95,8 @@ def _module_is_enabled(module):
         name = "php7"
 
     if result != 0:
-        module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
+        if not ('AH00534' in stderr and 'mpm_' in name):
+            module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
 
     if re.search(r' ' + name + r'_module', stdout):
         return True
