@@ -2837,6 +2837,14 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
+
+        uname_rc = None
+        uname_out = None
+        uname_err = None
+        uname_path = self.module.get_bin_path('uname')
+        if uname_path:
+            uname_rc, uname_out, uname_err = self.module.run_command([uname_path, '-W'])
+
         rc, out, err = self.module.run_command([ifconfig_path, ifconfig_options])
 
         for line in out.splitlines():
@@ -2866,12 +2874,12 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                     self.parse_inet6_line(words, current_if, ips)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
-            uname_path = self.module.get_bin_path('uname')
+
             if uname_path:
-                rc, out, err = self.module.run_command([uname_path, '-W'])
                 # don't bother with wpars it does not work
                 # zero means not in wpar
-                if not rc and out.split()[0] == '0':
+                if not uname_rc and uname_out.split()[0] == '0':
+
                     if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
                         entstat_path = self.module.get_bin_path('entstat')
                         if entstat_path:
@@ -2888,6 +2896,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                                 buff = re.match('^Device Type:', line)
                                 if buff and re.match('.*Ethernet', line):
                                     current_if['type'] = 'ether'
+
                     # device must have mtu attribute in ODM
                     if 'mtu' not in current_if:
                         lsattr_path = self.module.get_bin_path('lsattr')
