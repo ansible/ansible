@@ -27,40 +27,40 @@ import pytest
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
-from ansible.module_utils import facts
+from ansible.module_utils.facts import timeout
 
 
 @pytest.fixture
 def set_gather_timeout_higher():
-    default_timeout = facts.GATHER_TIMEOUT
-    facts.GATHER_TIMEOUT = facts.DEFAULT_GATHER_TIMEOUT + 5
+    default_timeout = timeout.GATHER_TIMEOUT
+    timeout.GATHER_TIMEOUT = timeout.DEFAULT_GATHER_TIMEOUT + 5
     yield
-    facts.GATHER_TIMEOUT = default_timeout
+    timeout.GATHER_TIMEOUT = default_timeout
 
 
 @pytest.fixture
 def set_gather_timeout_lower():
-    default_timeout = facts.GATHER_TIMEOUT
-    facts.GATHER_TIMEOUT = 2
+    default_timeout = timeout.GATHER_TIMEOUT
+    timeout.GATHER_TIMEOUT = 2
     yield
-    facts.GATHER_TIMEOUT = default_timeout
+    timeout.GATHER_TIMEOUT = default_timeout
 
 
-@facts.timeout
+@timeout.timeout
 def sleep_amount_implicit(amount):
     # implicit refers to the lack of argument to the decorator
     time.sleep(amount)
     return 'Succeeded after {0} sec'.format(amount)
 
 
-@facts.timeout(facts.DEFAULT_GATHER_TIMEOUT + 5)
+@timeout.timeout(timeout.DEFAULT_GATHER_TIMEOUT + 5)
 def sleep_amount_explicit_higher(amount):
     # explicit refers to the argument to the decorator
     time.sleep(amount)
     return 'Succeeded after {0} sec'.format(amount)
 
 
-@facts.timeout(2)
+@timeout.timeout(2)
 def sleep_amount_explicit_lower(amount):
     # explicit refers to the argument to the decorator
     time.sleep(amount)
@@ -71,7 +71,7 @@ def test_defaults_still_within_bounds():
     # If the default changes outside of these bounds, some of the tests will
     # no longer test the right thing.  Need to review and update the timeouts
     # in the other tests if this fails
-    assert facts.DEFAULT_GATHER_TIMEOUT >= 4
+    assert timeout.DEFAULT_GATHER_TIMEOUT >= 4
 
 
 def test_implicit_file_default_succeeds():
@@ -81,32 +81,32 @@ def test_implicit_file_default_succeeds():
 
 def test_implicit_file_default_timesout():
     # sleep_time is greater than the default
-    sleep_time = facts.DEFAULT_GATHER_TIMEOUT + 1
-    with pytest.raises(facts.TimeoutError):
+    sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
+    with pytest.raises(timeout.TimeoutError):
         assert sleep_amount_implicit(sleep_time) == '(Not expected to succeed)'
 
 
 def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
     # Set sleep_time greater than the default timeout and less than our new timeout
-    sleep_time = facts.DEFAULT_GATHER_TIMEOUT + 1
+    sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
     assert sleep_amount_implicit(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
 
 
 def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(facts.TimeoutError):
+    with pytest.raises(timeout.TimeoutError):
         assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
 
 
 def test_explicit_succeeds():
     # Set sleep_time greater than the default timeout and less than our new timeout
-    sleep_time = facts.DEFAULT_GATHER_TIMEOUT + 1
+    sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
     assert sleep_amount_explicit_higher(sleep_time) == 'Succeeded after {0} sec'.format(sleep_time)
 
 
 def test_explicit_timeout():
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(facts.TimeoutError):
+    with pytest.raises(timeout.TimeoutError):
         assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
