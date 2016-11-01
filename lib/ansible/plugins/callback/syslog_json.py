@@ -22,6 +22,7 @@ class CallbackModule(CallbackBase):
     This plugin makes use of the following environment variables:
         SYSLOG_SERVER   (optional): defaults to localhost
         SYSLOG_PORT     (optional): defaults to 514
+        SYSLOG_FACILITY (optional): defaults to user
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
@@ -38,7 +39,7 @@ class CallbackModule(CallbackBase):
         self.handler = logging.handlers.SysLogHandler(
             address = (os.getenv('SYSLOG_SERVER','localhost'),
                        os.getenv('SYSLOG_PORT',514)), 
-            facility=logging.handlers.SysLogHandler.LOG_USER
+            facility= os.getenv('SYSLOG_FACILITY',logging.handlers.SysLogHandler.LOG_USER)
         )
         self.logger.addHandler(self.handler)
         self.hostname = socket.gethostname()
