@@ -15,9 +15,10 @@ author:
 module: include
 short_description: include a play or task list.
 description:
-     - Loads a file with a list of plays or tasks to be executed in the current playbook.
+     - Includes a file with a list of plays or tasks to be executed in the current playbook.
      - Files with a list of plays can only be included at the top level, lists of tasks can only be included where tasks normally run (in play).
-     - Before 2.0 all includes were 'static', executed at play load time.
+     - Before 2.0 all includes were 'static', executed at play compile time.
+     - Static includes are not subject to most directives, for example, loops or conditionals, they are applied instead to each inherited task.
      - Since 2.0 task includes are dynamic and behave more like real tasks.  This means they can be looped, skipped and use variables from any source.
        Ansible tries to auto detect this, use the `static` directive (new in 2.1) to bypass autodetection.
 version_added: "0.6"
