@@ -1,6 +1,12 @@
 Ansible Changes By Release
 ==========================
 
+## 2.2.1 "The Battle of Evermore" - TBD
+
+### Minor Changes:
+
+* Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
+
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
 ###Major Changes:
