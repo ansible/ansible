@@ -72,7 +72,7 @@ options:
       - self.config_path
       - dockercfg_path
   state:
-    version_added: '2.2'
+    version_added: '2.3'
     description:
       - This controls the current state of the user. C(present) will login in a user, C(absent) will log him out.
       - To logout you only need the registry server, which defaults to DockerHub.
