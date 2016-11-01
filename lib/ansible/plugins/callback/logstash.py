@@ -57,6 +57,7 @@ class CallbackModule(CallbackBase):
         LOGSTASH_PORT     (optional): defaults to 5000
         LOGSTASH_TYPE     (optional): defaults to ansible
     """
+
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'logstash'
