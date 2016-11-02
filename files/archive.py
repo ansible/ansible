@@ -28,7 +28,7 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: archive
-version_added: 2.2
+version_added: 2.3
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
