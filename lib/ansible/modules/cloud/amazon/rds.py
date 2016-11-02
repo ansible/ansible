@@ -539,8 +539,8 @@ class RDSDBInstance:
             'iops'               : self.instance.iops
             }
 
-        # Endpoint exists only if the instance is available
-        if self.status == 'available':
+        # Only assign an Endpoint if one is available
+        if hasattr(self.instance, 'endpoint'):
             d["endpoint"] = self.instance.endpoint[0]
             d["port"] = self.instance.endpoint[1]
             if self.instance.vpc_security_groups is not None:
@@ -587,9 +587,9 @@ class RDS2DBInstance:
         }
         if self.instance["VpcSecurityGroups"] is not None:
             d['vpc_security_groups'] = ','.join(x['VpcSecurityGroupId'] for x in self.instance['VpcSecurityGroups'])
-        if self.status == 'available':
-            d['endpoint'] = self.instance["Endpoint"]["Address"]
-            d['port'] = self.instance["Endpoint"]["Port"]
+        if "Endpoint" in self.instance and self.instance["Endpoint"] is not None:
+            d['endpoint'] = self.instance["Endpoint"].get('Address', None)
+            d['port'] = self.instance["Endpoint"].get('Port', None)
         else:
             d['endpoint'] = None
             d['port'] = None
