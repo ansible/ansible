@@ -136,7 +136,17 @@ If you use Boto profiles to manage multiple AWS accounts, you can pass ``--profi
 You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``ansible-playbook`` though.
 But you can use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
 
-Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
+Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables. The ``ec2.ini`` file presumably defaults to **all the features** which for many admins is probably appropriate. If you have limited scope of what your ``IAM`` user is capable of, i.e, you would not have access to certain component, just comment/toggle the appropriate lines. For example,if you don't have ``RDS`` and ``elasticache`` access toggle to ``False`` ::
+
+    [ec2]
+    ...
+
+    # To exclude RDS instances from the inventory, uncomment and set to False.
+    rds = False
+
+    # To exclude ElastiCache instances from the inventory, uncomment and set to False.
+    elasticache = False
+    ...
 
 At their heart, inventory files are simply a mapping from some name to a destination address. The default ``ec2.ini`` settings are configured for running Ansible from outside EC2 (from your laptop for example) -- and this is not the most efficient way to manage EC2.
 
