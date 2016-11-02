@@ -182,6 +182,8 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         del libssl
 
 
+LOADED_VERIFY_LOCATIONS = set()
+
 HAS_MATCH_HOSTNAME = True
 try:
     from ssl import match_hostname, CertificateError
@@ -590,6 +592,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         paths_checked.append('/etc/ansible')
 
         tmp_fd, tmp_path = tempfile.mkstemp()
+        to_add_fd, to_add_path = tempfile.mkstemp()
+        to_add = False
 
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
@@ -608,13 +612,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
                         try:
                             cert_file = open(full_path, 'rb')
-                            os.write(tmp_fd, cert_file.read())
-                            os.write(tmp_fd, b('\n'))
+                            cert = cert_file.read()
                             cert_file.close()
+                            os.write(tmp_fd, cert)
+                            os.write(tmp_fd, b('\n'))
+                            if full_path not in LOADED_VERIFY_LOCATIONS:
+                                to_add = True
+                                os.write(to_add_fd, cert)
+                                os.write(to_add_fd, b('\n'))
+                                LOADED_VERIFY_LOCATIONS.add(full_path)
                         except (OSError, IOError):
                             pass
 
-        return (tmp_path, paths_checked)
+        if not to_add:
+            to_add_path = None
+        return (tmp_path, to_add_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=[200]):
         '''
@@ -643,17 +655,18 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def _make_context(self, tmp_ca_cert_path):
+    def _make_context(self, to_add_ca_cert_path):
         context = create_default_context()
-        context.load_verify_locations(tmp_ca_cert_path)
+        if to_add_ca_cert_path:
+            context.load_verify_locations(to_add_ca_cert_path)
         return context
 
     def http_request(self, req):
-        tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+        tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
         if HAS_SSLCONTEXT:
-            context = self._make_context(tmp_ca_cert_path)
+            context = self._make_context(to_add_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -716,6 +729,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # cleanup the temp file created, don't worry
             # if it fails for some reason
             os.remove(tmp_ca_cert_path)
+        except:
+            pass
+
+        try:
+            # cleanup the temp file created, don't worry
+            # if it fails for some reason
+            if to_add_ca_cert_path:
+                os.remove(to_add_ca_cert_path)
         except:
             pass
 
