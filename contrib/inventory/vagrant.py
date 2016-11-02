@@ -37,6 +37,7 @@ import sys
 import os.path
 import subprocess
 import re
+import time
 from paramiko import SSHConfig
 from optparse import OptionParser
 from collections import defaultdict
@@ -70,6 +71,25 @@ parser.add_option('--host', default=None, dest="host",
 #
 
 
+# Given Vagrant's locking situation when communicating with instances, it's
+# possible to recover from some errors if we just wait and retry.
+def subprocess_with_retry(cmd, retry_count=3, retry_wait=1):
+    pipes = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    std_out, std_err = pipes.communicate()
+
+    if pipes.returncode == 0:
+        return std_out
+    else:
+        retry_count -= 1
+        if retry_count < 0:
+            raise Exception(std_err.strip())
+        time.sleep(retry_wait)
+        return subprocess_with_retry(cmd, retry_count, retry_wait)
+
+
 # get all the ssh configs for all boxes in an array of dictionaries.
 def get_ssh_config():
     return dict((k, get_a_ssh_config(k)) for k in list_running_boxes())
@@ -78,7 +98,7 @@ def get_ssh_config():
 # list all the running boxes
 def list_running_boxes():
 
-    output = to_text(subprocess.check_output(["vagrant", "status"]), errors='surrogate_or_strict').split('\n')
+    output = to_text(subprocess_with_retry(["vagrant", "status"]), errors='surrogate_or_strict').split('\n')
 
     boxes = []
 
@@ -94,7 +114,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = to_text(subprocess.check_output(["vagrant", "ssh-config", box_name]), errors='surrogate_or_strict')
+    output = to_text(subprocess_with_retry(["vagrant", "ssh-config", box_name]), errors='surrogate_or_strict')
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
