@@ -422,6 +422,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         final_params.update(dict(
             path = '/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
+            attributes=None,
         ))
 
         # with the proper params specified, the returned dictionary should represent
