@@ -50,26 +50,23 @@ options:
         choices: ['general_purpose', 'max_io']
     tags:
         description:
-            - |
-                List of tags of Amazon EFS. Should be defined as dictionary
-                In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data.
+            - "List of tags of Amazon EFS. Should be defined as dictionary
+              In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data."
         required: false
         default: None
     targets:
         description:
-            - |
-                List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
-                    - subnet_id - Mandatory. The ID of the subnet to add the mount target in.
-                    - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
-                    - security_groups - Optional. List of security group IDs, of the form "sg-xxxxxxxx". These must be for the same VPC as subnet specified
-                This data may be modified for existing EFS using state 'present' and new list of mount targets.
+            - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
+                   - subnet_id - Mandatory. The ID of the subnet to add the mount target in.
+                   - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
+                   - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
+               This data may be modified for existing EFS using state 'present' and new list of mount targets."
         required: false
         default: None
     wait:
         description:
-            - |
-                In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
-                In case of 'absent' state should wait for EFS 'deleted' life cycle state
+            - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
+               In case of 'absent' state should wait for EFS 'deleted' life cycle state"
         required: false
         default: "no"
         choices: ["yes", "no"]
