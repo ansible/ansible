@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from nose.plugins.skip import SkipTest
 
 try:
@@ -287,10 +285,3 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
         self.assertTrue(changed)
         self.assertEqual(results, should_return)
         self.assertEqual(err_msg, 'Kinesis Stream test updated successfully.')
-
-
-def main():
-    unittest.main()
-
-if __name__ == '__main__':
-    main()
