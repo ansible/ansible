@@ -40,7 +40,7 @@ options:
         required: false
         default: null
         choices: ['true','false']
-    stratrum:
+    stratum:
         description:
             - If C(master=true), an optional stratum can be supplied (1-15).
               The device default is 8.
