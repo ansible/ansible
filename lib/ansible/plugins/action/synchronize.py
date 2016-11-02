@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012-2013, Timothy Appnel <tim@appnel.com>
