@@ -105,10 +105,10 @@ options:
   pn_mirror_receive:
     description:
       - Specify if the configuration receives mirrored traffic.
-  pn_unkown_ucast_level:
+  pn_unknown_ucast_level:
     description:
       - Specify an unkown unicast level in percent. The default value is 100%.
-  pn_unkown_mcast_level:
+  pn_unknown_mcast_level:
     description:
       - Specify an unkown multicast level in percent. The default value is 100%.
   pn_broadcast_level:
