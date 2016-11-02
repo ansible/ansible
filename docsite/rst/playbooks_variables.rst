@@ -677,6 +677,7 @@ period, without the rest of the domain.
 
 .. versionadded:: 2.2
 ``ansible_play_hosts`` is the full list of all hosts still active in the current play.
+
 .. versionadded:: 2.2
 ``ansible_play_batch`` is available as a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
 
