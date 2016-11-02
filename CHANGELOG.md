@@ -6,6 +6,8 @@ Ansible Changes By Release
 ### Minor Changes:
 
 * Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
+* Fixed dnf on systems with dnf-2.0.x (some changes in the API).
+* Fixed traceback with dnf install of groups
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
