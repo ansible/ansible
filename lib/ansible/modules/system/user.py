@@ -262,7 +262,6 @@ class User(object):
         self.non_unique  = module.params['non_unique']
         self.seuser     = module.params['seuser']
         self.group      = module.params['group']
-        self.groups     = ','.join(module.params['groups'])
         self.comment    = module.params['comment']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
@@ -282,6 +281,10 @@ class User(object):
         self.update_password = module.params['update_password']
         self.home    = module.params['home']
         self.expires = None
+        self.groups = None
+
+        if module.params['groups'] is not None:
+            self.groups = ','.join(module.params['groups'])
 
         if module.params['expires']:
             try:
