@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # long version of this one liner: python -c 'import yaml,sys;yaml.safe_load(sys.stdin)' < yamltest.txt
 import yaml
 import sys

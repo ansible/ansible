@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars import VariableManager

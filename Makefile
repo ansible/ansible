@@ -1,4 +1,3 @@
-#!/usr/bin/make
 # WARN: gmake syntax
 ########################################################
 # Makefile for Ansible

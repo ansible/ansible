@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>

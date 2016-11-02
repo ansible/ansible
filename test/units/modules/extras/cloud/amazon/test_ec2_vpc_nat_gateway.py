@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from nose.plugins.skip import SkipTest
 
 try:
@@ -489,9 +487,3 @@ class AnsibleEc2VpcNatGatewayFunctions(unittest.TestCase):
         )
         self.assertFalse(success)
         self.assertFalse(changed)
-
-def main():
-    unittest.main()
-
-if __name__ == '__main__':
-    main()
