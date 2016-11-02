@@ -47,7 +47,7 @@ options:
         required: false
         default: none
         description:
-            - path to a keyfile to add to the keyring
+            - path to a keyfile on the remote server to add to the keyring
     keyring:
         required: false
         default: none
@@ -102,6 +102,9 @@ EXAMPLES = '''
 
 # Add an Apt signing key to a specific keyring file
 - apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc keyring=/etc/apt/trusted.gpg.d/debian.gpg state=present
+
+# Add Apt signing key on remote server to keyring
+- apt_key: id=473041FA file=/tmp/apt.gpg state=present
 '''
 
 
