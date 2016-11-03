@@ -226,7 +226,7 @@ class ActionModule(ActionBase):
                 return success
         return success
 
-    def _load_files(self, filename):
+    def _load_files(self, filename, validate_extensions=False):
         """ Loads a file and converts the output into a valid Python dict.
         Args:
             filename (str): The source file.
@@ -237,7 +237,7 @@ class ActionModule(ActionBase):
         results = dict()
         failed = False
         err_msg = ''
-        if not self._is_valid_file_ext(filename):
+        if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
             err_msg = (
                 '{0} does not have a valid extension: {1}'
@@ -287,7 +287,7 @@ class ActionModule(ActionBase):
 
             if not stop_iter and not failed:
                 if path.exists(filepath) and not self._ignore_file(filename):
-                    failed, err_msg, loaded_data = self._load_files(filepath)
+                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                     if not failed:
                         results.update(loaded_data)
 
