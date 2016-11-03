@@ -100,7 +100,7 @@ class DocCLI(CLI):
                 try:
                     doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    display.vvv(traceback.print_exc())
+                    display.vvv(traceback.format_exc())
                     display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
                     continue
 
@@ -133,7 +133,7 @@ class DocCLI(CLI):
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
-                display.vvv(traceback.print_exc())
+                display.vvv(traceback.format_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
         if text:
