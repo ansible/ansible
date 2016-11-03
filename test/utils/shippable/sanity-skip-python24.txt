@@ -1,1 +1,1 @@
-/cloud/
+/cloud/[^/]+/(?!(ec2_facts.py|_ec2_ami_search.py))
