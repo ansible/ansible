@@ -5,6 +5,11 @@ Ansible Changes By Release
 
 ###Major Changes:
 
+###Minor Changes:
+* The version and release facts for OpenBSD hosts were reversed.  This has been
+  changed so that version has the numeric portion and release has the name of
+  the release.
+
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
   currently leads to the last one overridding all the previous ones.  This
