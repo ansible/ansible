@@ -8,6 +8,9 @@ Ansible Changes By Release
 * Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
 * Fixed dnf on systems with dnf-2.0.x (some changes in the API).
 * Fixed traceback with dnf install of groups
+* Fix for include_vars only loading files with .yml, .yaml, and .json
+  extensions.  This was only supposed to apply to loading a directory of vars
+  files.
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
