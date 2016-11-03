@@ -210,7 +210,7 @@ def main():
         module.fail_json(name=base_dir, msg='The directory %s does not exist or the file is not a directory' % base_dir)
 
     if not module.params['mode']:
-        module.params['mode'] = 0600
+        module.params['mode'] = int('0600', 8)
 
     private_key = PrivateKey(module)
     if private_key.state == 'present':
