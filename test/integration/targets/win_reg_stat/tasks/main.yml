@@ -1,11 +1,11 @@
 ---
 - name: template out test registry structure
   win_template:
-    src: files/test_reg.reg
+    src: ../files/test_reg.reg
     dest: "{{win_output_dir}}\\raw_test_reg.reg"
 
 - name: convert the line endings to the windows variant
-  win_shell: Get-Content "{{win_output_dir}}\\raw_test_reg.reg" | Set-Content "{{win_output_dir}}\\test_reg.reg"
+  win_shell: Get-Content "{{win_output_dir}}\raw_test_reg.reg" | Set-Content "{{win_output_dir}}\test_reg.reg"
 
 - name: import test registry structure
   win_regmerge:
