@@ -1228,7 +1228,11 @@ class LinuxHardware(Hardware):
                     self.facts[k] = 'NA'
 
     def _run_lsblk(self, lsblk_path):
-        args = ['--list', '--noheadings', '--paths',  '--output', 'NAME,UUID']
+        # call lsblk and collect all uuids
+        # --exclude 2 makes lsblk ignore floppy disks, which are slower to answer than typical timeouts
+        # this uses the linux major device number
+        # for details see https://www.kernel.org/doc/Documentation/devices.txt
+        args = ['--list', '--noheadings', '--paths',  '--output', 'NAME,UUID', '--exclude', '2']
         cmd = [lsblk_path] + args
         rc, out, err = self.module.run_command(cmd)
         return rc, out, err
