@@ -228,7 +228,7 @@ class Connection(ConnectionBase):
             self._persistent = True
 
             if not controlpath:
-                cpdir = unfrackpath(u'$HOME/.ansible/cp')
+                cpdir = unfrackpath(C.ANSIBLE_SSH_CONTROL_PATH_DIR)
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
                 # The directory must exist and be writable.
