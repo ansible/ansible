@@ -40,6 +40,8 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
+    from ansible.playbook.task_include import TaskInclude
+    from ansible.playbook.role_include import IncludeRole
 
     assert isinstance(ds, (list, type(None)))
 
@@ -61,7 +63,10 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
             # squash them down to a single block to save processing time later.
             if b._implicit and len(block_list) > 0 and block_list[-1]._implicit:
                 for t in b.block:
-                    t._parent = block_list[-1]
+                    if isinstance(t._parent, (TaskInclude, IncludeRole)):
+                        t._parent._parent = block_list[-1]
+                    else:
+                        t._parent = block_list[-1]
                 block_list[-1].block.extend(b.block)
             else:
                 block_list.append(b)
