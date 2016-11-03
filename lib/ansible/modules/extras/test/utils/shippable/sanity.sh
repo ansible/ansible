@@ -15,11 +15,11 @@ source "${build_dir}/hacking/env-setup"
 # REPOMERGE: END
 
 if [ "${install_deps}" != "" ]; then
-    add-apt-repository ppa:fkrull/deadsnakes && apt-get update -qq && apt-get install python2.4 -qq
-
+    add-apt-repository ppa:fkrull/deadsnakes
     apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
     apt-get update -qq
-    apt-get install shellcheck
+
+    apt-get install -qq shellcheck python2.4
 
     # Install dependencies for ansible and validate_modules
     pip install -r "${build_dir}/test/utils/shippable/sanity-requirements.txt" --upgrade
@@ -29,11 +29,10 @@ fi
 
 validate_modules="${build_dir}/test/sanity/validate-modules/validate-modules"
 
-python2.4 -m compileall -fq   -i                    "test/utils/shippable/sanity-test-python24.txt"
 python2.4 -m compileall -fq   -x "($(printf %s "$(< "test/utils/shippable/sanity-skip-python24.txt"))" | tr '\n' '|')" .
 python2.6 -m compileall -fq .
 python2.7 -m compileall -fq .
-python3.5 -m compileall -fq . -x "($(printf %s "$(< "test/utils/shippable/sanity-skip-python3.txt"))"  | tr '\n' '|')"
+python3.5 -m compileall -fq .
 
 ANSIBLE_DEPRECATION_WARNINGS=false \
     "${validate_modules}" --exclude '/utilities/|/shippable(/|$)' .
