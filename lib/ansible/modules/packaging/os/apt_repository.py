@@ -28,9 +28,8 @@ short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
-    - This module works on Debian and Ubuntu.
+    - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
-    - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
 options:
     repo:
         required: true
@@ -70,6 +69,12 @@ options:
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
         required: false
+    codename:
+        version_added: '2.3'
+        description:
+            - Override the distribution codename to use for PPA repositories.
+              Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+        required: false
 author: "Alexander Saltanov (@sashka)"
 version_added: "0.7"
 requirements:
@@ -90,9 +95,11 @@ apt_repository: repo='deb-src http://archive.canonical.com/ubuntu hardy partner'
 # Remove specified repository from sources list.
 apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner' state=absent
 
-# On Ubuntu target: add nginx stable repository from PPA and install its signing key.
-# On Debian target: adding PPA is not available, so it will fail immediately.
+# Add nginx stable repository from PPA and install its signing key.
+# On Ubuntu target:
 apt_repository: repo='ppa:nginx/stable'
+# On Debian target
+apt_repository: repo='ppa:nginx/stable' codename='trusty'
 '''
 
 import glob
@@ -375,6 +382,7 @@ class UbuntuSourcesList(SourcesList):
     def __init__(self, module, add_ppa_signing_keys_callback=None):
         self.module = module
         self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
+        self.codename = module.params['codename'] or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
 
     def _get_ppa_info(self, owner_name, ppa_name):
@@ -394,7 +402,7 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, distro.codename)
+        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):
@@ -415,7 +423,7 @@ class UbuntuSourcesList(SourcesList):
                     command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
                     self.add_ppa_signing_keys_callback(command)
 
-            file = file or self._suggest_filename('%s_%s' % (line, distro.codename))
+            file = file or self._suggest_filename('%s_%s' % (line, self.codename))
         else:
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
             file = file or self._suggest_filename(source)
@@ -469,6 +477,7 @@ def main():
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
             validate_certs = dict(default='yes', type='bool'),
+            codename = dict(required=False),
         ),
         supports_check_mode=True,
     )
@@ -487,13 +496,11 @@ def main():
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
-    if isinstance(distro, aptsources_distro.UbuntuDistribution):
+    if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module,
             add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-    elif isinstance(distro, aptsources_distro.Distribution):
-        sourceslist = SourcesList(module)
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
+        module.fail_json(msg='Module apt_repository is not supported on target.')
 
     sources_before = sourceslist.dump()
 
