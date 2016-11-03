@@ -113,8 +113,6 @@ EXAMPLES = '''
     group: my_first_group
     project: my_first_project
     name: v0.9a
-    ref: master
-    description: My very bad release
     state: absent
 
 '''
@@ -152,11 +150,14 @@ class GitLabTag(object):
 
     def deleteTag(self):
         """Delete a tag"""
-        tag = self.tagObject
-        if tag.delete():
-            return True
-        else:
-            return False
+
+        try:
+            tag = self.tagObject
+            tag.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Something went wrong deleting tag: %s " % e)
+        return True
 
     def createTag(self, name, ref, description):
         """Create a tag"""
@@ -164,10 +165,13 @@ class GitLabTag(object):
         tag = self.tagObject
 
         if tag is None:
-            create_tag = project.tags.create({'tag_name': name, 'ref': ref})
-            create_tag.set_release_description(description)
+            try:
+                create_tag = project.tags.create({'tag_name': name, 'ref': ref})
+                create_tag.set_release_description(description)
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a tag: %s " % e)
             return True
-        return False
 
     def getProject(self, group, project):
         """Validates if a project exists."""
@@ -251,8 +255,6 @@ def main():
                 module.exit_json(changed=True, result="Tag should have been deleted.")
             if tag.deleteTag():
                 module.exit_json(changed=True, result="Tag is deleted.")
-            else:
-                module.exit_json(changed=False, result="Something went wrong deleting the tag.")
     else:
         if state == "absent":
             module.exit_json(changed=False, result="There is no tag available.")
