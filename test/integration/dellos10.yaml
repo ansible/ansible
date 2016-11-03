@@ -1,0 +1,13 @@
+---
+- hosts: dellos10
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+   - { role: dellos10_command, when: "limit_to in ['*', 'dellos10_command']" }
+   - { role: dellos10_config, when: "limit_to in ['*', 'dellos10_config']" }
+   - { role: dellos10_facts, when: "limit_to in ['*', 'dellos10_facts']" }

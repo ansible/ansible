@@ -132,7 +132,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return result
     except SyntaxError as e:
         # special handling for syntax errors, we just return
-        # the expression string back as-is
+        # the expression string back as-is to support late evaluation
         if include_exceptions:
             return (expr, None)
         return expr
@@ -140,4 +140,3 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         if include_exceptions:
             return (expr, e)
         return expr
-

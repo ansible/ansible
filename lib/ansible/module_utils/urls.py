@@ -81,6 +81,21 @@
 # agrees to be bound by the terms and conditions of this License
 # Agreement.
 
+'''
+The **urls** utils module offers a replacement for the urllib2 python library.
+
+urllib2 is the python stdlib way to retrieve files from the Internet but it
+lacks some security features (around verifying SSL certificates) that users
+should care about in most situations. Using the functions in this module corrects
+deficiencies in the urllib2 module wherever possible.
+
+There are also third-party libraries (for instance, requests) which can be used
+to replace urllib2 with a more secure library. However, all third party libraries
+require that the library be installed on the managed machine. That is an extra step
+for users making use of a module. If possible, avoid third party libraries by using
+this code instead.
+'''
+
 import netrc
 import os
 import re
@@ -90,8 +105,6 @@ import platform
 import tempfile
 import base64
 
-from ansible.module_utils.basic import get_distribution, get_exception
-
 try:
     import httplib
 except ImportError:
@@ -100,6 +113,9 @@ except ImportError:
 
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+from ansible.module_utils.basic import get_distribution, get_exception
+from ansible.module_utils.six import b
+from ansible.module_utils._text import to_bytes
 
 try:
     # python3
@@ -165,6 +181,8 @@ if not HAS_SSLCONTEXT and HAS_SSL:
                 pass
         del libssl
 
+
+LOADED_VERIFY_LOCATIONS = set()
 
 HAS_MATCH_HOSTNAME = True
 try:
@@ -574,6 +592,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         paths_checked.append('/etc/ansible')
 
         tmp_fd, tmp_path = tempfile.mkstemp()
+        to_add_fd, to_add_path = tempfile.mkstemp()
+        to_add = False
 
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
@@ -591,14 +611,22 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
                         try:
-                            cert_file = open(full_path, 'r')
-                            os.write(tmp_fd, cert_file.read())
-                            os.write(tmp_fd, '\n')
+                            cert_file = open(full_path, 'rb')
+                            cert = cert_file.read()
                             cert_file.close()
-                        except:
+                            os.write(tmp_fd, cert)
+                            os.write(tmp_fd, b('\n'))
+                            if full_path not in LOADED_VERIFY_LOCATIONS:
+                                to_add = True
+                                os.write(to_add_fd, cert)
+                                os.write(to_add_fd, b('\n'))
+                                LOADED_VERIFY_LOCATIONS.add(full_path)
+                        except (OSError, IOError):
                             pass
 
-        return (tmp_path, paths_checked)
+        if not to_add:
+            to_add_path = None
+        return (tmp_path, to_add_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=[200]):
         '''
@@ -627,17 +655,18 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def _make_context(self, tmp_ca_cert_path):
+    def _make_context(self, to_add_ca_cert_path):
         context = create_default_context()
-        context.load_verify_locations(tmp_ca_cert_path)
+        if to_add_ca_cert_path:
+            context.load_verify_locations(to_add_ca_cert_path)
         return context
 
     def http_request(self, req):
-        tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+        tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
         if HAS_SSLCONTEXT:
-            context = self._make_context(tmp_ca_cert_path)
+            context = self._make_context(to_add_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -656,9 +685,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
-                        s.sendall('Proxy-Authorization: Basic %s\r\n' % credentials.encode('base64').strip())
-                    s.sendall('\r\n')
-                    connect_result = s.recv(4096)
+                        s.sendall(b('Proxy-Authorization: Basic %s\r\n') % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
+                    s.sendall(b('\r\n'))
+                    connect_result = b("")
+                    while connect_result.find(b("\r\n\r\n")) <= 0:
+                        connect_result += s.recv(4096)
+                        # 128 kilobytes of headers should be enough for everyone.
+                        if len(connect_result) > 131072:
+                            raise ProxyError('Proxy sent too verbose headers. Only 128KiB allowed.')
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
@@ -698,6 +732,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         except:
             pass
 
+        try:
+            # cleanup the temp file created, don't worry
+            # if it fails for some reason
+            if to_add_ca_cert_path:
+                os.remove(to_add_ca_cert_path)
+        except:
+            pass
+
         return req
 
     https_request = http_request
@@ -728,11 +770,11 @@ def maybe_add_ssl_handler(url, validate_certs):
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-        force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None,
-        force_basic_auth=False, follow_redirects='urllib2'):
+             force=False, last_mod_time=None, timeout=10, validate_certs=True,
+             url_username=None, url_password=None, http_agent=None,
+             force_basic_auth=False, follow_redirects='urllib2'):
     '''
-    Fetches a file from an HTTP/FTP server using urllib2
+    Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
     Does not require the module environment
     '''
@@ -829,15 +871,17 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
     # add the custom agent header, to help prevent issues
     # with sites that block the default urllib agent string
-    request.add_header('User-agent', http_agent)
+    if http_agent:
+        request.add_header('User-agent', http_agent)
 
-    # if we're ok with getting a 304, set the timestamp in the
-    # header, otherwise make sure we don't get a cached copy
-    if last_mod_time and not force:
+    # Cache control
+    # Either we directly force a cache refresh
+    if force:
+        request.add_header('cache-control', 'no-cache')
+    # or we do it if the original is more recent than our copy
+    elif last_mod_time:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
-    else:
-        request.add_header('cache-control', 'no-cache')
 
     # user defined headers now, which may override things we've set above
     if headers:
@@ -861,7 +905,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
 
 def basic_auth_header(username, password):
-    return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+    """Takes a username and password and returns a byte string suitable for
+    using as value of an Authorization header to do basic auth.
+    """
+    return b("Basic %s") % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
 
 
 def url_argument_spec():
@@ -870,23 +917,49 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url = dict(),
-        force = dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent = dict(default='ansible-httpget'),
-        use_proxy = dict(default='yes', type='bool'),
-        validate_certs = dict(default='yes', type='bool'),
-        url_username = dict(required=False),
-        url_password = dict(required=False),
-        force_basic_auth = dict(required=False, type='bool', default='no'),
+        url=dict(),
+        force=dict(default='no', aliases=['thirsty'], type='bool'),
+        http_agent=dict(default='ansible-httpget'),
+        use_proxy=dict(default='yes', type='bool'),
+        validate_certs=dict(default='yes', type='bool'),
+        url_username=dict(required=False),
+        url_password=dict(required=False),
+        force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
-    '''
-    Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
-    '''
+    '''Sends a request via HTTP(S) or FTP (needs the module as parameter)
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+        The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
+        occurred then ``info['body']`` contains the error response data::
+
+    Example::
+
+        data={...}
+        resp, info = fetch_url("http://example.com",
+                               data=module.jsonify(data)
+                               header={Content-type': 'application/json'},
+                               method="POST")
+        status_code = info["status"]
+        body = resp.read()
+        if status_code >= 400 :
+            body = info['body']
+'''
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')

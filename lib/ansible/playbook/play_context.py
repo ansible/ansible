@@ -31,6 +31,7 @@ import string
 from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.utils.boolean import boolean
@@ -53,6 +54,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
+   ssh_executable   = ('ansible_ssh_executable',),
    accelerate_port  = ('ansible_accelerate_port',),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
@@ -83,39 +85,39 @@ MAGIC_VARIABLE_MAPPING = dict(
    module_compression = ('ansible_module_compression',),
 )
 
-SU_PROMPT_LOCALIZATIONS = [
-    'Password',
-    '암호',
-    'パスワード',
-    'Adgangskode',
-    'Contraseña',
-    'Contrasenya',
-    'Hasło',
-    'Heslo',
-    'Jelszó',
-    'Lösenord',
-    'Mật khẩu',
-    'Mot de passe',
-    'Parola',
-    'Parool',
-    'Pasahitza',
-    'Passord',
-    'Passwort',
-    'Salasana',
-    'Sandi',
-    'Senha',
-    'Wachtwoord',
-    'ססמה',
-    'Лозинка',
-    'Парола',
-    'Пароль',
-    'गुप्तशब्द',
-    'शब्दकूट',
-    'సంకేతపదము',
-    'හස්පදය',
-    '密码',
-    '密碼',
-    '口令',
+b_SU_PROMPT_LOCALIZATIONS = [
+    to_bytes('Password'),
+    to_bytes('암호'),
+    to_bytes('パスワード'),
+    to_bytes('Adgangskode'),
+    to_bytes('Contraseña'),
+    to_bytes('Contrasenya'),
+    to_bytes('Hasło'),
+    to_bytes('Heslo'),
+    to_bytes('Jelszó'),
+    to_bytes('Lösenord'),
+    to_bytes('Mật khẩu'),
+    to_bytes('Mot de passe'),
+    to_bytes('Parola'),
+    to_bytes('Parool'),
+    to_bytes('Pasahitza'),
+    to_bytes('Passord'),
+    to_bytes('Passwort'),
+    to_bytes('Salasana'),
+    to_bytes('Sandi'),
+    to_bytes('Senha'),
+    to_bytes('Wachtwoord'),
+    to_bytes('ססמה'),
+    to_bytes('Лозинка'),
+    to_bytes('Парола'),
+    to_bytes('Пароль'),
+    to_bytes('गुप्तशब्द'),
+    to_bytes('शब्दकूट'),
+    to_bytes('సంకేతపదము'),
+    to_bytes('හස්පදය'),
+    to_bytes('密码'),
+    to_bytes('密碼'),
+    to_bytes('口令'),
 ]
 
 TASK_ATTRIBUTE_OVERRIDES = (
@@ -123,6 +125,7 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_user',
     'become_pass',
     'become_method',
+    'become_flags',
     'connection',
     'docker_extra_args',
     'delegate_to',
@@ -139,6 +142,7 @@ RESET_VARS = (
     'ansible_ssh_user',
     'ansible_ssh_private_key_file',
     'ansible_ssh_pipelining',
+    'ansible_ssh_executable',
     'ansible_user',
     'ansible_host',
     'ansible_port',
@@ -165,6 +169,7 @@ class PlayContext(Base):
     _sftp_extra_args  = FieldAttribute(isa='string')
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
+    _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
     _accelerate       = FieldAttribute(isa='bool', default=False)
@@ -281,23 +286,16 @@ class PlayContext(Base):
         if hasattr(options, 'timeout') and options.timeout:
             self.timeout = int(options.timeout)
 
-        # get the tag info from options, converting a comma-separated list
-        # of values into a proper list if need be. We check to see if the
-        # options have the attribute, as it is not always added via the CLI
+        # get the tag info from options. We check to see if the options have
+        # the attribute, as it is not always added via the CLI
         if hasattr(options, 'tags'):
-            if isinstance(options.tags, list):
-                self.only_tags.update(options.tags)
-            elif isinstance(options.tags, string_types):
-                self.only_tags.update(options.tags.split(','))
+            self.only_tags.update(options.tags)
 
         if len(self.only_tags) == 0:
             self.only_tags = set(['all'])
 
         if hasattr(options, 'skip_tags'):
-            if isinstance(options.skip_tags, list):
-                self.skip_tags.update(options.skip_tags)
-            elif isinstance(options.skip_tags, string_types):
-                self.skip_tags.update(options.skip_tags.split(','))
+            self.skip_tags.update(options.skip_tags)
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
@@ -412,12 +410,6 @@ class PlayContext(Base):
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
-        # if the final connection type is local, reset the remote_user value
-        # to that of the currently logged in user, to ensure any become settings
-        # are obeyed correctly
-        if new_info.connection == 'local':
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
-
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
             # in the event that we were using local before make sure to reset the
@@ -434,6 +426,14 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
+        # if the final connection type is local, reset the remote_user value
+        # to that of the currently logged in user, to ensure any become settings
+        # are obeyed correctly
+        # additionally, we need to do this check after final connection has been
+        # correctly set above ...
+        if new_info.connection == 'local':
+            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
@@ -441,9 +441,14 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
-        # have always_run override check mode
         if task.always_run:
+            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
             new_info.check_mode = False
+
+        # check_mode replaces always_run, overwrite always_run if both are given
+        if task.check_mode is not None:
+            new_info.check_mode = task.check_mode
+
 
         return new_info
 
@@ -505,17 +510,27 @@ class PlayContext(Base):
             elif self.become_method == 'su':
 
                 # passing code ref to examine prompt as simple string comparisson isn't good enough with su
-                def detect_su_prompt(data):
-                    SU_PROMPT_LOCALIZATIONS_RE = re.compile("|".join(['(\w+\'s )?' + x + ' ?(:|：) ?' for x in SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
-                    return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
+                def detect_su_prompt(b_data):
+                    b_password_string = b"|".join([b'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
+                    # Colon or unicode fullwidth colon
+                    b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
+                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b_password_string, flags=re.IGNORECASE)
+                    return bool(b_SU_PROMPT_LOCALIZATIONS_RE.match(b_data))
                 prompt = detect_su_prompt
 
                 becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote(command))
 
             elif self.become_method == 'pbrun':
 
-                prompt='assword:'
-                becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
+                prompt='Password:'
+                becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
+
+            elif self.become_method == 'ksu':
+                def detect_ksu_prompt(b_data):
+                    return re.match(b"Kerberos password for .*@.*:", b_data)
+
+                prompt = detect_ksu_prompt
+                becomecmd = '%s %s %s -e %s' % (exe, self.become_user, flags, command)
 
             elif self.become_method == 'pfexec':
 
@@ -530,7 +545,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'doas':
 
-                prompt = 'Password:'
+                prompt = 'doas (%s@' % self.remote_user
                 exe = self.become_exe or 'doas'
 
                 if not self.become_pass:
@@ -545,8 +560,11 @@ class PlayContext(Base):
             elif self.become_method == 'dzdo':
 
                 exe = self.become_exe or 'dzdo'
-
-                becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                if self.become_pass:
+                    prompt = '[dzdo via ansible, key=%s] password: ' % randbits
+                    becomecmd = '%s -p %s -u %s %s' % (exe, pipes.quote(prompt), self.become_user, command)
+                else:
+                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

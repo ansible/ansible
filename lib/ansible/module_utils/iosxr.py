@@ -1,28 +1,41 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 import re
 
-from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
-class Cli(NetCli):
+
+class Cli(CliBase):
+
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
@@ -42,37 +55,58 @@ class Cli(NetCli):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
 
-    ### implementation of network.Cli ###
+    ### Config methods ###
 
-    def configure(self, commands, **kwargs):
-        cmds = ['configure']
+    def configure(self, commands):
+        cmds = ['configure terminal']
+        if commands[-1] == 'end':
+            commands.pop()
         cmds.extend(to_list(commands))
-        cmds.append('end')
-
+        cmds.extend(['commit', 'end'])
         responses = self.execute(cmds)
-        return responses[1:-1]
+        return responses[1:]
 
-    def get_config(self, params, **kwargs):
-        return self.run_commands('show running-config')[0]
+    def get_config(self, flags=None):
+        cmd = 'show running-config'
+        if flags:
+            if isinstance(flags, list):
+                cmd += ' %s' % ' '.join(flags)
+            else:
+                cmd += ' %s' % flags
+        return self.execute([cmd])[0]
 
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
+    def load_config(self, config, commit=False, replace=False, comment=None):
+        commands = ['configure terminal']
+        commands.extend(config)
 
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
+        if commands[-1] == 'end':
+            commands.pop()
 
-    def commit_config(self, **kwargs):
-        command = 'commit'
-        self.run_commands([command])
+        try:
+            self.execute(commands)
+            diff = self.execute(['show commit changes diff'])
+            if commit:
+                if replace:
+                    prompt = re.compile(r'\[no\]:\s$')
+                    commit = 'commit replace'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    cmd = Command(commit, prompt=prompt, response='yes')
+                    self.execute([cmd, 'end'])
+                else:
+                    commit = 'commit'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    self.execute([commit, 'end'])
+            else:
+                self.execute(['abort'])
+        except NetworkError:
+            self.execute(['abort'])
+            diff = None
+            raise
 
-    def abort_config(self, **kwargs):
-        command = 'abort'
-        self.run_commands([command])
+        return diff[0]
 
-    def run_commands(self, commands):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        return responses
 Cli = register_transport('cli', default=True)(Cli)

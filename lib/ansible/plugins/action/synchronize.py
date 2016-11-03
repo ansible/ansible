@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012-2013, Timothy Appnel <tim@appnel.com>
@@ -31,6 +30,9 @@ class ActionModule(ActionBase):
 
     def _get_absolute_path(self, path):
         original_path = path
+
+        if path.startswith('rsync://'):
+            return path
 
         if self._task._role is not None:
             path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
@@ -111,7 +113,7 @@ class ActionModule(ActionBase):
         # connection to the remote host
         if 'ansible_syslog_facility' in task_vars:
             del task_vars['ansible_syslog_facility']
-        for key in task_vars.keys():
+        for key in list(task_vars.keys()):
             if key.startswith("ansible_") and key.endswith("_interpreter"):
                 del task_vars[key]
 
@@ -272,10 +274,7 @@ class ActionModule(ActionBase):
 
         if not dest_is_local:
             # Private key handling
-            if use_delegate:
-                private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
-            else:
-                private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
+            private_key = self._play_context.private_key_file
 
             if private_key is not None:
                 private_key = os.path.expanduser(private_key)

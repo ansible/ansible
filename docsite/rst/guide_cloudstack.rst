@@ -97,6 +97,43 @@ Or by looping over a regions list if you want to do the task in every region:
           - exmaple_cloud_one
           - exmaple_cloud_two
 
+Environment Variables
+`````````````````````
+.. versionadded:: 2.3
+
+Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``) and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
+
+Below you see an example how it can be used in combination with Ansible's block feature:
+
+.. code-block:: yaml
+
+    - hosts: cloud-vm
+      tasks:
+        - block:
+            - name: ensure my ssh public key
+              local_action:
+                module: cs_sshkeypair
+                name: my-ssh-key
+                public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+            - name: ensure my ssh public key
+              local_action:
+                module: cs_instance:
+                  display_name: "{{ inventory_hostname_short }}"
+                  template: Linux Debian 7 64-bit 20GB Disk
+                  service_offering: "{{ cs_offering }}"
+                  ssh_key: my-ssh-key
+                  state: running
+
+          environment:
+            CLOUDSTACK_DOMAIN: root/customers
+            CLOUDSTACK_PROJECT: web-app
+            CLOUDSTACK_ZONE: sf-1
+
+.. Note:: You are still able overwrite the environment variables using the module arguments, e.g.``zone: sf-2``
+
+.. Note:: Unlike ``CLOUDSTACK_REGION`` these additional environment variables are ingored in the CLI ``cs``.
+
 Use Cases
 `````````
 The following should give you some ideas how to use the modules to provision VMs to the cloud. As always, there isn't only one way to do it. But as always: keep it simple for the beginning is always a good start.
@@ -115,15 +152,15 @@ This is how our inventory looks like:
     jumphost
 
     [webserver]
-    web-01.example.com  public_ip=1.2.3.4
-    web-02.example.com  public_ip=1.2.3.5
+    web-01.example.com  public_ip=198.51.100.20
+    web-02.example.com  public_ip=198.51.100.21
 
     [db-server]
     db-01.example.com
     db-02.example.com
 
     [jumphost]
-    jump.example.com  public_ip=1.2.3.6
+    jump.example.com  public_ip=198.51.100.22
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 

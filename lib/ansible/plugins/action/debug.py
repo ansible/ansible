@@ -1,4 +1,5 @@
 # Copyright 2012, Dag Wieers <dag@wieers.com>
+# Copyright 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -17,15 +18,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleUndefinedVariable
+from ansible.module_utils._text import to_text
+from ansible.plugins.action import ActionBase
+
 
 class ActionModule(ActionBase):
     ''' Print statements during execution '''
 
     TRANSFERS_FILES = False
-    VALID_ARGS = set(['msg', 'var', 'verbosity'])
+    VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -54,16 +57,16 @@ class ActionModule(ActionBase):
                     results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                     if results == self._task.args['var']:
                         # if results is not str/unicode type, raise an exception
-                        if type(results) not in [str, unicode]:
+                        if not isinstance(results, string_types):
                             raise AnsibleUndefinedVariable
                         # If var name is same as result, try to template it
                         results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
                 except AnsibleUndefinedVariable:
                     results = "VARIABLE IS NOT DEFINED!"
 
-                if type(self._task.args['var']) in (list, dict):
+                if isinstance(self._task.args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display
-                    result[to_unicode(type(self._task.args['var']))] = results
+                    result[to_text(type(self._task.args['var']))] = results
                 else:
                     result[self._task.args['var']] = results
             else:

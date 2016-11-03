@@ -1,13 +1,13 @@
 - hosts: localhost
   gather_facts: no
   vars_files:
-    - versions.yml
+    - vars/versions.yml
   vars:
     release_dir: "./ansible_release"
     release_date: "{{lookup('pipe', 'date +\"%m-%d-%Y\"')}}"
     rpm_spec_line: |
 
-      * {{lookup('pipe', 'date +"%a %b %d %Y"')}} Ansible, Inc. <support@ansible.com> - {{ansible_release_version}}-{{ansible_release_string}}
+      * {{lookup('pipe', 'date +"%a %b %d %Y"')}} Ansible, Inc. <info@ansible.com> - {{ansible_release_version}}-{{ansible_release_string}}
       - Release {{ansible_release_version}}-{{ansible_release_string}}
     deb_changelog_line: |
 
@@ -15,7 +15,7 @@
 
         * {{ansible_release_version}}
 
-       -- Ansible, Inc. <support@ansible.com>  {{lookup('pipe', 'date -R')}}
+       -- Ansible, Inc. <info@ansible.com>  {{lookup('pipe', 'date -R')}}
 
   vars_prompt:
   - name: ansible_release_branch
@@ -58,7 +58,8 @@
 
   - name: Clone the official repo
     git:
-      repo: "git@github.com:ansible/ansible.git"
+      #repo: "git@github.com:ansible/ansible.git"
+      repo: "https://github.com/ansible/ansible.git"
       dest: "{{release_dir}}"
       version: "{{ansible_release_branch}}"
       recursive: yes
@@ -98,13 +99,11 @@
         dest: "{{release_dir}}/packaging/debian/changelog"
         regexp: "^ansible ({{ansible_release_version}})"
         line: "{{deb_changelog_line}}"
-        insertafter: "-- Ansible, Inc. <support@ansible.com>  %DATE%"
-    #- name: Update RELEASES.txt
-    #  lineinfile:
-    #    dest: "{{release_dir}}/RELEASES.txt"
-    #    regexp: "^{{ansible_release_version}}"
-    #    line: '{{ansible_release_version}} "{{ansible_release_codename}}" {{release_date}}'
-    #    insertafter: ""
+        insertafter: "-- Ansible, Inc. <info@ansible.com>  %DATE%"
+    - name: Update RELEASES.txt
+      template:
+        dest: "{{release_dir}}/RELEASES.txt"
+        src: "templates/RELEASES.tmpl"
     when: is_final|bool
 
   - name: "Make sure modules are checked out to {{ansible_release_branch}}"
@@ -141,6 +140,15 @@
       _raw_params: "git tag -fa {{new_version}} -m 'New release {{new_version}}'"
       chdir: "{{release_dir}}/"
 
+  - name: update git config for the main repo
+    lineinfile:
+      dest: "{{release_dir}}/.git/config"
+      regexp: "upstream"
+      line: |
+        [remote "upstream"]
+                url = git@github.com:ansible/ansible.git
+                fetch = +refs/heads/*:refs/remotes/origin/*
+
   - name: update git config for submodules
     lineinfile:
       dest: "{{release_dir}}/.git/modules/lib/ansible/modules/{{item}}/config"
@@ -152,6 +160,23 @@
     with_items:
     - core
     - extras
+
+  - name: create the dist tar.gz
+    command:
+      _raw_params: make sdist
+      chdir: "{{release_dir}}/"
+    environment:
+      OFFICIAL: yes
+
+  - name: rename the dist tar.gz to include the full release
+    command:
+      _raw_params: "mv dist/ansible-{{ansible_release_version}}.tar.gz dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz"
+      chdir: "{{release_dir}}/"
+
+  - name: generate the SHA file for the tar.gz
+    shell:
+      _raw_params: "sha256sum dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz > dist/ansible-{{ansible_release_version}}-{{ansible_release_string}}.tar.gz.sha"
+      chdir: "{{release_dir}}/"
 
   - block:
     - pause:
@@ -167,6 +192,6 @@
 
     - name: Push the updates and/or tag
       shell:
-        _raw_params: "git push --tags origin {{ansible_release_branch}}"
+        _raw_params: "git push --tags upstream {{ansible_release_branch}}"
         chdir: "{{release_dir}}/lib/ansible/modules/{{item}}/"
     when: do_push|bool

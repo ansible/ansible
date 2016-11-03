@@ -27,13 +27,13 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
+from ansible.module_utils._text import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.utils.vars import load_options_vars
-from ansible.utils.unicode import to_unicode
 from ansible.vars import VariableManager
 
 try:
@@ -72,7 +72,7 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(AdHocCLI, self).parse()
 
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
@@ -82,10 +82,8 @@ class AdHocCLI(CLI):
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
-        return True
-
     def _play_ds(self, pattern, async, poll):
-        check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
+        check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
             name = "Ansible Ad-Hoc",
             hosts = pattern,
@@ -99,7 +97,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = to_unicode(self.args[0], errors='strict')
+        pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
         # ignore connection password cause we are local
         if self.options.connection == "local":
@@ -120,7 +118,7 @@ class AdHocCLI(CLI):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
             loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             loader.set_vault_password(vault_pass)
 
         variable_manager = VariableManager()
@@ -139,9 +137,12 @@ class AdHocCLI(CLI):
 
         inventory.subset(self.options.subset)
         hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0 and no_hosts is False:
-            # Invalid limit
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        if len(hosts) == 0:
+            if no_hosts is False and self.options.subset:
+                # Invalid limit
+                raise AnsibleError("Specified --limit does not match any hosts")
+            else:
+                display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))
@@ -155,6 +156,10 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
+        # Avoid modules that don't work with ad-hoc
+        if self.options.module_name in ('include', 'include_role'):
+            raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
+
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
@@ -165,7 +170,7 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.callback: 
+        if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'

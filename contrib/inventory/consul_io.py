@@ -50,6 +50,12 @@ Other options include:
 
 which restricts the included nodes to those from the given datacenter
 
+'url':
+
+the URL of the Consul cluster. host, port and scheme are derived from the
+URL. If not specified, connection configuration defaults to http requests
+to localhost on port 8500.
+
 'domain':
 
 if specified then the inventory will generate domain names that will resolve
@@ -95,7 +101,7 @@ kv_metadata is used to lookup metadata for each discovered node. Like kv_groups
 above it is used to build a path to lookup in the kv store where it expects to
 find a json dictionary of metadata entries. If found, each key/value pair in the
 dictionary is added to the metadata for the node. eg node 'nyc-web-1' in datacenter
-'nyc-dc1' and kv_metadata = 'ansible/metadata', then the key 
+'nyc-dc1' and kv_metadata = 'ansible/metadata', then the key
 'ansible/groups/nyc-dc1/nyc-web-1' should contain '{"databse": "postgres"}'
 
 'availability':
@@ -126,6 +132,7 @@ be used to access the machine.
 import os
 import re
 import argparse
+import sys
 from time import time
 import sys
 import ConfigParser
@@ -191,9 +198,8 @@ except ImportError:
 try:
   import consul
 except ImportError as e:
-  print("""failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'""")
-  sys.exit(1)
+  sys.exit("""failed=True msg='python-consul required for this module.
+See http://python-consul.readthedocs.org/en/latest/#installation'""")
 
 from six import iteritems
 
@@ -465,6 +471,7 @@ class ConsulConfig(dict):
       host = 'localhost'
       port =  8500
       token = None
+      scheme = 'http'
 
       if hasattr(self, 'url'):
           from urlparse import urlparse
@@ -473,11 +480,13 @@ class ConsulConfig(dict):
               host = o.hostname
           if o.port:
               port = o.port
+          if o.scheme:
+              scheme = o.scheme
 
       if hasattr(self, 'token'):
           token = self.token
           if not token:
               token = 'anonymous'
-      return consul.Consul(host=host, port=port, token=token)
+      return consul.Consul(host=host, port=port, token=token, scheme=scheme)
 
 ConsulInventory()

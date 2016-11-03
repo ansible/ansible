@@ -112,14 +112,6 @@ AZURE_EXPECTED_VERSIONS = dict(
 
 AZURE_MIN_RELEASE = '2.0.0rc5'
 
-
-def check_client_version(client_name, client_version, expected_version):
-    # Pinning Azure modules to 2.0.0rc5.
-    if LooseVersion(client_version) != LooseVersion(expected_version):
-            self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
-                      "`pip install azure=={3}`".format(client_name, client_version, expected_version,
-                                                        AZURE_MIN_RELEASE))
-
 class AzureRMModuleBase(object):
 
     def __init__(self, derived_arg_spec, bypass_checks=False, no_log=False,
@@ -191,6 +183,13 @@ class AzureRMModuleBase(object):
 
         res = self.exec_module(**self.module.params)
         self.module.exit_json(**res)
+
+    def check_client_version(self, client_name, client_version, expected_version):
+        # Pinning Azure modules to 2.0.0rc5.
+        if LooseVersion(client_version) < LooseVersion(expected_version):
+            self.fail("Installed {0} client version is {1}. The supported version is {2}. Try "
+                      "`pip install azure>={3}`".format(client_name, client_version, expected_version,
+                                                        AZURE_MIN_RELEASE))
 
     def exec_module(self, **kwargs):
         self.fail("Error: {0} failed to implement exec_module method.".format(self.__class__.__name__))
@@ -532,12 +531,12 @@ class AzureRMModuleBase(object):
                 ]
                 parameters.location = location
             else:
-                # for windows add inbound RDP rules
+                # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
                     SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
                                  source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 5986',
-                                 source_port_range='*', destination_port_range='5986', priority=101, name='RDP01'),
+                    SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
+                                 source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
                 ]
         else:
             # Open custom ports
@@ -574,7 +573,7 @@ class AzureRMModuleBase(object):
     def storage_client(self):
         self.log('Getting storage client...')
         if not self._storage_client:
-            check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
+            self.check_client_version('storage', storage_client_version, AZURE_EXPECTED_VERSIONS['storage_client_version'])
             self._storage_client = StorageManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Storage')
         return self._storage_client
@@ -583,7 +582,7 @@ class AzureRMModuleBase(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
+            self.check_client_version('network', network_client_version, AZURE_EXPECTED_VERSIONS['network_client_version'])
             self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Network')
         return self._network_client
@@ -592,7 +591,7 @@ class AzureRMModuleBase(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
+            self.check_client_version('resource', resource_client_version, AZURE_EXPECTED_VERSIONS['resource_client_version'])
             self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
         return self._resource_client
 
@@ -600,7 +599,7 @@ class AzureRMModuleBase(object):
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            check_client_version('compute', compute_client_version, AZURE_EXPECTED_VERSIONS['compute_client_version'])
+            self.check_client_version('compute', compute_client_version, AZURE_EXPECTED_VERSIONS['compute_client_version'])
             self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Compute')
         return self._compute_client

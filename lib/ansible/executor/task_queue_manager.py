@@ -24,18 +24,18 @@ import os
 import tempfile
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
-from ansible.template import Templar
-from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.unicode import to_unicode
-from ansible.compat.six import string_types
+from ansible.template import Templar
+from ansible.utils.helpers import pct_to_int
+from ansible.vars.hostvars import HostVars
 
 try:
     from __main__ import display
@@ -61,8 +61,8 @@ class TaskQueueManager:
     RUN_OK                = 0
     RUN_ERROR             = 1
     RUN_FAILED_HOSTS      = 2
-    RUN_UNREACHABLE_HOSTS = 3
-    RUN_FAILED_BREAK_PLAY = 4
+    RUN_UNREACHABLE_HOSTS = 4
+    RUN_FAILED_BREAK_PLAY = 8
     RUN_UNKNOWN_ERROR     = 255
 
     def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
@@ -80,7 +80,6 @@ class TaskQueueManager:
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done    = False
-        self._result_prc       = None
 
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
@@ -111,9 +110,6 @@ class TaskQueueManager:
         for i in range(num):
             rslt_q = multiprocessing.Queue()
             self._workers.append([None, rslt_q])
-
-        self._result_prc = ResultProcess(self._final_q, self._workers)
-        self._result_prc.start()
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -192,7 +188,8 @@ class TaskQueueManager:
                     stdout_callback_loaded = True
                 elif callback_name == 'tree' and self._run_tree:
                     pass
-                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                        C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
             self._callback_plugins.append(callback_plugin())
@@ -225,8 +222,19 @@ class TaskQueueManager:
         )
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
-        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
-        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        num_hosts = len(self._inventory.get_hosts(new_play.hosts, ignore_restrictions=True))
+
+        max_serial = 0
+        if new_play.serial:
+            # the play has not been post_validated here, so we may need
+            # to convert the scalar value to a list at this point
+            serial_items = new_play.serial
+            if not isinstance(serial_items, list):
+                serial_items = [serial_items]
+            max_serial = max([pct_to_int(x, num_hosts) for x in serial_items])
+
+        contenders = [self._options.forks, max_serial, num_hosts]
+        contenders = [v for v in contenders if v is not None and v > 0]
         self._initialize_processes(min(contenders))
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
@@ -277,6 +285,7 @@ class TaskQueueManager:
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
 
+        strategy.cleanup()
         self._cleanup_processes()
         return play_return
 
@@ -287,9 +296,7 @@ class TaskQueueManager:
         self._cleanup_processes()
 
     def _cleanup_processes(self):
-        if self._result_prc:
-            self._result_prc.terminate()
-
+        if hasattr(self, '_workers'):
             for (worker_prc, rslt_q) in self._workers:
                 rslt_q.close()
                 if worker_prc and worker_prc.is_alive():
@@ -316,6 +323,18 @@ class TaskQueueManager:
     def terminate(self):
         self._terminated = True
 
+    def has_dead_workers(self):
+
+        # [<WorkerProcess(WorkerProcess-2, stopped[SIGKILL])>,
+        # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
+
+        defunct = False
+        for idx,x in enumerate(self._workers):
+            if hasattr(x[0], 'exitcode'):
+                if x[0].exitcode in [-9, -15]:
+                    defunct = True
+        return defunct
+
     def send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
@@ -326,7 +345,7 @@ class TaskQueueManager:
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
             for possible in [method_name, 'v2_on_any']:
-                gotit =  getattr(callback_plugin, possible, None)
+                gotit = getattr(callback_plugin, possible, None)
                 if gotit is None:
                     gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
                 if gotit is not None:
@@ -334,22 +353,25 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    # temporary hack, required due to a change in the callback API, so
-                    # we don't break backwards compatibility with callbacks which were
-                    # designed to use the original API
+                    # Previously, the `v2_playbook_on_start` callback API did not accept
+                    # any arguments. In recent versions of the v2 callback API, the play-
+                    # book that started execution is given. In order to support both of
+                    # these method signatures, we need to use this `inspect` hack to send
+                    # no arguments to the methods that don't accept them. This way, we can
+                    # not break backwards compatibility until that API is deprecated.
                     # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
                     if method_name == 'v2_playbook_on_start':
                         import inspect
-                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                        if 'playbook' in f_args:
-                            method(*args, **kwargs)
-                        else:
+                        argspec = inspect.getargspec(method)
+                        if argspec.args == ['self']:
                             method()
+                        else:
+                            method(*args, **kwargs)
                     else:
                         method(*args, **kwargs)
                 except Exception as e:
-                    #TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_unicode(method_name), to_unicode(callback_plugin), to_unicode(e)))
+                    # TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
                     from traceback import format_tb
                     from sys import exc_info
                     display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))

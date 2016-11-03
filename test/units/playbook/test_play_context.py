@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import pipes
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
@@ -131,6 +132,8 @@ class TestPlayContext(unittest.TestCase):
         pfexec_flags = ''
         doas_exe    = 'doas'
         doas_flags  = ' -n  -u foo '
+        ksu_exe = 'ksu'
+        ksu_flags = ''
         dzdo_exe   = 'dzdo'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
@@ -154,7 +157,7 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'pbrun'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -b %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, play_context.success_key, default_cmd))
 
         play_context.become_method = 'pfexec'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
@@ -164,12 +167,21 @@ class TestPlayContext(unittest.TestCase):
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
 
+        play_context.become_method = 'ksu'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags, default_exe, play_context.success_key, default_cmd))
+
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
 
         play_context.become_method = 'dzdo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+
+        play_context.become_pass = 'testpass'
+        play_context.become_method = 'dzdo'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, pipes.quote(play_context.prompt), play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
 class TestTaskAndVariableOverrride(unittest.TestCase):
 

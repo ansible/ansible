@@ -40,16 +40,18 @@ from binascii import hexlify
 from ansible.compat.six import iteritems
 
 from ansible import constants as C
+from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -100,7 +102,7 @@ class MyAddPolicy(object):
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
 
-            inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
+            inp = input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
             self.connection.connection_unlock()
@@ -272,11 +274,11 @@ class Connection(ConnectionBase):
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
-        cmd = to_bytes(cmd, errors='strict')
+        cmd = to_bytes(cmd, errors='surrogate_or_strict')
 
-        no_prompt_out = ''
-        no_prompt_err = ''
-        become_output = ''
+        no_prompt_out = b''
+        no_prompt_err = b''
+        become_output = b''
 
         try:
             chan.exec_command(cmd)
@@ -308,7 +310,7 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self._play_context.become and self._play_context.become_pass:
-                        chan.sendall(self._play_context.become_pass + '\n')
+                        chan.sendall(to_bytes(self._play_context.become_pass) + b'\n')
                     else:
                         raise AnsibleError("A password is reqired but none was supplied")
                 else:
@@ -317,8 +319,8 @@ class Connection(ConnectionBase):
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
-        stdout = ''.join(chan.makefile('rb', bufsize))
-        stderr = ''.join(chan.makefile_stderr('rb', bufsize))
+        stdout = b''.join(chan.makefile('rb', bufsize))
+        stderr = b''.join(chan.makefile_stderr('rb', bufsize))
 
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
@@ -329,7 +331,7 @@ class Connection(ConnectionBase):
 
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         try:
@@ -338,7 +340,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
@@ -364,7 +366,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)", e)
 
         try:
-            self.sftp.get(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 

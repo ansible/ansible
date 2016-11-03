@@ -4,6 +4,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install --force systemd-sysvinit && \
     zypper --non-interactive install --auto-agree-with-licenses --no-recommends \
     acl \
+    apache2 \
     asciidoc \
     bzip2 \
     curl \
@@ -18,6 +19,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     mariadb \
     mercurial \
     openssh \
+    postgresql-server \
     python-coverage \
     python-httplib2 \
     python-jinja2 \
@@ -28,6 +30,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     python-paramiko \
     python-passlib \
     python-pip \
+    python-psycopg2 \
     python-PyYAML \
     python-setuptools \
     python-virtualenv \

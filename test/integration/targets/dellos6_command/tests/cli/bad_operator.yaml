@@ -1,0 +1,20 @@
+---
+- debug: msg="START cli/bad_operator.yaml"
+
+- name: test bad operator
+  dellos6_command:
+    commands:
+      - show version
+      - show interfaces GigabitEthernet 1/0/1
+    wait_for:
+      - "result[0] contains 'Description: Foo'"
+    provider: "{{ cli }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END cli/bad_operator.yaml"

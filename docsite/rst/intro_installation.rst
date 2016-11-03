@@ -47,25 +47,27 @@ Control Machine Requirements
 
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
+.. note::
+  Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
+
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of 2.0 ansible uses a few more file handles to manage its forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles unlimited``. Or just any time you see a "Too many open files" error.
+    As of version 2.0, Ansible uses a few more file handles to manage its forks. Mac OS X by default is configured for a small amount of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
 
-    Please note that some modules and plugins have additional requirements, for modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
+    Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
 
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
-Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, which is normally ssh. By default this uses sftp. If that's not available, you can switch to scp in ansible.cfg.
+You also need Python 2.4 or later. If you are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson``
 
@@ -86,13 +88,16 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
 
 .. note::
 
-   Python 3 is a slightly different language than Python 2 and most Python programs (including
-   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
+
+   By default, Ansible uses Python 2 in order to maintain compability with older distributions
+   such as RHEL 5 and RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.
+
 
    If you need to bootstrap these remote systems by installing Python 2.X,
    using the 'raw' module will be able to do it remotely. For example,

@@ -25,6 +25,7 @@ import sys
 import time
 from io import BytesIO, StringIO
 
+from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
 
@@ -42,7 +43,6 @@ class OpenBytesIO(BytesIO):
         pass
 
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleRunCommand(unittest.TestCase):
     def setUp(self):
         self.cmd_out = {
@@ -174,13 +174,24 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.cmd_out[sentinel.stdout] = BytesIO(b'hello')
         (rc, stdout, stderr) = self.module.run_command('/bin/cat hello.txt')
         self.assertEqual(rc, 0)
-        self.assertEqual(stdout, b'hello')
+        # module_utils function.  On py3 it returns text and py2 it returns
+        # bytes because it's returning native strings
+        if PY3:
+            self.assertEqual(stdout, u'hello')
+        else:
+            self.assertEqual(stdout, b'hello')
 
     def test_utf8_output(self):
         self.cmd_out[sentinel.stdout] = BytesIO(u'Žarn§'.encode('utf-8'))
         self.cmd_out[sentinel.stderr] = BytesIO(u'لرئيسية'.encode('utf-8'))
         (rc, stdout, stderr) = self.module.run_command('/bin/something_ugly')
         self.assertEqual(rc, 0)
-        self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
-        self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
+        # module_utils function.  On py3 it returns text and py2 it returns
+        # bytes because it's returning native strings
+        if PY3:
+            self.assertEqual(stdout, u'Žarn§')
+            self.assertEqual(stderr, u'لرئيسية')
+        else:
+            self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
+            self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
 

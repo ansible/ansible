@@ -3,12 +3,10 @@ Playbook Debugger
 
 .. contents:: Topics
 
-In 2.1 we added a ``debug`` strategy. This strategy enables you to invoke a debugger when a task is
-failed, and check several info, such as the value of a variable. Also, it is possible to update module
-arguments in the debugger, and run the failed task again with new arguments to consider how you
-can fix an issue.
+In 2.1 we added a ``debug`` strategy. This strategy enables you to invoke a debugger when a task has
+failed.  You have access to all of the features of the debugger in the context of the failed task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the failed task with the new variables and arguments to help resolve the cause of the failure.
 
-To use ``debug`` strategy, change ``strategy`` attribute like this::
+To use the ``debug`` strategy, change the ``strategy`` attribute like this::
 
     - hosts: test
       strategy: debug
@@ -26,13 +24,14 @@ For example, run the playbook below::
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-The debugger is invoked since *wrong_var* variable is undefined. Let's change the module's args,
-and run the task again::
+The debugger is invoked since the *wrong_var* variable is undefined. 
+
+Let's change the module's arguments and run the task again::
 
     PLAY ***************************************************************************
 
     TASK [wrong variable] **********************************************************
-    fatal: [192.168.1.1]: FAILED! => {"failed": true, "msg": "ERROR! 'wrong_var' is undefined"}
+    fatal: [192.0.2.10]: FAILED! => {"failed": true, "msg": "ERROR! 'wrong_var' is undefined"}
     Debugger invoked
     (debug) p result
     {'msg': u"ERROR! 'wrong_var' is undefined", 'failed': True}
@@ -42,10 +41,10 @@ and run the task again::
     (debug) p task.args
     {u'data': '{{ var1 }}'}
     (debug) redo
-    ok: [192.168.1.1]
+    ok: [192.0.2.10]
 
     PLAY RECAP *********************************************************************
-    192.168.1.1               : ok=1    changed=0    unreachable=0    failed=0
+    192.0.2.10               : ok=1    changed=0    unreachable=0    failed=0
 
 This time, the task runs successfully!
 
@@ -66,14 +65,14 @@ Print values used to execute a module::
     (debug) p task.args
     {u'name': u'{{ pkg_name }}'}
     (debug) p vars
-    {u'ansible_all_ipv4_addresses': [u'192.168.1.1'],
+    {u'ansible_all_ipv4_addresses': [u'192.0.2.10'],
      u'ansible_architecture': u'x86_64',
      ...
     }
     (debug) p vars['pkg_name']
     u'bash'
     (debug) p host
-    192.168.1.1
+    192.0.2.10
     (debug) p result
     {'_ansible_no_log': False,
      'changed': False,

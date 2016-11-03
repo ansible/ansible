@@ -114,7 +114,7 @@ Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these varia
 
    ---
    httpd_port: 80
-   ntpserver: 192.168.1.2
+   ntpserver: 192.0.2.23
 
 This is a YAML file, and you can create lists and dictionaries for more complex variable structures. 
 In this case, we are just setting two variables, one for the port for the web server, and one for the 
@@ -186,7 +186,7 @@ Now you have a fully-deployed site with web servers, a load balancer, and monito
 orchestration features come into play. While some applications use the term 'orchestration' to mean basic ordering or command-blasting, Ansible
 refers to orchestration as 'conducting machines like an orchestra', and has a pretty sophisticated engine for it.
 
-Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_upgrade.yml``.
+Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_update.yml``.
 
 Looking at the playbook, you can see it is made up of two plays. The first play is very simple and looks like this::
 

@@ -103,6 +103,7 @@ class VcaAnsibleModule(AnsibleModule):
 
     def get_vm(self, vapp_name, vm_name):
         vapp = self.get_vapp(vapp_name)
+        children = vapp.me.get_Children()
         vms = [vm for vm in children.get_Vm() if vm.name == vm_name]
         try:
             return vms[0]

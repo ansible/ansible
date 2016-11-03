@@ -1,0 +1,51 @@
+---
+- debug: msg="START cli/insert.yaml"
+
+- name: setup
+  asa_config:
+    commands:
+      - clear configure access-list ACL-INSERT
+    provider: "{{ cli }}"
+  ignore_errors: yes
+
+- name: Create ACL
+  asa_acl:
+    provider: "{{ cli }}"
+    lines:
+      - access-list ACL-INSERT extended permit tcp any any eq www
+      - access-list ACL-INSERT extended permit tcp any any eq https
+  register: result
+
+- name: Insert on first line
+  asa_acl:
+    provider: "{{ cli }}"
+    lines:
+      - access-list ACL-INSERT extended permit tcp any any eq www
+      - access-list ACL-INSERT extended permit tcp any any eq https
+      - access-list ACL-INSERT line 1 extended permit tcp any any eq ssh
+  register: result
+
+- name: Show ACL
+  asa_command:
+    provider: "{{ cli }}"
+    commands: "show run access-list ACL-INSERT"
+  register: result
+
+- name: Show me
+  debug:
+    var: result
+
+- name:
+  assert:
+    that:
+      - result.stdout_lines[0][0].rstrip() == 'access-list ACL-INSERT extended permit tcp any any eq ssh'
+
+
+
+- name: teardown
+  asa_config:
+    commands:
+      - clear configure access-list  ACL-INSERT
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/insert.yaml"

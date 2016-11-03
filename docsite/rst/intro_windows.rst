@@ -68,7 +68,7 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 .. code-block:: bash
 
-   pip install kerberos
+   pip install kerberos requests_kerberos
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
@@ -169,7 +169,7 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
-    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    # The following is necessary for Python 2.7.9+ (or any older Python that has backported SSLContext, eg, Python 2.7.5 on RHEL7) when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.

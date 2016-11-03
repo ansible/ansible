@@ -19,7 +19,6 @@
 
 from __future__ import print_function
 
-import yaml
 import os
 import subprocess
 import sys
@@ -39,34 +38,75 @@ def main():
 
     C.DEPRECATION_WARNINGS = False
 
-    targets = [
+    C.DEFAULT_ROLES_PATH = [os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                         '..', '..', '..', 'integration', 'targets'))]
+
+    posix_targets = [
         'non_destructive',
         'destructive',
+    ]
+
+    windows_targets = [
+        'test_win_group1',
+        'test_win_group2',
+        'test_win_group3',
     ]
 
     parser = ArgumentParser(description='Generate an integration test script for changed modules.')
     parser.add_argument('module_group', choices=['core', 'extras'], help='module group to test')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='write verbose output to stderr')
+    parser.add_argument('--changes', dest='changes', default=None,
+                        help='file listing changed paths (default: query git)')
     parser.add_argument('--image', dest='image', default=os.environ.get('IMAGE'),
-                        help='image to run tests with (default: auto-detect)')
+                        help='image to run tests with')
     parser.add_argument('--privileged', dest='privileged', action='store_true',
                         default=os.environ.get('PRIVILEGED') == 'true',
                         help='run container in privileged mode')
+    parser.add_argument('--python3', dest='python3', action='store_true',
+                        default=os.environ.get('PYTHON3', '') != '',
+                        help='run tests using python3')
+    parser.add_argument('--platform', dest='platform', default=os.environ.get('PLATFORM'),
+                        help='platform to run tests on')
+    parser.add_argument('--version', dest='version', default=os.environ.get('VERSION'),
+                        help='version of platform to run tests on')
+    parser.add_argument('--output', dest='output', required=True,
+                        help='path to write output script to')
 
     args = parser.parse_args()
-    jobs = None if args.image is None else ['IMAGE=%s%s' % (args.image, ' PRIVILEGED=true' if args.privileged else '')]
 
-    generate_test_commands(args.module_group, targets, jobs=jobs, verbose=args.verbose)
+    targets = posix_targets
+
+    if args.image is not None:
+        script = 'integration'
+        options = ''
+        if args.privileged:
+            options += ' PRIVILEGED=true'
+        if args.python3:
+            options += ' PYTHON3=1'
+        jobs = ['IMAGE=%s%s' % (args.image, options)]
+    elif args.platform is not None and args.version is not None:
+        script = 'remote'
+        jobs = ['PLATFORM=%s VERSION=%s' % (args.platform, args.version)]
+
+        if args.platform == 'windows':
+            targets = windows_targets
+    else:
+        raise Exception('job parameters not specified')
+
+    generate_test_commands(args.module_group, targets, script, args.output, jobs=jobs, verbose=args.verbose, changes=args.changes)
 
 
-def generate_test_commands(module_group, targets, jobs=None, verbose=False):
+def generate_test_commands(module_group, targets, script, output, jobs=None, verbose=False, changes=None):
     """Generate test commands for the given module group and test targets.
 
     Args:
         module_group: The module group (core, extras) to examine.
         targets: The test targets to examine.
+        script: The script used to execute the test targets.
+        output: The path to write the output script to.
         jobs: The test jobs to execute, or None to auto-detect.
         verbose: True to write detailed output to stderr.
+        changes: Path to file containing list of changed files, or None to query git.
     """
 
     base_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
@@ -80,7 +120,11 @@ def generate_test_commands(module_group, targets, jobs=None, verbose=False):
         print_stderr('targets: %s' % ' '.join(targets))
         print_stderr()
 
-    paths_changed = get_changed_paths(module_dir)
+    if changes is None:
+        paths_changed = get_changed_paths(module_dir)
+    else:
+        with open(changes, 'r') as f:
+            paths_changed = f.read().strip().split('\n')
 
     if len(paths_changed) == 0:
         print_stderr('No changes to files detected.')
@@ -117,23 +161,22 @@ def generate_test_commands(module_group, targets, jobs=None, verbose=False):
     if verbose:
         dump_stderr('use_tags', use_tags)
 
-    if jobs is None:
-        jobs = get_test_jobs(job_config_path)
-
     target = ' '.join(targets)
     tags = ','.join(use_tags)
-    script_path = 'test/utils/shippable/integration.sh'
+    script_path = 'test/utils/shippable/%s.sh' % script
 
     commands = ['TARGET="%s" TEST_FLAGS="-t %s" %s %s' % (target, tags, j, script_path) for j in jobs]
 
-    for command in commands:
-        print(command)
+    with open(output, 'w') as f:
+        f.writelines(commands)
+        f.write('\n')
 
 
 def print_stderr(*args, **kwargs):
     """Print to stderr."""
 
     print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
 
 
 def dump_stderr(label, l):
@@ -188,28 +231,6 @@ def get_role_tags(playbook_path):
                 tags.add(tag)
 
     return tags
-
-
-def get_test_jobs(config_path):
-    """Get list of test jobs to execute based on the given shippable.yml config file.
-
-    Args:
-        config_path: Path to the shippable.yml config file to extract jobs from.
-
-    Returns: List of test jobs to execute.
-    """
-
-    with open(config_path, 'r') as shippable:
-        config = yaml.load(shippable.read())
-
-    includes = [dict([e.split('=') for e in i['env'].split(' ')]) for i in config['matrix']['include']]
-    tests = [i for i in includes if i['TEST'] == 'integration']
-    images = list(set([t['IMAGE'] for t in tests]))
-    privileged = set([t['IMAGE'] for t in tests if 'PRIVILEGED' in t and t['PRIVILEGED'] == 'true'])
-    images.sort()
-    jobs = ['IMAGE=%s%s' % (i, ' PRIVILEGED=true' if i in privileged else '') for i in images]
-
-    return jobs
 
 
 def get_changed_paths(git_root, branch='devel'):

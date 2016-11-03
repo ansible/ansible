@@ -2,24 +2,23 @@
   gather_facts: True
   roles:
     # In destructive because it creates and removes a user
-    - { role: test_sudo, tags: test_sudo}
-    #- { role: test_su, tags: test_su} # wait till su support is added to local connection, needs tty
-    - { role: test_become, tags: test_become}
-    - { role: test_service, tags: test_service }
-    # Current pip unconditionally uses md5.  We can re-enable if pip switches
-    # to a different hash or allows us to not check md5
-    - { role: test_pip, tags: test_pip, when: ansible_fips != True }
-    - { role: test_gem, tags: test_gem }
-    - { role: test_yum, tags: test_yum }
-    - { role: test_apt, tags: test_apt }
-    - { role: test_apt_repository, tags: [test_apt_repository, test_apt_key] }
-    - { role: test_postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user] }
-    - { role: test_mysql_db, tags: test_mysql_db}
-    - { role: test_mysql_user, tags: test_mysql_user}
-    - { role: test_mysql_variables, tags: test_mysql_variables}
-    - { role: test_docker, tags: test_docker, when: ansible_distribution != "Fedora" }
-    - { role: test_zypper, tags: test_zypper}
-    - { role: test_zypper_repository, tags: test_zypper_repository}
-    - { role: test_uri, tags: test_uri }
-    - { role: test_get_url, tags: test_get_url }
-    - { role: test_apache2_module, tags: test_apache2_module }
+    - { role: become, tags: test_become}
+    - { role: service, tags: [test_service, needs_privileged] }
+    - { role: pip, tags: test_pip }
+    - { role: gem, tags: test_gem }
+    - { role: yum, tags: test_yum }
+    - { role: dnf, tags: test_dnf }
+    - { role: apt, tags: test_apt }
+    - { role: apt_repository, tags: [test_apt_repository, test_apt_key] }
+    - { role: postgresql, tags: [test_postgresql, test_postgresql_db, test_postgresql_privs, test_postgresql_user, needs_privileged] }
+    - { role: mysql_db, tags: test_mysql_db}
+    - { role: mysql_user, tags: test_mysql_user}
+    - { role: mysql_variables, tags: test_mysql_variables}
+    - { role: docker, tags: test_docker }
+    - { role: zypper, tags: test_zypper}
+    - { role: zypper_repository, tags: test_zypper_repository}
+    - { role: uri, tags: test_uri }
+    - { role: get_url, tags: test_get_url }
+    - { role: apache2_module, tags: test_apache2_module }
+    # This removes ~/.ssh/known_hosts and /etc/ssh/known_hosts
+    - { role: git, tags: test_git }

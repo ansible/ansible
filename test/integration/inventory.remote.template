@@ -1,0 +1,9 @@
+[posix]
+remote
+
+[posix:vars]
+ansible_connection=ssh
+ansible_host=@ansible_host
+ansible_port=@ansible_port
+ansible_user=@ansible_user
+ansible_python_interpreter=/usr/local/bin/python2

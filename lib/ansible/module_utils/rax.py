@@ -33,6 +33,7 @@ import re
 from uuid import UUID
 
 from ansible.module_utils.basic import BOOLEANS
+from ansible.module_utils.six import text_type, binary_type
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
@@ -44,7 +45,7 @@ CLB_PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS',
                  'IMAPv4', 'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP',
                  'TCP', 'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, binary_type, bool, dict, int, list, type(None))
 PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
 SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
 

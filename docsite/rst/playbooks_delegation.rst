@@ -37,10 +37,40 @@ The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and 
 play, in order to determine the number of hosts per pass::
 
     - name: test play
-      hosts: websevers
+      hosts: webservers
       serial: "30%"
 
 If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
+
+As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - 10
+
+In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
+every following batch would contain 10 hosts until all available hosts are used.
+
+It is also possible to list multiple batche sizes as percentages::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - "10%"
+      - "20%"
+      - "100%"
+
+You can also mix and match the values::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - "20%"
 
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
@@ -194,7 +224,7 @@ This approach is similar to applying a conditional to a task such as::
 .. note::
      When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
-     :code:`inventory_hostname == my_group_name[0]` construct.
+     :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
 
 .. _local_playbooks:
 

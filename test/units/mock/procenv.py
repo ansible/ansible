@@ -1,4 +1,5 @@
 # (c) 2016, Matt Davis <mdavis@ansible.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -20,11 +21,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import sys
+import json
 
 from contextlib import contextmanager
 from io import BytesIO, StringIO
 from ansible.compat.six import PY3
-from ansible.utils.unicode import to_bytes
+from ansible.compat.tests import unittest
+from ansible.module_utils._text import to_bytes
+
 
 @contextmanager
 def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
@@ -45,13 +49,33 @@ def swap_stdin_and_argv(stdin_data='', argv_data=tuple()):
     sys.stdin = real_stdin
     sys.argv = real_argv
 
+
 @contextmanager
 def swap_stdout():
     """
     context manager that temporarily replaces stdout for tests that need to verify output
     """
     old_stdout = sys.stdout
-    fake_stream = BytesIO()
+    if PY3:
+        fake_stream = StringIO()
+    else:
+        fake_stream = BytesIO()
     sys.stdout = fake_stream
     yield fake_stream
     sys.stdout = old_stdout
+
+
+class ModuleTestCase(unittest.TestCase):
+    def setUp(self, module_args=None):
+        if module_args is None:
+            module_args = {}
+
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS=module_args))
+
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+    def tearDown(self):
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)

@@ -19,14 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
 import sys
 import base64
 import itertools
 import json
 import os.path
 import ntpath
-import types
 import pipes
 import glob
 import re
@@ -34,27 +32,28 @@ import crypt
 import hashlib
 import string
 from functools import partial
-import operator as py_operator
 from random import SystemRandom, shuffle
+from datetime import datetime
 import uuid
 
 import yaml
 from jinja2.filters import environmentfilter
-from distutils.version import LooseVersion, StrictVersion
-from ansible.compat.six import iteritems, string_types
-
-from ansible import errors
-from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.utils.hashing import md5s, checksum_s
-from ansible.utils.unicode import unicode_wrap, to_unicode
-from ansible.utils.vars import merge_hash
-from ansible.vars.hostvars import HostVars
 
 try:
     import passlib.hash
     HAS_PASSLIB = True
 except:
     HAS_PASSLIB = False
+
+from ansible import errors
+from ansible.compat.six import iteritems, string_types
+from ansible.compat.six.moves import reduce
+from ansible.module_utils._text import to_text
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils.unicode import unicode_wrap
+from ansible.utils.vars import merge_hash
+from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
@@ -68,17 +67,17 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if isinstance(o, HostVars):
             return dict(o)
         else:
-            return json.JSONEncoder.default(o)
+            return super(AnsibleJSONEncoder, self).default(o)
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
     transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
-    return to_unicode(transformed)
+    return to_text(transformed)
 
 def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
     transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
-    return to_unicode(transformed)
+    return to_text(transformed)
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
@@ -118,19 +117,22 @@ def to_bool(a):
     else:
         return False
 
+def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
+    return datetime.strptime(string, format)
+
+
 def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
 
 def fileglob(pathname):
-    ''' return list of matched files for glob '''
-    return glob.glob(pathname)
+    ''' return list of matched regular files for glob '''
+    return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
 
-    if not isinstance(value, basestring):
-        value = str(value)
+    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
 
     if ignorecase:
         flags = re.I
@@ -186,36 +188,15 @@ def ternary(value, true_val, false_val):
         return false_val
 
 
-def version_compare(value, version, operator='eq', strict=False):
-    ''' Perform a version comparison on a value '''
-    op_map = {
-        '==': 'eq', '=':  'eq', 'eq': 'eq',
-        '<':  'lt', 'lt': 'lt',
-        '<=': 'le', 'le': 'le',
-        '>':  'gt', 'gt': 'gt',
-        '>=': 'ge', 'ge': 'ge',
-        '!=': 'ne', '<>': 'ne', 'ne': 'ne'
-    }
-
-    if strict:
-        Version = StrictVersion
-    else:
-        Version = LooseVersion
-
-    if operator in op_map:
-        operator = op_map[operator]
-    else:
-        raise errors.AnsibleFilterError('Invalid operator type')
-
-    try:
-        method = getattr(py_operator, operator)
-        return method(Version(str(value)), Version(str(version)))
-    except Exception as e:
-        raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
 def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
+
+def from_yaml(data):
+    if isinstance(data, string_types):
+        return yaml.safe_load(data)
+    return data
 
 @environmentfilter
 def rand(environment, end, start=None, step=None):
@@ -261,7 +242,6 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
         'sha512':   '6',
     }
 
-    hastype = hashtype.lower()
     if hashtype in cryptmethod:
         if salt is None:
             r = SystemRandom()
@@ -277,7 +257,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
-            cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+            if hashtype == 'blowfish':
+                cls = passlib.hash.bcrypt;
+            else:
+                cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+
             encrypted = cls.encrypt(password, salt=salt)
 
         return encrypted
@@ -361,8 +345,14 @@ def comment(text, style='plain', **kw):
     str_beginning = ''
     if p['beginning']:
         str_beginning = "%s%s" % (p['beginning'], p['newline'])
-    str_prefix = str(
-        "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+    str_prefix = ''
+    if p['prefix']:
+        if p['prefix'] != p['newline']:
+            str_prefix = str(
+                "%s%s" % (p['prefix'], p['newline'])) * int(p['prefix_count'])
+        else:
+            str_prefix = str(
+                "%s" % (p['newline'])) * int(p['prefix_count'])
     str_text = ("%s%s" % (
         p['decoration'],
         # Prepend each line of the text with the decorator
@@ -394,9 +384,52 @@ def extract(item, container, morekeys=None):
         if not isinstance(morekeys, list):
             morekeys = [morekeys]
 
-        value = reduce(lambda d, k: d[k], morekeys, value)
+        try:
+            value = reduce(lambda d, k: d[k], morekeys, value)
+        except KeyError:
+            value = Undefined()
 
     return value
+
+def failed(*a, **kw):
+    ''' Test if task result yields failed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
+    rc = item.get('rc',0)
+    failed = item.get('failed',False)
+    if rc != 0 or failed:
+        return True
+    else:
+        return False
+
+def success(*a, **kw):
+    ''' Test if task result yields success '''
+    return not failed(*a, **kw)
+
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
+
+def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -418,7 +451,10 @@ class FilterModule(object):
             # yaml
             'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
-            'from_yaml': yaml.safe_load,
+            'from_yaml': from_yaml,
+
+            #date
+            'to_datetime': to_datetime,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
@@ -461,9 +497,6 @@ class FilterModule(object):
             'ternary': ternary,
 
             # list
-            # version comparison
-            'version_compare': version_compare,
-
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
@@ -478,4 +511,21 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # failure testing
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
+
+            # changed testing
+            'changed' : changed,
+            'change'  : changed,
+
+            # skip testing
+            'skipped' : skipped,
+            'skip'    : skipped,
+
+            # debug
+            'type': lambda o: o.__class__.__name__,
         }

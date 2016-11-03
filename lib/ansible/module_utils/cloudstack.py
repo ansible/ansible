@@ -27,7 +27,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import time
+from ansible.module_utils.six import iteritems
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -68,6 +70,10 @@ class AnsibleCloudStack(object):
 
         self.result = {
             'changed': False,
+            'diff' : {
+                'before': dict(),
+                'after': dict()
+            }
         }
 
         # Common returns, will be merged with self.returns
@@ -109,6 +115,7 @@ class AnsibleCloudStack(object):
         self.vpc = None
         self.zone = None
         self.vm = None
+        self.vm_default_nic = None
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
@@ -147,6 +154,7 @@ class AnsibleCloudStack(object):
 
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
+        result = False
         for key, value in want_dict.iteritems():
 
             # Optionally limit by a list of keys
@@ -158,20 +166,38 @@ class AnsibleCloudStack(object):
                 continue
 
             if key in current_dict:
-                if isinstance(current_dict[key], (int, long, float, complex)):
+                if isinstance(value, (int, float, long, complex)):
+                    # ensure we compare the same type
+                    if isinstance(value, int):
+                        current_dict[key] = int(current_dict[key])
+                    elif isinstance(value, float):
+                        current_dict[key] = float(current_dict[key])
+                    elif isinstance(value, long):
+                        current_dict[key] = long(current_dict[key])
+                    elif isinstance(value, complex):
+                        current_dict[key] = complex(current_dict[key])
+
                     if value != current_dict[key]:
-                        return True
+                        self.result['diff']['before'][key] = current_dict[key]
+                        self.result['diff']['after'][key] = value
+                        result = True
                 else:
                     if self.case_sensitive_keys and key in self.case_sensitive_keys:
                         if value != current_dict[key].encode('utf-8'):
-                            return True
+                            self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                            self.result['diff']['after'][key] = value
+                            result = True
 
                     # Test for diff in case insensitive way
                     elif value.lower() != current_dict[key].encode('utf-8').lower():
-                        return True
+                        self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                        self.result['diff']['after'][key] = value
+                        result = True
             else:
-                return True
-        return False
+                self.result['diff']['before'][key] = None
+                self.result['diff']['after'][key] = value
+                result = True
+        return result
 
 
     def _get_by_key(self, key=None, my_dict=None):
@@ -242,6 +268,8 @@ class AnsibleCloudStack(object):
 
         project = self.module.params.get('project')
         if not project:
+            project = os.environ.get('CLOUDSTACK_PROJECT')
+        if not project:
             return None
         args = {}
         args['account'] = self.get_account(key='name')
@@ -277,6 +305,32 @@ class AnsibleCloudStack(object):
         return self._get_by_key(key, self.ip_address)
 
 
+    def get_vm_guest_ip(self):
+        vm_guest_ip = self.module.params.get('vm_guest_ip')
+        default_nic = self.get_vm_default_nic()
+
+        if not vm_guest_ip:
+            return default_nic['ipaddress']
+
+        for secondary_ip in default_nic['secondaryip']:
+            if vm_guest_ip == secondary_ip['ipaddress']:
+                return vm_guest_ip
+        self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
+
+
+    def get_vm_default_nic(self):
+        if self.vm_default_nic:
+            return self.vm_default_nic
+
+        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
+        if nics:
+            for n in nics['nic']:
+                if n['isdefault']:
+                    self.vm_default_nic = n
+                    return self.vm_default_nic
+        self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
+
+
     def get_vm(self, key=None):
         if self.vm:
             return self._get_by_key(key, self.vm)
@@ -304,6 +358,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.zone)
 
         zone = self.module.params.get('zone')
+        if not zone:
+            zone = os.environ.get('CLOUDSTACK_ZONE')
         zones = self.cs.listZones()
 
         # use the first zone if no zone param given
@@ -361,6 +417,8 @@ class AnsibleCloudStack(object):
 
         account = self.module.params.get('account')
         if not account:
+            account = os.environ.get('CLOUDSTACK_ACCOUNT')
+        if not account:
             return None
 
         domain = self.module.params.get('domain')
@@ -383,6 +441,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.domain)
 
         domain = self.module.params.get('domain')
+        if not domain:
+            domain = os.environ.get('CLOUDSTACK_DOMAIN')
         if not domain:
             return None
 

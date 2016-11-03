@@ -22,17 +22,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pipes
-import sys
 from io import StringIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock, mock_open
+from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes
+
 
 class TestConnectionBaseClass(unittest.TestCase):
 
@@ -121,42 +121,42 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         mock_select.side_effect = _mock_select
 
-        mock_popen_res.stdout.read.side_effect = ["some data", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # test with a password set to trigger the sshpass write
         pc.password = '12345'
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run(["ssh", "is", "a", "cmd"], "this is more data")
 
         # test with password prompting enabled
         pc.password = None
         pc.prompt = True
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # test with some become settings
         pc.prompt = False
         pc.become = True
         pc.success_key = 'BECOME-SUCCESS-abcdefg'
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "this is input data")
 
         # simulate no data input
         mock_openpty.return_value = (98, 99)
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "")
 
         # simulate no data input but Popen using new pty's fails
         mock_Popen.return_value = None
         mock_Popen.side_effect = [OSError(), mock_popen_res]
-        mock_popen_res.stdout.read.side_effect = ["some data", "", ""]
-        mock_popen_res.stderr.read.side_effect = [""]
+        mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
+        mock_popen_res.stderr.read.side_effect = [b""]
         conn._run("ssh", "")
 
     def test_plugins_connection_ssh__examine_output(self):
@@ -171,22 +171,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.check_missing_password   = MagicMock()
 
         def _check_password_prompt(line):
-            if 'foo' in line:
+            if b'foo' in line:
                 return True
             return False
 
         def _check_become_success(line):
-            if 'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz' in line:
+            if b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz' in line:
                 return True
             return False
 
         def _check_incorrect_password(line):
-            if 'incorrect password' in line:
+            if b'incorrect password' in line:
                 return True
             return False
 
         def _check_missing_password(line):
-            if 'bad password' in line:
+            if b'bad password' in line:
                 return True
             return False
 
@@ -204,9 +204,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = True
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
-        self.assertEqual(output, 'line 1\nline 2\nline 3\n')
-        self.assertEqual(unprocessed, 'this should be the remainder')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
+        self.assertEqual(output, b'line 1\nline 2\nline 3\n')
+        self.assertEqual(unprocessed, b'this should be the remainder')
         self.assertTrue(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
@@ -221,10 +221,10 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = False
-        pc.success_key = 'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nBECOME-SUCCESS-abcdefghijklmnopqrstuvxyz\nline 3\n', False)
-        self.assertEqual(output, 'line 1\nline 2\nline 3\n')
-        self.assertEqual(unprocessed, '')
+        pc.success_key = u'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nBECOME-SUCCESS-abcdefghijklmnopqrstuvxyz\nline 3\n', False)
+        self.assertEqual(output, b'line 1\nline 2\nline 3\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertTrue(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
@@ -240,9 +240,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         pc.success_key = None
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nline 2\nincorrect password\n', True)
-        self.assertEqual(output, 'line 1\nline 2\nincorrect password\n')
-        self.assertEqual(unprocessed, '')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nincorrect password\n', True)
+        self.assertEqual(output, b'line 1\nline 2\nincorrect password\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertTrue(conn._flags['become_error'])
@@ -258,9 +258,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         pc.success_key = None
-        output, unprocessed = conn._examine_output('source', 'state', 'line 1\nbad password\n', True)
-        self.assertEqual(output, 'line 1\nbad password\n')
-        self.assertEqual(unprocessed, '')
+        output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nbad password\n', True)
+        self.assertEqual(output, b'line 1\nbad password\n')
+        self.assertEqual(unprocessed, b'')
         self.assertFalse(conn._flags['become_prompt'])
         self.assertFalse(conn._flags['become_success'])
         self.assertFalse(conn._flags['become_error'])
@@ -277,20 +277,22 @@ class TestConnectionBaseClass(unittest.TestCase):
         C.ANSIBLE_SSH_RETRIES = 9
 
         # test a regular, successful execution
-        conn._exec_command.return_value = (0, 'stdout', '')
+        conn._exec_command.return_value = (0, b'stdout', b'')
         res = conn.exec_command('ssh', 'some data')
+        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
 
         # test a retry, followed by success
         conn._exec_command.return_value = None
-        conn._exec_command.side_effect = [(255, '', ''), (0, 'stdout', '')]
+        conn._exec_command.side_effect = [(255, '', ''), (0, b'stdout', b'')]
         res = conn.exec_command('ssh', 'some data')
+        self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return what the _exec_command helper returned')
 
         # test multiple failures
-        conn._exec_command.side_effect = [(255, '', '')]*10
+        conn._exec_command.side_effect = [(255, b'', b'')] * 10
         self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
 
         # test other failure from exec_command
-        conn._exec_command.side_effect = [Exception('bad')]*10
+        conn._exec_command.side_effect = [Exception('bad')] * 10
         self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
 
     @patch('os.path.exists')
@@ -306,23 +308,39 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.return_value = (0, '', '')
         conn.host = "some_host"
 
+        # Test with C.DEFAULT_SCP_IF_SSH set to smart
+        # Test when SFTP works
+        C.DEFAULT_SCP_IF_SSH = 'smart'
+        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
+        # Test when SFTP doesn't work but SCP does
+        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._run.side_effect = None
+
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
-        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None)
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
-        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None)
+        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
-        res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
-        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
-        res = conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        expected_in_data = b' '.join((b'put',
+            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+        conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
@@ -344,25 +362,39 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.return_value = (0, '', '')
         conn.host = "some_host"
 
+        # Test with C.DEFAULT_SCP_IF_SSH set to smart
+        # Test when SFTP works
+        C.DEFAULT_SCP_IF_SSH = 'smart'
+        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
+
+        # Test when SFTP doesn't work but SCP does
+        conn._run.side_effect = [(1, 'stdout', 'some errors'), (0, '', '')]
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
+        conn._run.side_effect = None
+
         # test with C.DEFAULT_SCP_IF_SSH enabled
         C.DEFAULT_SCP_IF_SSH = True
-        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', None)
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
-        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', None)
+        conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', None, checkrc=False)
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
         expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
-        res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
-        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')), to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
-        res = conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
-        conn._run.assert_called_with('some command to run', expected_in_data)
+        expected_in_data = b' '.join((b'get',
+            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+        conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
+        conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
-
