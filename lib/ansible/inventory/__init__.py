@@ -231,7 +231,7 @@ class Inventory(object):
 
         # Check if pattern already computed
         if isinstance(pattern, list):
-            pattern_hash = u":".join(pattern)
+            pattern_hash = u":".join(to_text(p) for p in pattern)
         else:
             pattern_hash = pattern
 
@@ -293,8 +293,8 @@ class Inventory(object):
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
-
-        elif ',' in pattern:
+        pattern = to_text(pattern)
+        if ',' in pattern:
             patterns = re.split('\s*,\s*', pattern)
 
         # If it doesn't, it could still be a single pattern. This accounts for
