@@ -35,6 +35,7 @@ author: "Jesse Keating (@j2sol)"
 description:
    - Perform server actions on an existing compute instance from OpenStack.
      This module does not return any data other than changed true/false.
+     When I(action) is 'rebuild', then I(image) parameter is required.
 options:
    server:
      description:
@@ -55,8 +56,14 @@ options:
      description:
        - Perform the given action. The lock and unlock actions always return
          changed as the servers API does not provide lock status.
-     choices: [stop, start, pause, unpause, lock, unlock, suspend, resume]
+     choices: [stop, start, pause, unpause, lock, unlock, suspend, resume,
+               rebuild]
      default: present
+   image:
+     description:
+       - Image the server should be rebuilt with
+     default: null
+     version_added: "2.3"
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -82,7 +89,8 @@ _action_map = {'stop': 'SHUTOFF',
                'lock': 'ACTIVE', # API doesn't show lock/unlock status
                'unlock': 'ACTIVE',
                'suspend': 'SUSPENDED',
-               'resume': 'ACTIVE',}
+               'resume': 'ACTIVE',
+               'rebuild': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
@@ -113,11 +121,15 @@ def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
         action=dict(required=True, choices=['stop', 'start', 'pause', 'unpause',
-                                            'lock', 'unlock', 'suspend', 'resume']),
+                                            'lock', 'unlock', 'suspend', 'resume',
+                                            'rebuild']),
+        image=dict(required=False),
     )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, supports_check_mode=True, **module_kwargs)
+    module = AnsibleModule(argument_spec, supports_check_mode=True,
+                           required_if=[('action', 'rebuild', ['image'])],
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -125,6 +137,7 @@ def main():
     action = module.params['action']
     wait = module.params['wait']
     timeout = module.params['timeout']
+    image = module.params['image']
 
     try:
         if action in _admin_actions:
@@ -199,6 +212,18 @@ def main():
                 module.exit_json(changed=False)
 
             cloud.nova_client.servers.resume(server=server.id)
+            if wait:
+                _wait(timeout, cloud, server, action)
+            module.exit_json(changed=True)
+
+        elif action == 'rebuild':
+            image = cloud.get_image(image)
+
+            if image is None:
+                module.fail_json(msg="Image does not exist")
+
+            # rebuild doesn't set a state, just do it
+            cloud.nova_client.servers.rebuild(server=server.id, image=image.id)
             if wait:
                 _wait(timeout, cloud, server, action)
             module.exit_json(changed=True)
