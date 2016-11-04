@@ -3,17 +3,20 @@ Ansible Changes By Release
 
 ## 2.1.3 "The Song Remains the Same" - TBD
 
-* Security fix to apt_key module.  The apt_key module was always using a short
-  id (8 characters) to install keys even if a long id or fingerprint were given
-  (16 or more characters).  As the chance for a collision goes down the longer
-  the id, using all of the characters that the user specified in the the key id when
-  downloading a key is one good safety precaution.
+* Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
+* Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
 
 ###Minor Changes:
 * The subversion module from core now marks its password parameter as no_log so
   the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
   login_password as no_log so the password is obscured when logging.
+* Fixed several bugs related to locating files relative to role/playbook directories.
+* Fixed a bug in the way hosts were tested for failed states, resulting in incorrectly skipped block sessions.
+* Fixed a bug in the way our custom JSON encoder is used for the to_json* filters.
+* Fixed some bugs related to the use of non-ascii characters in become passwords.
+* Fixed a bug with Azure modules which may be using the latest rc6 library.
+* Backported some docker_common fixes.
 
 ## 2.1.2 "The Song Remains the Same" - 09-29-2016
 
