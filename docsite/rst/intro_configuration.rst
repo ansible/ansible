@@ -999,6 +999,18 @@ Ansible 1.4 and later will instruct users to run with "-vvvv" in situations wher
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
 encountered on EC2. This setting is ignored if ``ssh_args`` is set.
 
+.. _control_path_dir:
+
+control_path_dir
+================
+
+.. versionadded:: 2.3
+
+This is the base directory of the ControlPath sockets.
+It is the ``%(directory)s`` part of the ``control_path`` option.
+This defaults to::
+    control_path_dir=$HOME/.ansible/cp
+
 .. _scp_if_ssh:
 
 scp_if_ssh
