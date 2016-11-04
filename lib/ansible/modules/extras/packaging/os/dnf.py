@@ -304,14 +304,14 @@ def ensure(module, base, state, names):
         filenames = [f.strip() for f in filenames]
         groups = []
         environments = []
-        for group_spec in group_specs:
+        for group_spec in (g.strip() for g in group_specs):
             group = base.comps.group_by_pattern(group_spec)
             if group:
-                groups.append(group.strip())
+                groups.append(group)
             else:
-                environment = base.comps.environments_by_pattern(group_spec)
+                environment = base.comps.environment_by_pattern(group_spec)
                 if environment:
-                    environments.extend((e.id.strip() for e in environment))
+                    environments.append(environment.id)
                 else:
                     module.fail_json(
                         msg="No group {} available.".format(group_spec))
@@ -376,11 +376,21 @@ def ensure(module, base, state, names):
                 module.fail_json(
                     msg="Cannot remove paths -- please specify package name.")
 
-            installed = base.sack.query().installed()
             for group in groups:
-                if installed.filter(name=group.name):
+                try:
                     base.group_remove(group)
+                except dnf.exceptions.CompsError:
+                    # Group is already uninstalled.
+                    pass
 
+            for envioronment in environments:
+                try:
+                    base.environment_remove(environment)
+                except dnf.exceptions.CompsError:
+                    # Environment is already uninstalled.
+                    pass
+
+            installed = base.sack.query().installed()
             for pkg_spec in pkg_specs:
                 if installed.filter(name=pkg_spec):
                     base.remove(pkg_spec)
