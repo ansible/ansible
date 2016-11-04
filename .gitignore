@@ -65,3 +65,5 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
+# Release directory
+packaging/release/ansible_release
