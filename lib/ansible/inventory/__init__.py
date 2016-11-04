@@ -38,6 +38,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader
 from ansible.utils.vars import combine_vars
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -58,7 +59,7 @@ class Inventory(object):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
-        self.host_list = host_list
+        self.host_list = unfrackpath(host_list, follow=False)
         self._loader = loader
         self._variable_manager = variable_manager
         self.localhost = None
