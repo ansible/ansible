@@ -43,6 +43,14 @@ options:
         - Password for the user
      required: false
      default: None
+   update_password:
+     required: false
+     default: always
+     choices: ['always', 'on_create']
+     version_added: "2.3"
+     description:
+        - C(always) will attempt to update password.  C(on_create) will only
+          set the password for newly created users.
    email:
      description:
         - Email address for the user
@@ -89,6 +97,17 @@ EXAMPLES = '''
     cloud: mycloud
     state: absent
     name: demouser
+
+# Create a user but don't update password if user exists
+- os_user:
+    cloud: mycloud
+    state: present
+    name: demouser
+    password: secret
+    update_password: on_create
+    email: demo@example.com
+    domain: default
+    default_project: demo
 '''
 
 
@@ -122,12 +141,13 @@ user:
 
 def _needs_update(params_dict, user):
     for k, v in params_dict.items():
-        if k != 'password' and user[k] != v:
+        if k not in ('password', 'update_password') and user[k] != v:
             return True
 
     # We don't get password back in the user object, so assume any supplied
     # password is a change.
-    if params_dict['password'] is not None:
+    if (params_dict['password'] is not None and
+            params_dict['update_password'] == 'always'):
         return True
 
     return False
@@ -164,11 +184,17 @@ def main():
         domain=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
+        update_password=dict(default='always', choices=['always',
+                                                        'on_create']),
     )
 
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(
         argument_spec,
+        required_if=[
+            ('update_password', 'always', ['password']),
+            ('update_password', 'on_create', ['password']),
+        ],
         **module_kwargs)
 
     if not HAS_SHADE:
@@ -181,6 +207,7 @@ def main():
     domain = module.params['domain']
     enabled = module.params['enabled']
     state = module.params['state']
+    update_password = module.params['update_password']
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -203,17 +230,25 @@ def main():
                     enabled=enabled)
                 changed = True
             else:
-                params_dict = {'email': email, 'enabled': enabled, 'password': password}
+                params_dict = {'email': email, 'enabled': enabled,
+                               'password': password,
+                               'update_password': update_password}
                 if domain_id is not None:
                     params_dict['domain_id'] = domain_id
                 if default_project_id is not None:
                     params_dict['default_project_id'] = default_project_id
 
                 if _needs_update(params_dict, user):
-                    user = cloud.update_user(
-                        user['id'], password=password, email=email,
-                        default_project=default_project_id, domain_id=domain_id,
-                        enabled=enabled)
+                    if update_password == 'always':
+                        user = cloud.update_user(
+                            user['id'], password=password, email=email,
+                            default_project=default_project_id,
+                            domain_id=domain_id, enabled=enabled)
+                    else:
+                        user = cloud.update_user(
+                            user['id'], email=email,
+                            default_project=default_project_id,
+                            domain_id=domain_id, enabled=enabled)
                     changed = True
                 else:
                     changed = False
