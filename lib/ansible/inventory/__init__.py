@@ -45,6 +45,8 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+HOSTS_PATTERNS_CACHE = {}
+
 class Inventory(object):
     """
     Host inventory for ansible.
