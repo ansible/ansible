@@ -42,19 +42,31 @@ options:
 """
 
 EXAMPLES = """
+# Note: examples below use the following provider dict to handle
+#       transport and authentication to the node.
+vars:
+  cli:
+    host: "{{ inventory_hostname }}"
+    username: cisco
+    password: cisco
+    transport: cli
+
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all
+    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - ios_facts:
     gather_subset:
       - config
+    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - ios_facts:
     gather_subset:
       - "!hardware"
+    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -127,44 +139,35 @@ import re
 import itertools
 
 import ansible.module_utils.ios
-from ansible.module_utils.netcli import CommandRunner, AddCommandError
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
 
-def add_command(runner, command):
-    try:
-        runner.add_command(command)
-    except AddCommandError:
-        # AddCommandError is raised for any issue adding a command to
-        # the runner.  Silently ignore the exception in this case
-        pass
-
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, module):
+        self.module = module
         self.facts = dict()
+        self.failed_commands = list()
 
-        self.commands()
+    def run(self, cmd):
+        try:
+            return self.module.cli(cmd)[0]
+        except:
+            self.failed_commands.append(cmd)
 
-    def commands(self):
-        raise NotImplementedError
 
 class Default(FactsBase):
 
-    def commands(self):
-        add_command(self.runner, 'show version')
-
     def populate(self):
-        data = self.runner.get_command('show version')
-
-        self.facts['version'] = self.parse_version(data)
-        self.facts['serialnum'] = self.parse_serialnum(data)
-        self.facts['model'] = self.parse_model(data)
-        self.facts['image'] = self.parse_image(data)
-        self.facts['hostname'] = self.parse_hostname(data)
+        data = self.run('show version')
+        if data:
+            self.facts['version'] = self.parse_version(data)
+            self.facts['serialnum'] = self.parse_serialnum(data)
+            self.facts['model'] = self.parse_model(data)
+            self.facts['image'] = self.parse_image(data)
+            self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+),', data)
@@ -194,20 +197,17 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        add_command(self.runner, 'dir | include Directory')
-        add_command(self.runner, 'show version')
-        add_command(self.runner, 'show memory statistics | include Processor')
-
     def populate(self):
-        data = self.runner.get_command('dir | include Directory')
-        self.facts['filesystems'] = self.parse_filesystems(data)
+        data = self.run('dir | include Directory')
+        if data:
+            self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.runner.get_command('show memory statistics | include Processor')
-        match = re.findall(r'\s(\d+)\s', data)
-        if match:
-            self.facts['memtotal_mb'] = int(match[0]) / 1024
-            self.facts['memfree_mb'] = int(match[1]) / 1024
+        data = self.run('show memory statistics | include Processor')
+        if data:
+            match = re.findall(r'\s(\d+)\s', data)
+            if match:
+                self.facts['memtotal_mb'] = int(match[0]) / 1024
+                self.facts['memfree_mb'] = int(match[1]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
@@ -215,37 +215,33 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def commands(self):
-        add_command(self.runner, 'show running-config')
-
     def populate(self):
-        self.facts['config'] = self.runner.get_command('show running-config')
+        data = self.run('show running-config')
+        if data:
+            self.facts['config'] = data
 
 
 class Interfaces(FactsBase):
-
-    def commands(self):
-        add_command(self.runner, 'show interfaces')
-        add_command(self.runner, 'show ipv6 interface')
-        add_command(self.runner, 'show lldp')
-        add_command(self.runner, 'show lldp neighbors detail')
 
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interfaces')
-        interfaces = self.parse_interfaces(data)
-        self.facts['interfaces'] = self.populate_interfaces(interfaces)
+        data = self.run('show interfaces')
+        if data:
+            interfaces = self.parse_interfaces(data)
+            self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.runner.get_command('show ipv6 interface')
-        if len(data) > 0:
+        data = self.run('show ipv6 interface')
+        if data:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        if 'LLDP is not enabled' not in self.runner.get_command('show lldp'):
-            neighbors = self.runner.get_command('show lldp neighbors detail')
-            self.facts['neighbors'] = self.parse_neighbors(neighbors)
+        data = self.run('show lldp')
+        if 'LLDP is not enabled' not in data:
+            neighbors = self.run('show lldp neighbors detail')
+            if neighbors:
+                self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -434,27 +430,27 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](runner))
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
+    failed_commands = list()
 
     try:
         for inst in instances:
             inst.populate()
+            failed_commands.extend(inst.failed_commands)
             facts.update(inst.facts)
     except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, failed_commands=failed_commands)
 
 
 if __name__ == '__main__':
