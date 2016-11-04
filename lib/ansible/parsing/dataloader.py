@@ -31,7 +31,7 @@ from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
@@ -399,7 +399,10 @@ class DataLoader():
 
         try:
             with open(to_bytes(real_path), 'rb') as f:
-                if is_encrypted_file(f):
+                # Limit how much of the file is read since we do not know
+                # whether this is a vault file and therefore it could be very
+                # large.
+                if is_encrypted_file(f, count=len(b_HEADER)):
                     # if the file is encrypted and no password was specified,
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name
