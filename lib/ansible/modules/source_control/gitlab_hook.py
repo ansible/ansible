@@ -179,17 +179,21 @@ class GitLabHook(object):
         if self.hookObject is None:
             if self._module.check_mode:
                 self._module.exit_json(changed=True, result="Hook should have been created.")
-            project.hooks.create({
-                'url': url,
-                'push_events': push_events,
-                'issues_events': issues_events,
-                'note_events': note_events,
-                'merge_requests_events': merge_requests_events,
-                'tag_push_events': tag_push_events,
-                'build_events': build_events,
-                'pipeline_events': pipeline_events,
-                'enable_ssl_verification': enable_ssl_verification
-            })
+            try:
+                project.hooks.create({
+                    'url': url,
+                    'push_events': push_events,
+                    'issues_events': issues_events,
+                    'note_events': note_events,
+                    'merge_requests_events': merge_requests_events,
+                    'tag_push_events': tag_push_events,
+                    'build_events': build_events,
+                    'pipeline_events': pipeline_events,
+                    'enable_ssl_verification': enable_ssl_verification
+                })
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a hook: %s " % e)
             return True
         else:
             if self.updateHook(push_events, issues_events, note_events, merge_requests_events, tag_push_events,
@@ -233,7 +237,11 @@ class GitLabHook(object):
         if changed:
             if self._module.check_mode:
                 module.exit_json(changed=True, result="Hook should have been updated.")
-            hook.save()
+            try:
+                hook.save()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to update a hook: %s " % e)
             return True
         else:
             return False
@@ -262,11 +270,14 @@ class GitLabHook(object):
 
     def deleteHook(self):
         """Delete a hook"""
-        hook = self.hookObject
-        if hook.delete():
-            return True
-        else:
-            return False
+        try:
+            hook = self.hookObject
+            hook.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to delete a hook: %s " % e)
+        return True
+
 
 def main():
     module = AnsibleModule(
@@ -348,8 +359,6 @@ def main():
                 module.exit_json(changed=True, result="Hook should have been deleted.")
             if hook.deleteHook():
                 module.exit_json(changed=True, result="Hook is deleted.")
-            else:
-                module.exit_json(changed=False, result="Something went wrong with deleting the hook.")
         else:
             if hook.createOrUpdateHook(url=hook_url, push_events=push_events, issues_events=issues_events,
                                        note_events=note_events, merge_requests_events=merge_requests_events,
