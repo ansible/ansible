@@ -1,6 +1,7 @@
 #!/bin/sh
 
 grep '^#!' -RIn . 2>/dev/null | grep ':1:' | sed 's/:1:/:/' | grep -v -E \
+    -e '/.tox/' \
     -e '^\./lib/ansible/modules/' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
     -e ':#!/bin/sh$' \
