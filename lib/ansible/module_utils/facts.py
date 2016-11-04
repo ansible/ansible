@@ -2631,6 +2631,12 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['lladdr'] = words[1]
 
     def parse_inet_line(self, words, current_if, ips):
+        # netbsd show aliases like this
+        #  lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33184
+        #         inet 127.0.0.1 netmask 0xff000000
+        #         inet alias 127.1.1.1 netmask 0xff000000
+        if words[1] == 'alias':
+            del words[1]
         address = {'address': words[1]}
         # deal with hex netmask
         if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
