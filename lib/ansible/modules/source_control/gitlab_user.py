@@ -230,8 +230,8 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-# from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
 
 
 class GitLabUser(object):
@@ -309,18 +309,22 @@ class GitLabUser(object):
     def createSSHKey(self, name, sshkey):
         """Create ssh key"""
         user = self.userObject
-        if user.keys.create({'title': name, 'key': sshkey}):
-            return True
-        else:
-            return False
+        try:
+            user.keys.create({'title': name, 'key': sshkey})
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to create a SSH key: %s " % e)
+        return True
 
     def deleteSSHKey(self):
         """Delete ssh key"""
-        key = self.sshkeyObject
-        if key.delete():
-            return True
-        else:
-            return False
+        try:
+            key = self.sshkeyObject
+            key.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to create a SSH key: %s " % e)
+        return True
 
     def getAccessLevel(self, access_level):
         """Returns the correct access_level number"""
@@ -354,10 +358,18 @@ class GitLabUser(object):
                     if state == "present":
                         if member.access_level != access:
                             member.access_level = access
-                            member.save()
+                            try:
+                                member.save()
+                            except Exception:
+                                e = get_exception()
+                                self._module.fail_json(msg="Failed to update user membership: %s " % e)
                             changed = True
                     elif state == "absent":
-                        member.delete()
+                        try:
+                            member.delete()
+                        except Exception:
+                            e = get_exception()
+                            self._module.fail_json(msg="Failed to delete a member from a group: %s " % e)
                         changed = True
                 else:
                     if state == "present":
@@ -379,11 +391,15 @@ class GitLabUser(object):
 
     def createUser(self, name, username, password, email):
         """Create user in gitlab"""
-        user = self._gitlab.users.create({'email': email,
-                                          'password': password,
-                                          'username': username,
-                                          'name': name})
-        self.userObject = user
+        try:
+            user = self._gitlab.users.create({'email': email,
+                                              'password': password,
+                                              'username': username,
+                                              'name': name})
+            self.userObject = user
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Error while creating a user: %s " % e)
 
     def updateUser(self, username, email, name, projects_limit, twitter, linkedin, skype, external,
                    can_create_group):
@@ -422,8 +438,12 @@ class GitLabUser(object):
             changed = True
 
         if changed:
-            user.save()
-            self.userObject = user
+            try:
+                user.save()
+                self.userObject = user
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Error while updating a user: %s " % e)
             return True
         else:
             return False
@@ -459,11 +479,13 @@ class GitLabUser(object):
 
     def deleteUser(self):
         """Delete the user"""
-        user = self.userObject
-        if user.delete():
-            return True
-        else:
-            return False
+        try:
+            user = self.userObject
+            user.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to create a SSH key: %s " % e)
+        return True
 
 
 def main():
@@ -556,8 +578,6 @@ def main():
                 module.exit_json(changed=True, result="User should have been deleted.")
             if user.deleteUser():
                 module.exit_json(changed=True, result="User is deleted.")
-            else:
-                module.exit_json(changed=False, result="Something went wrong with deleting the user.")
         else:
             if user.createOrUpdateUser(name=user_name, username=user_username, password=user_password, email=user_email,
                                        state=state, groups=groups, sshkeys=sshkeys, projects_limit=projects_limit,
@@ -578,7 +598,7 @@ def main():
                                        can_create_group=can_create_group):
                 module.exit_json(changed=True, result="User is created.")
             else:
-                module.exit_json(changed=False, result="Something went wrong in deleting.")
+                module.exit_json(changed=False, result="There was no need for updating the user")
 
 
 if __name__ == '__main__':
