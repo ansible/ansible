@@ -3,13 +3,17 @@
 '''
 MDT external inventory script
 =================================
-author: Julian Barnett 06/23/2016 01:15
+author: J Barnett 06/23/2016 01:15
+maintainer: J Barnett (github @jbarnett1981)
 '''
 
 import argparse
-import ConfigParser
 import json
 import pymssql
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 class MDTInventory(object):
 
@@ -31,7 +35,7 @@ class MDTInventory(object):
         # NOT COMPLETE // TODO
         if self.args.host:
             data2 = { }
-            print json.dumps(data2, indent=2)
+            print(json.dumps(data2, indent=2))
 
     def _connect(self):
         '''
@@ -63,7 +67,7 @@ class MDTInventory(object):
         self.inventory[groupname] = hostlist
 
         # Print it all out
-        print json.dumps(self.inventory, indent=2)
+        print(json.dumps(self.inventory, indent=2))
 
     def _empty_inventory(self):
         '''
@@ -75,7 +79,7 @@ class MDTInventory(object):
         '''
         Reads the settings from the mdt.ini file
         '''
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         config.read('mdt.ini')
 
         # MDT Server and instance and database
@@ -106,4 +110,3 @@ class MDTInventory(object):
 if __name__ == "__main__":
     # Run the script
     MDTInventory()
-
