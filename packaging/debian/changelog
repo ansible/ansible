@@ -4,6 +4,13 @@ ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
  -- Ansible, Inc. <info@ansible.com>  %DATE%
 
+ansible (2.1.3.0) unstable; urgency=low
+
+  * 2.1.3.0
+
+ -- Ansible, Inc. <info@ansible.com>  Fri, 04 Nov 2016 11:51:43 -0500
+
+
 ansible (2.1.2.0) unstable; urgency=low
 
   * 2.1.2.0
