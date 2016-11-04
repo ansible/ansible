@@ -84,6 +84,13 @@ options:
         on Autoscaling.
     required: false
     default: null
+  named_ports:
+    version_added: "2.3"
+    description:
+      - Define named ports that backend services can forward data to.  Format is a a list of
+        name:port dictionaries.
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
@@ -104,6 +111,11 @@ EXAMPLES = '''
         state: present
         size: 1
         template: my-instance-template-1
+        named_ports:
+        - name: http
+          port: 80
+        - name: foobar
+          port: 82
     - pause: seconds=30
     - name: Recreate MIG Instances with Instance Template change.
       gce_mig:
@@ -167,6 +179,12 @@ name:
     type: string
     sample: "my-managed-instance-group"
 
+named_ports:
+    description: list of named ports acted upon
+    returned: when named_ports are initially set or updated
+    type: list
+    sample: [{ "name": "http", "port": 80 }, { "name": "foo", "port": 82 }]
+
 size:
     description: Number of VMs in Managed Instance Group.
     returned: changed
@@ -220,6 +238,18 @@ deleted_autoscaler:
     description: True if an Autoscaler delete attempted and succeeded.
                  False returned if delete failed.
     returned: When the delete of an Autoscaler was attempted.
+    type: bool
+    sample: true
+
+set_named_ports:
+    description: True if the named_ports have been set
+    returned: named_ports have been set
+    type: bool
+    sample: true
+
+updated_named_ports:
+    description: True if the named_ports have been updated
+    returned: named_ports have been updated
     type: bool
     sample: true
 '''
@@ -320,6 +350,38 @@ def _validate_autoscaling_params(params):
         return (False, as_policy_msg)
 
     # TODO(supertom): check utilization fields
+
+    return (True, '')
+
+
+def _validate_named_port_params(params):
+    """ 
+    Validate the named ports parameters
+
+    :param params: Ansible dictionary containing named_ports configuration
+                   It is expected that autoscaling config will be found at the
+                   key 'named_ports'.  That key should contain a list of
+                   {name : port} dictionaries.
+    :type  params: ``dict``
+
+    :return: Tuple containing a boolean and a string.  True if params
+             are valid, False otherwise, plus str for message.
+    :rtype: ``(``bool``, ``str``)``
+    """
+    if not params['named_ports']:
+        # It's optional, so if not set at all, it's valid.
+        return (True, '')
+    if not isinstance(params['named_ports'], list):
+        return (False, 'named_ports: expected list of name:port dictionaries.')
+    req_fields = [
+        {'name': 'name', 'required': True, 'type': str},
+        {'name': 'port', 'required': True, 'type': int}
+    ] # yapf: disable
+
+    for np in params['named_ports']:
+        (valid_named_ports, np_msg) = _check_params(np, req_fields)
+        if not valid_named_ports:
+            return (False, np_msg)
 
     return (True, '')
 
@@ -595,6 +657,38 @@ def get_mig(gce, name, zone):
         return None
 
 
+def update_named_ports(mig, named_ports):
+    """
+    Set the named ports on a Managed Instance Group.
+
+    Sort the existing named ports and new.  If different, update.
+    This also implicitly allows for the removal of named_por
+
+    :param mig: Managed Instance Group Object from libcloud.
+    :type mig:  :class: `GCEInstanceGroupManager`
+
+    :param named_ports: list of dictionaries in the format of {'name': port}
+    :type named_ports: ``list`` of ``dict``
+
+    :return: True if successful
+    :rtype: ``bool``
+    """
+    changed = False
+    existing_ports = []
+    new_ports = []
+    if hasattr(mig.instance_group, 'named_ports'):
+        existing_ports = sorted(mig.instance_group.named_ports,
+                                key=lambda x: x['name'])
+    if named_ports is not None:
+        new_ports = sorted(named_ports, key=lambda x: x['name'])
+
+    if existing_ports != new_ports:
+        if mig.instance_group.set_named_ports(named_ports):
+            changed = True
+
+    return changed
+
+
 def main():
     module = AnsibleModule(argument_spec=dict(
         name=dict(required=True),
@@ -607,6 +701,7 @@ def main():
         state=dict(choices=['absent', 'present'], default='present'),
         zone=dict(required=True),
         autoscaling=dict(type='dict', default=None),
+        named_ports=dict(type='list', default=None),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
         pem_file=dict(),
@@ -634,10 +729,21 @@ def main():
     params['template'] = module.params.get('template')
     params['recreate_instances'] = module.params.get('recreate_instances')
     params['autoscaling'] = module.params.get('autoscaling', None)
+    params['named_ports'] = module.params.get('named_ports', None)
 
     (valid_autoscaling, as_msg) = _validate_autoscaling_params(params)
     if not valid_autoscaling:
         module.fail_json(msg=as_msg, changed=False)
+
+    if params['named_ports'] is not None and not hasattr(
+            gce, 'ex_instancegroup_set_named_ports'):
+        module.fail_json(
+            msg="Apache Libcloud 1.3.0+ is required to use 'named_ports' option",
+            changed=False)
+
+    (valid_named_ports, np_msg) = _validate_named_port_params(params)
+    if not valid_named_ports:
+        module.fail_json(msg=np_msg, changed=False)
 
     changed = False
     json_output = {'state': params['state'], 'zone': params['zone']}
@@ -681,6 +787,18 @@ def main():
                         changed=False)
 
                 json_output['created_autoscaler'] = True
+            # Add named ports if available
+            if params['named_ports']:
+                mig = get_mig(gce, params['name'], params['zone'])
+                if not mig:
+                    module.fail_json(
+                        msg='Unable to fetch created MIG %s to create \
+                        autoscaler in zone: %s' % (
+                            params['name'], params['zone']), changed=False)
+                json_output['set_named_ports'] = update_named_ports(
+                    mig, params['named_ports'])
+                if json_output['set_named_ports']:
+                    json_output['named_ports'] = params['named_ports']
 
     elif params['state'] == 'absent':
         # Delete MIG
@@ -704,6 +822,7 @@ def main():
 
     else:
         # Update MIG
+
         # If we're going to update a MIG, we need a size and template values.
         # If not specified, we use the values from the existing MIG.
         if not params['size']:
@@ -755,6 +874,11 @@ def main():
                     changed = update_autoscaler(gce, autoscaler,
                                                 params['autoscaling'])
                     json_output['updated_autoscaler'] = changed
+        named_ports = params['named_ports'] or []
+        json_output['updated_named_ports'] = update_named_ports(mig,
+                                                                named_ports)
+        if json_output['updated_named_ports']:
+            json_output['named_ports'] = named_ports
 
     json_output['changed'] = changed
     json_output.update(params)
