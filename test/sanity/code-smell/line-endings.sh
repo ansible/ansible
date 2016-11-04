@@ -2,6 +2,8 @@
 
 grep -RIPl '\r' . 2>/dev/null \
     --exclude-dir .git \
+    | grep -v -E \
+    -e '/.tox/' \
     | grep -v -F \
     -e './test/integration/targets/win_regmerge/templates/win_line_ending.j2'
 
