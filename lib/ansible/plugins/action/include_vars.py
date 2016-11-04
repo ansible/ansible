@@ -22,7 +22,7 @@ from os import path, walk
 import re
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 
 
@@ -245,7 +245,9 @@ class ActionModule(ActionBase):
             )
             return failed, err_msg, results
 
-        data, show_content = self._loader._get_file_contents(filename)
+        b_data, show_content = self._loader._get_file_contents(filename)
+        data = to_text(b_data, errors='surrogate_or_strict')
+
         self.show_content = show_content
         data = self._loader.load(data, show_content)
         if not data:
