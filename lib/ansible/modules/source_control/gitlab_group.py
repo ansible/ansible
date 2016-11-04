@@ -114,6 +114,7 @@ except:
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
 
+
 class GitLabGroup(object):
     def __init__(self, module, git):
         self._module = module
@@ -135,7 +136,11 @@ class GitLabGroup(object):
         if changed:
             if self._module.check_mode:
                 self._module.exit_json(changed=True, result="Group should have updated.")
-            group.save()
+            try:
+                group.save()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create or update a group: %s " % e)
             return True
         else:
             return False
@@ -148,7 +153,12 @@ class GitLabGroup(object):
         else:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            group.delete()
+            try:
+                group.delete()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to delete a group: %s " % e)
+            return True
 
     def existsGroup(self, name):
         """When group/user exists, object will be stored in self.groupObject."""
@@ -220,8 +230,6 @@ def main():
     if group_exists and state == "absent":
         if group.deleteGroup(group_name):
             module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
-        else:
-            module.exit_json(changed=False, result="Something went wrong deleting the group.")
     else:
         if state == "absent":
             module.exit_json(changed=False, result="Group deleted or does not exists")
