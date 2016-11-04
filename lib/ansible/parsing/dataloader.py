@@ -180,7 +180,6 @@ class DataLoader():
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
-#            data = to_text(data, errors='surrogate_or_strict')
             return (data, show_content)
 
         except (IOError, OSError) as e:
