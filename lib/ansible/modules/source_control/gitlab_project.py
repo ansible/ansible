@@ -255,31 +255,48 @@ class GitLabProject(object):
         if changed:
             if self._module.check_mode:
                 module.exit_json(changed=True, result="Project should have updated.")
-            project.save()
+            try:
+                project.save()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to update a project: %s " % e)
             return True
         else:
             return False
 
     def createProject(self, name, group_id, import_url):
         """Creates a project"""
+        project = None
         if import_url is None:
-            project = self._gitlab.projects.create({'name': name, 'namespace_id': group_id})
+            try:
+                project = self._gitlab.projects.create({'name': name, 'namespace_id': group_id})
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a project: %s " % e)
         else:
-            project = self._gitlab.projects.create({'name': name, 'namespace_id': group_id, 'import_url': import_url})
+            try:
+                project = self._gitlab.projects.create(
+                    {'name': name, 'namespace_id': group_id, 'import_url': import_url})
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a project: %s " % e)
         return project
 
     def deleteProject(self, project):
         """Deletes a project."""
-        if project.delete():
-            return True
-        else:
-            return False
+        try:
+            project.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to dekla project: %s " % e)
+        return True
 
-    def existsProject(self, group, project):
+    def existsProject(self, group, project, state):
         """Validates if a project exists."""
         project_name = project
         if not self.existsGroup(name=group):
-            self._module.fail_json(msg="The group " + group + " doesnt exists in Gitlab. Please create it first.")
+            if state == "present":
+                self._module.fail_json(msg="The group " + group + " doesnt exists in Gitlab. Please create it first.")
 
         projects = self._gitlab.projects.search(project_name)
         if len(projects) >= 1:
@@ -378,26 +395,24 @@ def main():
 
     try:
         if use_credentials:
-            git = gitlab.Gitlab(server_url, email=login_user, password=login_password, ssl_verify=verify_ssl)
+            git = gitlab.Gitlab(url=server_url, email=login_user, password=login_password, ssl_verify=verify_ssl)
             git.auth()
         else:
-            git = gitlab.Gitlab(server_url, private_token=login_token, ssl_verify=verify_ssl)
+            git = gitlab.Gitlab(url=server_url, private_token=login_token, ssl_verify=verify_ssl)
             git.auth()
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
     project = GitLabProject(module, git)
-    if state == "present":
-        # Gather information if we have a group, or we have to add the project to the current user.
-        if group_name is None:
-            group_id, group_name = project.getUserData()
-            project_data = project.existsProject(group=group_name, project=project_name)
-        else:
-            project_data = project.existsProject(group=group_name, project=project_name)
-            group_id = project.getGroupId()
+    # Gather information if we have a group, or we have to add the project to the current user.
+    if group_name is None:
+        group_id, group_name = project.getUserData()
+        project_data = project.existsProject(group=group_name, project=project_name, state=state)
     else:
-        project_data = False
+        project_data = project.existsProject(group=group_name, project=project_name, state=state)
+        if state == "present":
+            group_id = project.getGroupId()
 
     if project_path is None:
         project_path = project_name.replace(" ", "_")
@@ -407,8 +422,6 @@ def main():
             module.exit_json(changed=True, result="Project should have been deleted.")
         if project.deleteProject(project=project_data):
             module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
-        else:
-            module.exit_json(changed=True, result="We could not delete the project.")
     else:
         if state == "absent":
             module.exit_json(changed=False, result="Project deleted or does not exists")
