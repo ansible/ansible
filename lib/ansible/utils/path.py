@@ -31,6 +31,7 @@ def unfrackpath(path, follow=True):
     Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
     :arg path: A byte or text string representing a path to be canonicalized
+    :arg follow: A boolean to indicate of symlinks should be resolved or not
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
     :rtype: A text string (unicode on pyyhon2, str on python3).
