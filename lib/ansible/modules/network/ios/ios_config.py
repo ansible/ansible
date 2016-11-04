@@ -202,11 +202,14 @@ backup_path:
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
 """
 import re
+import time
 
 from ansible.module_utils.basic import get_exception
+from ansible.module_utils.six  import iteritems
 from ansible.module_utils.ios import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.netcli import Command
+
 
 def check_args(module, warnings):
     if module.params['force']:
@@ -214,38 +217,76 @@ def check_args(module, warnings):
                         'match=none instead.  This argument will be '
                         'removed in the future')
 
+def extract_banners(config):
+    banners = {}
+    for cmd in ['exec', 'login', 'incoming']:
+        regex = r'banner %s \^C(.+?)(?=\^C)' % cmd
+        match = re.search(regex, config, re.S)
+        if match:
+            key = 'banner %s' % cmd
+            banners[key] = match.group(1).strip()
+            config = config.replace(str(match.group(1)), '')
+
+    config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
+    return (config, banners)
+
+def diff_banners(want, have):
+    candidate = {}
+    for key, value in iteritems(want):
+        if value != have.get(key):
+            candidate[key] = value
+    return candidate
+
+def load_banners(module, banners):
+    for key, value in iteritems(banners):
+        key += ' @'
+        for cmd in ['config terminal', key, value, '@', 'end']:
+            cmd += '\r'
+            module.connection.shell.shell.sendall(cmd)
+        time.sleep(1)
+        module.connection.shell.receive()
+
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
         defaults = module.params['defaults']
         contents = module.config.get_config(include_defaults=defaults)
-    return NetworkConfig(indent=1, contents=contents)
+
+    contents, banners = extract_banners(contents)
+    return NetworkConfig(indent=1, contents=contents), banners
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
+    banners = {}
+
     if module.params['src']:
-        candidate.load(module.params['src'])
+        src, banners = extract_banners(module.params['src'])
+        candidate.load(src)
+
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
-    return candidate
+
+    return candidate, banners
 
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
     path = module.params['parents']
 
-    candidate = get_candidate(module)
+    candidate, want_banners = get_candidate(module)
 
     if match != 'none':
-        config = get_config(module, result)
+        config, have_banners = get_config(module, result)
         path = module.params['parents']
         configobjs = candidate.difference(config, path=path,match=match,
                                           replace=replace)
     else:
         configobjs = candidate.items
 
-    if configobjs:
+    banners = diff_banners(want_banners, have_banners)
+
+    if configobjs or banners:
         commands = dumps(configobjs, 'commands').split('\n')
 
         if module.params['lines']:
@@ -256,11 +297,14 @@ def run(module, result):
                 commands.extend(module.params['after'])
 
             result['updates'] = commands
+            result['banners'] = banners
 
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
             module.config(commands)
+            load_banners(module, banners)
+
         result['changed'] = True
 
     if module.params['save']:
