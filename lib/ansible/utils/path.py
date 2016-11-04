@@ -23,14 +23,27 @@ from ansible.utils.unicode import to_bytes
 
 __all__ = ['unfrackpath']
 
-def unfrackpath(path):
+def unfrackpath(path, follow=True):
     '''
-    returns a path that is free of symlinks, environment
-    variables, relative path traversals and symbols (~)
-    example:
-    '$HOME/../../var/mail' becomes '/var/spool/mail'
+    Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
+
+    :arg path: A byte or text string representing a path to be canonicalized
+    :raises UnicodeDecodeError: If the canonicalized version of the path
+        contains non-utf8 byte sequences.
+    :rtype: A text string (unicode on pyyhon2, str on python3).
+    :returns: An absolute path with symlinks, environment variables, and tilde
+        expanded.  Note that this does not check whether a path exists.
+
+    example::
+        '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
+
+    if follow:
+        final_path = os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
+    else:
+        final_path = os.path.normpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path))))
+
+    return final_path
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
