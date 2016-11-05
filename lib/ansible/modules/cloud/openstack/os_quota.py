@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_quota
 short_description: Manage OpenStack Quotas
 extends_documentation_fragment: openstack
-version_added: "2.2"
+version_added: "2.3"
 author: "Michael Gale (gale.michael@gmail.com)"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
@@ -167,13 +167,18 @@ requirements:
 '''
 
 EXAMPLES = '''
-# List a Project Quotas
+# List a Project Quota
+- os_quota:
+    cloud: mycloud
+    name: demoproject
+
+# Update a Project Quota for cores
 - os_quota:
     cloud: mycloud
     name: demoproject
     cores: 100
 
-# Update a Project Quotas
+# Update a Project Quota
 - os_quota:
     name: demoproject
     cores: 1000
