@@ -311,7 +311,7 @@ def main():
             comment=dict(),
             status=dict(),
             assignee=dict(),
-            fields=dict(default={})
+            fields=dict(default={}, type='dict')
         ),
         supports_check_mode=False
     )
