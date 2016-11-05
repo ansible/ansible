@@ -434,6 +434,8 @@ def _parse_meta(meta):
             k, v = kv_str.split("=")
             metas[k] = v
         return metas
+    if not meta:
+        return {}
     return meta
 
 
