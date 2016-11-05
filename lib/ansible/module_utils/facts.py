@@ -3026,6 +3026,8 @@ class SunOSNetwork(GenericBsdIfconfigNetwork):
         v = 'ipv4'
         if 'IPv6' in flags:
             v = 'ipv6'
+        if 'LOOPBACK' in flags:
+            current_if['type'] = 'loopback'
         current_if[v].append({'flags': flags, 'mtu': words[3]})
         current_if['macaddress'] = 'unknown'    # will be overwritten later
         return current_if
