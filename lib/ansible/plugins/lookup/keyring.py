@@ -19,9 +19,35 @@
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+'''
+Lookup plugin to grab secrets from the OS keyring.
+========================================================================================
+
+Warning the secret will be output to the screen
+
+Example: 
+---
+- hosts: localhost
+  tasks:
+    - name : test
+      debug: 
+        msg: "Password: {{item}}"
+      with_keyring:
+        - 'servicename username'
+
+ansible localhost -m debug -a "msg=\"{{item}}\" with_keyring= 'servicename username'"  
+
+'''
+HAS_KEYRING = True
+
+from ansible.errors import AnsibleError
+
+try:
+    import keyring
+except ImportError:
+    HAS_KEYRING = False
 
 
-import keyring
 try:
     from __main__ import display
 except ImportError:
@@ -33,11 +59,17 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        if  not HAS_KEYRING:
+            raise AnsibleError(u"Can't LOOKUP(keyring): module keyring is not installed")
+
         display.vvvv(u"keyring: %s" % keyring.get_keyring() )
         ret = []
         for term in terms:
             (servicename, username) = (term.split()[0], term.split()[1])
             display.vvvv(u"username: %s, servicename: %s " %(username,servicename))
-            ret.append(keyring.get_password(servicename,username).rstrip())
+            password = keyring.get_password(servicename,username)
+            if password is None:
+                raise AnsibleError(u"servicename: %s for user %s not found" % (servicename, username))
+            ret.append(password.rstrip())
         return ret
 
