@@ -46,11 +46,7 @@ options:
         required: True
     ip_address:
         description:
-            - The IP Address for the VMK interface
-        required: True
-    subnet_mask:
-        description:
-            - The Subnet Mask for the VMK interface
+            - A key, value list of IP address parameters for the VMK interface
         required: True
     vland_id:
         description:
@@ -82,18 +78,33 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example command from Ansible Playbook
 
--  name: Add Management vmkernel port (vmk1)
-   local_action:
-      module: vmware_vmkernel
-      hostname: esxi_hostname
-      username: esxi_username
-      password: esxi_password
-      vswitch_name: vswitch_name
-      portgroup_name: portgroup_name
-      vlan_id: vlan_id
-      ip_address: ip_address
-      subnet_mask: subnet_mask
-      enable_mgmt: True
+## Add vmkernel port with static IP address
+  - vmware_vmkernel:
+     hostname: esxi_hostname
+     username: esxi_username
+     password: esxi_password
+     validate_certs: False
+     vswitch_name: vswitch_name
+     portgroup_name: portgroup_name
+     vlan_id: vlan_id
+     ip_address:
+        type: static
+        address: ip_address
+        subnet_mask: subnet_mask
+     enable_mgmt: False
+
+## Add vmkernel port with DHCP IP address
+  - vmware_vmkernel:
+     hostname: esxi_hostname
+     username: esxi_username
+     password: esxi_password
+     validate_certs: False
+     vswitch_name: vswitch_name
+     portgroup_name: portgroup_name
+     vlan_id: vlan_id
+     ip_address:
+        type: dhcp
+     enable_mgmt: False
 '''
 
 try:
@@ -105,8 +116,8 @@ except ImportError:
 
 def create_vmkernel_adapter(host_system, port_group_name,
                             vlan_id, vswitch_name,
-                            ip_address, subnet_mask,
-                            mtu, enable_vsan, enable_vmotion, enable_mgmt, enable_ft):
+                            ip_address, mtu,
+                            enable_vsan, enable_vmotion, enable_mgmt, enable_ft, module):
 
     host_config_manager = host_system.configManager
     host_network_system = host_config_manager.networkSystem
@@ -126,9 +137,26 @@ def create_vmkernel_adapter(host_system, port_group_name,
     config.vnic[0].portgroup = port_group_name
     config.vnic[0].spec = vim.host.VirtualNic.Specification()
     config.vnic[0].spec.ip = vim.host.IpConfig()
-    config.vnic[0].spec.ip.dhcp = False
-    config.vnic[0].spec.ip.ipAddress = ip_address
-    config.vnic[0].spec.ip.subnetMask = subnet_mask
+    
+    #set static or dhcp address
+    try:
+        address_type = ip_address['type']
+    except KeyError:
+        module.fail_json(msg="ip_address type needs to be specified - static/dhcp")
+    if address_type == "dhcp":
+        config.vnic[0].spec.ip.dhcp = True
+    elif address_type == "static":
+        config.vnic[0].spec.ip.dhcp = False
+        try:
+            address = ip_address['address']
+            subnet_mask = ip_address['subnet_mask']
+        except KeyError:
+            module.fail_json(msg="address and subnet_mask needs to be specified.")
+        config.vnic[0].spec.ip.ipAddress = address
+        config.vnic[0].spec.ip.subnetMask = subnet_mask
+    else:
+        module.fail_json(msg="ip_address type should be either static or dhcp")
+    
     if mtu:
         config.vnic[0].spec.mtu = mtu
 
@@ -160,8 +188,7 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(portgroup_name=dict(required=True, type='str'),
-                         ip_address=dict(required=True, type='str'),
-                         subnet_mask=dict(required=True, type='str'),
+                         ip_address=dict(required=True, type='dict'),
                          mtu=dict(required=False, type='int'),
                          enable_vsan=dict(required=False, type='bool'),
                          enable_vmotion=dict(required=False, type='bool'),
@@ -177,7 +204,6 @@ def main():
 
     port_group_name = module.params['portgroup_name']
     ip_address = module.params['ip_address']
-    subnet_mask = module.params['subnet_mask']
     mtu = module.params['mtu']
     enable_vsan = module.params['enable_vsan']
     enable_vmotion = module.params['enable_vmotion']
@@ -194,8 +220,8 @@ def main():
         host_system = host.keys()[0]
         changed = create_vmkernel_adapter(host_system, port_group_name,
                                           vlan_id, vswitch_name,
-                                          ip_address, subnet_mask,
-                                          mtu, enable_vsan, enable_vmotion, enable_mgmt, enable_ft)
+                                          ip_address, mtu,
+                                          enable_vsan, enable_vmotion, enable_mgmt, enable_ft, module)
         module.exit_json(changed=changed)
     except vmodl.RuntimeFault as runtime_fault:
         module.fail_json(msg=runtime_fault.msg)
