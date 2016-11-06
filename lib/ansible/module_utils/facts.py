@@ -3388,6 +3388,11 @@ class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         if self.facts['virtualization_type'] == '':
             self.detect_virt_vendor('machdep.dmi.system-vendor')
 
+        if os.path.exists('/dev/xencons'):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+
+
 class HPUXVirtual(Virtual):
     """
     This is a HP-UX specific subclass of Virtual. It defines
