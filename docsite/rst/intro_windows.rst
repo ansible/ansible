@@ -246,9 +246,9 @@ What modules are available
 ``````````````````````````
 
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various
-Windows-only modules are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
+Windows-only modules. These are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
 
-In addition, the following core module work with Windows:
+In addition, the following core modules work with Windows:
     assemble
     fetch
     raw
