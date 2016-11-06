@@ -1578,8 +1578,20 @@ class SunOSHardware(Hardware):
                 size_total, size_available = self._get_mount_size_facts(fields[1])
                 self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
 
+class GetSysctlMixin(object):
 
-class OpenBSDHardware(Hardware):
+    def get_sysctl(self, prefix):
+        rc, out, err = self.module.run_command(["/sbin/sysctl", prefix])
+        if rc != 0:
+            return dict()
+        sysctl = dict()
+        for line in out.splitlines():
+            (key, value) = line.split('=')
+            sysctl[key] = value.strip()
+        return sysctl
+
+
+class OpenBSDHardware(Hardware, GetSysctlMixin):
     """
     OpenBSD-specific subclass of Hardware. Defines memory, CPU and device facts:
     - memfree_mb
@@ -1603,16 +1615,6 @@ class OpenBSDHardware(Hardware):
         self.get_mount_facts()
         self.get_dmi_facts()
         return self.facts
-
-    def get_sysctl(self, prefix):
-        rc, out, err = self.module.run_command(["/sbin/sysctl", prefix])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            (key, value) = line.split('=')
-            sysctl[key] = value.strip()
-        return sysctl
 
     @timeout(10)
     def get_mount_facts(self):
