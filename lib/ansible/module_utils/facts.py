@@ -977,6 +977,23 @@ class Hardware(Facts):
     def populate(self):
         return self.facts
 
+    def get_sysctl(self, prefixes):
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd]
+        cmd.extend(prefixes)
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return dict()
+        sysctl = dict()
+        for line in out.splitlines():
+            if not line:
+                continue
+            (key, value) = re.split('\s?=\s?|: ', line, maxsplit=1)
+            sysctl[key] = value.strip()
+        return sysctl
+
+
+
 class LinuxHardware(Hardware):
     """
     Linux-specific subclass of Hardware.  Defines memory and CPU facts:
@@ -1599,23 +1616,13 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl(['hw'])
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
         self.get_mount_facts()
         self.get_dmi_facts()
         return self.facts
-
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/sbin/sysctl", "hw"])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            (key, value) = line.split('=')
-            sysctl[key] = value.strip()
-        return sysctl
 
     @timeout(10)
     def get_mount_facts(self):
@@ -2150,23 +2157,11 @@ class Darwin(Hardware):
     platform = 'Darwin'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl(['hw','machdep','kern'])
         self.get_mac_facts()
         self.get_cpu_facts()
         self.get_memory_facts()
         return self.facts
-
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/usr/sbin/sysctl", "hw", "machdep", "kern"])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            if not line:
-                continue
-            (key, value) = re.split(' = |: ', line, maxsplit=1)
-            sysctl[key] = value.strip()
-        return sysctl
 
     def get_system_profile(self):
         rc, out, err = self.module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
