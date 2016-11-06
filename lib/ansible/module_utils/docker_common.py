@@ -83,28 +83,6 @@ if not HAS_DOCKER_PY:
             pass
 
 
-def human_to_bytes(number):
-    if number is None:
-        return 0
-
-    if isinstance(number, int):
-        return number
-
-    if number[-1].isdigit():
-        return int(number)
-
-    if number[-1] == BYTE_SUFFIXES[0] and number[-2].isdigit():
-        return int(number[:-1])
-
-    i = 1
-    for each in BYTE_SUFFIXES[1:]:
-        if number[-len(each):] == BYTE_SUFFIXES[i]:
-            return int(number[:-len(each)]) * (1024 ** i)
-        i += 1
-
-    raise ValueError("Failed to convert %s. The suffix must be one of %s" % (number, ','.join(BYTE_SUFFIXES)))
-
-
 class DockerBaseClass(object):
 
     def __init__(self):
