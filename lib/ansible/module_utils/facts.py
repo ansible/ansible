@@ -1601,6 +1601,7 @@ class OpenBSDHardware(Hardware):
         self.get_processor_facts()
         self.get_device_facts()
         self.get_mount_facts()
+        self.get_dmi_facts()
         return self.facts
 
     def get_sysctl(self):
