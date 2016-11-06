@@ -3511,6 +3511,9 @@ class SunOSVirtual(Virtual):
                     elif 'HVM domU' in line:
                         self.facts['virtualization_type'] = 'xen'
                         self.facts['virtualization_role'] = 'guest'
+                    elif 'KVM' in line:
+                        self.facts['virtualization_type'] = 'kvm'
+                        self.facts['virtualization_role'] = 'guest'
 
 class Ohai(Facts):
     """
