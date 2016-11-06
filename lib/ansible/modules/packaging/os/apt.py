@@ -938,12 +938,6 @@ def main():
             retvals['cache_updated'] = updated_cache
             # Store when the update time was last
             retvals['cache_update_time'] = updated_cache_time
-            # If the cache was updated and the general state change was set to
-            #  False make sure that the change in cache state is accurately
-            #  updated by setting the general changed state to the same as
-            #  the cache state.
-            if updated_cache and not retvals['changed']:
-                retvals['changed'] = updated_cache
 
             if success:
                 module.exit_json(**retvals)
