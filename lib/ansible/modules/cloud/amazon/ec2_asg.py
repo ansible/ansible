@@ -53,6 +53,12 @@ options:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
     required: false
+  placement_group:
+    description:
+      - Physical location of your cluster placement group created in Amazon EC2.
+    required: false
+    version_added: "2.3"
+    default: None
   desired_capacity:
     description:
       - Desired number of instances in group, if unspecified then the current group value will be used.
@@ -399,6 +405,7 @@ def create_autoscaling_group(connection, module):
     launch_config_name = module.params.get('launch_config_name')
     min_size = module.params['min_size']
     max_size = module.params['max_size']
+    placement_group = module.params.get('placement_group')
     desired_capacity = module.params.get('desired_capacity')
     vpc_zone_identifier = module.params.get('vpc_zone_identifier')
     set_tags = module.params.get('tags')
@@ -442,6 +449,7 @@ def create_autoscaling_group(connection, module):
                  launch_config=launch_configs[0],
                  min_size=min_size,
                  max_size=max_size,
+                 placement_group=placement_group,
                  desired_capacity=desired_capacity,
                  vpc_zone_identifier=vpc_zone_identifier,
                  connection=connection,
@@ -821,6 +829,7 @@ def main():
             launch_config_name=dict(type='str'),
             min_size=dict(type='int'),
             max_size=dict(type='int'),
+            placement_group=dict(type='str'),
             desired_capacity=dict(type='int'),
             vpc_zone_identifier=dict(type='list'),
             replace_batch_size=dict(type='int', default=1),
