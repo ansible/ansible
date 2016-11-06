@@ -3296,35 +3296,14 @@ class LinuxVirtual(Virtual):
         self.facts['virtualization_role'] = 'NA'
         return
 
-class FreeBSDVirtual(Virtual):
-    """
-    This is a FreeBSD-specific subclass of Virtual.  It defines
-    - virtualization_type
-    - virtualization_role
-    """
-    platform = 'FreeBSD'
+class VirtualSysctlDetectionMixin(object):
+    def detect_sysctl(self):
+        self.sysctl_path = self.module.get_bin_path('sysctl')
 
-class DragonFlyVirtual(FreeBSDVirtual):
-    platform = 'DragonFly'
-
-class OpenBSDVirtual(Virtual):
-    """
-    This is a OpenBSD-specific subclass of Virtual.  It defines
-    - virtualization_type
-    - virtualization_role
-    """
-    platform = 'OpenBSD'
-    DMESG_BOOT = '/var/run/dmesg.boot'
-
-    def get_virtual_facts(self):
-        sysctl_path = self.module.get_bin_path('sysctl')
-
-        # Set empty values as default
-        self.facts['virtualization_type'] = ''
-        self.facts['virtualization_role'] = ''
-
-        if sysctl_path:
-            rc, out, err = self.module.run_command("%s -n hw.product" % sysctl_path)
+    def detect_virt_product(self, key):
+        self.detect_sysctl()
+        if self.sysctl_path:
+            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
             if rc == 0:
                 if re.match('(KVM|Bochs|SmartDC).*', out):
                     self.facts['virtualization_type'] = 'kvm'
@@ -3344,16 +3323,49 @@ class OpenBSDVirtual(Virtual):
                 elif out.rstrip() == 'RHEV Hypervisor':
                     self.facts['virtualization_type'] = 'RHEV'
                     self.facts['virtualization_role'] = 'guest'
-                else:
-                    # Try harder and see if hw.vendor has anything we could use.
-                    rc, out, err = self.module.run_command("%s -n hw.vendor" % sysctl_path)
-                    if rc == 0:
-                        if out.rstrip() == 'QEMU':
-                            self.facts['virtualization_type'] = 'kvm'
-                            self.facts['virtualization_role'] = 'guest'
-                        if out.rstrip() == 'OpenBSD':
-                            self.facts['virtualization_type'] = 'vmm'
-                            self.facts['virtualization_role'] = 'guest'
+
+    def detect_virt_vendor(self, key):
+        self.detect_sysctl()
+        if self.sysctl_path:
+            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
+            if rc == 0:
+                if out.rstrip() == 'QEMU':
+                    self.facts['virtualization_type'] = 'kvm'
+                    self.facts['virtualization_role'] = 'guest'
+                if out.rstrip() == 'OpenBSD':
+                    self.facts['virtualization_type'] = 'vmm'
+                    self.facts['virtualization_role'] = 'guest'
+
+
+class FreeBSDVirtual(Virtual):
+    """
+    This is a FreeBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'FreeBSD'
+
+class DragonFlyVirtual(FreeBSDVirtual):
+    platform = 'DragonFly'
+
+class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
+    """
+    This is a OpenBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'OpenBSD'
+    DMESG_BOOT = '/var/run/dmesg.boot'
+
+    def get_virtual_facts(self):
+
+        # Set empty values as default
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+        self.detect_virt_product('hw.product')
+        if self.facts['virtualization_type'] == '':
+            self.detect_virt_vendor('hw.vendor')
 
         # Check the dmesg if vmm(4) attached, indicating the host is
         # capable of virtualization.
