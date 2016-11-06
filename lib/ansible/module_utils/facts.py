@@ -3376,6 +3376,18 @@ class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
                 self.facts['virtualization_type'] = 'vmm'
                 self.facts['virtualization_role'] = 'host'
 
+class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
+    platform = 'NetBSD'
+
+    def get_virtual_facts(self):
+        # Set empty values as default
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+        self.detect_virt_product('machdep.dmi.system-product')
+        if self.facts['virtualization_type'] == '':
+            self.detect_virt_vendor('machdep.dmi.system-vendor')
+
 class HPUXVirtual(Virtual):
     """
     This is a HP-UX specific subclass of Virtual. It defines
