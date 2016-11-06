@@ -3325,6 +3325,16 @@ class FreeBSDVirtual(Virtual):
     """
     platform = 'FreeBSD'
 
+    def get_virtual_facts(self):
+
+        # Set empty values as default
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+        if os.path.exists('/dev/xen/xenstore'):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+
 class DragonFlyVirtual(FreeBSDVirtual):
     platform = 'DragonFly'
 
