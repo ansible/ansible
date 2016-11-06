@@ -597,7 +597,10 @@ class Facts(object):
         try:
             self.facts['python']['type'] = sys.subversion[0]
         except AttributeError:
-            self.facts['python']['type'] = None
+            try:
+                self.facts['python']['type'] = sys.implementation.name
+            except AttributeError:
+                self.facts['python']['type'] = None
 
 
 class Distribution(object):
