@@ -89,12 +89,9 @@ options:
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
-   - A section named C(default) cannot be added by the module, but if it exists, individual
-     options within the section can be updated. (This is a limitation of Python's I(ConfigParser).)
-     Either use M(template) to create a base INI file with a C([default]) section, or use
-     M(lineinfile) to add the missing line.
-requirements: [ ConfigParser ]
-author: "Jan-Piet Mens (@jpmens), Ales Nosek"
+author:
+    - "Jan-Piet Mens (@jpmens)"
+    - "Ales Nosek (@noseka1)"
 '''
 
 EXAMPLES = '''
