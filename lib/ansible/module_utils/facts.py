@@ -1586,8 +1586,16 @@ class GetSysctlMixin(object):
             return dict()
         sysctl = dict()
         for line in out.splitlines():
-            (key, value) = line.split('=')
-            sysctl[key] = value.strip()
+            # NetBSD do not always use '='
+            #  # sysctl machdep.diskinfo
+            #  machdep.diskinfo: 80:16777216(1023/255/63),2  wd0:80
+            # sometime, there is also '=' in the value:
+            #  # sysctl kern.timecounter.choice
+            #  kern.timecounter.choice = TSC(q=-100, f=3092928170 Hz) clockinterrupt(q=0, f=100 Hz)...
+            # so we will just take a subset of the value and defer to later if we need to parse others
+            if '=' in line:
+                (key, value) = line.split('=')
+                sysctl[key.strip()] = value.strip()
         return sysctl
 
 
