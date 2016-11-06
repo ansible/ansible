@@ -68,6 +68,14 @@ options:
         description:
             - run systemctl talking to the service manager of the calling user, rather than the service manager
               of the system.
+    no_block:
+        required: false
+        default: no
+        choices: [ "yes", "no" ]
+        description:
+            - Do not synchronously wait for the requested operation to finish.
+              Enqueued job will continue without Ansible blocking on its completion.
+        version_added: "2.3"
 notes:
     - One option other than name is required.
 requirements:
@@ -250,8 +258,9 @@ def main():
                 state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
                 enabled = dict(type='bool'),
                 masked = dict(type='bool'),
-                daemon_reload= dict(type='bool', default=False, aliases=['daemon-reload']),
-                user= dict(type='bool', default=False),
+                daemon_reload = dict(type='bool', default=False, aliases=['daemon-reload']),
+                user = dict(type='bool', default=False),
+                no_block = dict(type='bool', default=False),
             ),
             supports_check_mode=True,
             required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
@@ -260,6 +269,8 @@ def main():
     systemctl = module.get_bin_path('systemctl')
     if module.params['user']:
         systemctl = systemctl + " --user"
+    if module.params['no_block']:
+        systemctl = systemctl + " --no-block"
     unit = module.params['name']
     rc = 0
     out = err = ''
