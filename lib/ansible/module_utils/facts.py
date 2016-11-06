@@ -1596,7 +1596,7 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl('hw')
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
@@ -1604,8 +1604,8 @@ class OpenBSDHardware(Hardware):
         self.get_dmi_facts()
         return self.facts
 
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/sbin/sysctl", "hw"])
+    def get_sysctl(self, prefix):
+        rc, out, err = self.module.run_command(["/sbin/sysctl", prefix])
         if rc != 0:
             return dict()
         sysctl = dict()
