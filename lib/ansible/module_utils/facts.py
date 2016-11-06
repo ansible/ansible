@@ -1644,10 +1644,10 @@ class OpenBSDHardware(Hardware):
         # total: 69268k bytes allocated = 0k used, 69268k available
         rc, out, err = self.module.run_command("/sbin/swapctl -sk")
         if rc == 0:
-            swaptrans = maketrans(' ', ' ')
+            swaptrans = maketrans('kmg', '   ')
             data = out.split()
-            self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans, "kmg")) // 1024
-            self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans, "kmg")) // 1024
+            self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans)) // 1024
+            self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans)) // 1024
 
     def get_processor_facts(self):
         processor = []
