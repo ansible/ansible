@@ -223,7 +223,9 @@ requirements:
 author:
     - "Bruce Pennypacker (@bpennypacker)"
     - "Will Thames (@willthames)"
-
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
