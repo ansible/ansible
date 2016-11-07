@@ -3328,6 +3328,47 @@ class LinuxVirtual(Virtual):
         self.facts['virtualization_role'] = 'NA'
         return
 
+class VirtualSysctlDetectionMixin(object):
+    def detect_sysctl(self):
+        self.sysctl_path = self.module.get_bin_path('sysctl')
+
+    def detect_virt_product(self, key):
+        self.detect_sysctl()
+        if self.sysctl_path:
+            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
+            if rc == 0:
+                if re.match('(KVM|Bochs|SmartDC).*', out):
+                    self.facts['virtualization_type'] = 'kvm'
+                    self.facts['virtualization_role'] = 'guest'
+                elif re.match('.*VMware.*', out):
+                    self.facts['virtualization_type'] = 'VMware'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'VirtualBox':
+                    self.facts['virtualization_type'] = 'virtualbox'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'HVM domU':
+                    self.facts['virtualization_type'] = 'xen'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'Parallels':
+                    self.facts['virtualization_type'] = 'parallels'
+                    self.facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'RHEV Hypervisor':
+                    self.facts['virtualization_type'] = 'RHEV'
+                    self.facts['virtualization_role'] = 'guest'
+
+    def detect_virt_vendor(self, key):
+        self.detect_sysctl()
+        if self.sysctl_path:
+            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
+            if rc == 0:
+                if out.rstrip() == 'QEMU':
+                    self.facts['virtualization_type'] = 'kvm'
+                    self.facts['virtualization_role'] = 'guest'
+                if out.rstrip() == 'OpenBSD':
+                    self.facts['virtualization_type'] = 'vmm'
+                    self.facts['virtualization_role'] = 'guest'
+
+
 class FreeBSDVirtual(Virtual):
     """
     This is a FreeBSD-specific subclass of Virtual.  It defines
@@ -3349,7 +3390,7 @@ class FreeBSDVirtual(Virtual):
 class DragonFlyVirtual(FreeBSDVirtual):
     platform = 'DragonFly'
 
-class OpenBSDVirtual(Virtual):
+class OpenBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
     """
     This is a OpenBSD-specific subclass of Virtual.  It defines
     - virtualization_type
@@ -3359,43 +3400,14 @@ class OpenBSDVirtual(Virtual):
     DMESG_BOOT = '/var/run/dmesg.boot'
 
     def get_virtual_facts(self):
-        sysctl_path = self.module.get_bin_path('sysctl')
 
         # Set empty values as default
         self.facts['virtualization_type'] = ''
         self.facts['virtualization_role'] = ''
 
-        if sysctl_path:
-            rc, out, err = self.module.run_command("%s -n hw.product" % sysctl_path)
-            if rc == 0:
-                if re.match('(KVM|Bochs|SmartDC).*', out):
-                    self.facts['virtualization_type'] = 'kvm'
-                    self.facts['virtualization_role'] = 'guest'
-                elif re.match('.*VMware.*', out):
-                    self.facts['virtualization_type'] = 'VMware'
-                    self.facts['virtualization_role'] = 'guest'
-                elif out.rstrip() == 'VirtualBox':
-                    self.facts['virtualization_type'] = 'virtualbox'
-                    self.facts['virtualization_role'] = 'guest'
-                elif out.rstrip() == 'HVM domU':
-                    self.facts['virtualization_type'] = 'xen'
-                    self.facts['virtualization_role'] = 'guest'
-                elif out.rstrip() == 'Parallels':
-                    self.facts['virtualization_type'] = 'parallels'
-                    self.facts['virtualization_role'] = 'guest'
-                elif out.rstrip() == 'RHEV Hypervisor':
-                    self.facts['virtualization_type'] = 'RHEV'
-                    self.facts['virtualization_role'] = 'guest'
-                else:
-                    # Try harder and see if hw.vendor has anything we could use.
-                    rc, out, err = self.module.run_command("%s -n hw.vendor" % sysctl_path)
-                    if rc == 0:
-                        if out.rstrip() == 'QEMU':
-                            self.facts['virtualization_type'] = 'kvm'
-                            self.facts['virtualization_role'] = 'guest'
-                        if out.rstrip() == 'OpenBSD':
-                            self.facts['virtualization_type'] = 'vmm'
-                            self.facts['virtualization_role'] = 'guest'
+        self.detect_virt_product('hw.product')
+        if self.facts['virtualization_type'] == '':
+            self.detect_virt_vendor('hw.vendor')
 
         # Check the dmesg if vmm(4) attached, indicating the host is
         # capable of virtualization.
@@ -3405,6 +3417,23 @@ class OpenBSDVirtual(Virtual):
             if match:
                 self.facts['virtualization_type'] = 'vmm'
                 self.facts['virtualization_role'] = 'host'
+
+class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
+    platform = 'NetBSD'
+
+    def get_virtual_facts(self):
+        # Set empty values as default
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+        self.detect_virt_product('machdep.dmi.system-product')
+        if self.facts['virtualization_type'] == '':
+            self.detect_virt_vendor('machdep.dmi.system-vendor')
+
+        if os.path.exists('/dev/xencons'):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+
 
 class HPUXVirtual(Virtual):
     """
