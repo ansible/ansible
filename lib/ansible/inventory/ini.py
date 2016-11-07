@@ -51,18 +51,21 @@ class InventoryParser(object):
 
         # Read in the hosts, groups, and variables defined in the
         # inventory file.
+        if loader:
+            (b_data, private) = loader._get_file_contents(filename)
+        else:
+            with open(filename, 'rb') as fh:
+                b_data = fh.read()
 
-        with open(filename, 'rb') as fh:
-            data = fh.read()
-            try:
-                # Faster to do to_text once on a long string than many
-                # times on smaller strings
-                data = to_text(data, errors='surrogate_or_strict')
-                data = [line for line in data.splitlines() if not (line.startswith(u';') or line.startswith(u'#'))]
-            except UnicodeError:
-                # Skip comment lines here to avoid potential undecodable
-                # errors in comments: https://github.com/ansible/ansible/issues/17593
-                data = [to_text(line, errors='surrogate_or_strict') for line in data.splitlines() if not (line.startswith(b';') or line.startswith(b'#'))]
+        try:
+            # Faster to do to_text once on a long string than many
+            # times on smaller strings
+            data = to_text(b_data, errors='surrogate_or_strict')
+            data = [line for line in data.splitlines() if not (line.startswith(u';') or line.startswith(u'#'))]
+        except UnicodeError:
+            # Skip comment lines here to avoid potential undecodable
+            # errors in comments: https://github.com/ansible/ansible/issues/17593
+            data = [to_text(line, errors='surrogate_or_strict') for line in b_data.splitlines() if not (line.startswith(b';') or line.startswith(b'#'))]
 
         self._parse(data)
 

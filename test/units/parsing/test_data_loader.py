@@ -37,13 +37,13 @@ class TestDataLoader(unittest.TestCase):
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_json_from_file(self, mock_def):
-        mock_def.return_value = ("""{"a": 1, "b": 2, "c": 3}""", True)
+        mock_def.return_value = (b"""{"a": 1, "b": 2, "c": 3}""", True)
         output = self._loader.load_from_file('dummy_json.txt')
         self.assertEqual(output, dict(a=1,b=2,c=3))
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_yaml_from_file(self, mock_def):
-        mock_def.return_value = ("""
+        mock_def.return_value = (b"""
         a: 1
         b: 2
         c: 3
@@ -53,7 +53,7 @@ class TestDataLoader(unittest.TestCase):
 
     @patch.object(DataLoader, '_get_file_contents')
     def test_parse_fail_from_file(self, mock_def):
-        mock_def.return_value = ("""
+        mock_def.return_value = (b"""
         TEXT:
             ***
                NOT VALID
