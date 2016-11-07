@@ -45,6 +45,12 @@ options:
       - The known_hosts file to edit
     required: no
     default: "(homedir)+/.ssh/known_hosts"
+  hash_host:
+    description:
+      - Hash the hostname in the known_hosts file
+    required: no
+    default: no
+    version_added: "2.3"
   state:
     description:
       - I(present) to add the host key, I(absent) to remove it.
@@ -71,6 +77,7 @@ EXAMPLES = '''
 #    name = hostname whose key should be added (alias: host)
 #    key = line(s) to add to known_hosts file
 #    path = the known_hosts file to edit (default: ~/.ssh/known_hosts)
+#    hash_host = yes|no (default: no) hash the hostname in the known_hosts file
 #    state = absent|present (default: present)
 
 import os
@@ -90,6 +97,7 @@ def enforce_state(module, params):
     key = params.get("key",None)
     port = params.get("port",None)
     path = params.get("path")
+    hash_host = params.get("hash_host")
     state = params.get("state")
     #Find the ssh-keygen binary
     sshkeygen = module.get_bin_path("ssh-keygen",True)
@@ -103,7 +111,7 @@ def enforce_state(module, params):
 
     sanity_check(module,host,key,sshkeygen)
 
-    found,replace_or_add,found_line=search_for_host_key(module,host,key,path,sshkeygen)
+    found,replace_or_add,found_line,key=search_for_host_key(module,host,key,hash_host,path,sshkeygen)
 
     #We will change state if found==True & state!="present"
     #or found==False & state=="present"
@@ -192,7 +200,7 @@ def sanity_check(module,host,key,sshkeygen):
     if stdout=='': #host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
-def search_for_host_key(module,host,key,path,sshkeygen):
+def search_for_host_key(module,host,key,hash_host,path,sshkeygen):
     '''search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
 
     Looks up host and keytype in the known_hosts file path; if it's there, looks to see
@@ -204,24 +212,33 @@ def search_for_host_key(module,host,key,path,sshkeygen):
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     if os.path.exists(path)==False:
-        return False, False, None
+        return False, False, None, key
+
+    sshkeygen_command=[sshkeygen,'-F',host,'-f',path]
+
     #openssh >=6.4 has changed ssh-keygen behaviour such that it returns
     #1 if no host is found, whereas previously it returned 0
-    rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,'-f',path],
+    rc,stdout,stderr=module.run_command(sshkeygen_command,
                                  check_rc=False)
     if stdout=='' and stderr=='' and (rc==0 or rc==1):
-        return False, False, None #host not found, no other errors
+        return False, False, None, key #host not found, no other errors
     if rc!=0: #something went wrong
         module.fail_json(msg="ssh-keygen failed (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
 
     #If user supplied no key, we don't want to try and replace anything with it
     if key is None:
-        return True, False, None
+        return True, False, None, key
 
     lines=stdout.split('\n')
-    new_key = normalize_known_hosts_key(key, host)
+    new_key = normalize_known_hosts_key(key)
 
-    for l in lines:
+    sshkeygen_command.insert(1,'-H')
+    rc,stdout,stderr=module.run_command(sshkeygen_command,check_rc=False)
+    if rc!=0: #something went wrong
+        module.fail_json(msg="ssh-keygen failed to hash host (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
+    hashed_lines=stdout.split('\n')
+
+    for lnum,l in enumerate(lines):
         if l=='':
             continue
         elif l[0]=='#': # info output from ssh-keygen; contains the line number where key was found
@@ -233,15 +250,22 @@ def search_for_host_key(module,host,key,path,sshkeygen):
                 e = get_exception()
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
-            found_key = normalize_known_hosts_key(l,host)
+            found_key = normalize_known_hosts_key(l)
+            if hash_host==True:
+                if found_key['host'][:3]=='|1|':
+                    new_key['host']=found_key['host']
+                else:
+                    hashed_host=normalize_known_hosts_key(hashed_lines[lnum])
+                    found_key['host']=hashed_host['host']
+                key=key.replace(host,found_key['host'])
             if new_key==found_key: #found a match
-                return True, False, found_line  #found exactly the same key, don't replace
+                return True, False, found_line, key #found exactly the same key, don't replace
             elif new_key['type'] == found_key['type']: # found a different key for the same key type
-                return True, True, found_line
+                return True, True, found_line, key
     #No match found, return found and replace, but no line
-    return True, True, None
+    return True, True, None, key
 
-def normalize_known_hosts_key(key, host):
+def normalize_known_hosts_key(key):
     '''
     Transform a key, either taken from a known_host file or provided by the
     user, into a normalized form.
@@ -256,11 +280,11 @@ def normalize_known_hosts_key(key, host):
     #The optional "marker" field, used for @cert-authority or @revoked
     if k[0][0] == '@':
         d['options'] = k[0]
-        d['host']=host
+        d['host']=k[1]
         d['type']=k[2]
         d['key']=k[3]
     else:
-        d['host']=host
+        d['host']=k[0]
         d['type']=k[1]
         d['key']=k[2]
     return d
@@ -272,6 +296,7 @@ def main():
             name      = dict(required=True,  type='str', aliases=['host']),
             key       = dict(required=False,  type='str'),
             path      = dict(default="~/.ssh/known_hosts", type='path'),
+            hash_host = dict(required=False, type='bool' ,default=False),
             state     = dict(default='present', choices=['absent','present']),
             ),
         supports_check_mode = True
