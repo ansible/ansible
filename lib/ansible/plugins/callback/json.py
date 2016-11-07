@@ -76,7 +76,7 @@ class CallbackModule(CallbackBase):
             'stats': summary
         }
 
-        print(json.dumps(output, indent=4, sort_keys=True))
+        self._display.display(json.dumps(output, indent=4, sort_keys=True))
 
     v2_runner_on_failed = v2_runner_on_ok
     v2_runner_on_unreachable = v2_runner_on_ok
