@@ -116,7 +116,9 @@ class DataLoader():
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
-            (file_data, show_content) = self._get_file_contents(file_name)
+            (b_file_data, show_content) = self._get_file_contents(file_name)
+
+            file_data = to_text(b_file_data, errors='surrogate_or_strict')
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
 
             # cache the file contents for next time
@@ -178,7 +180,6 @@ class DataLoader():
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
-            data = to_text(data, errors='surrogate_or_strict')
             return (data, show_content)
 
         except (IOError, OSError) as e:

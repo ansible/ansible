@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 
 try:
     from __main__ import display
@@ -41,7 +42,8 @@ class LookupModule(LookupBase):
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
-                    contents, show_data = self._loader._get_file_contents(lookupfile)
+                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    contents = to_text(b_contents, errors='surrogate_or_strict')
                     ret.append(contents.rstrip())
                 else:
                     raise AnsibleParserError()
