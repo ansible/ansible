@@ -1581,8 +1581,28 @@ class SunOSHardware(Hardware):
                 size_total, size_available = self._get_mount_size_facts(fields[1])
                 self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
 
+class GetSysctlMixin(object):
 
-class OpenBSDHardware(Hardware):
+    def get_sysctl(self, prefix):
+        rc, out, err = self.module.run_command(["/sbin/sysctl", prefix])
+        if rc != 0:
+            return dict()
+        sysctl = dict()
+        for line in out.splitlines():
+            # NetBSD do not always use '='
+            #  # sysctl machdep.diskinfo
+            #  machdep.diskinfo: 80:16777216(1023/255/63),2  wd0:80
+            # sometime, there is also '=' in the value:
+            #  # sysctl kern.timecounter.choice
+            #  kern.timecounter.choice = TSC(q=-100, f=3092928170 Hz) clockinterrupt(q=0, f=100 Hz)...
+            # so we will just take a subset of the value and defer to later if we need to parse others
+            if '=' in line:
+                (key, value) = line.split('=')
+                sysctl[key.strip()] = value.strip()
+        return sysctl
+
+
+class OpenBSDHardware(Hardware, GetSysctlMixin):
     """
     OpenBSD-specific subclass of Hardware. Defines memory, CPU and device facts:
     - memfree_mb
@@ -1599,22 +1619,13 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl('hw')
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
         self.get_mount_facts()
+        self.get_dmi_facts()
         return self.facts
-
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/sbin/sysctl", "hw"])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            (key, value) = line.split('=')
-            sysctl[key] = value.strip()
-        return sysctl
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1823,7 +1834,7 @@ class DragonFlyHardware(FreeBSDHardware):
     platform = 'DragonFly'
 
 
-class NetBSDHardware(Hardware):
+class NetBSDHardware(Hardware, GetSysctlMixin):
     """
     NetBSD-specific subclass of Hardware.  Defines memory and CPU facts:
     - memfree_mb
@@ -1839,12 +1850,14 @@ class NetBSDHardware(Hardware):
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
 
     def populate(self):
+        self.sysctl = self.get_sysctl('machdep')
         self.get_cpu_facts()
         self.get_memory_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
             pass
+        self.get_dmi_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -1899,6 +1912,25 @@ class NetBSDHardware(Hardware):
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
                 self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+
+    def get_dmi_facts(self):
+        # We don't use dmidecode(1) here because:
+        # - it would add dependency on an external package
+        # - dmidecode(1) can only be ran as root
+        # So instead we rely on sysctl(8) to provide us the information on a
+        # best-effort basis. As a bonus we also get facts on non-amd64/i386
+        # platforms this way.
+        sysctl_to_dmi = {
+            'machdep.dmi.system-product':  'product_name',
+            'machdep.dmi.system-version':  'product_version',
+            'machdep.dmi.system-uuid':     'product_uuid',
+            'machdep.dmi.system-serial':   'product_serial',
+            'machdep.dmi.system-vendor':   'system_vendor',
+        }
+
+        for mib in sysctl_to_dmi:
+          if mib in self.sysctl:
+            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class AIX(Hardware):
     """
