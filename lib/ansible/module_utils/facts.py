@@ -38,13 +38,6 @@ from ansible.module_utils.six.moves import configparser, StringIO
 from ansible.module_utils._text import to_native
 
 try:
-    # python2
-    from string import maketrans
-except ImportError:
-    # python3
-    maketrans = str.maketrans # TODO: is this really identical?
-
-try:
     import selinux
     HAVE_SELINUX=True
 except ImportError:
@@ -1647,8 +1640,8 @@ class OpenBSDHardware(Hardware):
         # total: 69268k bytes allocated = 0k used, 69268k available
         rc, out, err = self.module.run_command("/sbin/swapctl -sk")
         if rc == 0:
-            swaptrans = maketrans('kmg', '   ')
-            data = out.split()
+            swaptrans = { ord(u'k'): None, ord(u'm'): None, ord(u'g'): None}
+            data = to_text(out, errors='surrogate_or_strict').split()
             self.facts['swapfree_mb'] = int(data[-2].translate(swaptrans)) // 1024
             self.facts['swaptotal_mb'] = int(data[1].translate(swaptrans)) // 1024
 
