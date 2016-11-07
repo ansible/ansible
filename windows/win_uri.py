@@ -120,6 +120,11 @@ use_basic_parsing:
   returned: always
   type: bool
   sample: True
+body:
+  description: The content of the body used (added in version 2.2)
+  returned: when body is specified
+  type: string
+  sample: '{"id":1}'
 status_code:
   description: The HTTP Status Code of the response.
   returned: success
