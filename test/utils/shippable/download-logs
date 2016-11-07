@@ -55,24 +55,37 @@ def main():
         Authorization='apiToken %s' % args.api_key,
     )
 
-    body = requests.get('https://api.shippable.com/jobs?runIds=%s' % args.run_id, headers=headers).json()
+    response = requests.get('https://api.shippable.com/jobs?runIds=%s' % args.run_id, headers=headers)
 
+    if response.status_code != 200:
+        raise Exception(response.content)
+
+    body = response.json()
     output_dir = args.run_id
 
     if not args.test:
-        os.mkdir(output_dir)
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
 
     for j in body:
         job_id = j['id']
         job_number = j['jobNumber']
         path = os.path.join(output_dir, '%s.log' % job_number)
-        url = 'https://api.shippable.com/jobs/%s/consoles/download' % job_id
+        url = 'https://api.shippable.com/jobConsoles?jobIds=%s&download=true' % job_id
 
         if args.verbose or args.test:
             print('%s' % path)
 
+        if os.path.exists(path):
+            continue
+
         if not args.test:
-            log = requests.get(url, headers=headers).content
+            response = requests.get(url, headers=headers)
+
+            if response.status_code != 200:
+                raise Exception(response.content)
+
+            log = response.content
 
             with open(path, 'w') as f:
                 f.write(log)
