@@ -29,7 +29,8 @@ module: win_acl
 version_added: "2.0"
 short_description: Set file/directory permissions for a system user or group.
 description:
-     - Add or remove rights/permissions for a given user or group for the specified src file or folder. If adding ACL's for AppPool identities, the Windows "Feature Web-Scripting-Tools" must be enabled
+     - Add or remove rights/permissions for a given user or group for the specified src file or folder.
+     - If adding ACL's for AppPool identities (available since 2.3), the Windows "Feature Web-Scripting-Tools" must be enabled
 options:
   path:
     description:
