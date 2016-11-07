@@ -70,4 +70,11 @@ options:
     required: false
     default: false
     version_added: "2.2"
+  attributes:
+    description:
+      - Attributes of the file or directory should be. To get supported flags look at the man page for I(chattr) on the taget system.
+    required: false
+    default: None
+    aliases: ['attr']
+    version_added: "2.3"
 """
