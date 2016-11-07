@@ -32,9 +32,19 @@ Function UserSearch
 
     $searchDomain = $false
     $searchDomainUPN = $false
+    $SearchAppPools = $false
     if ($accountName.Split("\").count -gt 1)
     {
-        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME)
+        if ($accountName.Split("\")[0] -eq $env:COMPUTERNAME)
+        {
+
+        }
+        elseif ($accountName.Split("\")[0] -eq "IIS APPPOOL")
+        {
+            $SearchAppPools = $true
+            $accountName = $accountName.split("\")[1]
+        }
+        else
         {
             $searchDomain = $true
             $accountName = $accountName.split("\")[1]
@@ -51,7 +61,7 @@ Function UserSearch
         $accountName = $env:COMPUTERNAME + "\" + $accountName
     }
 
-    if ($searchDomain -eq $false)
+    if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
     {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
@@ -60,7 +70,20 @@ Function UserSearch
             return $localaccount.SID
         }
     }
-    Else
+    Elseif ($SearchAppPools -eq $true)
+    {
+        Import-Module WebAdministration
+        $testiispath = Test-path "IIS:"
+        if ($testiispath -eq $false)
+        {
+            return $null
+        }
+        else
+        {
+            $apppoolobj = Get-ItemProperty IIS:\AppPools\$accountName
+            return $apppoolobj.applicationPoolSid
+        }
+    }
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
