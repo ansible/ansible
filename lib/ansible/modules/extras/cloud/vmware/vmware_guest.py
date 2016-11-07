@@ -278,7 +278,6 @@ except ImportError:
     pass
 
 import os
-import string
 import time
 from netaddr import IPNetwork, IPAddress
 
@@ -757,11 +756,7 @@ class PyVmomiHelper(object):
             if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
                 # size_tb, size_gb, size_mb, size_kb, size_b ...?
                 if 'size' in pspec:
-                    # http://stackoverflow.com/a/1451407
-                    trans = string.maketrans('', '')
-                    chars = trans.translate(trans, string.digits)
-                    expected = pspec['size'].translate(trans, chars)
-                    expected = expected
+                    expected = ''.join(c for c in pspec['size'] if c.isdigit())
                     unit = pspec['size'].replace(expected, '').lower()
                     expected = int(expected)
                 else:
