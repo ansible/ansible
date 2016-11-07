@@ -172,7 +172,7 @@ class TestGalaxy(unittest.TestCase):
                 'delete': 'usage: %prog delete [options] github_user github_repo',
                 'info': 'usage: %prog info [options] role_name[,version]',
                 'init': 'usage: %prog init [options] role_name',
-                'install': 'usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]',
+                'install': 'usage: %prog install [options] (-r FILE | ((role_name | scm+role_repo_url)[,[version][,name]] | tar_file[,,name])...)',
                 'list': 'usage: %prog list [role_name]',
                 'login': 'usage: %prog login [options]',
                 'remove': 'usage: %prog remove role1 role2 ...',

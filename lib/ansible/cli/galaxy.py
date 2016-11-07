@@ -87,7 +87,7 @@ class GalaxyCLI(CLI):
             self.parser.add_option('--role-skeleton', dest='role_skeleton', default=None,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
-            self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
+            self.parser.set_usage("usage: %prog install [options] (-r FILE | ((role_name | scm+role_repo_url)[,[version][,name]] | tar_file[,,name])...)")
             self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
