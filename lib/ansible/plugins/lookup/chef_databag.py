@@ -31,6 +31,8 @@ NOTES: This is a lookup plugin to provide access to chef data bags using the
 Requires: pychef package: https://pychef.readthedocs.io `pip install pychef`
 
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
