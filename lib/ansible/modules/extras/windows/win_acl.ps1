@@ -29,13 +29,22 @@ Function UserSearch
 {
     Param ([string]$AccountName)
     #Check if there's a realm specified
-    if ($AccountName.Split("\").count -gt 1)
+
+    $searchDomain = $false
+    $searchDomainUPN = $false
+    $SearchAppPools = $false
+    if ($accountName.Split("\").count -gt 1)
     {
-        if ($AccountName.Split("\")[0] -eq $env:COMPUTERNAME)
+        if ($accountName.Split("\")[0] -eq $env:COMPUTERNAME)
         {
-            $IsLocalAccount = $true
+
         }
-        Else
+        elseif ($accountName.Split("\")[0] -eq "IIS APPPOOL")
+        {
+            $SearchAppPools = $true
+            $accountName = $accountName.split("\")[1]
+        }
+        else
         {
             $IsDomainAccount = $true
             $IsUpn = $false
@@ -53,15 +62,28 @@ Function UserSearch
         $accountname = $env:COMPUTERNAME + "\" + $AccountName
         $IsLocalAccount = $true
     }
- 
- 
-    if ($IsLocalAccount -eq $true)
+
+    if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
     {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
         if ($localaccount)
         {
             return $localaccount.SID
+        }
+    }
+    Elseif ($SearchAppPools -eq $true)
+    {
+        Import-Module WebAdministration
+        $testiispath = Test-path "IIS:"
+        if ($testiispath -eq $false)
+        {
+            return $null
+        }
+        else
+        {
+            $apppoolobj = Get-ItemProperty IIS:\AppPools\$accountName
+            return $apppoolobj.applicationPoolSid
         }
     }
     ElseIf (($IsDomainAccount -eq $true) -and ($IsUpn -eq $false))
