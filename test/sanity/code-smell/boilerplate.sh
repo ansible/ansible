@@ -4,6 +4,7 @@ metaclass1=$(find ./bin -type f -exec grep -HL '__metaclass__ = type' \{\} \; )
 future1=$(find ./bin -type f -exec grep -HL 'from __future__ import (absolute_import, division, print_function)' \{\} \;)
 
 metaclass2=$(find ./lib/ansible -path ./lib/ansible/modules/core -prune \
+        -o -path ./lib/ansible/modules/__init__.py \
         -o -path ./lib/ansible/modules/extras -prune \
         -o -path ./lib/ansible/module_utils -prune \
         -o -path ./lib/ansible/compat/six/_six.py -prune \
@@ -11,6 +12,7 @@ metaclass2=$(find ./lib/ansible -path ./lib/ansible/modules/core -prune \
         -o -name '*.py' -exec grep -HL '__metaclass__ = type' \{\} \;)
 
 future2=$(find ./lib/ansible -path ./lib/ansible/modules/core -prune \
+        -o -path ./lib/ansible/modules/__init__.py \
         -o -path ./lib/ansible/modules/extras -prune \
         -o -path ./lib/ansible/module_utils -prune \
         -o -path ./lib/ansible/compat/six/_six.py -prune \
