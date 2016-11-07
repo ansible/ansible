@@ -64,6 +64,11 @@ options:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
         required: true
+    visible_name:
+        description:
+            - Visible name of the host in Zabbix.
+        required: false
+        version_added: '2.2'
     host_groups:
         description:
             - List of host groups the host is part of.
@@ -127,6 +132,7 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     host_name: ExampleHost
+    visible_name: ExampleName
     host_groups:
       - Example group1
       - Example group2
@@ -206,26 +212,30 @@ class Host(object):
                 template_ids.append(template_id)
         return template_ids
 
-    def add_host(self, host_name, group_ids, status, interfaces, proxy_id):
+    def add_host(self, host_name, group_ids, status, interfaces, proxy_id, visible_name):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             parameters = {'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status}
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
+            if visible_name:
+                parameters['name'] = visible_name 
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
                 return host_list['hostids'][0]
         except Exception as e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
-    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id):
+    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id, visible_name):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
             parameters = {'hostid': host_id, 'groups': group_ids, 'status': status}
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
+            if visible_name:
+                parameters['name'] = visible_name 
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
             if interfaces:
@@ -342,7 +352,7 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host, proxy_id):
+                             exist_interfaces, host, proxy_id, visible_name):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -362,10 +372,12 @@ class Host(object):
         if set(list(template_ids)) != set(exist_template_ids):
             return True
 
-        if proxy_id is not None:
-            if host['proxy_hostid'] != proxy_id:
-                return True
-
+        if host['proxy_hostid'] != proxy_id:
+            return True
+        
+        if host['name'] != visible_name:
+            return True
+        
         return False
 
     # link or clear template of the host
@@ -428,7 +440,9 @@ def main():
             timeout=dict(type='int', default=10),
             interfaces=dict(type='list', required=False),
             force=dict(type='bool', default=True),
-            proxy=dict(type='str', required=False)
+            proxy=dict(type='str', required=False),
+            visible_name=dict(type='str', required=False)
+
         ),
         supports_check_mode=True
     )
@@ -442,6 +456,7 @@ def main():
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
     host_name = module.params['host_name']
+    visible_name = module.params['visible_name']
     host_groups = module.params['host_groups']
     link_templates = module.params['link_templates']
     inventory_mode = module.params['inventory_mode']
@@ -514,10 +529,10 @@ def main():
 
             if len(exist_interfaces) > interfaces_len:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj, proxy_id):
+                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
                     host.link_or_clear_template(host_id, template_ids)
                     host.update_host(host_name, group_ids, status, host_id,
-                                     interfaces, exist_interfaces, proxy_id)
+                                     interfaces, exist_interfaces, proxy_id, visible_name)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
                                      % (host_name, ip, link_templates))
@@ -525,8 +540,8 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id):
-                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id)
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name):
+                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id, visible_name)
                     host.link_or_clear_template(host_id, template_ids)
                     host.update_inventory_mode(host_id, inventory_mode)
                     module.exit_json(changed=True,
@@ -552,7 +567,7 @@ def main():
             module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
-        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id)
+        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name)
         host.link_or_clear_template(host_id, template_ids)
         host.update_inventory_mode(host_id, inventory_mode)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
