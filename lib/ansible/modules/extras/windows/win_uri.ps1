@@ -65,6 +65,11 @@ if ($headers -ne $null) {
     $webrequest_opts.Headers = $req_headers
 }
 
+if ($body -ne $null) {
+    $webrequest_opts.Body = $body
+    Set-Attr $result.win_uri "body" $body
+}
+
 try {
     $response = Invoke-WebRequest @webrequest_opts
 } catch {
