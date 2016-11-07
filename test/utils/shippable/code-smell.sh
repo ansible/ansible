@@ -22,6 +22,7 @@ test/sanity/code-smell/boilerplate.sh
 test/sanity/code-smell/required-and-default-attributes.sh
 test/sanity/code-smell/shebang.sh
 test/sanity/code-smell/line-endings.sh
+test/sanity/code-smell/empty-init.sh
 
 shellcheck \
     test/integration/targets/*/*.sh \
