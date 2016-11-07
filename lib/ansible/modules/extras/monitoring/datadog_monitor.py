@@ -28,7 +28,6 @@ description:
 - "Options like described on http://docs.datadoghq.com/api/"
 version_added: "2.0"
 author: "Sebastian Kornehl (@skornehl)"
-notes: []
 requirements: [datadog]
 options:
     api_key:
@@ -45,7 +44,7 @@ options:
         description: ["A list of tags to associate with your monitor when creating or updating. This can help you categorize and filter monitors."]
         required: false
         default: None
-        version_added: 2.2
+        version_added: "2.2"
     type:
         description:
             - "The type of the monitor."
@@ -100,12 +99,12 @@ options:
         description: ["A boolean indicating whether changes to this monitor should be restricted to the creator or admins."]
         required: false
         default: False
-        version_added: 2.2
+        version_added: "2.2"
     require_full_window:
         description: ["A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for sparse metrics, otherwise some evaluations will be skipped."]
         required: false
         default: null
-        version_added: 2.2
+        version_added: "2.3"
 '''
 
 EXAMPLES = '''
