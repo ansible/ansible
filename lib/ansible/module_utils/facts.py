@@ -970,6 +970,23 @@ class Hardware(Facts):
     def populate(self):
         return self.facts
 
+    def get_sysctl(self, prefixes):
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd]
+        cmd.extend(prefixes)
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return dict()
+        sysctl = dict()
+        for line in out.splitlines():
+            if not line:
+                continue
+            (key, value) = re.split('\s?=\s?|: ', line, maxsplit=1)
+            sysctl[key] = value.strip()
+        return sysctl
+
+
+
 class LinuxHardware(Hardware):
     """
     Linux-specific subclass of Hardware.  Defines memory and CPU facts:
@@ -1592,22 +1609,13 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl(['hw'])
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
         self.get_mount_facts()
+        self.get_dmi_facts()
         return self.facts
-
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/sbin/sysctl", "hw"])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            (key, value) = line.split('=')
-            sysctl[key] = value.strip()
-        return sysctl
 
     @timeout(10)
     def get_mount_facts(self):
@@ -1832,12 +1840,14 @@ class NetBSDHardware(Hardware):
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
 
     def populate(self):
+        self.sysctl = self.get_sysctl(['machdep'])
         self.get_cpu_facts()
         self.get_memory_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
             pass
+        self.get_dmi_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -1892,6 +1902,25 @@ class NetBSDHardware(Hardware):
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
                 self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+
+    def get_dmi_facts(self):
+        # We don't use dmidecode(1) here because:
+        # - it would add dependency on an external package
+        # - dmidecode(1) can only be ran as root
+        # So instead we rely on sysctl(8) to provide us the information on a
+        # best-effort basis. As a bonus we also get facts on non-amd64/i386
+        # platforms this way.
+        sysctl_to_dmi = {
+            'machdep.dmi.system-product':  'product_name',
+            'machdep.dmi.system-version':  'product_version',
+            'machdep.dmi.system-uuid':     'product_uuid',
+            'machdep.dmi.system-serial':   'product_serial',
+            'machdep.dmi.system-vendor':   'system_vendor',
+        }
+
+        for mib in sysctl_to_dmi:
+          if mib in self.sysctl:
+            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class AIX(Hardware):
     """
@@ -2142,23 +2171,11 @@ class Darwin(Hardware):
     platform = 'Darwin'
 
     def populate(self):
-        self.sysctl = self.get_sysctl()
+        self.sysctl = self.get_sysctl(['hw','machdep','kern'])
         self.get_mac_facts()
         self.get_cpu_facts()
         self.get_memory_facts()
         return self.facts
-
-    def get_sysctl(self):
-        rc, out, err = self.module.run_command(["/usr/sbin/sysctl", "hw", "machdep", "kern"])
-        if rc != 0:
-            return dict()
-        sysctl = dict()
-        for line in out.splitlines():
-            if not line:
-                continue
-            (key, value) = re.split(' = |: ', line, maxsplit=1)
-            sysctl[key] = value.strip()
-        return sysctl
 
     def get_system_profile(self):
         rc, out, err = self.module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
