@@ -49,27 +49,30 @@ class MDTInventory(object):
         if self.args.list:
             self.get_hosts()
 
-        # NOT COMPLETE // TODO
+        # Get specific host vars
         if self.args.host:
-            data2 = { }
-            print(json.dumps(data2, indent=2))
+            self.get_hosts(self.args.host)
 
-    def _connect(self):
+    def _connect(self, query):
         '''
         Connect to MDT and dump contents of dbo.ComputerIdentity database
         '''
         if not self.conn:
             self.conn = pymssql.connect(server=self.mdt_server + "\\" + self.mdt_instance, user=self.mdt_user, password=self.mdt_password, database=self.mdt_database)
             cursor = self.conn.cursor()
-            cursor.execute('SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID')
+            cursor.execute(query)
             self.mdt_dump = cursor.fetchall()
             self.conn.close()
 
-    def get_hosts(self):
+    def get_hosts(self, hostname=False):
         '''
         Gets host from MDT Database
         '''
-        self._connect()
+        if hostname:
+        	query = "SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID where t1.Description = '%s'" % hostname
+        else:
+        	query = 'SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID'
+        self._connect(query)
 
         # Configure to group name configured in Ansible Tower for this inventory
         groupname = self.mdt_groupname
@@ -120,7 +123,7 @@ class MDTInventory(object):
         Command line argument processing
         '''
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on MDT')
-        parser.add_argument('--list', action='store_true', default=True, help='List instances (default: True)')
+        parser.add_argument('--list', action='store_true', default=False, help='List instances')
         parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
         self.args = parser.parse_args()
 
