@@ -98,6 +98,15 @@ options:
     required: false
     default: line
     choices: ['line', 'block']
+  multiline_delimiter:
+    description:
+      - This arugment is used when pushing a multiline configuration
+        element to the IOS device.  It specifies the character to use
+        as the delimiting character.  This only applies to the
+        configuration action
+    required: false
+    default: "@"
+    version_added: "2.2"
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -212,6 +221,10 @@ from ansible.module_utils.netcli import Command
 
 
 def check_args(module, warnings):
+    if module.params['multiline_delimiter']:
+        if len(module.params['multiline_delimiter']) != 1:
+            module.fail_json(msg='multiline_delimiter value can only be a '
+                                 'single character')
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -219,12 +232,18 @@ def check_args(module, warnings):
 
 def extract_banners(config):
     banners = {}
-    for cmd in ['exec', 'login', 'incoming']:
+    banner_cmds = re.findall(r'^banner (\w+)', config, re.M)
+    for cmd in banner_cmds:
         regex = r'banner %s \^C(.+?)(?=\^C)' % cmd
         match = re.search(regex, config, re.S)
         if match:
             key = 'banner %s' % cmd
             banners[key] = match.group(1).strip()
+
+    for cmd in banner_cmds:
+        regex = r'banner %s \^C(.+?)(?=\^C)' % cmd
+        match = re.search(regex, config, re.S)
+        if match:
             config = config.replace(str(match.group(1)), '')
 
     config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
@@ -238,9 +257,10 @@ def diff_banners(want, have):
     return candidate
 
 def load_banners(module, banners):
+    delimiter = module.params['multiline_delimiter']
     for key, value in iteritems(banners):
-        key += ' @'
-        for cmd in ['config terminal', key, value, '@', 'end']:
+        key += ' %s' % delimiter
+        for cmd in ['config terminal', key, value, delimiter, 'end']:
             cmd += '\r'
             module.connection.shell.shell.sendall(cmd)
         time.sleep(1)
@@ -283,6 +303,7 @@ def run(module, result):
                                           replace=replace)
     else:
         configobjs = candidate.items
+        have_banners = {}
 
     banners = diff_banners(want_banners, have_banners)
 
@@ -296,14 +317,16 @@ def run(module, result):
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-            result['updates'] = commands
-            result['banners'] = banners
+        result['updates'] = commands
+        result['banners'] = banners
 
         # send the configuration commands to the device and merge
         # them with the current running config
         if not module.check_mode:
-            module.config(commands)
-            load_banners(module, banners)
+            if commands:
+                module.config(commands)
+            if banners:
+                load_banners(module, banners)
 
         result['changed'] = True
 
@@ -327,6 +350,7 @@ def main():
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
+        multiline_delimiter=dict(default='@'),
 
         # this argument is deprecated in favor of setting match: none
         # it will be removed in a future version
