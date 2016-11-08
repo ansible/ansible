@@ -106,7 +106,7 @@ options:
         configuration action
     required: false
     default: "@"
-    version_added: "2.2"
+    version_added: "2.3"
   force:
     description:
       - The force argument instructs the module to not consider the
