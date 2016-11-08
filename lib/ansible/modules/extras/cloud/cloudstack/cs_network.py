@@ -59,14 +59,14 @@ options:
   gateway:
     description:
       - The gateway of the network.
-      - Required for shared networks and isolated networks when it belongs to VPC.
+      - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
     required: false
     default: null
   netmask:
     description:
       - The netmask of the network.
-      - Required for shared networks and isolated networks when it belongs to VPC.
+      - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
     required: false
     default: null
@@ -91,7 +91,7 @@ options:
     default: null
   gateway_ipv6:
     description:
-      - The gateway of the IPv6 network. 
+      - The gateway of the IPv6 network.
       - Required for shared networks.
       - Only considered on create.
     required: false
@@ -103,12 +103,12 @@ options:
     default: null
   vpc:
     description:
-      - The ID or VID of the network.
+      - Name of the VPC of the network.
     required: false
     default: null
   isolated_pvlan:
     description:
-      - The isolated private vlan for this network.
+      - The isolated private VLAN for this network.
     required: false
     default: null
   clean_up:
@@ -342,7 +342,6 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             'dns1':                 'dns1',
             'dns2':                 'dns2',
         }
-
         self.network = None
 
 
