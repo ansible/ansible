@@ -144,9 +144,13 @@ Using Fish::
 
     $ . ./hacking/env-setup.fish
 
-If you want to suppress spurious warnings/errors, use::
+You can use *-q* if you want to suppress spurious warnings/errors, and *-b* to background a few longer-running tasks so it returns faster for interactive or .profile use.::
 
     $ source ./hacking/env-setup -q
+
+If you want to make ansible always available in your environment, add it to your shell's profile (assumes you already source'd this above to set $ANSIBLE_HOME)::
+
+    echo source $ANSIBLE_HOME/hacking/env-setup -q -b >> ~/.bash_profile
 
 If you don't have pip installed in your version of Python, install pip::
 

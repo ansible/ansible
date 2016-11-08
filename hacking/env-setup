@@ -8,11 +8,15 @@ MANPATH=${MANPATH-""}
 PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
 PYTHON_BIN=${PYTHON_BIN-$PYTHON}
 
-verbosity=${1-info} # Defaults to `info' if unspecified
+verbosity=info # Defaults to `info' if unspecified
+background=no
 
-if [ "$verbosity" = -q ]; then
-    verbosity=silent
-fi
+for opt in "$@"; do
+    case $opt in
+      -q ) verbosity=silent ;;
+      -b ) background=yes ;;
+    esac
+done
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
@@ -34,9 +38,9 @@ PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
-expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
-expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
+expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}" > /dev/null || export PYTHONPATH="$PREFIX_PYTHONPATH:$PYTHONPATH"
+expr "$PATH" : "${PREFIX_PATH}" > /dev/null || export PATH="$PREFIX_PATH:$PATH"
+expr "$MANPATH" : "${PREFIX_MANPATH}" > /dev/null || export MANPATH="$PREFIX_MANPATH:$MANPATH"
 
 #
 # Generate egg_info so that pkg_resources works
@@ -46,26 +50,21 @@ expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || export MANPATH="$PREFIX_M
 gen_egg_info()
 {
     if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
-        \rm -rf "$PREFIX_PYTHONPATH/ansible.egg-info"
+       \rm -rf "$PREFIX_PYTHONPATH/ansible.egg-info"
     fi
     $PYTHON_BIN setup.py egg_info
 }
 
-if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
-    current_dir="$PWD"
-else
-    current_dir="$ANSIBLE_HOME"
-fi
 (
 	cd "$ANSIBLE_HOME"
 	if [ "$verbosity" = silent ] ; then
-	    gen_egg_info > /dev/null 2>&1
-            find . -type f -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
+	    # In silent mode run in background just to speed up sourcing this file
+	    (gen_egg_info; 
+             find . -type f -name "*.pyc" -exec rm -f {} \; ) > /dev/null 2>&1 &
 	else
-	    gen_egg_info
-            find . -type f -name "*.pyc" -exec rm -f {} \;
+	    gen_egg_info # still in foreground since it prints output
+            find . -type f -name "*.pyc" -exec rm -f {} \; &
 	fi
-	cd "$current_dir"
 )
 
 if [ "$verbosity" != silent ] ; then
@@ -83,3 +82,9 @@ if [ "$verbosity" != silent ] ; then
 	
 	EOF
 fi
+
+if [ $background = no ]; then
+  wait >/dev/null 2>&1
+fi
+
+unset PREFIX_PATH PREFIX_MANPATH PREFIX_PYTHONPATH HACKING_DIR PYTHON FULL_PATH verbosity background
