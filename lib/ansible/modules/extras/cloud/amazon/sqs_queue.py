@@ -81,6 +81,41 @@ extends_documentation_fragment:
     - ec2
 """
 
+RETURN = '''
+default_visibility_timeout: 
+    description: The default visibility timeout in seconds.
+    returned: always
+    sample: 30
+delivery_delay: 
+    description: The delivery delay in seconds.
+    returned: always
+    sample: 0
+maximum_message_size: 
+    description: The maximum message size in bytes.
+    returned: always
+    sample: 262144
+message_retention_period: 
+    description: The message retention period in seconds.
+    returned: always
+    sample: 345600
+name:
+    description: Name of the SQS Queue
+    returned: always
+    sample: "queuename-987d2de0"
+queue_arn:
+    description: The queue's Amazon resource name (ARN).
+    returned: on successful creation or update of the queue
+    sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
+receive_message_wait_time: 
+    description: The receive message wait time in seconds.
+    returned: always
+    sample: 0
+region:
+    description: Region that the queue was created within
+    returned: always
+    sample: 'us-east-1'
+'''
+
 EXAMPLES = '''
 # Create SQS queue with redrive policy
 - sqs_queue:
@@ -140,16 +175,23 @@ def create_or_update_sqs_queue(connection, module):
     try:
         queue = connection.get_queue(queue_name)
         if queue:
-            # Update existing
+            # Update existing            
             result['changed'] = update_sqs_queue(queue, check_mode=module.check_mode, **queue_attributes)
-
         else:
             # Create new
             if not module.check_mode:
                 queue = connection.create_queue(queue_name)
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
-
+        
+        if not module.check_mode:
+            result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
+            result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
+            result['message_retention_period'] = queue.get_attributes('MessageRetentionPeriod')['MessageRetentionPeriod']
+            result['maximum_message_size'] = queue.get_attributes('MaximumMessageSize')['MaximumMessageSize']
+            result['delivery_delay'] = queue.get_attributes('DelaySeconds')['DelaySeconds']
+            result['receive_message_wait_time'] = queue.get_attributes('ReceiveMessageWaitTimeSeconds')['ReceiveMessageWaitTimeSeconds']
+          
     except BotoServerError:
         result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)
