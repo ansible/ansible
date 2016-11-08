@@ -5,7 +5,7 @@ Ansible by Red Hat,  Core 2.3
 Target: February/April 2017
 **********************
 
-**General Comments byt the Core Team:**  The 2.3 Ansible Core is just a little different than the past two major releases we've done.  In addition to feature work, we're using part of the time for this release to reduce some of our backlog in other areas than pure development.
+**General Comments from the Core Team:**  The 2.3 Ansible Core is just a little different than the past two major releases we've done.  In addition to feature work, we're using part of the time for this release to reduce some of our backlog in other areas than pure development.
   - *Administrivia:* 
     - Clean up our github repos and move to one repo so that contributions, tickets, submissions, etc are centralized and easier for both the community and the Core Team to manage.
   - Move to a Metadata based system for modules.  This has been discussed here: https://github.com/ansible/proposals/blob/master/modules-management.md
