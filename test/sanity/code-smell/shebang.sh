@@ -1,7 +1,9 @@
 #!/bin/sh
 
-grep '^#!' -RIn . 2>/dev/null | grep ':1:' | sed 's/:1:/:/' | grep -v -E \
-    -e '/.tox/' \
+grep '^#!' -rIn . \
+    --exclude-dir .git \
+    --exclude-dir .tox \
+    | grep ':1:' | sed 's/:1:/:/' | grep -v -E \
     -e '^\./lib/ansible/modules/' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
     -e '^\./test/sanity/validate-modules/validate-modules:#!/usr/bin/env python2$' \

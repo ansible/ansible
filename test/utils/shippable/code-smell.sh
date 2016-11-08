@@ -16,13 +16,14 @@ if [ "${install_deps}" != "" ]; then
 fi
 
 yamllint .
-test/sanity/code-smell/replace-urlopen.sh .
-test/sanity/code-smell/use-compat-six.sh lib
+test/sanity/code-smell/replace-urlopen.sh
+test/sanity/code-smell/use-compat-six.sh
 test/sanity/code-smell/boilerplate.sh
 test/sanity/code-smell/required-and-default-attributes.sh
 test/sanity/code-smell/shebang.sh
 test/sanity/code-smell/line-endings.sh
 test/sanity/code-smell/empty-init.sh
+test/sanity/code-smell/no-basestring.sh
 
 shellcheck \
     test/integration/targets/*/*.sh \
