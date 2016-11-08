@@ -160,7 +160,7 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
-The `ansible_host` variable (`ansible_ssh_host` in 1.x) reflects the host a task is delegated to.
+The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
 .. _delegate_facts:
 
