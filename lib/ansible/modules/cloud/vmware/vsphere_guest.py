@@ -1556,6 +1556,7 @@ def gather_facts(vm):
         'hw_guest_full_name':  vm.properties.config.guestFullName,
         'hw_guest_id': vm.properties.config.guestId,
         'hw_product_uuid': vm.properties.config.uuid,
+        'hw_instance_uuid': vm.properties.config.instanceUuid,
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
         'hw_interfaces':[],
