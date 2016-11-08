@@ -226,7 +226,7 @@ To see the complete list of variables available for an instance, run the script 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
 explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter::
 
-    # ./ec2.py --refresh-cache
+    ./ec2.py --refresh-cache
 
 .. _openstack_example:
 
@@ -295,7 +295,7 @@ After a few moments you should see some JSON output with information about your 
 Refresh the cache
 +++++++++++++++++
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
 
     ./openstack.py --refresh --list
 
