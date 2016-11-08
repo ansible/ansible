@@ -120,6 +120,23 @@ def to_bool(a):
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
     return datetime.strptime(string, format)
 
+def to_int(a):
+    if a is None or isinstance(a, (int, long)):
+        return a
+    elif isinstance(a, string_types):
+        try:
+            return int(a)
+        except ValueError:
+            return a
+    elif isinstance(a, dict):
+        casted_dict = dict()
+        for k,v in a.iteritems():
+            casted_dict[k] = to_int(v)
+        return casted_dict
+    elif isinstance(a, list):
+        return map(to_int, a)
+    else:
+        return a
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
@@ -455,6 +472,9 @@ class FilterModule(object):
 
             #date
             'to_datetime': to_datetime,
+
+            # int
+            'to_int': to_int,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
