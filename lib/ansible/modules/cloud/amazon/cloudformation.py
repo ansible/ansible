@@ -96,6 +96,12 @@ options:
     choices: [ json, yaml ]
     required: false
     version_added: "2.0"
+  role_arn:
+    description:
+    - The role that AWS CloudFormation assumes to create the stack. [AWS CloudFormation Service Role](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+    required: false
+    default: null
+    version_added: "2.3"
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
@@ -148,6 +154,22 @@ EXAMPLES = '''
     stack_name="ansible-cloudformation" state=present
     region=us-east-1 disable_rollback=true
     template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
+  args:
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
+    tags:
+      Stack: ansible-cloudformation
+
+# Use a template from a URL, and assume a role to execute
+- name: launch ansible cloudformation example with role assumption
+  cloudformation:
+    stack_name="ansible-cloudformation" state=present
+    region=us-east-1 disable_rollback=true
+    template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
+    role_arn: arn:aws:iam::123456789012:role/cloudformation-iam-role
   args:
     template_parameters:
       KeyName: jmartin
@@ -348,6 +370,7 @@ def main():
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
             template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+            role_arn=dict(default=None, required=False),
             tags=dict(default=None, type='dict')
         )
     )
@@ -389,6 +412,9 @@ def main():
 
     if module.params.get('template_url'):
         stack_params['TemplateURL'] = module.params['template_url']
+
+    if module.params.get('role_arn'):
+        stack_params['RoleARN'] = module.params['role_arn']
 
     update = False
     result = {}
