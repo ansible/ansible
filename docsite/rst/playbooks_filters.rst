@@ -211,14 +211,14 @@ Square root, or the 5th::
 
 Note that jinja2 already provides some like abs() and round().
 
-.. _query_filter:
+.. json_query_filter:
 
-Query json filter
+JSON Query Filter
 -----------------
 
-Sometimes you end up with complex data structure in json format and you need to extract only a small set of data within it. **json_query** filter let you query a complexe json structure in order to iterate over it using a with_items for example.
+Sometimes you end up with complex data structure in JSON format and you need to extract only a small set of data within it. A **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
 
-.. note:: This filter is build upon **jmespath**. You can use the same syntax and have a look at this `jmespath examples <http://jmespath.org/examples.html>`_.
+.. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
 Now, let's take the following data structure::
 
@@ -246,31 +246,31 @@ Now, let's take the following data structure::
                 - name: "lib2"
                   target: "cluster2"
 
-You wan't to extract all clusters from this structure. you can do this using the following query::
+To extract all clusters from this structure, you can use the following query::
 
-    - name: "Display all clusters name"
+    - name: "Display all cluster names"
       debug: var=item
       with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
 
-Same things for all server's name::
+Same things for all server names::
 
-    - name: "Display all servers name"
+    - name: "Display all server names"
       debug: var=item
       with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
 
-Another little example where we only show ports from cluster1::
+This example shows ports from cluster1::
 
-    - name: "Display all servers name from cluster1"
+    - name: "Display all server names from cluster1"
       debug: var=item
       with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
-.. note:: We must use a variable in order to use quote in our query.
+.. note:: You must use a variable in order to use quotes in your query.
 
-And a last example where we get a hash map with port and name of cluster's members::
+In this example, we get a hash map with all ports and names of a cluster::
 
-    - name: "Display all servers port and name from cluster1"
+    - name: "Display all server ports and names from cluster1"
       debug: var=item
       with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
