@@ -19,7 +19,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 # The OpenStack Inventory module uses os-client-config for configuration.
-# https://github.com/stackforge/os-client-config
+# https://github.com/openstack/os-client-config
 # This means it will either:
 #  - Respect normal OS_* environment variables like other OpenStack tools
 #  - Read values from a clouds.yaml file.
