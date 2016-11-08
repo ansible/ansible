@@ -45,6 +45,7 @@ Target: February/April 2017
   - Modularize Windows module_utils (allow N files)
   - Declarative argspec for PS / .NET
   - Kerberos encryption (via notting, pywinrm/requests_kerberos/pykerberos)
+  - Fix plugin-specific connection var lookup/delegation (either registered explicitly by plugins or ansible_(plugin)_*)
 
 - **Windows modules** (nitzmahone)
 
