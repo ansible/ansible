@@ -89,6 +89,26 @@ options:
         description:
             - The esxi hostname where the VM will run.
         required: True
+   customize:
+        description:
+           - Should customization spec be run
+        required: False
+   ips:
+        description:
+           - IP Addresses to set
+        required: False
+   networks:    
+        description:
+          - Network to use should include VM network name and gateway
+        required: False
+   dns_servers:
+        description:
+          - DNS servers to use: 4.4.4.4, 8.8.8.8
+        required: False
+   domain: 
+        description:
+          - Domain to use while customizing
+        required: False
 extends_documentation_fragment: vmware.documentation    
 '''
 
@@ -125,6 +145,28 @@ Example from Ansible playbook
         wait_for_ip_address: yes
       register: deploy
 
+#
+# Clone Template and customize
+#
+   - name: Clone template and customize
+     vmware_guest:
+       hostname: "192.168.1.209"
+       username: "administrator@vsphere.local"
+       password: "vmware"
+       validate_certs: False
+       name: testvm-2
+       datacenter: datacenter1
+       cluster: cluster
+       validate_certs: False
+       template: template_el7
+       customize: True
+       domain: "example.com"
+       dns_servers: ['192.168.1.1','192.168.1.2']
+       ips: "192.168.1.100"
+       networks:
+         '192.168.1.0/24':
+           network: 'VM Network'
+           gateway: '192.168.1.1' 
 #
 # Gather facts only
 #
@@ -163,6 +205,7 @@ except ImportError:
 import os
 import string
 import time
+from netaddr import IPNetwork, IPAddress
 
 from ansible.module_utils.urls import fetch_url
 
@@ -680,6 +723,107 @@ class PyVmomiHelper(object):
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
 
+        # lets try and assign a static ip addresss
+        if 'customize' in self.params:
+                ip_settings = list()
+                for ip_string in self.params['ips']:
+                        ip = IPAddress(self.params['ips'])
+
+                        for network in self.params['networks']:
+
+                                if ip in IPNetwork(network):
+                                        self.params['networks'][network]['ip'] = str(ip)
+                                        ipnet = IPNetwork(network)
+                                        self.params['networks'][network]['subnet_mask'] = str(
+                                                ipnet.netmask
+                                        )
+                                        ip_settings.append(self.params['networks'][network])
+
+
+                network = get_obj(self.content, [vim.Network], ip_settings[0]['network'])
+                datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+                # get the folder where VMs are kept for this datacenter
+                destfolder = datacenter.vmFolder
+
+                cluster = get_obj(self.content, [vim.ClusterComputeResource],self.params['cluster'])
+
+
+                devices = []
+                adaptermaps = []
+
+                try:
+                        for device in template.config.hardware.device:
+
+                                if hasattr(device, 'addressType'):
+                                    nic = vim.vm.device.VirtualDeviceSpec()
+                                    nic.operation = \
+                                        vim.vm.device.VirtualDeviceSpec.Operation.remove
+                                    nic.device = device
+                                    devices.append(nic)
+                except:
+                        pass
+
+                    # for key, ip in enumerate(ip_settings):
+                    # VM device
+                    # single device support
+                key = 0
+                nic = vim.vm.device.VirtualDeviceSpec()
+                nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                nic.device = vim.vm.device.VirtualVmxnet3()
+                nic.device.wakeOnLanEnabled = True
+                nic.device.addressType = 'assigned'
+                nic.device.deviceInfo = vim.Description()
+                nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
+
+                nic.device.deviceInfo.summary = ip_settings[key]['network']
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
+
+                nic.device.backing.deviceName = ip_settings[key]['network']
+                nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                nic.device.connectable.startConnected = True
+                nic.device.connectable.allowGuestControl = True
+                devices.append(nic)
+
+                clonespec_kwargs['config'].deviceChange = devices
+
+                guest_map = vim.vm.customization.AdapterMapping()
+                guest_map.adapter = vim.vm.customization.IPSettings()
+                guest_map.adapter.ip = vim.vm.customization.FixedIp()
+                guest_map.adapter.ip.ipAddress = str(ip_settings[key]['ip'])
+                guest_map.adapter.subnetMask = str(ip_settings[key]['subnet_mask'])
+
+                try:
+                        guest_map.adapter.gateway = ip_settings[key]['gateway']
+                except:
+                        pass
+
+                try:
+                        guest_map.adapter.dnsDomain = self.params['domain']
+                except:
+                        pass
+
+                adaptermaps.append(guest_map)
+
+                # DNS settings
+                globalip = vim.vm.customization.GlobalIPSettings()
+                globalip.dnsServerList = self.params['dns_servers']
+                globalip.dnsSuffixList = str(self.params['domain'])
+
+                # Hostname settings
+                ident = vim.vm.customization.LinuxPrep()
+                ident.domain = str(self.params['domain'])
+                ident.hostName = vim.vm.customization.FixedName()
+                ident.hostName.name = self.params['name']
+
+                customspec = vim.vm.customization.Specification()
+                customspec.nicSettingMap = adaptermaps
+                customspec.globalIPSettings = globalip
+                customspec.identity = ident
+
+                clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
+                clonespec.customization = customspec
+
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
@@ -940,7 +1084,12 @@ def main():
             datacenter=dict(required=False, type='str', default=None),
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
-            wait_for_ip_address=dict(required=False, type='bool', default=True)
+            wait_for_ip_address=dict(required=False, type='bool', default=True),
+            customize=dict(required=False, type='bool', default=False),
+            ips=dict(required=False, type='str', default=None),
+            dns_servers=dict(required=False, type='list', default=None),
+            domain=dict(required=False, type='str', default=None),
+            networks=dict(required=False, type='dict', default={})
         ),
         supports_check_mode=True,
         mutually_exclusive=[],
