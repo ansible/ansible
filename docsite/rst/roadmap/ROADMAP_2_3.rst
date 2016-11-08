@@ -8,8 +8,8 @@ Target: February/April 2017
 **General Comments byt the Core Team:**  The 2.3 Ansible Core is just a little different than the past two major releases we've done.  In addition to feature work, we're using part of the time for this release to reduce some of our backlog in other areas than pure development.
   - *Administrivia:* 
     - Clean up our github repos and move to one repo so that contributions, tickets, submissions, etc are centralized and easier for both the community and the Core Team to manage.
-    - Move to a Metadata based system for modules.  This has been discussed here: https://github.com/ansible/proposals/blob/master/modules-management.md
-    - Documentation: We're aware that Docs have issues.  Scott Butler, aka Dharmabumstead will be leading the charge on how he and we as a community can clean them up.
+  - Move to a Metadata based system for modules.  This has been discussed here: https://github.com/ansible/proposals/blob/master/modules-management.md
+  - Documentation: We're aware that Docs have issues.  Scott Butler, aka Dharmabumstead will be leading the charge on how he and we as a community can clean them up.
   - *Backlog, Stability, Hardening:* We're spending some of the cycles for 2.3 trying to reduce our ticket/PR backlog, and clean up some particular areas of the project that the community has expressed particular frustrations about.
   - *Python 3:* The community and Toshio have done TONS of work getting Python 3 working.  Still more to go...
   - *Features:* We still have some cool stuff coming.  Check it out below.  For people on the Networking side of the world, the Persistent Connection Manager will be a *huge* feature and performance gain.
