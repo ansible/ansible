@@ -102,8 +102,26 @@ Else
 
     If ( $state -eq "directory" )
     {
-        New-Item -ItemType directory -Path $path | Out-Null
-        $result.changed = $TRUE
+        Try
+        {
+            New-Item -ItemType directory -Path $path
+            $result.changed = $TRUE
+        }
+        Catch
+        {
+            If ( $_.CategoryInfo.Category -eq "ResourceExists" )
+            {
+                $fileinfo = Get-Item $_.CategoryInfo.TargetName
+                If ( $state -eq "directory" -and -not $fileinfo.PsIsContainer )
+                {
+                    Fail-Json (New-Object psobject) "path is not a directory"
+                }
+            }
+            Else
+            {
+                Fail-Json (New-Object psobject) $_.Exception.Message
+            }
+        }
     }
 
     If ( $state -eq "file" )
