@@ -23,6 +23,9 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from distutils.version import StrictVersion
+
+
 DOCUMENTATION = '''
 ---
 module: os_floating_ip
@@ -59,6 +62,14 @@ options:
         - To which fixed IP of server the floating IP address should be
           attached to.
      required: false
+   nat_destination:
+     description:
+        - The name or id of a neutron private network that the fixed IP to
+          attach floating IP is on
+     required: false
+     default: None
+     aliases: ["fixed_network", "internal_network"]
+     version_added: "2.3"
    wait:
      description:
         - When attaching a floating IP address, specify whether we should
@@ -106,6 +117,17 @@ EXAMPLES = '''
      wait: true
      timeout: 180
 
+# Assign a new floating IP from the network `ext_net` to the instance fixed
+# ip in network `private_net` of `cattle001`.
+- os_floating_ip:
+     cloud: dguerri
+     state: present
+     server: cattle001
+     network: ext_net
+     nat_destination: private_net
+     wait: true
+     timeout: 180
+
 # Detach a floating IP address from a server
 - os_floating_ip:
      cloud: dguerri
@@ -132,6 +154,8 @@ def main():
         floating_ip_address=dict(required=False, default=None),
         reuse=dict(required=False, type='bool', default=False),
         fixed_address=dict(required=False, default=None),
+        nat_destination=dict(required=False, default=None,
+                             aliases=['fixed_network', 'internal_network']),
         wait=dict(required=False, type='bool', default=False),
         timeout=dict(required=False, type='int', default=60),
         purge=dict(required=False, type='bool', default=False),
@@ -143,12 +167,18 @@ def main():
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
+    if (module.params['nat_destination'] and
+            StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
+        module.fail_json(msg="To utilize nat_destination, the installed version of"
+                             "the shade library MUST be >= 1.8.0")
+
     server_name_or_id = module.params['server']
     state = module.params['state']
     network = module.params['network']
     floating_ip_address = module.params['floating_ip_address']
     reuse = module.params['reuse']
     fixed_address = module.params['fixed_address']
+    nat_destination = module.params['nat_destination']
     wait = module.params['wait']
     timeout = module.params['timeout']
     purge = module.params['purge']
@@ -171,7 +201,8 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
+                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
+                        (nat_destination and f_ip.internal_network == fixed_address),
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "
@@ -192,7 +223,7 @@ def main():
             server = cloud.add_ips_to_server(
                 server=server, ips=floating_ip_address, ip_pool=network,
                 reuse=reuse, fixed_address=fixed_address, wait=wait,
-                timeout=timeout)
+                timeout=timeout, nat_destination=nat_destination)
             fip_address = cloud.get_server_public_ip(server)
             # Update the floating IP status
             f_ip = _get_floating_ip(cloud, fip_address)
