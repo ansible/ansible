@@ -131,7 +131,9 @@ class BaseMeta(type):
             for parent in parents:
                 if hasattr(parent, '__dict__'):
                     _create_attrs(parent.__dict__, dst_dict)
-                    _process_parents(parent.__bases__, dst_dict)
+                    new_dst_dict = parent.__dict__.copy()
+                    new_dst_dict.update(dst_dict)
+                    _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
         dct['_attributes'] = dict()
