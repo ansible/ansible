@@ -716,23 +716,25 @@ class PyVmomiHelper(object):
                     int(self.params['hardware']['memory_mb'])
 
         # lets try and assign a static ip addresss
-        if 'customize' in self.params:
+        if self.params['customize'] is True:
                 ip_settings = list()
-                for ip_string in self.params['ips']:
-                        ip = IPAddress(self.params['ips'])
+		if self.params['ips'] and self.params['network']:
+	                for ip_string in self.params['ips']:
+        	                ip = IPAddress(self.params['ips'])
 
-                        for network in self.params['networks']:
+                	        for network in self.params['networks']:
 
-                                if ip in IPNetwork(network):
-                                        self.params['networks'][network]['ip'] = str(ip)
-                                        ipnet = IPNetwork(network)
-                                        self.params['networks'][network]['subnet_mask'] = str(
-                                                ipnet.netmask
-                                        )
-                                        ip_settings.append(self.params['networks'][network])
+                        	        if ip in IPNetwork(network):
+                                	        self.params['networks'][network]['ip'] = str(ip)
+                                        	ipnet = IPNetwork(network)
+	                                        self.params['networks'][network]['subnet_mask'] = str(
+        	                                        ipnet.netmask
+                	                        )
+                        	                ip_settings.append(self.params['networks'][network])
 
-
-                network = get_obj(self.content, [vim.Network], ip_settings[0]['network'])
+	
+                key = 0
+                network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
                 datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
                 # get the folder where VMs are kept for this datacenter
                 destfolder = datacenter.vmFolder
@@ -758,7 +760,7 @@ class PyVmomiHelper(object):
                     # for key, ip in enumerate(ip_settings):
                     # VM device
                     # single device support
-                key = 0
+
                 nic = vim.vm.device.VirtualDeviceSpec()
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic.device = vim.vm.device.VirtualVmxnet3()
