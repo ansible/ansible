@@ -291,17 +291,17 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
 Running From Source
 +++++++++++++++++++
 
-Ansible is trivially easy to run from a checkout, root permissions are not required
-to use it and there is no software to actually install for Ansible itself.  No daemons
+Ansible is easy to run from a checkout - root permissions are not required
+to use it and there is no software to actually install.  No daemons
 or database setup are required.  Because of this, many users in our community use the
-development version of Ansible all of the time, so they can take advantage of new features
-when they are implemented, and also easily contribute to the project. Because there is
+development version of Ansible all of the time so they can take advantage of new features
+when they are implemented and easily contribute to the project. Because there is
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
 .. note::
 
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
 
 
 To install from source.
@@ -362,7 +362,7 @@ Now let's test things with a ping command:
 
     $ ansible all -m ping --ask-pass
 
-You can also use "sudo make install" if you wish.
+You can also use "sudo make install".
 
 .. seealso::
 
