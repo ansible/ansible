@@ -298,7 +298,7 @@ def add_service(module, service):
     changed = False
 
     consul_api = get_consul_api(module)
-    existing = get_service_by_id(consul_api, service.id)
+    existing = get_service_by_id_or_name(consul_api, service.id)
 
     # there is no way to retrieve the details of checks so if a check is present
     # in the service it must be re-registered
@@ -306,7 +306,7 @@ def add_service(module, service):
 
         service.register(consul_api)
         # check that it registered correctly
-        registered = get_service_by_id(consul_api, service.id)
+        registered = get_service_by_id_or_name(consul_api, service.id)
         if registered:
             result = registered
             changed = True
@@ -322,7 +322,7 @@ def add_service(module, service):
 def remove_service(module, service_id):
     ''' deregister a service from the given agent using its service id '''
     consul_api = get_consul_api(module)
-    service = get_service_by_id(consul_api, service_id)
+    service = get_service_by_id_or_name(consul_api, service_id)
     if service:
         consul_api.agent.service.deregister(service_id)
         module.exit_json(changed=True, id=service_id)
@@ -338,10 +338,10 @@ def get_consul_api(module, token=None):
                          token=module.params.get('token'))
 
 
-def get_service_by_id(consul_api, service_id):
+def get_service_by_id_or_name(consul_api, service_id_or_name):
     ''' iterate the registered services and find one with the given id '''
     for name, service in consul_api.agent.services().iteritems():
-        if service['ID'] == service_id:
+        if service['ID'] == service_id_or_name or service['Service'] == service_id_or_name:
             return ConsulService(loaded=service)
 
 
