@@ -96,6 +96,7 @@ class Play(Base, Taggable, Become):
         super(Play, self).__init__()
 
         self._included_path = None
+        self._removed_hosts = []
         self.ROLE_CACHE = {}
 
     def __repr__(self):
