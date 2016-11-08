@@ -8,10 +8,14 @@ BASEDIR=${1-"lib"}
 #   message
 WHITELIST='(lib/ansible/modules/core/cloud/digital_ocean/digital_ocean.py)'
 
-SIX_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -wH six \{\} \;|grep import |grep -v ansible.compat| grep -v ansible.module_utils.six| egrep -v "^$WHITELIST:")
-if test -n "$SIX_USERS" ; then
-  printf "%s" "$SIX_USERS"
-  exit 1
-else
-  exit 0
+SIX_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -wH six '{}' '+' \
+    | grep import \
+    | grep -v ansible.compat \
+    | grep -v ansible.module_utils.six \
+    | egrep -v "^$WHITELIST:"
+)
+
+if [ "${SIX_USERS}" ]; then
+    echo "${SIX_USERS}"
+    exit 1
 fi
