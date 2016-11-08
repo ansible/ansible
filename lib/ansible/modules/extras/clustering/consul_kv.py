@@ -251,7 +251,7 @@ def test_dependencies(module):
     if not python_consul_installed:
         module.fail_json(msg="python-consul required for this module. "\
               "see http://python-consul.readthedocs.org/en/latest/#installation")
-    
+
 def main():
 
     argument_spec = dict(
@@ -265,7 +265,7 @@ def main():
         recurse=dict(required=False, type='bool'),
         retrieve=dict(required=False, default=True),
         state=dict(default='present', choices=['present', 'absent', 'acquire', 'release']),
-        token=dict(required=False, default='anonymous', no_log=True),
+        token=dict(required=False, no_log=True),
         value=dict(required=False),
         session=dict(required=False)
     )
@@ -273,7 +273,7 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=False)
 
     test_dependencies(module)
-        
+
     try:
         execute(module)
     except ConnectionError as e:
