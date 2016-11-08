@@ -1,13 +1,16 @@
 #!/bin/sh
 
-BASEDIR=${1-"."}
+urllib_users=$(find . -name '*.py' -exec grep -H urlopen '{}' '+' | grep -v \
+    -e '^[^:]*/.tox/' \
+    -e '^\./lib/ansible/module_utils/urls.py:' \
+    -e '^\./lib/ansible/module_utils/six.py:' \
+    -e '^\./lib/ansible/compat/six/_six.py:' \
+    -e '^[^:]*:#'
+)
 
-URLLIB_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -H urlopen \{\} \;)
-URLLIB_USERS=$(echo "$URLLIB_USERS" | sed '/\(\n\|lib\/ansible\/module_utils\/urls.py\|lib\/ansible\/module_utils\/six.py\|lib\/ansible\/compat\/six\/_six.py\|.tox\)/d')
-URLLIB_USERS=$(echo "$URLLIB_USERS" | sed '/^[^:]\+:#/d')
-if test -n "$URLLIB_USERS" ; then
-  printf "%s" "$URLLIB_USERS"
-  exit 1
-else
-  exit 0
+if [ "${urllib_users}" ]; then
+    echo "${urllib_users}"
+    echo "One or more file(s) listed above use urlopen."
+    echo "Use open_url from module_utils instead of urlopen."
+    exit 1
 fi
