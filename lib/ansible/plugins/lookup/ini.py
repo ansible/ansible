@@ -36,7 +36,7 @@ from ansible.module_utils._text import to_bytes, to_text
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'type', 'section', 'file', 're']
+    keys = ['key', 'type', 'section', 'file', 're', 'default']
     params = {}
     for k in keys:
         params[k] = ''
