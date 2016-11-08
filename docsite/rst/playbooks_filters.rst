@@ -211,6 +211,33 @@ Square root, or the 5th::
 
 Note that jinja2 already provides some like abs() and round().
 
+Starting from version 2.2 Ansible also includes some basic arithmetic filters. They are useful only in advanced cases (like a map() call). Normally, you can use the standard arithmetic operators (+, -, *, /, %).
+
+Add a number::
+
+    # only useful in a map() call, otherwise use '+'
+    {{ list_of_numbers | map('add', 2) | list }}
+
+Subtract a number::
+
+    # only useful in a map() call, otherwise use '-'
+    {{ list_of_numbers | map('subtract', 2) | list }}
+
+Multiply by a number::
+
+    # only useful in a map() call, otherwise use '*'
+    {{ list_of_numbers | map('multiply', 2) | list }}
+
+Divide by a number::
+
+    # only useful in a map() call, otherwise use '/'
+    {{ list_of_numbers | map('divide', 2) | list }}
+
+Modulo operation::
+
+    # only useful in a map() call, otherwise use '%'
+    {{ list_of_numbers | map('modulo', 7) | list }}
+
 .. _ipaddr_filter:
 
 IP address filter

@@ -71,6 +71,35 @@ def max(a):
     _max = __builtins__.get('max')
     return _max(a);
 
+def add(x, y):
+    try:
+        return (x + y)
+    except TypeError as e:
+        raise errors.AnsibleFilterError('add() can only be used on numbers: %s' % str(e))
+
+def subtract(x, y):
+    try:
+        return (x - y)
+    except TypeError as e:
+        raise errors.AnsibleFilterError('subtract() can only be used on numbers: %s' % str(e))
+
+def multiply(x, y):
+    try:
+        return (x * y)
+    except TypeError as e:
+        raise errors.AnsibleFilterError('multiply() can only be used on numbers: %s' % str(e))
+
+def divide(x, y):
+    try:
+        return (x / y)
+    except TypeError as e:
+        raise errors.AnsibleFilterError('divide() can only be used on numbers: %s' % str(e))
+
+def modulo(x, y):
+    try:
+        return (x % y)
+    except TypeError as e:
+        raise errors.AnsibleFilterError('modulo() can only be used on numbers: %s' % str(e))
 
 def logarithm(x, base=math.e):
     try:
@@ -121,6 +150,13 @@ class FilterModule(object):
             # general math
             'min' : min,
             'max' : max,
+
+            # basic arithmetic
+            'add':      add,
+            'subtract': subtract,
+            'multiply': multiply,
+            'divide':   divide,
+            'modulo':   modulo,
 
             # exponents and logarithms
             'log': logarithm,
