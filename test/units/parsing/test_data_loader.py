@@ -24,6 +24,7 @@ from six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
 from ansible.errors import AnsibleParserError
+from ansible.errors import yaml_strings
 
 from ansible.parsing.dataloader import DataLoader
 
@@ -59,6 +60,17 @@ class TestDataLoader(unittest.TestCase):
                NOT VALID
         """, True)
         self.assertRaises(AnsibleParserError, self._loader.load_from_file, 'dummy_yaml_bad.txt')
+
+    @patch('ansible.errors.AnsibleError._get_error_lines_from_file')
+    @patch.object(DataLoader, '_get_file_contents')
+    def test_tab_error(self, mock_def, mock_get_error_lines):
+        mock_def.return_value = (u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""", True)
+        mock_get_error_lines.return_value = ('''\tblip: baz''', '''..foo: bar''')
+        with self.assertRaises(AnsibleParserError) as cm:
+            self._loader.load_from_file('dummy_yaml_text.txt')
+        self.assertIn(yaml_strings.YAML_COMMON_LEADING_TAB_ERROR, str(cm.exception))
+        self.assertIn('foo: bar', str(cm.exception))
+
 
 class TestDataLoaderWithVault(unittest.TestCase):
 

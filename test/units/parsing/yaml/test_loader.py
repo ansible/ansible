@@ -37,8 +37,10 @@ from units.mock.yaml_helper import YamlTestUtils
 
 try:
     from _yaml import ParserError
+    from _yaml import ScannerError
 except ImportError:
     from yaml.parser import ParserError
+    from yaml.scanner import ScannerError
 
 
 class NameStringIO(StringIO):
@@ -144,6 +146,11 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         stream = StringIO(u"""{""")
         loader = AnsibleLoader(stream, 'myfile.yml')
         self.assertRaises(ParserError, loader.get_single_data)
+
+    def test_tab_error(self):
+        stream = StringIO(u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        self.assertRaises(ScannerError, loader.get_single_data)
 
     def test_front_matter(self):
         stream = StringIO(u"""---\nfoo: bar""")
