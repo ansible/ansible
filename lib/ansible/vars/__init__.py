@@ -410,12 +410,13 @@ class VariableManager:
             variables['inventory_file'] = self._inventory.src()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
-                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
-                #             however this would take work in the templating engine, so for now
-                #             we'll add both so we can give users something transitional to use
-                variables['play_hosts'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_hosts'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
+                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
+
+                #DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
+                #  however this would take work in the templating engine, so for now we'll add both
+                variables['play_hosts'] = variables['ansible_play_batch']
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token

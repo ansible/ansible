@@ -502,6 +502,7 @@ class PlayIterator:
         s = self._set_failed_state(s)
         display.debug("^ failed state is now: %s" % s)
         self._host_states[host.name] = s
+        self._play._removed_hosts.append(host.name)
 
     def get_failed_hosts(self):
         return dict((host, True) for (host, state) in iteritems(self._host_states) if self._check_failed_state(state))
