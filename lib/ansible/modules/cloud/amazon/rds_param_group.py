@@ -159,7 +159,7 @@ def set_parameter(param, value, immediate):
                 # may be based on a variable (ie. {foo*3/4}) so
                 # just pass it on through to boto
                 converted_value = str(value)
-        elif type(value) == bool:
+        elif isinstance(value, bool):
             converted_value = 1 if value else 0
         else:
             converted_value = int(value)
