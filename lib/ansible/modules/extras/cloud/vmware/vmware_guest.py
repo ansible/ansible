@@ -724,105 +724,99 @@ class PyVmomiHelper(object):
                     int(self.params['hardware']['memory_mb'])
 
         # lets try and assign a static ip addresss
-        if 'customize' in self.params:
-                ip_settings = list()
+        if self.params['customize'] is True:
+            ip_settings = list()
+            if self.params['ips'] and self.params['network']:
                 for ip_string in self.params['ips']:
-                        ip = IPAddress(self.params['ips'])
+                    ip = IPAddress(self.params['ips'])
+                    for network in self.params['networks']:
+                        if ip in IPNetwork(network):
+                            self.params['networks'][network]['ip'] = str(ip)
+                            ipnet = IPNetwork(network)
+                            self.params['networks'][network]['subnet_mask'] = str(
+                                ipnet.netmask
+                            )
+                            ip_settings.append(self.params['networks'][network])
 
-                        for network in self.params['networks']:
+            key = 0
+            network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
+            datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
+            # get the folder where VMs are kept for this datacenter
+            destfolder = datacenter.vmFolder
 
-                                if ip in IPNetwork(network):
-                                        self.params['networks'][network]['ip'] = str(ip)
-                                        ipnet = IPNetwork(network)
-                                        self.params['networks'][network]['subnet_mask'] = str(
-                                                ipnet.netmask
-                                        )
-                                        ip_settings.append(self.params['networks'][network])
+            cluster = get_obj(self.content, [vim.ClusterComputeResource],self.params['cluster'])
 
+            devices = []
+            adaptermaps = []
 
-                network = get_obj(self.content, [vim.Network], ip_settings[0]['network'])
-                datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-                # get the folder where VMs are kept for this datacenter
-                destfolder = datacenter.vmFolder
+            try:
+                for device in template.config.hardware.device:
+                    if hasattr(device, 'addressType'):
+                        nic = vim.vm.device.VirtualDeviceSpec()
+                        nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                        nic.device = device
+                        devices.append(nic)
+            except:
+                pass
 
-                cluster = get_obj(self.content, [vim.ClusterComputeResource],self.params['cluster'])
+                # single device support
+            nic = vim.vm.device.VirtualDeviceSpec()
+            nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+            nic.device = vim.vm.device.VirtualVmxnet3()
+            nic.device.wakeOnLanEnabled = True
+            nic.device.addressType = 'assigned'
+            nic.device.deviceInfo = vim.Description()
+            nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
 
+            nic.device.deviceInfo.summary = ip_settings[key]['network']
+            nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+            nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
 
-                devices = []
-                adaptermaps = []
+            nic.device.backing.deviceName = ip_settings[key]['network']
+            nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+            nic.device.connectable.startConnected = True
+            nic.device.connectable.allowGuestControl = True
+            devices.append(nic)
+            
+            # Update the spec with the added NIC
+            clonespec_kwargs['config'].deviceChange = devices
 
-                try:
-                        for device in template.config.hardware.device:
+            guest_map = vim.vm.customization.AdapterMapping()
+            guest_map.adapter = vim.vm.customization.IPSettings()
+            guest_map.adapter.ip = vim.vm.customization.FixedIp()
+            guest_map.adapter.ip.ipAddress = str(ip_settings[key]['ip'])
+            guest_map.adapter.subnetMask = str(ip_settings[key]['subnet_mask'])
 
-                                if hasattr(device, 'addressType'):
-                                    nic = vim.vm.device.VirtualDeviceSpec()
-                                    nic.operation = \
-                                        vim.vm.device.VirtualDeviceSpec.Operation.remove
-                                    nic.device = device
-                                    devices.append(nic)
-                except:
-                        pass
+            try:
+                guest_map.adapter.gateway = ip_settings[key]['gateway']
+            except:
+                pass
 
-                    # for key, ip in enumerate(ip_settings):
-                    # VM device
-                    # single device support
-                key = 0
-                nic = vim.vm.device.VirtualDeviceSpec()
-                nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-                nic.device = vim.vm.device.VirtualVmxnet3()
-                nic.device.wakeOnLanEnabled = True
-                nic.device.addressType = 'assigned'
-                nic.device.deviceInfo = vim.Description()
-                nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
+            try:
+                guest_map.adapter.dnsDomain = self.params['domain']
+            except:
+                pass
 
-                nic.device.deviceInfo.summary = ip_settings[key]['network']
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
+            adaptermaps.append(guest_map)
 
-                nic.device.backing.deviceName = ip_settings[key]['network']
-                nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-                nic.device.connectable.startConnected = True
-                nic.device.connectable.allowGuestControl = True
-                devices.append(nic)
+            # DNS settings
+            globalip = vim.vm.customization.GlobalIPSettings()
+            globalip.dnsServerList = self.params['dns_servers']
+            globalip.dnsSuffixList = str(self.params['domain'])
 
-                clonespec_kwargs['config'].deviceChange = devices
+            # Hostname settings
+            ident = vim.vm.customization.LinuxPrep()
+            ident.domain = str(self.params['domain'])
+            ident.hostName = vim.vm.customization.FixedName()
+            ident.hostName.name = self.params['name']
 
-                guest_map = vim.vm.customization.AdapterMapping()
-                guest_map.adapter = vim.vm.customization.IPSettings()
-                guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                guest_map.adapter.ip.ipAddress = str(ip_settings[key]['ip'])
-                guest_map.adapter.subnetMask = str(ip_settings[key]['subnet_mask'])
+            customspec = vim.vm.customization.Specification()
+            customspec.nicSettingMap = adaptermaps
+            customspec.globalIPSettings = globalip
+            customspec.identity = ident
 
-                try:
-                        guest_map.adapter.gateway = ip_settings[key]['gateway']
-                except:
-                        pass
-
-                try:
-                        guest_map.adapter.dnsDomain = self.params['domain']
-                except:
-                        pass
-
-                adaptermaps.append(guest_map)
-
-                # DNS settings
-                globalip = vim.vm.customization.GlobalIPSettings()
-                globalip.dnsServerList = self.params['dns_servers']
-                globalip.dnsSuffixList = str(self.params['domain'])
-
-                # Hostname settings
-                ident = vim.vm.customization.LinuxPrep()
-                ident.domain = str(self.params['domain'])
-                ident.hostName = vim.vm.customization.FixedName()
-                ident.hostName.name = self.params['name']
-
-                customspec = vim.vm.customization.Specification()
-                customspec.nicSettingMap = adaptermaps
-                customspec.globalIPSettings = globalip
-                customspec.identity = ident
-
-                clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
-                clonespec.customization = customspec
+            clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
+            clonespec.customization = customspec
 
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
