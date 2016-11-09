@@ -466,7 +466,7 @@ def core(module):
 
     if state and command == 'list_nets':
         res = v.list_nets(state=state)
-        if type(res) != dict:
+        if not isinstance(res, dict):
             res = { command: res }
         return VIRT_SUCCESS, res
 
@@ -523,13 +523,13 @@ def core(module):
                         res = {'changed': mod, 'modified': name}
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
