@@ -149,7 +149,7 @@ def set_master_mode(client):
 
 def flush(client, db=None):
     try:
-        if type(db) != int:
+        if not isinstance(db, int):
             return client.flushall()
         else:
             # The passed client has been connected to the database already

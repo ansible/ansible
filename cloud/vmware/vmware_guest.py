@@ -199,13 +199,13 @@ class PyVmomiHelper(object):
             for child in children:
                 if child == folder or child in tree:
                     continue
-                if type(child) == vim.Folder:
+                if isinstance(child, vim.Folder):
                     ctree = self._build_folder_tree(child)
                     tree['subfolders'][child] = dict.copy(ctree)
-                elif type(child) == vim.VirtualMachine:
+                elif isinstance(child, vim.VirtualMachine):
                     tree['virtualmachines'].append(child)
         else:
-            if type(folder) == vim.VirtualMachine:
+            if isinstance(folder, vim.VirtualMachine):
                 return folder
         return tree
 
@@ -214,7 +214,7 @@ class PyVmomiHelper(object):
 
         ''' Build a searchable index for vms+uuids+folders '''
 
-        if type(folder) == tuple:
+        if isinstance(folder, tuple):
             folder = folder[1]
 
         if not 'names' in vmap:
@@ -284,13 +284,13 @@ class PyVmomiHelper(object):
     def compile_folder_path_for_object(self, vobj):
         ''' make a /vm/foo/bar/baz like folder path for an object '''
         paths = []
-        if type(vobj) == vim.Folder:
+        if isinstance(vobj, vim.Folder):
             paths.append(vobj.name)
 
         thisobj = vobj
         while hasattr(thisobj, 'parent'):
             thisobj = thisobj.parent
-            if type(thisobj) == vim.Folder:
+            if isinstance(thisobj, vim.Folder):
                 paths.append(thisobj.name)
         paths.reverse()
         if paths[0] == 'Datacenters':
@@ -343,7 +343,7 @@ class PyVmomiHelper(object):
                     if isinstance(fObj, vim.Datacenter):
                         fObj = fObj.vmFolder
                     for cObj in fObj.childEntity:
-                        if not type(cObj) == vim.VirtualMachine:
+                        if not isinstance(cObj, vim.VirtualMachine):
                             continue
                         if cObj.name == name:
                             vm = cObj
@@ -362,7 +362,7 @@ class PyVmomiHelper(object):
                 # compare the folder path of each VM against the search path
                 for item in vmList.items():
                     vobj = item[0]
-                    if not type(vobj.parent) == vim.Folder:
+                    if not isinstance(vobj.parent, vim.Folder):
                         continue
                     if self.compile_folder_path_for_object(vobj) == searchpath:
                         return vobj
