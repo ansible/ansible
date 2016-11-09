@@ -106,7 +106,7 @@ options:
         version_added: "2.3"
    dns_servers:
         description:
-          - DNS servers to use: ['4.4.4.4', '8.8.8.8']
+          - DNS servers to use
         required: False
         version_added: "2.3"
    domain: 
