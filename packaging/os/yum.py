@@ -832,6 +832,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # some guess work involved with groups. update @<group> will install the group if missing
             if spec.startswith('@'):
                 pkgs['update'].append(spec)
+                will_update.add(spec)
                 continue
             # dep/pkgname  - find it
             else:
@@ -908,14 +909,16 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         if len(pkgs['install']) > 0:    # install missing
             cmd = yum_basecmd + ['install'] + pkgs['install']
             rc, out, err = module.run_command(cmd)
-            res['changed'] = True
+            if not out.strip().lower().endswith("no packages marked for update"):
+                res['changed'] = True
         else:
             rc, out, err = [0, '', '']
 
         if len(will_update) > 0:     # update present
             cmd = yum_basecmd + ['update'] + pkgs['update']
             rc2, out2, err2 = module.run_command(cmd)
-            res['changed'] = True
+            if not out2.strip().lower().endswith("no packages marked for update"):
+                res['changed'] = True
         else:
             rc2, out2, err2 = [0, '', '']
 
@@ -936,7 +939,14 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq):
 
-    yumbin = module.get_bin_path('yum')
+    # fedora will redirect yum to dnf, which has incompatibilities
+    # with how this module expects yum to operate. If yum-deprecated
+    # is available, use that instead to emulate the old behaviors.
+    if module.get_bin_path('yum-deprecated'):
+        yumbin = module.get_bin_path('yum-deprecated')
+    else:
+        yumbin = module.get_bin_path('yum')
+
     # need debug level 2 to get 'Nothing to do' for groupinstall.
     yum_basecmd = [yumbin, '-d', '2', '-y']
 
