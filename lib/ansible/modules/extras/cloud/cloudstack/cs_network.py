@@ -345,25 +345,6 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         self.network = None
 
 
-    def get_vpc(self, key=None):
-        vpc = self.module.params.get('vpc')
-        if not vpc:
-            return None
-
-        args                = {}
-        args['account']     = self.get_account(key='name')
-        args['domainid']    = self.get_domain(key='id')
-        args['projectid']   = self.get_project(key='id')
-        args['zoneid']      = self.get_zone(key='id')
-
-        vpcs = self.cs.listVPCs(**args)
-        if vpcs:
-            for v in vpcs['vpc']:
-                if vpc in [ v['name'], v['displaytext'], v['id'] ]:
-                    return self._get_by_key(key, v)
-        self.module.fail_json(msg="VPC '%s' not found" % vpc)
-
-
     def get_network_offering(self, key=None):
         network_offering = self.module.params.get('network_offering')
         if not network_offering:
