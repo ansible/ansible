@@ -450,10 +450,10 @@ def main():
 
     value_list = ()
 
-    if type(value_in) is str:
+    if isinstance(value_in, str):
         if value_in:
             value_list = sorted([s.strip() for s in value_in.split(',')])
-    elif type(value_in)  is list:
+    elif isinstance(value_in, list):
         value_list = sorted(value_in)
 
     if zone_in[-1:] != '.':

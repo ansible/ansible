@@ -602,7 +602,7 @@ class Wrapper(object):
         raise AttributeError(name)
 
     def _wrap(self, func, args, kwargs):
-        if type(func) == MethodType:
+        if isinstance(func, MethodType):
             result = self._handle_temporary_redirects(lambda: func(*args, **kwargs))
         else:
             result = self._handle_temporary_redirects(lambda: func(self.other, *args, **kwargs))

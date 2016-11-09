@@ -143,7 +143,7 @@ def _run_module(wrapped_cmd, jid, job_path):
         if json_warnings:
             # merge JSON junk warnings with any existing module warnings
             module_warnings = result.get('warnings', [])
-            if type(module_warnings) is not list:
+            if not isinstance(module_warnings, list):
                 module_warnings = [module_warnings]
             module_warnings.extend(json_warnings)
             result['warnings'] = module_warnings

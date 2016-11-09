@@ -612,7 +612,7 @@ def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 def _set_none_to_blank(dictionary):
     result = dictionary
     for k in result.iterkeys():
-        if type(result[k]) == dict:
+        if isinstance(result[k], dict):
             result[k] = _set_none_to_blank(result[k])
         elif not result[k]:
             result[k] = ""
@@ -626,27 +626,27 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
 
     if tags is not None:
 
-        if type(tags) is str:
+        if isinstance(tags, str):
             try:
                 tags = literal_eval(tags)
             except:
                 pass
 
         # if string, we only care that a tag of that name exists
-        if type(tags) is str:
+        if isinstance(tags, str):
             filters.update({"tag-key": tags})
 
         # if list, append each item to filters
-        if type(tags) is list:
+        if isinstance(tags, list):
             for x in tags:
-                if type(x) is dict:
+                if isinstance(x, dict):
                     x = _set_none_to_blank(x)
                     filters.update(dict(("tag:"+tn, tv) for (tn,tv) in x.iteritems()))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
-        if type(tags) is dict:
+        if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
             filters.update(dict(("tag:"+tn, tv) for (tn,tv) in tags.iteritems()))
 
@@ -906,7 +906,7 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
-        if type(inst) is not dict:
+        if not isinstance(inst, dict):
             inst = get_instance_info(inst)
         all_instances.append(inst)
 

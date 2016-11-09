@@ -388,7 +388,7 @@ def _exit_hostvars(module, cloud, server, changed=True):
 
 def _parse_nics(nics):
     for net in nics:
-        if type(net) == str:
+        if isinstance(net, str):
             for nic in net.split(','):
                 yield dict((nic.split('='),))
         else:
@@ -398,11 +398,11 @@ def _network_args(module, cloud):
     args = []
     nics = module.params['nics']
 
-    if type(nics) != list:
+    if not isinstance(nics, list):
         module.fail_json(msg='The \'nics\' parameter must be a list.')
 
     for net in _parse_nics(nics):
-        if type(net) != dict:
+        if not isinstance(net, dict):
             module.fail_json(
                 msg='Each entry in the \'nics\' parameter must be a dict.')
 
@@ -459,7 +459,7 @@ def _create_server(module, cloud):
 
     nics = _network_args(module, cloud)
 
-    if type(module.params['meta']) is str:
+    if isinstance(module.params['meta'], str):
         metas = {}
         for kv_str in module.params['meta'].split(","):
             k, v = kv_str.split("=")
