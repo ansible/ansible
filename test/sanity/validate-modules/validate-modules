@@ -45,7 +45,7 @@ import yaml
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
-TYPE_REGEX = re.compile(r'.*\stype\(.*')
+TYPE_REGEX =  re.compile(r'.*(if|or)(\s+.*|\s+)(?<!_)(?<!str\()type\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
