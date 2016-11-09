@@ -336,7 +336,7 @@ def main():
         mgmt_token=dict(required=True, no_log=True),
         host=dict(default='localhost'),
         scheme=dict(required=False, default='http'),
-        validate_certs=dict(required=False, default=True),
+        validate_certs=dict(required=False, type='bool', default=True),
         name=dict(required=False),
         port=dict(default=8500, type='int'),
         rules=dict(default=None, required=False, type='list'),
