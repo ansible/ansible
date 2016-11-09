@@ -246,10 +246,11 @@ class AnsibleCloudStack(object):
             return None
 
         args = {
-            'account': self.get_account('name'),
-            'domainid': self.get_domain('id'),
-            'projectid': self.get_project('id'),
-            'zoneid': self.get_zone('id'),
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id')
         }
         networks = self.cs.listNetworks(**args)
         if not networks:
@@ -291,11 +292,13 @@ class AnsibleCloudStack(object):
         if not ip_address:
             self.module.fail_json(msg="IP address param 'ip_address' is required")
 
-        args = {}
-        args['ipaddress'] = ip_address
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
+        args = {
+            'ipaddress': ip_address,
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'vpcid': self.get_vpc(key='id'),
+        }
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if not ip_addresses:
@@ -339,11 +342,13 @@ class AnsibleCloudStack(object):
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
-        args = {}
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
-        args['zoneid'] = self.get_zone(key='id')
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id'),
+        }
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
