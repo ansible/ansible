@@ -76,9 +76,6 @@ Target: February - April 2017
   - Extend testing
   - User facing documentation
   - Persistent connection manager
-  
-    - Implement ControlPersist functionality into Paramiko
-    - Will speed up network module tasks
   - Netconf/YANG implementation (only feature)
   - Deferred from 2.2: Network facts modules (sros)
 
