@@ -1,0 +1,4 @@
+jinja2
+junit-xml
+pywinrm
+pyyaml
