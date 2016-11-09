@@ -93,27 +93,27 @@ options:
         description:
            - Should customization spec be run
         required: False
-        version_added: "2.2"
+        version_added: "2.3"
    ips:
         description:
            - IP Addresses to set
         required: False
-        version_added: "2.2"
+        version_added: "2.3"
    networks:    
         description:
           - Network to use should include VM network name and gateway
         required: False
-        version_added: "2.2"
+        version_added: "2.3"
    dns_servers:
         description:
-          - DNS servers to use: 4.4.4.4, 8.8.8.8
+          - DNS servers to use: ['4.4.4.4', '8.8.8.8']
         required: False
-        version_added: "2.2"
+        version_added: "2.3"
    domain: 
         description:
           - Domain to use while customizing
         required: False
-        version_added: "2.2"
+        version_added: "2.3"
 extends_documentation_fragment: vmware.documentation    
 '''
 
