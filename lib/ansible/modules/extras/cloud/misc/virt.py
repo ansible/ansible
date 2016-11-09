@@ -430,7 +430,7 @@ def core(module):
 
     if state and command=='list_vms':
         res = v.list_vms(state=state)
-        if type(res) != dict:
+        if not isinstance(res, dict):
             res = { command: res }
         return VIRT_SUCCESS, res
 
@@ -477,13 +477,13 @@ def core(module):
                     res = {'changed': True, 'created': guest}
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(guest)
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 

@@ -561,7 +561,7 @@ def core(module):
 
     if state and command == 'list_pools':
         res = v.list_pools(state=state)
-        if type(res) != dict:
+        if not isinstance(res, dict):
             res = { command: res }
         return VIRT_SUCCESS, res
 
@@ -623,22 +623,22 @@ def core(module):
                 return VIRT_SUCCESS, res
             elif command == 'build':
                 res = v.build(name, mode)
-                if type(res) != dict:
+                if not isinstance(res, dict):
                     res = { 'changed': True, command: res }
                 return VIRT_SUCCESS, res
             elif command == 'delete':
                 res = v.delete(name, mode)
-                if type(res) != dict:
+                if not isinstance(res, dict):
                     res = { 'changed': True, command: res }
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
-            if type(res) != dict:
+            if not isinstance(res, dict):
                 res = { command: res }
             return VIRT_SUCCESS, res
 

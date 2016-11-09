@@ -233,7 +233,7 @@ class OSXDefaults(object):
     def write(self):
 
         # We need to convert some values so the defaults commandline understands it
-        if type(self.value) is bool:
+        if isinstance(self.value, bool):
             if self.value:
                 value = "TRUE"
             else:

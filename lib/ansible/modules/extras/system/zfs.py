@@ -226,7 +226,7 @@ def main():
         # All freestyle params are zfs properties
         if prop not in module.argument_spec:
             # Reverse the boolification of freestyle zfs properties
-            if type(value) == bool:
+            if isinstance(value, bool):
                 if value is True:
                     properties[prop] = 'on'
                 else:
