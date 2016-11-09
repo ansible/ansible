@@ -41,6 +41,7 @@ from schema import doc_schema, option_schema
 from utils import CaptureStd
 
 import yaml
+import yaml.reader
 
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
@@ -383,7 +384,7 @@ class ModuleValidator(Validator):
         doc_info = self._get_docs()
         try:
             doc = yaml.safe_load(doc_info['DOCUMENTATION']['value'])
-        except yaml.YAMLError as e:
+        except yaml.MarkedYAMLError as e:
             doc = None
             # This offsets the error line number to where the
             # DOCUMENTATION starts so we can just go to that line in the
@@ -397,6 +398,13 @@ class ModuleValidator(Validator):
                                'column %d' %
                                (e.problem_mark.line + 1,
                                 e.problem_mark.column + 1))
+        except yaml.reader.ReaderError as e:
+            self.traces.append(e)
+            self.errors.append('DOCUMENTATION is not valid YAML. Character 0x%x at position %d.' %
+                               (e.character, e.position))
+        except yaml.YAMLError as e:
+            self.traces.append(e)
+            self.errors.append('DOCUMENTATION is not valid YAML: %s: %s' % (type(e), e))
         except AttributeError:
             self.errors.append('No DOCUMENTATION provided')
         else:
@@ -427,7 +435,7 @@ class ModuleValidator(Validator):
         else:
             try:
                 yaml.safe_load(doc_info['RETURN']['value'])
-            except yaml.YAMLError as e:
+            except yaml.MarkedYAMLError as e:
                 e.problem_mark.line += (
                     doc_info['RETURN']['lineno'] - 1
                 )
@@ -437,6 +445,13 @@ class ModuleValidator(Validator):
                                    (e.problem_mark.line + 1,
                                     e.problem_mark.column + 1))
                 self.traces.append(e)
+            except yaml.reader.ReaderError as e:
+                self.traces.append(e)
+                self.errors.append('RETURN is not valid YAML. Character 0x%x at position %d.' %
+                                   (e.character, e.position))
+            except yaml.YAMLError as e:
+                self.traces.append(e)
+                self.errors.append('RETURN is not valid YAML: %s: %s' % (type(e), e))
 
     def _check_version_added(self, doc):
         if not self._is_new_module():
