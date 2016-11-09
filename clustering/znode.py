@@ -194,7 +194,7 @@ class KazooCommandProxy():
             for i in dir(zstat):
                 if not i.startswith('_'):
                     attr = getattr(zstat, i)
-                    if type(attr) in (int, str):
+                    if isinstance(attr, (int, str)):
                         stat_dict[i] = attr
             result = True, {'msg': 'The node was retrieved.', 'znode': path, 'value': value,
                             'stat': stat_dict}
