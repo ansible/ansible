@@ -504,13 +504,13 @@ class Nmcli(object):
             val=d[key]
             str_val=""
             add_string=True
-            if type(val)==type(dbus.Array([])):
+            if isinstance(val, dbus.Array):
                 for elt in val:
-                    if type(elt)==type(dbus.Byte(1)):
+                    if isinstance(elt, dbus.Byte):
                         str_val+="%s " % int(elt)
-                    elif type(elt)==type(dbus.String("")):
+                    elif isinstance(elt, dbus.String):
                         str_val+="%s" % elt
-            elif type(val)==type(dbus.Dictionary({})):
+            elif isinstance(val, dbus.Dictionary):
                 dstr+=self.dict_to_string(val)
                 add_string=False
             else:
