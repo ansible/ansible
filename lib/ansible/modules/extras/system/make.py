@@ -101,7 +101,7 @@ def main():
         argument_spec=dict(
             target=dict(required=False, default=None, type='str'),
             params=dict(required=False, default=None, type='dict'),
-            chdir=dict(required=True, default=None, type='str'),
+            chdir=dict(required=True, default=None, type='path'),
         ),
     )
     # Build up the invocation of `make` we are going to use
