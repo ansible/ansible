@@ -72,14 +72,10 @@ requirements:
 
 EXAMPLES = '''
 # Example action to start service httpd, if not running
-- systemd:
-    state: started
-    name: httpd
+- systemd: state=started name=httpd
 
 # Example action to stop service cron on debian, if running
-- systemd:
-    name: cron
-    state: stopped
+- systemd: name=cron state=stopped
 
 # Example action to restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
 - systemd:
@@ -235,16 +231,15 @@ status:
         }
 '''
 
-import os
-import glob
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
+from ansible.module_utils._text import to_native
 
 # ===========================================
 # Main control flow
 
 def main():
-    # init
+    # initialize
     module = AnsibleModule(
         argument_spec = dict(
                 name = dict(required=True, type='str', aliases=['unit', 'service']),
@@ -258,7 +253,6 @@ def main():
             required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
         )
 
-    # initialize
     systemctl = module.get_bin_path('systemctl')
     if module.params['user']:
         systemctl = systemctl + " --user"
@@ -269,6 +263,7 @@ def main():
         'name':  unit,
         'changed': False,
         'status': {},
+        'warnings': [],
     }
 
     # Run daemon-reload first, if requested
@@ -277,44 +272,55 @@ def main():
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
-    #TODO: check if service exists
+    # check service data
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
     if rc != 0:
         module.fail_json(msg='failure %d running systemctl show for %r: %s' % (rc, unit, err))
 
+    found = False
+    is_initd = sysv_exists(unit)
+    is_systemd = False
+
     # load return of systemctl show into dictionary for easy access and return
-    k = None
     multival = []
-    for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
-        if line.strip():
-            if k is None:
-                if '=' in line:
-                    k,v = line.split('=', 1)
-                    if v.lstrip().startswith('{'):
-                        if not v.rstrip().endswith('}'):
-                            multival.append(line)
-                            continue
-                    result['status'][k] = v.strip()
-                    k = None
-            else:
-                if line.rstrip().endswith('}'):
-                    result['status'][k] = '\n'.join(multival).strip()
-                    multival = []
-                    k = None
+    if out:
+        k = None
+        for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
+            if line.strip():
+                if k is None:
+                    if '=' in line:
+                        k,v = line.split('=', 1)
+                        if v.lstrip().startswith('{'):
+                            if not v.rstrip().endswith('}'):
+                                multival.append(line)
+                                continue
+                        result['status'][k] = v.strip()
+                        k = None
                 else:
-                    multival.append(line)
+                    if line.rstrip().endswith('}'):
+                        result['status'][k] = '\n'.join(multival).strip()
+                        multival = []
+                        k = None
+                    else:
+                        multival.append(line)
+
+        is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
+
+        # Check for loading error
+        if is_systemd and 'LoadError' in result['status']:
+            module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
 
 
-    if 'LoadState' in result['status'] and result['status']['LoadState'] == 'not-found':
-        module.fail_json(msg='Could not find the requested service "%r": %s' % (unit, err))
-    elif 'LoadError' in result['status']:
-        module.fail_json(msg="Failed to get the service status '%s': %s" % (unit, result['status']['LoadError']))
+    # Does service exist?
+    found = is_systemd or is_initd
+    if is_initd and not is_systemd:
+        result['warnings'].append('The service (%s) is actually an init script but the system is managed by systemd' % unit)
 
-    # mask/unmask the service, if requested
+    # mask/unmask the service, if requested, can operate on services before they are installed
     if module.params['masked'] is not None:
-        masked = (result['status']['LoadState'] == 'masked')
+        # state is not masked unless systemd affirms otherwise
+        masked = ('LoadState' in result['status'] and result['status']['LoadState'] == 'masked')
 
-        # Change?
         if masked != module.params['masked']:
             result['changed'] = True
             if module.params['masked']:
@@ -325,10 +331,21 @@ def main():
             if not module.check_mode:
                 (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                 if rc != 0:
+                    # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
+                    fail_if_missing(module, found, unit, "cannot %s" % (action))
                     module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+
 
     # Enable/disable service startup at boot if requested
     if module.params['enabled'] is not None:
+
+        if module.params['enabled']:
+            action = 'enable'
+        else:
+            action = 'disable'
+
+        fail_if_missing(module, found, unit, "cannot %s" % (action))
+
         # do we need to enable the service?
         enabled = False
         (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
@@ -337,11 +354,8 @@ def main():
         if rc == 0:
             enabled = True
         elif rc == 1:
-            # Deals with init scripts
             # if both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-            initscript = '/etc/init.d/' + unit
-            if os.path.exists(initscript) and os.access(initscript, os.X_OK) and \
-               (not out.startswith('disabled') or bool(glob.glob('/etc/rc?.d/S??' + unit))):
+            if is_initd and (not out.startswith('disabled') or sysv_is_enabled(unit)):
                 enabled = True
 
         # default to current state
@@ -350,19 +364,16 @@ def main():
         # Change enable/disable if needed
         if enabled != module.params['enabled']:
             result['changed'] = True
-            if module.params['enabled']:
-                action = 'enable'
-            else:
-                action = 'disable'
-
             if not module.check_mode:
                 (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                 if rc != 0:
-                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
             result['enabled'] = not enabled
 
+    # set service state if requested
     if module.params['state'] is not None:
+        fail_if_missing(module, found, unit, "cannot check nor set state")
 
         # default to desired state
         result['state'] = module.params['state']
@@ -373,17 +384,15 @@ def main():
             if module.params['state'] == 'started':
                 if result['status']['ActiveState'] != 'active':
                     action = 'start'
-                    result['changed'] = True
             elif module.params['state'] == 'stopped':
                 if result['status']['ActiveState'] == 'active':
                     action = 'stop'
-                    result['changed'] = True
             else:
                 action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
                 result['state'] = 'started'
-                result['changed'] = True
 
             if action:
+                result['changed'] = True
                 if not module.check_mode:
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
