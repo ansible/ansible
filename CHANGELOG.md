@@ -29,6 +29,16 @@ Ansible Changes By Release
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
+- free_ipa:
+  * ipa_group
+  * ipa_hbacrule
+  * ipa_hostgroup
+  * ipa_host
+  * ipa_role
+  * ipa_sudocmdgroup
+  * ipa_sudocmd
+  * ipa_sudorule
+  * ipa_user
 - openwrt_init
 - windows:
   * win_say
