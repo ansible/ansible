@@ -36,7 +36,7 @@ requirements: [ "requests >= 1.0.0" ]
 options:
     state:
         description:
-            - Whether the exchange should be present or absent
+            - Whether the binding should be present or absent
             - Only present implemented atm
         choices: [ "present", "absent" ]
         required: false
@@ -46,54 +46,6 @@ options:
             - source exchange to create binding on
         required: true
         aliases: [ "src", "source" ]
-    login_user:
-        description:
-            - rabbitMQ user for connection
-        required: false
-        default: guest
-    login_password:
-        description:
-            - rabbitMQ password for connection
-        required: false
-        default: false
-    login_host:
-        description:
-            - rabbitMQ host for connection
-        required: false
-        default: localhost
-    login_port:
-        description:
-            - rabbitMQ management api port
-        required: false
-        default: 15672
-    login_protocol:
-        description:
-            - rabbitMQ management api protocol
-        choices: [ http , https ]
-        required: false
-        default: http
-        version_added: "2.3"
-    cacert:
-        description:
-            - CA certificate to verify SSL connection to management API.
-        required: false
-        version_added: "2.3"
-    cert:
-        description:
-            - Client certificate to send on SSL connections to management API.
-        required: false
-        version_added: "2.3"
-    key:
-        description:
-            - Private key matching the client certificate.
-        required: false
-        version_added: "2.3"
-    vhost:
-        description:
-            - rabbitMQ virtual host
-            - default vhost is /
-        required: false
-        default: "/"
     destination:
         description:
             - destination exchange or queue for the binding
@@ -116,6 +68,7 @@ options:
             - extra arguments for exchange. If defined this argument is a key/value dictionary
         required: false
         default: {}
+extends_documentation.fragment: rabbitmq.documentation
 '''
 
 EXAMPLES = '''
@@ -138,27 +91,21 @@ import requests
 import urllib
 import json
 
+
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'absent'], type='str'),
-            name = dict(required=True, aliases=[ "src", "source" ], type='str'),
-            login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str', no_log=True),
-            login_host = dict(default='localhost', type='str'),
-            login_port = dict(default='15672', type='str'),
-            login_protocol = dict(default='http', choices=['http', 'https'], type='str'),
-            cacert = dict(required=False, type='path', default=None),
-            cert = dict(required=False, type='path', default=None),
-            key = dict(required=False, type='path', default=None),
-            vhost = dict(default='/', type='str'),
-            destination = dict(required=True, aliases=[ "dst", "dest"], type='str'),
-            destination_type = dict(required=True, aliases=[ "type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
-            routing_key = dict(default='#', type='str'),
-            arguments = dict(default=dict(), type='dict')
-        ),
-        supports_check_mode = True
+
+    argument_spec = rabbitmq_argument_spec()
+    argument_spec.update(
+        dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            name=dict(required=True, aliases=["src", "source"], type='str'),
+            destination=dict(required=True, aliases=["dst", "dest"], type='str'),
+            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
+            routing_key=dict(default='#', type='str'),
+            arguments=dict(default=dict(), type='dict')
+        )
     )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if module.params['destination_type'] == "queue":
         dest_type="q"
@@ -260,6 +207,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.rabbitmq import *
 
 if __name__ == '__main__':
     main()
