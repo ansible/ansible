@@ -285,7 +285,8 @@ class OSXDefaults(object):
             return True
 
         # There is a type mismatch! Given type does not match the type in defaults
-        if self.current_value is not None and not isinstance(self.current_value, type(self.value)):
+        value_type = type(self.value)
+        if self.current_value is not None and not isinstance(self.current_value, value_type):
             raise OSXDefaultsException("Type mismatch. Type in defaults: " + type(self.current_value).__name__)
 
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
