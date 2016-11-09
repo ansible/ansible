@@ -72,9 +72,12 @@ options:
       - routing key for the binding.
       default: "#"
     arguments:
-      description:
-      - extra arguments for exchange. If defined this argument is a key/value dictionary.
-      default: {}
+        description:
+            - extra arguments for exchange. If defined this argument is a key/value dictionary
+        required: false
+        default: {}
+extends_documentation_fragment:
+    - rabbitmq
 '''
 
 EXAMPLES = '''
@@ -104,6 +107,7 @@ except ImportError:
 
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
 
 
 class RabbitMqBinding(object):
@@ -122,6 +126,9 @@ class RabbitMqBinding(object):
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
         self.routing_key = self.module.params['routing_key']
         self.arguments = self.module.params['arguments']
+        self.verify = self.module.params['cacert']
+        self.cert = self.module.params['cert']
+        self.key = self.module.params['key']
         self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
                                                              self.login_port)
         self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
@@ -253,6 +260,8 @@ class RabbitMqBinding(object):
                                                   urllib_parse.quote(self.destination, safe=''))
         self.api_result = self.request.post(self.url,
                                             auth=self.authentication,
+                                            verify=self.cacert,
+                                            cert=(self.cert, self.key),
                                             headers={"content-type": "application/json"},
                                             data=json.dumps({
                                                 'routing_key': self.routing_key,
@@ -277,23 +286,20 @@ class RabbitMqBinding(object):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+
+    argument_spec = rabbitmq_argument_spec()
+    argument_spec.update(
+        dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, aliases=["src", "source"], type='str'),
-            login_user=dict(default='guest', type='str'),
-            login_password=dict(default='guest', type='str', no_log=True),
-            login_host=dict(default='localhost', type='str'),
-            login_port=dict(default='15672', type='str'),
-            vhost=dict(default='/', type='str'),
             destination=dict(required=True, aliases=["dst", "dest"], type='str'),
             destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"],
                                   type='str'),
             routing_key=dict(default='#', type='str'),
             arguments=dict(default=dict(), type='dict')
-        ),
-        supports_check_mode=True
+        )
     )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_REQUESTS:
         module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")

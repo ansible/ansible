@@ -95,6 +95,8 @@ options:
         description:
             - extra arguments for queue. If defined this argument is a key/value dictionary
         default: {}
+extends_documentation_fragment:
+    - rabbitmq
 '''
 
 EXAMPLES = '''
@@ -120,18 +122,16 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+
+    argument_spec = rabbitmq_argument_spec()
+    argument_spec.update(
+        dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
-            login_user=dict(default='guest', type='str'),
-            login_password=dict(default='guest', type='str', no_log=True),
-            login_host=dict(default='localhost', type='str'),
-            login_port=dict(default='15672', type='str'),
-            vhost=dict(default='/', type='str'),
             durable=dict(default=True, type='bool'),
             auto_delete=dict(default=False, type='bool'),
             message_ttl=dict(default=None, type='int'),
@@ -144,8 +144,10 @@ def main():
         ),
         supports_check_mode=True
     )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    url = "http://%s:%s/api/queues/%s/%s" % (
+    url = "%s://%s:%s/api/queues/%s/%s" % (
+        module.params['login_protocol'],
         module.params['login_host'],
         module.params['login_port'],
         urllib_parse.quote(module.params['vhost'], ''),
@@ -158,7 +160,8 @@ def main():
     result = dict(changed=False, name=module.params['name'])
 
     # Check if queue already exists
-    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']))
+    r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']),
+                     verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
     if r.status_code == 200:
         queue_exists = True
@@ -244,10 +247,13 @@ def main():
                     "durable": module.params['durable'],
                     "auto_delete": module.params['auto_delete'],
                     "arguments": module.params['arguments']
-                })
+                }),
+                verify=module.params['cacert'],
+                cert=(module.params['cert'], module.params['key'])
             )
         elif module.params['state'] == 'absent':
-            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']))
+            r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']),
+                                verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
 
         # RabbitMQ 3.6.7 changed this response code from 204 to 201
         if r.status_code == 204 or r.status_code == 201:
@@ -261,8 +267,11 @@ def main():
             )
 
     else:
-        result['changed'] = False
-        module.exit_json(**result)
+        module.exit_json(
+            changed=False,
+            name=module.params['name']
+        )
+
 
 
 if __name__ == '__main__':
