@@ -98,7 +98,7 @@ options:
     version_added: "2.0"
   role_arn:
     description:
-    - The role that AWS CloudFormation assumes to create the stack. [AWS CloudFormation Service Role](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     required: false
     default: null
     version_added: "2.3"
@@ -456,8 +456,6 @@ def main():
                 result = dict(changed=False, output='Stack is already up-to-date.')
             else:
                 module.fail_json(msg=error_msg)
-                #return {'error': error_msg}
-                #module.fail_json(msg=error_msg)
         if not result: module.fail_json(msg="empty result")
 
     # check the status of the stack while we are creating/updating it.
