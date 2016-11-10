@@ -121,12 +121,12 @@ def create_fix(rawtext, oldfile, newfile):
     return diff    
 
 def main():
-    print sys.argv
+    print(sys.argv)
     mfiles = find_modules(sys.argv[1])
 
     total = len(mfiles) - 1
     for idm,mfile in enumerate(mfiles):
-        print "CHECKING (%s|%s) %s" % (idm, total, mfile)
+        print("CHECKING (%s|%s) %s" % (idm, total, mfile))
         with open(mfile, 'rb') as f:
             rawtext = f.read()
         flag = isbad(rawtext)
