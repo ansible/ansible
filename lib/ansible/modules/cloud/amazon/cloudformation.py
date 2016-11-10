@@ -473,7 +473,7 @@ def main():
         for res in reslist.get('StackResourceSummaries', []):
             stack_resources.append({
                 "logical_resource_id": res['LogicalResourceId'],
-                "physical_resource_id": res['PhysicalResourceId'],
+                "physical_resource_id": res.get('PhysicalResourceId', ''),
                 "resource_type": res['ResourceType'],
                 "last_updated_time": res['LastUpdatedTimestamp'],
                 "status": res['ResourceStatus'],
