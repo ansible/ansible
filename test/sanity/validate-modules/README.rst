@@ -55,6 +55,7 @@ Errors
 #. New arguments have the correct ``version_added``
 #. Modules should not import requests, instead use ``ansible.module_utils.urls``
 #. Missing ``RETURN`` for new modules
+#. Use of ``type()`` for type comparison instead of ``isinstance()``
 
 Warnings
 ^^^^^^^^
