@@ -153,6 +153,13 @@ options:
     default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
     required: false
     version_added: "2.2"
+  suspend_processes:
+    description:
+      - A list of scaling processes to suspend.
+    required: False
+    default: []
+    choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
+    version_added: "2.2"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -398,6 +405,28 @@ def wait_for_elb(asg_connection, module, group_name):
             module.fail_json(msg = "Waited too long for ELB instances to be healthy. %s" % time.asctime())
         log.debug("Waiting complete.  ELB thinks {0} instances are healthy.".format(healthy_instances))
 
+
+def suspend_processes(as_group, module):
+    suspend_processes = set(module.params.get('suspend_processes'))
+
+    try:
+        suspended_processes = set([p.process_name for p in as_group.suspended_processes])
+    except AttributeError:
+        # New ASG being created, no suspended_processes defined yet
+        suspended_processes = set()
+
+    if suspend_processes == suspended_processes:
+        return False
+
+    resume_processes = list(suspended_processes - suspend_processes)
+    if resume_processes:
+        as_group.resume_processes(resume_processes)
+
+    if suspend_processes:
+        as_group.suspend_processes(list(suspend_processes))
+
+    return True
+
 def create_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     load_balancers = module.params['load_balancers']
@@ -463,6 +492,7 @@ def create_autoscaling_group(connection, module):
 
         try:
             connection.create_auto_scaling_group(ag)
+            suspend_processes(ag, module)
             if wait_for_instances:
                 wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
                 wait_for_elb(connection, module, group_name)
@@ -479,6 +509,10 @@ def create_autoscaling_group(connection, module):
     else:
         as_group = as_groups[0]
         changed = False
+
+        if suspend_processes(as_group, module):
+            changed = True
+
         for attr in ASG_ATTRIBUTES:
             if module.params.get(attr, None) is not None:
                 module_attr = module.params.get(attr)
@@ -853,7 +887,8 @@ def main():
                 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
-            ])
+            ]),
+            suspend_processes=dict(type='list', default=[])
         ),
     )
 
