@@ -89,7 +89,7 @@ tasks:
     instance: "{{ item.id }}"
     region: eu-west-1
     state: list
-  with_items: ec2.tagged_instances
+  with_items: "{{ ec2.tagged_instances }}"
   register: ec2_vol
 
 - name: tag the volumes

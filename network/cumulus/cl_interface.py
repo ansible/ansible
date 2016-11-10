@@ -151,7 +151,7 @@ cl_interface:
   mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork|default('no') }}"
   mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
   mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
-with_dict: cl_interfaces
+with_dict: "{{ cl_interfaces }}"
 notify: reload networking
 
 
