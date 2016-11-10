@@ -36,6 +36,12 @@ from ansible.module_utils._text import to_bytes
 
 class TestConnectionBaseClass(unittest.TestCase):
 
+    def setUp(self):
+        """
+        Make sure this global variable is not set whenever a connection is made
+        """
+        ssh.SSHPASS_AVAILABLE = None
+
     def test_plugins_connection_ssh_basic(self):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -69,6 +75,54 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command('ssh')
+
+    def test_plugins_connection_ssh__build_command_sshpass_not_available(self):
+
+        passwords = {'conn_pass': 'somepassword'}
+        pc = PlayContext(passwords=passwords)
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+
+        with patch('subprocess.Popen') as mock_popen:
+            mock_popen.side_effect = OSError(
+                "expected to fail to pretend sshpass is missing")
+            with self.assertRaises(AnsibleError):
+                conn._build_command('ssh')
+
+    def test_plugins_connection_ssh__build_command_sftp_binary(self):
+
+        passwords = {'conn_pass': 'somepassword'}
+        pc = PlayContext(passwords=passwords)
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+
+        with patch('subprocess.Popen'):
+            command = conn._build_command('sftp')
+            command_str = ' '.join(command)
+            self.assertIn("-b -", command_str)
+            self.assertIn("-o BatchMode=no", command_str)
+
+    def test_plugins_connection_ssh__build_command_verbose(self):
+
+        pc = PlayContext()
+        pc.verbosity = 4
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+
+        command = conn._build_command('ssh')
+        self.assertIn("-vvv", command)
+
+    def test_plugins_connection_ssh__build_command_ssh_common_args(self):
+
+        test_ssh_args = "-o Foo=1"
+        pc = PlayContext()
+        pc.ssh_common_args = test_ssh_args
+        new_stdin = StringIO()
+        conn = ssh.Connection(pc, new_stdin)
+
+        command = conn._build_command('ssh')
+        command_str = ' '.join(command)
+        self.assertIn(test_ssh_args, command_str)
 
     def test_plugins_connection_ssh__exec_command(self):
         pc = PlayContext()
