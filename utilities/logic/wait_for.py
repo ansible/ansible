@@ -27,6 +27,8 @@ import socket
 import sys
 import time
 
+from ansible.module_utils._text import to_native
+
 HAS_PSUTIL = False
 try:
     import psutil
@@ -509,7 +511,7 @@ def main():
                             if not response:
                                 # Server shutdown
                                 break
-                            data += response
+                            data += to_native(response, errors='surrogate_or_strict')
                             if re.search(compiled_search_re, data):
                                 matched = True
                                 break
