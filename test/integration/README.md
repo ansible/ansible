@@ -183,6 +183,28 @@ should include both `cli` and `eapi` test cases. Cli test cases should be
 added to `targets/modulename/tests/cli` and eapi tests should be added to
 `targets/modulename/tests/eapi`.
 
+In addition to positive testing, negative tests are required to ensure user friendly warnings & errors are generated, rather than backtraces, for example:
+
+```yaml
+- name: test invalid subset (foobar)
+  eos_facts:
+    provider: "{{ cli }}"
+    gather_subset:
+      - "foobar"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      # Failures shouldn't return changes
+      - "result.changed == false"
+      # It's a failure
+      - "result.failed == true"
+      # Sensible Failure message
+      - "'Subset must be one of' in result.msg"
+```
+
+
 ### Conventions
 
 - Each test case should generally follow the pattern:
@@ -197,3 +219,8 @@ added to `targets/modulename/tests/cli` and eapi tests should be added to
   test, at least provide a helpful name for each task.)
 
 - Files containing test cases must end in `.yaml`
+
+
+### Adding a new Network Platform
+
+A top level playbook is required such as `ansible/test/integration/eos.yaml` which needs to be references by `ansible/test/integration/network-all.yaml`
