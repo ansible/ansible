@@ -34,6 +34,7 @@ from ansible.module_utils.network import NetworkError
 from ansible.module_utils.six.moves import StringIO
 from ansible.module_utils._text import to_native
 
+# Default ANSI and terminal escape sequence regexes
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
     re.compile(r'\x08.')
@@ -57,7 +58,7 @@ class ShellError(Exception):
 
 class Shell(object):
 
-    def __init__(self, prompts_re=None, errors_re=None, kickstart=True):
+    def __init__(self, prompts_re=None, errors_re=None, ansi_re=None, kickstart=True):
         self.ssh = None
         self.shell = None
 
@@ -66,6 +67,7 @@ class Shell(object):
 
         self.prompts = prompts_re or list()
         self.errors = errors_re or list()
+        self.ansi = ansi_re or ANSI_RE
 
     def open(self, host, port=22, username=None, password=None, timeout=10,
              key_filename=None, pkey=None, look_for_keys=None,
@@ -116,7 +118,7 @@ class Shell(object):
         self.receive()
 
     def strip(self, data):
-        for regex in ANSI_RE:
+        for regex in self.ansi:
             data = regex.sub('', data)
         return data
 
@@ -220,6 +222,7 @@ class CliBase(object):
                 kickstart=kickstart,
                 prompts_re=self.CLI_PROMPTS_RE,
                 errors_re=self.CLI_ERRORS_RE,
+                ansi_re=getattr(self, "CLI_ANSI_RE", ANSI_RE)
             )
             self.shell.open(
                 host, port=port, username=username, password=password,
