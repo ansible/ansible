@@ -42,7 +42,7 @@ EXAMPLES = '''
 
 - name: Print running VMs
   debug: msg="{{ item }}"
-  with_items: xs_vms.keys()
+  with_items: "{{ xs_vms.keys() }}"
   when: xs_vms[item]['power_state'] == "Running"
 
 TASK: [Print running VMs] ***********************************************************

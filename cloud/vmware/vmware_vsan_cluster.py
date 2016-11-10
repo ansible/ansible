@@ -61,7 +61,7 @@ EXAMPLES = '''
          username: "{{ esxi_username }}"
          password: "{{ site_password }}"
          cluster_uuid: "{{ vsan_cluster.cluster_uuid }}"
-      with_items: groups['esxi'][1:]
+      with_items: "{{ groups['esxi'][1:] }}"
 
 '''
 

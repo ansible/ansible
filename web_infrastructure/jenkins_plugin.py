@@ -218,7 +218,7 @@ EXAMPLES = '''
       register: my_jenkins_plugin_unversioned
       when: >
         'version' not in item.value
-      with_dict: my_jenkins_plugins
+      with_dict: "{{ my_jenkins_plugins }}"
 
     - name: Install plugins with a specific version
       jenkins_plugin:
@@ -227,7 +227,7 @@ EXAMPLES = '''
       register: my_jenkins_plugin_versioned
       when: >
         'version' in item.value
-      with_dict: my_jenkins_plugins
+      with_dict: "{{ my_jenkins_plugins }}"
 
     - name: Initiate the fact
       set_fact:
@@ -237,13 +237,13 @@ EXAMPLES = '''
       set_fact:
         jenkins_restart_required: yes
       when: item.changed
-      with_items: my_jenkins_plugin_versioned.results
+      with_items: "{{ my_jenkins_plugin_versioned.results }}"
 
     - name: Check if restart is required by any of the unversioned plugins
       set_fact:
         jenkins_restart_required: yes
       when: item.changed
-      with_items: my_jenkins_plugin_unversioned.results
+      with_items: "{{ my_jenkins_plugin_unversioned.results }}"
 
     - name: Restart Jenkins if required
       service:
@@ -276,7 +276,7 @@ EXAMPLES = '''
         state: "{{ 'pinned' if item.value['pinned'] else 'unpinned'}}"
       when: >
         'pinned' in item.value
-      with_dict: my_jenkins_plugins
+      with_dict: "{{ my_jenkins_plugins }}"
 
     - name: Plugin enabling
       jenkins_plugin:
@@ -284,7 +284,7 @@ EXAMPLES = '''
         state: "{{ 'enabled' if item.value['enabled'] else 'disabled'}}"
       when: >
         'enabled' in item.value
-      with_dict: my_jenkins_plugins
+      with_dict: "{{ my_jenkins_plugins }}"
 '''
 
 RETURN = '''

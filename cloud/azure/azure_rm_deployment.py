@@ -159,7 +159,7 @@ EXAMPLES = '''
 
     - name: Add new instance to host group
       add_host: hostname={{ item['ips'][0].public_ip }} groupname=azure_vms
-      with_items: azure.deployment.instances
+      with_items: "{{ azure.deployment.instances }}"
 
     - hosts: azure_vms
       user: devopscle
