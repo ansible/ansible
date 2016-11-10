@@ -202,8 +202,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                res = self.poll_job(res, 'ipaddress')
-            ip_address = res
+                ip_address = self.poll_job(res, 'ipaddress')
         return ip_address
 
 
