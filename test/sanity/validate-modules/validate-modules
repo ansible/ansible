@@ -203,7 +203,7 @@ class ModuleValidator(Validator):
         for line_no, line in enumerate(self.text.splitlines()):
             typekeyword = TYPE_REGEX.match(line)
             if typekeyword:
-                self.errors.append('type() found on line %d. Use isinstance() instead' % (line_no + 1))
+                self.errors.append('Type comparison using type() found on line %d. Use isinstance() instead' % (line_no + 1))
 
     def _check_for_sys_exit(self):
         if 'sys.exit(' in self.text:
