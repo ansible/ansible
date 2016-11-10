@@ -216,7 +216,7 @@ Note that jinja2 already provides some like abs() and round().
 JSON Query Filter
 -----------------
 
-Sometimes you end up with complex data structure in JSON format and you need to extract only a small set of data within it. A **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
 
 .. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
@@ -252,7 +252,7 @@ To extract all clusters from this structure, you can use the following query::
       debug: var=item
       with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
 
-Same things for all server names::
+Same thing for all server names::
 
     - name: "Display all server names"
       debug: var=item
@@ -266,7 +266,7 @@ This example shows ports from cluster1::
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
-.. note:: You must use a variable in order to use quotes in your query.
+.. note:: You can use a variable to make the query more readable.
 
 In this example, we get a hash map with all ports and names of a cluster::
 
