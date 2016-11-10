@@ -142,7 +142,7 @@ task:
     name: jdavila
     state: update
     groups: "{{ item.created_group.group_name }}"
-  with_items: new_groups.results
+  with_items: "{{ new_groups.results }}"
 
 # Example of role with custom trust policy for Lambda service
 - name: Create IAM role with custom trust relationship

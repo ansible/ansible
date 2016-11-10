@@ -171,7 +171,7 @@ cl_bond:
   mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork|default('no') }}"
   mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
   mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
-with_dict: cl_bonds
+with_dict: "{{ cl_bonds }}"
 notify: reload networking
 
 # In vars file

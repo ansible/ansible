@@ -92,7 +92,7 @@ task:
     policy_name: "READ-ONLY"
     policy_document: readonlypolicy.json
     state: present
-  with_items: new_groups.results
+  with_items: "{{ new_groups.results }}"
 
 # Create a new S3 policy with prefix per user
 tasks:

@@ -95,7 +95,7 @@ post_tasks:
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
-    with_items: ec2_elbs
+    with_items: "{{ ec2_elbs }}"
 """
 
 import time

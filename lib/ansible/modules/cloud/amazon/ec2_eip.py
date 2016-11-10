@@ -107,7 +107,7 @@ EXAMPLES = '''
   register: ec2
 - name: associate new elastic IPs with each of the instances
   ec2_eip: "device_id={{ item }}"
-  with_items: ec2.instance_ids
+  with_items: "{{ ec2.instance_ids }}"
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip: region=us-west-2 in_vpc=yes
   register: eip
