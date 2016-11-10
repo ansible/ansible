@@ -427,6 +427,16 @@ def _network_args(module, cloud):
     return args
 
 
+def _parse_meta(meta):
+    if isinstance(meta, str):
+        metas = {}
+        for kv_str in meta.split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        return metas
+    return meta
+
+
 def _delete_server(module, cloud):
     try:
         cloud.delete_server(
@@ -459,12 +469,7 @@ def _create_server(module, cloud):
 
     nics = _network_args(module, cloud)
 
-    if isinstance(module.params['meta'], str):
-        metas = {}
-        for kv_str in module.params['meta'].split(","):
-            k, v = kv_str.split("=")
-            metas[k] = v
-        module.params['meta'] = metas
+    module.params['meta'] = _parse_meta(module.params['meta'])
 
     bootkwargs = dict(
         name=module.params['name'],
@@ -500,12 +505,7 @@ def _create_server(module, cloud):
 def _update_server(module, cloud, server):
     changed = False
 
-    if type(module.params['meta']) is str:
-        metas = {}
-        for kv_str in module.params['meta'].split(","):
-            k, v = kv_str.split("=")
-            metas[k] = v
-        module.params['meta'] = metas
+    module.params['meta'] = _parse_meta(module.params['meta'])
 
     # cloud.set_server_metadata only updates the key=value pairs, it doesn't
     # touch existing ones
