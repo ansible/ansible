@@ -311,8 +311,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
 
 # Create an ELB with load balancer stickiness enabled
 - local_action:
@@ -325,8 +325,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     stickiness:
       type: loadbalancer
       enabled: yes
@@ -343,8 +343,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     stickiness:
       type: application
       enabled: yes
@@ -361,8 +361,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     tags:
       Name: "New ELB"
       stack: "production"
@@ -379,8 +379,8 @@ EXAMPLES = """
       - us-east-1d
     listeners:
       - protocol: http
-      - load_balancer_port: 80
-      - instance_port: 80
+        load_balancer_port: 80
+        instance_port: 80
     tags: {}
 """
 
