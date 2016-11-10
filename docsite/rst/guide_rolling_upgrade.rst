@@ -209,12 +209,12 @@ Here is the next part of the update play::
   - name: disable nagios alerts for this host webserver service
     nagios: action=disable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
-    with_items: groups.monitoring
+    with_items: "{{ groups.monitoring }}"
 
   - name: disable the server in haproxy
     shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
-    with_items: groups.lbservers
+    with_items: "{{ groups.lbservers }}"
 
 The ``pre_tasks`` keyword just lets you list tasks to run before the roles are called. This will make more sense in a minute. If you look at the names of these tasks, you can see that we are disabling Nagios alerts and then removing the webserver that we are currently updating from the HAProxy load balancing pool.
 
@@ -235,12 +235,12 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
   - name: Enable the server in haproxy
     shell: echo "enable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
-    with_items: groups.lbservers
+    with_items: "{{ groups.lbservers }}"
 
   - name: re-enable nagios alerts
     nagios: action=enable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
-    with_items: groups.monitoring
+    with_items: "{{ groups.monitoring }}"
 
 Again, if you were using a Netscaler or F5 or Elastic Load Balancer, you would just substitute in the appropriate modules instead.
 
