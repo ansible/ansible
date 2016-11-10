@@ -2,7 +2,7 @@
 Ansible by Red Hat,  Core 2.3
 ****************
 **********************
-Target: February/April 2017
+Target: February/March 2017
 **********************
 
 **General Comments from the Core Team:**  The 2.3 Ansible Core is just a little different than the past two major releases we've done.  In addition to feature work, we're using part of the time for this release to reduce some of our backlog in other areas than pure development.
