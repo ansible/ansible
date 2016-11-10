@@ -27,8 +27,8 @@ Sometimes, though, you want to continue on.  To do so, write a task that looks l
 
 Note that the above system only governs the return value of failure of the particular task,
 so if you have an undefined variable used or a syntax error, it will still raise an error that users will need to address.
-Neither will this prevent failures on connection or execution issues.
-This feature only works when  the task must be able to run and return a value of 'failed'.
+Note that this will not prevent failures on connection or execution issues.
+This feature only works when the task must be able to run and return a value of 'failed'.
 
 .. _resetting_unreachable:
 
