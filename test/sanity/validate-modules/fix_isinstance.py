@@ -9,7 +9,9 @@ import sys
 import subprocess
 import tempfile
 
+# basic matcher for instances of type()
 TYPE_REGEX = re.compile(r'.*\stype\(.*')
+# each of these regexes identifies the different possible operators
 r1 = re.compile(r'.*\stype\(.*\)\s+is\s+(int|bool|str|dict|list|tuple|MethodType|vim\..*):')
 r2 = re.compile(r'.*\stype\(.*\)\s+is\snot\s+(int|bool|str|dict|list|tuple|MethodType|vim\..*):')
 r3 = re.compile(r'.*\stype\(.*\)\s+==\s+(int|bool|str|dict|list|tuple|MethodType|vim\..*):')
@@ -56,6 +58,7 @@ def create_fix(rawtext, oldfile, newfile):
     #        module.fail_json(msg='Invalid rule parameter type [%s].' % type(rule))
     #     p = type('Params', (), module.params)
 
+    # Match each different operator and split the components accordingly
     diff = None
     lines = [x for x in rawtext.split('\n')]
     for idx,x in enumerate(lines):
@@ -106,6 +109,7 @@ def create_fix(rawtext, oldfile, newfile):
             if x2:
                 lines[idx] = x2
 
+    # Create a patch with the new revisions
     newtxt = '\n'.join(lines)
     if newtxt != rawtext:
         with open(newfile, 'wb') as f:
@@ -114,6 +118,7 @@ def create_fix(rawtext, oldfile, newfile):
         (rc, so, se) = run_command(diffcmd)
         print(str(so) + str(se))
 
+        # Copy the changed file over if the user accepts
         choice = raw_input('Does this look good? (y|n)')
         if choice == 'y':
             shutil.move(newfile, oldfile)
