@@ -175,6 +175,7 @@ class Facts(object):
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
+            self.get_apparmor_facts()
             self.get_caps_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
@@ -467,6 +468,13 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except (AttributeError,OSError):
                 self.facts['selinux']['type'] = 'unknown'
+
+    def get_apparmor_facts(self):
+        self.facts['apparmor'] = {}
+        if os.path.exists('/sys/kernel/security/apparmor'):
+             self.facts['apparmor']['status'] = 'enabled'
+        else:
+             self.facts['apparmor']['status'] = 'disabled'
 
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
