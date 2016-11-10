@@ -101,6 +101,9 @@ class CallbackBase:
         if C.COMMAND_WARNINGS and 'warnings' in res and res['warnings']:
             for warning in res['warnings']:
                 self._display.warning(warning)
+        if 'deprecation_warnings' in res and res['deprecation_warnings']:
+            for warning in res['deprecation_warnings']:
+                self._display.deprecated(msg=warning)
 
     def _get_diff(self, difflist):
 
