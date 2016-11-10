@@ -37,7 +37,7 @@ EXAMPLES = '''
  
  - name: Print each switch/port
    debug: msg="{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifalias'] }}
-   with_items: lldp.keys()
+   with_items: "{{ lldp.keys() }}"
 
 # TASK: [Print each switch/port] ***********************************************************
 # ok: [10.13.0.22] => (item=eth2) => {"item": "eth2", "msg": "switch1.example.com / Gi0/24"}

@@ -78,7 +78,7 @@ EXAMPLES = '''
 
 - name: Add the 'discard' option to any existing options for all devices
   crypttab: name={{ item.device }} state=opts_present opts=discard
-  with_items: ansible_mounts
+  with_items: "{{ ansible_mounts }}"
   when: '/dev/mapper/luks-' in {{ item.device }}
 '''
 
