@@ -97,7 +97,7 @@ EXAMPLES = '''
 
 # Gather information about network managed by 'libvirt' remotely using uri
 - virt_net: command=info uri='{{ item }}'
-  with_items: libvirt_uris
+  with_items: "{{ libvirt_uris }}"
   register: networks
 
 # Ensure that a network is active (needs to be defined and built first)

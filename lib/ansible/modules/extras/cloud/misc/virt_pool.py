@@ -108,7 +108,7 @@ EXAMPLES = '''
 
 # Gather information about pools managed by 'libvirt' remotely using uri
 - virt_pool: command=info uri='{{ item }}'
-  with_items: libvirt_uris
+  with_items: "{{ libvirt_uris }}"
   register: storage_pools
 
 # Ensure that a pool is active (needs to be defined and built first)
