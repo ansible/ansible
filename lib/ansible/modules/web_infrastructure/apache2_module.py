@@ -85,6 +85,7 @@ def _get_ctl_binary(module):
 def _module_is_enabled(module):
     control_binary = _get_ctl_binary(module)
     name = module.params['name']
+    state = module.params['state']
 
     result, stdout, stderr = module.run_command("%s -M" % control_binary)
 
@@ -97,11 +98,15 @@ def _module_is_enabled(module):
     if result != 0:
         if not ('AH00534' in stderr and 'mpm_' in name):
             module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
+        else:
+            if state == 'absent':
+                msg = "No MPM module loaded! apache2 reload AND other module actions will fail if no MPM module is loaded immediatly."
+                return (False, [msg])
 
     if re.search(r' ' + name + r'_module', stdout):
-        return True
+        return (True, [])
     else:
-        return False
+        return (False, [])
 
 def _set_state(module, state):
     name = module.params['name']
@@ -112,7 +117,8 @@ def _set_state(module, state):
     a2mod_binary = {'present': 'a2enmod', 'absent': 'a2dismod'}[state]
     success_msg = "Module %s %s" % (name, state_string)
 
-    if _module_is_enabled(module) != want_enabled:
+    (is_enabled, warnings) = _module_is_enabled(module)
+    if is_enabled != want_enabled:
         if module.check_mode:
             module.exit_json(changed = True, result = success_msg)
 
@@ -126,12 +132,13 @@ def _set_state(module, state):
 
         result, stdout, stderr = module.run_command("%s %s" % (a2mod_binary, name))
 
-        if _module_is_enabled(module) == want_enabled:
-            module.exit_json(changed = True, result = success_msg)
+        (is_enabled, warnings) = _module_is_enabled(module)
+        if is_enabled == want_enabled:
+            module.exit_json(changed = True, result = success_msg, warnings = warnings)
         else:
             module.fail_json(msg="Failed to set module %s to %s: %s" % (name, state_string, stdout), rc=result, stdout=stdout, stderr=stderr)
     else:
-        module.exit_json(changed = False, result = success_msg)
+        module.exit_json(changed = False, result = success_msg, warnings = warnings)
 
 def main():
     module = AnsibleModule(
