@@ -226,6 +226,8 @@ class IPAClient:
                 if isinstance(result, list):
                     if len(result) > 0:
                         return result[0]
+                    else:
+                        return {}
             return result
         return None
 
@@ -348,7 +350,8 @@ def modify_if_diff(module, name, ipa_list, module_list, add_method, remove_metho
 def category_changed(module, client, category_name, ipa_sudorule):
     if ipa_sudorule.get(category_name, None) == ['all']:
         if not module.check_mode:
-            client.sudorule_mod(name=ipa_sudorule.get('cn'), item={category_name: None})
+            # cn is returned as list even with only a single value.
+            client.sudorule_mod(name=ipa_sudorule.get('cn')[0], item={category_name: None})
         return True
     return False
 
