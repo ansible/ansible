@@ -58,13 +58,21 @@ requirements: [ update-alternatives ]
 
 EXAMPLES = '''
 - name: correct java version selected
-  alternatives: name=java path=/usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
 
 - name: alternatives link created
-  alternatives: name=hadoop-conf link=/etc/hadoop/conf path=/etc/hadoop/conf.ansible
+  alternatives:
+    name: hadoop-conf
+    link: /etc/hadoop/conf
+    path: /etc/hadoop/conf.ansible
 
 - name: make java 32 bit an alternative with low priority
-  alternatives: name=java path=/usr/lib/jvm/java-7-openjdk-i386/jre/bin/java priority=-10
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-7-openjdk-i386/jre/bin/java
+    priority: -10
 '''
 
 import re
@@ -154,5 +162,5 @@ def main():
     else:
         module.exit_json(changed=False)
 
-
-main()
+if __name__ == '__main__':
+    main()
