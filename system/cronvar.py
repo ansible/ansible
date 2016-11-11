@@ -89,15 +89,22 @@ author: "Doug Luce (@dougluce)"
 EXAMPLES = '''
 # Ensure a variable exists.
 # Creates an entry like "EMAIL=doug@ansibmod.con.com"
-- cronvar: name="EMAIL" value="doug@ansibmod.con.com"
+- cronvar:
+    name: EMAIL
+    value: doug@ansibmod.con.com
 
 # Make sure a variable is gone.  This will remove any variable named
 # "LEGACY"
-- cronvar: name="LEGACY" state=absent
+- cronvar:
+    name: LEGACY
+    state: absent
 
 # Adds a variable to a file under /etc/cron.d
-- cronvar: name="LOGFILE" value="/var/log/yum-autoupdate.log"
-        user="root" cron_file=ansible_yum-autoupdate
+- cronvar:
+    name: LOGFILE
+    value: /var/log/yum-autoupdate.log
+    user: root
+    cron_file: ansible_yum-autoupdate
 '''
 
 import os
