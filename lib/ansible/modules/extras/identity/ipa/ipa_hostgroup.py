@@ -187,6 +187,8 @@ class IPAClient:
                 if isinstance(result, list):
                     if len(result) > 0:
                         return result[0]
+                    else:
+                        return {}
             return result
         return None
 
@@ -285,11 +287,13 @@ def ensure(module, client):
                     client.hostgroup_mod(name=name, item=data)
 
         if host is not None:
-            changed = modify_if_diff(module, name, ipa_hostgroup.get('member_host', []), host,
+            changed = modify_if_diff(module, name, ipa_hostgroup.get('member_host', []),
+                                     [item.lower() for item in host],
                                      client.hostgroup_add_host, client.hostgroup_remove_host) or changed
 
         if hostgroup is not None:
-            changed = modify_if_diff(module, name, ipa_hostgroup.get('member_hostgroup', []), hostgroup,
+            changed = modify_if_diff(module, name, ipa_hostgroup.get('member_hostgroup', []),
+                                     [item.lower() for item in hostgroup],
                                      client.hostgroup_add_hostgroup, client.hostgroup_remove_hostgroup) or changed
 
     else:

@@ -174,6 +174,8 @@ class IPAClient:
                 if isinstance(result, list):
                     if len(result) > 0:
                         return result[0]
+                    else:
+                        return {}
             return result
         return None
 
