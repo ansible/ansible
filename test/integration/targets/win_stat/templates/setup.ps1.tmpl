@@ -1,0 +1,117 @@
+$parent_folder = '{{win_output_dir}}\win_stat'
+$text = "abc"
+$base_date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
+$adate = $base_date
+$mdate = $base_date
+$cdate = $base_date
+
+$objects = @(
+    @{'type'='folder'; 'path'="$parent_folder\folder"}
+    @{'type'='folder'; 'path'="$parent_folder\folder space"}
+    @{'type'='folder'; 'path'="$parent_folder\nested"}
+    @{'type'='folder'; 'path'="$parent_folder\nested\nested"}
+    @{'type'='folder'; 'path'="$parent_folder\shared"; "shared"="folder-share"}
+    @{'type'='folder'; 'path'="$parent_folder\hidden"; "hidden"=$true}
+    @{'type'='folder'; 'path'="$parent_folder\link-dest"}
+    @{'type'='folder'; 'path'="$parent_folder\junction-dest"}
+    @{'type'='file'; 'path'="$parent_folder\nested\file.ps1"; 'text'=$text}
+    @{'type'='file'; 'path'="$parent_folder\nested\read-only.ps1"; 'text'=$text; "readonly"=$true}
+    @{'type'='file'; 'path'="$parent_folder\nested\archive.ps1"; 'text'=$text; "archive"=$true}
+    @{'type'='file'; 'path'="$parent_folder\nested\hidden.ps1"; 'text'=$text; "hidden"=$true}
+    @{'type'='file'; 'path'="$parent_folder\nested\nested\file.ps1"; 'text'=$text}
+    @{'type'='file'; 'path'="$parent_folder\folder space\file.ps1"; 'text'=$text}
+    @{'type'='link'; 'path'="$parent_folder\link"; 'target'="$parent_folder\link-dest"; 'link_type'='soft'},
+    @{'type'='link'; 'path'="$parent_folder\nested\hard-link.ps1"; 'target'="$parent_folder\nested\file.ps1"; 'link_type'='hard'},
+    @{'type'='link'; 'path'="$parent_folder\junction-link"; 'target'="$parent_folder\junction-dest"; 'link_type'='junction'}
+)
+
+Function Create-Folder($path) {
+    New-Item -Path $path -ItemType Directory | Out-Null
+    $folder = Get-Item -Path $path
+}
+
+Function Create-File($path, $text) {
+    New-Item -Path $path -ItemType File | Out-Null
+    Set-Content -Path $path -Value $text | Out-Null
+    $file = Get-Item -Path $path
+}
+
+Function Create-Link($path, $target, $type) {
+    If (Test-Path $path) {
+        cmd.exe /c rmdir $path        
+    }
+
+    If ($type -eq 'soft') {
+        cmd.exe /c mklink /D $path $target
+    } ElseIf ($type -eq 'hard') {
+        cmd.exe /c mklink /H $path $target
+    } ElseIf ($type -eq 'junction') {
+        cmd.exe /c mklink /J $path $target
+    }
+}
+
+Function Delete($file) {
+    $filepath = $file.FullName
+    If ( $file.Attributes.ToString().contains("ReparsePoint") ) {
+        cmd.exe /c rmdir $filepath
+    } ElseIf ( $file.PsIsContainer ) {
+        Delete-Directory -directory $filepath | Out-Null
+    } Else {
+        Remove-Item -Force $filepath | Out-Null
+    }
+}
+
+Function Delete-Directory($directory) {
+    ForEach ( $file in Get-ChildItem $directory ) {
+        Delete -file $file
+    }
+    Remove-Item -Recurse -Force $directory | Out-Null
+}
+
+If (Test-Path $parent_folder) {
+    Delete-Directory -directory $parent_folder
+}
+
+foreach ($object in $objects) {
+    If ($object.type -eq 'folder') {
+        Create-Folder -path $object.path
+        If ($object.shared -ne $null) {
+            Remove-SmbShare -Force -Name $object.shared -ErrorAction 'SilentlyContinue' | Out-Null
+            New-SmbShare -Name $object.shared -Path $object.path | Out-Null
+        }
+    } ElseIf ($object.type -eq 'file') {
+        Create-File -path $object.path -text $object.text
+    } ElseIf ($object.type -eq 'link') {
+        Create-Link -path $object.path -target $object.target -type $object.link_type
+    }
+
+
+    If ($object.type -eq 'folder' -or $object.type -eq 'file') {
+        $attributes = ((Get-Item $object.path).Attributes) -split ','
+        If ($object.hidden -ne $null -and $attributes -notcontains 'Hidden') {
+            $attributes += 'Hidden'
+        }
+        If ($object.readonly -ne $null -and $attributes -notcontains 'ReadOnly') {
+            $attributes += 'ReadOnly'
+        }
+        If ($object.archive -ne $null -and $attributes -notcontains 'Archive') {
+            $attributes += 'Archive'
+        }
+
+        (Get-Item $object.path).Attributes = ($attributes -join ',')
+    }
+}
+
+foreach ($file in (Get-ChildItem -Path $parent_folder -Recurse -Force)) {
+    If ($file.Attributes -like '*ReadOnly*') {
+        Set-ItemProperty $file.FullName -Name IsReadOnly -Value $false
+        $file.CreationTime = $cdate
+        $file.LastAccessTime = $adate
+        $file.LastWriteTime = $mdate
+        Set-ItemProperty $file.FullName -Name IsReadOnly -Value $true       
+    } ElseIf ($file.Attributes -notlike '*ReparsePoint*') {
+        $file.CreationTime = $cdate
+        $file.LastAccessTime = $adate
+        $file.LastWriteTime = $mdate
+    }
+}
