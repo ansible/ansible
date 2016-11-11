@@ -159,7 +159,7 @@ options:
     required: False
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
-    version_added: "2.2"
+    version_added: "2.3"
 extends_documentation_fragment:
     - aws
     - ec2
