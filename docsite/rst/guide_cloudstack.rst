@@ -101,7 +101,7 @@ Environment Variables
 `````````````````````
 .. versionadded:: 2.3
 
-Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``) and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
+Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``), VPC (``CLOUDSTACK_VPC``) and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
 
 Below you see an example how it can be used in combination with Ansible's block feature:
 
