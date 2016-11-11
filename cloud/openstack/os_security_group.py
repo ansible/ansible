@@ -53,17 +53,17 @@ options:
 EXAMPLES = '''
 # Create a security group
 - os_security_group:
-    cloud=mordred
-    state=present
-    name=foo
-    description=security group for foo servers
+    cloud: mordred
+    state: present
+    name: foo
+    description: security group for foo servers
 
 # Update the existing 'foo' security group description
 - os_security_group:
-    cloud=mordred
-    state=present
-    name=foo
-    description=updated description for the foo security group
+    cloud: mordred
+    state: present
+    name: foo
+    description: updated description for the foo security group
 '''
 
 
