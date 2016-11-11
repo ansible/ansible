@@ -11,6 +11,7 @@ Ansible Changes By Release
 * Fix for include_vars only loading files with .yml, .yaml, and .json
   extensions.  This was only supposed to apply to loading a directory of vars
   files.
+* Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
