@@ -81,10 +81,10 @@ options:
   create:
      required: false
      choices: [ "yes", "no" ]
-     default: "no"
+     default: "yes"
      description:
-       - If specified, the file will be created if it does not already exist.
-         By default it will fail if the file is missing.
+       - If set to 'no', the module will fail if the file does not already exist.
+         By default it will create the file if it is missing.
      version_added: "2.2"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
@@ -253,7 +253,7 @@ def main():
             backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent']),
             no_extra_spaces = dict(required=False, default=False, type='bool'),
-            create=dict(default=False, type='bool')
+            create=dict(default=True, type='bool')
         ),
         add_file_common_args = True,
         supports_check_mode = True
