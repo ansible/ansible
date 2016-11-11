@@ -2,7 +2,7 @@
 Ansible by Red Hat,  Core 2.3
 ****************
 **********************
-Target: February - April 2017
+Target: February/March 2017
 **********************
 
 - **General Comments from the Core Team**
