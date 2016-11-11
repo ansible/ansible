@@ -92,10 +92,14 @@ author: "Ansible Core Team"
 
 EXAMPLES = '''
 # Example using key data from a local file on the management machine
-- authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+- authorized_key:
+    user: charlie
+    key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
 # Using github url as key source
-- authorized_key: user=charlie key=https://github.com/charlie.keys
+- authorized_key:
+    user: charlie
+    key: https://github.com/charlie.keys
 
 # Using alternate directory locations:
 - authorized_key:
@@ -114,19 +118,28 @@ EXAMPLES = '''
 # Using key_options:
 - authorized_key:
     user: charlie
-    key:  "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+    key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
 # Using validate_certs:
-- authorized_key: user=charlie key=https://github.com/user.keys validate_certs=no
+- authorized_key:
+    user: charlie
+    key: https://github.com/user.keys
+    validate_certs: no
 
 # Set up authorized_keys exclusively with one key
-- authorized_key: user=root key="{{ item }}" state=present exclusive=yes
+- authorized_key:
+    user: root
+    key: '{{ item }}'
+    state: present
+    exclusive: yes
   with_file:
     - public_keys/doe-jane
 
 # Copies the key from the user who is running ansible to the remote machine user ubuntu
-- authorized_key: user=ubuntu key="{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+- authorized_key:
+    user: ubuntu
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
   become: yes
 
 '''
