@@ -55,10 +55,16 @@ author: "Nate Coraor (@natefoo)"
 
 EXAMPLES = '''
 # Set cap_sys_chroot+ep on /foo
-- capabilities: path=/foo capability=cap_sys_chroot+ep state=present
+- capabilities:
+    path: /foo
+    capability: cap_sys_chroot+ep
+    state: present
 
 # Remove cap_net_bind_service from /bar
-- capabilities: path=/bar capability=cap_net_bind_service state=absent
+- capabilities:
+    path: /bar
+    capability: cap_net_bind_service
+    state: absent
 '''
 
 
