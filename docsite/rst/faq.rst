@@ -281,10 +281,10 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 
 .. _commercial_support:
 
-Can I get training on Ansible or find commercial support?
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Can I get training on Ansible?
+++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <http://www.ansible.com/services>`_ for information on our services and training offerings. Support is also included with :doc:`tower`. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <http://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
 We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
