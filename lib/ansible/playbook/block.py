@@ -56,6 +56,9 @@ class Block(Base, Become, Conditional, Taggable):
 
         super(Block, self).__init__()
 
+    def __repr__(self):
+        return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
+
     def get_vars(self):
         '''
         Blocks do not store variables directly, however they may be a member
@@ -254,17 +257,6 @@ class Block(Base, Become, Conditional, Taggable):
             p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
-
-    def evaluate_conditional(self, templar, all_vars):
-        dep_chain = self.get_dep_chain()
-        if dep_chain:
-            for dep in dep_chain:
-                if not dep.evaluate_conditional(templar, all_vars):
-                    return False
-        if self._parent is not None:
-            if not self._parent.evaluate_conditional(templar, all_vars):
-                return False
-        return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
         self._loader = loader

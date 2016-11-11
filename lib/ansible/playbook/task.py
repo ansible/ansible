@@ -376,12 +376,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).deserialize(data)
 
-    def evaluate_conditional(self, templar, all_vars):
-        if self._parent is not None:
-            if not self._parent.evaluate_conditional(templar, all_vars):
-                return False
-        return super(Task, self).evaluate_conditional(templar, all_vars)
-
     def set_loader(self, loader):
         '''
         Sets the loader on this object and recursively on parent, child objects.
