@@ -64,13 +64,22 @@ author: "Richard Isaacson (@risaacson)"
 
 EXAMPLES = '''
 # Schedule a command to execute in 20 minutes as root.
-- at: command="ls -d / > /dev/null" count=20 units="minutes"
+- at:
+    command: "ls -d / > /dev/null"
+    count: 20
+    units: minutes
 
 # Match a command to an existing job and delete the job.
-- at: command="ls -d / > /dev/null" state="absent"
+- at:
+    command: "ls -d / > /dev/null"
+    state: absent
 
 # Schedule a command to execute in 20 minutes making sure it is unique in the queue.
-- at: command="ls -d / > /dev/null" unique=true count=20 units="minutes"
+- at:
+    command: "ls -d / > /dev/null"
+    unique: true
+    count: 20
+    units: minutes
 '''
 
 import os
