@@ -82,6 +82,10 @@ Ansible Changes By Release
   * All functionality from *_template network modules have been combined into *_config module
   * Network *_command modules not longer allow configuration mode statements
 
+
+####New Filters:
+* crc32
+
 ####New Modules:
 - apache2_mod_proxy
 - asa

@@ -110,3 +110,7 @@
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
 
+- name: Test crc32 filter
+  assert:
+    that:
+      - "'ansible_crc32_test_string' | crc32 == 2593132251"
