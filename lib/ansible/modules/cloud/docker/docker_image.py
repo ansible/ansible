@@ -224,7 +224,6 @@ EXAMPLES = '''
     tag: v1
     push: yes
     load_path: my_sinatra.tar
-    push: True
 
 - name: Build image and with buildargs
    docker_image:
