@@ -204,7 +204,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            required_if=[
-                               ('state', 'present', ['bgp_arn'])
+                               ('state', 'present', ['bgp_asn'])
                            ]
                            )
 
