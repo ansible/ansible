@@ -185,7 +185,7 @@ EXAMPLES = '''
       service_name: nginx
       service_port: 80
       interval: 60s
-      http: /status
+      http: "http://localhost:80/status"
 
   - name: register external service nginx available at 10.1.5.23
     consul:
@@ -212,6 +212,14 @@ EXAMPLES = '''
       check_id: disk_usage
       script: "/opt/disk_usage.py"
       interval: 5m
+
+  - name: register an http check against a service that's already registered
+    consul:
+      check_name: nginx-check2
+      check_id: nginx-check2
+      service_id: nginx
+      interval: 60s
+      http: "http://localhost:80/morestatus"
 
 '''
 
@@ -265,7 +273,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name:
+    if not check.name and not service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -278,7 +286,8 @@ def add_check(module, check):
                      interval=check.interval,
                      ttl=check.ttl,
                      http=check.http,
-                     timeout=check.timeout)
+                     timeout=check.timeout,
+                     service_id=check.service_id)
 
 
 def remove_check(module, check_id):
@@ -363,7 +372,8 @@ def parse_check(module):
             module.params.get('ttl'),
             module.params.get('notes'),
             module.params.get('http'),
-            module.params.get('timeout')
+            module.params.get('timeout'),
+            module.params.get('service_id'),
         )
 
 
@@ -451,10 +461,11 @@ class  ConsulService():
 class ConsulCheck():
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None):
+                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
+        self.service_id = service_id
         self.notes = notes
         self.node = node
         self.host = host
@@ -488,13 +499,14 @@ class ConsulCheck():
         return duration
 
     def register(self, consul_api):
-        consul_api.agent.check.register(self.name, check_id=self.check_id,
+        consul_api.agent.check.register(self.name, check_id=self.check_id, service_id=self.service_id,
                                         notes=self.notes,
                                         check=self.check)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.check_id == other.check_id
+                and self.service_id == other.service_id
                 and self.name == other.name
                 and self.script == script
                 and self.interval == interval)
@@ -514,6 +526,7 @@ class ConsulCheck():
         self._add(data, 'ttl')
         self._add(data, 'http')
         self._add(data, 'timeout')
+        self._add(data, 'service_id')
         return data
 
     def _add(self, data, key, attr=None):
