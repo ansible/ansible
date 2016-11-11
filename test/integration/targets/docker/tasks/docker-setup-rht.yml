@@ -14,4 +14,3 @@
     state: present
     name: nc
   when: ansible_distribution != 'Fedora' and (ansible_os_family == 'RedHat' and ansible_distribution_version|version_compare(7, '<'))
-
