@@ -42,11 +42,12 @@ options:
 EXAMPLES = '''
 
 # Upgrade the atomic host platform to the latest version (atomic host upgrade)
-- atomic_host: revision=latest
+- atomic_host:
+    revision: latest
 
 # Deploy a specific revision as the atomic host (atomic host deploy 23.130)
-- atomic_host: revision=23.130
-
+- atomic_host:
+    revision: 23.130
 '''
 
 RETURN = '''
