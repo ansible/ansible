@@ -27,4 +27,24 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# This file is a placeholder for common code for the future split 'service' modules.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+import os
+import glob
+
+def sysv_is_enabled(name):
+    return bool(glob.glob('/etc/rc?.d/S??%s' % name))
+
+def get_sysv_script(name):
+
+    if name.startswith('/'):
+        result = name
+    else:
+        result = '/etc/init.d/%s' % name
+
+    return result
+
+def sysv_exists(name):
+    return os.path.exists(get_sysv_script(name))
+
