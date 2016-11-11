@@ -51,6 +51,17 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [ value ])
 
+    def _get_attr_when(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        when = self._attributes['when']
+        if when is None:
+            when = []
+        if hasattr(self, '_get_parent_attribute'):
+            when = self._get_parent_attribute('when', extend=True)
+        return when
+
     def evaluate_conditional(self, templar, all_vars):
         '''
         Loops through the conditionals set on this object, returning

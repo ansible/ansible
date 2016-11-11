@@ -654,6 +654,7 @@ class StrategyBase:
                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
+
             ti_copy.vars = temp_vars
 
             block_list = load_list_of_blocks(
