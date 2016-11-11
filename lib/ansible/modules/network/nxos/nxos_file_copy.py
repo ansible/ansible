@@ -88,6 +88,7 @@ import os
 from scp import SCPClient
 import paramiko
 import time
+import hashlib
 
 # COMMON CODE FOR MIGRATION
 import re
@@ -290,7 +291,8 @@ def remote_file_exists(module, dst, file_system='bootflash:'):
     body = execute_show_command(command, module, command_type='cli_show_ascii')
     if 'No such file' in body[0]:
         return False
-    return True
+    else:
+        return file_already_exists(module, dst)
 
 
 def verify_remote_file_exists(module, dst, file_system='bootflash:'):
@@ -303,6 +305,35 @@ def verify_remote_file_exists(module, dst, file_system='bootflash:'):
 
 def local_file_exists(module):
     return os.path.isfile(module.params['local_file'])
+
+
+def file_already_exists(module, dst):
+    dst_hash = get_remote_md5(module, dst)
+    src_hash = get_local_md5(module)
+    if src_hash == dst_hash:
+        return True
+    return False
+
+
+def already_transfered(self):
+    return self.file_already_exists()
+
+
+def get_remote_md5(module, dst):
+    command = 'show file {0}{1} md5sum'.format(module.params['file_system'], dst)
+    md5_body = execute_show_command(command, module)
+    if md5_body:
+        return md5_body[0]['file_content_md5sum'].strip()
+
+
+def get_local_md5(module, blocksize=2**20):
+    md5 = hashlib.md5()
+    with open(module.params['local_file'], 'rb') as f:
+        buf = f.read(blocksize)
+        while buf:
+            md5.update(buf)
+            buf = f.read(blocksize)
+    return md5.hexdigest()
 
 
 def get_flash_size(module):
@@ -342,7 +373,9 @@ def transfer_file(module, dest):
     ssh.connect(
         hostname=hostname,
         username=username,
-        password=password)
+        password=password,
+        allow_agent=False,
+        look_for_keys=False)
 
     full_remote_path = '{}{}'.format(module.params['file_system'], dest)
     scp = SCPClient(ssh.get_transport())
