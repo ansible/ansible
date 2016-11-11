@@ -96,7 +96,9 @@ EXAMPLES = '''
         arn: arn:aws:lambda:us-east-1:123456789012:function:MyFunction
         input: '{"foo": "bar"}'
 
-- cloudwatchevent_rule: name=MyCronTask state=absent
+- cloudwatchevent_rule:
+    name: MyCronTask
+    state: absent
 '''
 
 RETURN = '''
