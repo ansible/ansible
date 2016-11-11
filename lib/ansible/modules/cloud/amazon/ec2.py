@@ -584,6 +584,8 @@ EXAMPLES = '''
 
 import time
 from ast import literal_eval
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import get_function_code
 
 try:
     import boto.ec2
@@ -611,7 +613,7 @@ def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
 
 def _set_none_to_blank(dictionary):
     result = dictionary
-    for k in result.iterkeys():
+    for k in result:
         if isinstance(result[k], dict):
             result[k] = _set_none_to_blank(result[k])
         elif not result[k]:
@@ -641,14 +643,14 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             for x in tags:
                 if isinstance(x, dict):
                     x = _set_none_to_blank(x)
-                    filters.update(dict(("tag:"+tn, tv) for (tn,tv) in x.iteritems()))
+                    filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(x)))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
-            filters.update(dict(("tag:"+tn, tv) for (tn,tv) in tags.iteritems()))
+            filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(tags)))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -748,7 +750,7 @@ def boto_supports_profile_name_arg(ec2):
         True if Boto library accept instance_profile_name argument, else false
     """
     run_instances_method = getattr(ec2, 'run_instances')
-    return 'instance_profile_name' in run_instances_method.func_code.co_varnames
+    return 'instance_profile_name' in get_function_code(run_instances_method).co_varnames
 
 def create_block_device(module, ec2, volume):
     # Not aware of a way to determine this programatically
@@ -798,7 +800,7 @@ def boto_supports_param_in_spot_request(ec2, param):
         True if boto library has the named param as an argument on the request_spot_instances method, else False
     """
     method = getattr(ec2, 'request_spot_instances')
-    return param in method.func_code.co_varnames
+    return param in get_function_code(method).co_varnames
 
 def await_spot_requests(module, ec2, spot_requests, count):
     """
