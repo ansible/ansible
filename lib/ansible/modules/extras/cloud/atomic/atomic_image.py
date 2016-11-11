@@ -54,7 +54,9 @@ options:
 EXAMPLES = '''
 
 # Execute the run command on rsyslog container image (atomic run rhel7/rsyslog)
-- atomic_image: name=rhel7/rsyslog state=latest
+- atomic_image:
+    name: rhel7/rsyslog
+    state: latest
 
 '''
 
