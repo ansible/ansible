@@ -56,7 +56,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
                 task_include=task_include,
                 use_handlers=use_handlers,
                 variable_manager=variable_manager,
-                loader=loader
+                loader=loader,
             )
             # Implicit blocks are created by bare tasks listed in a play without
             # an explicit block statement. If we have two implicit blocks in a row,
@@ -219,11 +219,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         task_list.append(t)
                         continue
 
+                    ti_copy = t.copy(exclude_parent=True)
+                    ti_copy._parent = block
                     included_blocks = load_list_of_blocks(
                         data,
                         play=play,
                         parent_block=None,
-                        task_include=t.copy(),
+                        task_include=ti_copy,
                         role=role,
                         use_handlers=use_handlers,
                         loader=loader,
@@ -233,12 +235,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
-                    tags = t.vars.pop('tags', [])
+                    tags = ti_copy.vars.pop('tags', [])
                     if isinstance(tags, string_types):
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if len(t.tags) > 0:
+                        if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). " \
                                 "Mixing styles in which tags are specified is prohibited for whole import hierarchy, not only for single import statement",
@@ -247,7 +249,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                     else:
-                        tags = t.tags[:]
+                        tags = ti_copy.tags[:]
 
                     # now we extend the tags on each of the included blocks
                     for b in included_blocks:
