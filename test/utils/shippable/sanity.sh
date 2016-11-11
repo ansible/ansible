@@ -29,9 +29,4 @@ else
     coverage_file="${coverage_dir}/nosetests-coverage.xml"
 
     TOX_TESTENV_PASSENV=NOSETESTS NOSETESTS="nosetests --with-xunit --xunit-file='${xunit_file}' --cover-xml --cover-xml-file='${coverage_file}'" tox
-
-    source hacking/env-setup
-    python --version
-    ansible --version
-    ansible -m ping localhost
 fi
