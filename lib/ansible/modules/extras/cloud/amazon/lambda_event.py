@@ -102,8 +102,9 @@ EXAMPLES = '''
         batch_size: 100
         starting_position: TRIM_HORIZON
 
-  - name: show source event
-    debug: var=lambda_stream_events
+  - name: Show source event
+    debug:
+      var: lambda_stream_events
 '''
 
 RETURN = '''
