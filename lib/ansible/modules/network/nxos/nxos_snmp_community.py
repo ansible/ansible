@@ -352,13 +352,17 @@ def main():
             save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
-                                required_one_of=[['access', 'group']],
                                 mutually_exclusive=[['access', 'group']],
                                 supports_check_mode=True)
 
     access = module.params['access']
     group = module.params['group']
     state = module.params['state']
+
+    if state == 'present':
+        if not group and not access:
+            module.fail_json(msg='group or access param must be '
+                                 'used when state=present')
 
     if access:
         if access == 'ro':
