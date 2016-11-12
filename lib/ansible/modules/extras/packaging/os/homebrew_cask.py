@@ -75,6 +75,8 @@ EXAMPLES = '''
 import os.path
 import re
 
+from ansible.module_utils.six import iteritems
+
 
 # exceptions -------------------------------------------------------------- {{{
 class HomebrewCaskException(Exception):
@@ -309,7 +311,7 @@ class HomebrewCask(object):
         self.message = ''
 
     def _setup_instance_vars(self, **kwargs):
-        for key, val in kwargs.iteritems():
+        for key, val in iteritems(kwargs):
             setattr(self, key, val)
 
     def _prep(self):
