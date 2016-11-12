@@ -385,6 +385,10 @@ class Templar:
         returns True if the data contains a variable pattern
         '''
         if isinstance(data, string_types):
+            # Assume that it contains variables since the user obviously wants it passed through the templating engine
+            if data.startswith(JINJA2_OVERRIDE):
+                return True
+
             for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
                 if marker in data:
                     return True
