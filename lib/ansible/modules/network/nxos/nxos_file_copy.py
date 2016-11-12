@@ -277,6 +277,8 @@ def execute_show(cmds, module, command_type=None):
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
+        if 'md5sum' in command:
+            command += ' | json'
         cmds = [command]
         body = execute_show(cmds, module)
     elif module.params['transport'] == 'nxapi':
@@ -328,11 +330,12 @@ def get_remote_md5(module, dst):
 
 def get_local_md5(module, blocksize=2**20):
     md5 = hashlib.md5()
-    with open(module.params['local_file'], 'rb') as f:
-        buf = f.read(blocksize)
-        while buf:
-            md5.update(buf)
-            buf = f.read(blocksize)
+    local_file = open(module.params['local_file'], 'rb')
+    buf = local_file.read(blocksize)
+    while buf:
+        md5.update(buf)
+        buf = local_file.read(blocksize)
+    local_file.close()
     return md5.hexdigest()
 
 
