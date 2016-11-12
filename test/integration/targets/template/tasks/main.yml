@@ -20,6 +20,10 @@
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
 
+- name: fill in a basic template with an override
+  template: src=override.j2 dest={{output_dir}}/override.templated mode=0644
+  register: template_result_override
+
 - assert: 
     that: 
         - "'changed' in template_result" 
@@ -47,17 +51,30 @@
   delegate_to: localhost
 
 - name: copy known good into place
-  copy: src=foo.txt dest={{output_dir}}/foo.txt
+  copy: src={{item}}.txt dest={{output_dir}}/{{item}}.txt
+  with_items:
+    - foo
+    - override
 
 - name: compare templated file to known good
   shell: diff -w {{output_dir}}/foo.templated {{output_dir}}/foo.txt
-  register: diff_result
+  register: diff_result_foo
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-        - 'diff_result.stdout == ""' 
-        - "diff_result.rc == 0" 
+  assert:
+    that:
+        - 'diff_result_foo.stdout == ""'
+        - "diff_result_foo.rc == 0"
+
+- name: compare templated file with override to known good
+  shell: diff -w {{output_dir}}/override.templated {{output_dir}}/override.txt
+  register: diff_result_override
+
+- name: verify templated file with override matches known good
+  assert:
+    that:
+        - 'diff_result_override.stdout == ""'
+        - "diff_result_override.rc == 0"
 
 # VERIFY MODE
 
