@@ -24,7 +24,7 @@
 DOCUMENTATION = """
 ---
 module: win_hosts
-version_added: "2.2"
+version_added: "2.3"
 short_description: Manages hosts file.
 description:
     - Manages hosts file in a windows machine
