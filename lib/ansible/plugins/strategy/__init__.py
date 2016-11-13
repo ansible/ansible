@@ -241,26 +241,32 @@ class StrategyBase:
         def search_handler_blocks(handler_name, handler_blocks):
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
-                    handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
-                    templar = Templar(loader=self._loader, variables=handler_vars)
-                    try:
-                        # first we check with the full result of get_name(), which may
-                        # include the role name (if the handler is from a role). If that
-                        # is not found, we resort to the simple name field, which doesn't
-                        # have anything extra added to it.
-                        target_handler_name = templar.template(handler_task.name)
-                        if target_handler_name == handler_name:
-                            return handler_task
-                        else:
-                            target_handler_name = templar.template(handler_task.get_name())
+                    if handler_task.name:
+                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
+                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        try:
+                            # first we check with the full result of get_name(), which may
+                            # include the role name (if the handler is from a role). If that
+                            # is not found, we resort to the simple name field, which doesn't
+                            # have anything extra added to it.
+                            target_handler_name = templar.template(handler_task.name)
                             if target_handler_name == handler_name:
                                 return handler_task
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        # We skip this handler due to the fact that it may be using
-                        # a variable in the name that was conditionally included via
-                        # set_fact or some other method, and we don't want to error
-                        # out unnecessarily
-                        continue
+                            else:
+                                target_handler_name = templar.template(handler_task.get_name())
+                                if target_handler_name == handler_name:
+                                    return handler_task
+                        except (UndefinedError, AnsibleUndefinedVariable):
+                            # We skip this handler due to the fact that it may be using
+                            # a variable in the name that was conditionally included via
+                            # set_fact or some other method, and we don't want to error
+                            # out unnecessarily
+                            continue
+                    else:
+                        # if the handler name is not set, we check via the handlers uuid.
+                        # this is mainly used by listening handlers only
+                        if handler_name == handler_task._uuid:
+                            return handler_task
             return None
 
         def parent_handler_match(target_handler, handler_name):
@@ -415,6 +421,8 @@ class StrategyBase:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
                                         if listening_handler is not None:
                                             found = True
+                                        else:
+                                            continue
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))

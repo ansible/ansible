@@ -3,6 +3,7 @@
 set -eux
 
 ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
+ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 
 [ "$(ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario2 -l A \
 | egrep -o 'RUNNING HANDLER \[test_handlers : .*?]')" = "RUNNING HANDLER [test_handlers : test handler]" ]
