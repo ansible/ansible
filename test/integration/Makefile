@@ -134,6 +134,7 @@ test_group_by: setup
 
 test_handlers:
 	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ansible-playbook test_listening_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o 'RUNNING HANDLER \[test_handlers : .*?]')" = "RUNNING HANDLER [test_handlers : test handler]" ]
 	# Not forcing, should only run on successful host
 	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]

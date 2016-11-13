@@ -1,23 +1,4 @@
 ---
-- name: run handlers
-  hosts: A
-  gather_facts: False
-  connection: local
-  roles:
-  - { role: test_handlers_meta, tags: ['scenario1'] }
-
-- name: verify final handler was run
-  hosts: A
-  gather_facts: False
-  connection: local
-  tasks:
-    - name: verify handler2 ran
-      assert: 
-        that:
-            - "not hostvars[inventory_hostname]['handler1_called']"
-            - "'handler2_called' in hostvars[inventory_hostname]"
-      tags: ['scenario1']
-
 - name: verify listening handlers
   hosts: A
   gather_facts: False
@@ -42,10 +23,3 @@
     - set_fact:
         notify_listen_ran_2: True
       listen: notify_listen
-
-- name: test handlers
-  hosts: testgroup
-  gather_facts: False
-  connection: local
-  roles:
-  - { role: test_handlers }
