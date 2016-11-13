@@ -54,16 +54,6 @@ author:
 requirements:
   - python-ldap
 options:
-  '...':
-    required: false
-    default: null
-    description:
-      - If I(state=present), all additional arguments are taken to be
-        LDAP attribute names like I(objectClass), with similar
-        lists of values. These should only be used to
-        provide the minimum attributes necessary for creating an entry;
-        existing entries are never modified. To assert specific attribute
-        values on an existing entry, see M(ldap_attr).
   bind_dn:
     required: false
     default: null
@@ -80,6 +70,13 @@ options:
     required: true
     description:
       - The DN of the entry to add or remove.
+  attributes:
+    required: false
+    default: null
+    description:
+      - If I(state=present), attributes necessary to create an entry. Existing
+        entries are never modified. To assert specific attribute values on an
+        existing entry, use M(ldap_attr) module instead.
   objectClass:
     required: false
     default: null
@@ -91,9 +88,9 @@ options:
     required: false
     default: null
     description:
-      - Option used to allow the user to overwrite any of the other
-        options. To remove an option, set the value of the option to
-        C(null).
+      - List of options which allows to overwrite any of the task or the
+        I(attributes) options. To remove an option, set the value of the option
+        to C(null).
   server_uri:
     required: false
     default: ldapi:///
@@ -128,8 +125,9 @@ EXAMPLES = """
     objectClass:
       - simpleSecurityObject
       - organizationalRole
-    description: An LDAP administrator
-    userPassword: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
+    attributes:
+      description: An LDAP administrator
+      userPassword: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
 
 - name: Get rid of an old entry
   ldap_entry:
@@ -171,28 +169,29 @@ class LdapEntry(object):
         self.start_tls = self.module.params['start_tls']
         self.state = self.module.params['state']
 
+        # Add the objectClass into the list of attributes
+        self.module.params['attributes']['objectClass'] = (
+            self.module.params['objectClass'])
+
+        # Load attributes
+        if self.state == 'present':
+            self.attrs = self._load_attrs()
+
         # Establish connection
         self.connection = self._connect_to_ldap()
 
-        # Load attributes
-        self.attrs = self._load_attrs()
-
-        if (self.state == 'present') and ('objectClass' not in self.attrs):
-            self.module.fail_json(
-                msg="At least one objectClass must be provided")
-
     def _load_attrs(self):
+        """ Turn attribute's value to array. """
         attrs = {}
 
-        for name, value in self.module.params.iteritems():
-            if name not in self.module.argument_spec:
-                if name not in attrs:
-                    attrs[name] = []
+        for name, value in self.module.params['attributes'].iteritems():
+            if name not in attrs:
+                attrs[name] = []
 
-                if isinstance(value, list):
-                    attrs[name] = value
-                else:
-                    attrs[name].append(str(value))
+            if isinstance(value, list):
+                attrs[name] = value
+            else:
+                attrs[name].append(str(value))
 
         return attrs
 
@@ -257,32 +256,55 @@ class LdapEntry(object):
 def main():
     module = AnsibleModule(
         argument_spec={
+            'attributes': dict(type='dict'),
             'bind_dn': dict(default=None),
             'bind_pw': dict(default='', no_log=True),
             'dn': dict(required=True),
+            'objectClass': dict(type='raw'),
             'params': dict(type='dict'),
             'server_uri': dict(default='ldapi:///'),
             'start_tls': dict(default=False, type='bool'),
             'state': dict(default='present', choices=['present', 'absent']),
         },
-        check_invalid_arguments=False,
         supports_check_mode=True,
     )
 
     if not HAS_LDAP:
         module.fail_json(
-            msg="Missing requried 'ldap' module (pip install python-ldap)")
+            msg="Missing requried 'ldap' module (pip install python-ldap).")
+
+    state = module.params['state']
+
+    # Chek if objectClass is present when needed
+    if state == 'present' and module.params['objectClass'] is None:
+        module.fail_json(msg="At least one objectClass must be provided.")
+
+    # Check if objectClass is of the correct type
+    if (
+            module.params['objectClass'] is not None and not (
+                isinstance(module.params['objectClass'], basestring) or
+                isinstance(module.params['objectClass'], list))):
+        module.fail_json(msg="objectClass must be either a string or a list.")
+
+    # Check is there are some attributes defined
+    if (
+            module.params['objectClass'] is not None and
+            module.params['attributes'] is None):
+        module.fail_json(msg="Some entry attributes must be defined.")
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
-        module.params.update(module.params['params'])
+        for key, val in module.params['params'].iteritems():
+            if key in module.argument_spec:
+                module.params[key] = val
+            else:
+                module.params['attributes'][key] = val
+
         # Remove the params
         module.params.pop('params', None)
 
     # Instantiate the LdapEntry object
     ldap = LdapEntry(module)
-
-    state = module.params['state']
 
     # Get the action function
     if state == 'present':
