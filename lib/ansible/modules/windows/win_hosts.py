@@ -59,14 +59,14 @@ EXAMPLES = """
 # Sample hosts modification
 ---
 - name: Adds host name resolution
-  win_robocopy:
+  win_hosts:
     ip: "8.8.8.8"
     hostname: "defaultdns"
     state: present
 
 ---
 - name: Removes host name resolution for the specified IP
-  win_robocopy:
+  win_hosts:
     ip: "192.0.2.100"
     hostname: "webnode1"
     state: absent
