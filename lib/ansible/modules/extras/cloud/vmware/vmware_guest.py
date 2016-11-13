@@ -114,6 +114,11 @@ options:
           - Domain to use while customizing
         required: False
         version_added: "2.3"
+   snapshot_op:
+        description:
+          - A key, value pair of snapshot operation types and their additional required parameters.
+        required: False
+        version_added: "2.3"
 extends_documentation_fragment: vmware.documentation    
 '''
 
@@ -184,6 +189,71 @@ Example from Ansible playbook
         name: testvm_2
         esxi_hostname: 192.168.1.117
       register: facts
+
+### Snapshot Operations
+# Create snapshot
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: create
+         name: snap1
+         description: snap1_description
+
+# Remove a snapshot
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: remove
+         name: snap1
+
+# Revert to a snapshot
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: revert
+         name: snap1
+
+# List all snapshots of a VM
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: list_all
+
+# List current snapshot of a VM
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: list_current
+
+# Remove all snapshots of a VM
+  - vmware_guest:
+     hostname: 192.168.1.209
+     username: administrator@vsphere.local
+     password: vmware
+     validate_certs: False
+     name: dummy_vm
+     snapshot_op:
+         op_type: remove_all
 '''
 
 RETURN = """
@@ -1020,6 +1090,107 @@ class PyVmomiHelper(object):
 
         return result
 
+    def list_snapshots_recursively(self, snapshots):
+        snapshot_data = []
+        snap_text = ''
+        for snapshot in snapshots:
+            snap_text = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s'%(snapshot.id, snapshot.name,
+                            snapshot.description, snapshot.createTime, snapshot.state)
+            snapshot_data.append(snap_text)
+            snapshot_data = snapshot_data + self.list_snapshots_recursively(snapshot.childSnapshotList)
+        return snapshot_data
+
+
+    def get_snapshots_by_name_recursively(self, snapshots, snapname):
+        snap_obj = []
+        for snapshot in snapshots:
+            if snapshot.name == snapname:
+                snap_obj.append(snapshot)
+            else:
+                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
+        return snap_obj
+
+    def get_current_snap_obj(self, snapshots, snapob):
+        snap_obj = []
+        for snapshot in snapshots:
+            if snapshot.snapshot == snapob:
+                snap_obj.append(snapshot)
+            snap_obj = snap_obj + self.get_current_snap_obj(snapshot.childSnapshotList, snapob)
+        return snap_obj
+
+    def snapshot_vm(self, vm, guest, snapshot_op):
+        ''' To perform snapshot operations create/remove/revert/list_all/list_current/remove_all '''
+
+        try:
+            snapshot_op_name = snapshot_op['op_type']
+        except KeyError:
+            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
+
+        task = None
+        result = {}
+
+        if snapshot_op_name not in ['create', 'remove', 'revert', 'list_all', 'list_current', 'remove_all']:
+            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
+
+        if snapshot_op_name != 'create' and vm.snapshot is None:
+            self.module.exit_json(msg="VM - %s doesn't have any snapshots"%guest)
+
+        if snapshot_op_name == 'create':
+            try:
+                snapname = snapshot_op['name']
+            except KeyError:
+                self.module.fail_json(msg="specify name & description(optional) to create a snapshot")
+
+            if 'description' in snapshot_op:
+                snapdesc = snapshot_op['description']
+            else:
+                snapdesc = ''
+
+            dumpMemory = False
+            quiesce = False
+            task = vm.CreateSnapshot(snapname, snapdesc, dumpMemory, quiesce)
+
+        elif snapshot_op_name in ['remove', 'revert']:
+            try:
+                snapname = snapshot_op['name']
+            except KeyError:
+                self.module.fail_json(msg="specify snapshot name")
+
+            snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList, snapname)
+
+            #if len(snap_obj) is 0; then no snapshots with specified name
+            if len(snap_obj) == 1:
+                snap_obj = snap_obj[0].snapshot
+                if snapshot_op_name == 'remove':
+                    task = snap_obj.RemoveSnapshot_Task(True)
+                else:
+                    task = snap_obj.RevertToSnapshot_Task()
+            else:
+                self.module.exit_json(msg="Couldn't find any snapshots with specified name: %s on VM: %s"%(snapname, guest))
+
+        elif snapshot_op_name == 'list_all':
+            snapshot_data = self.list_snapshots_recursively(vm.snapshot.rootSnapshotList)
+            result['snapshot_data'] = snapshot_data
+
+        elif snapshot_op_name == 'list_current':
+            current_snapref = vm.snapshot.currentSnapshot
+            current_snap_obj = self.get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
+            result['current_snapshot'] = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s'%(current_snap_obj[0].id,
+                            current_snap_obj[0].name, current_snap_obj[0].description, current_snap_obj[0].createTime,
+                            current_snap_obj[0].state)
+
+        elif snapshot_op_name == 'remove_all':
+            task = vm.RemoveAllSnapshots()
+
+        if task:
+            self.wait_for_task(task)
+            if task.info.state == 'error':
+                result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+            else:
+                result = {'changed': True, 'failed': False}
+
+        return result
+
 def get_obj(content, vimtype, name):
     """
     Return an object by name, if name is None the
@@ -1074,6 +1245,7 @@ def main():
             template_src=dict(required=False, type='str', aliases=['template']),
             name=dict(required=True, type='str'),
             name_match=dict(required=False, type='str', default='first'),
+            snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm', aliases=['folder']),
             disk=dict(required=False, type='list'),
@@ -1118,6 +1290,8 @@ def main():
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted']:
             # set powerstate
             result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+        elif module.params['snapshot_op']:
+            result = pyv.snapshot_vm(vm, module.params['name'], module.params['snapshot_op'])
         else:
             # Run for facts only
             try:
