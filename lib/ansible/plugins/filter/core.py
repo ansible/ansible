@@ -31,7 +31,7 @@ import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle
 from datetime import datetime
 import uuid
 
@@ -199,8 +199,11 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
     if isinstance(end, (int, long)):
         if not start:
             start = 0

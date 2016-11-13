@@ -168,6 +168,11 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+It's also possible to initialize random number generator from seed. This way, you can create random-but-idempotent
+numbers (new in version 2.3)::
+
+    {{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron
+
 
 Shuffle Filter
 --------------
