@@ -122,8 +122,8 @@ EXAMPLES = '''
 # for example:
 #
 # - copy:
-#     dest: /var/www/html/{{ sample_com_http_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
-#     content: "{{ sample_com_http_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
+#     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
+#     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
 #     when: sample_com_challenge|changed
 
 - letsencrypt:
