@@ -311,19 +311,19 @@ stat:
             type: string
             sample: us-ascii
         readable:
-            description: Tells you if the invoking user has the right to read the path, added in version 2.2
+            description: Tells you if the invoking user has the right to read the path
             returned: success, path exists and user can read the path
             type: boolean
             sample: False
             version_added: 2.2
         writeable:
-            description: Tells you if the invoking user has the right to write the path, added in version 2.2
+            description: Tells you if the invoking user has the right to write the path
             returned: success, path exists and user can write the path
             type: boolean
             sample: False
             version_added: 2.2
         executable:
-            description: Tells you if the invoking user has the execute the path, added in version 2.2
+            description: Tells you if the invoking user has the execute the path
             returned: success, path exists and user can execute the path
             type: boolean
             sample: False
