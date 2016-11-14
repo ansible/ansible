@@ -388,7 +388,7 @@ class Task(Base, Conditional, Taggable, Become):
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False):
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
@@ -399,7 +399,7 @@ class Task(Base, Conditional, Taggable, Become):
             if self._parent and (value is None or extend):
                 parent_value = getattr(self._parent, attr, None)
                 if extend:
-                    value = self._extend_value(value, parent_value)
+                    value = self._extend_value(value, parent_value, prepend)
                 else:
                     value = parent_value
         except KeyError:
