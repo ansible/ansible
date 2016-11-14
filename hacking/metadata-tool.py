@@ -1,4 +1,4 @@
-#!/usr/bin/python2 -tt
+#!/usr/bin/env python
 
 import ast
 import csv
@@ -15,7 +15,7 @@ from ansible.plugins import module_loader
 
 # There's a few files that are not new-style modules.  Have to blacklist them
 NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
-
+NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
 
 class ParseError(Exception):
     """Thrown when parsing a file fails"""
@@ -448,7 +448,7 @@ def add_default(version=None, overwrite=False):
     # List of all plugins
     plugins = module_loader.all(path_only=True)
     plugins = ((os.path.splitext((os.path.basename(p)))[0], p) for p in plugins)
-    plugins = (p for p in plugins if p[0] != 'async_wrapper')
+    plugins = (p for p in plugins if p[0] not in NONMODULE_MODULE_NAMES)
 
     # Default metadata
     new_metadata = {'version': '1.0', 'status': 'preview', 'supported_by':'community'}
@@ -481,7 +481,7 @@ def report(version=None):
     # List of all plugins
     plugins = module_loader.all(path_only=True)
     plugins = ((os.path.splitext((os.path.basename(p)))[0], p) for p in plugins)
-    plugins = (p for p in plugins if p[0] != 'async_wrapper')
+    plugins = (p for p in plugins if p[0] != NONMODULE_MODULE_NAMES)
 
     no_metadata, has_metadata = metadata_summary(plugins, version=version)
 
