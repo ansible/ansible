@@ -368,6 +368,8 @@ class StrategyBase:
                                 )
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
+                    if 'changed' in task_result._result and task_result._result['changed']:
+                        self._tqm._stats.increment('changed', original_host.name)
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=original_task.ignore_errors)
             elif task_result.is_unreachable():
                 self._tqm._unreachable_hosts[original_host.name] = True
