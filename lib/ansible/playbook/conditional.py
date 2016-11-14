@@ -59,7 +59,7 @@ class Conditional:
         if when is None:
             when = []
         if hasattr(self, '_get_parent_attribute'):
-            when = self._get_parent_attribute('when', extend=True)
+            when = self._get_parent_attribute('when', extend=True, prepend=True)
         return when
 
     def evaluate_conditional(self, templar, all_vars):
@@ -130,5 +130,5 @@ class Conditional:
             elif "is defined" in original:
                 return False
             else:
-                raise AnsibleError("error while evaluating conditional (%s): %s" % (original, e))
+                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
 
