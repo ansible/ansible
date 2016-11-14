@@ -1415,6 +1415,7 @@ class SunOSHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_dmi_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1468,7 +1469,7 @@ class SunOSHardware(Hardware):
         rc, out, err = self.module.run_command(["/usr/sbin/prtconf"])
         for line in out.split('\n'):
             if 'Memory size' in line:
-                self.facts['memtotal_mb'] = line.split()[2]
+                self.facts['memtotal_mb'] = int(line.split()[2])
         rc, out, err = self.module.run_command("/usr/sbin/swap -s")
         allocated = long(out.split()[1][:-1])
         reserved = long(out.split()[5][:-1])
@@ -1491,7 +1492,16 @@ class SunOSHardware(Hardware):
                 size_total, size_available = self._get_mount_size_facts(fields[1])
                 self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
 
-
+    def get_dmi_facts(self):
+        uname_path = self.module.get_bin_path("prtdiag")
+        rc, out, err = self.module.run_command(uname_path)
+        """
+        rc returns 1
+        """
+        if out:
+           system_conf = out.split('\n')[0]
+           self.facts['product_name'] = re.search(r'(\w+\sEnterprise\s\w+)',system_conf).group(1)
+            
 class OpenBSDHardware(Hardware):
     """
     OpenBSD-specific subclass of Hardware. Defines memory, CPU and device facts:
@@ -1970,7 +1980,9 @@ class HPUX(Hardware):
                 separator = '='
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
             self.facts['firmware_version'] = out.split(separator)[1].strip()
-
+            rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo |grep -i 'Machine serial number' ",use_unsafe_shell=True)
+            if rc == 0 and out:
+              self.facts['product_serial'] = out.split(separator)[1].strip()
 
 class Darwin(Hardware):
     """
