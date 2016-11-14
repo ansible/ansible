@@ -146,7 +146,7 @@ EXAMPLES = '''
     db: acme
     name: django
     password: ceec4eif7ya
-    priv: CONNECT/products:ALL
+    priv: 'CONNECT/products:ALL'
 
 # Create rails user, grant privilege to create other databases and demote rails from super user status
 - postgresql_user:
