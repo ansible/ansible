@@ -303,17 +303,17 @@ stat:
             type: string
             sample: us-ascii
         readable:
-            description: Tells you if the invoking user has the right to read the path
+            description: Tells you if the invoking user has the right to read the path, added in version 2.2
             returned: success, path exists and user can read the path
             type: boolean
             sample: False
         writeable:
-            description: Tells you if the invoking user has the right to write the path
+            description: Tells you if the invoking user has the right to write the path, added in version 2.2
             returned: success, path exists and user can write the path
             type: boolean
             sample: False
         executable:
-            description: Tells you if the invoking user has the execute the path
+            description: Tells you if the invoking user has the execute the path, added in version 2.2
             returned: success, path exists and user can execute the path
             type: boolean
             sample: False
