@@ -95,13 +95,20 @@ author:
 
 EXAMPLES = '''
 # Ensure "fav=lemonade is in section "[drinks]" in specified file
-- ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes
+- ini_file:
+    dest: /etc/conf
+    section: drinks
+    option: fav
+    value: lemonade
+    mode: 0600
+    backup: yes
 
-- ini_file: dest=/etc/anotherconf
-            section=drinks
-            option=temperature
-            value=cold
-            backup=yes
+- ini_file:
+    dest: /etc/anotherconf
+    section: drinks
+    option: temperature
+    value: cold
+    backup: yes
 '''
 
 import os
