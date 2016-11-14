@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 module: rds_v2
-short_description: Create and delete AWS VPN Virtual Gateways.
+short_description: Manages RDS Instances in AWS
 description:
   - Creates RDS instances
   - Modifies RDS instances
@@ -253,7 +253,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Create an RDS Instance
 - name: Create an RDS instance
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: create
@@ -276,7 +276,7 @@ EXAMPLES = '''
 
 # Create an RDS Aurora Instance
 - name: Create an Aurora RDS instance with encryption enabled
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: create
@@ -297,7 +297,7 @@ EXAMPLES = '''
 
 # Modify an RDS Instance
 - name: Modify an RDS instance
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: modify
@@ -313,7 +313,7 @@ EXAMPLES = '''
    
 # Snapshot an RDS Instance
 - name: Snapshot an RDS instance
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: snapshot
@@ -327,7 +327,7 @@ EXAMPLES = '''
 
 # Delete an RDS Instance
 - name: Delete an RDS instance
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: delete
@@ -339,7 +339,7 @@ EXAMPLES = '''
 
 # Create an RDS Instance Read Replica
 - name: create an RDS instance replica
-  rds_boto3:
+  rds_v2:
     region: ap-southeast-2
     profile: production
     command: replicate
