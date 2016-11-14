@@ -98,7 +98,7 @@ def is_present(name):
 def fix_case(name):
     """locale -a might return the encoding in either lower or upper case.
     Passing through this function makes them uniform for comparisons."""
-    for s, r in LOCALE_NORMALIZATION.iteritems():
+    for s, r in LOCALE_NORMALIZATION.items():
         name = name.replace(s, r)
     return name
 
