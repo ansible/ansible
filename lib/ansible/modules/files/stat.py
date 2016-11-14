@@ -53,16 +53,24 @@ options:
     default: sha1
     aliases: [ 'checksum_algo', 'checksum' ]
     version_added: "2.0"
-  mime:
+  get_mime:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
       - This will add both `mime_type` and 'charset' fields to the return, if possible.
+      - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'
     required: false
     choices: [ Yes, No ]
-    default: No
+    default: Yes
     version_added: "2.1"
-    aliases: [ 'mime_type', 'mime-type' ]
+    aliases: [ 'mime', 'mime_type', 'mime-type' ]
+  get_attributes:
+    description:
+      - Get file attributes using lsattr tool if present.
+    required: false
+    default: True
+    version_added: "2.3"
+    aliases: [ 'attributes', 'attr' ]
 author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
@@ -107,7 +115,7 @@ EXAMPLES = '''
 
 RETURN = '''
 stat:
-    description: dictionary containing all the stat data
+    description: dictionary containing all the stat data, some platforms might add additional fields
     returned: success
     type: dictionary
     contains:
@@ -307,16 +315,25 @@ stat:
             returned: success, path exists and user can read the path
             type: boolean
             sample: False
+            version_added: 2.2
         writeable:
             description: Tells you if the invoking user has the right to write the path, added in version 2.2
             returned: success, path exists and user can write the path
             type: boolean
             sample: False
+            version_added: 2.2
         executable:
             description: Tells you if the invoking user has the execute the path, added in version 2.2
             returned: success, path exists and user can execute the path
             type: boolean
             sample: False
+            version_added: 2.2
+        attributes:
+            description: list of file attributes
+            returned: success, path exists and user can execute the path
+            type: boolean
+            sample: [ immutable, extent ]
+            version_added: 2.3
 '''
 
 import errno
@@ -326,10 +343,9 @@ import pwd
 import stat
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, format_attributes
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
-
 
 def format_output(module, path, st):
     mode = st.st_mode
@@ -380,7 +396,7 @@ def format_output(module, path, st):
             ('st_birthtime', 'birthtime'),
             # RISCOS
             ('st_ftype', 'file_type'),
-            ('st_attrs', 'attributes'),
+            ('st_attrs', 'attrs'),
             ('st_obtype', 'object_type'),
             # OS X
             ('st_rsize', 'real_size'),
@@ -401,10 +417,11 @@ def main():
             follow=dict(default='no', type='bool'),
             get_md5=dict(default='yes', type='bool'),
             get_checksum=dict(default='yes', type='bool'),
+            get_mime=dict(default=True, type='bool', aliases=['mime', 'mime_type', 'mime-type']),
+            get_attributes=dict(default=True, type='bool', aliases=['attributes', 'attr']),
             checksum_algorithm=dict(default='sha1', type='str',
                                     choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum_algo', 'checksum']),
-            mime=dict(default=False, type='bool', aliases=['mime_type', 'mime-type']),
         ),
         supports_check_mode=True
     )
@@ -412,7 +429,8 @@ def main():
     path = module.params.get('path')
     b_path = to_bytes(path, errors='surrogate_or_strict')
     follow = module.params.get('follow')
-    get_mime = module.params.get('mime')
+    get_mime = module.params.get('get_mime')
+    get_attr = module.params.get('get_attributes')
     get_md5 = module.params.get('get_md5')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
@@ -469,15 +487,27 @@ def main():
     # try to get mime data if requested
     if get_mime:
         output['mimetype'] = output['charset'] = 'unknown'
-        filecmd = [module.get_bin_path('file', True), '-i', path]
-        try:
-            rc, out, err = module.run_command(filecmd)
-            if rc == 0:
-                mimetype, charset = out.split(':')[1].split(';')
-                output['mimetype'] = mimetype.strip()
-                output['charset'] = charset.split('=')[1].strip()
-        except:
-            pass
+        mimecmd = module.get_bin_path('file')
+        if mimecmd:
+            mimecmd = [mimecmd, '-i', path]
+            try:
+                rc, out, err = module.run_command(mimecmd)
+                if rc == 0:
+                    mimetype, charset = out.split(':')[1].split(';')
+                    output['mimetype'] = mimetype.strip()
+                    output['charset'] = charset.split('=')[1].strip()
+            except:
+                pass
+
+    # try to get attr data
+    if get_attr:
+        output['version'] = None
+        output['attributes'] = []
+        output['attr_flags'] = ''
+        out = module.get_file_attributes(path)
+        for x in ('version', 'attributes', 'attr_flags'):
+            if x in out:
+                output[x] = out[x]
 
     module.exit_json(changed=False, stat=output)
 
