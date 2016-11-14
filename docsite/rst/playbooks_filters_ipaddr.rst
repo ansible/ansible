@@ -311,7 +311,7 @@ This result can be canonicalised with ``ipaddr()`` to produce a subnet in CIDR f
     # {{ net_mask | ipaddr('prefix') }}
     '24'
 
-    # {{ net_mask | ipaddr('net') }}
+    # {{ net_mask | ipaddr('cidr') }}
     '192.168.0.0/24'
 
 
