@@ -901,7 +901,7 @@ class PyVmomiHelper(object):
             clonespec_kwargs['customization'].nicSettingMap = adaptermaps
             clonespec_kwargs['customization'].globalIPSettings = globalip
             clonespec_kwargs['customization'].identity = ident
-
+		
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
