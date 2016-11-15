@@ -89,6 +89,11 @@ options:
         description:
             - The esxi hostname where the VM will run.
         required: True
+   annotation:
+        description:
+            - A note or annotation to include in the VM
+        required: False
+        version_added: "2.3"
    customize:
         description:
            - Should customization spec be run
@@ -796,17 +801,18 @@ class PyVmomiHelper(object):
         # lets try and assign a static ip addresss
         if self.params['customize'] is True:
             ip_settings = list()
-            if self.params['ips'] and self.params['network']:
+            if self.params['ips']:
                 for ip_string in self.params['ips']:
                     ip = IPAddress(self.params['ips'])
                     for network in self.params['networks']:
-                        if ip in IPNetwork(network):
-                            self.params['networks'][network]['ip'] = str(ip)
-                            ipnet = IPNetwork(network)
-                            self.params['networks'][network]['subnet_mask'] = str(
-                                ipnet.netmask
-                            )
-                            ip_settings.append(self.params['networks'][network])
+	                if network:
+                            if ip in IPNetwork(network):
+                                self.params['networks'][network]['ip'] = str(ip)
+                                ipnet = IPNetwork(network)
+                                self.params['networks'][network]['subnet_mask'] = str(
+                                  ipnet.netmask
+                                )
+                                ip_settings.append(self.params['networks'][network])
 
             key = 0
             network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
@@ -837,14 +843,27 @@ class PyVmomiHelper(object):
             nic.device.addressType = 'assigned'
             nic.device.deviceInfo = vim.Description()
             nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
-
             nic.device.deviceInfo.summary = ip_settings[key]['network']
-            nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-            nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
+            
+            if hasattr(get_obj(self.content, [vim.Network], ip_settings[key]['network']), 'portKeys'):
+            # VDS switch
+                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], ip_settings[key]['network'])
+                dvs_port_connection = vim.dvs.PortConnection()
+                dvs_port_connection.portgroupKey= pg_obj.key
+                dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                nic.device.backing.port = dvs_port_connection 
 
-            nic.device.backing.deviceName = ip_settings[key]['network']
+            else: 
+            # vSwitch
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
+                nic.device.backing.deviceName = ip_settings[key]['network']
+
             nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
             nic.device.connectable.startConnected = True
+            nic.device.connectable.allowGuestControl = True
+            nic.device.connectable.connected = True
             nic.device.connectable.allowGuestControl = True
             devices.append(nic)
             
@@ -881,13 +900,12 @@ class PyVmomiHelper(object):
             ident.hostName.name = self.params['name']
 
             customspec = vim.vm.customization.Specification()
-            customspec.nicSettingMap = adaptermaps
-            customspec.globalIPSettings = globalip
-            customspec.identity = ident
+            clonespec_kwargs['customization'] = customspec
 
-            clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
-            clonespec.customization = customspec
-
+            clonespec_kwargs['customization'].nicSettingMap = adaptermaps
+            clonespec_kwargs['customization'].globalIPSettings = globalip
+            clonespec_kwargs['customization'].identity = ident
+		
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
@@ -898,7 +916,13 @@ class PyVmomiHelper(object):
             return ({'changed': False, 'failed': True, 'msg': task.info.error.msg})
         else:
 
+            # set annotation
             vm = task.info.result
+            if self.params['annotation']:
+                annotation_spec = vim.vm.ConfigSpec()
+                annotation_spec.annotation = str(self.params['annotation'])
+                task = vm.ReconfigVM_Task(annotation_spec)
+		self.wait_for_task(task)
             if wait_for_ip:
                 self.set_powerstate(vm, 'poweredon', force=False)
                 self.wait_for_vm_ip(vm)
@@ -1238,6 +1262,7 @@ def main():
                 default='present'),
             validate_certs=dict(required=False, type='bool', default=True),
             template_src=dict(required=False, type='str', aliases=['template']),
+            annotation=dict(required=False, type='str', aliases=['notes']),
             name=dict(required=True, type='str'),
             name_match=dict(required=False, type='str', default='first'),
             snapshot_op=dict(required=False, type='dict', default={}),
