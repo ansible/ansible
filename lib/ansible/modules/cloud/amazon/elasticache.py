@@ -151,7 +151,7 @@ class ElastiCacheManager(object):
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, cache_parameter_group, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
-                 hard_modify, region, **aws_connect_kwargs):
+                 hard_modify, region, replication_group, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine.lower()
@@ -166,6 +166,7 @@ class ElastiCacheManager(object):
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
+        self.replication_group = replication_group
 
         self.region = region
         self.aws_connect_kwargs = aws_connect_kwargs
@@ -385,6 +386,8 @@ class ElastiCacheManager(object):
 
     def _requires_modification(self):
         """Check if cluster requires (nondestructive) modification"""
+        if self.replication_group:
+            return False
         # Check modifiable data attributes
         modifiable_data = {
             'NumCacheNodes': self.num_nodes,
@@ -504,7 +507,8 @@ def main():
         security_group_names=dict(default=[], type='list'),
         zone=dict(default=""),
         wait=dict(default=True, type='bool'),
-        hard_modify=dict(type='bool')
+        hard_modify=dict(type='bool'),
+        replication_group=dict(),
     ))
 
     module = AnsibleModule(
@@ -532,11 +536,16 @@ def main():
     wait = module.params['wait']
     hard_modify = module.params['hard_modify']
     cache_parameter_group = module.params['cache_parameter_group']
+    replication_group = module.params['replication_group']
 
     if cache_subnet_group and cache_security_groups:
         module.fail_json(msg="Can't specify both cache_subnet_group and cache_security_groups")
 
-    if state == 'present' and not num_nodes:
+    if replication_group:
+        engine = None
+        node_type = None
+
+    if state == 'present' and not num_nodes and not replication_group:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
 
     if not region:
@@ -562,7 +571,8 @@ def main():
                                              cache_subnet_group,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
-                                             hard_modify, region, **aws_connect_kwargs)
+                                             hard_modify, region,
+                                             replication_group, **aws_connect_kwargs)
 
     if state == 'present':
         elasticache_manager.ensure_present()
