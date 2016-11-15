@@ -1539,7 +1539,7 @@ class DarwinUser(User):
         Return the next available uid. If system=True, then
         uid should be below of 500, if possible.
         '''
-        system = True if system == True else False
+        system = (system == True)
         cmd = self._get_dscl()
         cmd += ['-list', '/Users', 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
