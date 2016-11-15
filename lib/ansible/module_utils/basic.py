@@ -710,8 +710,11 @@ class AnsibleModule(object):
         self.no_log_values = set()
         # Use the argspec to determine which args are no_log
         for arg_name, arg_opts in self.argument_spec.items():
-            if arg_opts.get('deprecated', False) and arg_name in self.params:
-                self._deprecated_param_warnings.append("Param '%s' is deprecated. See the module docs for more information" % arg_name)
+            if arg_opts.get('deprecated_version') is not None and arg_name in self.params:
+                self._deprecated_param_warnings.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                    'version': arg_opts.get('deprecated_version'),
+                })
 
             if arg_opts.get('no_log', False):
                 # Find the value for the no_log'd param
@@ -1896,6 +1899,7 @@ class AnsibleModule(object):
             elif not isinstance(kwargs['deprecation_warnings'], list):
                 kwargs['deprecation_warnings'] = [kwargs['deprecation_warnings']]
             kwargs['deprecation_warnings'].extend(self._deprecated_param_warnings)
+            del self._deprecated_param_warnings
         return kwargs
 
     def exit_json(self, **kwargs):
