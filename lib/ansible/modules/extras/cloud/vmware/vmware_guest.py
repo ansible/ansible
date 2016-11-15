@@ -805,7 +805,7 @@ class PyVmomiHelper(object):
                 for ip_string in self.params['ips']:
                     ip = IPAddress(self.params['ips'])
                     for network in self.params['networks']:
-	                if network:
+                        if network:
                             if ip in IPNetwork(network):
                                 self.params['networks'][network]['ip'] = str(ip)
                                 ipnet = IPNetwork(network)
@@ -922,7 +922,7 @@ class PyVmomiHelper(object):
                 annotation_spec = vim.vm.ConfigSpec()
                 annotation_spec.annotation = str(self.params['annotation'])
                 task = vm.ReconfigVM_Task(annotation_spec)
-		self.wait_for_task(task)
+                self.wait_for_task(task)
             if wait_for_ip:
                 self.set_powerstate(vm, 'poweredon', force=False)
                 self.wait_for_vm_ip(vm)
