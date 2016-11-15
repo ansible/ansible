@@ -53,7 +53,9 @@ options:
 
 EXAMPLES = '''
 # Example group command from Ansible Playbooks
-- group: name=somegroup state=present
+- group:
+    name: somegroup
+    state: present
 '''
 
 import grp
@@ -144,7 +146,7 @@ class SunOS(Group):
 
     This overrides the following methods from the generic class:-
         - group_add()
-    """ 
+    """
 
     platform = 'SunOS'
     distribution = None

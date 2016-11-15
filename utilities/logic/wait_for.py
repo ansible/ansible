@@ -123,30 +123,50 @@ author:
 EXAMPLES = '''
 
 # wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
-- wait_for: port=8000 delay=10
+- wait_for:
+    port: 8000
+    delay: 10
 
 # wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
-- wait_for: host=0.0.0.0 port=8000 delay=10 state=drained
+- wait_for:
+    host: 0.0.0.0
+    port: 8000
+    delay: 10
+    state: drained
 
 # wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
-- wait_for: host=0.0.0.0 port=8000 state=drained exclude_hosts=10.2.1.2,10.2.1.3
+- wait_for:
+    host: 0.0.0.0
+    port: 8000
+    state: drained
+    exclude_hosts: 10.2.1.2,10.2.1.3
 
 # wait until the file /tmp/foo is present before continuing
-- wait_for: path=/tmp/foo
+- wait_for:
+    path: /tmp/foo
 
 # wait until the string "completed" is in the file /tmp/foo before continuing
-- wait_for: path=/tmp/foo search_regex=completed
+- wait_for:
+    path: /tmp/foo
+    search_regex: completed
 
 # wait until the lock file is removed
-- wait_for: path=/var/lock/file.lock state=absent
+- wait_for:
+    path: /var/lock/file.lock
+    state: absent
 
 # wait until the process is finished and pid was destroyed
-- wait_for: path=/proc/3466/status state=absent
+- wait_for:
+    path: /proc/3466/status
+    state: absent
 
 # wait 300 seconds for port 22 to become open and contain "OpenSSH", don't assume the inventory_hostname is resolvable
 # and don't start checking for 10 seconds
-- local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
-
+- local_action: wait_for
+    port: 22
+    host: "{{ ansible_ssh_host | default(inventory_hostname) }}"
+    search_regex: OpenSSH
+    delay: 10
 '''
 
 class TCPConnectionInfo(object):
