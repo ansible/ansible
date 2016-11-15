@@ -85,34 +85,67 @@ notes:
 
 EXAMPLES = '''
 - name: associate an elastic IP with an instance
-  ec2_eip: device_id=i-1212f003 ip=93.184.216.119
+  ec2_eip:
+    device_id: i-1212f003
+    ip: 93.184.216.119
+
 - name: associate an elastic IP with a device
-  ec2_eip: device_id=eni-c8ad70f3 ip=93.184.216.119
+  ec2_eip:
+    device_id: eni-c8ad70f3
+    ip: 93.184.216.119
+
 - name: disassociate an elastic IP from an instance
-  ec2_eip: device_id=i-1212f003 ip=93.184.216.119 state=absent
+  ec2_eip:
+    device_id: i-1212f003
+    ip: 93.184.216.119
+    state: absent
+
 - name: disassociate an elastic IP with a device
-  ec2_eip: device_id=eni-c8ad70f3 ip=93.184.216.119 state=absent
+  ec2_eip:
+    device_id: eni-c8ad70f3
+    ip: 93.184.216.119
+    state: absent
+
 - name: allocate a new elastic IP and associate it with an instance
-  ec2_eip: device_id=i-1212f003
+  ec2_eip:
+    device_id: i-1212f003
+
 - name: allocate a new elastic IP without associating it to anything
   action: ec2_eip
   register: eip
+
 - name: output the IP
-  debug: msg="Allocated IP is {{ eip.public_ip }}"
+  debug:
+    msg: "Allocated IP is {{ eip.public_ip }}"
+
 - name: another way of allocating an elastic IP without associating it to anything
-  ec2_eip: state='present'
+  ec2_eip:
+    state: 'present'
+
 - name: provision new instances with ec2
-  ec2: keypair=mykey instance_type=c1.medium image=ami-40603AD1 wait=yes'''
-''' group=webserver count=3
+  ec2:
+    keypair: mykey
+    instance_type: c1.medium
+    image: ami-40603AD1
+    wait: yes
+    group: webserver
+    count: 3
   register: ec2
+
 - name: associate new elastic IPs with each of the instances
-  ec2_eip: "device_id={{ item }}"
+  ec2_eip:
+    device_id: "{{ item }}"
   with_items: "{{ ec2.instance_ids }}"
+
 - name: allocate a new elastic IP inside a VPC in us-west-2
-  ec2_eip: region=us-west-2 in_vpc=yes
+  ec2_eip:
+    region: us-west-2
+    in_vpc: yes
   register: eip
+
 - name: output the IP
-  debug: msg="Allocated IP inside a VPC is {{ eip.public_ip }}"
+  debug:
+    msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
 '''
 
 try:

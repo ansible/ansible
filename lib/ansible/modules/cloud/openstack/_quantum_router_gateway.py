@@ -78,10 +78,14 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Attach an external network with a router to allow flow of external traffic
-- quantum_router_gateway: state=present login_username=admin login_password=admin
-                          login_tenant_name=admin router_name=external_router
-                          network_name=external_network
+- name: Attach an external network with a router to allow flow of external traffic
+  quantum_router_gateway:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    router_name: external_router
+    network_name: external_network
 '''
 
 _os_keystone = None

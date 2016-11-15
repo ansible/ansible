@@ -119,10 +119,16 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Create a subnet for a tenant with the specified subnet
-- quantum_subnet: state=present login_username=admin login_password=admin
-                  login_tenant_name=admin tenant_name=tenant1
-                  network_name=network1 name=net1subnet cidr=192.168.0.0/24"
+- name: Create a subnet for a tenant with the specified subnet
+  quantum_subnet:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    tenant_name: tenant1
+    network_name: network1
+    name: net1subnet
+    cidr: 192.168.0.0/24
 '''
 
 _os_keystone   = None

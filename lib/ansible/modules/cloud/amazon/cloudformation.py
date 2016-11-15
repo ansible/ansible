@@ -152,9 +152,11 @@ EXAMPLES = '''
 # Use a template from a URL
 - name: launch ansible cloudformation example
   cloudformation:
-    stack_name="ansible-cloudformation" state=present
-    region=us-east-1 disable_rollback=true
-    template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_url: 'https://s3.amazonaws.com/my-bucket/cloudformation.template'
   args:
     template_parameters:
       KeyName: jmartin
@@ -167,10 +169,12 @@ EXAMPLES = '''
 # Use a template from a URL, and assume a role to execute
 - name: launch ansible cloudformation example with role assumption
   cloudformation:
-    stack_name="ansible-cloudformation" state=present
-    region=us-east-1 disable_rollback=true
-    template_url=https://s3.amazonaws.com/my-bucket/cloudformation.template
-    role_arn: arn:aws:iam::123456789012:role/cloudformation-iam-role
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_url: 'https://s3.amazonaws.com/my-bucket/cloudformation.template'
+    role_arn: 'arn:aws:iam::123456789012:role/cloudformation-iam-role'
   args:
     template_parameters:
       KeyName: jmartin

@@ -258,11 +258,18 @@ EXAMPLES = '''
       register: gce
 
     - name: Save host data
-      add_host: hostname={{ item.public_ip }} groupname=gce_instances_ips
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: gce_instances_ips
       with_items: "{{ gce.instance_data }}"
 
     - name: Wait for SSH for instances
-      wait_for: delay=1 host={{ item.public_ip }} port=22 state=started timeout=30
+      wait_for:
+        delay: 1
+        host: "{{ item.public_ip }}"
+        port: 22
+        state: started
+        timeout: 30
       with_items: "{{ gce.instance_data }}"
 
     - name: Configure Hosts

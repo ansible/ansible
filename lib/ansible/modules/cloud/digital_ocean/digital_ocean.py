@@ -141,11 +141,13 @@ EXAMPLES = '''
     region_id: ams2
     image_id: fedora-19-x64
     wait_timeout: 500
-
   register: my_droplet
 
-- debug: msg="ID is {{ my_droplet.droplet.id }}"
-- debug: msg="IP is {{ my_droplet.droplet.ip_address }}"
+- debug:
+    msg: "ID is {{ my_droplet.droplet.id }}"
+
+- debug:
+    msg: "IP is {{ my_droplet.droplet.ip_address }}"
 
 # Ensure a droplet is present
 # If droplet id already exist, will return the droplet details and changed = False

@@ -74,10 +74,18 @@ EXAMPLES = '''
   connection: local
   tasks:
   - name: Get the Ubuntu precise AMI
-    ec2_ami_search: distro=ubuntu release=precise region=us-west-1 store=instance-store
+    ec2_ami_search:
+      distro: ubuntu
+      release: precise
+      region: us-west-1
+      store: instance-store
     register: ubuntu_image
+
   - name: Start the EC2 instance
-    ec2: image={{ ubuntu_image.ami }} instance_type=m1.small key_name=mykey
+    ec2:
+      image: "{{ ubuntu_image.ami }}"
+      instance_type: m1.small
+      key_name: mykey
 '''
 
 import csv

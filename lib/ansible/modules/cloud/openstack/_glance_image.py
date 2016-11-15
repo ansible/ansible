@@ -117,15 +117,16 @@ requirements: ["glanceclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Upload an image from an HTTP URL
-- glance_image: login_username=admin
-                login_password=passme
-                login_tenant_name=admin
-                name=cirros
-                container_format=bare
-                disk_format=qcow2
-                state=present
-                copy_from=http:launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img
+- name: Upload an image from an HTTP URL
+  glance_image:
+    login_username: admin
+    login_password: passme
+    login_tenant_name: admin
+    name: cirros
+    container_format: bare
+    disk_format: qcow2
+    state: present
+    copy_from: 'http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img'
 '''
 
 import time

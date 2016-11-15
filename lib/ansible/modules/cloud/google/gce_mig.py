@@ -116,7 +116,11 @@ EXAMPLES = '''
           port: 80
         - name: foobar
           port: 82
-    - pause: seconds=30
+
+    - name: Pause for 30 seconds
+      pause:
+        seconds: 30
+
     - name: Recreate MIG Instances with Instance Template change.
       gce_mig:
         name: ansible-mig-example
@@ -124,13 +128,18 @@ EXAMPLES = '''
         state: present
         template: my-instance-template-2-small
         recreate_instances: yes
-    - pause: seconds=30
+
+    - name: Pause for 30 seconds
+      pause:
+        seconds: 30
+
     - name: Resize MIG
       gce_mig:
         name: ansible-mig-example
         zone: us-central1-c
         state: present
         size: 3
+
     - name: Update MIG with Autoscaler
       gce_mig:
         name: ansible-mig-example
@@ -150,7 +159,11 @@ EXAMPLES = '''
               target: .39
             load_balancing_utilization:
               target: 0.4
-    - pause: seconds=30
+
+    - name: Pause for 30 seconds
+      pause:
+        seconds: 30
+
     - name: Delete MIG
       gce_mig:
         name: ansible-mig-example
