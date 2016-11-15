@@ -34,7 +34,8 @@ EXAMPLES = """
 # include a play after another play
 - hosts: localhost
   tasks:
-    - debug: msg="play1"
+    - debug:
+        msg: "play1"
 
 - include: otherplays.yml
 
@@ -42,15 +43,21 @@ EXAMPLES = """
 # include task list in play
 - hosts: all
   tasks:
-    - debug: msg=task1
+    - debug:
+        msg: task1
+
     - include: stuff.yml
-    - debug: msg=task10
+
+    - debug:
+        msg: task10
 
 # dyanmic include task list in play
 - hosts: all
   tasks:
-    - debug: msg=task1
-    - include: {{hostvar}}.yml
+    - debug:
+        msg: task1
+
+    - include: "{{ hostvar }}.yml"
       static: no
       when: hostvar is defined
 """

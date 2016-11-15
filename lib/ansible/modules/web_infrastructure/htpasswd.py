@@ -74,11 +74,26 @@ author: "Ansible Core Team"
 
 EXAMPLES = """
 # Add a user to a password file and ensure permissions are set
-- htpasswd: path=/etc/nginx/passwdfile name=janedoe password=9s36?;fyNp owner=root group=www-data mode=0640
+- htpasswd:
+    path: /etc/nginx/passwdfile
+    name: janedoe
+    password: '9s36?;fyNp'
+    owner: root
+    group: www-data
+    mode: 0640
+
 # Remove a user from a password file
-- htpasswd: path=/etc/apache2/passwdfile name=foobar state=absent
+- htpasswd:
+    path: /etc/apache2/passwdfile
+    name: foobar
+    state: absent
+
 # Add a user to a password file suitable for use by libpam-pwdfile
-- htpasswd: path=/etc/mail/passwords name=alex password=oedu2eGh crypt_scheme=md5_crypt
+- htpasswd:
+    path: /etc/mail/passwords
+    name: alex
+    password: oedu2eGh
+    crypt_scheme: md5_crypt
 """
 
 

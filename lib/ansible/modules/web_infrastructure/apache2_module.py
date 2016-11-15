@@ -47,10 +47,14 @@ requirements: ["a2enmod","a2dismod"]
 
 EXAMPLES = '''
 # enables the Apache2 module "wsgi"
-- apache2_module: state=present name=wsgi
+- apache2_module:
+    state: present
+    name: wsgi
 
 # disables the Apache2 module "wsgi"
-- apache2_module: state=absent name=wsgi
+- apache2_module:
+    state: absent
+    name: wsgi
 '''
 
 import re

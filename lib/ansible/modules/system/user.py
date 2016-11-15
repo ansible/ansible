@@ -159,7 +159,7 @@ options:
         default: rsa
         version_added: "0.9"
         description:
-            - Optionally specify the type of SSH key to generate. 
+            - Optionally specify the type of SSH key to generate.
               Available SSH key types will depend on implementation
               present on target host.
     ssh_key_file:
@@ -200,19 +200,38 @@ options:
 
 EXAMPLES = '''
 # Add the user 'johnd' with a specific uid and a primary group of 'admin'
-- user: name=johnd comment="John Doe" uid=1040 group=admin
+- user:
+    name: johnd
+    comment: "John Doe"
+    uid: 1040
+    group: admin
 
 # Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
-- user: name=james shell=/bin/bash groups=admins,developers append=yes
+- user:
+    name: james
+    shell: /bin/bash
+    groups: admins,developers
+    append: yes
 
 # Remove the user 'johnd'
-- user: name=johnd state=absent remove=yes
+- user:
+    name: johnd
+    state: absent
+    remove: yes
 
 # Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
-- user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/id_rsa
+- user:
+    name: jsmith
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
 
 # added a consultant whose account you want to expire
-- user: name=james18 shell=/bin/zsh groups=developers expires=1422403387
+- user:
+    name: james18
+    shell: /bin/zsh
+    groups: developers
+    expires: 1422403387
 '''
 
 import os

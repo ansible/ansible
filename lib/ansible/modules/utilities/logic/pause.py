@@ -47,11 +47,13 @@ notes:
 
 EXAMPLES = '''
 # Pause for 5 minutes to build app cache.
-- pause: minutes=5
+- pause:
+    minutes: 5
 
 # Pause until you can verify updates to an application were successful.
 - pause:
 
 # A helpful reminder of what to look out for post-update.
-- pause: prompt="Make sure org.foo.FooOverload exception is not present"
+- pause:
+    prompt: "Make sure org.foo.FooOverload exception is not present"
 '''
