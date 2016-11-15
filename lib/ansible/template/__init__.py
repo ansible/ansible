@@ -384,8 +384,17 @@ class Templar:
         '''
         returns True if the data contains a variable pattern
         '''
+        markers = {
+            'block_start_string': self.environment.block_start_string,
+            'variable_start_string': self.environment.variable_start_string,
+            'comment_start_string': self.environment.comment_start_string,
+        }
+        for key, value in self._get_jinja2_overrides(data):
+            if key in markers:
+                markers[key] = value
+
         if isinstance(data, string_types):
-            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
+            for marker in markers.values():
                 if marker in data:
                     return True
         return False
@@ -467,14 +476,13 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if data.startswith(JINJA2_OVERRIDE):
+            jinja2_overrides = list(self._get_jinja2_overrides(data))
+            if jinja2_overrides:
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol+1:]
-                for pair in line.split(','):
-                    (key,val) = pair.split(':')
-                    key = key.strip()
-                    setattr(myenv, key, ast.literal_eval(val.strip()))
+                for key, value in jinja2_overrides:
+                    setattr(myenv, key, value)
 
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
@@ -537,3 +545,13 @@ class Templar:
             else:
                 #TODO: return warning about undefined var
                 return data
+
+    def _get_jinja2_overrides(self, data):
+        '''Yields key,value pairs of jinja2 overrides from the data header.'''
+        if data.startswith(JINJA2_OVERRIDE):
+            eol = data.find('\n')
+            line = data[len(JINJA2_OVERRIDE):eol]
+            for pair in line.split(','):
+                (key,val) = pair.split(':')
+                key = key.strip()
+                yield (key, ast.literal_eval(val.strip()))

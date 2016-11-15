@@ -54,7 +54,6 @@ class TestTemplar(unittest.TestCase):
         pass
 
     def test_templar_simple(self):
-
         templar = self.templar
         # test some basic templating
         self.assertEqual(templar.template("{{foo}}"), "bar")
@@ -103,11 +102,14 @@ class TestTemplar(unittest.TestCase):
     def test_template_jinja2_extensions(self):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
-        
+
         old_exts = C.DEFAULT_JINJA2_EXTENSIONS
         try:
             C.DEFAULT_JINJA2_EXTENSIONS = "foo,bar"
             self.assertEqual(templar._get_extensions(), ['foo', 'bar'])
         finally:
             C.DEFAULT_JINJA2_EXTENSIONS = old_exts
+
+    def test_template_jinja2_overrides(self):
+        self.assertEqual(self.templar.template("#jinja2: variable_start_string: '[%', variable_end_string: '%]'\n[% foo %]"), "bar")
 
