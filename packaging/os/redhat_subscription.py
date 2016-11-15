@@ -114,30 +114,41 @@ options:
 
 EXAMPLES = '''
 # Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
-- redhat_subscription: state=present username=joe_user password=somepass autosubscribe=true
+- redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    autosubscribe: true
 
 # Same as above but with pulling existing system data.
-- redhat_subscription: state=present username=joe_user password=somepass
-                       consumer_id=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+- redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    consumer_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 # Register with activationkey (1-222333444) and consume subscriptions matching
 # the names (Red hat Enterprise Server) and (Red Hat Virtualization)
-- redhat_subscription: state=present
-                       activationkey=1-222333444
-                       pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
+- redhat_subscription:
+    state: present
+    activationkey: 1-222333444
+    pool: '^(Red Hat Enterprise Server|Red Hat Virtualization)$'
 
 # Update the consumed subscriptions from the previous example (remove the Red
 # Hat Virtualization subscription)
-- redhat_subscription: state=present
-                       activationkey=1-222333444
-                       pool='^Red Hat Enterprise Server$'
+- redhat_subscription:
+    state: present
+    activationkey: 1-222333444
+    pool: '^Red Hat Enterprise Server$'
 
 # Register as user credentials into given environment (against Red Hat
 # Satellite 6.x), and auto-subscribe to available content.
-- redhat_subscription: state=present
-                       username=joe_user password=somepass
-                       environment=Library
-                       autosubscribe=true
+- redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    environment: Library
+    autosubscribe: yes
 '''
 
 import os

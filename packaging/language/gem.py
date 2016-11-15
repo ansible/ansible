@@ -97,13 +97,21 @@ author:
 
 EXAMPLES = '''
 # Installs version 1.0 of vagrant.
-- gem: name=vagrant version=1.0 state=present
+- gem:
+    name: vagrant
+    version: 1.0
+    state: present
 
 # Installs latest available version of rake.
-- gem: name=rake state=latest
+- gem:
+    name: rake
+    state: latest
 
 # Installs rake version 1.0 from a local gem on disk.
-- gem: name=rake gem_source=/path/to/gems/rake-1.0.gem state=present
+- gem:
+    name: rake
+    gem_source: /path/to/gems/rake-1.0.gem
+    state: present
 '''
 
 import re
