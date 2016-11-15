@@ -127,7 +127,7 @@ class ActionModule(ActionBase):
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
+            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
