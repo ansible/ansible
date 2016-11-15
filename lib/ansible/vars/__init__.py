@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 from collections import defaultdict, MutableMapping
 
@@ -389,6 +390,7 @@ class VariableManager:
 
         variables = dict()
         variables['playbook_dir'] = loader.get_basedir()
+        variables['ansible_playbook_python'] = sys.executable
 
         if host:
             variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
