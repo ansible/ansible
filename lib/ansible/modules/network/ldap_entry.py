@@ -256,8 +256,8 @@ class LdapEntry(object):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'attributes': dict(type='dict'),
-            'bind_dn': dict(default=None),
+            'attributes': dict(default={}, type='dict'),
+            'bind_dn': dict(),
             'bind_pw': dict(default='', no_log=True),
             'dn': dict(required=True),
             'objectClass': dict(type='raw'),
@@ -285,12 +285,6 @@ def main():
                 isinstance(module.params['objectClass'], basestring) or
                 isinstance(module.params['objectClass'], list))):
         module.fail_json(msg="objectClass must be either a string or a list.")
-
-    # Check is there are some attributes defined
-    if (
-            module.params['objectClass'] is not None and
-            module.params['attributes'] is None):
-        module.fail_json(msg="Some entry attributes must be defined.")
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
