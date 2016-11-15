@@ -71,6 +71,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection        = None
         self._rslt_q            = rslt_q
+        self._loop_eval_error   = None
 
         self._task.squash()
 
@@ -85,7 +86,13 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
-            items = self._get_loop_items()
+            try:
+                items = self._get_loop_items()
+            except AnsibleUndefinedVariable as e:
+                # save the error raised here for use later
+                items = None
+                self._loop_eval_error = e
+
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
@@ -402,6 +409,11 @@ class TaskExecutor:
             if not self._task.evaluate_conditional(templar, variables):
                 display.debug("when evaluation failed, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
+            # since we're not skipping, if there was a loop evaluation error
+            # raised earlier we need to raise it now to halt the execution of
+            # this task
+            if self._loop_eval_error is not None:
+                raise self._loop_eval_error
         except AnsibleError:
             # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
             if self._task.action not in ['include', 'include_role']:
