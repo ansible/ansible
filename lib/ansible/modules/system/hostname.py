@@ -40,7 +40,8 @@ options:
 '''
 
 EXAMPLES = '''
-- hostname: name=web01
+- hostname:
+    name: web01
 '''
 
 import socket

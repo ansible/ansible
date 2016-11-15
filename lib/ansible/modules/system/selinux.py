@@ -49,9 +49,19 @@ author: "Derek Carter (@goozbach) <goozbach@friocorte.com>"
 '''
 
 EXAMPLES = '''
-- selinux: policy=targeted state=enforcing
-- selinux: policy=targeted state=permissive
-- selinux: state=disabled
+# Enable SELinux
+- selinux:
+    policy: targeted
+    state: enforcing
+
+# Put SELinux in permissive mode, logging actions that would be blocked.
+- selinux:
+    policy: targeted
+    state: permissive
+
+# Disable SELinux
+- selinux:
+    state: disabled
 '''
 
 import os

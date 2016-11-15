@@ -39,6 +39,7 @@ author: "Dag Wieers (@dagwieers)"
 
 EXAMPLES = '''
 # Example playbook using fail and when together
-- fail: msg="The system may not be provisioned according to the CMDB status."
+- fail:
+    msg: "The system may not be provisioned according to the CMDB status."
   when: cmdb_status != "to-be-staged"
 '''

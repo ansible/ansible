@@ -59,7 +59,8 @@ notes:
 '''
 
 EXAMPLES = """
-- include_role: name=myrole
+- include_role:
+    name: myrole
 
 - name: Run tasks/other.yml instead of 'main'
   include_role:
