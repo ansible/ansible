@@ -101,7 +101,7 @@ def _get_fs_size(fssize_cmd, dev, module):
         if rc == 0:
             for line in size.splitlines():
                 #if 'data' in line:
-                if 'data ' in line:
+                if line.startswith('data'):
                     block_size = int(line.split('=')[2].split()[0])
                     block_count = int(line.split('=')[3].split(',')[0])
                     break
