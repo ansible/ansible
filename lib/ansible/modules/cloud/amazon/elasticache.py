@@ -223,17 +223,18 @@ class ElastiCacheManager(object):
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
 
-        try:
-            self.conn.create_cache_cluster(**kwargs)
+        if not self.module.check_mode:
+            try:
+                self.conn.create_cache_cluster(**kwargs)
 
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg=e.message, exception=format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+            except botocore.exceptions.ClientError as e:
+                self.module.fail_json(msg=e.message, exception=format_exc(),
+                                      **camel_dict_to_snake_dict(e.response))
 
-        self._refresh_data()
+            self._refresh_data()
 
         self.changed = True
-        if self.wait:
+        if self.wait and not self.module.check_mode:
             self._wait_for_status('available')
         return True
 
@@ -252,17 +253,18 @@ class ElastiCacheManager(object):
                 msg = "'%s' is currently %s. Cannot delete."
                 self.module.fail_json(msg=msg % (self.name, self.status))
 
-        try:
-            response = self.conn.delete_cache_cluster(CacheClusterId=self.name)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg=e.message, exception=format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+        if not self.module.check_mode:
+            try:
+                response = self.conn.delete_cache_cluster(CacheClusterId=self.name)
+            except botocore.exceptions.ClientError as e:
+                self.module.fail_json(msg=e.message, exception=format_exc(),
+                                      **camel_dict_to_snake_dict(e.response))
 
-        cache_cluster_data = response['CacheCluster']
-        self._refresh_data(cache_cluster_data)
+            cache_cluster_data = response['CacheCluster']
+            self._refresh_data(cache_cluster_data)
 
         self.changed = True
-        if self.wait:
+        if self.wait and not self.module.check_mode:
             self._wait_for_status('gone')
 
     def sync(self):
@@ -296,23 +298,24 @@ class ElastiCacheManager(object):
     def modify(self):
         """Modify the cache cluster. Note it's only possible to modify a few select options."""
         nodes_to_remove = self._get_nodes_to_remove()
-        try:
-            self.conn.modify_cache_cluster(CacheClusterId=self.name,
-                                           NumCacheNodes=self.num_nodes,
-                                           CacheNodeIdsToRemove=nodes_to_remove,
-                                           CacheSecurityGroupNames=self.cache_security_groups,
-                                           CacheParameterGroupName=self.cache_parameter_group,
-                                           SecurityGroupIds=self.security_group_ids,
-                                           ApplyImmediately=True,
-                                           EngineVersion=self.cache_engine_version)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg=e.message, exception=format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+        if not self.module.check_mode:
+            try:
+                self.conn.modify_cache_cluster(CacheClusterId=self.name,
+                                               NumCacheNodes=self.num_nodes,
+                                               CacheNodeIdsToRemove=nodes_to_remove,
+                                               CacheSecurityGroupNames=self.cache_security_groups,
+                                               CacheParameterGroupName=self.cache_parameter_group,
+                                               SecurityGroupIds=self.security_group_ids,
+                                               ApplyImmediately=True,
+                                               EngineVersion=self.cache_engine_version)
+            except botocore.exceptions.ClientError as e:
+                self.module.fail_json(msg=e.message, exception=format_exc(),
+                                      **camel_dict_to_snake_dict(e.response))
 
-        self._refresh_data()
+            self._refresh_data()
 
         self.changed = True
-        if self.wait:
+        if self.wait and not self.module.check_mode:
             self._wait_for_status('available')
 
     def reboot(self):
@@ -331,17 +334,18 @@ class ElastiCacheManager(object):
 
         # Collect ALL nodes for reboot
         cache_node_ids = [cn['CacheNodeId'] for cn in self.data['CacheNodes']]
-        try:
-            self.conn.reboot_cache_cluster(CacheClusterId=self.name,
-                                           CacheNodeIdsToReboot=cache_node_ids)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg=e.message, exception=format_exc(),
-                                  **camel_dict_to_snake_dict(e.response))
+        if not self.module.check_mode:
+            try:
+                self.conn.reboot_cache_cluster(CacheClusterId=self.name,
+                                               CacheNodeIdsToReboot=cache_node_ids)
+            except botocore.exceptions.ClientError as e:
+                self.module.fail_json(msg=e.message, exception=format_exc(),
+                                      **camel_dict_to_snake_dict(e.response))
 
         self._refresh_data()
 
         self.changed = True
-        if self.wait:
+        if self.wait and not self.module.check_mode:
             self._wait_for_status('available')
 
     def get_info(self):
@@ -504,6 +508,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode = True,
     )
 
     if not HAS_BOTO3:
