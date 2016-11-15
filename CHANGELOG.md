@@ -11,6 +11,7 @@ Ansible Changes By Release
   the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
   any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+* Blocks can now have a `name` field, to aid in playbook readability.
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line

@@ -30,12 +30,16 @@ from ansible.playbook.taggable import Taggable
 
 class Block(Base, Become, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
-    _always = FieldAttribute(isa='list', default=[], inherit=False)
-    _delegate_to = FieldAttribute(isa='list')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    # main block fields containing the task lists
+    _block            = FieldAttribute(isa='list', default=[], inherit=False)
+    _rescue           = FieldAttribute(isa='list', default=[], inherit=False)
+    _always           = FieldAttribute(isa='list', default=[], inherit=False)
+
+    # other fields
     _any_errors_fatal = FieldAttribute(isa='bool')
+    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_facts   = FieldAttribute(isa='bool', default=False)
+    _name             = FieldAttribute(isa='string', default='')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
