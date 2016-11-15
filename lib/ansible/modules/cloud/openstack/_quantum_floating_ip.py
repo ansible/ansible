@@ -89,10 +89,15 @@ requirements: ["novaclient", "quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Assign a floating ip to the instance from an external network
-- quantum_floating_ip: state=present login_username=admin login_password=admin
-                       login_tenant_name=admin network_name=external_network
-                       instance_name=vm1 internal_network_name=internal_network
+- name: Assign a floating ip to the instance from an external network
+  quantum_floating_ip:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    network_name: external_network
+    instance_name: vm1
+    internal_network_name: internal_network
 '''
 
 def _get_ksclient(module, kwargs):

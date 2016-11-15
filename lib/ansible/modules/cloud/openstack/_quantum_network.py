@@ -109,15 +109,26 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Create a GRE backed Quantum network with tunnel id 1 for tenant1
-- quantum_network: name=t1network tenant_name=tenant1 state=present
-                   provider_network_type=gre provider_segmentation_id=1
-                   login_username=admin login_password=admin login_tenant_name=admin
+- name: Create a GRE backed Quantum network with tunnel id 1 for tenant1
+  quantum_network:
+    name: t1network
+    tenant_name: tenant1
+    state: present
+    provider_network_type: gre
+    provider_segmentation_id: 1
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
 
-# Create an external network
-- quantum_network: name=external_network state=present
-                   provider_network_type=local router_external=yes
-                   login_username=admin login_password=admin login_tenant_name=admin
+- name: Create an external network
+  quantum_network:
+    name: external_network
+    state: present
+    provider_network_type: local
+    router_external: yes
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
 '''
 
 _os_keystone = None

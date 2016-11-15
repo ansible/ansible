@@ -154,44 +154,97 @@ extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Simple PUT operation
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
+- name: Simple PUT operation
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    src: /usr/local/myfile.txt
+    mode: put
 
-# Simple PUT operation in Ceph RGW S3
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put rgw=true s3_url=http://localhost:8000
+- name: Simple PUT operation in Ceph RGW S3
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    src: /usr/local/myfile.txt
+    mode: put
+    rgw: true
+    s3_url: "http://localhost:8000"
 
-# Simple GET operation
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
+- name: Simple GET operation
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    dest: /usr/local/myfile.txt
+    mode: get
 
-# Get a specific version of an object.
-- s3: bucket=mybucket object=/my/desired/key.txt version=48c9ee5131af7a716edc22df9772aa6f dest=/usr/local/myfile.txt mode=get
+- name: Get a specific version of an object.
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    version: 48c9ee5131af7a716edc22df9772aa6f
+    dest: /usr/local/myfile.txt
+    mode: get
 
-# PUT/upload with metadata
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
+- name: PUT/upload with metadata
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    src: /usr/local/myfile.txt
+    mode: put
+    metadata: 'Content-Encoding=gzip,Cache-Control=no-cache'
 
-# PUT/upload with custom headers
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put headers=x-amz-grant-full-control=emailAddress=owner@example.com
+- name: PUT/upload with custom headers
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    src: /usr/local/myfile.txt
+    mode: put
+    headers: 'x-amz-grant-full-control=emailAddress=owner@example.com'
 
-# List keys simple
-- s3: bucket=mybucket mode=list
+- name: List keys simple
+  s3:
+    bucket: mybucket
+    mode: list
 
-# List keys all options
-- s3: bucket=mybucket mode=list prefix=/my/desired/ marker=/my/desired/0023.txt max_keys=472
+- name: List keys all options
+  s3:
+    bucket: mybucket
+    mode: list
+    prefix: /my/desired/
+    marker: /my/desired/0023.txt
+    max_keys: 472
 
-# Create an empty bucket
-- s3: bucket=mybucket mode=create permission=public-read
+- name: Create an empty bucket
+  s3:
+    bucket: mybucket
+    mode: create
+    permission: public-read
 
-# Create a bucket with key as directory, in the EU region
-- s3: bucket=mybucket object=/my/directory/path mode=create region=eu-west-1
+- name: Create a bucket with key as directory, in the EU region
+  s3:
+    bucket: mybucket
+    object: /my/directory/path
+    mode: create
+    region: eu-west-1
 
-# Delete a bucket and all contents
-- s3: bucket=mybucket mode=delete
+- name: Delete a bucket and all contents
+  s3:
+    bucket: mybucket
+    mode: delete
 
-# GET an object but dont download if the file checksums match. New in 2.0
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=different
+- name: GET an object but dont download if the file checksums match. New in 2.0
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    dest: /usr/local/myfile.txt
+    mode: get
+    overwrite: different
 
-# Delete an object from a bucket
-- s3: bucket=mybucket object=/my/desired/key.txt mode=delobj
+- name: Delete an object from a bucket
+  s3:
+    bucket: mybucket
+    object: /my/desired/key.txt
+    mode: delobj
 '''
 
 import os

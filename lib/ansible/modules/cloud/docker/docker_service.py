@@ -190,14 +190,16 @@ EXAMPLES = '''
         project_src: flask
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - docker_service:
         project_src: flask
         build: no
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - assert:
         that: "not output.changed "
@@ -208,7 +210,8 @@ EXAMPLES = '''
         stopped: true
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - assert:
         that:
@@ -221,7 +224,8 @@ EXAMPLES = '''
         restarted: true
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - assert:
         that:
@@ -239,7 +243,8 @@ EXAMPLES = '''
           web: 2
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
 - name: Run with inline v2 compose
   hosts: localhost
@@ -268,7 +273,8 @@ EXAMPLES = '''
                 - db
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - assert:
         that:
@@ -300,7 +306,8 @@ EXAMPLES = '''
                 - db
       register: output
 
-    - debug: var=output
+    - debug:
+        var: output
 
     - assert:
         that:

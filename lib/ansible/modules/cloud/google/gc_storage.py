@@ -96,26 +96,49 @@ author: "Benno Joy (@bennojoy)"
 '''
 
 EXAMPLES = '''
-# upload some content
-- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put permission=public-read
+- name: Upload some content
+  gc_storage:
+    bucket: mybucket
+    object: key.txt
+    src: /usr/local/myfile.txt
+    mode: put
+    permission: public-read
 
-# upload some headers
-- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt headers='{"Content-Encoding": "gzip"}'
+- name: Upload some headers
+  gc_storage:
+    bucket: mybucket
+    object: key.txt
+    src: /usr/local/myfile.txt
+    headers: '{"Content-Encoding": "gzip"}'
 
-# download some content
-- gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get
+- name: Download some content
+  gc_storage:
+    bucket: mybucket
+    object: key.txt
+    dest: /usr/local/myfile.txt
+    mode: get
 
-# Download an object as a string to use else where in your playbook
-- gc_storage: bucket=mybucket object=key.txt mode=get_str
+- name: Download an object as a string to use else where in your playbook
+  gc_storage:
+    bucket: mybucket
+    object: key.txt
+    mode: get_str
 
-# Create an empty bucket
-- gc_storage: bucket=mybucket mode=create
+- name: Create an empty bucket
+  gc_storage:
+    bucket: mybucket
+    mode: create
 
-# Create a bucket with key as directory
-- gc_storage: bucket=mybucket object=/my/directory/path mode=create
+- name: Create a bucket with key as directory
+  gc_storage:
+    bucket: mybucket
+    object: /my/directory/path
+    mode: create
 
-# Delete a bucket and all contents
-- gc_storage: bucket=mybucket mode=delete
+- name: Delete a bucket and all contents
+  gc_storage:
+    bucket: mybucket
+    mode: delete
 '''
 
 import os

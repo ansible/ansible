@@ -84,12 +84,13 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Creates a router for tenant admin
-- quantum_router: state=present
-                login_username=admin
-                login_password=admin
-                login_tenant_name=admin
-                name=router1"
+- name: Create a router for tenant admin
+  quantum_router:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    name: router1
 '''
 
 _os_keystone = None

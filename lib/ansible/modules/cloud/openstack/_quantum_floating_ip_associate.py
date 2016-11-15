@@ -81,14 +81,14 @@ requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Associate a specific floating IP with an Instance
-- quantum_floating_ip_associate:
-           state=present
-           login_username=admin
-           login_password=admin
-           login_tenant_name=admin
-           ip_address=1.1.1.1
-           instance_name=vm1
+- name: Associate a specific floating IP with an Instance
+  quantum_floating_ip_associate:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    ip_address: 1.1.1.1
+    instance_name: vm1
 '''
 
 def _get_ksclient(module, kwargs):
