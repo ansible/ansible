@@ -217,13 +217,13 @@ EXAMPLES = '''
 
 # Add an alias record that points to an Amazon ELB:
 - route53:
-      command=create
-      zone=foo.com
-      record=elb.foo.com
-      type=A
-      value="{{ elb_dns_name }}"
-      alias=True
-      alias_hosted_zone_id="{{ elb_zone_id }}"
+    command: create
+    zone: foo.com
+    record: elb.foo.com
+    type: A
+    value: "{{ elb_dns_name }}"
+    alias: True
+    alias_hosted_zone_id: "{{ elb_zone_id }}"
 
 # Retrieve the details for elb.foo.com
 - route53:
@@ -246,14 +246,14 @@ EXAMPLES = '''
 
 # Add an alias record that points to an Amazon ELB and evaluates it health:
 - route53:
-      command=create
-      zone=foo.com
-      record=elb.foo.com
-      type=A
-      value="{{ elb_dns_name }}"
-      alias=True
-      alias_hosted_zone_id="{{ elb_zone_id }}"
-      alias_evaluate_target_health=True
+    command: create
+    zone: foo.com
+    record: elb.foo.com
+    type: A
+    value: "{{ elb_dns_name }}"
+    alias: True
+    alias_hosted_zone_id: "{{ elb_zone_id }}"
+    alias_evaluate_target_health: True
 
 # Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:

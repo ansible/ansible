@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: nova_keypair
 version_added: "1.2"
-author: 
+author:
     - "Benno Joy (@bennojoy)"
     - "Michael DeHaan"
 deprecated: Deprecated in 2.0. Use os_keypair instead
@@ -83,14 +83,22 @@ requirements:
     - "python-novaclient"
 '''
 EXAMPLES = '''
-# Creates a key pair with the running users public key
-- nova_keypair: state=present login_username=admin
-                login_password=admin login_tenant_name=admin name=ansible_key
-                public_key={{ lookup('file','~/.ssh/id_rsa.pub') }}
+- name: Create a key pair with the running users public key
+  nova_keypair:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    name: ansible_key
+    public_key: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
 
-# Creates a new key pair and the private key returned after the run.
-- nova_keypair: state=present login_username=admin login_password=admin
-                login_tenant_name=admin name=ansible_key
+- name: Create a new key pair and the private key returned after the run.
+  nova_keypair:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    name: ansible_key
 '''
 
 def main():
