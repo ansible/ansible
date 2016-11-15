@@ -537,3 +537,6 @@ class Templar:
             else:
                 #TODO: return warning about undefined var
                 return data
+
+    # for backwards compatibility in case anyone is using old private method directly
+    _do_template = do_template
