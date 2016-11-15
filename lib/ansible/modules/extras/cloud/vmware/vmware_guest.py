@@ -905,7 +905,7 @@ class PyVmomiHelper(object):
             clonespec_kwargs['customization'].nicSettingMap = adaptermaps
             clonespec_kwargs['customization'].globalIPSettings = globalip
             clonespec_kwargs['customization'].identity = ident
-		
+
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
@@ -928,7 +928,6 @@ class PyVmomiHelper(object):
                 self.wait_for_vm_ip(vm)
             vm_facts = self.gather_facts(vm)
             return ({'changed': True, 'failed': False, 'instance': vm_facts})
-        
 
     def wait_for_task(self, task):
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.Task.html
