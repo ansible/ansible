@@ -1534,8 +1534,12 @@ class DarwinUser(User):
                 else:
                     return None
 
-    def _get_next_uid(self):
-        '''Return the next available uid'''
+    def _get_next_uid(self, system=None):
+        '''
+        Return the next available uid. If system=True, then
+        uid should be below of 500, if possible.
+        '''
+        system = True if system == True else False
         cmd = self._get_dscl()
         cmd += ['-list', '/Users', 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
@@ -1546,10 +1550,18 @@ class DarwinUser(User):
                 out=out,
                 err=err
             )
+
         max_uid = 0
+        max_system_uid = 0
         for line in out.splitlines():
-            if max_uid < int(line.split()[1]):
-                max_uid = int(line.split()[1])
+            current_uid = int(line.split(' ')[-1])
+            if max_uid < current_uid:
+                max_uid = current_uid
+            if max_system_uid < current_uid and current_uid < 500:
+                    max_system_uid = current_uid
+
+        if system and (0 < max_system_uid < 499):
+            return max_system_uid + 1
         return max_uid + 1
 
     def _change_user_password(self):
@@ -1708,7 +1720,7 @@ class DarwinUser(User):
 
         self._make_group_numerical()
         if self.uid is None:
-            self.uid = str(self._get_next_uid())
+            self.uid = str(self._get_next_uid(self.system))
 
         # Homedir is not created by default
         if self.createhome:
