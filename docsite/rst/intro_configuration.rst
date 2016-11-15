@@ -780,6 +780,15 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _cfg_strategy:
+
+strategy
+========
+
+Strategy allow to change the default strategy used by Ansible::
+
+    strategy = free
+
 .. _sudo_exe:
 
 sudo_exe
