@@ -129,6 +129,12 @@ class StrategyBase:
         self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
+        # execute one more pass through the iterator without peeking, to
+        # make sure that all of the hosts are advanced to their final task.
+        # This should be safe, as everything should be ITERATING_COMPLETE by
+        # this point, though the strategy may not advance the hosts itself.
+        [iterator.get_next_task_for_host(host) for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
         failed_hosts      = iterator.get_failed_hosts()
@@ -348,24 +354,25 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    # only add the host to the failed list officially if it has
-                    # been failed by the iterator
-                    if iterator.is_failed(original_host):
+                    # increment the failed count for this host
+                    self._tqm._stats.increment('failures', original_host.name)
+
+                    # grab the current state and if we're iterating on the rescue portion
+                    # of a block then we save the failed task in a special var for use 
+                    # within the rescue/always
+                    state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+
+                    if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
-                        self._tqm._stats.increment('failures', original_host.name)
-                    else:
-                        # otherwise, we grab the current state and if we're iterating on
-                        # the rescue portion of a block then we save the failed task in a
-                        # special var for use within the rescue/always
-                        state, _ = iterator.get_next_task_for_host(original_host, peek=True)
-                        if state.run_state == iterator.ITERATING_RESCUE:
-                            self._variable_manager.set_nonpersistent_facts(
-                                original_host,
-                                dict(
-                                    ansible_failed_task=original_task.serialize(),
-                                    ansible_failed_result=task_result._result,
-                                ),
-                                )
+
+                    if state and state.run_state == iterator.ITERATING_RESCUE:
+                        self._variable_manager.set_nonpersistent_facts(
+                            original_host,
+                            dict(
+                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_result=task_result._result,
+                            ),
+                        )
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
