@@ -118,7 +118,14 @@ def create_connection():
     config_path = os.environ.get('OVIRT_INI_PATH', default_path)
 
     # Create parser and add ovirt section if it doesn't exist:
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser.SafeConfigParser(
+        defaults={
+            'ovirt_url': None,
+            'ovirt_username': None,
+            'ovirt_password': None,
+            'ovirt_ca_file': None,
+        }
+    )
     if not config.has_section('ovirt'):
         config.add_section('ovirt')
     config.read(config_path)
@@ -128,8 +135,8 @@ def create_connection():
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
         password=config.get('ovirt', 'ovirt_password'),
-        ca_file=config.get('ovirt', 'ovirt_ca_file'),
-        insecure=config.get('ovirt', 'ovirt_ca_file') is None,
+        ca_file=config.get('ovirt', 'ovirt_ca_file', None),
+        insecure=config.get('ovirt', 'ovirt_ca_file', None) is None,
     )
 
 
@@ -137,11 +144,19 @@ def get_dict_of_struct(connection, vm):
     """
     Transform SDK Vm Struct type to Python dictionary.
     """
+    if vm is None:
+        return dict()
+
     vms_service = connection.system_service().vms_service()
+    clusters_service = connection.system_service().clusters_service()
     vm_service = vms_service.vm_service(vm.id)
     devices = vm_service.reported_devices_service().list()
     tags = vm_service.tags_service().list()
     stats = vm_service.statistics_service().list()
+    labels = vm_service.affinity_labels_service().list()
+    groups = clusters_service.cluster_service(
+        vm.cluster.id
+    ).affinity_groups_service().list()
 
     return {
         'id': vm.id,
@@ -154,6 +169,11 @@ def get_dict_of_struct(connection, vm):
         'os_type': vm.os.type,
         'template': connection.follow_link(vm.template).name,
         'tags': [tag.name for tag in tags],
+        'affinity_labels': [label.name for label in labels],
+        'affinity_groups': [
+            group.name for group in groups
+            if vm.name in [vm.name for vm in connection.follow_link(group.vms)]
+        ],
         'statistics': dict(
             (stat.name, stat.values[0].datum) for stat in stats
         ),
@@ -168,19 +188,22 @@ def get_data(connection, vm_name=None):
     """
     Obtain data of `vm_name` if specified, otherwise obtain data of all vms.
     """
-    # Locate vms service:
     vms_service = connection.system_service().vms_service()
+    clusters_service = connection.system_service().clusters_service()
 
     if vm_name:
+        vm = vms_service.list(search='name=%s' % vm_name) or [None]
         data = get_dict_of_struct(
             connection=connection,
-            vm=vms_service.list(search='name=%s' % vm_name)[0]
+            vm=vm[0],
         )
     else:
         vms = dict()
         data = defaultdict(list)
         for vm in vms_service.list():
             name = vm.name
+            vm_service = vms_service.vm_service(vm.id)
+            cluster_service = clusters_service.cluster_service(vm.cluster.id)
 
             # Add vm to vms dict:
             vms[name] = get_dict_of_struct(connection, vm)
@@ -190,12 +213,24 @@ def get_data(connection, vm_name=None):
             data['cluster_%s' % cluster_name].append(name)
 
             # Add vm to tag group:
-            tags_service = vms_service.vm_service(vm.id).tags_service()
+            tags_service = vm_service.tags_service()
             for tag in tags_service.list():
                 data['tag_%s' % tag.name].append(name)
 
             # Add vm to status group:
             data['status_%s' % vm.status].append(name)
+
+            # Add vm to affinity group:
+            for group in cluster_service.affinity_groups_service().list():
+                if vm.name in [
+                    v.name for v in connection.follow_link(group.vms)
+                ]:
+                    data['affinity_group_%s' % group.name].append(vm.name)
+
+            # Add vm to affinity label group:
+            affinity_labels_service = vm_service.affinity_labels_service()
+            for label in affinity_labels_service.list():
+                data['affinity_label_%s' % label.name].append(name)
 
         data["_meta"] = {
             'hostvars': vms,
