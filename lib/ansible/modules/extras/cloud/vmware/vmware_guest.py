@@ -88,7 +88,7 @@ options:
    esxi_hostname:
         description:
             - The esxi hostname where the VM will run.
-        required: True
+        required: False
    annotation:
         description:
             - A note or annotation to include in the VM
