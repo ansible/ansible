@@ -404,8 +404,8 @@ class PyVmomiHelper(object):
         if not self.datacenter:
             self.get_datacenter()
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
-        self.folder_map = self._build_folder_map(self.folders)
-        return (self.folders, self.folder_map)
+        self.foldermap = self._build_folder_map(self.folders)
+        return (self.folders, self.foldermap)
 
     def compile_folder_path_for_object(self, vobj):
         ''' make a /vm/foo/bar/baz like folder path for an object '''
@@ -455,7 +455,7 @@ class PyVmomiHelper(object):
                 # need to look for matching absolute path
                 if not self.folders:
                     self.getfolders()
-                paths = self.folder_map['paths'].keys()
+                paths = self.foldermap['paths'].keys()
                 paths = [x for x in paths if x.endswith(self.params['folder'])]
                 if len(paths) > 1:
                     self.module.fail_json(msg='%s matches more than one folder. Please use the absolute path starting with /vm/' % self.params['folder'])
@@ -663,6 +663,8 @@ class PyVmomiHelper(object):
 
         # find matching folders
         if self.params['folder'].startswith('/'):
+            if not self.params['folder'].startswith('/vm'):
+                self.params['folder'] = '/vm' + self.params['folder']
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
         else:
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
@@ -860,6 +862,8 @@ class PyVmomiHelper(object):
                                 )
                                 ip_settings.append(self.params['networks'][network])
 
+            key = 0
+
             adaptermaps = []
 
             guest_map = vim.vm.customization.AdapterMapping()
@@ -915,8 +919,9 @@ class PyVmomiHelper(object):
                 annotation_spec.annotation = str(self.params['annotation'])
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
-            if wait_for_ip:
+            if self.params['state'] == "poweredon":
                 self.set_powerstate(vm, 'poweredon', force=False)
+            if wait_for_ip:
                 self.wait_for_vm_ip(vm)
             vm_facts = self.gather_facts(vm)
             return ({'changed': True, 'failed': False, 'instance': vm_facts})
