@@ -383,6 +383,7 @@ COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LI
 
 # diff
 DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, value_type='integer')
+DIFF_ALWAYS = get_config(p, 'diff', 'always', 'ANSIBLE_DIFF_ALWAYS', False, value_type='bool')
 
 # non-configurable things
 MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw', 'script']
