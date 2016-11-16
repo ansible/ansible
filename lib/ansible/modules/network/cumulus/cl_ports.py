@@ -48,7 +48,9 @@ attributes defined in the ports.conf file on Cumulus Linux
 
 ## Unganged port config using simple args
    - name: configure ports.conf setup
-     cl_ports: speed_4_by_10g="swp1, swp32" speed_40g="swp2-31"
+     cl_ports:
+        speed_4_by_10g: "swp1, swp32"
+        speed_40g: "swp2-31"
      notify: restart switchd
 
 ## Unganged port configuration on certain ports using complex args

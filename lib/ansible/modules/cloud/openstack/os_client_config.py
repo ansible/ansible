@@ -39,15 +39,17 @@ author: "Monty Taylor (@emonty)"
 '''
 
 EXAMPLES = '''
-# Get list of clouds that do not support security groups
-- os_client_config:
-- debug: var={{ item }}
-  with_items: "{{ openstack.clouds|rejectattr('secgroup_source', 'none')|list() }}"
+- name: Get list of clouds that do not support security groups
+  os_client_config:
 
-# Get the information back just about the mordred cloud
-- os_client_config:
+- debug:
+    var: "{{ item }}"
+  with_items: "{{ openstack.clouds | rejectattr('secgroup_source', 'none') | list }}"
+
+- name: Get the information back just about the mordred cloud
+  os_client_config:
     clouds:
-    - mordred
+      - mordred
 '''
 
 

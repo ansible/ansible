@@ -42,15 +42,18 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about a previously created image named image1
-- os_image_facts:
+- name: Gather facts about a previously created image named image1
+  os_image_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
     image: image1
-- debug: var=openstack
+
+- name: Show openstack facts
+  debug:
+    var: openstack
 '''
 
 RETURN = '''

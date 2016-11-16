@@ -34,10 +34,13 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Authenticate to the cloud and retreive the service catalog
-- os_auth:
+- name: Authenticate to the cloud and retrieve the service catalog
+  os_auth:
     cloud: rax-dfw
-- debug: var=service_catalog
+
+- name: Show service catalog
+  debug:
+    var: service_catalog
 '''
 
 def main():

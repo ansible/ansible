@@ -152,20 +152,24 @@ author: "Romeo Theriault (@romeotheriault)"
 '''
 
 EXAMPLES = '''
-# Check that you can connect (GET) to a page and it returns a status 200
-- uri: url=http://www.example.com
+- name: Check that you can connect (GET) to a page and it returns a status 200
+  uri:
+    url: 'http://www.example.com'
 
 # Check that a page returns a status 200 and fail if the word AWESOME is not
 # in the page contents.
-- action: uri url=http://www.example.com return_content=yes
+- uri:
+    url: http://www.example.com
+    return_content: yes
   register: webpage
 
-- action: fail
+- name: Fail if AWESOME is not in the page content
+  fail:
   when: "'AWESOME' not in webpage.content"
 
 
-# Create a JIRA issue
-- uri:
+- name: Create a JIRA issue
+  uri:
     url: https://your.jira.example.com/rest/api/2/issue/
     method: POST
     user: your_username
@@ -192,8 +196,8 @@ EXAMPLES = '''
     return_content: yes
     HEADER_Cookie: "{{login.set_cookie}}"
 
-# Queue build of a project in Jenkins:
-- uri:
+- name: Queue build of a project in Jenkins
+  uri:
     url: "http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}"
     method: GET
     user: "{{ jenkins.user }}"

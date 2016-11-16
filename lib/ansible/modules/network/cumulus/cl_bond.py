@@ -146,33 +146,39 @@ notes:
 EXAMPLES = '''
 # Options ['virtual_mac', 'virtual_ip'] are required together
 # configure a bond interface with IP address
-cl_bond: name=bond0  slaves="swp4-5" ipv4=10.1.1.1/24
-notify: reload networking
+- cl_bond:
+    name: bond0
+    slaves: "swp4-5"
+    ipv4: 10.1.1.1/24
+  notify: reload networking
 
 # configure bond as a dual-connected clag bond
-cl_bond: name=bond1 slaves="swp1s0 swp2s0" clag_id=1
-notify: reload networking
+- cl_bond:
+    name: bond1
+    slaves: "swp1s0 swp2s0"
+    clag_id: 1
+  notify: reload networking
 
 # define cl_bond once in tasks file
 # then write interface config in variables file
 # with just the options you want.
-cl_bond:
-  name: "{{ item.key }}"
-  slaves: "{{ item.value.slaves }}"
-  clag_id: "{{ item.value.clag_id|default(omit) }}"
-  ipv4:  "{{ item.value.ipv4|default(omit) }}"
-  ipv6: "{{ item.value.ipv6|default(omit) }}"
-  alias_name: "{{ item.value.alias_name|default(omit) }}"
-  addr_method: "{{ item.value.addr_method|default(omit) }}"
-  mtu: "{{ item.value.mtu|default(omit) }}"
-  vids: "{{ item.value.vids|default(omit) }}"
-  virtual_ip: "{{ item.value.virtual_ip|default(omit) }}"
-  virtual_mac: "{{ item.value.virtual_mac|default(omit) }}"
-  mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork|default('no') }}"
-  mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
-  mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
-with_dict: "{{ cl_bonds }}"
-notify: reload networking
+- cl_bond:
+    name: "{{ item.key }}"
+    slaves: "{{ item.value.slaves }}"
+    clag_id: "{{ item.value.clag_id|default(omit) }}"
+    ipv4:  "{{ item.value.ipv4|default(omit) }}"
+    ipv6: "{{ item.value.ipv6|default(omit) }}"
+    alias_name: "{{ item.value.alias_name|default(omit) }}"
+    addr_method: "{{ item.value.addr_method|default(omit) }}"
+    mtu: "{{ item.value.mtu|default(omit) }}"
+    vids: "{{ item.value.vids|default(omit) }}"
+    virtual_ip: "{{ item.value.virtual_ip|default(omit) }}"
+    virtual_mac: "{{ item.value.virtual_mac|default(omit) }}"
+    mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork|default('no') }}"
+    mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
+    mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
+  with_dict: "{{ cl_bonds }}"
+  notify: reload networking
 
 # In vars file
 # ============

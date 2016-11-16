@@ -88,22 +88,21 @@ requirements: ["shade"]
 '''
 
 EXAMPLES = '''
-# Create 'tiny' flavor with 1024MB of RAM, 1 virtual CPU, and 10GB of
-# local disk, and 10GB of ephemeral.
-- os_nova_flavor:
-    cloud=mycloud
-    state=present
-    name=tiny
-    ram=1024
-    vcpus=1
-    disk=10
-    ephemeral=10
+- name: "Create 'tiny' flavor with 1024MB of RAM, 1 virtual CPU, and 10GB of local disk, and 10GB of ephemeral."
+  os_nova_flavor:
+    cloud: mycloud
+    state: present
+    name: tiny
+    ram: 1024
+    vcpus: 1
+    disk: 10
+    ephemeral: 10
 
-# Delete 'tiny' flavor
-- os_nova_flavor:
-    cloud=mycloud
-    state=absent
-    name=tiny
+- name: "Delete 'tiny' flavor"
+  os_nova_flavor:
+    cloud: mycloud
+    state: absent
+    name: tiny
 '''
 
 RETURN = '''
