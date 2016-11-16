@@ -21,6 +21,8 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes
 import os
 import re
 import tempfile
@@ -269,7 +271,7 @@ class Hosts:
 
         # Write data back into the file
         for line in self.lines:
-            f.write(line['line'])
+            f.write(to_bytes(line['line']))
             self.diff['after'] += line['line']
 
         # Close the file
@@ -311,7 +313,7 @@ def main():
 
     # Split aliases if any
     if module.params['alias'] is not None:
-        if isinstance(module.params['alias'], basestring):
+        if isinstance(module.params['alias'], string_types):
             p_split = re.compile("\s*,\s*|\s+")
             module.params['alias'] = p_split.split(
                 module.params['alias'].strip())
