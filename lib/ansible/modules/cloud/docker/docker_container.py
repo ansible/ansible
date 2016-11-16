@@ -571,7 +571,6 @@ EXAMPLES = '''
 
 - name: Add container to networks
   docker_container:
-    docker_container:
     name: sleepy
     networks:
       - name: TestingNet
