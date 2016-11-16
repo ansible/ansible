@@ -1879,6 +1879,12 @@ def main():
         elif state == 'absent':
             module.exit_json(changed=False, msg="vm %s not present" % guest)
 
+        # check if user is trying to perform state operation on a vm which doesn't exists
+        elif state in ['present', 'powered_off', 'powered_on'] and not all((vm_extra_config,
+                                                       vm_hardware, vm_disk, vm_nic, esxi)):
+            module.exit_json(changed=False, msg="vm %s not present" % guest)
+
+
         # Create the VM
         elif state in ['present', 'powered_off', 'powered_on']:
 
