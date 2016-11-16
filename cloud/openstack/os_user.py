@@ -191,10 +191,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(
         argument_spec,
-        required_if=[
-            ('update_password', 'always', ['password']),
-            ('update_password', 'on_create', ['password']),
-        ],
         **module_kwargs)
 
     if not HAS_SHADE:
@@ -219,6 +215,11 @@ def main():
             domain_id = _get_domain_id(opcloud, domain)
 
         if state == 'present':
+            if update_password in ('always', 'on_create'):
+                if not password:
+                    msg = ("update_password is %s but a password value is "
+                          "missing") % update_password
+                    self.fail_json(msg=msg)
             default_project_id = None
             if default_project:
                 default_project_id = _get_default_project_id(cloud, default_project)
