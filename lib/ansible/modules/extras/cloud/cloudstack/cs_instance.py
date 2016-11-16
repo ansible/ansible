@@ -205,6 +205,7 @@ options:
       - If you want to delete all tags, set a empty list e.g. C(tags: []).
     required: false
     default: null
+    aliases: [ 'tag' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
