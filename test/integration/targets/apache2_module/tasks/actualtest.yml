@@ -73,3 +73,15 @@
   assert:
     that:
       - 'disablefinal.changed'
+
+- name: ensure autoindex enabled
+  apache2_module:
+    name: autoindex
+    state: present
+
+- name: force disable of autoindex  # bug #2499
+  apache2_module:
+    name: autoindex
+    state: absent
+    force: True
+  when: "ansible_os_family != 'Suse'"
