@@ -192,18 +192,6 @@ class GalaxyCLI(CLI):
                             "however it will reset any main.yml files that may have\n"
                             "been modified there already." % role_path)
 
-        platforms = []
-        if not offline:
-            platforms = self.api.get_list("platforms") or []
-
-        # group the list of platforms from the api based
-        # on their names, with the release field being
-        # appended to a list of versions
-        platform_groups = defaultdict(list)
-        for platform in platforms:
-            platform_groups[platform['name']].append(platform['release'])
-            platform_groups[platform['name']].sort()
-
         inject_data = dict(
             role_name=role_name,
             author='your name',
@@ -212,7 +200,6 @@ class GalaxyCLI(CLI):
             license='license (GPLv2, CC-BY, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='1.2',
-            platforms=platform_groups,
             container_enabled=self.options.container_enabled
         )
 
