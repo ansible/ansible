@@ -46,30 +46,36 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created networks
-- os_networks_facts:
+- name: Gather facts about previously created networks
+  os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
-- debug: var=openstack_networks
 
-# Gather facts about a previously created network by name
-- os_networks_facts:
+- name: Show openstack networks
+  debug:
+    var: openstack_networks
+
+- name: Gather facts about a previously created network by name
+  os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
     name:  network1
-- debug: var=openstack_networks
 
-# Gather facts about a previously created network with filter (note: name and
-  filters parameters are Not mutually exclusive)
-- os_networks_facts:
+- name: Show openstack networks
+  debug:
+    var: openstack_networks
+
+- name: Gather facts about a previously created network with filter
+  # Note: name and filters parameters are Not mutually exclusive
+  os_networks_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
@@ -78,7 +84,10 @@ EXAMPLES = '''
       subnets:
         - 057d4bdf-6d4d-4728-bb0f-5ac45a6f7400
         - 443d4dc0-91d4-4998-b21c-357d10433483
-- debug: var=openstack_networks
+
+- name: Show openstack networks
+  debug:
+    var: openstack_networks
 '''
 
 RETURN = '''

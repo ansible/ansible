@@ -114,7 +114,8 @@ EXAMPLES = '''
     mode: "u=rw,g=r,o=r"
 
 # touch the same file, but add/remove some permissions
-- file: path=/etc/foo.conf
+- file:
+    path: /etc/foo.conf
     state: touch
     mode: "u+rw,g-wx,o-rwx"
 

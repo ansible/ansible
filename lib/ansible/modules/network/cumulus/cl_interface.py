@@ -114,45 +114,55 @@ notes:
 
 EXAMPLES = '''
 # Options ['virtual_mac', 'virtual_ip'] are required together
-# configure a front panel port with an IP
-cl_interface: name=swp1  ipv4=10.1.1.1/24
-notify: reload networking
+- name: Configure a front panel port with an IP
+  cl_interface:
+    name: swp1
+    ipv4: 10.1.1.1/24
+  notify: reload networking
 
-# configure front panel to use DHCP
-cl_interface: name=swp2 addr_family=dhcp
-notify: reload networking
+- name: Configure front panel to use DHCP
+  cl_interface:
+    name: swp2
+    addr_family: dhcp
+  notify: reload networking
 
-# configure a SVI for vlan 100 interface with an IP
-cl_interface: name=bridge.100 ipv4=10.1.1.1/24
-notify: reload networking
+- name: Configure a SVI for vlan 100 interface with an IP
+  cl_interface:
+    name: bridge.100
+    ipv4: 10.1.1.1/24
+  notify: reload networking
 
-# configure subinterface with an IP
-cl_interface: name=bond0.100  alias_name='my bond' ipv4=10.1.1.1/24
-notify: reload networking
+- name: Configure subinterface with an IP
+  cl_interface:
+    name: bond0.100
+    alias_name: 'my bond'
+    ipv4: 10.1.1.1/24
+  notify: reload networking
 
 # define cl_interfaces once in tasks
 # then write interfaces in variables file
 # with just the options you want.
-cl_interface:
-  name: "{{ item.key }}"
-  ipv4: "{{ item.value.ipv4|default(omit) }}"
-  ipv6: "{{ item.value.ipv6|default(omit) }}"
-  alias_name: "{{ item.value.alias_name|default(omit) }}"
-  addr_method: "{{ item.value.addr_method|default(omit) }}"
-  speed: "{{ item.value.link_speed|default(omit) }}"
-  mtu: "{{ item.value.mtu|default(omit) }}"
-  clagd_enable: "{{ item.value.clagd_enable|default(omit) }}"
-  clagd_peer_ip: "{{ item.value.clagd_peer_ip|default(omit) }}"
-  clagd_sys_mac: "{{ item.value.clagd_sys_mac|default(omit) }}"
-  clagd_priority: "{{ item.value.clagd_priority|default(omit) }}"
-  vids: "{{ item.value.vids|default(omit) }}"
-  virtual_ip: "{{ item.value.virtual_ip|default(omit) }}"
-  virtual_mac: "{{ item.value.virtual_mac|default(omit) }}"
-  mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork|default('no') }}"
-  mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
-  mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
-with_dict: "{{ cl_interfaces }}"
-notify: reload networking
+  - name: Create interfaces
+    cl_interface:
+      name: "{{ item.key }}"
+      ipv4: "{{ item.value.ipv4 | default(omit) }}"
+      ipv6: "{{ item.value.ipv6 | default(omit) }}"
+      alias_name: "{{ item.value.alias_name | default(omit) }}"
+      addr_method: "{{ item.value.addr_method | default(omit) }}"
+      speed: "{{ item.value.link_speed | default(omit) }}"
+      mtu: "{{ item.value.mtu | default(omit) }}"
+      clagd_enable: "{{ item.value.clagd_enable | default(omit) }}"
+      clagd_peer_ip: "{{ item.value.clagd_peer_ip | default(omit) }}"
+      clagd_sys_mac: "{{ item.value.clagd_sys_mac | default(omit) }}"
+      clagd_priority: "{{ item.value.clagd_priority | default(omit) }}"
+      vids: "{{ item.value.vids | default(omit) }}"
+      virtual_ip: "{{ item.value.virtual_ip | default(omit) }}"
+      virtual_mac: "{{ item.value.virtual_mac | default(omit) }}"
+      mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork | default('no') }}"
+      mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge | default('no') }}"
+      mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard | default('no') }}"
+    with_dict: "{{ cl_interfaces }}"
+    notify: reload networking
 
 
 # In vars file

@@ -55,33 +55,37 @@ options:
 
 '''
 EXAMPLES = '''
-Example playbook using the cl_license module to manage licenses on Cumulus Linux
+# Example playbook using the cl_license module to manage licenses on Cumulus Linux
 
----
-   - hosts: all
-     tasks:
-       - name: install license using http url
-         cl_license: src='http://10.1.1.1/license.txt'
-         notify: restart switchd
+- hosts: all
+  tasks:
+    - name: install license using http url
+      cl_license:
+        src: 'http://10.1.1.1/license.txt'
+      notify: restart switchd
 
-       - name: Triggers switchd to be restarted right away, before play, or role
-               is over. This is desired behaviour
-         meta: flush_handlers
+    - name: Triggers switchd to be restarted right away, before play, or role
+            is over. This is desired behaviour
+      meta: flush_handlers
 
-       - name: configure interfaces
-         template: src=interfaces.j2 dest=/etc/network/interfaces
-         notify: restart networking
+    - name: Configure interfaces
+      template:
+        src: interfaces.j2
+        dest: /etc/network/interfaces
+      notify: restart networking
 
-     handlers:
-       - name: restart switchd
-         service: name=switchd state=restarted
-       - name: restart networking
-         service: name=networking state=reloaded
-
-----
+ handlers:
+   - name: restart switchd
+     service:
+      name: switchd
+      state: restarted
+   - name: restart networking
+     service:
+      name: networking
+      state: reloaded
 
 # Force all switches to accept a new license. Typically not needed
-ansible -m cl_license -a "src='http://10.1.1.1/new_lic' force=yes"  -u root all
+ansible -m cl_license -a "src='http://10.1.1.1/new_lic' force=yes" -u root all
 
 ----
 
