@@ -33,6 +33,12 @@ options:
       - C(?format=json) will be appended per default.
     required: false
     default: 'https://api.ipify.org'
+  timeout:
+    description:
+      - HTTP connection timeout in seconds.
+    required: false
+    default: 10
+    version_added: "2.3"
 notes:
   - "Visit https://www.ipify.org to get more information."
 '''
@@ -42,9 +48,11 @@ EXAMPLES = '''
 - name: get my public IP
   ipify_facts:
 
-# Gather IP facts from your own ipify service endpoint
+# Gather IP facts from your own ipify service endpoint with a custom timeout
 - name: get my public IP
-  ipify_facts: api_url=http://api.example.com/ipify
+  ipify_facts:
+    api_url: http://api.example.com/ipify
+    timeout: 20
 '''
 
 RETURN = '''
@@ -65,27 +73,35 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 class IpifyFacts(object):
 
     def __init__(self):
         self.api_url = module.params.get('api_url')
+        self.timeout = module.params.get('timeout')
 
     def run(self):
         result = {
             'ipify_public_ip': None
         }
-        (response, info) = fetch_url(module, self.api_url + "?format=json" , force=True)
-        if response:
-            data = json.loads(response.read())
-            result['ipify_public_ip'] = data.get('ip')
+        (response, info) = fetch_url(module=module, url=self.api_url + "?format=json" , force=True, timeout=self.timeout)
+
+        if not response:
+            module.fail_json(msg="No valid or no response from url %s within %s seconds (timeout)" % (self.api_url, self.timeout))
+
+        data = json.loads(response.read())
+        result['ipify_public_ip'] = data.get('ip')
         return result
 
 def main():
     global module
     module = AnsibleModule(
         argument_spec = dict(
-            api_url = dict(default='https://api.ipify.org'),
+            api_url=dict(default='https://api.ipify.org'),
+            timeout=dict(type='int', default=10),
         ),
         supports_check_mode=True,
     )
@@ -94,7 +110,5 @@ def main():
     ipify_facts_result = dict(changed=False, ansible_facts=ipify_facts)
     module.exit_json(**ipify_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
