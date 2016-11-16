@@ -203,7 +203,7 @@ class PlayContext(Base):
     _force_handlers   = FieldAttribute(isa='bool', default=False)
     _start_at_task    = FieldAttribute(isa='string')
     _step             = FieldAttribute(isa='bool', default=False)
-    _diff             = FieldAttribute(isa='bool', default=False)
+    _diff             = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
 
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
