@@ -208,8 +208,8 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
     def disassociate_ip_address(self):
         ip_address = self.get_ip_address()
-        if ip_address is None:
-            return ip_address
+        if not ip_address:
+            return None
         if ip_address['isstaticnat']:
             self.module.fail_json(msg="IP address is allocated via static nat")
 
