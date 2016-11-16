@@ -46,36 +46,45 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created subnets
-- os_subnets_facts:
+- name: Gather facts about previously created subnets
+  os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
-- debug: var=openstack_subnets
 
-# Gather facts about a previously created subnet by name
-- os_subnets_facts:
+- name: Show openstack subnets
+  debug:
+    var: openstack_subnets
+
+- name: Gather facts about a previously created subnet by name
+  os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
-    name:  subnet1
-- debug: var=openstack_subnets
+    name: subnet1
 
-# Gather facts about a previously created subnet with filter (note: name and
-  filters parameters are Not mutually exclusive)
-- os_subnets_facts:
+- name: Show openstack subnets
+  debug:
+    var: openstack_subnets
+
+- name: Gather facts about a previously created subnet with filter
+  # Note: name and filters parameters are not mutually exclusive
+  os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: 'https://your_api_url.com:9000/v2.0'
       username: user
       password: password
       project_name: someproject
     filters:
       tenant_id: 55e2ce24b2a245b09f181bf025724cbe
-- debug: var=openstack_subnets
+
+- name: Show openstack subnets
+  debug:
+    var: openstack_subnets
 '''
 
 RETURN = '''

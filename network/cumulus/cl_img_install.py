@@ -59,32 +59,40 @@ Example playbook entries using the cl_img_install module
 
 ## Download and install the image from a webserver.
 
-   - name: install image using using http url. Switch slots so the subsequent
-     will load the new version
-      cl_img_install: version=2.0.1
-          src='http://10.1.1.1/CumulusLinux-2.0.1.bin'
-          switch_slot=yes
+- name: Install image using using http url. Switch slots so the subsequent will load the new version
+  cl_img_install:
+    version: 2.0.1
+    src: 'http://10.1.1.1/CumulusLinux-2.0.1.bin'
+    switch_slot: yes
 
 ## Copy the software from the ansible server to the switch.
 ## The module will get the code version from the filename
 ## The code will be installed in the alternate slot but the slot will not be primary
 ## A subsequent reload will not run the new code
 
-    - name: download cumulus linux to local system
-      get_url: src=ftp://cumuluslinux.bin dest=/root/CumulusLinux-2.0.1.bin
+- name: Download cumulus linux to local system
+  get_url:
+    src: 'ftp://cumuluslinux.bin'
+    dest: /root/CumulusLinux-2.0.1.bin
 
-    - name: install image from local filesystem. Get version from the filename
-      cl_img_install:  src='/root/CumulusLinux-2.0.1.bin'
+- name: Install image from local filesystem. Get version from the filename.
+  cl_img_install:
+    src: /root/CumulusLinux-2.0.1.bin
 
 
 ## If the image name has been changed from the original name, use the `version` option
 ## to inform the module exactly what code version is been installed
 
-    - name: download cumulus linux to local system
-      get_url: src=ftp://CumulusLinux-2.0.1.bin dest=/root/image.bin
+- name: Download cumulus linux to local system
+  get_url:
+    src: 'ftp://CumulusLinux-2.0.1.bin'
+    dest: /root/image.bin
 
-    - name: install image and switch slots. only reboot needed
-      cl_img_install: version=2.0.1 src=/root/image.bin switch_slot=yes'
+- name: install image and switch slots. only reboot needed
+  cl_img_install:
+    version: 2.0.1
+    src: /root/image.bin
+    switch_slot: yes
 '''
 
 RETURN = '''

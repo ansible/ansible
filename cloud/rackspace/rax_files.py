@@ -86,10 +86,12 @@ EXAMPLES = '''
   gather_facts: no
   tasks:
     - name: "List all containers"
-      rax_files: state=list
+      rax_files:
+        state: list
 
     - name: "Create container called 'mycontainer'"
-      rax_files: container=mycontainer
+      rax_files:
+        container: mycontainer
 
     - name: "Create container 'mycontainer2' with metadata"
       rax_files:
@@ -99,19 +101,30 @@ EXAMPLES = '''
           file_for: someuser@example.com
 
     - name: "Set a container's web index page"
-      rax_files: container=mycontainer web_index=index.html
+      rax_files:
+        container: mycontainer
+        web_index: index.html
 
     - name: "Set a container's web error page"
-      rax_files: container=mycontainer web_error=error.html
+      rax_files:
+        container: mycontainer
+        web_error: error.html
 
     - name: "Make container public"
-      rax_files: container=mycontainer public=yes
+      rax_files:
+        container: mycontainer
+        public: yes
 
     - name: "Make container public with a 24 hour TTL"
-      rax_files: container=mycontainer public=yes ttl=86400
+      rax_files:
+        container: mycontainer
+        public: yes
+        ttl: 86400
 
     - name: "Make container private"
-      rax_files: container=mycontainer private=yes
+      rax_files:
+        container: mycontainer
+        private: yes
 
 - name: "Test Cloud Files Containers Metadata Storage"
   hosts: local

@@ -78,25 +78,33 @@ extends_documentation_fragment: mysql
 '''
 
 EXAMPLES = '''
-# Create a new database with name 'bobdata'
-- mysql_db:
+- name: Create a new database with name 'bobdata'
+  mysql_db:
     name: bobdata
     state: present
 
 # Copy database dump file to remote host and restore it to database 'my_db'
-- copy:
+- name: Copy database dump file
+  copy:
     src: dump.sql.bz2
     dest: /tmp
-- mysql_db:
+- name: Restore database
+  mysql_db:
     name: my_db
     state: import
     target: /tmp/dump.sql.bz2
 
-# Dumps all databases to hostname.sql
-- mysql_db: state=dump name=all target=/tmp/{{ inventory_hostname }}.sql
+- name: Dump all databases to hostname.sql
+  mysql_db:
+    state: dump
+    name: all
+    target: /tmp/{{ inventory_hostname }}.sql
 
-# Imports file.sql similar to mysql -u <username> -p <password> < hostname.sql
-- mysql_db: state=import name=all target=/tmp/{{ inventory_hostname }}.sql
+- name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/{{ inventory_hostname }}.sql
 '''
 
 import os
