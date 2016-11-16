@@ -386,7 +386,7 @@ def main():
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
             lambda_function_arn=dict(required=True, default=None, aliases=['function_name', 'function_arn']),
-            event_source=dict(required=True, default="stream", choices=source_choices),
+            event_source=dict(required=False, default="stream", choices=source_choices),
             source_params=dict(type='dict', required=True, default=None),
             alias=dict(required=False, default=None),
             version=dict(type='int', required=False, default=0),
