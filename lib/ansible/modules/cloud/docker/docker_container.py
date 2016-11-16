@@ -1201,6 +1201,12 @@ class Container(DockerBaseClass):
         # assuming if the container was running, it must have been detached.
         detach = not (config.get('AttachStderr') and config.get('AttachStdout'))
 
+        # "ExposedPorts": null returns None type & causes AttributeError - PR #5517 
+        if config.get('ExposedPorts') is not None:
+            expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
+        else:
+            expected_exposed = []
+
         # Map parameters to container inspect results
         config_mapping = dict(
             image=config.get('Image'),
@@ -1217,7 +1223,7 @@ class Container(DockerBaseClass):
             expected_env=(config.get('Env') or []),
             expected_entrypoint=config.get('Entrypoint'),
             expected_etc_hosts=host_config['ExtraHosts'],
-            expected_exposed=[re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()],
+            expected_exposed=expected_exposed,
             groups=host_config.get('GroupAdd'),
             ipc_mode=host_config.get("IpcMode"),
             labels=config.get('Labels'),
