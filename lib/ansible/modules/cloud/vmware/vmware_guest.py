@@ -794,6 +794,56 @@ class PyVmomiHelper(object):
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
 
+        # set nics
+        if 'nic' in self.params:
+            key = 0
+
+            devices = []
+
+            try:
+                for device in template.config.hardware.device:
+                    if hasattr(device, 'addressType'):
+                        nic = vim.vm.device.VirtualDeviceSpec()
+                        nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                        nic.device = device
+                        devices.append(nic)
+            except:
+                pass
+
+            for device in self.params.get('nic'):
+                network = get_obj(self.content, [vim.Network], device['network'])
+
+                nic = vim.vm.device.VirtualDeviceSpec()
+                nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                nic.device = vim.vm.device.VirtualVmxnet3()
+                nic.device.wakeOnLanEnabled = True
+                nic.device.addressType = 'assigned'
+
+                if hasattr(get_obj(self.content, [vim.Network], device['network']), 'portKeys'):
+                    # VDS switch
+                    pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], device['network'])
+                    dvs_port_connection = vim.dvs.PortConnection()
+                    dvs_port_connection.portgroupKey= pg_obj.key
+                    dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                    nic.device.backing.port = dvs_port_connection
+
+                else:
+                    # vSwitch
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                    nic.device.backing.network = get_obj(self.content, [vim.Network], device['network'])
+                    nic.device.backing.deviceName = device['network']
+
+                nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                nic.device.connectable.startConnected = True
+                nic.device.connectable.allowGuestControl = True
+                nic.device.connectable.connected = True
+                nic.device.connectable.allowGuestControl = True
+                devices.append(nic)
+
+            # Update the spec with the added NIC
+            clonespec_kwargs['config'].deviceChange = devices
+
         # lets try and assign a static ip addresss
         if self.params['customize'] is True:
             ip_settings = list()
@@ -810,61 +860,7 @@ class PyVmomiHelper(object):
                                 )
                                 ip_settings.append(self.params['networks'][network])
 
-            key = 0
-            network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
-            datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-            # get the folder where VMs are kept for this datacenter
-            destfolder = datacenter.vmFolder
-
-            cluster = get_obj(self.content, [vim.ClusterComputeResource],self.params['cluster'])
-
-            devices = []
             adaptermaps = []
-
-            try:
-                for device in template.config.hardware.device:
-                    if hasattr(device, 'addressType'):
-                        nic = vim.vm.device.VirtualDeviceSpec()
-                        nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
-                        nic.device = device
-                        devices.append(nic)
-            except:
-                pass
-
-                # single device support
-            nic = vim.vm.device.VirtualDeviceSpec()
-            nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-            nic.device = vim.vm.device.VirtualVmxnet3()
-            nic.device.wakeOnLanEnabled = True
-            nic.device.addressType = 'assigned'
-            nic.device.deviceInfo = vim.Description()
-            nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
-            nic.device.deviceInfo.summary = ip_settings[key]['network']
-            
-            if hasattr(get_obj(self.content, [vim.Network], ip_settings[key]['network']), 'portKeys'):
-            # VDS switch
-                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], ip_settings[key]['network'])
-                dvs_port_connection = vim.dvs.PortConnection()
-                dvs_port_connection.portgroupKey= pg_obj.key
-                dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = dvs_port_connection 
-
-            else: 
-            # vSwitch
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
-                nic.device.backing.deviceName = ip_settings[key]['network']
-
-            nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-            nic.device.connectable.startConnected = True
-            nic.device.connectable.allowGuestControl = True
-            nic.device.connectable.connected = True
-            nic.device.connectable.allowGuestControl = True
-            devices.append(nic)
-            
-            # Update the spec with the added NIC
-            clonespec_kwargs['config'].deviceChange = devices
 
             guest_map = vim.vm.customization.AdapterMapping()
             guest_map.adapter = vim.vm.customization.IPSettings()
