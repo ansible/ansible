@@ -284,7 +284,9 @@ class Hosts:
                 detail=str(e))
 
         # Move the tmp file to the right location
-        self.module.atomic_move(tmp_file, self.params['path'])
+        self.module.atomic_move(
+            tmp_file, self.params['path'],
+            unsafe_writes=self.params['unsafe_writes'])
 
 
 def main():
