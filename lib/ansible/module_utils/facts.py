@@ -2724,7 +2724,7 @@ class GenericBsdIfconfigNetwork(Network):
             return []
 
     def merge_default_interface(self, defaults, interfaces, ip_type):
-        if not 'interface' in defaults.keys():
+        if 'interface' not in defaults:
             return
         if not defaults['interface'] in interfaces:
             return
@@ -3045,7 +3045,7 @@ class SunOSNetwork(GenericBsdIfconfigNetwork):
 
     def parse_interface_line(self, words, current_if, interfaces):
         device = words[0][0:-1]
-        if device not in interfaces.keys():
+        if device not in interfaces:
             current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
         else:
             current_if = interfaces[device]
