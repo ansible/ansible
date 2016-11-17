@@ -877,7 +877,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 # or virtual provides (like "python-*" or "smtp-daemon") while
                 # updates contains name only.
                 this_name_only = '-'.join(this.split('-')[:-2])
-                if spec in pkgs['update'] and this_name_only in updates.keys():
+                if spec in pkgs['update'] and this_name_only in updates:
                     nothing_to_do = False
                     will_update.add(spec)
                     # Massage the updates list
