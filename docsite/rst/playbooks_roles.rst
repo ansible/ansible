@@ -34,7 +34,7 @@ put together.  You may wish to have this open in a separate tab as you dive in.
 
 Task versus Play includes
 `````````````````````````
-Tasks and plays both use the `include` keyword, but the keyword differently. The difference between them is determined by their positioning and content. If the include is inside a play it can only be a 'task' include and include a list of tasks; if it is at the top level, it can only include plays. For example::
+Tasks and plays both use the `include` keyword, but implement the keyword differently. The difference between them is determined by their positioning and content. If the include is inside a play it can only be a 'task' include and include a list of tasks; if it is at the top level, it can only include plays. For example::
 
     # this is a 'play' include
     - include: listofplays
