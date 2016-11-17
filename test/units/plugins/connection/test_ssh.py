@@ -21,13 +21,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pipes
 from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
@@ -311,7 +311,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with C.DEFAULT_SCP_IF_SSH set to smart
         # Test when SFTP works
         C.DEFAULT_SCP_IF_SSH = 'smart'
-        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -331,13 +331,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
-        expected_in_data = b' '.join((b'put', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'put', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.put_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'put',
-            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.put_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -365,7 +365,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         # Test with C.DEFAULT_SCP_IF_SSH set to smart
         # Test when SFTP works
         C.DEFAULT_SCP_IF_SSH = 'smart'
-        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
@@ -385,13 +385,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         # test with C.DEFAULT_SCP_IF_SSH disabled
         C.DEFAULT_SCP_IF_SSH = False
-        expected_in_data = b' '.join((b'get', to_bytes(pipes.quote('/path/to/in/file')), to_bytes(pipes.quote('/path/to/dest/file')))) + b'\n'
+        expected_in_data = b' '.join((b'get', to_bytes(shlex_quote('/path/to/in/file')), to_bytes(shlex_quote('/path/to/dest/file')))) + b'\n'
         conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 
         expected_in_data = b' '.join((b'get',
-            to_bytes(pipes.quote('/path/to/in/file/with/unicode-fö〩')),
-            to_bytes(pipes.quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
+            to_bytes(shlex_quote('/path/to/in/file/with/unicode-fö〩')),
+            to_bytes(shlex_quote('/path/to/dest/file/with/unicode-fö〩')))) + b'\n'
         conn.fetch_file(u'/path/to/in/file/with/unicode-fö〩', u'/path/to/dest/file/with/unicode-fö〩')
         conn._run.assert_called_with('some command to run', expected_in_data, checkrc=False)
 

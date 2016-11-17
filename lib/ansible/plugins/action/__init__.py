@@ -22,7 +22,6 @@ __metaclass__ = type
 import base64
 import json
 import os
-import pipes
 import random
 import re
 import stat
@@ -30,9 +29,9 @@ import tempfile
 import time
 from abc import ABCMeta, abstractmethod
 
-from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
-
 from ansible import constants as C
+from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -596,7 +595,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
                 for k,v in iteritems(module_args):
-                    args_data += '%s=%s ' % (k, pipes.quote(text_type(v)))
+                    args_data += '%s=%s ' % (k, shlex_quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
@@ -748,7 +747,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
             if executable:
-                cmd = executable + ' -c ' + pipes.quote(cmd)
+                cmd = executable + ' -c ' + shlex_quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 
