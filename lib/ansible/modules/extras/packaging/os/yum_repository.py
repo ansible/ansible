@@ -21,6 +21,7 @@
 
 import ConfigParser
 import os
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
 
@@ -273,8 +274,8 @@ options:
     required: false
     default: null
     description:
-      - URL to the proxy server that yum should use. Set to C(_none_) to disable
-        the global proxy setting.
+      - URL to the proxy server that yum should use. Set to C(_none_) to
+        disable the global proxy setting.
   proxy_password:
     required: false
     default: null
@@ -719,7 +720,12 @@ def main():
     yumrepo = YumRepo(module)
 
     # Get repo status before change
-    yumrepo_before = yumrepo.dump()
+    diff = {
+        'before_header': yumrepo.params['dest'],
+        'before': yumrepo.dump(),
+        'after_header': yumrepo.params['dest'],
+        'after': ''
+    }
 
     # Perform action depending on the state
     if state == 'present':
@@ -728,10 +734,10 @@ def main():
         yumrepo.remove()
 
     # Get repo status after change
-    yumrepo_after = yumrepo.dump()
+    diff['after'] = yumrepo.dump()
 
     # Compare repo states
-    changed = yumrepo_before != yumrepo_after
+    changed = diff['before'] != diff['after']
 
     # Save the file only if not in check mode and if there was a change
     if not module.check_mode and changed:
@@ -743,11 +749,7 @@ def main():
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Print status of the change
-    module.exit_json(changed=changed, repo=name, state=state)
-
-
-# Import module snippets
-from ansible.module_utils.basic import *
+    module.exit_json(changed=changed, repo=name, state=state, diff=diff)
 
 
 if __name__ == '__main__':
