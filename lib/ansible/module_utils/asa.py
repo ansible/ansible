@@ -62,8 +62,13 @@ class Cli(CliBase):
 
     def authorize(self, params, **kwargs):
         passwd = params['auth_pass']
+        errors = self.shell.errors
+        # Disable errors (if already in enable mode)
+        self.shell.errors = []
         cmd = Command('enable', prompt=self.NET_PASSWD_RE, response=passwd)
         self.execute([cmd, 'no terminal pager'])
+        # Reapply error handling
+        self.shell.errors = errors
 
     def change_context(self, params):
         context = params['context']
