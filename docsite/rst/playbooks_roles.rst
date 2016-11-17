@@ -32,10 +32,9 @@ are great and you should use them every time you write playbooks.
 See the `ansible-examples <https://github.com/ansible/ansible-examples>`_ repository on GitHub for lots of examples of all of this
 put together.  You may wish to have this open in a separate tab as you dive in.
 
-Task vs Play includes
-`````````````````````
-They both use the `include` keyword but act very differently. The difference between them is directed by their positioning and content,
-if the include is inside a play in can only be a 'task' include and include a list of tasks, if it is at the top level, it can only include plays.::
+Task versus Play includes
+`````````````````````````
+Tasks and plays both use the `include` keyword, but the keyword differently. The difference between them is determined by their positioning and content. If the include is inside a play it can only be a 'task' include and include a list of tasks; if it is at the top level, it can only include plays. For example::
 
     # this is a 'play' include
     - include: listofplays
@@ -48,7 +47,7 @@ if the include is inside a play in can only be a 'task' include and include a li
         # this is a 'task' include
         - include: stuff.yml
 
-A 'task' include can appear anywhere a task can, a 'play' include cannot be inside other plays only along side them, at the same level.
+A 'task' include can appear anywhere a task can, but a 'play' include cannot be inside other plays only alongside them at the same level.
 While 'task' includes can take other parameters and have the included tasks inherit them, 'play' includes are very limited and most directives do not work.
 
 
