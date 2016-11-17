@@ -48,8 +48,8 @@ if the include is inside a play in can only be a 'task' include and include a li
         # this is a 'task' include
         - include: stuff.yml
 
-A 'task' include can appear anywhere a task can, a 'play' include can only appear at the 'top' of a playbook, they cannot be inside other plays.
-While 'task' includes can take other parameters and have the included tasks inherit them, 'play' includes are very limited and most directives do not work with them.
+A 'task' include can appear anywhere a task can, a 'play' include cannot be inside other plays only along side them, at the same level.
+While 'task' includes can take other parameters and have the included tasks inherit them, 'play' includes are very limited and most directives do not work.
 
 
 Task Include Files And Encouraging Reuse
