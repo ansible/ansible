@@ -265,7 +265,7 @@ class Hosts:
             e = get_exception()
             self.module.fail_json(
                 msg=(
-                    "Cannot open temporal hosts file %s for writing." %
+                    "Cannot open temporary hosts file %s for writing." %
                     tmp_file),
                 details=str(e))
 
