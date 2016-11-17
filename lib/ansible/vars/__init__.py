@@ -312,7 +312,10 @@ class VariableManager:
                         except AnsibleParserError as e:
                             raise
                     else:
-                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                        # if include_delegate_to is set to False, we ignore the missing
+                        # vars file here because we're working on a delegated host
+                        if include_delegate_to:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
                         raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
