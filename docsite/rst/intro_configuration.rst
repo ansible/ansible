@@ -1050,9 +1050,9 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
     pipelining = False
 
-.. _ssh_executable:
+.. _ansible_ssh_executable:
 
-ssh_executable
+ansible_ssh_executable
 ==============
 
 .. versionadded:: 2.2
