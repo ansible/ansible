@@ -163,7 +163,7 @@ class Rhn(RegistrationBase):
         def get_option_default(self, key, default=''):
             # ignore pep8 W601 errors for this line
             # setting this to use 'in' does not work in the rhn library
-            if self.has_key(key):
+            if key in self:
                 return self[key]
             else:
                 return default
