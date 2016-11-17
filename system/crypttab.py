@@ -312,7 +312,7 @@ class Options(dict):
     def add(self, opts_string):
         changed = False
         for k, v in Options(opts_string).items():
-            if self.has_key(k):
+            if k in self:
                 if self[k] != v:
                     changed = True
             else:
@@ -323,7 +323,7 @@ class Options(dict):
     def remove(self, opts_string):
         changed = False
         for k in Options(opts_string):
-            if self.has_key(k):
+            if k in self:
                 del self[k]
                 changed = True
         return changed, 'removed options'
@@ -341,7 +341,7 @@ class Options(dict):
         return iter(self.itemlist)
 
     def __setitem__(self, key, value):
-        if not self.has_key(key):
+        if key not in self:
             self.itemlist.append(key)
         super(Options, self).__setitem__(key, value)
 
