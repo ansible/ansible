@@ -274,7 +274,7 @@ def wait_for_peer(host):
 def probe(host, myhostname):
     global module
     out = run_gluster([ 'peer', 'probe', host ])
-    if not out.find('localhost') and not wait_for_peer(host):
+    if out.find('localhost') == -1 and not wait_for_peer(host):
         module.fail_json(msg='failed to probe peer %s on %s' % (host, myhostname))
     changed = True
 
