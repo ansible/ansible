@@ -31,7 +31,7 @@ import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import SystemRandom, Random
 from datetime import datetime
 import uuid
 
@@ -199,13 +199,18 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed:
+        r = Random(seed)
+    else:
+        r = SystemRandom()
     if isinstance(end, (int, long)):
         if not start:
             start = 0
         if not step:
             step = 1
+        if seed:
+            r.seed(seed)
         return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
@@ -214,10 +219,14 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
-def randomize_list(mylist):
+def randomize_list(mylist, seed=None):
     try:
+        if seed:
+            r = Random(seed)
+        else:
+            r = SystemRandom()
         mylist = list(mylist)
-        shuffle(mylist)
+        r.shuffle(mylist)
     except:
         pass
     return mylist
