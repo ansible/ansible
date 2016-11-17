@@ -37,115 +37,94 @@ options:
   node_type:
     description:
       - The node type of the cluster. Must be specified when command=create.
-    required: false
     choices: ['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge']
   username:
     description:
       - Master database username. Used only when command=create.
-    required: false
   password:
     description:
       - Master database password. Used only when command=create.
-    required: false
   cluster_type:
     description:
       - The type of cluster.
-    required: false
     choices: ['multi-node', 'single-node' ]
     default: 'single-node'
   db_name:
     description:
       - Name of the database.
-    required: false
     default: null
   availability_zone:
     description:
       - availability zone in which to launch cluster
-    required: false
     aliases: ['zone', 'aws_zone']
   number_of_nodes:
     description:
       - Number of nodes. Only used when cluster_type=multi-node.
-    required: false
     default: null
   cluster_subnet_group_name:
     description:
       - which subnet to place the cluster
-    required: false
     aliases: ['subnet']
   cluster_security_groups:
     description:
       - in which security group the cluster belongs
-    required: false
     default: null
     aliases: ['security_groups']
   vpc_security_group_ids:
     description:
       - VPC security group
-    required: false
     aliases: ['vpc_security_groups']
     default: null
   preferred_maintenance_window:
     description:
       - maintenance window
-    required: false
     aliases: ['maintance_window', 'maint_window']
     default: null
   cluster_parameter_group_name:
     description:
       - name of the cluster parameter group
-    required: false
     aliases: ['param_group_name']
     default: null
   automated_snapshot_retention_period:
     description:
       - period when the snapshot take place
-    required: false
     aliases: ['retention_period']
     default: null
   port:
     description:
       - which port the cluster is listining
-    required: false
     default: null
   cluster_version:
     description:
       - which version the cluster should have
-    required: false
     aliases: ['version']
     choices: ['1.0']
     default: null
   allow_version_upgrade:
     description:
       - flag to determinate if upgrade of version is possible
-    required: false
     aliases: ['version_upgrade']
-    default: null
+    default: true
   publicly_accessible:
     description:
       - if the cluster is accessible publicly or not
-    required: false
-    default: null
+    default: false
   encrypted:
     description:
       -  if the cluster is encrypted or not
-    required: false
-    default: null
+    default: false
   elastic_ip:
     description:
       - if the cluster has an elastic IP or not
-    required: false
     default: null
   new_cluster_identifier:
     description:
       - Only used when command=modify.
-    required: false
     aliases: ['new_identifier']
     default: null
   wait:
     description:
       - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be terminated.
-    required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -282,7 +261,7 @@ def create_cluster(module, redshift):
               'cluster_version', 'allow_version_upgrade',
               'number_of_nodes', 'publicly_accessible',
               'encrypted', 'elastic_ip'):
-        if module.params.get( p ):
+        if p in module.params:
             params[ p ] = module.params.get( p )
 
     try:
@@ -389,12 +368,11 @@ def modify_cluster(module, redshift):
               'cluster_parameter_group_name',
               'automated_snapshot_retention_period', 'port', 'cluster_version',
               'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier'):
-        if module.params.get(p):
+        if p in module.params:
             params[p] = module.params.get(p)
 
     try:
         redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-        changed = False
     except boto.exception.JSONResponseError as e:
         try:
             redshift.modify_cluster(identifier, **params)
@@ -444,10 +422,10 @@ def main():
             automated_snapshot_retention_period = dict(aliases=['retention_period']),
             port                                = dict(type='int'),
             cluster_version                     = dict(aliases=['version'], choices=['1.0']),
-            allow_version_upgrade               = dict(aliases=['version_upgrade'], type='bool'),
+            allow_version_upgrade               = dict(aliases=['version_upgrade'], type='bool', default=True),
             number_of_nodes                     = dict(type='int'),
-            publicly_accessible                 = dict(type='bool'),
-            encrypted                           = dict(type='bool'),
+            publicly_accessible                 = dict(type='bool', default=False),
+            encrypted                           = dict(type='bool', default=False),
             elastic_ip                          = dict(required=False),
             new_cluster_identifier              = dict(aliases=['new_identifier']),
             wait                                = dict(type='bool', default=False),
