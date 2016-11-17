@@ -1,6 +1,4 @@
 #!/bin/bash -eu
-# https://gist.github.com/gundalow/a5f3225c42ad817bf4b57aa51314dfb2
-
 # (c) 2016, John Barker <jobarker@redhat.com>
 #
 # This file is part of Ansible
