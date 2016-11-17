@@ -160,6 +160,12 @@ options:
       - Boolean. Allows you to run commands which may alter the running state of a guest. Also used to reconfigure and destroy.
     default: "no"
     choices: [ "yes", "no" ]
+  snapshot_op:
+    description:
+      - A key, value pair of snapshot operation types and their additional required parameters.
+    required: False
+    default: null
+    version_added: "2.3"
 
 notes:
   - This module should run from a system that can access vSphere directly.
@@ -319,6 +325,61 @@ as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
     guest: newvm001
     state: absent
     force: yes
+
+## Snapshot Operations
+# Create a snapshot
+- vsphere_guest:
+    vcenter_hostname: <hostname>
+    username: <username>
+    password: <password>
+    validate_certs: False
+    guest: <vm_name>
+    snapshot_op:
+        op_type: create
+        name: <snapshot_name_to_create>
+        description: <snapshot_description>
+        
+# Remove a snapshot
+- vsphere_guest:
+    vcenter_hostname: <hostname>
+    username: <username>
+    password: <password>
+    validate_certs: False
+    guest: <vm_name>
+    snapshot_op:
+        op_type: remove
+        name: <snapshot_name_to_delete>
+
+# Revert to a snapshot
+- vsphere_guest:
+    vcenter_hostname: <hostname>
+    username: <username>
+    password: <password>
+    validate_certs: False
+    guest: <vm_name>
+    snapshot_op:
+        op_type: revert
+        name: <snapshot_name_to_revert>
+
+# List all snapshots
+- vsphere_guest:
+    vcenter_hostname: <hostname>
+    username: <username>
+    password: <password>
+    validate_certs: False
+    guest: <vm_name>
+    snapshot_op:
+        op_type: list_all
+
+# List current snapshot of a vm
+- vsphere_guest:
+    vcenter_hostname: <hostname>
+    username: <username>
+    password: <password>
+    validate_certs: False
+    guest: <vm_name>
+    snapshot_op:
+        op_type: list_current
 '''
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
@@ -1512,14 +1573,14 @@ def delete_vm(vsphere_client, module, guest, vm, force):
 
 def snapshot_vm(vsphere_client, module, guest, vm, snapshot_op):
     """
-    To perform snapshot operations create/delete/list/revert.
+    To perform snapshot operations create/remove/revert/list_all/list_current.
     """
     
     try:
         snapshot_op_name = snapshot_op['op_type']
     except KeyError:
         vsphere_client.disconnect()
-        module.fail_json(msg="Specify op_type - list_all/remove/create/revert")
+        module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current")
     
     if snapshot_op_name == 'list_all':
         snapshot_data = []
@@ -1548,22 +1609,26 @@ def snapshot_vm(vsphere_client, module, guest, vm, snapshot_op):
             vsphere_client.disconnect()
             module.fail_json(msg="specify name to delete snapshot")
         try:
-            vm.delete_named_snapshot(snapname, remove_children=False, sync_run=False)
+            vm.delete_named_snapshot(snapname, remove_children=True, sync_run=True)
             module.exit_json(changed=True, msg="Deleted snapshot %s for guest %s" % (snapname, guest))
         except Exception:
-            e = get_exception()
-            module.fail_json(msg='Failed to delete snapshot %s for guest %s : %s' % (snapname, guest, e))
+            module.fail_json(msg='Failed to delete snapshot %s for guest %s : %s' % (snapname, guest, get_exception()))
             
     elif snapshot_op_name == 'create':
         try:
             snapname = snapshot_op['name']
-            snapdesc = snapshot_op['description']
         except KeyError:
             vsphere_client.disconnect()
-            module.fail_json(msg="specify name & description to create snapshot")
+            module.fail_json(msg="specify name & description(optional) to create snapshot")
+        
+        if 'description' in snapshot_op:
+            snapdesc = snapshot_op['description']
+        else:
+            snapdesc = ''
+            
         try:
-            vm.create_snapshot(snapname, description=snapdesc, sync_run=False)
-            module.exit_json(changed=True, msg="Snapshot create task running asynchronously")
+            vm.create_snapshot(snapname, description=snapdesc, sync_run=True)
+            module.exit_json(changed=True, msg="Snapshot %s created for guest %s" %(snapname, guest))
         except Exception:
             module.fail_json(msg='Failed to create snapshot for guest %s : %s' % (guest, get_exception()))
             
@@ -1573,12 +1638,12 @@ def snapshot_vm(vsphere_client, module, guest, vm, snapshot_op):
         except KeyError:
             module.fail_json(msg="specify name to revert snapshot")
         try:
-            vm.revert_to_named_snapshot(snapname, sync_run=False)
-            module.exit_json(changed=True, msg="Snapshot revert task running asynchronously")
+            vm.revert_to_named_snapshot(snapname, sync_run=True)
+            module.exit_json(changed=True, msg="Guest %s reverted to snapshot %s" %(guest, snapname))
         except Exception:
             module.fail_json(msg='Failed to revert snapshot for guest %s : %s' % (guest, get_exception()))
             
-    elif snapshot_op_name == "list_current_snapshot":
+    elif snapshot_op_name == "list_current":
         try:
             current_snap = vm.get_current_snapshot_name()
             module.exit_json(changed=False, msg="Guest %s current snapshot - %s" %(guest, current_snap))
@@ -1586,7 +1651,7 @@ def snapshot_vm(vsphere_client, module, guest, vm, snapshot_op):
             module.fail_json(msg='Failed to get current snapshot for guest %s : %s' % (guest, get_exception()))
     else:
         vsphere_client.disconnect()
-        module.fail_json(msg="Specify op_type - list_all/remove/create/revert")
+        module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current")
         
 def power_state(vm, state, force):
     """
