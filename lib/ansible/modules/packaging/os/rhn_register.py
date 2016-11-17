@@ -162,8 +162,8 @@ class Rhn(RegistrationBase):
         # well
         def get_option_default(self, key, default=''):
             # the class in rhn-client-tools that this comes from didn't
-            # implement __contains__().  That's why we check if the key is
-            # present in the dictionary that is the actual storage
+            # implement __contains__() until 2.5.x.  That's why we check if
+            # the key is present in the dictionary that is the actual storage
             if key in self.dict:
                 return self[key]
             else:
