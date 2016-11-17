@@ -672,7 +672,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = json.loads(filtered_output)
             data['_ansible_parsed'] = True
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
-                remove_keys = set()
+                remove_keys = set(['ansible_rsync_path'])
                 fact_keys = set(data['ansible_facts'].keys())
                 # first we add all of our magic variable names to the set of
                 # keys we want to remove from facts
