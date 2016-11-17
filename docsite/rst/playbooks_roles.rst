@@ -32,6 +32,26 @@ are great and you should use them every time you write playbooks.
 See the `ansible-examples <https://github.com/ansible/ansible-examples>`_ repository on GitHub for lots of examples of all of this
 put together.  You may wish to have this open in a separate tab as you dive in.
 
+Task vs Play includes
+`````````````````````
+They both use the `include` keyword but act very differently. The difference between them is directed by their positioning and content,
+if the include is inside a play in can only be a 'task' include and include a list of tasks, if it is at the top level, it can only include plays.::
+
+    # this is a 'play' include
+    - include: listofplays
+
+    - name: antoher play
+      hosts: all
+      tasks:
+        - debug: msg=hello
+
+        # this is a 'task' include
+        - include: stuff.yml
+
+A 'task' include can appear anywhere a task can, a 'play' include can only appear at the 'top' of a playbook, they cannot be inside other plays.
+While 'task' includes can take other parameters and have the included tasks inherit them, 'play' includes are very limited and most directives do not work with them.
+
+
 Task Include Files And Encouraging Reuse
 ````````````````````````````````````````
 
@@ -88,7 +108,6 @@ You can reference them like this::
 (In addition to the explicitly passed-in parameters, all variables from
 the vars section are also available for use here as well.)
 
-Playbooks can include other playbooks too, but that's mentioned in a later section.
 
 .. note::
    As of 1.0, task include statements can be used at arbitrary depth.
@@ -149,11 +168,13 @@ inside another.
 Dynamic versus Static Includes
 ```````````````````````````
 
-Ansible 2.0 changes how include tasks are processed. In previous versions of Ansible, includes acted as a pre-processor statement and were read during playbook parsing time. This created problems with things like inventory variables (like group and host vars, which are not available during
-the parsing time) were used in the included file name.
+In Ansible 2.0 there were changes on how 'task' includes are processed. The 'play' includes are still 'static' or unchanged.
 
-Ansible 2.0 instead makes includes "dynamic", meaning they are not evaluated until the include task is
-reached during the play execution. This change allows the reintroduction of loops on include statements,
+In previous versions of Ansible, all includes acted as a pre-processor statement and were read during playbook parsing time.
+This created problems with things like inventory variables (like group and host vars, which are not available during the parsing time) were used in the included file name.
+
+After Ansible 2.0, 'task' includes can be 'dynamic', meaning they are not evaluated until the include task is reached during the play execution.
+This change allows the reintroduction of loops on include statements,
 such as the following::
 
    - include: foo.yml param={{item}}
@@ -166,6 +187,8 @@ It is also possible to use variables from any source with a dynamic include::
 
    - include: "{{inventory_hostname}}.yml"
 
+Starting in 2.1, Ansible attempts to detect when a 'task' include should be dynamic (read below for details on how detection works).
+
 .. note::
    When an include statement loads different tasks for different hosts,
    the ``linear`` strategy keeps the hosts in lock-step by alternating
@@ -174,6 +197,11 @@ It is also possible to use variables from any source with a dynamic include::
    example, hostA would execute all of the tasks in hostA.yml while hostB
    and hostC waited. It is generally better to do the above with the
    ``free`` strategy, which does not force hosts to execute in lock-step.
+
+.. note::
+    In Ansible 2.0 task includes were always considered dynamic, but since this
+    created problems in existing playbooks we changed the default in 2.1.
+    Continue reading below for more details.
 
 Dynamic includes introduced some other limitations due to the fact that the included
 file is not read in until that task is reached during the execution of the play. When using dynamic includes,
@@ -195,7 +223,7 @@ To work around these limitations, Ansible 2.1 introduces the ``static`` option f
    - include: foo.yml
      static: <yes|no|true|false>
 
-By default in Ansible 2.1 and higher, includes are automatically treated as static rather than
+By default, starting in Ansible 2.1, 'task' includes are automatically treated as static rather than
 dynamic when the include meets the following conditions:
 
 * The include does not use any loops
@@ -209,6 +237,14 @@ Two options are available in the ansible.cfg configuration for static includes:
 * ``handler_includes_static`` - forces all includes in handlers sections to be static.
 
 These options allow users to force playbooks to behave exactly as they did in 1.9.x and before.
+
+One example on how 'static' vs 'dynamic' behaviour can impact your tasks::
+
+   - include: "stuff.yml"
+     static: no
+     when: verto is defined
+
+If this task were 'static' the `when` would be inherited by the tasks included, but forcing it to be dynamic, the `when` is now applied to the include task itself.
 
 .. _roles:
 
