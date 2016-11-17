@@ -609,7 +609,7 @@ class DockerInventory(object):
 
                 self.groups[id].append(name)
                 self.groups[name].append(name)
-                if short_id not in self.groups.keys():
+                if short_id not in self.groups:
                     self.groups[short_id].append(name)
                 self.groups[hostname].append(name)
 

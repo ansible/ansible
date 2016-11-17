@@ -180,14 +180,14 @@ class BrookInventory:
 
                 # Group by project
                 project_group = 'project_%s' % project.name
-                if project_group in groups.keys():
+                if project_group in groups:
                     groups[project_group].append(instance.name)
                 else:
                     groups[project_group] = [instance.name]
 
                 # Group by status
                 status_group = 'status_%s' % meta['hostvars'][instance.name]['brook_status']
-                if status_group in groups.keys():
+                if status_group in groups:
                     groups[status_group].append(instance.name)
                 else:
                     groups[status_group] = [instance.name]
@@ -196,7 +196,7 @@ class BrookInventory:
                 tags = meta['hostvars'][instance.name]['brook_tags']
                 for tag in tags:
                     tag_group = 'tag_%s' % tag
-                    if tag_group in groups.keys():
+                    if tag_group in groups:
                         groups[tag_group].append(instance.name)
                     else:
                         groups[tag_group] = [instance.name]

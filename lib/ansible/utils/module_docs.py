@@ -104,7 +104,7 @@ def get_docstring(filename, verbose=False):
                                         doc['notes'] = []
                                     doc['notes'].extend(notes)
 
-                            if 'options' not in fragment.keys():
+                            if 'options' not in fragment:
                                 raise Exception("missing options in fragment, possibly misformatted?")
 
                             for key, value in fragment.items():
