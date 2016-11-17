@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift
-version_added: "2.1"
+version_added: "2.2"
 short_description: create, delete, or modify an Amazon Redshift instance
 description:
   - Creates, deletes, or modifies amazon Redshift cluster instances.
