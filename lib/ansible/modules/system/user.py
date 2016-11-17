@@ -1715,7 +1715,7 @@ class DarwinUser(User):
                 self.chown_homedir(int(self.uid), int(self.group), self.home)
 
         for field in self.fields:
-            if self.__dict__.has_key(field[0]) and self.__dict__[field[0]]:
+            if field[0] in self.__dict__ and self.__dict__[field[0]]:
 
                 cmd = self._get_dscl()
                 cmd += [ '-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
@@ -1752,7 +1752,7 @@ class DarwinUser(User):
             self._make_group_numerical()
 
         for field in self.fields:
-            if self.__dict__.has_key(field[0]) and self.__dict__[field[0]]:
+            if field[0] in self.__dict__ and self.__dict__[field[0]]:
                 current = self._get_user_property(field[1])
                 if current is None or current != self.__dict__[field[0]]:
                     cmd = self._get_dscl()
