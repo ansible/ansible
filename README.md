@@ -56,6 +56,7 @@ Ansible is sponsored by [Ansible, Inc](https://ansible.com)
 
 Licence
 =======
-GNU [Link](COPYING)
+GNU 
+Click on the [Link](COPYING) to see the full text.
 
 
