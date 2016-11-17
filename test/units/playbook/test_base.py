@@ -57,6 +57,7 @@ class TestBase(unittest.TestCase):
 
     def test(self):
         self.assertIsInstance(self.b, base.Base)
+        self.assertIsInstance(self.b, self.ClassUnderTest)
 
     def test_dump_me_empty(self):
         ret = self.b.dump_me()
@@ -70,10 +71,26 @@ class TestBase(unittest.TestCase):
         ret = b.dump_me()
         print(ret)
 
-    def test_copy(self):
-        copy = self.b.copy()
-        self.assertIsInstance(copy, self.classUnderTest)
+    def _assert_copy(self, orig, copy):
+        self.assertIsInstance(copy, self.ClassUnderTest)
         self.assertIsInstance(copy, base.Base)
+        self.assertEquals(len(orig._valid_attrs),
+                          len(copy._valid_attrs))
+
+        sentinel = 'Empty DS'
+        self.assertEquals(getattr(orig, '_ds', sentinel),
+                          getattr(copy, '_ds', sentinel))
+
+    def test_copy_empty(self):
+        copy = self.b.copy()
+        self._assert_copy(self.b, copy)
+
+    def test_copy_with_vars(self):
+        ds = {'vars': self.assorted_vars}
+        b = self._base_validate(ds)
+
+        copy = b.copy()
+        self._assert_copy(b, copy)
 
     def test_serialize(self):
         ds = {}
@@ -84,6 +101,33 @@ class TestBase(unittest.TestCase):
         ret = b.serialize()
         print(ret)
         self.assertIsInstance(ret, dict)
+
+    def test_deserialize(self):
+        data = {}
+        #valid_attrs = self.b._vaid_attrs.copy()
+
+        d = self.ClassUnderTest()
+        d.deserialize(data)
+        self.assertIn('run_once', d._attributes)
+        self.assertIn('check_mode', d._attributes)
+
+        data = {'no_log': False,
+                'remote_user': None,
+                'vars': self.assorted_vars,
+                #'check_mode': False,
+                'always_run': False,
+                'environment': [],
+                'run_once': False,
+                'connection': None,
+                'ignore_errors': False,
+                'port': 22,
+                'a_sentinel_with_an_unlikely_name': ['sure, a list']}
+
+        d = self.ClassUnderTest()
+        d.deserialize(data)
+        self.assertNotIn('a_sentinel_with_an_unlikely_name', d._attributes)
+        self.assertIn('run_once', d._attributes)
+        self.assertIn('check_mode', d._attributes)
 
     def test_serialize_then_deserialize(self):
         ds = {'environment': [],
@@ -131,39 +175,23 @@ class TestBase(unittest.TestCase):
     def test_post_validate(self):
         ds = {'environment': [],
               'port': 443}
-        self.b.load_data(ds)
-
-        fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
-        b.post_validate(templar)
+        b = self._base_validate(ds)
 
     def test_post_validate_invalid_attr_types(self):
-        b = base.Base()
         ds = {'environment': [],
               'port': 'some_port'}
-        b.load_data(ds)
+        b = self._base_validate(ds)
         print(b._valid_attrs)
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
         b.post_validate(templar)
         print(b._attributes['port'])
 
-    def test_post_validate_templated(self):
-        b = base.Base()
-        ds = {'environment': [],
-              'port': 443}
-
-        b.load_data(ds)
-
-        fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
-        b.post_validate(templar)
-
     def test_squash(self):
-        b = base.Base()
-        data = b.serialize()
-        b.squash()
-        squashed_data = b.serialize()
+        data = self.b.serialize()
+        self.b.squash()
+        squashed_data = self.b.serialize()
+        # TODO: assert something
         print(data)
         print(squashed_data)
 
@@ -172,12 +200,7 @@ class TestBase(unittest.TestCase):
         ds = {'environment': [],
               'vars': {'var_2_key': 'var_2_value',
                        'var_1_key': 'var_1_value'}}
-        b = base.Base()
-        b.load_data(ds)
-
-        fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
-        b.post_validate(templar)
+        b = self._base_validate(ds)
         self.assertEquals(b.vars['var_1_key'], 'var_1_value')
 
     def test_vars_list_of_dicts(self):
@@ -185,39 +208,31 @@ class TestBase(unittest.TestCase):
               'vars': [{'var_2_key': 'var_2_value'},
                        {'var_1_key': 'var_1_value'}]
               }
-        b = base.Base()
-        b.load_data(ds)
-
-        fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
-        b.post_validate(templar)
+        b = self._base_validate(ds)
         self.assertEquals(b.vars['var_1_key'], 'var_1_value')
 
     def test_vars_not_dict_or_list(self):
         ds = {'environment': [],
               'vars': 'I am a string, not a dict or a list of dicts'}
-        b = base.Base()
-        self.assertRaises(AnsibleParserError, b.load_data, ds)
+        self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
     def test_vars_not_valid_identifier(self):
         ds = {'environment': [],
               'vars': [{'var_2_key': 'var_2_value'},
                        {'1an-invalid identifer': 'var_1_value'}]
               }
-        b = base.Base()
-        self.assertRaises(AnsibleParserError, b.load_data, ds)
+        self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
     def test_validate_empty(self):
-        b = base.Base()
-        b.validate()
+        self.b.validate()
+        self.assertTrue(self.b._validated)
 
     def test_getters(self):
-        b = base.Base()
         # not sure why these exist, but here are tests anyway
-        loader = b.get_loader()
-        variable_manager = b.get_variable_manager()
-        self.assertEquals(loader, b._loader)
-        self.assertEquals(variable_manager, b._variable_manager)
+        loader = self.b.get_loader()
+        variable_manager = self.b.get_variable_manager()
+        self.assertEquals(loader, self.b._loader)
+        self.assertEquals(variable_manager, self.b._variable_manager)
 
 
 class TestExtendValue(unittest.TestCase):
@@ -225,8 +240,6 @@ class TestExtendValue(unittest.TestCase):
         # _extend_value could be a module or staticmethod but since its
         # not, the test is here.
         b = base.Base()
-        # inputs:
-        #    value list   | value is not a list | newvalue list | newvalue not a list | prepend
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(value_list, new_value_list)
@@ -306,6 +319,16 @@ class BaseSubClass(base.Base):
         after_template_value = templar.template(value)
         #print('_post_validate after_template_value=%s' % after_template_value)
         return after_template_value
+
+
+# naming fails me...
+class AParentBaseSubClass(BaseSubClass):
+    _test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
+
+    def __init__(self, parent_thing=None):
+        self._parent = parent_thing
+
+        super(AParentBaseSubClass, self).__init__()
 
 
 # terrible name, but it is a TestBase subclass for testing subclasses of Base
@@ -414,3 +437,7 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_list_no_listof': test_list}
         bsc = self._base_validate(ds)
         self.assertEquals(test_list, bsc._attributes['test_attr_list_no_listof'])
+
+
+class TestParentClass(TestBaseSubClass):
+    ClassUnderTest = AParentBaseSubClass
