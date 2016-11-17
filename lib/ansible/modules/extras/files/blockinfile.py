@@ -258,9 +258,9 @@ def main():
 
     n0 = n1 = None
     for i, line in enumerate(lines):
-        if line.startswith(marker0):
+        if line == marker0:
             n0 = i
-        if line.startswith(marker1):
+        if line == marker1:
             n1 = i
 
     if None in (n0, n1):
