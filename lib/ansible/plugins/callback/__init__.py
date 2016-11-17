@@ -99,9 +99,13 @@ class CallbackBase:
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
-        if C.COMMAND_WARNINGS and 'warnings' in res and res['warnings']:
-            for warning in res['warnings']:
-                self._display.warning(warning)
+        if C.COMMAND_WARNINGS:
+            if 'warnings' in res and res['warnings']:
+                for warning in res['warnings']:
+                    self._display.warning(warning)
+            if 'deprecations' in res and res['deprecations']:
+                for warning in res['deprecations']:
+                    self._display.deprecated(warning)
 
     def _get_diff(self, difflist):
 
