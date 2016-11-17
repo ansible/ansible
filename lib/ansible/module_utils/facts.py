@@ -2782,11 +2782,11 @@ class GenericBsdIfconfigNetwork(Network):
             return
         ifinfo = interfaces[defaults['interface']]
         # copy all the interface values across except addresses
-        for item in ifinfo.keys():
+        for item in ifinfo:
             if item != 'ipv4' and item != 'ipv6':
                 defaults[item] = ifinfo[item]
         if len(ifinfo[ip_type]) > 0:
-            for item in ifinfo[ip_type][0].keys():
+            for item in ifinfo[ip_type][0]:
                 defaults[item] = ifinfo[ip_type][0][item]
 
 
