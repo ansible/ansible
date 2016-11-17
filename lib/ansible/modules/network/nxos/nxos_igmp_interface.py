@@ -1343,7 +1343,7 @@ def main():
 
     if state == 'absent':
         for each in CANNOT_ABSENT:
-            if each in proposed.keys():
+            if each in proposed:
                 module.fail_json(msg='only params: oif_prefix, oif_source, '
                                      'oif_routemap can be used when '
                                      'state=absent')

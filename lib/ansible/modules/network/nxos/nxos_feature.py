@@ -877,7 +877,7 @@ def get_available_features(feature, module):
             if 'enabled' in state:
                 state = 'enabled'
 
-            if feature not in available_features.keys():
+            if feature not in available_features:
                 available_features[feature] = state
             else:
                 if (available_features[feature] == 'disabled' and
@@ -963,7 +963,7 @@ def main():
     state = module.params['state'].lower()
 
     available_features = get_available_features(feature, module)
-    if feature not in available_features.keys():
+    if feature not in available_features:
         module.fail_json(
             msg='Invalid feature name.',
             features_currently_supported=available_features,
