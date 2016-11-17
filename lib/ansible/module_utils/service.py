@@ -45,3 +45,6 @@ def get_sysv_script(name):
 def sysv_exists(name):
     return os.path.exists(get_sysv_script(name))
 
+def fail_if_missing(module, found, service):
+    if not found:
+        module.fail_json(msg='Could not find the requested service %s' % (service))
