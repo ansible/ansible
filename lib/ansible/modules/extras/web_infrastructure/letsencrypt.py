@@ -20,6 +20,7 @@
 
 import binascii
 import copy
+import locale
 import textwrap
 from datetime import datetime
 
@@ -769,6 +770,9 @@ def main():
         ),
         supports_check_mode = True,
     )
+ 
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    locale.setlocale(locale.LC_ALL, "C")
 
     cert_days = get_cert_days(module,module.params['dest'])
     if cert_days < module.params['remaining_days']:
