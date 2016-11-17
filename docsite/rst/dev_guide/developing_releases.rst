@@ -11,7 +11,7 @@ Release Schedule
 Ansible is on a 'flexible' 4 month release schedule, sometimes this can be extended if there is a major change that requires a longer cycle (i.e. 2.0 core rewrite).
 Currently modules get released at the same time as the main Ansible repo, even though they are separated into ansible-modules-core and ansible-modules-extras.
 
-The major features and bugs fixed in a release should be reflected in the CHANGELOG.md, minor ones will be in the commit history (FIXME: add git exmaple to list).
+The major features and bugs fixed in a release should be reflected in the CHANGELOG.md, minor ones will be in the commit history (FIXME: add git example to list).
 When a fix/feature gets added to the `devel` branch it will be part of the next release, some bugfixes can be backported to previous releases and might be part of a minor point release if it is deemed necessary.
 
 Sometimes an RC can be extended by a few days if a bugfix makes a change that can have far reaching consequences, so users have enough time to find any new issues that may stem from this.
