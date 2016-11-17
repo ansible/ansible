@@ -23,10 +23,10 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import traceback
 
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
@@ -150,7 +150,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
                 try:
@@ -172,7 +172,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = shlex_quote(self._prefix_login_path(in_path))
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:

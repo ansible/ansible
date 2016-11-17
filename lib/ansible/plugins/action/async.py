@@ -18,11 +18,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-import pipes
 import random
 
 from ansible import constants as C
 from ansible.compat.six import iteritems
+from ansible.compat.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
@@ -47,8 +47,6 @@ class ActionModule(ActionBase):
             self._cleanup_remote_tmp=True
 
         module_name = self._task.action
-
-
 
         env_string = self._compute_environment_string()
 
@@ -77,7 +75,7 @@ class ActionModule(ActionBase):
         elif module_style == 'old':
             args_data = ""
             for k, v in iteritems(module_args):
-                args_data += '%s="%s" ' % (k, pipes.quote(to_text(v)))
+                args_data += '%s="%s" ' % (k, shlex_quote(to_text(v)))
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), args_data)
 
         remote_paths = tmp, remote_module_path, remote_async_module_path

@@ -17,9 +17,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pipes
 from ansible.plugins.shell.sh import ShellModule as ShModule
 from ansible.compat.six import text_type
+from ansible.compat.six.moves import shlex_quote
+
 
 class ShellModule(ShModule):
 
@@ -40,12 +41,12 @@ class ShellModule(ShModule):
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['set -lx %s %s;' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['set -lx %s %s;' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
-            cmd = pipes.quote(cmd)
+            cmd = shlex_quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         if arg_path is not None:
             cmd_parts.append(arg_path)
@@ -82,7 +83,7 @@ class ShellModule(ShModule):
         # Quoting gets complex here.  We're writing a python string that's
         # used by a variety of shells on the remote host to invoke a python
         # "one-liner".
-        shell_escaped_path = pipes.quote(path)
+        shell_escaped_path = shlex_quote(path)
         test = "set rc flag; [ -r %(p)s ] %(shell_or)s set rc 2; [ -f %(p)s ] %(shell_or)s set rc 1; [ -d %(p)s ] %(shell_and)s set rc 3; %(i)s -V 2>/dev/null %(shell_or)s set rc 4; [ x\"$rc\" != \"xflag\" ] %(shell_and)s echo \"$rc  \"%(p)s %(shell_and)s exit 0" % dict(p=shell_escaped_path, i=python_interp, shell_and=self._SHELL_AND, shell_or=self._SHELL_OR)
         csums = [
             u"({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
