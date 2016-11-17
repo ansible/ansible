@@ -161,9 +161,10 @@ class Rhn(RegistrationBase):
         # configuration.  Yeah, I know this should be subclassed ... but, oh
         # well
         def get_option_default(self, key, default=''):
-            # ignore pep8 W601 errors for this line
-            # setting this to use 'in' does not work in the rhn library
-            if key in self:
+            # the class in rhn-client-tools that this comes from didn't
+            # implement __contains__().  That's why we check if the key is
+            # present in the dictionary that is the actual storage
+            if key in self.dict:
                 return self[key]
             else:
                 return default
