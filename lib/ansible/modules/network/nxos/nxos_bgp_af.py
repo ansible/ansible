@@ -1418,7 +1418,7 @@ def state_present(module, existing, proposed, candidate):
             commands.append('no {0}'.format(key))
 
         elif value == 'default':
-            if key in PARAM_TO_DEFAULT_KEYMAP.keys():
+            if key in PARAM_TO_DEFAULT_KEYMAP:
                 commands.append('{0} {1}'.format(key, PARAM_TO_DEFAULT_KEYMAP[key]))
 
             elif existing_commands.get(key):

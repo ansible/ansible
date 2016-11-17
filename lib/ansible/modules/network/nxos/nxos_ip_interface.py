@@ -1081,7 +1081,7 @@ def get_config_ip_commands(delta, interface, existing, version):
     # loop used in the situation that just an IP address or just a
     # mask is changing, not both.
     for each in ['addr', 'mask']:
-        if each not in delta.keys():
+        if each not in delta:
             delta[each] = existing[each]
 
     if version == 'v4':

@@ -1013,7 +1013,7 @@ def main():
     if vpc:
         mapping = get_existing_portchannel_to_vpc_mappings(module)
 
-        if vpc in mapping.keys() and portchannel != mapping[vpc].strip('Po'):
+        if vpc in mapping and portchannel != mapping[vpc].strip('Po'):
             module.fail_json(msg="This vpc is already configured on "
                                  "another portchannel.  Remove it first "
                                  "before trying to assign it here. ",

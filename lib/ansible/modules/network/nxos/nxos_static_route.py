@@ -852,7 +852,7 @@ def get_existing(module, prefix, warnings):
             group_route = match_route.groupdict()
 
             for key in key_map:
-                if key not in group_route.keys():
+                if key not in group_route:
                     group_route[key] = ''
             group_route['prefix'] = prefix
             group_route['vrf'] = module.params['vrf']
