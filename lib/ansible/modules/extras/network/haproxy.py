@@ -196,10 +196,10 @@ class HAProxy(object):
         """
         Capture the output for a command
         """
-        if not 'command' in self.command_results.keys():
+        if 'command' not in self.command_results:
             self.command_results['command'] = []
         self.command_results['command'].append(cmd)
-        if not 'output' in self.command_results.keys():
+        if 'output' not in self.command_results:
             self.command_results['output'] = []
         self.command_results['output'].append(output)
 

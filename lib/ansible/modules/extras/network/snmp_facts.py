@@ -153,7 +153,7 @@ def lookup_adminstatus(int_adminstatus):
                             2: 'down',
                             3: 'testing'
                           }
-    if int_adminstatus in adminstatus_options.keys():
+    if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
         return ""
@@ -168,7 +168,7 @@ def lookup_operstatus(int_operstatus):
                            6: 'notPresent',
                            7: 'lowerLayerDown'
                          }
-    if int_operstatus in operstatus_options.keys():
+    if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
         return ""
