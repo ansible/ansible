@@ -129,7 +129,6 @@ def isidentifier(ident):
     Orignally posted at: http://stackoverflow.com/a/29586366
     """
 
-    print('ident=%s' % ident)
     if not isinstance(ident, string_types):
         return False
 
