@@ -390,13 +390,22 @@ class GceInventory(object):
         self.cache.write_to_cache(data)
         self.inventory = data
 
+    def list_nodes(self):
+        all_nodes = []
+        params, more_results = {'maxResults': 500}, True
+        while more_results:
+            self.driver.connection.gce_params=params
+            all_nodes.extend(self.driver.list_nodes())
+            more_results = 'pageToken' in params
+        return all_nodes
+
     def group_instances(self, zones=None):
         '''Group all instances'''
         groups = {}
         meta = {}
         meta["hostvars"] = {}
 
-        for node in self.driver.list_nodes():
+        for node in self.list_nodes():
 
             # This check filters on the desired instance states defined in the
             # config file with the instance_states config option.
