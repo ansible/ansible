@@ -666,7 +666,7 @@
   # clone a repo checkout signed tag, verify tag
 
 - name: Import Jamie Evans GPG key
-  command: gpg --keyserver pgp.mit.edu --recv-key 61107C8E
+  command: gpg --keyserver keyserver.ubuntu.com --recv-key 61107C8E
   when: >
     not gpg_version.stderr and
     gpg_version.stdout and
