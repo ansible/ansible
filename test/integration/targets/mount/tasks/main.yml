@@ -91,6 +91,7 @@
   assert:
     that:
       - "(ansible_system == 'Linux' and not bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and not bind_result_freebsd['changed'])"
+  when: ansible_system in ('FreeBSD', 'Linux')
 
 # The opts type of bind mount only works on Linux
 - name: Remount filesystem with different opts (Linux)
@@ -126,6 +127,7 @@
       - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
       - "'1' in remount_options.stdout"
       - "1 == remount_options.stdout_lines | length"
+  when: ansible_system in ('FreeBSD', 'Linux')
 
 - name: Unmount the bind mount
   mount:
