@@ -287,7 +287,7 @@ class StrategyModule(StrategyBase):
                             loop_var = 'item'
                             if hr._task.loop_control:
                                 loop_var = hr._task.loop_control.loop_var or 'item'
-                            include_results = hr._result['results']
+                            include_results = hr._result.get('results', [])
                         else:
                             include_results = [ hr._result ]
 
