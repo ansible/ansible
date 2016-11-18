@@ -49,6 +49,10 @@ class TestBase(unittest.TestCase):
     def _base_validate(self, ds):
         print('')
         bsc = self.ClassUnderTest()
+        parent = ExampleParentBaseSubClass()
+        bsc._parent = parent
+        bsc._dep_chain = [parent]
+        parent._dep_chain = None
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
@@ -286,6 +290,10 @@ class ExampleParentBaseSubClass(base.Base):
     def __init__(self):
 
         super(ExampleParentBaseSubClass, self).__init__()
+        self._dep_chain = None
+
+    def get_dep_chain(self):
+        return self._dep_chain
 
 
 class ExampleSubClass(base.Base):
@@ -294,8 +302,14 @@ class ExampleSubClass(base.Base):
                                      always_post_validate=True)
 
     def __init__(self):
+#        self._parent = ExampleParentBaseSubClass()
         super(ExampleSubClass, self).__init__()
-        self._parent = ExampleParentBaseSubClass()
+
+    def get_dep_chain(self):
+        if self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
 
 
 class BaseSubClass(base.Base):
