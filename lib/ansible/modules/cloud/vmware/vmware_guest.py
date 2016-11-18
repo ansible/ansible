@@ -149,6 +149,7 @@ Example from Ansible playbook
             - size_gb: 10
               type: thin
               datastore: g73_datastore
+              operation: add
         nic:
             - type: vmxnet3
               network: VM Network
@@ -643,7 +644,6 @@ class PyVmomiHelper(object):
         #   - multiple datacenters
         #   - resource pools
         #   - multiple templates by the same name
-        #   - multiple disks
         #   - changing the esx host is ignored?
         #   - static IPs
 
@@ -731,64 +731,11 @@ class PyVmomiHelper(object):
 
         clonespec_kwargs = {}
         clonespec_kwargs['location'] = relospec
-
-        # create disk spec if not default
-        if self.params['disk']:
-            # grab the template's first disk and modify it for this customization
-            disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
-            diskspec = vim.vm.device.VirtualDeviceSpec()
-            # set the operation to edit so that it knows to keep other settings
-            diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-            diskspec.device = disks[0]
-
-            # get the first disk attributes
-            pspec = self.params.get('disk')[0]
-
-            # is it thin?
-            if pspec.get('type', '').lower() == 'thin':
-                diskspec.device.backing.thinProvisioned = True
-
-            # which datastore?
-            if pspec.get('datastore'):
-                # This is already handled by the relocation spec,
-                # but it needs to eventually be handled for all the
-                # other disks defined
-                pass
-
-            # what size is it?
-            if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
-                # size_tb, size_gb, size_mb, size_kb, size_b ...?
-                if 'size' in pspec:
-                    expected = ''.join(c for c in pspec['size'] if c.isdigit())
-                    unit = pspec['size'].replace(expected, '').lower()
-                    expected = int(expected)
-                else:
-                    param = [x for x in pspec.keys() if x.startswith('size_')][0]
-                    unit = param.split('_')[-1].lower()
-                    expected = [x[1] for x in pspec.items() if x[0].startswith('size_')][0]
-                    expected = int(expected)
-
-                kb = None
-                if unit == 'tb':
-                    kb = expected * 1024 * 1024 * 1024
-                elif unit == 'gb':
-                    kb = expected * 1024 * 1024
-                elif unit ==' mb':
-                    kb = expected * 1024
-                elif unit == 'kb':
-                    kb = expected
-                else:
-                    self.module.fail_json(msg='%s is not a supported unit for disk size' % unit)
-                diskspec.device.capacityInKB = kb
-
-            # tell the configspec that the disk device needs to change
-            configspec = vim.vm.ConfigSpec(deviceChange=[diskspec])
-            clonespec_kwargs['config'] = configspec
+        clonespec_kwargs['config'] = vim.vm.ConfigSpec()
+        devices = []
 
         # set cpu/memory/etc
         if 'hardware' in self.params:
-            if not 'config' in clonespec_kwargs:
-                clonespec_kwargs['config'] = vim.vm.ConfigSpec()
             if 'num_cpus' in self.params['hardware']:
                 clonespec_kwargs['config'].numCPUs = \
                     int(self.params['hardware']['num_cpus'])
@@ -796,11 +743,85 @@ class PyVmomiHelper(object):
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
 
-        # set nics
-        if 'nic' in self.params:
-            key = 0
+        # create disk spec if not default
+        if self.params['disk']:
+            # get all disks on a VM, set unit_number to the next available
+            for dev in template.config.hardware.device:
+                if hasattr(dev.backing, 'fileName'):
+                    unit_number = int(dev.unitNumber) + 1
+                    # unit_number 7 reserved for scsi controller
+                    if unit_number == 7:
+                        unit_number += 1
+                    if unit_number >= 16:
+                        self.module.fail_json(msg="We don't support this many disks")
+                if isinstance(dev, vim.vm.device.VirtualSCSIController):
+                    controller = dev
 
-            devices = []
+            for pspec in self.params.get('disk'):
+                diskspec = vim.vm.device.VirtualDeviceSpec()
+
+                # add a new to disk?
+                if 'operation' in pspec and pspec['operation'].lower() == 'add':
+                    # set the operation to add a new disk
+                    diskspec.fileOperation = "create"
+                    diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                    diskspec.device = vim.vm.device.VirtualDisk()
+                    diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+                    diskspec.device.backing.diskMode = 'persistent'
+                    diskspec.device.unitNumber = unit_number
+                    diskspec.device.controllerKey = controller.key
+                    unit_number+=1
+                else:
+                    # grab the template's first disk and modify it for this customization
+                    disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
+
+                    # set the operation to edit so that it knows to keep other settings
+                    diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                    diskspec.device = disks[0]
+
+                # is it thin?
+                if 'type' in pspec:
+                    if pspec['type'].lower() == 'thin':
+                        diskspec.device.backing.thinProvisioned = True
+
+                # which datastore?
+                if 'datastore' in pspec:
+                    # This is already handled by the relocation spec,
+                    # but it needs to eventually be handled for all the
+                    # other disks defined
+                    pass
+
+                # what size is it?
+                if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
+                    # size_tb, size_gb, size_mb, size_kb, size_b ...?
+                    if 'size' in pspec:
+                        expected = ''.join(c for c in pspec['size'] if c.isdigit())
+                        unit = pspec['size'].replace(expected, '').lower()
+                        expected = int(expected)
+                    else:
+                        param = [x for x in pspec.keys() if x.startswith('size_')][0]
+                        unit = param.split('_')[-1].lower()
+                        expected = [x[1] for x in pspec.items() if x[0].startswith('size_')][0]
+                        expected = int(expected)
+
+                    kb = None
+                    if unit == 'tb':
+                        kb = expected * 1024 * 1024 * 1024
+                    elif unit == 'gb':
+                        kb = expected * 1024 * 1024
+                    elif unit ==' mb':
+                        kb = expected * 1024
+                    elif unit == 'kb':
+                        kb = expected
+                    else:
+                        self.module.fail_json(msg='%s is not a supported unit for disk size' % unit)
+                    diskspec.device.capacityInKB = kb
+
+                devices.append(diskspec)
+
+        # set nics
+        if self.params['nic']:
+            key = 0
 
             try:
                 for device in template.config.hardware.device:
@@ -847,10 +868,8 @@ class PyVmomiHelper(object):
                 nic.device.connectable.allowGuestControl = True
                 nic.device.connectable.connected = True
                 nic.device.connectable.allowGuestControl = True
-                devices.append(nic)
 
-            # Update the spec with the added NIC
-            clonespec_kwargs['config'].deviceChange = devices
+                devices.append(nic)
 
         # lets try and assign a static ip address
         if self.params['customize'] is True:
@@ -907,7 +926,11 @@ class PyVmomiHelper(object):
             clonespec_kwargs['customization'].nicSettingMap = adaptermaps
             clonespec_kwargs['customization'].globalIPSettings = globalip
             clonespec_kwargs['customization'].identity = ident
-		
+
+        # Update the spec with the added devices (Nics or disks)
+        if devices:
+            clonespec_kwargs['config'].deviceChange = devices
+
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
@@ -928,6 +951,7 @@ class PyVmomiHelper(object):
             if self.params['state'] == "poweredon":
                 self.set_powerstate(vm, 'poweredon', force=False)
             if wait_for_ip:
+                self.set_powerstate(vm, 'poweredon', force=False)
                 self.wait_for_vm_ip(vm)
             vm_facts = self.gather_facts(vm)
             return ({'changed': True, 'failed': False, 'instance': vm_facts})
