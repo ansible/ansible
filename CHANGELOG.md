@@ -12,6 +12,7 @@ Ansible Changes By Release
   extensions.  This was only supposed to apply to loading a directory of vars
   files.
 * Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
+* Fixed Windows async to avoid blocking due to handle inheritance.
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
