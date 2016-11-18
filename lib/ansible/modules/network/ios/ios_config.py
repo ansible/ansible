@@ -391,7 +391,7 @@ def main():
     except NetworkError:
         exc = get_exception()
         module.disconnect()
-        module.fail_json(msg=str(exc), stdout=exc.kwargs.get('stdout'))
+        module.fail_json(msg=str(exc))
 
     module.disconnect()
     module.exit_json(**result)

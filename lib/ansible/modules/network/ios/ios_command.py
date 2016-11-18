@@ -148,6 +148,12 @@ from ansible.module_utils.six import string_types
 
 VALID_KEYS = ['command', 'prompt', 'response']
 
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, string_types):
+            item = str(item).split('\n')
+        yield item
+
 def parse_commands(module):
     for cmd in module.params['commands']:
         if isinstance(cmd, string_types):
@@ -210,9 +216,7 @@ def main():
         module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
     except NetworkError:
         exc = get_exception()
-        module.disconnect()
-        module.fail_json(msg=str(exc), stdout=exc.kwargs.get('stdout'))
-
+        module.fail_json(msg=str(exc))
 
     result = dict(changed=False, stdout=list())
 
@@ -224,6 +228,7 @@ def main():
         result['stdout'].append(output)
 
     result['warnings'] = warnings
+    result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)
 
