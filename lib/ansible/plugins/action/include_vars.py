@@ -137,8 +137,8 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
 
             except AnsibleError as e:
+                failed = True
                 err_msg = to_native(e)
-                raise AnsibleError(err_msg)
 
         if self.return_results_as_name:
             scope = dict()
