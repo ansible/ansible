@@ -90,7 +90,42 @@
 - name: Make sure we didn't mount a second time
   assert:
     that:
-      - "not bind_result_linux['changed'] and not bind_result_freebsd['changed']"
+      - "(ansible_system == 'Linux' and not bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and not bind_result_freebsd['changed'])"
+
+# The opts type of bind mount only works on Linux
+- name: Remount filesystem with different opts (Linux)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "None"
+    opts: "bind,ro"
+  when: ansible_system == 'Linux'
+  register: bind_result_linux
+
+# Nullfs is freebsd only
+- name: Remount filesystem with different opts (FreeBSD)
+  mount:
+    src: "{{ outputdir }}/mount_source"
+    name: "{{ outputdir }}/mount_dest"
+    state: "mounted"
+    fstype: "nullfs"
+    opts: "ro"
+  when: ansible_system == 'FreeBSD'
+  register: bind_result_freebsd
+
+- name: Get mount options
+  shell: mount | grep mount_dest | grep -E -w '(ro|read-only)' | wc -l
+  register: remount_options
+
+- debug: var=remount_options
+
+- name: Make sure the filesystem now has the new opts
+  assert:
+    that:
+      - "(ansible_system == 'Linux' and bind_result_linux['changed']) or (ansible_system == 'FreeBSD' and bind_result_freebsd['changed'])"
+      - "'1' in remount_options.stdout"
+      - "1 == remount_options.stdout_lines | length"
 
 - name: Unmount the bind mount
   mount:
