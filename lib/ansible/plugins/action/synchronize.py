@@ -318,7 +318,7 @@ class ActionModule(ActionBase):
         self._tmp_task_args['dest'] = dest
 
         # Allow custom rsync path argument
-        rsync_path = self_tmp_task_args.get('rsync_path', None)
+        rsync_path = self._tmp_task_args.get('rsync_path', None)
 
         if not dest_is_local:
             if self._play_context.become and not rsync_path:
