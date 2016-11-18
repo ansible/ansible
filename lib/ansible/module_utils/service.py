@@ -27,4 +27,24 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# This file is a placeholder for common code for the future split 'service' modules.
+import os
+import glob
+
+def sysv_is_enabled(name):
+    return bool(glob.glob('/etc/rc?.d/S??%s' % name))
+
+def get_sysv_script(name):
+
+    if name.startswith('/'):
+        result = name
+    else:
+        result = '/etc/init.d/%s' % name
+
+    return result
+
+def sysv_exists(name):
+    return os.path.exists(get_sysv_script(name))
+
+def fail_if_missing(module, found, service, msg=''):
+    if not found:
+        module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
