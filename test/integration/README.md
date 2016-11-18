@@ -166,7 +166,7 @@ $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
 
 ```
-$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network all.yaml -e "limit_to=eos_command"
+$ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml -e "limit_to=eos_command"
 ```
 
 To filter a singular test case set the tags options to eapi or cli, set limit_to to the test group,
