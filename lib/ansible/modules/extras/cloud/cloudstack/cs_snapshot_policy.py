@@ -230,13 +230,14 @@ class AnsibleCloudStackSnapshotPolicy(AnsibleCloudStack):
 
         policy = self.get_snapshot_policy()
         args = {
+            'id': policy.get('id') if policy else None,
             'intervaltype': self.module.params.get('interval_type'),
-            'schedule':     self.module.params.get('schedule'),
-            'maxsnaps':     self.module.params.get('max_snaps'),
-            'timezone':     self.module.params.get('time_zone'),
-            'volumeid':     self.get_volume(key='id')
+            'schedule': self.module.params.get('schedule'),
+            'maxsnaps': self.module.params.get('max_snaps'),
+            'timezone': self.module.params.get('time_zone'),
+            'volumeid': self.get_volume(key='id')
         }
-        if not policy or (policy and self.has_changed(policy, args)):
+        if not policy or (policy and self.has_changed(policy, args, only_keys=['schedule', 'maxsnaps', 'timezone'])):
             self.result['changed'] = True
             if not self.module.check_mode:
                 res = self.cs.createSnapshotPolicy(**args)
