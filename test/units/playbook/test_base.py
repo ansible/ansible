@@ -332,6 +332,12 @@ class BaseSubClass(base.Base):
     _test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
 #    _test_attr_omit = FieldAttribute(isa='string', always_post_validate=True)
 
+    def _preprocess_data_basesubclass(self, ds):
+        return ds
+
+    def preprocess_data(self, ds):
+        return super(BaseSubClass, self).preprocess_data(ds)
+
     def _validate_test_attr_example(self, attr, name, value):
         # print("_validate_test_attr_example attr=%s name=%s value=%s" % (attr, name, value))
         # print('type(value)=%s instance(value,str)=%s' % (type(value), isinstance(value, str)))
