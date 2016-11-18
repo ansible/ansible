@@ -30,7 +30,40 @@ options:
   volume:
     description:
       - Name of the volume.
-    required: true
+      - Either C(volume) or C(vm) is required.
+    required: false
+    default: null
+  volume_type:
+    description:
+      - Type of the volume.
+    required: false
+    default: null
+    choices:
+      - DATADISK
+      - ROOT
+    version_added: "2.3"
+  vm:
+    description:
+      - Name of the instance to select the volume from.
+      - Use C(volume_type) if VM has a DATADISK and ROOT volume.
+      - In case of C(volume_type=DATADISK), additionally use C(device_id) if VM has more than one DATADISK volume.
+      - Either C(volume) or C(vm) is required.
+    required: false
+    default: null
+    version_added: "2.3"
+  device_id:
+    description:
+      - ID of the device on a VM the volume is attached to.
+      - This will only be considered if VM has multiple DATADISK volumes.
+    required: false
+    default: null
+    version_added: "2.3"
+  vpc:
+    description:
+      - Name of the vpc the instance is deployed in.
+    required: false
+    default: null
+    version_added: "2.3"
   interval_type:
     description:
       - Interval of the snapshot.
@@ -88,6 +121,15 @@ EXAMPLES = '''
 - local_action:
     module: cs_snapshot_policy
     volume: ROOT-478
+    schedule: '00:1'
+    max_snaps: 3
+
+# Ensure a snapshot policy daily at 1h00 UTC on the second DATADISK of VM web-01
+- local_action:
+    module: cs_snapshot_policy
+    vm: web-01
+    volume_type: DATADISK
+    device_id: 2
     schedule: '00:1'
     max_snaps: 3
 
@@ -200,13 +242,25 @@ class AnsibleCloudStackSnapshotPolicy(AnsibleCloudStack):
             return self._get_by_key(key, self.volume)
 
         args = {
-            'name':         self.module.params.get('volume'),
-            'account':      self.get_account(key='name'),
-            'domainid':     self.get_domain(key='id'),
-            'projectid':    self.get_project(key='id'),
+            'name': self.module.params.get('volume'),
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'virtualmachineid': self.get_vm(key='id'),
+            'type': self.module.params.get('volume_type'),
         }
         volumes = self.cs.listVolumes(**args)
         if volumes:
+            if volumes['count'] > 1:
+                device_id = self.module.params.get('device_id')
+                if not device_id:
+                    self.module.fail_json(msg="Found more then 1 volume: combine params 'vm', 'volume_type', 'device_id' and/or 'volume' to select the volume")
+                else:
+                    for v in volumes['volume']:
+                        if v.get('deviceid') == device_id:
+                            self.volume = v
+                            return self._get_by_key(key, self.volume)
+                    self.module.fail_json(msg="No volume found with device id %s" % device_id)
             self.volume = volumes['volume'][0]
             return self._get_by_key(key, self.volume)
         return None
@@ -282,7 +336,11 @@ class AnsibleCloudStackSnapshotPolicy(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        volume=dict(required=True),
+        volume=dict(default=None),
+        volume_type=dict(choices=['DATADISK', 'ROOT'], default=None),
+        vm=dict(default=None),
+        device_id=dict(type='int', default=None),
+        vpc=dict(default=None),
         interval_type=dict(default='daily', choices=['hourly', 'daily', 'weekly', 'monthly'], aliases=['interval']),
         schedule=dict(default=None),
         time_zone=dict(default='UTC', aliases=['timezone']),
@@ -296,6 +354,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=cs_required_together(),
+        required_one_of = (
+            ['vm', 'volume'],
+        ),
         supports_check_mode=True
     )
 
