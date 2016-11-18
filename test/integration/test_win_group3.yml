@@ -4,6 +4,6 @@
     - { role: test_win_service, tags: test_win_service }
     - { role: test_win_feature, tags: test_win_feature }
     - { role: test_win_user, tags: test_win_user }
-    - { role: test_win_async_wrapper, tags: test_win_async_wrapper }
+    - { role: test_win_async_wrapper, tags: ["test_win_async_wrapper","test_async_wrapper","test_win_async_status","test_async_status"] }
     - { role: test_win_shell, tags: test_win_shell }
     - { role: test_win_command, tags: test_win_command }
