@@ -87,7 +87,7 @@ EXAMPLES = '''
   # text from file example
 - win_say:
     start_sound_path: 'C:\Windows\Media\Windows Balloon.wav'
-    msg_text: AppData\Local\Temp\morning_report.txt 
+    msg_file: AppData\Local\Temp\morning_report.txt
     end_sound_path: 'C:\Windows\Media\chimes.wav'
 '''
 RETURN = '''
