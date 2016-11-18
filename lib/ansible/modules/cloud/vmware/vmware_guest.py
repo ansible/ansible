@@ -821,6 +821,12 @@ class PyVmomiHelper(object):
                 nic.device.wakeOnLanEnabled = True
                 nic.device.addressType = 'assigned'
 
+                if 'type' in device:
+                    if device['type'].lower() == "e1000":
+                        nic.device = vim.vm.device.VirtualE1000()
+                    elif device['type'].lower() == "vmxnet2":
+                        nic.device = vim.vm.device.VirtualVmxnet2()
+
                 if hasattr(get_obj(self.content, [vim.Network], device['network']), 'portKeys'):
                     # VDS switch
                     pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], device['network'])
