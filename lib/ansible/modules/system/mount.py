@@ -373,7 +373,7 @@ def remount(module, mount_bin, args):
     if rc != 0:
         msg = out+err
         if ismount(args['name']):
-            rc,msg = umount(module, args)
+            rc, msg = umount(module, args['name'])
         if rc == 0:
             rc,msg = mount(module, args)
     return rc, msg
