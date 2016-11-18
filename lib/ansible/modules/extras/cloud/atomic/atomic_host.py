@@ -33,7 +33,7 @@ requirements:
 options:
     revision:
         description:
-          - The version number of the atomic host to be deployed. Providing ```latest``` will upgrade to the latest available version.
+          - The version number of the atomic host to be deployed. Providing C(latest) will upgrade to the latest available version.
         required: false
         default: latest
         aliases: ["version"]
