@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 # (c) 2016, John Barker <jobarker@redhat.com>
 #
 # This file is part of Ansible
@@ -159,9 +159,11 @@ run_tests() {
         logdir_for_this_run="${log_root}/${branch}/${platform}/${checkout_sha}"
         mkdir -p "${logdir_for_this_run}"
 
-       echo "Running Ansible..."
+       echo "env-setup..."
+       source "${ansible_dir}/hacking/env-setup"
        ansible_exit_value=0
        cd "${ansible_dir}/test/integration"
+       echo "Running Tests..."
        ansible-playbook --version > "${logdir_for_this_run}/ansible.log" 2>&1
        ANSIBLE_FORCE_COLOR=1 ANSIBLE_ROLES_PATH=targets time -p ansible-playbook \
             -vvv \
@@ -245,27 +247,12 @@ eexit() {
 # Log everything of interest to syslog and to disk
 # Based on https://nicolaw.uk/#BashScriptDebugSyslog
 
-function prepend_timestamp() {
-    while read line ; do
-        echo "$(date +'%d-%m-%y %X') $line"
-    done
-}
+exec > >(2>&-;logger -s -t "$PROG[$$]" -p user.info 2>&1) 2> >(logger -s -t "$PROG[$$]" -p user.error)
 
-function log_debug() {
-    echo "$PROG[$$] $*" | prepend_timestamp >> "$DEBUG_LOGFILE"
-}
+echo "This message is to standard out (FD1)."
+echo "This message is to STANDARD ERROR (FD2)." >&2
 
-if [[ -n "$DEBUG_LOGFILE" ]] ; then
-    exec > >(2>&-; \
-          logger -s -t "$PROG[$$]" -p user.info 2>&1 \
-        | prepend_timestamp | tee -a "$DEBUG_LOGFILE"
-      ) 2> >( \
-          logger -s -t "$PROG[$$]" -p user.error 2>&1 \
-        | prepend_timestamp | tee -a "$DEBUG_LOGFILE" 1>&2
-      )
-else
-    exec > >(2>&-;logger -s -t "$PROG[$$]" -p user.info 2>&1) \
-        2> >(logger -s -t "$PROG[$$]" -p user.error)
-fi
+ls
+ps >&2
 
 main "$@"
