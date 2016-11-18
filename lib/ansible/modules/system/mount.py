@@ -308,6 +308,15 @@ def unset_mount(module, args):
 
     return (args['name'], changed)
 
+def _set_fstab_args(args):
+    result = []
+    if 'fstab' in args and args['fstab'] != '/etc/fstab':
+        if get_platform().lower().endswith('bsd'):
+            result.append('-F')
+        else:
+            result.append('-T')
+        result.append(args['fstab'])
+    return result
 
 def mount(module, args):
     """Mount up a path or remount if needed."""
@@ -317,13 +326,9 @@ def mount(module, args):
     cmd = [mount_bin]
 
     if ismount(name):
-        cmd += ['-o', 'remount']
+        return remount(module, mount_bin, args)
 
-    if args['fstab'] != '/etc/fstab':
-        if get_platform() == 'FreeBSD':
-            cmd += ['-F', args['fstab']]
-        elif get_platform() == 'Linux':
-            cmd += ['-T', args['fstab']]
+    cmd += _set_fstab_args(args)
 
     cmd += [name]
 
@@ -348,6 +353,30 @@ def umount(module, dest):
     else:
         return rc, out+err
 
+def remount(module, mount_bin, args):
+    ''' will try to use -o remount first and fallback to unmount/mount if unsupported'''
+    msg = ''
+    cmd = [mount_bin]
+
+    # multiplatform remount opts
+    if get_platform().lower().endswith('bsd'):
+        cmd += ['-u']
+    else:
+        cmd += ['-o', 'remount' ]
+
+    cmd += _set_fstab_args(args)
+    cmd += [ args['name'], ]
+    try:
+        rc, out, err = module.run_command(cmd)
+    except:
+        rc = 1
+    if rc != 0:
+        msg = out+err
+        if ismount(args['name']):
+            rc,msg = umount(module, args)
+        if rc == 0:
+            rc,msg = mount(module, args)
+    return rc, msg
 
 # Note if we wanted to put this into module_utils we'd have to get permission
 # from @jupeter -- https://github.com/ansible/ansible-modules-core/pull/2923
@@ -650,8 +679,7 @@ def main():
         elif 'bind' in args.get('opts', []):
             changed = True
 
-            if is_bind_mounted(
-                    module, linux_mounts, name, args['src'], args['fstype']):
+            if is_bind_mounted( module, linux_mounts, name, args['src'], args['fstype']):
                 changed = False
 
             if changed and not module.check_mode:
