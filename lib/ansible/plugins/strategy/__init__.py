@@ -559,10 +559,6 @@ class StrategyBase:
         if group_name not in host.get_groups():
             new_group.add_host(real_host)
             changed = True
-            
-        if changed:
-            # clear cache of group dict, which is used in magic host variables
-            self._inventory.clear_group_dict_cache()
 
         return changed
 
