@@ -47,6 +47,10 @@ Ansible Changes By Release
 - windows:
   * win_say
 
+####New Callbacks:
+
+* dense: minimal stdout output with fallback to default when verbose
+
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
 ###Major Changes:
