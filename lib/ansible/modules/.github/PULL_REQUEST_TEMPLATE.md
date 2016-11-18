@@ -9,7 +9,11 @@
 <!--- Name of the plugin/module/task -->
 
 ##### ANSIBLE VERSION
-<!--- Paste verbatim output from “ansible --version” between quotes below -->
+<!---
+Paste verbatim output from “ansible --version” between quotes below,
+this is to help the Ansible team determine if this is a version specific
+issue which is being fixed.
+-->
 ```
 
 ```
@@ -22,7 +26,11 @@ If you are fixing an existing issue, please include "Fixes #nnnn" in your commit
 message and your description; but you should still explain what the change does.
 -->
 
-<!--- Paste verbatim command output below, e.g. before and after your change -->
+<!---
+Please paste verbatim command output below, e.g. before and after your change.
+Even in the event of a Docs Pull Request, this allows the Ansible team to quickly
+verify that there were no accidental syntax mistakes.
+-->
 ```
 
 ```
