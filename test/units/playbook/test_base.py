@@ -279,6 +279,15 @@ class ExampleException(Exception):
     pass
 
 
+# naming fails me...
+class ExampleParentBaseSubClass(base.Base):
+    _test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
+
+    def __init__(self):
+
+        super(ExampleParentBaseSubClass, self).__init__()
+
+
 class ExampleSubClass(base.Base):
     _test_attr_blip = FieldAttribute(isa='string', default='example sub class test_attr_blip',
                                      inherit=False,
@@ -286,6 +295,7 @@ class ExampleSubClass(base.Base):
 
     def __init__(self):
         super(ExampleSubClass, self).__init__()
+        self._parent = ExampleParentBaseSubClass()
 
 
 class BaseSubClass(base.Base):
@@ -319,16 +329,6 @@ class BaseSubClass(base.Base):
         after_template_value = templar.template(value)
         #print('_post_validate after_template_value=%s' % after_template_value)
         return after_template_value
-
-
-# naming fails me...
-class AParentBaseSubClass(BaseSubClass):
-    _test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
-
-    def __init__(self, parent_thing=None):
-        self._parent = parent_thing
-
-        super(AParentBaseSubClass, self).__init__()
 
 
 # terrible name, but it is a TestBase subclass for testing subclasses of Base
@@ -389,14 +389,16 @@ class TestBaseSubClass(TestBase):
         self.assertEquals(bsc.test_attr_dict, test_dict)
 
     def test_attr_class(self):
-        ds = {'test_attr_class': ExampleSubClass}
+        esc = ExampleSubClass()
+        ds = {'test_attr_class': esc}
         bsc = self._base_validate(ds)
-        self.assertIs(bsc.test_attr_class, ExampleSubClass)
+        self.assertIs(bsc.test_attr_class, esc)
 
-#    def test_attr_class_post_validate(self):
-#        ds = {'test_attr_class_post_validate': ExampleSubClass}
-#        bsc = self._base_validate(ds)
-#        self.assertIs(bsc.test_attr_class_post_validate, ExampleSubClass)
+    def test_attr_class_post_validate(self):
+        esc = ExampleSubClass()
+        ds = {'test_attr_class_post_validate': esc}
+        bsc = self._base_validate(ds)
+        self.assertIs(bsc.test_attr_class_post_validate, esc)
 
 #    def test_attr_omit(self):
 #        ds = {'test_attr_omit': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
@@ -437,7 +439,3 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_list_no_listof': test_list}
         bsc = self._base_validate(ds)
         self.assertEquals(test_list, bsc._attributes['test_attr_list_no_listof'])
-
-
-class TestParentClass(TestBaseSubClass):
-    ClassUnderTest = AParentBaseSubClass
