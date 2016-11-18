@@ -54,3 +54,11 @@ Libraries
   users as a primary audience, they are for intra-server communication. The
   python-openstacksdk is the future there, and shade will migrate to it when
   its ready in a manner that is not noticable to ansible users.
+
+Testing
+-------
+
+* Integration testing is currently done in OpenStack's CI system in
+  http://git.openstack.org/cgit/openstack-infra/shade/tree/shade/tests/ansible
+* Testing in shade produces an obvious chicken-and-egg scenario. Work is under
+  way to trigger from and report on PRs directly.
