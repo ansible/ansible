@@ -26,7 +26,7 @@ description:
 version_added: "2.2"
 author: "Saravanan KR @krsacme"
 notes:
-    - Host should be support ```atomic``` command
+    - Host should be support C(atomic) command
 requirements:
   - atomic
   - "python >= 2.6"
@@ -39,7 +39,7 @@ options:
     state:
         description:
           - The state of the container image.
-          - The state ```latest``` will ensure container image is upgraded to the latest version and forcefully restart container, if running.
+          - The state C(latest) will ensure container image is upgraded to the latest version and forcefully restart container, if running.
         required: False
         choices: ["present", "absent", "latest"]
         default: latest
