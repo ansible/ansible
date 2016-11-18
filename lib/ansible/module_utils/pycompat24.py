@@ -51,7 +51,7 @@ def get_exception():
     if any(e):
         return e
     else:
-        return ''.join(tb_list)
+        return Exception(tb_list)
 
 try:
     # Python 2.6+
