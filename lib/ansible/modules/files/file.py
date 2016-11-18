@@ -201,6 +201,7 @@ def main():
 
     params = module.params
     state = params['state']
+    recurse = params['recurse']
     force = params['force']
     diff_peek = params['diff_peek']
     src = params['src']
@@ -231,6 +232,8 @@ def main():
     if state is None:
         if prev_state != 'absent':
             state = prev_state
+        elif recurse:
+            state = 'directory'
         else:
             state = 'file'
 
@@ -257,7 +260,6 @@ def main():
             b_path = to_bytes(path, errors='surrogate_or_strict')
 
     # make sure the target path is a directory when we're doing a recursive operation
-    recurse = params['recurse']
     if recurse and state != 'directory':
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
 
