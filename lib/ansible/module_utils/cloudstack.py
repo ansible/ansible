@@ -259,6 +259,9 @@ class AnsibleCloudStack(object):
             self.module.fail_json(msg="No networks available.")
 
         for n in networks['network']:
+            # ignore any VPC network if vpc param is not given
+            if 'vpcid' in n and not self.get_vpc(key='id'):
+                continue
             if network in [n['displaytext'], n['name'], n['id']]:
                 self.network = n
                 return self._get_by_key(key, self.network)
