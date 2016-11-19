@@ -218,7 +218,7 @@ ansible_port
 ansible_user
     The default ssh user name to use.
 ansible_ssh_pass
-    The ssh password to use (never store this variable in plain text: always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -247,7 +247,7 @@ ansible_become_method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
 ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text: always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 
 Remote host environment parameters:
 
