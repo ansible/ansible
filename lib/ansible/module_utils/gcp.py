@@ -50,13 +50,13 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
 
     # If any of the values are not given as parameters, check the appropriate
     # environment variables.
-    if not service_account_email:
+    if service_account_email is None:
         service_account_email = os.environ.get('GCE_EMAIL', None)
-    if not project_id:
+    if project_id is None:
         project_id = os.environ.get('GCE_PROJECT', None)
-    if not pem_file:
+    if pem_file is None:
         pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
-    if not credentials_file:
+    if credentials_file is None:
         credentials_file = os.environ.get('GCE_CREDENTIALS_FILE_PATH', pem_file)
 
     # If we still don't have one or more of our credentials, attempt to
@@ -68,12 +68,12 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
             secrets = None
 
         if hasattr(secrets, 'GCE_PARAMS'):
-            if not service_account_email:
+            if service_account_email is None:
                 service_account_email = secrets.GCE_PARAMS[0]
-            if not credentials_file:
+            if credentials_file is None:
                 credentials_file = secrets.GCE_PARAMS[1]
         keyword_params = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
-        if not project_id:
+        if project_id is None:
             project_id = keyword_params.get('project', None)
 
     # If we *still* don't have the credentials we need, then it's time to
@@ -97,6 +97,9 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
                 return None
         except ValueError as e:
             # Not JSON
+            pass
+        except IOError as e:
+            # Not a file (Installed app or internal authorization authentications)
             pass
 
     try:
