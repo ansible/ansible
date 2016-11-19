@@ -33,13 +33,13 @@ options:
     required: false
     default: null
     aliases: ['keypair']
-  id:        
+  id:
     version_added: "1.1"
-    description:        
-      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).        
-    required: false        
-    default: null        
-    aliases: []        
+    description:
+      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
+    required: false
+    default: null
+    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -603,6 +603,8 @@ from ast import literal_eval
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six import get_function_code
 
+from distutils.version import LooseVersion
+
 try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
@@ -768,6 +770,15 @@ def boto_supports_profile_name_arg(ec2):
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in get_function_code(run_instances_method).co_varnames
 
+def boto_supports_volume_encryption():
+    """
+    Check if Boto library supports encryption of EBS volumes (added in 2.29.0)
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+
 def create_block_device(module, ec2, volume):
     # Not aware of a way to determine this programatically
     # http://aws.amazon.com/about-aws/whats-new/2013/10/09/ebs-provisioned-iops-maximum-iops-gb-ratio-increased-to-30-1/
@@ -798,13 +809,21 @@ def create_block_device(module, ec2, volume):
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
             module.fail_json(msg = 'Cannot set both ephemeral and snapshot')
-    return BlockDeviceType(snapshot_id=volume.get('snapshot'),
-                           ephemeral_name=volume.get('ephemeral'),
-                           size=volume.get('volume_size'),
-                           volume_type=volume_type,
-                           delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'),
-                           encrypted=volume.get('encrypted', None))
+    if boto_supports_volume_encryption():
+        return BlockDeviceType(snapshot_id=volume.get('snapshot'),
+                               ephemeral_name=volume.get('ephemeral'),
+                               size=volume.get('volume_size'),
+                               volume_type=volume_type,
+                               delete_on_termination=volume.get('delete_on_termination', False),
+                               iops=volume.get('iops'),
+                               encrypted=volume.get('encrypted', None))
+    else:
+        return BlockDeviceType(snapshot_id=volume.get('snapshot'),
+                               ephemeral_name=volume.get('ephemeral'),
+                               size=volume.get('volume_size'),
+                               volume_type=volume_type,
+                               delete_on_termination=volume.get('delete_on_termination', False),
+                               iops=volume.get('iops'))
 
 def boto_supports_param_in_spot_request(ec2, param):
     """
