@@ -637,6 +637,19 @@ Using a Control Machine
           retries: 30
           delay: 10
     
+    - name: Update new_web hosts with IP that RackConnect assigns
+      hosts: new_web
+      gather_facts: false
+      tasks:
+        - name: Get facts about servers
+          local_action:
+            module: rax_facts
+            name: "{{ inventory_hostname }}"
+            region: DFW
+        - name: Map some facts
+          set_fact:
+            ansible_host: "{{ rax_accessipv4 }}"
+        
     - name: Base Configure Servers
       hosts: web
       roles:
