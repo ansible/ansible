@@ -20,7 +20,7 @@ module: elb_lb_application
 short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
-version_added: "2.2"
+version_added: "2.3"
 author: "Rob White (@wimnat)"
 options:
   access_logs_s3_bucket:
@@ -231,7 +231,7 @@ def convert(data):
     if isinstance(data, basestring):
         return str(data)
     elif isinstance(data, collections.Mapping):
-        return dict(map(convert, data.iteritems()))
+        return dict(map(convert, data.items()))
     elif isinstance(data, collections.Iterable):
         return type(data)(map(convert, data))
     else:
@@ -243,7 +243,7 @@ def convert_tg_name_arn(connection, module, tg_name):
     try:
         response = connection.describe_target_groups(Names=[tg_name])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     tg_arn =response['TargetGroups'][0]['TargetGroupArn']
 
@@ -256,7 +256,7 @@ def convert_tg_arn_name(connection, module, tg_arn):
     try:
         response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     tg_name = response['TargetGroups'][0]['TargetGroupName']
 
@@ -278,7 +278,7 @@ def wait_for_status(connection, module, elb_arn, status):
             else:
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     result = response
     return status_achieved, result
@@ -352,7 +352,6 @@ def update_elb_attributes(connection, module, elb):
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
     
     return attribute_changed
-
 
 
 def create_or_update_elb_listeners(connection, module, elb):
@@ -634,7 +633,6 @@ def create_or_update_elb(connection, connection_ec2, module):
     elb['Tags'] = boto3_tag_list_to_ansible_dict(elb_tags)
 
     module.exit_json(changed=changed, load_balancer=camel_dict_to_snake_dict(elb))
-
 
 
 def delete_elb(connection, module):
