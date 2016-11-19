@@ -97,7 +97,7 @@ EXAMPLES = '''
 # Create a target group with a default health check
 - elb_target_group:
     name: mytargetgroup
-    protocol: http
+    protocol: HTTP
     port: 80
     vpc_id: vpc-01234567
     state: present
@@ -105,7 +105,7 @@ EXAMPLES = '''
 # Modify the target group with a custom health check
 - elb_target_group:
     name: mytargetgroup
-    protocol: http
+    protocol: HTTP
     port: 80
     vpc_id: vpc-01234567
     health_check_path: /
@@ -214,6 +214,7 @@ def get_target_group(connection, module):
         else:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
+
 def diff_list(a, b):
     """Find the entries in list a that are not in list b"""
     b = set(b)
@@ -254,10 +255,10 @@ def create_or_update_target_group(connection, module):
         params['HealthCheckPath'] = module.params.get("health_check_path")
 
         if module.params.get("health_check_protocol") is not None:
-            params['HealthCheckProtocol'] = module.params.get("health_check_protocol")
+            params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
 
         if module.params.get("health_check_port") is not None:
-            params['HealthCheckPort'] = module.params.get("health_check_port")
+            params['HealthCheckPort'] = str(module.params.get("health_check_port"))
 
         if module.params.get("health_check_interval") is not None:
             params['HealthCheckIntervalSeconds'] = module.params.get("health_check_interval")
