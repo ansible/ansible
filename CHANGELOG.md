@@ -5,12 +5,19 @@ Ansible Changes By Release
 
 ### Minor Changes:
 
+* Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
+* Fixes multiple bugs related to field/attribute inheritance in nested blocks and includes, as well as task iteration logic during failures.
 * Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
 * Fixed dnf on systems with dnf-2.0.x (some changes in the API).
-* Fixed traceback with dnf install of groups
-* Fix for include_vars only loading files with .yml, .yaml, and .json
-  extensions.  This was only supposed to apply to loading a directory of vars
-  files.
+* Fixed traceback with dnf install of groups.
+* Fixes a bug in which include_vars was not working with failed_when.
+* Fix for include_vars only loading files with .yml, .yaml, and .json extensions.  This was only supposed to apply to loading a directory of vars files.
+* Fixes several bugs related to properly incrementing the failed count in the host statistics.
+* Fixes a bug with listening handlers which did not specify a `name` field.
+* Fixes a bug with the `play_hosts` internal variable, so that it properly reflects the current list of hosts.
+* Fixes a bug related to the v2_playbook_on_start callback method and legacy (v1) plugins.
+* Fixes an openssh related process exit race condition, related to the fact that connections using ControlPersist do not close stderr.
+* Improvements and fixes to OpenBSD fact gathering.
 * Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
 * Fixed Windows async to avoid blocking due to handle inheritance.
 
