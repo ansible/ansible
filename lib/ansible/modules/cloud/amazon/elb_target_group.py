@@ -234,7 +234,7 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
             else:
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     result = response
     return status_achieved, result
