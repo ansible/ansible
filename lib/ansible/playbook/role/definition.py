@@ -34,6 +34,12 @@ from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.path import unfrackpath
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 __all__ = ['RoleDefinition']
 
@@ -197,6 +203,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        or make this list more automatic in some way so we don't have to
             #        remember to update it manually.
             if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
+                if key in ('connection', 'port', 'remote_user'):
+                    display.deprecated("Using '%s' as a role param has been deprecated. " % key + \
+                                       "In the future, these values should be entered in the `vars:` " + \
+                                       "section for roles, but for now we'll store it as both a param and an attribute.")
+                    role_def[key] = value
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:
