@@ -36,6 +36,7 @@ from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.six import PY3, iteritems
 from ansible.module_utils.six.moves import configparser, StringIO
 from ansible.module_utils._text import to_native, to_text
+from ansible.compat.six.moves import reduce
 
 try:
     import selinux
