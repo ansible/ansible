@@ -107,6 +107,9 @@ class AnsibleCloudStack(object):
         self.module = module
         self._connect()
 
+        # Helper for VPCs
+        self._vpc_networks_ids = None
+
         self.domain = None
         self.account = None
         self.project = None
@@ -238,6 +241,32 @@ class AnsibleCloudStack(object):
         self.module.fail_json(msg="VPC '%s' not found" % vpc)
 
 
+    def is_vm_in_vpc(self, vm):
+        for n in vm.get('nic'):
+            if n.get('isdefault', False):
+                return self.is_vpc_network(network_id=n['networkid'])
+        self.module.fail_json(msg="VM has no default nic")
+
+
+    def is_vpc_network(self, network_id):
+        """Returns True if network is in VPC."""
+        # This is an efficient way to query a lot of networks at a time
+        if self._vpc_networks_ids is None:
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'zoneid': self.get_zone(key='id'),
+            }
+            vpcs = self.cs.listVPCs(**args)
+            self._vpc_networks_ids = []
+            if vpcs:
+                for vpc in vpcs['vpc']:
+                    for n in vpc.get('network',[]):
+                        self._vpc_networks_ids.append(n['id'])
+        return network_id in self._vpc_networks_ids
+
+
     def get_network(self, key=None):
         """Return a network dictionary or the value of given key of."""
         if self.network:
@@ -347,16 +376,22 @@ class AnsibleCloudStack(object):
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
+        vpc_id = self.get_vpc(key='id')
+
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
-            'vpcid': self.get_vpc(key='id'),
+            'vpcid': vpc_id,
         }
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
+                # Due the limitation of the API, there is no easy way (yet) to get only those VMs
+                # not belonging to a VPC.
+                if not vpc_id and self.is_vm_in_vpc(vm=v):
+                    continue
                 if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
