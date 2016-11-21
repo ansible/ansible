@@ -238,6 +238,7 @@ def main():
             if follow and state == 'link':
                 # use the current target of the link as the source
                 src = to_native(os.path.realpath(b_path), errors='strict')
+                b_src = to_bytes(os.path.realpath(b_path), errors='strict')
             else:
                 module.fail_json(msg='src and dest are required for creating links')
 
