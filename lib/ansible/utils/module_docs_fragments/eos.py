@@ -39,7 +39,7 @@ options:
   username:
     description:
       - Configures the username to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+        the remote device.  This value is used to authenticate
         either the CLI login or the eAPI authentication depending on which
         transport is used. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
