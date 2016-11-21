@@ -55,9 +55,7 @@ options:
             - Specify whether to wait for install or uninstall to complete before continuing.
         choices:
             - true
-            - yes
             - false
-            - no
         default: false
 author: Matt Martz
 '''
