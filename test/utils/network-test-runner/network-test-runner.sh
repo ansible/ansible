@@ -249,9 +249,6 @@ eexit() {
 
 exec > >(2>&-;logger -s -t "$PROG[$$]" -p user.info 2>&1) 2> >(logger -s -t "$PROG[$$]" -p user.error)
 
-echo "This message is to standard out (FD1)."
-echo "This message is to STANDARD ERROR (FD2)." >&2
-
 ls
 ps >&2
 
