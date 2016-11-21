@@ -27,4 +27,23 @@
       - result.stdout is defined
       - result.stdout | length == 2
 
+- name: Get output for multiple commands that call less explicitly
+  vyos_command:
+    commands:
+      - show hardware cpu detail
+      - show hardware mem
+      - show license
+      - show log
+      - show log all
+      - show log authorization
+      - show system boot-messages
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout_lines is defined
+      - result.stdout_lines[2] | length >= 20
+
 - debug: msg="END cli/output.yaml"
