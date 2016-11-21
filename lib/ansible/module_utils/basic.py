@@ -2268,11 +2268,11 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except (OSError, IOError):
             e = get_exception()
-            self.log("%s: Error Executing CMD:%s PERM:%s Exception:%s" % (args[0] , args[1] , str(e)))
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
-            self.log("%s: Error Executing CMD:%s PERM:%s Exception:%s" % (args[0] , args[1] , str(traceback.format_exc())))
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args,to_native(traceback.format_exc())))
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings
