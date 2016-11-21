@@ -38,8 +38,6 @@ import sys
 import time
 import traceback
 
-#import q
-
 from io import BytesIO
 
 from ansible import constants as C
@@ -111,8 +109,6 @@ class Server():
         #        in the main() method below.
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
-
-        #q.q("done setting up connection and connected")
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
@@ -218,7 +214,6 @@ def main():
         print("FAIL: %s" % e)
         print(traceback.format_exc())
         sys.exit(1)
-    #q.q("done reading in and parsing PlayContext")
 
     # here we create a hash to use later when creating the socket file,
     # so we can hide the info about the target host/user/etc.
@@ -239,15 +234,12 @@ def main():
     lock_fd = os.open(lk_path, os.O_RDWR|os.O_CREAT, 0o600)
     fcntl.lockf(lock_fd, fcntl.LOCK_EX)
     if not os.path.exists(sf_path):
-        #q.q("creating daemonized connection fork")
         pid = do_fork()
         if pid == 0:
            server = Server(sf_path, pc)
            fcntl.lockf(lock_fd, fcntl.LOCK_UN)
            os.close(lock_fd)
-           #q.q("fork done, running server")
            server.run()
-           #q.q("server run complete, exiting")
            sys.exit(0)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
@@ -257,13 +249,10 @@ def main():
     #        the connection will timeout here. Need to make this more resilient.
     rc = 0
     while rc == 0:
-        #q.q("waiting for input")
         data = sys.stdin.readline()
         if data == '':
-            #q.q("data was empty, aborting")
             break
         if data.strip() == '':
-            #q.q("data was empty line, skipping")
             continue
         sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         attempts = 1
@@ -280,15 +269,10 @@ def main():
                     sys.stderr.write("failed to connect to the host, connection timeout\n")
                     sys.exit(255)
 
-        #q.q("sending data to pipe")
         send_data(sf, to_bytes(data.strip()))
-        #q.q("getting data back")
         rc = int(recv_data(sf), 10)
-        #q.q(rc)
         stdout = recv_data(sf)
-        #q.q(stdout)
         stderr = recv_data(sf)
-        #q.q(stderr)
         sys.stdout.write(to_native(stdout))
         sys.stderr.write(to_native(stderr))
         #sys.stdout.flush()
