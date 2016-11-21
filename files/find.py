@@ -66,7 +66,7 @@ options:
         required: false
         description:
             - Type of file to select
-        choices: [ "file", "directory", "link" ]
+        choices: [ "file", "directory", "link", "any" ]
         default: "file"
     recurse:
         required: false
@@ -275,7 +275,7 @@ def main():
             paths         = dict(required=True, aliases=['name','path'], type='list'),
             patterns      = dict(default=['*'], type='list', aliases=['pattern']),
             contains      = dict(default=None, type='str'),
-            file_type     = dict(default="file", choices=['file', 'directory', 'link'], type='str'),
+            file_type     = dict(default="file", choices=['file', 'directory', 'link', 'any'], type='str'),
             age           = dict(default=None, type='str'),
             age_stamp     = dict(default="mtime", choices=['atime','mtime','ctime'], type='str'),
             size          = dict(default=None, type='str'),
@@ -337,7 +337,11 @@ def main():
                         continue
 
                     r = {'path': fsname}
-                    if stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
+                    if params['file_type'] == 'any':
+                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                            r.update(statinfo(st))
+                            filelist.append(r)
+                    elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
