@@ -27,6 +27,7 @@
 #
 
 import re
+import os
 
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.network import register_transport, to_list
@@ -46,9 +47,13 @@ class Cli(CliBase):
         re.compile(r"\n\s+Set failed"),
     ]
 
+    TERMINAL_LENGTH = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('set terminal length 0')
+        self.shell.send('set terminal length %s' % self.TERMINAL_LENGTH)
 
 
     ### implementation of netcli.Cli ###

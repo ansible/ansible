@@ -36,7 +36,8 @@ from ansible.module_utils._text import to_native
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
-    re.compile(r'\x08.')
+    re.compile(r'\x08'),
+    re.compile(r'\x1b[^m]*m')
 ]
 
 def to_list(val):
