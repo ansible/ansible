@@ -984,8 +984,7 @@ def main():
             remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackgitpath(repo)
         else:
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
-        if remote_url_changed:
-            result.update(remote_url_changed=True)
+        result.update(remote_url_changed=remote_url_changed)
 
         if need_fetch:
             if module.check_mode:
