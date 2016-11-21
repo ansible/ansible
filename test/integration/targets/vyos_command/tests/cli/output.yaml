@@ -37,7 +37,8 @@
       - show log all
       - show log authorization
       - show system boot-messages
-    register: result
+    provider: "{{ cli }}"
+  register: result
 
 - assert:
     that:
