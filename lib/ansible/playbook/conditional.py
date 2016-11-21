@@ -106,7 +106,7 @@ class Conditional:
         templar.set_available_variables(variables=all_vars)
 
         try:
-            if templar.templatable(conditional):
+            if templar.is_templatable(conditional):
                 conditional = templar.template(conditional)
                 if not isinstance(conditional, text_type) or conditional == "":
                     return conditional

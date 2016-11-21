@@ -369,9 +369,10 @@ class Templar:
             else:
                 return variable
 
-    def templatable(self, data):
+    def is_templatable(self, data):
         '''
-        returns True if the data can be templated w/o errors
+        returns True if the data can be templated w/o errors.
+        This is not as inefficient as it might seem as Jinja2 will cache
         '''
         try:
             result = self.template(data)
