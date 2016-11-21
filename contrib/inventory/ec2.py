@@ -1195,7 +1195,7 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address (PrimaryEndpoint)
-        dest = replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address']
+        dest = replication_group['NodeGroups'][0]['PrimaryEndpoint']
 
         if not dest:
             # Skip clusters we cannot address (e.g. private VPC subnet)
