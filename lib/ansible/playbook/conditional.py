@@ -106,9 +106,10 @@ class Conditional:
         templar.set_available_variables(variables=all_vars)
 
         try:
-            resolved = templar.template(conditional)
-            if not isinstance(resolved, text_type) or resolved == "":
-                return resolved
+            if templar.templatable(conditional):
+                conditional = templar.template(conditional)
+                if not isinstance(conditional, text_type) or conditional == "":
+                    return conditional
 
             # a Jinja2 evaluation that results in something Python can eval!
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional

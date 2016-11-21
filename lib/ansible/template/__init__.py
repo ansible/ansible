@@ -373,12 +373,11 @@ class Templar:
         '''
         returns True if the data can be templated w/o errors
         '''
-        templatable = True
         try:
-            self.template(data)
+            result = self.template(data)
         except:
-           templatable = False
-        return templatable
+            result = data
+        return (result != data)
 
     def _contains_vars(self, data):
         '''
