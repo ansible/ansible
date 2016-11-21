@@ -61,7 +61,7 @@ options:
     required: false
   provider:
     description:
-      - Convenience method that allows all I(ios) arguments to be passed as
+      - Convenience method that allows all I(junos) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
