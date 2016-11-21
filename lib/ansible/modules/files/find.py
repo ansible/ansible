@@ -66,7 +66,7 @@ options:
         required: false
         description:
             - Type of file to select
-            - 'link' and 'any' were added in version 2.3
+            - The 'link' and 'any' choices were added in version 2.3
         choices: [ "file", "directory", "link", "any" ]
         default: "file"
     recurse:
