@@ -73,7 +73,7 @@ class HostVars(collections.Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            raise UndefinedError("%s not found in hostvars" % host_name)
+            raise UndefinedError("'hostvars[\"%s\"]' is undefined" % host_name)
 
         return self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
