@@ -398,7 +398,7 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
 
     is_mounted = False
 
-    if get_platform() == 'Linux':
+    if get_platform() == 'Linux' and linux_mounts is not None:
         if src is None:
             # That's for unmounted/absent
             if dest in linux_mounts:
@@ -439,7 +439,7 @@ def get_linux_mounts(module):
     try:
         f = open(mntinfo_file)
     except IOError:
-        module.fail_json(msg="Cannot open file %s" % mntinfo_file)
+        return
 
     lines = map(str.strip, f.readlines())
 
@@ -603,6 +603,11 @@ def main():
     # call is_bind_mouted() multiple times
     if get_platform() == 'Linux':
         linux_mounts = get_linux_mounts(module)
+
+        if linux_mounts is None:
+            args['warnings'] = (
+                'Cannot open file /proc/self/mountinfo. '
+                'Bind mounts might be misinterpreted.')
 
     # Override defaults with user specified params
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
