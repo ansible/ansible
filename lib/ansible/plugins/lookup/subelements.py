@@ -51,7 +51,7 @@ class LookupModule(LookupBase):
                 # the registered result was completely skipped
                 return []
             elementlist = []
-            for key in terms[0].iterkeys():
+            for key in terms[0]:
                 elementlist.append(terms[0][key])
         else:
             elementlist = terms[0]
