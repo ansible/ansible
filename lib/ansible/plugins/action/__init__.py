@@ -359,9 +359,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Try to use file system acls to make the files readable for sudo'd
             # user
             if execute:
-                mode = 'rx'
+                mode = 'r-x'
             else:
-                mode = 'rX'
+                ### Note: this form fails silently on freebsd.  We currently
+                # never call _fixup_perms2() with execute=False but if we
+                # start to we'll have to fix this.
+                mode = 'r-X'
 
             res = self._remote_set_user_facl(remote_paths, self._play_context.become_user, mode)
             if res['rc'] != 0:
