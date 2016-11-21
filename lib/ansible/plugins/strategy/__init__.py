@@ -783,6 +783,7 @@ class StrategyBase:
                     # of hosts which included the file to the notified_handlers dict
                     for block in new_blocks:
                         iterator._play.handlers.append(block)
+                        iterator.cache_block_tasks(block)
                         for task in block.block:
                             result = self._do_handler_run(
                                 handler=task,
