@@ -265,6 +265,7 @@ class ConsulInventory(object):
 
   def load_data_for_datacenter(self, datacenter):
     '''processes all the nodes in a particular datacenter'''
+    self.current_dc = datacenter
     index, nodes = self.consul_api.catalog.nodes(dc=datacenter)
     for node in nodes:
       self.add_node_to_map(self.nodes_by_datacenter, datacenter, node)
@@ -273,7 +274,7 @@ class ConsulInventory(object):
   def load_data_for_node(self, node, datacenter):
     '''loads the data for a sinle node adding it to various groups based on
     metadata retrieved from the kv store and service availability'''
-
+    self.current_dc = datacenter
     index, node_data = self.consul_api.catalog.node(node, dc=datacenter)
     node = node_data['Node']
     self.add_node_to_map(self.nodes, 'all', node)
