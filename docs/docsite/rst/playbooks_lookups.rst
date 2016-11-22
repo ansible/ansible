@@ -516,7 +516,7 @@ The etcd Lookup
 
 When you need to query a value from an etcd server you can use etcd lookup. Until version 2.3 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server. Since 2.3 this functionality has been improved by allowing to set the etcd host and version directly from you playbook:
 
-Example usage:
+Example usage::
 
     # query localhost etcd ( v1 )
     - hosts: localhost
