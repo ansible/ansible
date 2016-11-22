@@ -508,6 +508,28 @@ Sample output:
     debug ------------------------------------------------------------------- 0.07s
     mdiez@batman:~/ansible$
 
+.. _credstash_lookup:
+
+The etcd Lookup
+````````````````````
+.. versionadded:: 2.3
+
+When you need to query a value from an etcd server you can use etcd lookup. Until version 2.3 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server. Since 2.3 this functionality has been improved by allowing to set the etcd host and version directly from you playbook:
+
+Example usage:
+
+# query localhost etcd ( v1 )
+- hosts: localhost
+  connection: local
+  tasks:
+   - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
+
+# query a remote v2 etcd server
+
+- hosts: localhost
+  connection: local
+   - debug: msg={{lookup('etcd','/tfm/network/config', url='http://192.168.1.21:2379' , version='v2')}}
+
 
 .. _more_lookups:
 
@@ -555,7 +577,6 @@ Here are some examples::
            debug: msg="{{ lookup('template', './some_json.json.j2', convert_data=False) }} is a value from evaluation of this template"
 
 
-         - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
          # shelvefile lookup retrieves a string value corresponding to a key inside a Python shelve file
          - debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
