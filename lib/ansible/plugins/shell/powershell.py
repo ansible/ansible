@@ -164,8 +164,8 @@ class ShellModule(object):
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
+        cmd_parts = shlex.split(cmd, posix=False)
+        cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
@@ -249,7 +249,7 @@ class ShellModule(object):
         if strict_mode:
             script = u'Set-StrictMode -Version Latest\r\n%s' % script
         script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
+        encoded_script = to_text(base64.b64encode(script.encode('utf-16-le')))
         cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
         if as_list:
             return cmd_parts

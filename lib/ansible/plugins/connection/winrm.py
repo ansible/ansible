@@ -208,7 +208,7 @@ class Connection(ConnectionBase):
 
             except Exception as ex:
                 from traceback import format_exc
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc(ex))
+                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc())
                 stdin_push_failed = True
 
             if stdin_push_failed:
@@ -249,8 +249,8 @@ class Connection(ConnectionBase):
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
+        cmd_parts = shlex.split(to_text(cmd), posix=False)
+        cmd_parts = list(map(to_text, cmd_parts))
         script = None
         cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
         # Support running .ps1 files (via script/raw).
@@ -275,8 +275,8 @@ class Connection(ConnectionBase):
         except Exception:
             traceback.print_exc()
             raise AnsibleConnectionFailure("failed to exec cmd %s" % cmd)
-        result.std_out = to_bytes(result.std_out)
-        result.std_err = to_bytes(result.std_err)
+        result.std_out = result.std_out
+        result.std_err = result.std_err
 
         # parse just stderr from CLIXML output
         if self.is_clixml(result.std_err):
@@ -289,7 +289,7 @@ class Connection(ConnectionBase):
         return (result.status_code, result.std_out, result.std_err)
 
     def is_clixml(self, value):
-        return value.startswith("#< CLIXML")
+        return value.startswith(b"#< CLIXML")
 
     # hacky way to get just stdout- not always sure of doc framing here, so use with care
     def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
@@ -303,11 +303,11 @@ class Connection(ConnectionBase):
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
-            for out_data in iter((lambda:in_file.read(buffer_size)), ''):
+            for out_data in iter((lambda:in_file.read(buffer_size)), b''):
                 offset += len(out_data)
                 self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
                 # yes, we're double-encoding over the wire in this case- we want to ensure that the data shipped to the end PS pipeline is still b64-encoded
-                b64_data = base64.b64encode(out_data) + '\r\n'
+                b64_data = base64.b64encode(out_data) + b'\r\n'
                 # cough up the data, as well as an indicator if this is the last chunk so winrm_send knows to set the End signal
                 yield b64_data, (in_file.tell() == in_size)
 
@@ -359,7 +359,7 @@ class Connection(ConnectionBase):
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
-        put_output = json.loads(result.std_out)
+        put_output = json.loads(to_text(result.std_out))
         remote_sha1 = put_output.get("sha1")
 
         if not remote_sha1:
