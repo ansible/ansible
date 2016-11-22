@@ -245,7 +245,7 @@ def load_config(module, result):
     kwargs['commit'] = not module.check_mode
 
     if module.params['src']:
-        config_format = module.params['src_format'] or guess_format(candidate)
+        config_format = module.params['src_format'] or guess_format(str(candidate))
     elif module.params['lines']:
         config_format = 'set'
     kwargs['config_format'] = config_format
