@@ -364,7 +364,7 @@ def command_integration_role(args, target):
         gather_facts = False
     elif 'network/' in target.aliases:
         inventory = 'inventory.network'
-        hosts = target.name[:target.name.find('_') - 1]
+        hosts = target.name[:target.name.find('_')]
         gather_facts = False
     else:
         inventory = 'inventory'
