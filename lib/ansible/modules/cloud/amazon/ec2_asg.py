@@ -641,10 +641,17 @@ def replace(connection, module):
     as_group = connection.get_all_groups(names=[group_name])[0]
     wait_for_new_inst(module, connection, group_name, wait_timeout, as_group.min_size, 'viable_instances')
     props = get_properties(as_group)
-    instances = props['instances']
+    instances = []
     if replace_instances:
         instances = replace_instances
-        
+    elif 'instances' in props:
+        instances = props['instances']
+
+    # No instances to be replaced (initial configuration or currently 0 sized)
+    if not instances:
+        changed = False
+        return(changed, props)
+
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
         min_size = as_group.min_size
@@ -674,7 +681,7 @@ def replace(connection, module):
     if not old_instances:
         changed = False
         return(changed, props)
-      
+
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
