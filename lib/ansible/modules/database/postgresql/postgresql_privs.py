@@ -120,6 +120,20 @@ options:
       - 'Alias: I(login_password))'
     default: null
     required: no
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+    required: false
+    default: disable
+    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    required: false
+    default: null
+    version_added: '2.3'
 notes:
   - Default authentication assumes that postgresql_privs is run by the
     C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
@@ -139,6 +153,7 @@ notes:
     specified via I(login). If R has been granted the same privileges by
     another user also, R can still access database objects via these privileges.
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
+  - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [psycopg2]
 author: "Bernhard Weitzhofer (@b6d)"
 """
@@ -274,17 +289,31 @@ class Connection(object):
             "password":"password",
             "port":"port",
             "database": "database",
+            "ssl_mode":"sslmode",
+            "ssl_rootcert":"sslrootcert"
         }
+
         kw = dict( (params_map[k], getattr(params, k)) for k in params_map
-                   if getattr(params, k) != '' )
+                   if getattr(params, k) != '' and getattr(params, k) is not None )
 
         # If a unix_socket is specified, incorporate it here.
         is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
         if is_localhost and params.unix_socket != "":
             kw["host"] = params.unix_socket
 
-        self.connection = psycopg2.connect(**kw)
-        self.cursor = self.connection.cursor()
+        sslrootcert = params.ssl_rootcert
+        if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+            module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
+        try:
+            self.connection = psycopg2.connect(**kw)
+            self.cursor = self.connection.cursor()
+
+        except TypeError:
+            e = get_exception()
+            if 'sslrootcert' in e.args[0]:
+                module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(msg="unable to connect to database: %s" % e)
 
 
     def commit(self):
@@ -541,7 +570,9 @@ def main():
             port=dict(type='int', default=5432),
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True)
+            password=dict(default='', aliases=['login_password'], no_log=True),
+            ssl_mode=dict(default="disable", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True
     )
