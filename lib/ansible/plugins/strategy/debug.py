@@ -7,6 +7,7 @@ import pprint
 import sys
 
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
+from ansible.compat.six.moves import reduce
 
 try:
     from __main__ import display
