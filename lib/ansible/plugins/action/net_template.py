@@ -28,9 +28,6 @@ from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
 
 
-BOOLEANS = ('true', 'false', 'yes', 'no')
-
-
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
