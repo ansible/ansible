@@ -47,4 +47,7 @@ def sysv_exists(name):
 
 def fail_if_missing(module, found, service, msg=''):
     if not found:
-        module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
+        if module.check_mode:
+            module.exit_json(msg="Service %s not found on %s, assuming it will exist on full run" % (service, msg), changed=True)
+        else:
+            module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
