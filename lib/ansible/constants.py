@@ -32,15 +32,13 @@ from ansible.utils.path import makedirs_safe
 
 BOOL_TRUE = frozenset([ "true", "t", "y", "1", "yes", "on" ])
 
-# copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
-    if value is None:
-        return False
-    val = str(value)
-    if val.lower() in BOOL_TRUE:
-        return True
-    else:
-        return False
+    ret = value
+    if not isinstance(value, bool):
+        if value is None:
+            ret = False
+        ret = (str(value).lower() in BOOL_TRUE)
+    return ret
 
 def shell_expand(path, expand_relative_paths=False):
     '''

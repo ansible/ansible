@@ -125,7 +125,7 @@ from jinja2.exceptions import UndefinedError
 from ansible.compat.six import string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 class LookupModule(LookupBase):
 

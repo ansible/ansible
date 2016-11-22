@@ -20,8 +20,8 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems, string_types
 
+from ansible.constants import mk_boolean as boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.vars import isidentifier
 
 class ActionModule(ActionBase):

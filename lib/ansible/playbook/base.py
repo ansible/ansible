@@ -33,7 +33,7 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 from ansible.utils.vars import combine_vars, isidentifier
 
 try:
