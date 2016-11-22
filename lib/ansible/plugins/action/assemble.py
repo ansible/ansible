@@ -25,10 +25,10 @@ import os.path
 import re
 import tempfile
 
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
 
 
