@@ -44,12 +44,12 @@ options:
       - The C(config_format) argument is used to specify the desired
         format of the configuration file.  Devices support three
         configuration file formats.  By default, the configuration
-        from the device is returned as text.  The other options include
-        set and xml.  If the xml option is chosen, the configuration file
-        is returned as both xml and json.
+        from the device is returned as text.  The other option xml.
+        If the xml option is chosen, the configuration file is 
+        returned as both xml and json.
     required: false
     default: text
-    choices: ['xml', 'text', 'set']
+    choices: ['xml', 'text']
 requirements:
   - junos-eznc
 notes:
@@ -68,10 +68,10 @@ EXAMPLES = """
   junos_facts:
     config: yes
 
-- name: collect default set of facts and configuration in set format
+- name: collect default set of facts and configuration in text format
   junos_facts:
     config: yes
-    config_format: set
+    config_format: text
 
 - name: collect default set of facts and configuration in XML and JSON format
   junos_facts:
@@ -95,7 +95,7 @@ def main():
     """
     spec = dict(
         config=dict(type='bool'),
-        config_format=dict(default='text', choices=['xml', 'set', 'text']),
+        config_format=dict(default='text', choices=['xml', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
@@ -116,7 +116,7 @@ def main():
         config_format = module.params['config_format']
         resp_config = module.config.get_config(config_format=config_format)
 
-        if config_format in ['text', 'set']:
+        if config_format in ['text']:
             facts['config'] = resp_config
         elif config_format == "xml":
             facts['config'] = xml_to_string(resp_config)
