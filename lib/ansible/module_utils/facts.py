@@ -34,8 +34,8 @@ import pwd
 
 from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.six import PY3, iteritems
-from ansible.module_utils.six.moves import configparser, StringIO
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six.moves import configparser, StringIO, reduce
+from ansible.module_utils._text import to_native, to_text
 
 try:
     import selinux
