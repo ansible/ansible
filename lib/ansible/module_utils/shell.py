@@ -176,7 +176,7 @@ class Shell(object):
     def sanitize(self, cmd, resp):
         cleaned = []
         for line in resp.splitlines():
-            if line.startswith(str(cmd)) or self.find_prompt(line):
+            if line.lstrip().startswith(str(cmd)) or self.find_prompt(line):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned)
