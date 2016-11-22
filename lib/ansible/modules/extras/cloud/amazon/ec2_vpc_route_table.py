@@ -298,7 +298,7 @@ def route_spec_matches_route(route_spec, route):
             if all((not route.gateway_id, not route.instance_id, not route.interface_id, not route.vpc_peering_connection_id)):
                 return True
 
-    for k in key_attr_map.iterkeys():
+    for k in key_attr_map:
         if k in route_spec:
             if route_spec[k] != getattr(route, k):
                 return False
