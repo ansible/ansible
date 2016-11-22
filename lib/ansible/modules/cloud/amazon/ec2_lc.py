@@ -130,6 +130,7 @@ EXAMPLES = '''
       device_type: io1
       iops: 3000
       delete_on_termination: true
+      encrypted: true
     - device_name: /dev/sdb
       ephemeral: ephemeral0
 
@@ -166,7 +167,8 @@ def create_block_device(module, volume):
                            size=volume.get('volume_size'),
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'))
+                           iops=volume.get('iops'),
+                           encrypted=volume.get('encrypted',None))
 
 
 def create_launch_config(connection, module):
