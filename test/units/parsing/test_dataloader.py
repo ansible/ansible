@@ -35,6 +35,8 @@ class TestDataLoader(unittest.TestCase):
 
     def setUp(self):
         self._loader = DataLoader()
+        #self.test_path = os.path.join(os.path.dirname(__file__), 'data.yml')
+        self.test_data_path = os.path.join(os.path.dirname(__file__), 'data.yml')
 
     def tearDown(self):
         pass
@@ -80,6 +82,32 @@ class TestDataLoader(unittest.TestCase):
     def test_get_real_file_load_test_module(self):
         ret = self._loader.get_real_file(__file__)
         self.assertEquals(ret, __file__)
+
+    def test_is_directory(self):
+        ret = self._loader.is_directory('parsing/test_data')
+        self.assertTrue(ret)
+
+    def test_is_directory_full_path(self):
+        ret = self._loader.is_directory(os.path.join(os.path.dirname(__file__), 'test_data'))
+        self.assertTrue(ret)
+
+    def test_list_directory_full_path(self):
+        ret = self._loader.list_directory(os.path.join(os.path.dirname(__file__), 'test_data'))
+        self.assertIn('roles', ret)
+        self.assertIn('tasks', ret)
+
+    def test_get_file_contents(self):
+        ret = self._loader._get_file_contents(self.test_data_path)
+        print(ret)
+
+    def test_get_file_contents_none_path(self):
+        self.assertRaisesRegexp(AnsibleParserError, 'Invalid filename',
+                                self._loader._get_file_contents, None)
+
+    def test_get_file_contents_bogus_path(self):
+        bogus_path = os.path.join(os.path.dirname(__file__),
+                                  'this/path/shouldnt/exist/foo.yml')
+        self.assertRaises(AnsibleFileNotFound, self._loader._get_file_contents, bogus_path)
 
 
 class TestPathDwimDataLoader(unittest.TestCase):
@@ -176,8 +204,10 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def setUp(self):
         self._loader = DataLoader()
         self._loader.set_vault_password('ansible')
-        self.test_data_path = os.path.join(os.path.dirname(__file__), 'vault.yml')
+        self.test_vault_data_path = os.path.join(os.path.dirname(__file__), 'vault.yml')
+        self.test_data_path = os.path.join(os.path.dirname(__file__), 'data.yml')
         self.vault_password_path = os.path.join(os.path.dirname(__file__), 'vault_password.txt')
+        self.vault_password_bogus_path = os.path.join(os.path.dirname(__file__), '_this_path_shouldnt_exit_vault_password.txt')
         self.vault_password_script_path = os.path.join(os.path.dirname(__file__), 'vault_password.py')
         self.vaulted_data = """$ANSIBLE_VAULT;1.1;AES256
 33343734386261666161626433386662623039356366656637303939306563376130623138626165
@@ -201,15 +231,33 @@ class TestDataLoaderWithVault(unittest.TestCase):
             output = self._loader.load_from_file('dummy_vault.txt')
             self.assertEqual(output, dict(foo='bar'))
 
-    def test_get_file_file(self):
-        print(self.test_data_path)
-        real_file = self._loader.get_real_file(self.test_data_path)
-        print(real_file)
+    def test_get_real_file_vault(self):
+        self._loader.set_vault_password('ansible')
+        real_file_path = self._loader.get_real_file(self.test_vault_data_path)
+        self.assertTrue(os.path.exists(real_file_path))
+
+    def test_get_real_file_vault_no_vault(self):
+        self._loader._vault_password = None
+        self._loader._vault = None
+        self.assertRaisesRegexp(AnsibleParserError, 'password', self._loader.get_real_file, self.test_vault_data_path)
+
+    def test_get_real_file(self):
+        real_file_path = self._loader.get_real_file(self.test_data_path)
+        self.assertTrue(os.path.exists(real_file_path))
+        self.assertEquals(real_file_path, self.test_data_path)
+
+    def test_get_real_file_not_a_path(self):
+        self.assertRaisesRegexp(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
     def test_read_vault_password_file(self):
-        ret = self._loader.read_vault_password_file(self.vault_password_path)
-        print(ret)
+        self._loader.set_vault_password('wrong password')
+        self._loader.read_vault_password_file(self.vault_password_path)
+        self.assertEquals(self._loader._vault_password, 'ansible')
+
+    def test_read_vault_password_file_doesnt_exist(self):
+        self.assertRaises(AnsibleFileNotFound, self._loader.read_vault_password_file, self.vault_password_bogus_path)
 
     def test_read_vault_password_script(self):
         ret = self._loader.read_vault_password_file(self.vault_password_script_path)
+        self.assertEquals(self._loader._vault_password, 'ansible')
         print(ret)
