@@ -176,6 +176,9 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def setUp(self):
         self._loader = DataLoader()
         self._loader.set_vault_password('ansible')
+        self.test_data_path = os.path.join(os.path.dirname(__file__), 'vault.yml')
+        self.vault_password_path = os.path.join(os.path.dirname(__file__), 'vault_password.txt')
+        self.vault_password_script_path = os.path.join(os.path.dirname(__file__), 'vault_password.py')
         self.vaulted_data = """$ANSIBLE_VAULT;1.1;AES256
 33343734386261666161626433386662623039356366656637303939306563376130623138626165
 6436333766346533353463636566313332623130383662340a393835656134633665333861393331
@@ -199,7 +202,14 @@ class TestDataLoaderWithVault(unittest.TestCase):
             self.assertEqual(output, dict(foo='bar'))
 
     def test_get_file_file(self):
-        test_data_path = os.path.join(os.path.dirname(__file__), 'vault.yml')
-        print(test_data_path)
-        real_file = self._loader.get_real_file(test_data_path)
+        print(self.test_data_path)
+        real_file = self._loader.get_real_file(self.test_data_path)
         print(real_file)
+
+    def test_read_vault_password_file(self):
+        ret = self._loader.read_vault_password_file(self.vault_password_path)
+        print(ret)
+
+    def test_read_vault_password_script(self):
+        ret = self._loader.read_vault_password_file(self.vault_password_script_path)
+        print(ret)
