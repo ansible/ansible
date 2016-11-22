@@ -124,6 +124,20 @@ options:
     default: 'no'
     choices: [ "yes", "no" ]
     version_added: '2.0'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+    required: false
+    default: disable
+    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    required: false
+    default: null
+    version_added: '2.3'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -140,6 +154,7 @@ notes:
    - If you specify PUBLIC as the user, then the privilege changes will apply
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
+   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
 author: "Ansible Core Team"
 '''
@@ -580,7 +595,9 @@ def main():
             role_attr_flags=dict(default=''),
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
-            expires=dict(default=None)
+            expires=dict(default=None),
+            ssl_mode=dict(default='disable', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -605,6 +622,7 @@ def main():
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
+    sslrootcert = module.params["ssl_rootcert"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -617,19 +635,31 @@ def main():
         "login_user":"user",
         "login_password":"password",
         "port":"port",
-        "db":"database"
+        "db":"database",
+        "ssl_mode":"sslmode",
+        "ssl_rootcert":"sslrootcert"
     }
     kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" )
+              if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
+    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    except TypeError:
+        e = get_exception()
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
