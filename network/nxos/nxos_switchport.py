@@ -79,16 +79,42 @@ options:
         default: null
 '''
 EXAMPLES = '''
-# ENSURE Eth1/5 is in its default switchport state
-- nxos_switchport: interface=eth1/5 state=unconfigured host={{ inventory_hostname }}
-# ENSURE Eth1/5 is configured for access vlan 20
-- nxos_switchport: interface=eth1/5 mode=access access_vlan=20 host={{ inventory_hostname }}
-# ENSURE Eth1/5 only has vlans 5-10 as trunk vlans
-- nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=5-10 host={{ inventory_hostname }}
-# Ensure eth1/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
-- nxos_switchport: interface=eth1/5 mode=trunk native_vlan=10 trunk_vlans=2-50 host={{ inventory_hostname }}
-# Ensure these VLANs are not being tagged on the trunk
-- nxos_switchport: interface=eth1/5 mode=trunk trunk_vlans=51-4094 host={{ inventory_hostname }} state=absent
+- name: Ensure Eth1/5 is in its default switchport state
+  nxos_switchport:
+    interface: eth1/5
+    state: unconfigured
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure Eth1/5 is configured for access vlan 20
+  nxos_switchport:
+    interface: eth1/5
+    mode: access
+    access_vlan: 20
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure Eth1/5 only has vlans 5-10 as trunk vlans
+  nxos_switchport:
+    interface: eth1/5
+    mode: trunk
+    native_vlan: 10
+    trunk_vlans: 5-10
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure eth1/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
+  nxos_switchport:
+    interface: eth1/5
+    mode: trunk
+    native_vlan: 10
+    trunk_vlans: 2-50
+    host: "{{ inventory_hostname }}"
+
+- name: Ensure these VLANs are not being tagged on the trunk
+  nxos_switchport:
+    interface: eth1/5
+    mode: trunk
+    trunk_vlans: 51-4094
+    host: "{{ inventory_hostname }} "
+    state: absent
 '''
 
 RETURN = '''

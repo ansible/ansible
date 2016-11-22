@@ -286,8 +286,8 @@ options:
 
 
 EXAMPLES = '''
-# configure a simple asn
-- nxos_bgp:
+- name: Configure a simple ASN
+  nxos_bgp:
       asn: 65535
       vrf: test
       router_id: 1.1.1.1

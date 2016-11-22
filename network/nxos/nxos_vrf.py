@@ -76,8 +76,12 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure ntc VRF exists on switch
-- nxos_vrf: vrf=ntc username="{{ un }}" password="{{ pwd }}" host="{{ inventory_hostname }}"
+- name: Ensure ntc VRF exists on switch
+  nxos_vrf:
+    vrf: ntc
+    username: "{{ un }}"
+    password: "{{ pwd }}"
+    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''

@@ -71,16 +71,33 @@ options:
 
 '''
 EXAMPLES = '''
-# Ensure a range of VLANs are not present on the switch
-- nxos_vlan: vlan_range="2-10,20,50,55-60,100-150" host=68.170.147.165 username=cisco password=cisco state=absent transport=nxapi
+- name: Ensure a range of VLANs are not present on the switch
+  nxos_vlan:
+    vlan_range: "2-10,20,50,55-60,100-150"
+    host: 68.170.147.165
+    username: cisco
+    password: cisco
+    state: absent
+    transport: nxapi
 
-# Ensure VLAN 50 exists with the name WEB and is in the shutdown state
-- nxos_vlan: vlan_id=50 host=68.170.147.165 admin_state=down name=WEB transport=nxapi username=cisco password=cisco
+- name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
+  nxos_vlan:
+    vlan_id: 50
+    host: 68.170.147.165
+    admin_state: down
+    name: WEB
+    transport: nxapi
+    username: cisco
+    password: cisco
 
-# Ensure VLAN is NOT on the device
-- nxos_vlan: vlan_id=50 host=68.170.147.165 state=absent transport=nxapi username=cisco password=cisco
-
-
+- name: Ensure VLAN is NOT on the device
+  nxos_vlan:
+    vlan_id: 50
+    host: 68.170.147.165
+    state: absent
+    transport: nxapi
+    username: cisco
+    password: cisco
 '''
 
 RETURN = '''

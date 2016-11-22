@@ -46,27 +46,37 @@ options:
         If C(file), the file will NOT be created if it does not exist, see the M(copy)
         or M(template) module if you want that behavior.  If C(absent),
         directories will be recursively deleted, and files will be removed.
-        If C(touch), an empty file will be created if the c(path) does not
+        If C(touch), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
-        modification times (similar to the way `touch` works from the command line).
+        modification times (similar to the way C(touch) works from the command line).
     required: false
     default: file
     choices: [ file, directory, touch, absent ]
 '''
 
 EXAMPLES = '''
-# create a file
-- win_file: path=C:\\temp\\foo.conf 
+- name: Create a file
+  win_file:
+    path: C:\temp\foo.conf
+    state: file
 
-# touch a file (creates if not present, updates modification time if present)
-- win_file: path=C:\\temp\\foo.conf state=touch 
+- name: Touch a file (creates if not present, updates modification time if present)
+  win_file:
+    path: C:\temp\foo.conf
+    state: touch
 
-# remove a file, if present
-- win_file: path=C:\\temp\\foo.conf state=absent
+- name: Remove a file, if present
+  win_file:
+    path: C:\temp\foo.conf
+    state: absent
 
-# create directory structure
-- win_file: path=C:\\temp\\folder\\subfolder state=directory
+- name: Create directory structure
+  win_file:
+    path: C:\temp\folder\subfolder
+    state: directory
 
-# remove directory structure
-- win_file: path=C:\\temp state=absent
+- name: Remove directory structure
+  win_file:
+    path: C:\temp
+    state: absent
 '''
