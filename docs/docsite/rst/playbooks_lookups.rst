@@ -514,7 +514,20 @@ The etcd Lookup
 ````````````````````
 .. versionadded:: 2.3
 
-When you need to query a value from an etcd server you can use etcd lookup. Until version 2.3 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server. Since 2.3 this functionality has been improved by allowing to set the etcd host and version directly from you playbook:
+When you need to query a value from an etcd server you can use etcd lookup. 
+Before version 2.3 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server.
+
+Since 2.3 this functionality has been improved by allowing to set the etcd host and version directly from you playbook
+
+==============   =============================================================================
+Parameters       Values
+--------------   -----------------------------------------------------------------------------
+url              Default 'http://127.0.0.1:4001'. If ANSIBLE_ETCD_URL is set will override
+version          Default 'v1'. If ANSIBLE_ETCD_VERSION is set will override default
+validate_certs   Default true
+==============   =============================================================================
+
+Variables set in playbook will override defaults.
 
 Example usage::
 
@@ -525,6 +538,7 @@ Example usage::
        - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
     # query a remote v2 etcd server
+    # Note "url" option is new in Ansible 2.3
     - hosts: localhost
       connection: local
        - debug: msg={{lookup('etcd','/tfm/network/config', url='http://192.168.1.21:2379' , version='v2')}}
