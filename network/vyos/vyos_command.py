@@ -28,6 +28,10 @@ description:
     to validate key parameters before returning successfully.  If the
     conditional statements are not met in the wait period, the task
     fails.
+  - Certain C(show) commands in VyOS produce many lines of output and
+    use a custom pager that can cause this module to hang.  If the
+    value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
+    is not set, the default number of 10000 is used.
 extends_documentation_fragment: vyos
 options:
   commands:
@@ -43,15 +47,15 @@ options:
       - Specifies what to evaluate from the output of the command
         and what conditionals to apply.  This argument will cause
         the task to wait for a particular conditional to be true
-        before moving forward.   If the conditional is not true
-        by the configured I(retries), the task fails.  See examples.
+        before moving forward.  If the conditional is not true
+        by the configured I(retries), the task fails. See examples.
     required: false
     default: null
     aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
-        I(wait_for) argument to specify the match policy.  Valid
+        I(wait_for) argument to specify the match policy. Valid
         values are C(all) or C(any).  If the value is set to C(all)
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
@@ -75,6 +79,10 @@ options:
         trying the command again.
     required: false
     default: 1
+
+notes:
+  - Running C(show system boot-messages all) will cause the module to hang since
+    VyOS is using a custom pager setting to display the output of that command.
 """
 
 EXAMPLES = """
