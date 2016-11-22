@@ -10,11 +10,11 @@
 #
 # Ansible is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = """
 ---
@@ -33,15 +33,11 @@ options:
     aliases: [ name, destfile ]
     description:
       - The path of the file to modify.
-      - Note that the Windows path delimiter '\' must be escaped as '\\' (see examples below)
+      - Note that the Windows path delimiter C(\) must be escaped as C(\\) when the line is double quoted.
   regexp:
     required: false
     description:
-      - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found; only the last line
-        found will be replaced. For C(state=absent), the pattern of the line
-        to remove.  Uses .NET compatible regular expressions; see
-        U(https://msdn.microsoft.com/en-us/library/hs600312%28v=vs.110%29.aspx).
+      - "The regular expression to look for in every line of the file. For C(state=present), the pattern to replace if found; only the last line found will be replaced. For C(state=absent), the pattern of the line to remove. Uses .NET compatible regular expressions; see U(https://msdn.microsoft.com/en-us/library/hs600312%28v=vs.110%29.aspx)."
   state:
     required: false
     choices: [ present, absent ]
@@ -71,14 +67,14 @@ options:
     default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted after the last match of specified regular expression. A special value is available; C(EOF) for inserting the line at the end of the file.
-      - If specified regular expression has no matches, EOF will be used instead.  May not be used with C(backrefs).
+      - If specified regular expression has no matches, EOF will be used instead. May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
     version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted before the last match of specified regular expression. A value is available; C(BOF) for inserting the line at the beginning of the file.
-      - If specified regular expression has no matches, the line will be inserted at the end of the file.  May not be used with C(backrefs).
+      - If specified regular expression has no matches, the line will be inserted at the end of the file. May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -98,7 +94,7 @@ options:
   validate:
     required: false
     description:
-      - Validation to run before copying into place.  Use %s in the command to indicate the current file to validate.
+      - Validation to run before copying into place. Use %s in the command to indicate the current file to validate.
       - The command is passed securely so shell features like expansion and pipes won't work.
     default: None
   encoding:
@@ -118,27 +114,50 @@ options:
   newline:
     required: false
     description:
-      - "Specifies the line separator style to use for the modified file. This defaults to the windows line separator (\r\n). Note that the indicated line separator will be used for file output regardless of the original line separator that appears in the input file."
+      - "Specifies the line separator style to use for the modified file. This defaults to the windows line separator (C(\r\n)). Note that the indicated line separator will be used for file output regardless of the original line separator that appears in the input file."
     choices: [ "windows", "unix" ]
     default: "windows"
 
 """
 
 EXAMPLES = r"""
-- win_lineinfile: dest=C:\\temp\\example.conf regexp=^name= line="name=JohnDoe"
+- win_lineinfile:
+    dest: C:\temp\example.conf
+    regexp: '^name='
+    line: 'name=JohnDoe'
 
-- win_lineinfile: dest=C:\\temp\\example.conf state=absent regexp="^name="
+- win_lineinfile:
+    dest: C:\temp\example.conf
+    regexp: '^name='
+    state: absent
 
-- win_lineinfile: dest=C:\\temp\\example.conf regexp='^127\.0\.0\.1' line='127.0.0.1 localhost'
+- win_lineinfile:
+    dest: C:\temp\example.conf
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1 localhost'
 
-- win_lineinfile: dest=C:\\temp\\httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"
+- win_lineinfile:
+    dest: C:\temp\httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: Listen 8080
 
-- win_lineinfile: dest=C:\\temp\\services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
+- win_lineinfile:
+    dest: C:\temp\services
+    regexp: '^# port for http'
+    insertbefore: '^www.*80/tcp'
+    line: '# port for http by default'
 
 # Create file if it doesn't exist with a specific encoding
-- win_lineinfile: dest=C:\\temp\\utf16.txt create="yes" encoding="utf-16" line="This is a utf-16 encoded file"
+- win_lineinfile:
+    dest: C:\temp\utf16.txt
+    create: yes
+    encoding: utf-16
+    line: This is a utf-16 encoded file
 
 # Add a line to a file and ensure the resulting file uses unix line separators
-- win_lineinfile: dest=C:\\temp\\testfile.txt line="Line added to file" newline="unix"
-
+- win_lineinfile:
+    dest: C:\temp\testfile.txt
+    line: Line added to file
+    newline: unix
 """

@@ -50,11 +50,12 @@ author: "Chris Church (@cchurch)"
 '''
 
 EXAMPLES = '''
-# Obtain information about a file
-
-- win_stat: path=C:\\foo.ini
+- name: Obtain information about a file
+  win_stat:
+    path: C:\foo.ini
   register: file_info
 
-- debug: var=file_info
+- debug:
+    var: file_info
 '''
 

@@ -123,7 +123,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     ospf: 1
     area: 1
-    cost=default
+    cost: default
     username: "{{ un }}"
     password: "{{ pwd }}"
     host: "{{ inventory_hostname }}"
