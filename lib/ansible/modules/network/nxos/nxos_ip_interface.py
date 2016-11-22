@@ -57,10 +57,23 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure ipv4 address is configured on Ethernet1/32
-- nxos_ip_interface: interface=Ethernet1/32 transport=nxapi version=v4 state=present addr=20.20.20.20 mask=24
-# ensure ipv6 address is configured on Ethernet1/31
-- nxos_ip_interface: interface=Ethernet1/31 transport=cli version=v6 state=present addr=2001::db8:800:200c:cccb mask=64
+- name: Ensure ipv4 address is configured on Ethernet1/32
+  nxos_ip_interface:
+    interface: Ethernet1/32
+    transport: nxapi
+    version: v4
+    state: present
+    addr: 20.20.20.20
+    mask: 24
+
+- name: Ensure ipv6 address is configured on Ethernet1/31
+  nxos_ip_interface:
+    interface: Ethernet1/31
+    transport: cli
+    version: v6
+    state: present
+    addr: '2001::db8:800:200c:cccb'
+    mask: 64
 '''
 
 RETURN = '''

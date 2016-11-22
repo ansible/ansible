@@ -61,13 +61,18 @@ author: Matt Martz
 '''
 
 EXAMPLES = '''
-# Install an MSI file
-- win_msi: path=C:\\\\7z920-x64.msi
+- name: Install an MSI file
+  win_msi:
+    path: C:\7z920-x64.msi
 
-# Install an MSI, and wait for it to complete before continuing
-- win_msi: path=C:\\\\7z920-x64.msi wait=true
+- name: Install an MSI, and wait for it to complete before continuing
+  win_msi:
+    path: C:\7z920-x64.msi
+    wait: true
 
-# Uninstall an MSI file
-- win_msi: path=C:\\\\7z920-x64.msi state=absent
+- name: Uninstall an MSI file
+  win_msi:
+    path: C:\7z920-x64.msi
+    state: absent
 '''
 

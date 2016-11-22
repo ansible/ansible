@@ -54,13 +54,13 @@ author: "Chris Hoffman (@chrishoffman)"
 '''
 
 EXAMPLES = '''
-  # Create a new group
+- name: Create a new group
   win_group:
     name: deploy
     description: Deploy Group
     state: present
 
-  # Remove a group
+- name: Remove a group
   win_group:
     name: deploy
     state: absent

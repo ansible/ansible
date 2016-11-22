@@ -60,24 +60,21 @@ options:
         choices: ['present', 'default']
 '''
 EXAMPLES = '''
-# default igmp global params (all params except restart)
-- nxos_igmp: state=default host={{ inventory_hostname }}
-# ensure the following igmp global config exists on the device
-- nxos_igmp: flush_routes=true enforce_rtr_alert=true host={{ inventory_hostname }}
-# restart the igmp process
-- nxos_igmp: restart=true host={{ inventory_hostname }}
-'''
+- name: Default igmp global params (all params except restart)
+  nxos_igmp:
+    state: default
+    host: "{{ inventory_hostname }}"
 
-EXAMPLES = '''
-# configure a simple asn
-- nxos_bgp:
-      asn=65535
-      vrf=test
-      router_id=1.1.1.1
-      state=present
-      username: "{{ un }}"
-      password: "{{ pwd }}"
-      host: "{{ inventory_hostname }}"
+- name: Ensure the following igmp global config exists on the device
+  nxos_igmp:
+    flush_routes: true
+    enforce_rtr_alert: true
+    host: "{{ inventory_hostname }}"
+
+- name: Restart the igmp process
+  nxos_igmp:
+    restart: true
+    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
