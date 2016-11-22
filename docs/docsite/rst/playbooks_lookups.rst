@@ -522,8 +522,8 @@ Since 2.3 this functionality has been improved by allowing to set the etcd host 
 ==============   =============================================================================
 Parameters       Values
 --------------   -----------------------------------------------------------------------------
-url              Default 'http://127.0.0.1:4001'. If ANSIBLE_ETCD_URL is set will override
-version          Default 'v1'. If ANSIBLE_ETCD_VERSION is set will override default
+url              Default 'http://127.0.0.1:4001'. If ANSIBLE_ETCD_URL is set will override . Added in 2.3
+version          Default 'v1'. If ANSIBLE_ETCD_VERSION is set will override default . Added in 2.3
 validate_certs   Default true
 ==============   =============================================================================
 
