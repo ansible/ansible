@@ -374,7 +374,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if execute:
                     res = self._remote_chmod(remote_paths, 'u+x')
                     if res['rc'] != 0:
-                        raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+                        raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
                 res = self._remote_chown(remote_paths, self._play_context.become_user)
                 if res['rc'] != 0 and remote_user == 'root':
@@ -390,18 +390,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                 ' https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
                         res = self._remote_chmod(remote_paths, 'a+%s' % mode)
                         if res['rc'] != 0:
-                            raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+                            raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
                     else:
                         raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user'
                                 ' (rc: {0}, err: {1}). For information on working around this,'
-                                ' see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], res['stderr']))
+                                ' see https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'.format(res['rc'], to_native(res['stderr'])))
         elif execute:
             # Can't depend on the file being transferred with execute
             # permissions.  Only need user perms because no become was
             # used here
             res = self._remote_chmod(remote_paths, 'u+x')
             if res['rc'] != 0:
-                raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], res['stderr']))
+                raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
         return remote_paths
 
