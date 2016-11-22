@@ -35,9 +35,9 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
 
+boolean = C.mk_boolean
 
 try:
     from __main__ import display

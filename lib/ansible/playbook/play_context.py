@@ -34,7 +34,8 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.utils.boolean import boolean
+
+boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 

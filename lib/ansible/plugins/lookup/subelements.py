@@ -21,7 +21,7 @@ from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 FLAGS = ('skip_missing',)
 
