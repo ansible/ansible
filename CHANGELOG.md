@@ -13,8 +13,6 @@ Ansible Changes By Release
   any user can add back via config options if they don't use those package managers or othewise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
-* Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible
-  is not invoked via the standard CLI (sys.executable limitation).
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
 
 ###Deprecations:
