@@ -19,9 +19,9 @@ if [ -s /tmp/posix.txt ]; then
 else
     echo "Running Windows integration tests for multiple versions concurrently."
     ansible-test windows-integration --color -v "${target}" --requirements \
-        --windows 2012-R2_RTM \
-        --windows 2012-RTM \
-        --windows 2008-R2_SP1 \
         --windows 2008-SP2 \
+        --windows 2008-R2_SP1 \
+        --windows 2012-RTM \
+        --windows 2012-R2_RTM \
         --windows 2016-English-Full-Base
 fi
