@@ -115,6 +115,18 @@ def _filter_non_json_lines(data):
 
     return ('\n'.join(lines), warnings)
 
+
+def _get_interpreter(module_path):
+    module_fd = open(module_path, 'rb')
+    try:
+        head = module_fd.read(1024)
+        if head[0:2] != '#!':
+            return None
+        return head[2:head.index('\n')].strip().split(' ')
+    finally:
+        module_fd.close()
+
+
 def _run_module(wrapped_cmd, jid, job_path):
 
     tmp_job_path = job_path + ".tmp"
@@ -130,6 +142,11 @@ def _run_module(wrapped_cmd, jid, job_path):
     stderr = ''
     try:
         cmd = shlex.split(wrapped_cmd)
+        # call the module interpreter directly (for non-binary modules)
+        # this permits use of a script for an interpreter on non-Linux platforms
+        interpreter = _get_interpreter(cmd[0])
+        if interpreter:
+            cmd = interpreter + cmd
         script = subprocess.Popen(cmd, shell=False, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outdata, stderr) = script.communicate()
         if PY3:
