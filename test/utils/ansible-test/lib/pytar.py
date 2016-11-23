@@ -14,6 +14,7 @@ IGNORE_DIRS = (
     '.git',
     '.idea',
     '__pycache__',
+    'ansible.egg-info',
 )
 
 IGNORE_FILES = (

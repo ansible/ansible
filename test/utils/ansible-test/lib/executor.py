@@ -100,6 +100,8 @@ def install_command_requirements(args):
     """
     :type args: EnvironmentConfig
     """
+    generate_egg_info(args)
+
     if not args.requirements:
         return
 
@@ -126,6 +128,16 @@ def install_command_requirements(args):
         # Upgrading pip works around the issue.
         run_command(args, ['pip', 'install', '--upgrade', 'pip'])
         run_command(args, cmd)
+
+
+def generate_egg_info(args):
+    """
+    :type args: EnvironmentConfig
+    """
+    if os.path.isdir('lib/ansible.egg-info'):
+        return
+
+    run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
 def generate_pip_install(command):
