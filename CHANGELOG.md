@@ -20,6 +20,8 @@ Ansible Changes By Release
 * Improvements and fixes to OpenBSD fact gathering.
 * Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
 * Fixed Windows async to avoid blocking due to handle inheritance.
+* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Various minor fixes for Python 3
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
