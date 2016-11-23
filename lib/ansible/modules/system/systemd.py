@@ -272,44 +272,41 @@ def main():
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
-    # check service data
-    (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
-    if rc != 0:
-        module.fail_json(msg='failure %d running systemctl show for %r: %s' % (rc, unit, err))
-
     found = False
     is_initd = sysv_exists(unit)
     is_systemd = False
 
-    # load return of systemctl show into dictionary for easy access and return
-    multival = []
-    if out:
-        k = None
-        for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
-            if line.strip():
-                if k is None:
-                    if '=' in line:
-                        k,v = line.split('=', 1)
-                        if v.lstrip().startswith('{'):
-                            if not v.rstrip().endswith('}'):
-                                multival.append(line)
-                                continue
-                        result['status'][k] = v.strip()
-                        k = None
-                else:
-                    if line.rstrip().endswith('}'):
-                        result['status'][k] = '\n'.join(multival).strip()
-                        multival = []
-                        k = None
+    # check service data, cannot error out on rc as it changes across versions, assume not found
+    (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
+    if rc == 0:
+        # load return of systemctl show into dictionary for easy access and return
+        multival = []
+        if out:
+            k = None
+            for line in to_native(out).split('\n'): # systemd can have multiline values delimited with {}
+                if line.strip():
+                    if k is None:
+                        if '=' in line:
+                            k,v = line.split('=', 1)
+                            if v.lstrip().startswith('{'):
+                                if not v.rstrip().endswith('}'):
+                                    multival.append(line)
+                                    continue
+                            result['status'][k] = v.strip()
+                            k = None
                     else:
-                        multival.append(line)
+                        if line.rstrip().endswith('}'):
+                            result['status'][k] = '\n'.join(multival).strip()
+                            multival = []
+                            k = None
+                        else:
+                            multival.append(line)
 
-        is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
+            is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
 
-        # Check for loading error
-        if is_systemd and 'LoadError' in result['status']:
-            module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
-
+            # Check for loading error
+            if is_systemd and 'LoadError' in result['status']:
+                module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
 
     # Does service exist?
     found = is_systemd or is_initd
