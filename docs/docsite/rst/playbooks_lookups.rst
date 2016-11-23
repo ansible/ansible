@@ -512,7 +512,6 @@ Sample output:
 
 The etcd Lookup
 ````````````````````
-.. versionadded:: 2.3
 
 When you need to query a value from an etcd server you can use etcd lookup. 
 Before version 2.3 you could interrogate localmachine by default or using environment variable you could interrogate a remote v1 server.
