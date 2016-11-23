@@ -366,16 +366,26 @@ def remount(module, mount_bin, args):
 
     cmd += _set_fstab_args(args)
     cmd += [ args['name'], ]
+    out = err = ''
     try:
-        rc, out, err = module.run_command(cmd)
+        if get_platform().lower().endswith('bsd'):
+            # Note: Forcing BSDs to do umount/mount due to BSD remount not
+            # working as expected (suspect bug in the BSD mount command)
+            # Interested contributor could rework this to use mount options on
+            # the CLI instead of relying on fstab
+            # https://github.com/ansible/ansible-modules-core/issues/5591
+            rc = 1
+        else:
+            rc, out, err = module.run_command(cmd)
     except:
         rc = 1
+
     if rc != 0:
-        msg = out+err
+        msg = out + err
         if ismount(args['name']):
             rc, msg = umount(module, args['name'])
         if rc == 0:
-            rc,msg = mount(module, args)
+            rc, msg = mount(module, args)
     return rc, msg
 
 # Note if we wanted to put this into module_utils we'd have to get permission
