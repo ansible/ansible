@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, print_function
 
+import errno
 import os
 import sys
 import pipes
@@ -40,7 +41,15 @@ def main():
             args, env = injector()
 
         logger.debug('Run command: %s', ' '.join(pipes.quote(c) for c in args))
-        logger.debug('Working directory: %s', os.getcwd())
+
+        try:
+            cwd = os.getcwd()
+        except OSError as ex:
+            if ex.errno != errno.EACCES:
+                raise
+            cwd = None
+
+        logger.debug('Working directory: %s', cwd or '?')
 
         for key in sorted(env.keys()):
             logger.debug('%s=%s', key, env[key])
