@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import errno
 import os
 import pipes
+import shutil
 import subprocess
 import sys
 import time
@@ -235,6 +236,17 @@ def deepest_path(path_a, path_b):
         return path_b or '.'
 
     return None
+
+
+def remove_tree(path):
+    """
+    :type path: str
+    """
+    try:
+        shutil.rmtree(path)
+    except OSError as ex:
+        if ex.errno != errno.ENOENT:
+            raise
 
 
 def make_dirs(path):

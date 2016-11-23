@@ -36,6 +36,7 @@ from lib.util import (
     run_command,
     deepest_path,
     common_environment,
+    remove_tree,
     make_dirs,
     is_shippable,
 )
@@ -305,7 +306,11 @@ def command_integration_filtered(args, targets):
 
     targets_iter = iter(targets)
 
-    make_dirs(os.path.expanduser('~/ansible_testing'))
+    test_dir = os.path.expanduser('~/ansible_testing')
+
+    if not args.explain:
+        remove_tree(test_dir)
+        make_dirs(test_dir)
 
     for target in targets_iter:
         if args.start_at and not found:
