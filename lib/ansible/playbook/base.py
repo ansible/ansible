@@ -111,7 +111,7 @@ class BaseMeta(type):
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
                         getter = partial(_generic_g_method, attr_name)
-                    elif '_get_parent_attribute' in dst_dict and value.inherit:
+                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
                         getter = partial(_generic_g_parent, attr_name)
                     else:
                         getter = partial(_generic_g, attr_name)
