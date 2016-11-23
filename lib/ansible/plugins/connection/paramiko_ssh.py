@@ -418,8 +418,9 @@ class Connection(ConnectionBase):
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
 
-        if self.sftp is not None:
-            self.sftp.close()
+        if hasattr(self, 'sftp'):
+            if self.sftp is not None:
+                self.sftp.close()
 
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
