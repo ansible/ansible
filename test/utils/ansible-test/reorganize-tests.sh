@@ -215,6 +215,11 @@ for target in connection_chroot authorized_key copy template unarchive; do
     echo "needs/root" >> "test/integration/targets/${target}/aliases"
 done
 
+# Add needs/ssh entries as required.
+for target in async_extra_data connection_ssh connection_paramiko_ssh; do
+    echo "needs/ssh" >> "test/integration/targets/${target}/aliases"
+done
+
 # Add missing alias for windows async_status.
 echo "async_status" >> test/integration/targets/win_async_wrapper/aliases
 

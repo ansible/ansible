@@ -312,6 +312,21 @@ def command_integration_filtered(args, targets):
         remove_tree(test_dir)
         make_dirs(test_dir)
 
+    if any('needs/ssh/' in target.aliases for target in targets):
+        max_tries = 3
+        display.info('SSH service required for tests. Checking to make sure we can connect.')
+        for i in range(1, max_tries + 1):
+            try:
+                run_command(args, ['ssh', '-o', 'BatchMode=yes', 'localhost', 'id'], capture=True)
+                display.info('SSH service responded.')
+                break
+            except SubprocessError as ex:
+                if i == max_tries:
+                    raise ex
+                seconds = 3
+                display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
+                time.sleep(seconds)
+
     for target in targets_iter:
         if args.start_at and not found:
             found = target.name == args.start_at
