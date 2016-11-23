@@ -343,6 +343,10 @@ def command_integration_script(args, target):
     display.info('Running %s integration test script' % target.name)
 
     cmd = ['./%s' % os.path.basename(target.script_path)]
+
+    if args.verbosity:
+        cmd.append('-' + ('v' * args.verbosity))
+
     env = integration_environment(args)
     cwd = target.path
 
