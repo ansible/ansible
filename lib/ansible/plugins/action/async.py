@@ -92,7 +92,7 @@ class ActionModule(ActionBase):
         # call the interpreter for async_wrapper directly
         # this permits use of a script for an interpreter on non-Linux platforms
         # TODO: re-implement async_wrapper as a regular module to avoid this special case
-        interpreter = shebang.replace('#!', '')
+        interpreter = shebang.replace('#!', '').strip()
         async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
 
         if env_string:
