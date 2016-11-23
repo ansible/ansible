@@ -91,7 +91,15 @@ class ActionModule(ActionBase):
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))
 
-        async_cmd = [env_string, remote_async_module_path, async_jid, async_limit, remote_module_path]
+        # call the interpreter for async_wrapper directly
+        # this permits use of a script for an interpreter on non-Linux platforms
+        # TODO: re-implement async_wrapper as a regular module to avoid this special case
+        interpreter = shebang.replace('#!', '').strip()
+        async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
+
+        if env_string:
+            async_cmd.insert(0, env_string)
+
         if argsfile:
             async_cmd.append(argsfile)
         else:
