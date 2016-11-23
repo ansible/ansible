@@ -694,7 +694,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         pass
 
                 # remove some KNOWN keys
-                for hard in ['ansible_rsync_path']:
+                for hard in ['ansible_rsync_path', 'ansible_playbook_python']:
                     if hard in fact_keys:
                         remove_keys.add(hard)
 
