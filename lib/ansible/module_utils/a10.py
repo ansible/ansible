@@ -30,6 +30,7 @@ import json
 
 from ansible.module_utils.urls import fetch_url
 
+
 AXAPI_PORT_PROTOCOLS = {
     'tcp': 2,
     'udp': 3,
@@ -91,7 +92,7 @@ def axapi_authenticate(module, base_url, username, password):
 def axapi_authenticate_v3(module, base_url, username, password):
     url = base_url
     auth_payload = {"credentials": {"username": username, "password": password}}
-    result = axapi_call_v3(module, url, method='POST', body=auth_payload)
+    result = axapi_call_v3(module, url, method='POST', body=json.dumps(auth_payload))
     if axapi_failure(result):
         return module.fail_json(msg=result['response']['err']['msg'])
     signature = result['authresponse']['signature']
@@ -105,7 +106,7 @@ def axapi_call_v3(module, url, method=None, body=None, signature=None):
         headers = {'content-type': 'application/json', 'Authorization': 'A10 %s' % signature}
     else:
         headers = {'content-type': 'application/json'}
-    rsp, info = fetch_url(module, url, method=method, data=json.dumps(body), headers=headers)
+    rsp, info = fetch_url(module, url, method=method, data=body, headers=headers)
     if not rsp or info['status'] >= 400:
         module.fail_json(msg="failed to connect (status code %s), error was %s" % (info['status'], info.get('msg', 'no error given')))
     try:
