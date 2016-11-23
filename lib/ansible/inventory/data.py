@@ -238,7 +238,8 @@ class InventoryData(object):
 
         for group in self.groups:
             g = self.groups[group]
-            g.remove_host(host)
+            if host in g.hosts:
+                g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
         ''' sets a variable for an inventory object '''
