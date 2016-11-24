@@ -234,11 +234,6 @@ for target in pull_limit_inventory pull_no_127 pull_run; do
     sed -i '/^posix\/ci\/.*$/d' "test/integration/targets/${target}/aliases"
 done
 
-# FIXME: Skip tests on python 3 which are currently broken under ansible-test. Fix these before deploying ansible-test.
-for target in iterators lineinfile lookups mysql_user mysql_variables no_log pip; do
-    echo "skip/python3" >> "test/integration/targets/${target}/aliases"
-done
-
 # Sort aliases.
 for file in test/integration/targets/*/aliases; do
     sort -o "${file}" "${file}"
