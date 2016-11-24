@@ -667,7 +667,7 @@ def replace(connection, module):
     if lc_check:
         if num_new_inst_needed == 0 and old_instances:
             log.debug("No new instances needed, but old instances are present. Removing old instances")
-            terminate_batch(connection, module, old_instances, instances, True)
+            terminate_batch(connection, module, old_instances, instances, desired_capacity, True)
             as_group = connection.get_all_groups(names=[group_name])[0]
             props = get_properties(as_group)
             changed = True
@@ -697,7 +697,7 @@ def replace(connection, module):
     log.debug("beginning main loop")
     for i in get_chunks(instances, batch_size):
         # break out of this loop if we have enough new instances
-        break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, False)
+        break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, desired_capacity, False)
         wait_for_term_inst(connection, module, term_instances)
         wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size, 'viable_instances')
         wait_for_elb(connection, module, group_name)
@@ -753,10 +753,9 @@ def list_purgeable_instances(props, lc_check, replace_instances, initial_instanc
                 instances_to_terminate.append(i)
     return instances_to_terminate
 
-def terminate_batch(connection, module, replace_instances, initial_instances, leftovers=False):
+def terminate_batch(connection, module, replace_instances, initial_instances, desired_capacity, leftovers=False):
     batch_size = module.params.get('replace_batch_size')
     min_size =  module.params.get('min_size')
-    desired_capacity =  module.params.get('desired_capacity')
     group_name = module.params.get('name')
     wait_timeout = int(module.params.get('wait_timeout'))
     lc_check = module.params.get('lc_check')
