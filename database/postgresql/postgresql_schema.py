@@ -19,44 +19,44 @@
 DOCUMENTATION = '''
 ---
 module: postgresql_schema
-short_description: Add or remove PostgreSQL schema from a remote host.
+short_description: Add or remove PostgreSQL schema from a remote host
 description:
    - Add or remove PostgreSQL schema from a remote host.
-version_added: "2.2"
+version_added: "2.3"
 options:
   name:
     description:
-      - name of the schema to add or remove
+      - Name of the schema to add or remove.
     required: true
     default: null
   database:
     description:
-      - name of the database to connect to
+      - Name of the database to connect to.
     required: false
     default: postgres
   login_user:
     description:
-      - The username used to authenticate with
+      - The username used to authenticate with.
     required: false
     default: null
   login_password:
     description:
-      - The password used to authenticate with
+      - The password used to authenticate with.
     required: false
     default: null
   login_host:
     description:
-      - Host running the database
+      - Host running the database.
     required: false
     default: localhost
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections
+      - Path to a Unix domain socket for local connections.
     required: false
     default: null
   owner:
     description:
-      - Name of the role to set as owner of the schema
+      - Name of the role to set as owner of the schema.
     required: false
     default: null
   port:
@@ -66,7 +66,7 @@ options:
     default: 5432
   state:
     description:
-      - The schema state
+      - The schema state.
     required: false
     default: present
     choices: [ "present", "absent" ]
@@ -79,9 +79,13 @@ author: "Flavien Chantelot <contact@flavien.io>"
 
 EXAMPLES = '''
 # Create a new schema with name "acme"
-- postgresql_schema: name=acme
+- postgresql_schema:
+    name: acme
+
 # Create a new schema "acme" with a user "bob" who will own it
-- postgresql_schema: name=acme owner=bob
+- postgresql_schema: 
+    name: acme
+    owner: bob
 
 '''
 
@@ -261,6 +265,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.database import *
+
 if __name__ == '__main__':
     main()
-
