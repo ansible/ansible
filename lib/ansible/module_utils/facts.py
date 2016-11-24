@@ -1599,9 +1599,11 @@ class SunOSHardware(Hardware):
         rc returns 1
         """
         if out:
-           system_conf = out.split('\n')[0]
-           self.facts['product_name'] = re.search(r'(\w+\sEnterprise\s\w+)',system_conf).group(1)
-            
+            system_conf = out.split('\n')[0]
+            found = re.search(r'(\w+\sEnterprise\s\w+)',system_conf)
+            if found:
+                self.facts['product_name'] = found.group(1)
+
 class OpenBSDHardware(Hardware):
     """
     OpenBSD-specific subclass of Hardware. Defines memory, CPU and device facts:
