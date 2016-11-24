@@ -687,7 +687,7 @@ def replace(connection, module):
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     update_size(as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(module, connection, group_name, wait_timeout, as_group.min_size, 'viable_instances')
+    wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity + batch_size, 'viable_instances')
     wait_for_elb(connection, module, group_name)
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
