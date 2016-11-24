@@ -22,10 +22,8 @@
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
-    win_robocopy = New-Object psobject @{
-        recurse         = $false
-        purge           = $false
-    }
+    recurse = $false
+    purge = $false
     changed = $false
 }
 
@@ -70,10 +68,10 @@ if (-Not (Test-Path $src)) {
 }
 
 $robocopy_opts += $src
-Set-Attr $result.win_robocopy "src" $src
+Set-Attr $result "src" $src
 
 $robocopy_opts += $dest
-Set-Attr $result.win_robocopy "dest" $dest
+Set-Attr $result "dest" $dest
 
 if ($flags -eq $null) {
     if ($purge) {
@@ -88,9 +86,9 @@ Else {
     $robocopy_opts += $flags
 }
 
-Set-Attr $result.win_robocopy "purge" $purge
-Set-Attr $result.win_robocopy "recurse" $recurse
-Set-Attr $result.win_robocopy "flags" $flags
+Set-Attr $result "purge" $purge
+Set-Attr $result "recurse" $recurse
+Set-Attr $result "flags" $flags
 
 $robocopy_output = ""
 $rc = 0
@@ -109,8 +107,8 @@ Else {
     }
 }
 
-Set-Attr $result.win_robocopy "return_code" $rc
-Set-Attr $result.win_robocopy "output" $robocopy_output
+Set-Attr $result "return_code" $rc
+Set-Attr $result "output" $robocopy_output
 
 $cmd_msg = "Success"
 If ($rc -eq 0) {
@@ -141,7 +139,7 @@ ElseIf ($rc -eq 16) {
     Fail-Json $result $error_msg
 }
 
-Set-Attr $result.win_robocopy "msg" $cmd_msg
-Set-Attr $result.win_robocopy "changed" $changed
+Set-Attr $result "msg" $cmd_msg
+Set-Attr $result "changed" $changed
 
 Exit-Json $result
