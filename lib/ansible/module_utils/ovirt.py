@@ -327,6 +327,12 @@ class BaseModule(object):
         """
         pass
 
+    def param(self, name, default=None):
+        """
+        Return a module parameter specified by it's name.
+        """
+        return self._module.params.get(name, default)
+
     def update_check(self, entity):
         """
         This method handle checks whether the entity values are same as values
