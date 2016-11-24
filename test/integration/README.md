@@ -156,6 +156,10 @@ There are additional environment variables that can be used. A few of the more u
 
 Network Tests
 =============
+**Note:** From Ansible 2.3, for any new Network Module to be accepted it must be accompanied by a corresponding test.
+
+For further help with this please contact `gundalow` in `#ansible-devel` on FreeNode IRC.
+
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 ```
