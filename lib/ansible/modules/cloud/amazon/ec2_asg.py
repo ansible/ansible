@@ -654,7 +654,7 @@ def replace(connection, module):
 
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
-        min_size = as_group.min_size
+        min_size = as_group.min_size or 0
     if max_size is None:
         max_size = as_group.max_size
     if desired_capacity is None:
@@ -765,7 +765,10 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
-    desired_size = as_group.min_size
+    # as_group.min_size can return None rather than 0 :/
+    desired_size = as_group.min_size or 0
+    if min_size is None:
+        min_size = as_group.min_size or 0
 
     new_instances, old_instances = get_instances_by_lc(props, lc_check, initial_instances)
     num_new_inst_needed = desired_capacity - len(new_instances)
