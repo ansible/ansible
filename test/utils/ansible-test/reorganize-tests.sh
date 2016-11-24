@@ -238,6 +238,3 @@ done
 for file in test/integration/targets/*/aliases; do
     sort -o "${file}" "${file}"
 done
-
-# Remove unnecessary prefix file.
-rm -f test/integration/target-prefixes.win
