@@ -313,7 +313,7 @@ def command_integration_filtered(args, targets):
         make_dirs(test_dir)
 
     if any('needs/ssh/' in target.aliases for target in targets):
-        max_tries = 3
+        max_tries = 10
         display.info('SSH service required for tests. Checking to make sure we can connect.')
         for i in range(1, max_tries + 1):
             try:
