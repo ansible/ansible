@@ -27,7 +27,7 @@ module: bigip_irule_bigsuds
 short_description: Manage iRules on a BIG-IP
 description:
   - Manage iRules on a BIG-IP using the 'bigsuds' module from F5.
-version_added: ""
+version_added: "2.3"
 notes:
   - "Requires BIG-IP software version >= 9"
   - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
