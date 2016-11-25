@@ -698,6 +698,7 @@ def replace(connection, module):
     log.debug("beginning main loop")
     for i in get_chunks(old_instances, batch_size):
         # break out of this loop if we have enough new instances
+        log.debug("chunk: {0}".format(i))
         break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, desired_capacity, False)
         wait_for_term_inst(connection, module, term_instances)
         wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size, 'viable_instances')
@@ -765,8 +766,8 @@ def terminate_batch(connection, module, replace_instances, initial_instances, de
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
+    desired_size = as_group.desired_capacity
     # as_group.min_size can return None rather than 0 :/
-    desired_size = as_group.min_size or 0
     if min_size is None:
         min_size = as_group.min_size or 0
 
@@ -794,7 +795,6 @@ def terminate_batch(connection, module, replace_instances, initial_instances, de
             decrement_capacity = False
         break_loop = True
         instances_to_terminate = old_instances
-        desired_size = min_size
         log.debug("No new instances needed")
 
     if num_new_inst_needed < batch_size and num_new_inst_needed !=0 :
@@ -807,8 +807,10 @@ def terminate_batch(connection, module, replace_instances, initial_instances, de
 
     for instance_id in instances_to_terminate:
         elb_dreg(connection, module, group_name, instance_id)
-        log.debug("terminating instance: {0}".format(instance_id))
+        log.debug("terminating instance: {0}, {1}".format(instance_id,decrement_capacity))
         connection.terminate_instance(instance_id, decrement_capacity=decrement_capacity)
+        if decrement_capacity:
+            desired_size -= 1
 
     # we wait to make sure the machines we marked as Unhealthy are
     # no longer in the list
