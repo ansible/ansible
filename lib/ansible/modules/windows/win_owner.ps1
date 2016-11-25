@@ -48,7 +48,7 @@ Function UserSearch
 
     if ($searchDomain -eq $false)
     {
-        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
+        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
         if ($localaccount)
         {
@@ -58,29 +58,11 @@ Function UserSearch
     Else
     {
         #Search by samaccountname
-        $Searcher = [adsisearcher]""
-
-        If ($searchDomainUPN -eq $false) {
-            $Searcher.Filter = "sAMAccountName=$($accountName)"
-        }
-        Else {
-            $Searcher.Filter = "userPrincipalName=$($accountName)"
-        }
-
-        $result = $Searcher.FindOne() 
-        if ($result)
-        {
-            $user = $result.GetDirectoryEntry()
-
-            # get binary SID from AD account
-            $binarySID = $user.ObjectSid.Value
-
-            # convert to string SID
-            return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
-        }
+        $objUser = New-Object System.Security.Principal.NTAccount($accountName)
+        return $objUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
     }
 }
- 
+
 $params = Parse-Args $args;
 
 $result = New-Object PSObject;

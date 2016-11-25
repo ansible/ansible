@@ -17,13 +17,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
- 
+
 # WANT_JSON
 # POWERSHELL_COMMON
- 
+
 # win_acl module (File/Resources Permission Additions/Removal)
- 
- 
+
+
 #Functions
 Function UserSearch
 {
@@ -63,7 +63,7 @@ Function UserSearch
 
     if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
     {
-        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
+        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
         if ($localaccount)
         {
@@ -86,29 +86,11 @@ Function UserSearch
     }
     {
         #Search by samaccountname
-        $Searcher = [adsisearcher]""
-
-        If ($searchDomainUPN -eq $false) {
-            $Searcher.Filter = "sAMAccountName=$($accountName)"
-        }
-        Else {
-            $Searcher.Filter = "userPrincipalName=$($accountName)"
-        }
-
-        $result = $Searcher.FindOne() 
-        if ($result)
-        {
-            $user = $result.GetDirectoryEntry()
-
-            # get binary SID from AD account
-            $binarySID = $user.ObjectSid.Value
-
-            # convert to string SID
-            return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
-        }
+        $objUser = New-Object System.Security.Principal.NTAccount($accountName)
+        return $objUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
     }
 }
- 
+
 $params = Parse-Args $args;
 
 $result = New-Object PSObject;
@@ -141,31 +123,31 @@ If (Test-Path -Path $path -PathType Leaf) {
 ElseIf ($inherit -eq "") {
     $inherit = "ContainerInherit, ObjectInherit"
 }
- 
+
 Try {
     $colRights = [System.Security.AccessControl.FileSystemRights]$rights
     $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]$inherit
     $PropagationFlag = [System.Security.AccessControl.PropagationFlags]$propagation
- 
+
     If ($type -eq "allow") {
         $objType =[System.Security.AccessControl.AccessControlType]::Allow
     }
     Else {
         $objType =[System.Security.AccessControl.AccessControlType]::Deny
     }
- 
+
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     $objACL = Get-ACL $path
- 
+
     # Check if the ACE exists already in the objects ACL list
     $match = $false
     ForEach($rule in $objACL.Access){
         $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
-        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
+        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
             $match = $true
             Break
-        } 
+        }
     }
 
     If ($state -eq "present" -And $match -eq $false) {
@@ -196,11 +178,11 @@ Try {
         # A rule didn't exist that was trying to be removed
         Else {
             Exit-Json $result "the specified rule does not exist"
-        }       
+        }
     }
 }
 Catch {
     Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
 }
- 
+
 Exit-Json $result
