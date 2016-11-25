@@ -1,6 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2016, Ryan Conway <ryan@rjc.cc>
+#
+# Inspired by the `bigip_virtual_server` module by
+# Etienne Carriere (@Etienne-Carriere) and Tim Rupp (@caphrim007)
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
@@ -13,7 +32,6 @@ notes:
   - "Requires BIG-IP software version >= 9"
   - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
   - "Best run as a local_action in your playbook"
-  - "Inspired by the `bigip_virtual_server` module by Etienne Carriere (@Etienne-Carriere) and Tim Rupp (@caphrim007)"
 requirements:
   - bigsuds
 author:
