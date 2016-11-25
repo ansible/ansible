@@ -692,10 +692,11 @@ def replace(connection, module):
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
     instances = props['instances']
+    new_instances, old_instances = get_instances_by_lc(props, lc_check, instances)
     if replace_instances:
         instances = replace_instances
     log.debug("beginning main loop")
-    for i in get_chunks(instances, batch_size):
+    for i in get_chunks(old_instances, batch_size):
         # break out of this loop if we have enough new instances
         break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, desired_capacity, False)
         wait_for_term_inst(connection, module, term_instances)
