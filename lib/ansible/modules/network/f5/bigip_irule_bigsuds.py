@@ -39,7 +39,7 @@ author:
 options:
   content:
     description:
-      - When used instead of 'src', sets the contents of an iRule directly to
+      - When used instead of C(src), sets the contents of an iRule directly to
         the specified value. This is for simple values, but can be used with
         lookup plugins for anything complex or with formatting. Either one
         of C(src) or C(content) must be provided.
