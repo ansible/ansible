@@ -76,10 +76,10 @@ class IncludeRole(Task):
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        # compile role
-        blocks = actual_role.compile(play=myplay)
-
-        # set parent to ensure proper inheritance
+        # compile role with parent roles as dependencies to ensure they inherit
+        # variables
+        dep_chain = [] if not self._parent_role else [self._parent_role]
+        blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
         for b in blocks:
             b._parent = self
 
