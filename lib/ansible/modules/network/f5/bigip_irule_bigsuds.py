@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: bigip_irule_bigsuds
-short_description: Manage iRules on a BIG-IP.
+short_description: Manage iRules on a BIG-IP
 description:
   - Manage iRules on a BIG-IP using the 'bigsuds' module from F5.
 version_added: ""
