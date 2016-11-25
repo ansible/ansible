@@ -14,11 +14,11 @@ if [ -s /tmp/posix.txt ]; then
     cat /tmp/posix.txt
 
     echo "Running Windows integration tests for a single version only."
-    ansible-test windows-integration --color -v "${target}" --requirements \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements \
         --windows 2012-R2_RTM
 else
     echo "Running Windows integration tests for multiple versions concurrently."
-    ansible-test windows-integration --color -v "${target}" --requirements \
+    ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements \
         --windows 2008-SP2 \
         --windows 2008-R2_SP1 \
         --windows 2012-RTM \
