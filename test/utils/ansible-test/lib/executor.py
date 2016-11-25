@@ -1148,8 +1148,8 @@ class IntegrationConfig(TestConfig):
         """
         super(IntegrationConfig, self).__init__(args, command)
 
-        self.start_at = args.start_at  # str
-        self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # bool
+        self.start_at = args.start_at  # type: str
+        self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
 
 
