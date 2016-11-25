@@ -302,9 +302,9 @@ def get_properties(autoscaling_group):
                 properties['unhealthy_instances'] += 1
             if i.lifecycle_state == 'InService':
                 properties['in_service_instances'] += 1
-            if i.lifecycle_state == 'Terminating':
+            if i.lifecycle_state in ['Terminating','Terminating:Wait','Terminating:Proceed']:
                 properties['terminating_instances'] += 1
-            if i.lifecycle_state == 'Pending':
+            if i.lifecycle_state in ['Pending','Pending:Wait','Pending:Proceed']:
                 properties['pending_instances'] += 1
     properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
@@ -837,7 +837,7 @@ def wait_for_term_inst(connection, module, term_instances):
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
             log.debug("Instance {0} has state of {1},{2}".format(i,lifecycle,health ))
-            if  lifecycle == 'Terminating' or health == 'Unhealthy':
+            if  lifecycle in ['Terminating','Terminating:Wait','Terminating:Proceed'] or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 
