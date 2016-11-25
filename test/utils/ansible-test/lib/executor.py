@@ -334,11 +334,25 @@ def command_integration_filtered(args, targets):
             if not found:
                 continue
 
+        tries = 2 if args.retry_on_error else 1
+        verbosity = args.verbosity
+
         try:
-            if target.script_path:
-                command_integration_script(args, target)
-            else:
-                command_integration_role(args, target)
+            while tries:
+                tries -= 1
+
+                try:
+                    if target.script_path:
+                        command_integration_script(args, target)
+                    else:
+                        command_integration_role(args, target)
+                    break
+                except SubprocessError:
+                    if not tries:
+                        raise
+
+                    display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
+                    display.verbosity = args.verbosity = 6
         except:
             display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
@@ -348,6 +362,8 @@ def command_integration_filtered(args, targets):
                 display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
 
             raise
+        finally:
+            display.verbosity = args.verbosity = verbosity
 
 
 def integration_environment(args):
@@ -1134,6 +1150,7 @@ class IntegrationConfig(TestConfig):
 
         self.start_at = args.start_at  # str
         self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # bool
+        self.retry_on_error = args.retry_on_error  # type: bool
 
 
 class PosixIntegrationConfig(IntegrationConfig):

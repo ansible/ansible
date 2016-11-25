@@ -165,6 +165,10 @@ def parse_args():
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
 
+    integration.add_argument('--retry-on-error',
+                             action='store_true',
+                             help='retry failed test with increased verbosity')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
