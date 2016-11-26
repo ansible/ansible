@@ -628,7 +628,10 @@ class Connection(ConnectionBase):
                 cmd = self._build_command('sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
             elif method == 'scp':
-                cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
+                if sftp_action == 'get':
+                    cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(out_path)), in_path)
+                else:
+                    cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
 
             in_data = to_bytes(in_data, nonstring='passthru')
