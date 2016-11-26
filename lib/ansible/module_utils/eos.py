@@ -166,6 +166,7 @@ class Eapi(EosConfigMixin):
         self.url_args.params['url_username'] = params['username']
         self.url_args.params['url_password'] = params['password']
         self.url_args.params['validate_certs'] = params['validate_certs']
+        self.url_args.params['timeout'] = params['timeout']
 
         if params['use_ssl']:
             proto = 'https'
@@ -205,10 +206,11 @@ class Eapi(EosConfigMixin):
         data = json.dumps(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
+        timeout = self.url_args['timeout']
 
         response, headers = fetch_url(
             self.url_args, self.url, data=data, headers=headers,
-            method='POST'
+            method='POST', timeout=timeout
         )
 
         if headers['status'] != 200:
