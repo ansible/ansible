@@ -197,7 +197,9 @@ def main():
         unmute_monitor(module)
 
 def _fix_template_vars(message):
-    return message.replace('[[', '{{').replace(']]', '}}')
+    if message:
+        return message.replace('[[', '{{').replace(']]', '}}')
+    return message
 
 
 def _get_monitor(module):
