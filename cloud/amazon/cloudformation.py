@@ -261,11 +261,11 @@ def get_stack_events(cfn, stack_name):
         return ret
 
     for e in events.get('StackEvents', []):
-        eventline = 'StackEvent {} {} {}'.format(e['ResourceType'], e['LogicalResourceId'], e['ResourceStatus'])
+        eventline = 'StackEvent {ResourceType} {LogicalResourceId} {ResourceStatus}'.format(**e)
         ret['events'].append(eventline)
 
         if e['ResourceStatus'].endswith('FAILED'):
-            failline = '{} {} {}: {}'.format(e['ResourceType'], e['LogicalResourceId'], e['ResourceStatus'], e['ResourceStatusReason'])
+            failline = '{ResourceType} {LogicalResourceId} {ResourceStatus}: {ResourceStatusReason}'.format(**e)
             ret['log'].append(failline)
 
     return ret
