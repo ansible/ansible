@@ -1533,6 +1533,7 @@ class SunOSHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_device_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1620,6 +1621,49 @@ class SunOSHardware(Hardware):
             found = re.search(r'(\w+\sEnterprise\s\w+)',system_conf)
             if found:
                 self.facts['product_name'] = found.group(1)
+
+    def get_device_facts(self):
+        self.facts['devices'] = {}
+
+        disk_stats = {
+            'Product': 'product',
+            'Revision': 'revision',
+            'Serial No': 'serial',
+            'Size': 'size',
+            'Vendor': 'vendor',
+            'Hard Errors': 'hard_errors',
+            'Soft Errors': 'soft_errors',
+            'Transport Errors': 'transport_errors',
+            'Media Error': 'media_errors',
+            'Predictive Failure Analysis': 'predictive_failure_analysis',
+            'Illegal Request': 'illegal_request',
+        }
+
+        cmd = ['/usr/bin/kstat', '-p']
+
+        for ds in disk_stats:
+            cmd.append('sderr:::%s' % ds)
+
+        d = {}
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return dict()
+
+        sd_instances = set(sorted([line.split(':')[1] for line in out.split('\n') if line.startswith('sderr')]))
+        for instance in sd_instances:
+            lines = (line for line in out.split('\n') if len(line) > 0 and line.split(':')[1] == instance)
+            for line in lines:
+                text, value = line.split('\t')
+                stat = text.split(':')[3]
+
+                if stat == 'Size':
+                    d[disk_stats.get(stat)] = self.module.pretty_bytes(float(value))
+                else:
+                    d[disk_stats.get(stat)] = value.rstrip()
+
+            diskname = 'sd' + str(instance)
+            self.facts['devices'][diskname] = d
+            d = {}
 
 class OpenBSDHardware(Hardware):
     """
