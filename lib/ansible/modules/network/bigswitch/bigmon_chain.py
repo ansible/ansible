@@ -58,7 +58,7 @@ from ansible.module_utils.bigswitch_utils import Rest, Response
 def chain(module):
     try:
         access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     name = module.params['name']
@@ -114,7 +114,7 @@ def main():
 
     try:
         chain(module)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
 if __name__ == '__main__':
