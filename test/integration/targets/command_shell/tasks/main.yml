@@ -217,3 +217,21 @@
 
 - name: remove the previously created file
   file: path={{output_dir_test}}/afile.txt state=absent
+
+# Multiline indentation
+# See https://github.com/ansible/ansible-modules-core/issues/5607
+
+- name: execute multiline shell command using Python
+  shell: |
+    print('hello world')
+    print('goodbye world')
+  args:
+    executable: "{{ ansible_python.executable }}"
+  register: indentation_result
+
+- name: assert multiline Python command run without indentation issues
+  assert:
+    that:
+      - "indentation_result.rc == 0"
+      - "indentation_result.stderr == ''"
+      - "indentation_result.stdout == 'hello world\ngoodbye world'"
