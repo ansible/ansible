@@ -111,6 +111,7 @@ class Netconf(object):
         try:
             self.device = Device(host, **kwargs)
             self.device.open()
+            self.device.timeout = params['timeout']
         except ConnectError:
             exc = get_exception()
             self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
