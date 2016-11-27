@@ -1534,6 +1534,7 @@ class SunOSHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
+        self.get_uptime_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1664,6 +1665,15 @@ class SunOSHardware(Hardware):
             diskname = 'sd' + str(instance)
             self.facts['devices'][diskname] = d
             d = {}
+
+    def get_uptime_facts(self):
+        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:snaptime')
+
+        if rc != 0:
+            return
+
+        self.facts['uptime_secodns'] = int(float(out.split('\t')[1]))
+
 
 class OpenBSDHardware(Hardware):
     """
