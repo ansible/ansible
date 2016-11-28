@@ -53,7 +53,7 @@ options:
     description:
       - Specifies the timeout in seconds for communicating with the network device
         for either connecting or sending commands.  If the timeout is
-        exceeded before the operation is completed, the module will error
+        exceeded before the operation is completed, the module will error.
     require: false
     default: 10
   ssh_keyfile:
@@ -64,12 +64,6 @@ options:
         in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
         will be used instead.
     required: false
-  timeout:
-    description:
-      - Specifies idle timeout for the connection, in seconds. Useful if the console
-        freezes before continuing. For example when saving configurations.
-    required: false
-    default: 10
   provider:
     description:
       - Convenience method that allows all I(vyos) arguments to be passed as

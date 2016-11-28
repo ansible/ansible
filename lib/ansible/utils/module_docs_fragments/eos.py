@@ -56,7 +56,7 @@ options:
     description:
       - Specifies the timeout in seconds for communicating with the network device
         for either connecting or sending commands.  If the timeout is
-        exceeded before the operation is completed, the module will error
+        exceeded before the operation is completed, the module will error.
     require: false
     default: 10
   ssh_keyfile:
