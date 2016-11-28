@@ -2086,12 +2086,13 @@ class AnsibleModule(object):
                         try:
                             os.rename(b_tmp_dest_name, b_dest)
                         except (shutil.Error, OSError, IOError):
+                            exception = get_exception()
                             if unsafe_writes:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest, get_exception())
+                                self._unsafe_writes(b_tmp_dest_name, b_dest, exception)
                             else:
                                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
                     except (shutil.Error, OSError, IOError):
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, get_exception()))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
