@@ -80,7 +80,7 @@ def injector():
             args, env = [interpreter, executable], os.environ.copy()
             tool = 'runner'
 
-        if command in ('ansible', 'ansible-playbook'):
+        if command in ('ansible', 'ansible-playbook', 'ansible-pull'):
             interpreter = find_executable(tool + version)
             args += ['--extra-vars', 'ansible_python_interpreter=' + interpreter]
     else:
