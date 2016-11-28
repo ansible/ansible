@@ -33,7 +33,9 @@ options:
     name:
         description:
             - name of package to install/remove
-        required: true
+        required: false
+        default: null
+        aliases: [ 'pkg', 'package' ]
     state:
         description:
             - state of the package
@@ -53,6 +55,12 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    ipk:
+       description:
+         - Path to a .ipk package on the remote machine.
+         - If :// in the path, ansible will attempt to download ipk before installing.
+       required: false
+       version_added: "2.3"
 notes:  []
 '''
 EXAMPLES = '''
@@ -81,6 +89,8 @@ EXAMPLES = '''
 
 import pipes
 
+from ansible.module_utils.urls import fetch_url
+
 def update_package_db(module, opkg_path):
     """ Updates packages list. """
 
@@ -100,6 +110,44 @@ def query_package(module, opkg_path, name, state="present"):
             return True
 
         return False
+
+
+def query_ipk_info(module, opkg_path, pkg_name):
+    """ Returns the package metadata as known by opkg """
+
+    rc, out, err = module.run_command("%s info %s" % (pipes.quote(opkg_path), pipes.quote(pkg_name)), use_unsafe_shell=False)
+    if rc == 0:
+        info = dict([map(str.strip, line.split(':', 1)) for line in out.splitlines() if ':' in line])
+        return info
+
+    return False
+
+
+def download(module, ipk):
+    tempdir = os.path.dirname(__file__)
+    package = os.path.join(tempdir, str(ipk.rsplit('/', 1)[1]))
+    # When downloading a ipk, how much of the ipk to download before
+    # saving to a tempfile (64k)
+    BUFSIZE = 65536
+
+    try:
+        rsp, info = fetch_url(module, ipk)
+        f = open(package, 'w')
+        # Read 1kb at a time to save on ram
+        while True:
+            data = rsp.read(BUFSIZE)
+
+            if data == "":
+                break # End of file, break while loop
+
+            f.write(data)
+        f.close()
+        ipk = package
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg="Failure downloading %s, %s" % (ipk, e))
+
+    return ipk
 
 
 def remove_packages(module, opkg_path, packages):
@@ -131,7 +179,7 @@ def remove_packages(module, opkg_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, opkg_path, packages):
+def install_packages(module, opkg_path, packages, ipk_install=False):
     """ Installs one or more packages if not already installed. """
 
     p = module.params
@@ -142,13 +190,21 @@ def install_packages(module, opkg_path, packages):
     install_c = 0
 
     for package in packages:
-        if query_package(module, opkg_path, package):
+        if ipk_install:
+            if '://' in package:
+                package = download(module, package)
+
+            package_metadata = query_ipk_info(module, opkg_path, package)
+            package_name = package_metadata['Package']
+        else:
+            package_name = package
+        if query_package(module, opkg_path, package_name):
             continue
 
         rc, out, err = module.run_command("%s install %s %s" % (opkg_path, force, package))
 
-        if not query_package(module, opkg_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out))
+        if not query_package(module, opkg_path, package_name):
+            module.fail_json(msg="failed to install %s: %s" % (package_name, out))
 
         install_c += 1
 
@@ -161,11 +217,14 @@ def install_packages(module, opkg_path, packages):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
+            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
+            ipk = dict(default=None, type='list'),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
             force = dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]),
             update_cache = dict(default="no", aliases=["update-cache"], type='bool')
-        )
+        ),
+        mutually_exclusive = [['package', 'ipk']],
+        required_one_of = [['package', 'ipk']]
     )
 
     opkg_path = module.get_bin_path('opkg', True, ['/bin'])
@@ -175,13 +234,16 @@ def main():
     if p["update_cache"]:
         update_package_db(module, opkg_path)
 
-    pkgs = p["name"].split(",")
+    if p['ipk']:
+        if p['state'] not in ["present", "installed"]:
+            module.fail_json(msg="ipk only supports state=present")
+        install_packages(module, opkg_path, p['ipk'], True)
+    else:
+        if p["state"] in ["present", "installed"]:
+            install_packages(module, opkg_path, p["package"])
 
-    if p["state"] in ["present", "installed"]:
-        install_packages(module, opkg_path, pkgs)
-
-    elif p["state"] in ["absent", "removed"]:
-        remove_packages(module, opkg_path, pkgs)
+        elif p["state"] in ["absent", "removed"]:
+            remove_packages(module, opkg_path, p["package"])
 
 # import module snippets
 from ansible.module_utils.basic import *
