@@ -158,6 +158,11 @@ def remove_packages(module, opkg_path, packages):
     if force:
         force = "--force-%s" % force
 
+    if module.check_mode:
+        check_arg = '--noaction'
+    else:
+        check_arg = ''
+
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -165,9 +170,9 @@ def remove_packages(module, opkg_path, packages):
         if not query_package(module, opkg_path, package):
             continue
 
-        rc, out, err = module.run_command("%s remove %s %s" % (opkg_path, force, package))
+        rc, out, err = module.run_command("%s remove %s %s %s" % (opkg_path, force, check_arg, package))
 
-        if query_package(module, opkg_path, package):
+        if query_package(module, opkg_path, package) and not module.check_mode:
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
         remove_c += 1
@@ -187,6 +192,11 @@ def install_packages(module, opkg_path, packages, ipk_install=False):
     if force:
         force = "--force-%s" % force
 
+    if module.check_mode:
+        check_arg = '--noaction'
+    else:
+        check_arg = ''
+
     install_c = 0
 
     for package in packages:
@@ -201,9 +211,9 @@ def install_packages(module, opkg_path, packages, ipk_install=False):
         if query_package(module, opkg_path, package_name):
             continue
 
-        rc, out, err = module.run_command("%s install %s %s" % (opkg_path, force, package))
+        rc, out, err = module.run_command("%s install %s %s %s" % (opkg_path, force, check_arg, package))
 
-        if not query_package(module, opkg_path, package_name):
+        if not query_package(module, opkg_path, package_name) and not module.check_mode:
             module.fail_json(msg="failed to install %s: %s" % (package_name, out))
 
         install_c += 1
@@ -224,7 +234,8 @@ def main():
             update_cache = dict(default="no", aliases=["update-cache"], type='bool')
         ),
         mutually_exclusive = [['package', 'ipk']],
-        required_one_of = [['package', 'ipk']]
+        required_one_of = [['package', 'ipk']],
+        supports_check_mode = True
     )
 
     opkg_path = module.get_bin_path('opkg', True, ['/bin'])
