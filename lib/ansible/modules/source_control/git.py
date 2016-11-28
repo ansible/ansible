@@ -320,7 +320,7 @@ fi
 if [ -z "$GIT_KEY" ]; then
     ssh $BASEOPTS "$@"
 else
-    ssh -i "$GIT_KEY" $BASEOPTS "$@"
+    ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
 fi
 """
     fh.write(template)
