@@ -132,7 +132,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from GitLab or other git-based scm
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
-      version: 0.1.0
+      version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
 Dependencies
 ============
