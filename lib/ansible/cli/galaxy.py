@@ -87,6 +87,7 @@ class GalaxyCLI(CLI):
         elif self.action == "init":
             self.parser.set_usage("usage: %prog init [options] role_name")
             self.parser.add_option('-p', '--init-path', dest='init_path', default="./", help='The path in which the skeleton role will be created. The default is the current working directory.')
+            self.parser.add_option('-t', '--template-path', dest='template_path', default=None, help='The path to templates used for role creation.')
             self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
                                    help='Initialize the skeleton role with default contents for a Container Enabled role.')
         elif self.action == "install":
