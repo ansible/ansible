@@ -143,6 +143,14 @@ In these cases just use quotes::
     other_string: "False"
 
 
+YAML converts certain strings into floating-point values, such as the string
+`1.0`. If you need to specify a version number (in a requirements.yml file, for
+example), you will need to quote the value if it looks like a floating-point
+value::
+
+  version: "1.0"
+
+
 .. seealso::
 
    :doc:`playbooks`
