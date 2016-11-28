@@ -20,7 +20,7 @@ import os
 import re
 import socket
 import time
-
+import signal
 
 try:
     import paramiko
@@ -58,7 +58,7 @@ class ShellError(Exception):
 
 class Shell(object):
 
-    def __init__(self, prompts_re=None, errors_re=None, kickstart=True):
+    def __init__(self, prompts_re=None, errors_re=None, kickstart=True, timeout=10):
         self.ssh = None
         self.shell = None
 
@@ -68,7 +68,12 @@ class Shell(object):
         self.prompts = prompts_re or list()
         self.errors = errors_re or list()
 
-    def open(self, host, port=22, username=None, password=None, timeout=10,
+        self._timeout = timeout
+        self._history = list()
+
+        signal.signal(signal.SIGALRM, self.alarm_handler)
+
+    def open(self, host, port=22, username=None, password=None,
              key_filename=None, pkey=None, look_for_keys=None,
              allow_agent=False, key_policy="loose"):
 
@@ -90,15 +95,16 @@ class Shell(object):
         if not look_for_keys:
             look_for_keys = password is None
 
+
         try:
             self.ssh.connect(
                 host, port=port, username=username, password=password,
-                timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
+                timeout=self._timeout, look_for_keys=look_for_keys, pkey=pkey,
                 key_filename=key_filename, allow_agent=allow_agent,
             )
 
             self.shell = self.ssh.invoke_shell()
-            self.shell.settimeout(timeout)
+            self.shell.settimeout(self._timeout)
         except socket.gaierror:
             raise ShellError("unable to resolve host name")
         except AuthenticationException:
@@ -120,6 +126,10 @@ class Shell(object):
         for regex in ANSI_RE:
             data = regex.sub('', data)
         return data
+
+    def alarm_handler(self, signum, frame):
+        self.shell.close()
+        raise ShellError('timeout trying to send command: %s' % self._history[-1])
 
     def receive(self, cmd=None):
         recv = StringIO()
@@ -149,14 +159,21 @@ class Shell(object):
         responses = list()
         try:
             for command in to_list(commands):
+                signal.alarm(self._timeout)
+                self._history.append(str(command))
                 cmd = '%s\r' % str(command)
                 self.shell.sendall(cmd)
+                if self._timeout == 0:
+                    return
                 responses.append(self.receive(command))
+
         except socket.timeout:
             raise ShellError("timeout trying to send command: %s" % cmd)
+
         except socket.error:
             exc = get_exception()
             raise ShellError("problem sending command to host: %s" % to_native(exc))
+
         return responses
 
     def close(self):
@@ -221,16 +238,16 @@ class CliBase(object):
                 kickstart=kickstart,
                 prompts_re=self.CLI_PROMPTS_RE,
                 errors_re=self.CLI_ERRORS_RE,
+                timeout=timeout
             )
-            self.shell.open(
-                host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
-            )
+
+            self.shell.open(host, port=port, username=username,
+                            password=password, key_filename=key_file)
+
         except ShellError:
             exc = get_exception()
-            raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=to_native(exc)
-            )
+            raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
+                               exc=to_native(exc))
 
         self._connected = True
 
@@ -241,19 +258,16 @@ class CliBase(object):
     def authorize(self, params, **kwargs):
         pass
 
-    ### Command methods ###
-
     def execute(self, commands):
         try:
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
+            commands = [str(c) for c in commands]
             raise NetworkError(to_native(exc), commands=commands)
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
-
-    ### Config methods ###
 
     def configure(self, commands):
         raise NotImplementedError
