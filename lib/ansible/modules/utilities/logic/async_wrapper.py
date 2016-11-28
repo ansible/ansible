@@ -24,6 +24,7 @@ try:
 except ImportError:
     import simplejson as json
 import shlex
+import shutil
 import os
 import subprocess
 import sys
@@ -204,7 +205,8 @@ if __name__ == '__main__':
     if len(sys.argv) < 5:
         print(json.dumps({
             "failed" : True,
-            "msg"    : "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile>.  Humans, do not call directly!"
+            "msg"    : "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile> [-preserve_tmp]  "
+                       "Humans, do not call directly!"
         }))
         sys.exit(1)
 
@@ -212,6 +214,12 @@ if __name__ == '__main__':
     time_limit = sys.argv[2]
     wrapped_module = sys.argv[3]
     argsfile = sys.argv[4]
+    if '-tmp-' not in os.path.dirname(wrapped_module):
+        preserve_tmp = True
+    elif len(sys.argv) > 5:
+        preserve_tmp = sys.argv[5] == '-preserve_tmp'
+    else:
+        preserve_tmp = False
     # consider underscore as no argsfile so we can support passing of additional positional parameters
     if argsfile != '_':
         cmd = "%s %s" % (wrapped_module, argsfile)
@@ -244,7 +252,8 @@ if __name__ == '__main__':
             # this probably could be done with some IPC later.  Modules should always read
             # the argsfile at the very first start of their execution anyway
             notice("Return async_wrapper task started.")
-            print(json.dumps({ "started" : 1, "finished" : 0, "ansible_job_id" : jid, "results_file" : job_path }))
+            print(json.dumps({ "started" : 1, "finished" : 0, "ansible_job_id" : jid, "results_file" : job_path,
+                               "_suppress_tmpdir_delete": not preserve_tmp}))
             sys.stdout.flush()
             time.sleep(1)
             sys.exit(0)
@@ -276,8 +285,12 @@ if __name__ == '__main__':
                         os.killpg(sub_pid, signal.SIGKILL)
                         notice("Sent kill to group %s"%sub_pid)
                         time.sleep(1)
+                        if not preserve_tmp:
+                            shutil.rmtree(os.path.dirname(wrapped_module), True)
                         sys.exit(0)
                 notice("Done in kid B.")
+                if not preserve_tmp:
+                    shutil.rmtree(os.path.dirname(wrapped_module), True)
                 sys.exit(0)
             else:
                 # the child process runs the actual module
