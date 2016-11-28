@@ -164,6 +164,7 @@ run_tests() {
        ansible_exit_value=0
        cd "${ansible_dir}/test/integration"
        echo "Running Tests..."
+       echo "Logs will be written to: ${log_root}/results.html"
        ansible-playbook --version > "${logdir_for_this_run}/ansible.log" 2>&1
        ANSIBLE_FORCE_COLOR=1 ANSIBLE_ROLES_PATH=targets time -p ansible-playbook \
             -vvv \
