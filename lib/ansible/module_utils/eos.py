@@ -206,7 +206,7 @@ class Eapi(EosConfigMixin):
         data = json.dumps(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
-        timeout = self.url_args['timeout']
+        timeout = self.url_args.params['timeout']
 
         response, headers = fetch_url(
             self.url_args, self.url, data=data, headers=headers,
