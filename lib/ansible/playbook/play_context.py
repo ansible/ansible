@@ -73,6 +73,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    sftp_extra_args  = ('ansible_sftp_extra_args',),
    scp_extra_args   = ('ansible_scp_extra_args',),
    ssh_extra_args   = ('ansible_ssh_extra_args',),
+   ssh_transfer_method = ('ansible_ssh_transfer_method',),
    sudo             = ('ansible_sudo',),
    sudo_user        = ('ansible_sudo_user',),
    sudo_pass        = ('ansible_sudo_password', 'ansible_sudo_pass'),
@@ -173,6 +174,7 @@ class PlayContext(Base):
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
     _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
+    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
     _accelerate       = FieldAttribute(isa='bool', default=False)
