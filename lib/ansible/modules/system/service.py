@@ -58,10 +58,10 @@ options:
         required: false
         version_added: "0.7"
         description:
-        - If the service does not respond to the status command, name a
-          substring to look for as would be found in the output of the I(ps)
-          command as a stand-in for a status result.  If the string is found,
-          the service will be assumed to be running.
+        - If the service does not respond to the status command, name a substring
+          (or regex) pattern to look for as would be found in the output of the I(ps)
+          command as a stand-in for a status result.  If the string is found, the
+          service will be assumed to be running. Which type is controlled by C(use_regex) option.
     enabled:
         required: false
         choices: [ "yes", "no" ]
@@ -84,6 +84,13 @@ options:
             - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         default: 'auto'
         version_added: 2.2
+    use_regex:
+        required: false
+        version_added: "2.3"
+        default: "False"
+        choices: [ True, False ]
+        description:
+            - If false the pattern is a substring. if true it is a python regex
 '''
 
 EXAMPLES = '''
@@ -117,6 +124,13 @@ EXAMPLES = '''
     name: foo
     pattern: /usr/bin/foo
     state: started
+
+# Example action to start service foo, based on running process /usr/bin/foo (with no arguments)
+- service:
+    name: foo
+    pattern: "/usr/bin/foo$"
+    state: started
+    use_regex: True
 
 # Example action to restart network service for interface eth0
 - service:
@@ -170,6 +184,7 @@ class Service(object):
         self.state          = module.params['state']
         self.sleep          = module.params['sleep']
         self.pattern        = module.params['pattern']
+        self.use_regex      = module.params['use_regex']
         self.enable         = module.params['enabled']
         self.runlevel       = module.params['runlevel']
         self.changed        = False
@@ -282,6 +297,22 @@ class Service(object):
                     data += dat
             return json.loads(data)
 
+    def pfilter(self, line, pattern=None, use_regex=False):
+        '''filter using pattern'''
+
+        if pattern is None:
+            return True
+
+        if use_regex:
+            r = re.compile(pattern)
+            if r.match(line):
+                return True
+        else:
+            if pattern in line:
+                return True
+
+        return False
+
     def check_ps(self):
         # Set ps flags
         if platform.system() == 'SunOS':
@@ -298,7 +329,7 @@ class Service(object):
             self.running = False
             lines = psout.split("\n")
             for line in lines:
-                if self.pattern in line and not "pattern=" in line:
+                if self.pfilter(line, self.pattern, self.use_regex) and not "pattern=" in line:
                     # so as to not confuse ./hacking/test-module
                     self.running = True
                     break
@@ -1490,6 +1521,7 @@ def main():
             enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
+            use_regex = dict(default="False", type='bool'),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
