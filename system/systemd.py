@@ -329,8 +329,7 @@ def main():
                 (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                 if rc != 0:
                     # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
-                    fail_if_missing(module, found, unit, "cannot %s" % (action))
-                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+                    fail_if_missing(module, found, unit, msg='host')
 
 
     # Enable/disable service startup at boot if requested
@@ -341,7 +340,7 @@ def main():
         else:
             action = 'disable'
 
-        fail_if_missing(module, found, unit, "cannot %s" % (action))
+        fail_if_missing(module, found, unit, msg='host')
 
         # do we need to enable the service?
         enabled = False
@@ -370,7 +369,7 @@ def main():
 
     # set service state if requested
     if module.params['state'] is not None:
-        fail_if_missing(module, found, unit, "cannot check nor set state")
+        fail_if_missing(module, found, unit, msg="host")
 
         # default to desired state
         result['state'] = module.params['state']

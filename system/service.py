@@ -131,6 +131,7 @@ import select
 import time
 import string
 import glob
+from ansible.module_utils.service import fail_if_missing
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -493,7 +494,7 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg="no service or tool found for: %s" % self.name)
+            fail_if_missing(self.module, False, self.name, msg='host')
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
