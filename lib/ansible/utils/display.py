@@ -182,9 +182,12 @@ class Display:
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
+        if C.ERROR_ON_DEPRECATION:
+            raise AnsibleError("[DEPRECATED]: %s.\nYou're using a deprecated feature with ERROR_ON_DEPRECATION enabled" % msg)
+
         if not removed and not C.DEPRECATION_WARNINGS:
             return
-
+	
         if not removed:
             if version:
                 new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)

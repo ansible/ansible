@@ -287,6 +287,7 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_var
 HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, value_type='boolean')
 SYSTEM_WARNINGS                = get_config(p, DEFAULTS, 'system_warnings', 'ANSIBLE_SYSTEM_WARNINGS', True, value_type='boolean')
 DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings', 'ANSIBLE_DEPRECATION_WARNINGS', True, value_type='boolean')
+ERROR_ON_DEPRECATION           = get_config(p, DEFAULTS, 'error_on_deprecation', 'ERROR_ON_DEPRECATION', False, value_type='boolean')
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], value_type='list')
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', True, value_type='boolean')
 DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, value_type='boolean')
