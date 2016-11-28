@@ -247,6 +247,10 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
+ 
+Returning a new fact from a python module could be done like::
+
+        module.exit_json(msg=message, ansible_facts=dict(leptons=5000, colors=my_colors))
 
 .. _common_module_boilerplate:
 
