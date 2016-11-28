@@ -229,11 +229,6 @@ for connection in docker jail libvirt_lxc lxc lxd; do
     sed -i '/^posix\/ci\/.*$/d' "test/integration/targets/${target}/aliases"
 done
 
-# FIXME: Remove tests from CI which are currently broken under ansible-test. Fix these before deploying ansible-test.
-for target in pull_limit_inventory pull_no_127 pull_run; do
-    sed -i '/^posix\/ci\/.*$/d' "test/integration/targets/${target}/aliases"
-done
-
 # Sort aliases.
 for file in test/integration/targets/*/aliases; do
     sort -o "${file}" "${file}"
