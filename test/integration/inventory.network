@@ -24,7 +24,7 @@ clvx01
 
 [vyos]
 #vyos-dut-01
-vyos-01
+vyos01
 
 [ops]
 ops01
