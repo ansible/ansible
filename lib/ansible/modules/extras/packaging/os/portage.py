@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2016, William L Thomson Jr
 # (c) 2013, Yap Sok Ann
 # Written by Yap Sok Ann <sokann@gmail.com>
+# Modified by William L. Thomson Jr. <wlt@o-sinc.com>
 # Based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -146,8 +148,36 @@ options:
     default: False
     choices: [ "yes", "no" ]
 
+  keepgoing:
+    description:
+      - Continue as much as possible after an error.
+    required: false
+    default: False
+    choices: [ "yes", "no" ]
+    version_added: 2.3
+
+  jobs:
+    description:
+      - Specifies the number of packages to build simultaneously.
+    required: false
+    default: None
+    type: int
+    version_added: 2.3
+
+  loadavg:
+    description:
+      - Specifies that no new builds should be started if there are
+      - other builds running and the load average is at least LOAD
+    required: false
+    default: None
+    type: float
+    version_added: 2.3
+
 requirements: [ gentoolkit ]
-author: Yap Sok Ann, Andrew Udvare
+author:
+    - "William L Thomson Jr (@wltjr)"
+    - "Yap Sok Ann (@sayap)"
+    - "Andrew Udvare"
 notes:  []
 '''
 
@@ -270,6 +300,7 @@ def emerge_packages(module, packages):
         'getbinpkg': '--getbinpkg',
         'usepkgonly': '--usepkgonly',
         'usepkg': '--usepkg',
+        'keepgoing': '--keep-going',
     }
     for flag, arg in emerge_flags.iteritems():
         if p[flag]:
@@ -277,6 +308,15 @@ def emerge_packages(module, packages):
 
     if p['usepkg'] and p['usepkgonly']:
         module.fail_json(msg='Use only one of usepkg, usepkgonly')
+
+    emerge_flags = {
+        'jobs': '--jobs=',
+        'loadavg': '--load-average ',
+    }
+
+    for flag, arg in emerge_flags.iteritems():
+        if p[flag] is not None:
+            args.append(arg + str(p[flag]))
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
     if rc != 0:
@@ -414,6 +454,9 @@ def main():
             getbinpkg=dict(default=False, type='bool'),
             usepkgonly=dict(default=False, type='bool'),
             usepkg=dict(default=False, type='bool'),
+            keepgoing=dict(default=False, type='bool'),
+            jobs=dict(default=None, type='int'),
+            loadavg=dict(default=None, type='float'),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
         mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
