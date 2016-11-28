@@ -23,7 +23,8 @@ vsrx01
 clvx01
 
 [vyos]
-vyos-dut-01
+#vyos-dut-01
+vyos-01
 
 [ops]
 ops01
