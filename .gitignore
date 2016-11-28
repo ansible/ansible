@@ -43,7 +43,7 @@ docsite/htmlout
 docs-api/rst/
 docs-api/_build/
 # deb building stuff...
-debian/
+/debian/
 deb-build
 # Vim swap files
 *.swp
@@ -54,6 +54,7 @@ credentials.yml
 *.out
 .coverage
 .tox
+.cache
 results.xml
 coverage.xml
 /test/units/cover-html
@@ -64,3 +65,5 @@ Vagrantfile
 .vagrant
 ansible.egg-info/
 /shippable/
+# Release directory
+packaging/release/ansible_release

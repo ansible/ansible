@@ -30,29 +30,36 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when building the connection to the remote
+      - Specifies the port to use when building the connection to the remote.
         device.
     required: false
     default: 22
   username:
     description:
       - Configures the username to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+        the remote device.  This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
       - Specifies the password to use to authenticate the connection to
-        the remote device.   The value of I(password) is used to authenticate
+        the remote device.   This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
+  timeout:
+    description:
+      - Specifies the timeout in seconds for communicating with the network device
+        for either connecting or sending commands.  If the timeout is
+        exceeded before the operation is completed, the module will error.
+    require: false
+    default: 10
   ssh_keyfile:
     description:
       - Specifies the SSH key to use to authenticate the connection to
-        the remote device.   The value of I(ssh_keyfile) is the path to the
+        the remote device.   This value is the path to the
         key used to authenticate the SSH session. If the value is not specified
         in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
         will be used instead.
@@ -64,5 +71,4 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
-
-  """
+"""

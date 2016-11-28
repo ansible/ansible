@@ -25,14 +25,13 @@ import itertools
 import json
 import os.path
 import ntpath
-import pipes
 import glob
 import re
 import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle
 from datetime import datetime
 import uuid
 
@@ -48,6 +47,7 @@ except:
 from ansible import errors
 from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import reduce
+from ansible.compat.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -67,7 +67,7 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if isinstance(o, HostVars):
             return dict(o)
         else:
-            return json.JSONEncoder.default(o)
+            return super(AnsibleJSONEncoder, self).default(o)
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
@@ -123,7 +123,7 @@ def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
@@ -199,8 +199,11 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
     if isinstance(end, (int, long)):
         if not start:
             start = 0
@@ -257,7 +260,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
-            cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+            if hashtype == 'blowfish':
+                cls = passlib.hash.bcrypt;
+            else:
+                cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+
             encrypted = cls.encrypt(password, salt=salt)
 
         return encrypted
@@ -387,6 +394,46 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def failed(*a, **kw):
+    ''' Test if task result yields failed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
+    rc = item.get('rc',0)
+    failed = item.get('failed',False)
+    if rc != 0 or failed:
+        return True
+    else:
+        return False
+
+def success(*a, **kw):
+    ''' Test if task result yields success '''
+    return not failed(*a, **kw)
+
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
+
+def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -467,4 +514,21 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # failure testing
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
+
+            # changed testing
+            'changed' : changed,
+            'change'  : changed,
+
+            # skip testing
+            'skipped' : skipped,
+            'skip'    : skipped,
+
+            # debug
+            'type': lambda o: o.__class__.__name__,
         }

@@ -83,9 +83,9 @@ try:
 except ImportError:
     pass
 except Exception as e:
-    display.warning("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'")
+    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
     import traceback
-    display.debug("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
+    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
 
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
@@ -398,18 +398,18 @@ class VaultEditor:
             self._shred_file(tmp_path)
             raise
 
-        tmpdata = self.read_data(tmp_path)
+        b_tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
-        if existing_data == tmpdata and not force_save:
+        if existing_data == b_tmpdata and not force_save:
             self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
         # An existing vaultfile will always be UTF-8,
         # so decode to unicode here
-        enc_data = self.vault.encrypt(tmpdata.decode())
-        self.write_data(enc_data, tmp_path)
+        b_ciphertext = self.vault.encrypt(b_tmpdata)
+        self.write_data(b_ciphertext, tmp_path)
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
@@ -420,9 +420,9 @@ class VaultEditor:
 
         # A file to be encrypted into a vaultfile could be any encoding
         # so treat the contents as a byte string.
-        plaintext = self.read_data(filename)
-        ciphertext = self.vault.encrypt(plaintext)
-        self.write_data(ciphertext, output_file or filename)
+        b_plaintext = self.read_data(filename)
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+        self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
 
@@ -485,6 +485,10 @@ class VaultEditor:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
+
+        # This is more or less an assert, see #18247
+        if new_password is None:
+            raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
 
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)

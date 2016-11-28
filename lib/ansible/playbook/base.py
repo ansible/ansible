@@ -111,7 +111,7 @@ class BaseMeta(type):
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
                         getter = partial(_generic_g_method, attr_name)
-                    elif '_get_parent_attribute' in dst_dict and value.inherit:
+                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
                         getter = partial(_generic_g_parent, attr_name)
                     else:
                         getter = partial(_generic_g, attr_name)
@@ -131,7 +131,9 @@ class BaseMeta(type):
             for parent in parents:
                 if hasattr(parent, '__dict__'):
                     _create_attrs(parent.__dict__, dst_dict)
-                    _process_parents(parent.__bases__, dst_dict)
+                    new_dst_dict = parent.__dict__.copy()
+                    new_dst_dict.update(dst_dict)
+                    _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
         dct['_attributes'] = dict()
@@ -480,7 +482,7 @@ class Base(with_metaclass(BaseMeta, object)):
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
-    def _extend_value(self, value, new_value):
+    def _extend_value(self, value, new_value, prepend=False):
         '''
         Will extend the value given with new_value (and will turn both
         into lists if they are not so already). The values are run through
@@ -492,7 +494,12 @@ class Base(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
+        if prepend:
+            combined = new_value + value
+        else:
+            combined = value + new_value
+
+        return [i for i,_ in itertools.groupby(combined) if i is not None]
 
     def serialize(self):
         '''

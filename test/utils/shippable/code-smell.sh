@@ -15,11 +15,17 @@ if [ "${install_deps}" != "" ]; then
     pip list
 fi
 
-yamllint .
-test/code-smell/replace-urlopen.sh .
-test/code-smell/use-compat-six.sh lib
-test/code-smell/boilerplate.sh
-test/code-smell/required-and-default-attributes.sh
+yamllint ./test
+
+test/sanity/code-smell/replace-urlopen.sh
+test/sanity/code-smell/use-compat-six.sh
+test/sanity/code-smell/boilerplate.sh
+test/sanity/code-smell/required-and-default-attributes.sh
+test/sanity/code-smell/shebang.sh
+test/sanity/code-smell/line-endings.sh
+test/sanity/code-smell/empty-init.sh
+test/sanity/code-smell/no-basestring.sh
 
 shellcheck \
+    test/integration/targets/*/*.sh \
     test/utils/shippable/*.sh

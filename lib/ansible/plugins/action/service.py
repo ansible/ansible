@@ -26,7 +26,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     UNUSED_PARAMS = {
-        'systemd': ['pattern', 'runlevels', 'sleep', 'arguments'],
+        'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
     }
 
     def run(self, tmp=None, task_vars=None):

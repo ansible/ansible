@@ -168,6 +168,10 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
+
+    {{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron
+
 
 Shuffle Filter
 --------------
@@ -210,6 +214,71 @@ Square root, or the 5th::
     {{ myvar | root(5) }}
 
 Note that jinja2 already provides some like abs() and round().
+
+.. json_query_filter:
+
+JSON Query Filter
+-----------------
+
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+
+.. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
+
+Now, let's take the following data structure::
+
+    domain_definition:
+        domain:
+            cluster:
+                - name: "cluster1"
+                - name: "cluster2"
+            server:
+                - name: "server11"
+                  cluster: "cluster1"
+                  port: "8080"
+                - name: "server12"
+                  cluster: "cluster1"
+                  port: "8090"
+                - name: "server21"
+                  cluster: "cluster2"
+                  port: "9080"
+                - name: "server22"
+                  cluster: "cluster2"
+                  port: "9090"
+            library:
+                - name: "lib1"
+                  target: "cluster1"
+                - name: "lib2"
+                  target: "cluster2"
+
+To extract all clusters from this structure, you can use the following query::
+
+    - name: "Display all cluster names"
+      debug: var=item
+      with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+
+Same thing for all server names::
+
+    - name: "Display all server names"
+      debug: var=item
+      with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
+
+This example shows ports from cluster1::
+
+    - name: "Display all server names from cluster1"
+      debug: var=item
+      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      vars:
+        server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
+
+.. note:: You can use a variable to make the query more readable.
+
+In this example, we get a hash map with all ports and names of a cluster::
+
+    - name: "Display all server ports and names from cluster1"
+      debug: var=item
+      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      vars:
+        server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
 .. _ipaddr_filter:
 
@@ -509,10 +578,22 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
-To get date object from string use the `to_datetime` filter, (new in version in 2.2):
+To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
     # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
     {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+
+Debugging Filters
+-----------------
+
+.. versionadded:: 2.3
+
+Use the ``type`` filter to display the underlying Python type of a variable.
+This can be useful in debugging in situations where you may need to know the exact
+type of a variable::
+
+    {{ myvar | type }}
+
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones

@@ -1,0 +1,9 @@
+- hosts: testhost
+
+  # the following commands should all parse fine and execute fine
+  # and represent quoting scenarios that should be legit
+
+  gather_facts: False
+
+  roles:
+    - { role: test_good_parsing, tags: test_good_parsing }

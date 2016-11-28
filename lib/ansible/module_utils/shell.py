@@ -20,12 +20,7 @@ import os
 import re
 import socket
 import time
-
-# py2 vs py3; replace with six via ansiballz
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+import signal
 
 try:
     import paramiko
@@ -36,10 +31,13 @@ except ImportError:
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
+from ansible.module_utils.six.moves import StringIO
+from ansible.module_utils._text import to_native
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
-    re.compile(r'\x08.')
+    re.compile(r'\x08'),
+    re.compile(r'\x1b[^m]*m')
 ]
 
 def to_list(val):
@@ -55,13 +53,12 @@ class ShellError(Exception):
 
     def __init__(self, msg, command=None):
         super(ShellError, self).__init__(msg)
-        self.message = msg
         self.command = command
 
 
 class Shell(object):
 
-    def __init__(self, prompts_re=None, errors_re=None, kickstart=True):
+    def __init__(self, prompts_re=None, errors_re=None, kickstart=True, timeout=10):
         self.ssh = None
         self.shell = None
 
@@ -71,7 +68,12 @@ class Shell(object):
         self.prompts = prompts_re or list()
         self.errors = errors_re or list()
 
-    def open(self, host, port=22, username=None, password=None, timeout=10,
+        self._timeout = timeout
+        self._history = list()
+
+        signal.signal(signal.SIGALRM, self.alarm_handler)
+
+    def open(self, host, port=22, username=None, password=None,
              key_filename=None, pkey=None, look_for_keys=None,
              allow_agent=False, key_policy="loose"):
 
@@ -93,19 +95,22 @@ class Shell(object):
         if not look_for_keys:
             look_for_keys = password is None
 
+
         try:
             self.ssh.connect(
                 host, port=port, username=username, password=password,
-                timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
+                timeout=self._timeout, look_for_keys=look_for_keys, pkey=pkey,
                 key_filename=key_filename, allow_agent=allow_agent,
             )
 
             self.shell = self.ssh.invoke_shell()
-            self.shell.settimeout(timeout)
+            self.shell.settimeout(self._timeout)
         except socket.gaierror:
             raise ShellError("unable to resolve host name")
         except AuthenticationException:
             raise ShellError('Unable to authenticate to remote device')
+        except socket.timeout:
+            raise ShellError("timeout trying to connect to remote device")
         except socket.error:
             exc = get_exception()
             if exc.errno == 60:
@@ -121,6 +126,10 @@ class Shell(object):
         for regex in ANSI_RE:
             data = regex.sub('', data)
         return data
+
+    def alarm_handler(self, signum, frame):
+        self.shell.close()
+        raise ShellError('timeout trying to send command: %s' % self._history[-1])
 
     def receive(self, cmd=None):
         recv = StringIO()
@@ -150,14 +159,21 @@ class Shell(object):
         responses = list()
         try:
             for command in to_list(commands):
+                signal.alarm(self._timeout)
+                self._history.append(str(command))
                 cmd = '%s\r' % str(command)
                 self.shell.sendall(cmd)
+                if self._timeout == 0:
+                    return
                 responses.append(self.receive(command))
+
         except socket.timeout:
             raise ShellError("timeout trying to send command: %s" % cmd)
+
         except socket.error:
             exc = get_exception()
-            raise ShellError("problem sending command to host: %s" % exc.message)
+            raise ShellError("problem sending command to host: %s" % to_native(exc))
+
         return responses
 
     def close(self):
@@ -177,7 +193,7 @@ class Shell(object):
     def sanitize(self, cmd, resp):
         cleaned = []
         for line in resp.splitlines():
-            if line.startswith(str(cmd)) or self.find_prompt(line):
+            if line.lstrip().startswith(str(cmd)) or self.find_prompt(line):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned)
@@ -222,16 +238,16 @@ class CliBase(object):
                 kickstart=kickstart,
                 prompts_re=self.CLI_PROMPTS_RE,
                 errors_re=self.CLI_ERRORS_RE,
+                timeout=timeout
             )
-            self.shell.open(
-                host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
-            )
+
+            self.shell.open(host, port=port, username=username,
+                            password=password, key_filename=key_file)
+
         except ShellError:
             exc = get_exception()
-            raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
-            )
+            raise NetworkError(msg='failed to connect to %s:%s' % (host, port),
+                               exc=to_native(exc))
 
         self._connected = True
 
@@ -242,19 +258,16 @@ class CliBase(object):
     def authorize(self, params, **kwargs):
         pass
 
-    ### Command methods ###
-
     def execute(self, commands):
         try:
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
-            raise NetworkError(exc.message, commands=commands)
+            commands = [str(c) for c in commands]
+            raise NetworkError(to_native(exc), commands=commands)
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
-
-    ### Config methods ###
 
     def configure(self, commands):
         raise NotImplementedError

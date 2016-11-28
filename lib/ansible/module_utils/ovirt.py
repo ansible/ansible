@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
@@ -327,6 +326,12 @@ class BaseModule(object):
         :return: Specific instance of sdk.Struct.
         """
         pass
+
+    def param(self, name, default=None):
+        """
+        Return a module parameter specified by it's name.
+        """
+        return self._module.params.get(name, default)
 
     def update_check(self, entity):
         """

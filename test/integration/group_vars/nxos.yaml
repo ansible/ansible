@@ -1,0 +1,13 @@
+---
+cli:
+  host: "{{ inventory_hostname }}"
+  username: "{{ nxos_cli_user | default('admin') }}"
+  password: "{{ nxos_cli_pass | default('admin') }}"
+  transport: cli
+
+nxapi:
+  host: "{{ inventory_hostname }}"
+  username: "{{ nxos_nxapi_user | default('admin') }}"
+  password: "{{ nxos_nxapi_pass | default('admin') }}"
+  transport: nxapi
+  use_ssl: no

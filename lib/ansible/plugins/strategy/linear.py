@@ -287,7 +287,7 @@ class StrategyModule(StrategyBase):
                             loop_var = 'item'
                             if hr._task.loop_control:
                                 loop_var = hr._task.loop_control.loop_var or 'item'
-                            include_results = hr._result['results']
+                            include_results = hr._result.get('results', [])
                         else:
                             include_results = [ hr._result ]
 
@@ -295,13 +295,12 @@ class StrategyModule(StrategyBase):
                             if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
                                 continue
 
-                            role_vars = include_result.get('include_variables', dict())
-                            if loop_var and loop_var in include_result:
-                                role_vars[loop_var] = include_result[loop_var]
-
                             display.debug("generating all_blocks data for role")
                             new_ir = hr._task.copy()
-                            new_ir.args.update(role_vars)
+                            new_ir.vars.update(include_result.get('include_variables', dict()))
+                            if loop_var and loop_var in include_result:
+                                new_ir.vars[loop_var] = include_result[loop_var]
+
                             all_role_blocks.extend(new_ir.get_block_list(play=iterator._play, variable_manager=self._variable_manager, loader=self._loader))
 
                 if len(all_role_blocks) > 0:
@@ -395,7 +394,8 @@ class StrategyModule(StrategyBase):
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
-                        if s.run_state != iterator.ITERATING_RESCUE:
+                        if s.run_state != iterator.ITERATING_RESCUE or \
+                           s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")
@@ -414,6 +414,13 @@ class StrategyModule(StrategyBase):
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for max_fail_percentage")
+
+                display.debug("checking to see if all hosts have failed and the running result is not ok")
+                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
+                    display.debug("^ not ok, so returning result now")
+                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    return result
+                display.debug("done checking to see if all hosts have failed")
 
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)

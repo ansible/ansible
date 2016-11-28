@@ -67,7 +67,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 
 __all__ = ['do_encrypt']
 
@@ -84,6 +84,10 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         if salt_size:
             result = crypt.encrypt(result, salt_size=salt_size)
         elif salt:
+            if crypt._salt_is_bytes:
+                salt = to_bytes(salt, encoding='ascii', errors='strict')
+            else:
+                salt = to_text(salt, encoding='ascii', errors='strict')
             result = crypt.encrypt(result, salt=salt)
         else:
             result = crypt.encrypt(result)

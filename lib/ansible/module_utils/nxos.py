@@ -128,6 +128,7 @@ class Nxapi(NxapiConfigMixin):
         self.url_args.params['url_username'] = params['username']
         self.url_args.params['url_password'] = params['password']
         self.url_args.params['validate_certs'] = params['validate_certs']
+        self.url_args.params['timeout'] = params['timeout']
 
         if params['use_ssl']:
             proto = 'https'
@@ -170,13 +171,13 @@ class Nxapi(NxapiConfigMixin):
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-
+        timeout = self.url_args.params['timeout']
         for req in requests:
             if self._nxapi_auth:
                 headers['Cookie'] = self._nxapi_auth
 
             response, headers = fetch_url(
-                self.url_args, self.url, data=data, headers=headers, method='POST'
+                self.url_args, self.url, data=data, headers=headers, timeout=timeout, method='POST'
             )
             self._nxapi_auth = headers.get('set-cookie')
 

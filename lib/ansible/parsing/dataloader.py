@@ -31,7 +31,7 @@ from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
@@ -116,7 +116,9 @@ class DataLoader():
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
-            (file_data, show_content) = self._get_file_contents(file_name)
+            (b_file_data, show_content) = self._get_file_contents(file_name)
+
+            file_data = to_text(b_file_data, errors='surrogate_or_strict')
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
 
             # cache the file contents for next time
@@ -178,7 +180,6 @@ class DataLoader():
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
-            data = to_text(data, errors='surrogate_or_strict')
             return (data, show_content)
 
         except (IOError, OSError) as e:
@@ -313,7 +314,11 @@ class DataLoader():
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
                     else:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
+                        # don't add dirname if user already is using it in source
+                        if b_source.split(b'/')[0] == b_dirname:
+                            search.append(os.path.join(b_upath, b_source))
+                        else:
+                            search.append(os.path.join(b_upath, b_dirname, b_source))
                         search.append(os.path.join(b_upath, b'tasks', b_source))
                 elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
@@ -395,7 +400,10 @@ class DataLoader():
 
         try:
             with open(to_bytes(real_path), 'rb') as f:
-                if is_encrypted_file(f):
+                # Limit how much of the file is read since we do not know
+                # whether this is a vault file and therefore it could be very
+                # large.
+                if is_encrypted_file(f, count=len(b_HEADER)):
                     # if the file is encrypted and no password was specified,
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name

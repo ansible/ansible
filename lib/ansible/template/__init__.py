@@ -328,7 +328,7 @@ class Templar:
                     if cache and sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
                     else:
-                        result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        result = self.do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
                         if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
@@ -451,7 +451,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
+    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
         # For preserving the number of input newlines in the output (used
         # later in this method)
         data_newlines = _count_newlines_from_end(data)
@@ -537,3 +537,6 @@ class Templar:
             else:
                 #TODO: return warning about undefined var
                 return data
+
+    # for backwards compatibility in case anyone is using old private method directly
+    _do_template = do_template

@@ -121,17 +121,13 @@ class TestModule(object):
         return {
             # failure testing
             'failed'    : failed,
-            'failure'   : failed,
-            'success'   : success,
             'succeeded' : success,
 
             # changed testing
             'changed' : changed,
-            'change'  : changed,
 
             # skip testing
             'skipped' : skipped,
-            'skip'    : skipped,
 
             # regex
             'match': match,

@@ -1,0 +1,17 @@
+[lxc]
+lxc-pipelining    ansible_ssh_pipelining=true
+lxc-no-pipelining ansible_ssh_pipelining=false
+[lxc:vars]
+# 1. install lxc
+# 2. install python2-lxc
+# $ pip install git+https://github.com/lxc/python2-lxc.git
+# 3. create container:
+# $ sudo lxc-create -t download -n centos-7-amd64 -- -d centos -r 7 -a amd64
+# 4. start container:
+# $ sudo lxc-start -n centos-7-amd64 -d
+# 5. run test:
+# $ sudo -E make test_connection_lxc
+# 6. stop container
+# $ sudo lxc-stop -n centos-7-amd64
+ansible_host=centos-7-amd64
+ansible_connection=lxc

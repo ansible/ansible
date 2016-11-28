@@ -129,6 +129,12 @@ class StrategyBase:
         self._results_thread.join()
 
     def run(self, iterator, play_context, result=0):
+        # execute one more pass through the iterator without peeking, to
+        # make sure that all of the hosts are advanced to their final task.
+        # This should be safe, as everything should be ITERATING_COMPLETE by
+        # this point, though the strategy may not advance the hosts itself.
+        [iterator.get_next_task_for_host(host) for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
         failed_hosts      = iterator.get_failed_hosts()
@@ -241,26 +247,32 @@ class StrategyBase:
         def search_handler_blocks(handler_name, handler_blocks):
             for handler_block in handler_blocks:
                 for handler_task in handler_block.block:
-                    handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
-                    templar = Templar(loader=self._loader, variables=handler_vars)
-                    try:
-                        # first we check with the full result of get_name(), which may
-                        # include the role name (if the handler is from a role). If that
-                        # is not found, we resort to the simple name field, which doesn't
-                        # have anything extra added to it.
-                        target_handler_name = templar.template(handler_task.name)
-                        if target_handler_name == handler_name:
-                            return handler_task
-                        else:
-                            target_handler_name = templar.template(handler_task.get_name())
+                    if handler_task.name:
+                        handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler_task)
+                        templar = Templar(loader=self._loader, variables=handler_vars)
+                        try:
+                            # first we check with the full result of get_name(), which may
+                            # include the role name (if the handler is from a role). If that
+                            # is not found, we resort to the simple name field, which doesn't
+                            # have anything extra added to it.
+                            target_handler_name = templar.template(handler_task.name)
                             if target_handler_name == handler_name:
                                 return handler_task
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        # We skip this handler due to the fact that it may be using
-                        # a variable in the name that was conditionally included via
-                        # set_fact or some other method, and we don't want to error
-                        # out unnecessarily
-                        continue
+                            else:
+                                target_handler_name = templar.template(handler_task.get_name())
+                                if target_handler_name == handler_name:
+                                    return handler_task
+                        except (UndefinedError, AnsibleUndefinedVariable):
+                            # We skip this handler due to the fact that it may be using
+                            # a variable in the name that was conditionally included via
+                            # set_fact or some other method, and we don't want to error
+                            # out unnecessarily
+                            continue
+                    else:
+                        # if the handler name is not set, we check via the handlers uuid.
+                        # this is mainly used by listening handlers only
+                        if handler_name == handler_task._uuid:
+                            return handler_task
             return None
 
         def parent_handler_match(target_handler, handler_name):
@@ -342,29 +354,33 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    # only add the host to the failed list officially if it has
-                    # been failed by the iterator
-                    if iterator.is_failed(original_host):
+                    # increment the failed count for this host
+                    self._tqm._stats.increment('failures', original_host.name)
+
+                    # grab the current state and if we're iterating on the rescue portion
+                    # of a block then we save the failed task in a special var for use 
+                    # within the rescue/always
+                    state, _ = iterator.get_next_task_for_host(original_host, peek=True)
+
+                    if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
-                        self._tqm._stats.increment('failures', original_host.name)
-                    else:
-                        # otherwise, we grab the current state and if we're iterating on
-                        # the rescue portion of a block then we save the failed task in a
-                        # special var for use within the rescue/always
-                        state, _ = iterator.get_next_task_for_host(original_host, peek=True)
-                        if state.run_state == iterator.ITERATING_RESCUE:
-                            self._variable_manager.set_nonpersistent_facts(
-                                original_host,
-                                dict(
-                                    ansible_failed_task=original_task.serialize(),
-                                    ansible_failed_result=task_result._result,
-                                ),
-                                )
+
+                    if state and state.run_state == iterator.ITERATING_RESCUE:
+                        self._variable_manager.set_nonpersistent_facts(
+                            original_host,
+                            dict(
+                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_result=task_result._result,
+                            ),
+                        )
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
+                    if 'changed' in task_result._result and task_result._result['changed']:
+                        self._tqm._stats.increment('changed', original_host.name)
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=original_task.ignore_errors)
             elif task_result.is_unreachable():
                 self._tqm._unreachable_hosts[original_host.name] = True
+                iterator._play._removed_hosts.append(original_host.name)
                 self._tqm._stats.increment('dark', original_host.name)
                 self._tqm.send_callback('v2_runner_on_unreachable', task_result)
             elif task_result.is_skipped():
@@ -388,40 +404,45 @@ class StrategyBase:
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for handler_name in result_item['_ansible_notify']:
+                                found = False
                                 # Find the handler using the above helper.  First we look up the
                                 # dependency chain of the current task (if it's from a role), otherwise
                                 # we just look through the list of handlers in the current play/all
                                 # roles and use the first one that matches the notify name
+                                target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
+                                if target_handler is not None:
+                                    found = True
+                                    if original_host not in self._notified_handlers[target_handler]:
+                                        self._notified_handlers[target_handler].append(original_host)
+                                        # FIXME: should this be a callback?
+                                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                                else:
+                                    # As there may be more than one handler with the notified name as the
+                                    # parent, so we just keep track of whether or not we found one at all
+                                    for target_handler in self._notified_handlers:
+                                        if parent_handler_match(target_handler, handler_name):
+                                            self._notified_handlers[target_handler].append(original_host)
+                                            display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
+                                            found = True
+
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_name in self._listening_handlers[handler_name]:
                                         listening_handler = search_handler_blocks(listening_handler_name, iterator._play.handlers)
-                                        if listening_handler is None:
-                                            raise AnsibleError("The requested handler listener '%s' was not found in any of the known handlers" % listening_handler_name)
+                                        if listening_handler is not None:
+                                            found = True
+                                        else:
+                                            continue
                                         if original_host not in self._notified_handlers[listening_handler]:
                                             self._notified_handlers[listening_handler].append(original_host)
                                             display.vv("NOTIFIED HANDLER %s" % (listening_handler_name,))
 
-                                else:
-                                    target_handler = search_handler_blocks(handler_name, iterator._play.handlers)
-                                    if target_handler is not None:
-                                        if original_host not in self._notified_handlers[target_handler]:
-                                            self._notified_handlers[target_handler].append(original_host)
-                                            # FIXME: should this be a callback?
-                                            display.vv("NOTIFIED HANDLER %s" % (handler_name,))
-                                    else:
-                                        # As there may be more than one handler with the notified name as the
-                                        # parent, so we just keep track of whether or not we found one at all
-                                        found = False
-                                        for target_handler in self._notified_handlers:
-                                            if parent_handler_match(target_handler, handler_name):
-                                                self._notified_handlers[target_handler].append(original_host)
-                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
-                                                found = True
-
-                                        # and if none were found, then we raise an error
-                                        if not found:
-                                            raise AnsibleError("The requested handler '%s' was found in neither the main handlers list nor the listening handlers list" % handler_name)
-
+                                # and if none were found, then we raise an error
+                                if not found:
+                                  msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                  if C.ERROR_ON_MISSING_HANDLER:
+                                      raise AnsibleError(msg)
+                                  else:
+                                      display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -603,9 +624,6 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         new_group = self._inventory.get_group(group_name)
         if not new_group:
-            # clear cache of group dict, which is used in magic host variables
-            self._inventory.clear_group_dict_cache()
-
             # create the new group and add it to inventory
             new_group = Group(name=group_name)
             self._inventory.add_group(new_group)
@@ -619,6 +637,10 @@ class StrategyBase:
         if group_name not in host.get_groups():
             new_group.add_host(real_host)
             changed = True
+            
+        if changed:
+            # clear cache of group dict, which is used in magic host variables
+            self._inventory.clear_group_dict_cache()
 
         return changed
 
@@ -650,6 +672,7 @@ class StrategyBase:
                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
+
             ti_copy.vars = temp_vars
 
             block_list = load_list_of_blocks(
@@ -760,6 +783,7 @@ class StrategyBase:
                     # of hosts which included the file to the notified_handlers dict
                     for block in new_blocks:
                         iterator._play.handlers.append(block)
+                        iterator.cache_block_tasks(block)
                         for task in block.block:
                             result = self._do_handler_run(
                                 handler=task,

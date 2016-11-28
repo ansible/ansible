@@ -91,7 +91,8 @@ class GalaxyAPI(object):
             headers = self.__auth_header()
         try:
             display.vvv(url)
-            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method)
+            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method,
+                            timeout=20)
             data = json.load(resp)
         except HTTPError as e:
             res = json.load(e)
@@ -139,17 +140,21 @@ class GalaxyAPI(object):
         return data
 
     @g_connect
-    def create_import_task(self, github_user, github_repo, reference=None):
+    def create_import_task(self, github_user, github_repo, reference=None, role_name=None):
         """
         Post an import request
         """
         url = '%s/imports/' % self.baseurl
-        args = urlencode({
+        args = {
             "github_user": github_user,
             "github_repo": github_repo,
             "github_reference": reference if reference else ""
-        })
-        data = self.__call_galaxy(url, args=args)
+        }
+        if role_name:
+            args['alternate_role_name'] = role_name
+        elif github_repo.startswith('ansible-role'):
+            args['alternate_role_name'] = github_repo[len('ansible-role')+1:]
+        data = self.__call_galaxy(url, args=urlencode(args))
         if data.get('results', None):
             return data['results']
         return data

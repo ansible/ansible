@@ -269,7 +269,7 @@ Random Choices
 ``````````````
 
 The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer (there are modules
-for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
+for those), it can somewhat be used as a poor man's load balancer in a MacGyver like situation::
 
     - debug: msg={{ item }}
       with_random_choice:
@@ -459,7 +459,7 @@ That's how!
 Using register with a loop
 ``````````````````````````
 
-When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
+When using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
 Here is an example of using ``register`` with ``with_items``::
 
@@ -532,7 +532,7 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
 
     # show all the hosts in the current play
     - debug: msg={{ item }}
-      with_items: play_hosts
+      with_items: "{{ play_hosts }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
@@ -585,7 +585,7 @@ When using complex data structures for looping the display might get a bit too "
         - name: server1
           disks: 3gb
           ram: 15Gb
-          netowrk:
+          network:
             nic01: 100Gb
             nic02: 10Gb
             ...
@@ -640,7 +640,7 @@ for `item`::
 Writing Your Own Iterators
 ``````````````````````````
 
-While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read :doc:`developing_plugins` for some starter
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary data structures, you can read :doc:`developing_plugins` for some starter
 information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
 
 .. seealso::

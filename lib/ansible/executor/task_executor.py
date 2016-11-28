@@ -71,6 +71,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection        = None
         self._rslt_q            = rslt_q
+        self._loop_eval_error   = None
 
         self._task.squash()
 
@@ -85,10 +86,13 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
-            # get search path for this task to pass to lookup plugins
-            self._job_vars['ansible_search_path'] = self._task.get_search_path()
+            try:
+                items = self._get_loop_items()
+            except AnsibleUndefinedVariable as e:
+                # save the error raised here for use later
+                items = None
+                self._loop_eval_error = e
 
-            items = self._get_loop_items()
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
@@ -173,6 +177,10 @@ class TaskExecutor:
                 old_vars[k] = self._job_vars[k]
             self._job_vars[k] = play_context_vars[k]
 
+        # get search path for this task to pass to lookup plugins
+        self._job_vars['ansible_search_path'] = self._task.get_search_path()
+
+
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
@@ -212,6 +220,11 @@ class TaskExecutor:
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
+
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
+            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
+
         return items
 
     def _run_loop(self, items):
@@ -397,9 +410,16 @@ class TaskExecutor:
                 display.debug("when evaluation failed, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
+            # loop error takes precedence
+            if self._loop_eval_error is not None:
+                raise self._loop_eval_error
             # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
             if self._task.action not in ['include', 'include_role']:
                 raise
+
+        # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
+        if self._loop_eval_error is not None:
+            raise self._loop_eval_error
 
         # if we ran into an error while setting up the PlayContext, raise it now
         if context_validation_error is not None:
@@ -416,14 +436,10 @@ class TaskExecutor:
             include_file = templar.template(include_file)
             return dict(include=include_file, include_variables=include_variables)
 
-        # TODO: not needed?
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
             include_variables = self._task.args.copy()
-            role = templar.template(self._task._role_name)
-            if not role:
-                return dict(failed=True, msg="No role was specified to include")
-            return dict(include_role=role, include_variables=include_variables)
+            return dict(include_role=self._task, include_variables=include_variables)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
@@ -499,7 +515,7 @@ class TaskExecutor:
                 vars_copy[self._task.register] = wrap_var(result.copy())
 
             if self._task.async > 0:
-                if self._task.poll > 0:
+                if self._task.poll > 0 and not result.get('skipped'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
 
                 # ensure no log is preserved
@@ -682,7 +698,19 @@ class TaskExecutor:
                 if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION
+        # attribute to True), then we use the persistent connection plugion. Otherwise load the
+        # requested connection plugin
+        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False) or conn_type == 'persistent':
+            # if someone did `connection: persistent`, default it to using a
+            # persistent paramiko connection to avoid problems
+            if conn_type == 'persistent':
+                self._play_context.connection = 'paramiko'
+
+            connection = self._shared_loader_obj.connection_loader.get('persistent', self._play_context, self._new_stdin)
+        else:
+            connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 

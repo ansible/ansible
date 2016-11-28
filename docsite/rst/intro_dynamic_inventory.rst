@@ -133,10 +133,22 @@ If you use Boto profiles to manage multiple AWS accounts, you can pass ``--profi
     aws_access_key_id = <prod access key>
     aws_secret_access_key = <prod secret key>
 
-You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``ansible-playbook`` though.
-But you can use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
+You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, although this option is not supported by ``ansible-playbook``.
+You can also use the ``AWS_PROFILE`` variable - for example: ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
 
-Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
+Since each region requires its own API call, if you are only using a small set of regions, you can edit the``ec2.ini`` file and comment out the regions you are not using. 
+
+There are other config options in ``ec2.ini``, including cache control and destination variables. By default, the ``ec2.ini`` file is configured for **all Amazon cloud services**, but you can comment out any features that aren't applicable. For example, if you don't have ``RDS`` or ``elasticache``, you can set them to ``False`` ::
+
+    [ec2]
+    ...
+
+    # To exclude RDS instances from the inventory, uncomment and set to False.
+    rds = False
+
+    # To exclude ElastiCache instances from the inventory, uncomment and set to False.
+    elasticache = False
+    ...
 
 At their heart, inventory files are simply a mapping from some name to a destination address. The default ``ec2.ini`` settings are configured for running Ansible from outside EC2 (from your laptop for example) -- and this is not the most efficient way to manage EC2.
 
@@ -226,7 +238,7 @@ To see the complete list of variables available for an instance, run the script 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
 explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter::
 
-    # ./ec2.py --refresh-cache
+    ./ec2.py --refresh-cache
 
 .. _openstack_example:
 
@@ -295,7 +307,7 @@ After a few moments you should see some JSON output with information about your 
 Refresh the cache
 +++++++++++++++++
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
 
     ./openstack.py --refresh --list
 

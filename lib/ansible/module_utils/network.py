@@ -32,6 +32,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
 from ansible.module_utils.netcli import Cli, Command
 from ansible.module_utils.netcfg import Config
+from ansible.module_utils._text import to_native
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
@@ -105,7 +106,7 @@ class NetworkModule(AnsibleModule):
             self.fail_json(msg='Unknown transport or no default transport specified')
         except (TypeError, NetworkError):
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
         if connect_on_load:
             self.connect()
@@ -147,17 +148,20 @@ class NetworkModule(AnsibleModule):
                 self.connection.connect(self.params)
                 if self.params['authorize']:
                     self.connection.authorize(self.params)
+                self.log('connected to %s:%s using %s' % (self.params['host'],
+                         self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
     def disconnect(self):
         try:
             if self.connected:
                 self.connection.disconnect()
+            self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
 def register_transport(transport, default=False):
     def register(cls):

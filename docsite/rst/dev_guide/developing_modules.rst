@@ -426,13 +426,13 @@ for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specified as ``M(module)``.
 
-Examples (which typically contain colons, quotes, etc.) are difficult
-to format with YAML, so these must be
-written in plain text in an ``EXAMPLES`` string within the module
-like this::
+Examples should be written in YAML format in plain text in an
+``EXAMPLES`` string within the module like this::
 
     EXAMPLES = '''
-    - action: modulename opt1=arg1 opt2=arg2
+    - modulename:
+        opt1: arg1
+        opt2: arg2
     '''
 
 The EXAMPLES section, just like the documentation section, is required in
@@ -522,7 +522,7 @@ your debugging session will start::
         "ping": "debugging_session"
     }
 
-Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILE` to ``1`` tells Ansible to keep the
+Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` tells Ansible to keep the
 remote module files instead of deleting them after the module finishes
 executing.  Giving Ansible the ``-vvv`` optin makes Ansible more verbose.
 That way it prints the file name of the temporary module file for you to see.
@@ -632,8 +632,8 @@ Module checklist
 
 The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
 
-* The shebang should always be ``#!/usr/bin/python``, this allows ansible_python_interpreter to work
-* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
+* The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
+* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).

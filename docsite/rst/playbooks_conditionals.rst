@@ -7,7 +7,7 @@ Conditionals
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), 
 or previous task result.  In some cases, the values of variables may depend on other variables.  
 Further, additional groups can be created to manage hosts based on
-whether the hosts match other criteria.   There are many options to control execution flow in Ansible.
+whether the hosts match other criteria.   There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
 
 Let's dig into what they are.
 

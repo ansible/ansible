@@ -90,7 +90,7 @@ class Connection(ConnectionBase):
         if self._play_context.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            become_output = ''
+            become_output = b''
             while not self.check_become_success(become_output) and not self.check_password_prompt(become_output):
 
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], self._play_context.timeout)
@@ -100,13 +100,13 @@ class Connection(ConnectionBase):
                     chunk = p.stderr.read()
                 else:
                     stdout, stderr = p.communicate()
-                    raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + become_output)
+                    raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
                 if not chunk:
                     stdout, stderr = p.communicate()
-                    raise AnsibleError('privilege output closed while waiting for password prompt:\n' + become_output)
+                    raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
                 become_output += chunk
             if not self.check_become_success(become_output):
-                p.stdin.write(self._play_context.become_pass + '\n')
+                p.stdin.write(to_bytes(self._play_context.become_pass, errors='surrogate_or_strict') + b'\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 

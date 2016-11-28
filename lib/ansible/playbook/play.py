@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.six import string_types
+from ansible import constants as C
 
 from ansible.errors import AnsibleParserError
 
@@ -88,7 +89,7 @@ class Play(Base, Taggable, Become):
     _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _strategy            = FieldAttribute(isa='string', default='linear', always_post_validate=True)
+    _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
 
     # =================================================================================
 
@@ -96,6 +97,7 @@ class Play(Base, Taggable, Become):
         super(Play, self).__init__()
 
         self._included_path = None
+        self._removed_hosts = []
         self.ROLE_CACHE = {}
 
     def __repr__(self):

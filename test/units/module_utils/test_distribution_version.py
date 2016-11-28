@@ -172,6 +172,24 @@ ID_LIKE="suse"
                    'os_family': u'Suse',
                    'distribution_version': u'13.2'}
     },
+    {
+        "platform.dist": [
+            "", 
+            "", 
+            ""
+        ], 
+        "input": {
+            "/etc/os-release": "NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\nPRETTY_NAME=\"openSUSE Tumbleweed\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:tumbleweed:20160917\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+        }, 
+        "name": "openSUSE Tumbleweed 20160917", 
+        "result": {
+            "distribution_release": "NA", 
+            "distribution": "openSUSE Tumbleweed", 
+            "distribution_major_version": "NA", 
+            "os_family": "Suse", 
+            "distribution_version": "20160917"
+        }
+    },
     { # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 11.3",
         "input": {
@@ -383,6 +401,25 @@ VERSION_ID="12.04"
                    'distribution_release': u'precise',
                    "os_family": "Debian",
                    'distribution_version': u'12.04'}
+    },
+    {
+        "platform.dist": [
+            "neon",
+            "16.04",
+            "xenial"
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nVERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n",
+            "/etc/lsb-release": "DISTRIB_ID=neon\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"KDE neon User Edition 5.8\"\n"
+        },
+        "name": "KDE neon 16.04",
+        "result": {
+            "distribution_release": "xenial",
+            "distribution": "Neon",
+            "distribution_major_version": "16",
+            "os_family": "Debian",
+            "distribution_version": "16.04"
+        }
     },
     {
         'name': 'Core OS',

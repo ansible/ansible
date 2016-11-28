@@ -49,7 +49,6 @@ class GalaxyRole(object):
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
 
-
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
@@ -82,6 +81,7 @@ class GalaxyRole(object):
                 # create list of possible paths
                 self.paths = [x for x in galaxy.roles_paths]
                 self.paths = [os.path.join(x, self.name) for x in self.paths]
+
 
     def __eq__(self, other):
         return self.name == other.name
@@ -136,6 +136,8 @@ class GalaxyRole(object):
             version=self.version,
             install_date=datetime.datetime.utcnow().strftime("%c"),
         )
+        if not os.path.exists(os.path.join(self.path, 'meta')):
+            os.makedirs(os.path.join(self.path, 'meta'))
         info_path = os.path.join(self.path, self.META_INSTALL)
         with open(info_path, 'w+') as f:
             try:
@@ -210,6 +212,16 @@ class GalaxyRole(object):
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
+                if role_data.get('role_type') == 'CON':
+                    # Container Enabled
+                    display.warning("%s is a Container Enabled role and should only be installed using "
+                                    "Ansible Container" % self.name)
+
+                if role_data.get('role_type') == 'APP':
+                    # Container Role
+                    display.warning("%s is a Container App role and should only be installed using Ansible "
+                                    "Container" % self.name)
+
                 role_versions = api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
@@ -225,7 +237,7 @@ class GalaxyRole(object):
                     else:
                         self.version = 'master' 
                 elif self.version != 'master':
-                    if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
 
                 tmp_file = self.fetch(role_data)

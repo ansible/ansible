@@ -186,7 +186,7 @@ Now you have a fully-deployed site with web servers, a load balancer, and monito
 orchestration features come into play. While some applications use the term 'orchestration' to mean basic ordering or command-blasting, Ansible
 refers to orchestration as 'conducting machines like an orchestra', and has a pretty sophisticated engine for it.
 
-Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_upgrade.yml``.
+Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_update.yml``.
 
 Looking at the playbook, you can see it is made up of two plays. The first play is very simple and looks like this::
 
@@ -209,12 +209,12 @@ Here is the next part of the update play::
   - name: disable nagios alerts for this host webserver service
     nagios: action=disable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
-    with_items: groups.monitoring
+    with_items: "{{ groups.monitoring }}"
 
   - name: disable the server in haproxy
     shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
-    with_items: groups.lbservers
+    with_items: "{{ groups.lbservers }}"
 
 The ``pre_tasks`` keyword just lets you list tasks to run before the roles are called. This will make more sense in a minute. If you look at the names of these tasks, you can see that we are disabling Nagios alerts and then removing the webserver that we are currently updating from the HAProxy load balancing pool.
 
@@ -235,12 +235,12 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
   - name: Enable the server in haproxy
     shell: echo "enable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
-    with_items: groups.lbservers
+    with_items: "{{ groups.lbservers }}"
 
   - name: re-enable nagios alerts
     nagios: action=enable_alerts host={{ inventory_hostname }} services=webserver
     delegate_to: "{{ item }}"
-    with_items: groups.monitoring
+    with_items: "{{ groups.monitoring }}"
 
 Again, if you were using a Netscaler or F5 or Elastic Load Balancer, you would just substitute in the appropriate modules instead.
 

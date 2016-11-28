@@ -149,15 +149,15 @@ def generate_inv_from_api(enterprise_entity,config):
                 vm_state = False
 
             if not vm_nic == None and vm_state:
-                if not vm_vapp in inventory.keys():
+                if vm_vapp not in inventory:
                     inventory[vm_vapp] = {}
                     inventory[vm_vapp]['children'] = []
                     inventory[vm_vapp]['hosts'] = []
-                if not vm_vdc in inventory.keys():
+                if vm_vdc not in inventory:
                     inventory[vm_vdc] = {}
                     inventory[vm_vdc]['hosts'] = []
                     inventory[vm_vdc]['children'] = []
-                if not vm_template in inventory.keys():
+                if vm_template not in inventory:
                     inventory[vm_template] = {}
                     inventory[vm_template]['children'] = []
                     inventory[vm_template]['hosts'] = []

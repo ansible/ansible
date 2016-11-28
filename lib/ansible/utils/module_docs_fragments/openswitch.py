@@ -41,7 +41,7 @@ options:
   username:
     description:
       - Configures the username to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+        the remote device.  This value is used to authenticate
         either the CLI login or the eAPI authentication depending on which
         transport is used. Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
@@ -56,6 +56,13 @@ options:
         environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
+  timeout:
+    description:
+      - Specifies the timeout in seconds for communicating with the network device
+        for either connecting or sending commands.  If the timeout is
+        exceeded before the operation is completed, the module will error.
+    require: false
+    default: 10
   ssh_keyfile:
     description:
       - Specifies the SSH key to use to authenticate the connection to

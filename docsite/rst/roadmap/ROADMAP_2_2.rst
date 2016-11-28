@@ -9,8 +9,8 @@ Target: September 2016
   - Docker_network: **done**
   - Docker_volume: Not in this release
   - Docker_file: Not in this release.
-  - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_.)
-  - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_)
+  - Openshift:  oso_deployment, oso_route, oso_service, oso_login (...and possibly others. These are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_.): Deferred for later release
+  - Kubernetes: kube_deployment, kube_service, kube_login (...and possibly others. These too are modules being developed to support `ansible-container <https://github.com/ansible/ansible-container>`_): Deferred for later release
 
 - **Extras split from Core** (Team, Community, lead by Jason M and Jimi-c) (Targeting 2.2, could move into 2.3).
     Targeted towards the 2.2 release or shortly after, we are planning on splitting Extras out of the “Ansible Core” project.  That means that modules that are shipped with Ansible by default are **only** the modules in ansibl-modules-core.  Ansible extras will become a separate project, managed by the community standard.  Over the next few months we’re going to have a lot of work to do on getting all of the modules in the right places for this to work.
@@ -105,40 +105,55 @@ Target: September 2016
   - Config option to turn ‘unvaulting’ failures into warnings https://github.com/ansible/ansible/issues/13244
 
 - **Python3** (Toshio)
-    A note here from Jason M: Getting to complete, tested Python 3 is both a critical task and one that has so much work, and so many moving parts that we don’t expect this to be complete by the 2.2 release.  Toshio will lead this overall effort.
+    A note here from Jason M: Getting to complete, tested Python 3 is both
+    a critical task and one that has so much work and so many moving parts
+    that we don’t expect this to be complete by the 2.2 release.  Toshio will
+    lead this overall effort.
+  - Motivation:
+    - Ubuntu LTS (16.04) already ships without python2.  RHEL8 is coming which is also expected to be python3 based.  These considerations make this high priority.
+    - Ansible users are getting restless: https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI
+    - This is probably going to take multiple releases to complete; need to get started now
+  - Baselines:
+    - We're targeting Python-3.5 and above.
 
-  - RHEL8 is coming which has no python2 in default install.  Ubuntu (non-LTS) already ships without python2.  These considerations make this high priority.
-  - Ansible users are getting restless: https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI
-  - This is probably going to take multiple releases to complete.
-  - Side work to do: Figure out best ways to run unit-tests on modules.  Start unit-testing modules.  This is going to become important so we don’t regress python3 or python2.4 support in modules  (Going to largely punt on this for 2.2.  Sounds like Matt Clay is working on building us a testing foundation for the first half of 2.2 development so we’ll re-evaluate towards the middle of the dev cycle).
-  - Goals for 2.2:  
-
-    - Controller-side code can run on python3 [but may not work in practice as targeting localhost presently uses the python that runs /bin/ansible instead of defaulting to /usr/bin/python like any other target]  
-
-      - Bcoca suggests: If we’re running controller under sys.version_info[0] &gt;= 3, try to detect a python2 to set implicit localhost to instead of using sys.executable as workaround for modules not working with py3 yet. 
-      - We’ll have to make some decisions about some of our dependencies 
-
+  - Goals for 2.2:
+    - Tech preview level of support
+    - Controller-side code can run on Python3
+      - Update: Essential features have been shown to work on Python3.
+        Currently all unittests and all but three integration tests are
+        passing on Python3.  Code has not been line-by-line audited so bugs
+        remain but can be treated as bugs, not as massive, invasive new features.
+      - Almost all of our deps have been ported:
         - The base deps in setup.py are ported: ['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto &gt;= 2.6']
-        - Python-keyczar and python-six are additional deps in the rpm spec file.  Six is ported but keyczar is not. (removing keyczar when we drop accelerate for 2.3)  print deprecation in 2.1.
+        - python-six from the rpm spec file has been ported
+        - Python-keyczar from the rpm spec file is not.
+          - Strategy: removing keyczar when we drop accelerate for 2.3. Print deprecation in 2.1.
 
     - Module_utils ported to dual python3/python2(2.4 for much of it, python2.6 for specific things)
-    - Add module_utils files to help port -- copy of the six library (v1.4.1 for python2.4 compat), unicode helpers from ansible.utils.
-    - More unit tests of module_utils
+      - Update: Mostly done.  Also not line-by-line audited but the unittests
+        and integration tests do show that the most use functionality is working.
+    - Add module_utils files to help port
+      - Update: copy of the six library (v1.4.1 for python2.4 compat) and unicode helpers are here (ansible.module_utils._text.{to_bytes,to_text,to_native})
     - A few basic modules ported to python3
-
       - Stat module best example module since it’s essential.
+      - Update: A handful of modules like stat have been line-by-line ported.  They should work reliably with few python3-specific bugs.  All but three integration tests pass which means that most essential modules are working to some extent on Python3.
+        - The three failing tests are: service, hg, and uri.
+          - Note, large swaths of the modules are not tested.  The status of
+            these is unknown
+    - All code should compile under Python3.
+      - lib/ansible/* and all modules now compile under Python-3.5
 
-    - Python3 integration tests -- jimi’s idea was mark some distributions as able to fail and have them run via run_tests.sh with python3 (Fedora-rawhide, latest ubuntu?) 
-    - Some setup.py/packaging tweaks to make it easier for users to test with py2 and py3  (ansible-playbook-py2 and py3 installed in bin?)
+    - Side work to do:
+      - Figure out best ways to run unit-tests on modules.  Start unit-testing modules.  This is going to become important so we don’t regress python3 or python2.4 support in modules  (Going to largely punt on this for 2.2.  Matt Clay is working on building us a testing foundation for the first half of 2.2 development so we’ll re-evaluate towards the middle of the dev cycle).
+      - More unit tests of module_utils
+      - More integration tests.  Currently integration tests are the best way to test ansible modules so we have to rely on those.
 
   - Goals for 2.3:
-
-    - Go for low hanging fruit: modules that are already python2.6+ may be easy to port to python3.
-
-      - Unfortunately, we may also have the least automated testing on these (as a large number of these are cloud modules)
-      - Will need to figure out how to organize “works on python3” into a cohesive set.
-
-    - Increase number of essential modules that have been ported.  Package managers, url fetching, etc.
+      - Bugfixing, bugfixing, bugfixing.  We need community members to test,
+        submit bugs, and add new unit and integration tests.  I'll have some
+        time allocated both to review any Python3 bugfixes that they submit
+        and to work on bug reports without PRs.  The overall goal is to make
+        the things that people do in production with Ansible work on Python 3.
 
 - **Infrastructure Buildout and Changes** (Matt Clay)
     Another note from Jason M: A lot of this work is to ease the burden of CI, CI performance, increase our testing coverage and all of that sort of thing.  It’s not necessarily feature work, but it’s \*\*critical\*\* to growing our product and our ability to get community changes in more securely and quickly.

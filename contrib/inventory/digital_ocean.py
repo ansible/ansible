@@ -58,7 +58,7 @@ When run against a specific host, this script returns the following variables:
  - do_private_ip_address
  - do_kernel - object
  - do_locked
- - de_memory
+ - do_memory
  - do_name
  - do_networks - object
  - do_next_backup_window
@@ -67,7 +67,9 @@ When run against a specific host, this script returns the following variables:
  - do_size_slug
  - do_snapshot_ids - list
  - do_status
+ - do_tags
  - do_vcpus
+ - do_volume_ids
 
 -----
 ```
@@ -260,7 +262,7 @@ or environment variables (DO_API_TOKEN)\n''')
 
         # Private IP Address
         if config.has_option('digital_ocean', 'use_private_network'):
-            self.use_private_network = config.get('digital_ocean', 'use_private_network')
+            self.use_private_network = config.getboolean('digital_ocean', 'use_private_network')
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
@@ -399,6 +401,11 @@ or environment variables (DO_API_TOKEN)\n''')
                         self.inventory[image] = { 'hosts': [ ], 'vars': {} }
                     self.inventory[image]['hosts'].append(dest)
 
+            if droplet['tags']:
+                for tag in droplet['tags']:
+                    if tag not in self.inventory:
+                        self.inventory[tag] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[tag]['hosts'].append(dest)
 
 
     def load_droplet_variables_for_host(self):

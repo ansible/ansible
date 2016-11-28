@@ -20,9 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import MagicMock
 
-from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -37,7 +36,7 @@ class TestPlaybookExecutor(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_playbook_executor__get_serialized_batches(self):
+    def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
             'no_serial.yml': '''
             - hosts: all

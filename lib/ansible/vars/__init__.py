@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 from collections import defaultdict, MutableMapping
 
@@ -252,7 +253,7 @@ class VariableManager:
             # we merge in vars from groups specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_group_vars())
 
-            for group in sorted(host.get_groups(), key=lambda g: g.depth):
+            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
@@ -312,7 +313,10 @@ class VariableManager:
                         except AnsibleParserError as e:
                             raise
                     else:
-                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                        # if include_delegate_to is set to False, we ignore the missing
+                        # vars file here because we're working on a delegated host
+                        if include_delegate_to:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
                         raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
@@ -389,6 +393,7 @@ class VariableManager:
 
         variables = dict()
         variables['playbook_dir'] = loader.get_basedir()
+        variables['ansible_playbook_python'] = sys.executable
 
         if host:
             variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
@@ -410,12 +415,13 @@ class VariableManager:
             variables['inventory_file'] = self._inventory.src()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
-                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
-                #             however this would take work in the templating engine, so for now
-                #             we'll add both so we can give users something transitional to use
-                variables['play_hosts'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_hosts'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
+                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
+
+                #DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
+                #  however this would take work in the templating engine, so for now we'll add both
+                variables['play_hosts'] = variables['ansible_play_batch']
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
@@ -459,7 +465,7 @@ class VariableManager:
 
             templar.set_available_variables(vars_copy)
             delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
-            if not delegated_host_name:
+            if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value

@@ -432,13 +432,13 @@ for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specified as ``M(module)``.
 
-Examples (which typically contain colons, quotes, etc.) are difficult
-to format with YAML, so these must be
-written in plain text in an ``EXAMPLES`` string within the module
-like this::
+Examples should be written in YAML format in plain text in an
+``EXAMPLES`` string within the module like this::
 
     EXAMPLES = '''
-    - action: modulename opt1=arg1 opt2=arg2
+    - modulename:
+        opt1: arg1
+        opt2: arg2
     '''
 
 The EXAMPLES section, just like the documentation section, is required in
@@ -528,7 +528,7 @@ your debugging session will start::
         "ping": "debugging_session"
     }
 
-Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILE` to ``1`` tells Ansible to keep the
+Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` tells Ansible to keep the
 remote module files instead of deleting them after the module finishes
 executing.  Giving Ansible the ``-vvv`` optin makes Ansible more verbose.
 That way it prints the file name of the temporary module file for you to see.

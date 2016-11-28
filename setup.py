@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 import sys
 
@@ -17,7 +15,7 @@ setup(name='ansible',
       version=__version__,
       description='Radically simple IT automation',
       author=__author__,
-      author_email='support@ansible.com',
+      author_email='info@ansible.com',
       url='http://ansible.com/',
       license='GPLv3',
       # Ansible will also make use of a system copy of python-six if installed but use a
@@ -26,7 +24,7 @@ setup(name='ansible',
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
-         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1', 'galaxy/data/*'],
+         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1', 'galaxy/data/*/*.*', 'galaxy/data/*/*/*.*', 'galaxy/data/*/tests/inventory'],
       },
       classifiers=[
           'Development Status :: 5 - Production/Stable',

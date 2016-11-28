@@ -5,6 +5,16 @@ Ansible Changes By Release
 
 ###Major Changes:
 
+###Minor Changes:
+* The version and release facts for OpenBSD hosts were reversed.  This has been
+  changed so that version has the numeric portion and release has the name of
+  the release.
+* removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
+  any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+* Blocks can now have a `name` field, to aid in playbook readability.
+* default strategy is now configurable via ansible.cfg or environment variable.
+* Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
   currently leads to the last one overridding all the previous ones.  This
@@ -18,6 +28,29 @@ Ansible Changes By Release
 
 ###New Modules:
 - archive
+- aws
+  * ec2_lc_facts
+- f5
+  * bigip_gtm_facts
+  * bigip_hostname
+  * bigip_snat_pool
+- free_ipa:
+  * ipa_group
+  * ipa_hbacrule
+  * ipa_hostgroup
+  * ipa_host
+  * ipa_role
+  * ipa_sudocmdgroup
+  * ipa_sudocmd
+  * ipa_sudorule
+  * ipa_user
+- openwrt_init
+- windows:
+  * win_say
+
+####New Callbacks:
+
+* dense: minimal stdout output with fallback to default when verbose
 
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
@@ -32,7 +65,7 @@ Ansible Changes By Release
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or background tasks.
-* Windows `environment:` support for setting module environment vars in play/task. 
+* Windows `environment:` support for setting module environment vars in play/task.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
@@ -51,10 +84,10 @@ Ansible Changes By Release
 * Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
   * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
   * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
-  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not familiar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
   * scp_if_ssh now supports True, False and "smart". "smart" is the default and will retry failed sftp transfers with scp.
 * Network:
-  * Refactored all network modules to remove dulicate code and take advantage of Ansiballz implementation
+  * Refactored all network modules to remove duplicate code and take advantage of Ansiballz implementation
   * All functionality from *_template network modules have been combined into *_config module
   * Network *_command modules not longer allow configuration mode statements
 
@@ -309,7 +342,7 @@ Ansible Changes By Release
     Ansible.  The feature it was intended to support has now been implemented
     without using this.
   * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
-    and was relaced by VaultAES256 less than a week later, now has a deprecation
+    and was replaced by VaultAES256 less than a week later, now has a deprecation
     warning.  **It will be removed in 2.3**.  In the unlikely event that you
     wrote a vault file in that 1 week window and have never modified the file
     since (ansible-vault automatically re-encrypts the file using VaultAES256
@@ -381,20 +414,6 @@ Module fixes:
 * Fixed a bug where single_transaction and quick were not passed into db_dump for the mysql_db module.
 * Fixed a bug where the fetch module was not idempotent when retrieving the target of a symlink.
 * Many minor fixes for bugs in extras modules.
-
-###Deprecations:
-
-* Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
-  This change only impacts custom action plugins using `_fixup_perms`.
-
-###Incompatible Changes:
-
-* Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
-  Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
-  Use `_fixup_perms2` if support for previous releases is not required.
-  Otherwise use `_fixup_perms` with `recursive=False`.
-
-## 2.1.2 "The Song Remains the Same"
 
 ###Deprecations:
 

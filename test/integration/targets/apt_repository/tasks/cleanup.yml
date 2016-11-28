@@ -1,0 +1,17 @@
+---
+# tasks to cleanup a repo and assert it is gone
+
+- name: remove existing ppa
+  apt_repository: repo={{test_ppa_name}} state=absent
+  ignore_errors: true
+
+- name: test that ppa does not exist (expect pass)
+  shell: cat /etc/apt/sources.list /etc/apt/sources.list.d/* | grep "{{test_ppa_spec}}"
+  register: command
+  failed_when: command.rc == 0
+  changed_when: false
+
+# Should this use apt-key, maybe?
+- name: remove ppa key
+  apt_key: id={{test_ppa_key}} state=absent
+  ignore_errors: true

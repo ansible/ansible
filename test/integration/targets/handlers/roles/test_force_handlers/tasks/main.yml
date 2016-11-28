@@ -1,0 +1,26 @@
+---
+
+# We notify for A and B, and hosts B and C fail.
+# When forcing, we expect A and B to run handlers
+# When not forcing, we expect only B to run handlers
+
+- name: notify the handler for host A and B
+  shell: echo
+  notify:
+    - echoing handler
+  when: inventory_hostname == 'A' or inventory_hostname == 'B'
+
+- name: EXPECTED FAILURE fail task for all
+  fail: msg="Fail All"
+  when: fail_all is defined and fail_all
+
+- name: EXPECTED FAILURE fail task for A
+  fail: msg="Fail A"
+  when: inventory_hostname == 'A'
+
+- name: EXPECTED FAILURE fail task for C
+  fail: msg="Fail C"
+  when: inventory_hostname == 'C'
+
+- name: echo after A and C have failed
+  command: echo CALLED_TASK_{{ inventory_hostname }}

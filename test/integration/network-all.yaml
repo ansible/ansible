@@ -1,0 +1,11 @@
+---
+- { include: asa.yaml }
+- { include: eos.yaml }
+- { include: ios.yaml }
+- { include: iosxr.yaml }
+- { include: nxos.yaml }
+- { include: junos.yaml }
+- { include: ops.yaml }
+- { include: dellos10.yaml }
+- { include: dellos9.yaml }
+- { include: dellos6.yaml }

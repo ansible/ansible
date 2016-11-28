@@ -35,6 +35,7 @@ from ansible.module_utils.network import add_argument, register_transport, to_li
 from ansible.module_utils.netcli import Command
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils._text import to_native
 
 EAPI_FORMATS = ['json', 'text']
 
@@ -50,7 +51,7 @@ class EosConfigMixin(object):
         cmds = ['configure terminal']
         cmds.extend(to_list(commands))
         cmds.append('end')
-        responses = self.execute(commands)
+        responses = self.execute(cmds)
         return responses[1:-1]
 
     def get_config(self, include_defaults=False, **kwargs):
@@ -60,6 +61,12 @@ class EosConfigMixin(object):
         return self.execute([cmd])[0]
 
     def load_config(self, config, commit=False, replace=False):
+        if self.supports_sessions():
+            return self.load_config_session(config, commit, replace)
+        else:
+            return self.configure(config)
+
+    def load_config_session(self, config, commit=False, replace=False):
         """ Loads the configuration into the remote device
         """
         session = 'ansible_%s' % int(time.time())
@@ -82,7 +89,7 @@ class EosConfigMixin(object):
                 self.execute(['no configure session %s' % session])
         except NetworkError:
             exc = get_exception()
-            if 'timeout trying to send command' in exc.message:
+            if 'timeout trying to send command' in to_native(exc):
                 # try to get control back and get out of config mode
                 if isinstance(self, Cli):
                     self.execute(['\x03', 'end'])
@@ -116,6 +123,17 @@ class EosConfigMixin(object):
         commands = ['configure session %s' % session, 'abort']
         self.execute(commands)
 
+    def supports_sessions(self):
+        try:
+            if isinstance(self, Eapi):
+                self.execute(['show configuration sessions'], output='text')
+            else:
+                self.execute('show configuration sessions')
+            return True
+        except NetworkError:
+            return False
+
+
 
 class Eapi(EosConfigMixin):
 
@@ -148,6 +166,7 @@ class Eapi(EosConfigMixin):
         self.url_args.params['url_username'] = params['username']
         self.url_args.params['url_password'] = params['password']
         self.url_args.params['validate_certs'] = params['validate_certs']
+        self.url_args.params['timeout'] = params['timeout']
 
         if params['use_ssl']:
             proto = 'https'
@@ -187,10 +206,11 @@ class Eapi(EosConfigMixin):
         data = json.dumps(body)
 
         headers = {'Content-Type': 'application/json-rpc'}
+        timeout = self.url_args.params['timeout']
 
         response, headers = fetch_url(
             self.url_args, self.url, data=data, headers=headers,
-            method='POST'
+            method='POST', timeout=timeout
         )
 
         if headers['status'] != 200:

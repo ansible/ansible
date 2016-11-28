@@ -98,5 +98,3 @@
   sudo: true
   lineinfile: "dest=/etc/sudoers regexp='^Defaults[ ,       ]*requiretty'  line='#Defaults    requiretty'"
   when: ansible_os_family == 'RedHat'
-
-

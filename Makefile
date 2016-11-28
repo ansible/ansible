@@ -1,4 +1,3 @@
-#!/usr/bin/make
 # WARN: gmake syntax
 ########################################################
 # Makefile for Ansible
@@ -77,6 +76,12 @@ DEB_PPA ?= ppa
 # Choose the desired Ubuntu release: lucid precise saucy trusty
 DEB_DIST ?= unstable
 
+# pbuilder parameters
+PBUILDER_ARCH ?= amd64
+PBUILDER_CACHE_DIR = /var/cache/pbuilder
+PBUILDER_BIN ?= pbuilder
+PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_ARCH) --debbuildopts -b
+
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
@@ -100,10 +105,10 @@ NOSETESTS3 ?= nosetests-3.5
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
 
 tests-py3:
-	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase
+	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
 
 integration:
 	test/utils/shippable/integration.sh
@@ -230,7 +235,23 @@ debian: sdist
         sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
-deb: debian
+deb: deb-src
+	@for DIST in $(DEB_DIST) ; do \
+	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
+	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
+	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
+	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+	@echo "#############################################"
+
+# Build package outside of pbuilder, with locally installed dependencies.
+# Install BuildRequires as noted in packaging/debian/control.
+local_deb: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
 	done
