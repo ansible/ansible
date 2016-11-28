@@ -1995,12 +1995,14 @@ class AnsibleModule(object):
                         try:
                             os.rename(b_tmp_dest_name, b_dest)
                         except (shutil.Error, OSError, IOError):
+                            e = get_exception()
                             if unsafe_writes:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest, get_exception())
+                                self._unsafe_writes(b_tmp_dest_name, b_dest, e)
                             else:
-                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
                     except (shutil.Error, OSError, IOError):
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+                        e = get_exception()
+                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
