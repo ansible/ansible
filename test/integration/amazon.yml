@@ -14,6 +14,7 @@
     - { role: test_ec2_asg, tags: test_ec2_asg }
     - { role: test_ec2_vpc_nat_gateway, tags: test_ec2_vpc_nat_gateway }
     - { role: test_ecs_ecr, tags: test_ecs_ecr }
+    - { role: test_rds, tags: test_rds }
 
 # complex test for ec2_elb, split up over multiple plays
 # since there is a setup component as well as the test which
