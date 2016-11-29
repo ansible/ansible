@@ -819,7 +819,7 @@ class StrategyBase:
             display.debug("User ran task")
             ret = True
         elif resp.lower() in ['c', 'continue']:
-            display.debug("User ran task and cancled step mode")
+            display.debug("User ran task and canceled step mode")
             self._step = False
             ret = True
         else:
