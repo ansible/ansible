@@ -20,6 +20,38 @@
 # -------------------------------------------------------------
 # Setup steps
 
+
+- name: copy an existing file in place with comments
+  copy: src=existing_authorized_keys dest="{{output_dir|expanduser}}/authorized_keys"
+
+- name: add multiple keys different order
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order_2 }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{output_dir|expanduser}}/authorized_keys"
+  register: multiple_keys_existing
+
+- name: assert that the key was added and comments and ordering preserved
+  assert:
+    that:
+    - 'result.changed == True'
+    - '"# I like candy" in multiple_keys_existing.stdout'
+    - '"# I like candy" in multiple_keys_existing.stdout_lines[0]'
+    - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout'
+    # The specific index is a little fragile, but I want to verify the line shows up
+    # as the 3rd line in the new entries after the existing entries and comments are preserved
+    - '"ssh-rsa DATA_BASIC 1@testing" in multiple_keys_existing.stdout_lines[7]'
+
+# start afresh
+
+- name: remove file foo.txt
+  file: path="{{output_dir|expanduser}}/authorized_keys" state=absent
+
 - name: touch the authorized_keys file
   file: dest="{{output_dir}}/authorized_keys" state=touch
   register: result
@@ -29,6 +61,100 @@
     that:
     - 'result.changed == True'
     - 'result.state == "file"'
+
+- name: add multiple keys
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_base }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == multiple_key_base'
+    - 'result.key_options == None'
+
+- name: add multiple keys different order
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_different_order }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == multiple_key_different_order'
+    - 'result.key_options == None'
+
+- name: add multiple keys exclusive
+  authorized_key:
+    user: root
+    key: "{{ multiple_key_exclusive }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+    exclusive: true
+  register: result
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == True'
+    - 'result.key == multiple_key_exclusive'
+    - 'result.key_options == None'
+
+- name: add multiple keys in different calls
+  authorized_key:
+    user: root
+    key: "ecdsa-sha2-nistp521 ECDSA_DATA 4@testing"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: add multiple keys in different calls
+  authorized_key:
+    user: root
+    key: "ssh-rsa DATA_BASIC 1@testing"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+  register: result
+
+- name: get the file content
+  shell: cat "{{output_dir|expanduser}}/authorized_keys"
+  register: multiple_keys_at_a_time
+
+- name: assert that the key was added
+  assert:
+    that:
+    - 'result.changed == false'
+    - 'multiple_keys_at_a_time.stdout  == multiple_key_exclusive.strip()'
+
+- name: add multiple keys comment
+  authorized_key:
+    user: root
+    key: "{{ multiple_keys_comments }}"
+    state: present
+    path: "{{output_dir|expanduser}}/authorized_keys"
+    exclusive: true
+  register: result
+
+- name: get the file content
+  shell: cat "{{output_dir|expanduser}}/authorized_keys"
+  register: multiple_keys_comments
+
+- name: assert that the keys exist and comment only lines were not added
+  assert:
+    that:
+    - 'result.changed == False'
+    - 'multiple_keys_comments.stdout == multiple_key_exclusive.strip()'
+    - 'result.key_options == None'
+
+
 
 # -------------------------------------------------------------
 # basic ssh-dss key
