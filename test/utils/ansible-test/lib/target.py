@@ -87,11 +87,17 @@ def walk_external_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, errors=True), key=lambda t: t.name)
-
     if requires:
-        require_targets = set(filter_targets(targets, requires, errors=True))
-        include_targets = [target for target in include_targets if target in require_targets]
+        include_targets = filter_targets(targets, includes, errors=True, directories=False)
+        require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
+        includes = [target.name for target in include_targets if target in require_targets]
+
+        if includes:
+            include_targets = sorted(filter_targets(targets, includes, errors=True), key=lambda t: t.name)
+        else:
+            include_targets = tuple()
+    else:
+        include_targets = sorted(filter_targets(targets, includes, errors=True), key=lambda t: t.name)
 
     if excludes:
         exclude_targets = sorted(filter_targets(targets, excludes, errors=True), key=lambda t: t.name)
