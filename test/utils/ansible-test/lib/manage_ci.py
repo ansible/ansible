@@ -42,8 +42,10 @@ class ManageWindowsCI(object):
             'ansible_winrm_server_cert_validation=ignore',
         ]
 
+        name = 'windows_%s' % self.core_ci.version
+
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', 'win_ping', '-i', 'windows,', 'windows', '-e', ' '.join(extra_vars)]
+        cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
         for _ in range(1, 60):
             try:
