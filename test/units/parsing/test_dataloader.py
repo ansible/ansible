@@ -252,12 +252,11 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def test_read_vault_password_file(self):
         self._loader.set_vault_password('wrong password')
         self._loader.read_vault_password_file(self.vault_password_path)
-        self.assertEquals(self._loader._vault_password, 'ansible')
+        self.assertEquals(self._loader._vault_password, b'ansible')
 
     def test_read_vault_password_file_doesnt_exist(self):
         self.assertRaises(AnsibleFileNotFound, self._loader.read_vault_password_file, self.vault_password_bogus_path)
 
     def test_read_vault_password_script(self):
         ret = self._loader.read_vault_password_file(self.vault_password_script_path)
-        self.assertEquals(self._loader._vault_password, 'ansible')
-        print(ret)
+        self.assertEquals(self._loader._vault_password, b'ansible')
