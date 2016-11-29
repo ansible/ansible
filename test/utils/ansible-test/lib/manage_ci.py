@@ -64,7 +64,7 @@ class ManagePosixCI(object):
         :type core_ci: AnsibleCoreCI
         """
         self.core_ci = core_ci
-        self.ssh_args = ['-o', 'StrictHostKeyChecking=no', '-i', self.core_ci.ssh_key.key]
+        self.ssh_args = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no', '-i', self.core_ci.ssh_key.key]
 
         if self.core_ci.platform == 'freebsd':
             self.become = ['su', '-l', 'root', '-c']
