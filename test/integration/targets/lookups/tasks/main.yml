@@ -268,3 +268,14 @@
         - product.results[6]['item'] == ["C", "1"]
         - product.results[7]['item'] == ["C", "2"]
         - product.results[8]['item'] == ["C", "3"]
+
+# Template lookups
+
+# ref #18526
+- name: Test that we have a proper jinja search path in template lookup
+  set_fact:
+    hello_world: "{{ lookup('template', 'hello.txt') }}"
+
+- assert:
+    that:
+      - "hello_world|trim == 'Hello world!'"
