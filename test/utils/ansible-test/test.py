@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
-"""Demo script for proposed ansible-test features."""
+"""Test runner for all Ansible tests."""
 
 from __future__ import absolute_import, print_function
 
