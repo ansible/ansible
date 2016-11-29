@@ -302,7 +302,7 @@ def emerge_packages(module, packages):
         'usepkg': '--usepkg',
         'keepgoing': '--keep-going',
     }
-    for flag, arg in emerge_flags.iteritems():
+    for flag, arg in emerge_flags.items():
         if p[flag]:
             args.append(arg)
 
@@ -314,7 +314,7 @@ def emerge_packages(module, packages):
         'loadavg': '--load-average ',
     }
 
-    for flag, arg in emerge_flags.iteritems():
+    for flag, arg in emerge_flags.items():
         if p[flag] is not None:
             args.append(arg + str(p[flag]))
 
