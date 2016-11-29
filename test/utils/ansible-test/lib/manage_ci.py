@@ -69,7 +69,7 @@ class ManagePosixCI(object):
         if self.core_ci.platform == 'freebsd':
             self.become = ['su', '-l', 'root', '-c']
         elif self.core_ci.platform == 'osx':
-            self.become = ['sudo', '-i', 'PATH=/usr/local/bin:$PATH']
+            self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
 
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""
