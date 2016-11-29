@@ -49,7 +49,7 @@ inventory="inventory.network" # FIXME This file will updating to reference the D
 # FIXME Describe directory structure here
 basedir="/tmp/run-network-test"
 log_root="/var/www/html/network-tests/logs"
-DEBUG_LOGFILE="${basedir}/${PROG}-$(date '+%s').log"
+#DEBUG_LOGFILE="${basedir}/${PROG}-$(date '+%s').log"
 
 main() {
     validate_tools
