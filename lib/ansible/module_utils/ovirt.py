@@ -51,7 +51,7 @@ def check_sdk(module):
         )
 
 
-def get_dict_of_struct(struct):
+def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=None):
     """
     Convert SDK Struct type into dictionary.
     """
@@ -64,18 +64,32 @@ def get_dict_of_struct(struct):
     res = {}
     if struct is not None:
         for key, value in struct.__dict__.items():
+            nested = False
             key = remove_underscore(key)
             if value is None:
                 continue
+
             elif isinstance(value, sdk.Struct):
                 res[key] = get_dict_of_struct(value)
             elif isinstance(value, Enum) or isinstance(value, datetime):
                 res[key] = str(value)
-            elif isinstance(value, list):
+            elif isinstance(value, list) or isinstance(value, sdk.List):
+                if isinstance(value, sdk.List) and fetch_nested and value.href:
+                    value = connection.follow_link(value)
+                    nested = True
+
                 res[key] = []
                 for i in value:
                     if isinstance(i, sdk.Struct):
-                        res[key].append(get_dict_of_struct(i))
+                        if not nested:
+                            res[key].append(get_dict_of_struct(i))
+                        else:
+                            nested_obj = dict(
+                                (attr, getattr(i, attr))
+                                for attr in attributes if getattr(i, attr, None)
+                            )
+                            nested_obj['id'] = getattr(i, 'id', None),
+                            res[key].append(nested_obj)
                     elif isinstance(i, Enum):
                         res[key].append(str(i))
                     else:
