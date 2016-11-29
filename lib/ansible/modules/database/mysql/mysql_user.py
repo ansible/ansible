@@ -346,7 +346,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                     else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED BY %s", (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
                     changed = True
 
         # Handle privileges
