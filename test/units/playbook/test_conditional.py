@@ -1,12 +1,12 @@
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 from units.mock.loader import DictDataLoader
-from units.mock.path import mock_unfrackpath_noop
 
 from ansible.plugins.strategy import SharedPluginLoaderObj
-from ansible.playbook import conditional
 from ansible.template import Templar
+from ansible import errors
+
+from ansible.playbook import conditional
 
 
 class TestConditional(unittest.TestCase):
@@ -35,8 +35,8 @@ class TestConditional(unittest.TestCase):
 
     def test_undefined(self):
         when = [u"{{ some_undefined_thing }}"]
-        ret = self._eval_con(when, {})
-        self.assertFalse(ret)
+        self.assertRaisesRegexp(errors.AnsibleError, "The conditional check '{{ some_undefined_thing }}' failed",
+                                self._eval_con, when, {})
 
     def test_defined(self):
         variables = {'some_defined_thing': True}
@@ -80,27 +80,30 @@ class TestConditional(unittest.TestCase):
                                                                  }}
 
         when = [u"some_defined_dict_with_undefined_values is defined"]
-        ret = self._eval_con(when, variables)
-        # FIXME/TODO: Is this correct? should this be false
-        self.assertFalse(ret)
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
+                                self._eval_con,
+                                when, variables)
 
-#    def test_nested_hostvars_undefined_values(self):
-#        variables = {'dict_value': 1,
-#                     'hostvars': {'host1': {'key1': 'value1',
-#                                            'key2': '{{ dict_value }}'},
-#                                  'host2': '{{ dict_value }}',
-#                                  'host3': '{{ undefined_dict_value }}',
-#                                  # no host4
-#                                  },
-#                     'some_dict': {'some_dict_key1': '{{ hostvars["host3"] }}'}
-#                     }
+    def test_nested_hostvars_undefined_values(self):
+        variables = {'dict_value': 1,
+                     'hostvars': {'host1': {'key1': 'value1',
+                                            'key2': '{{ dict_value }}'},
+                                  'host2': '{{ dict_value }}',
+                                  'host3': '{{ undefined_dict_value }}',
+                                  # no host4
+                                  },
+                     'some_dict': {'some_dict_key1': '{{ hostvars["host3"] }}'}
+                     }
 
-#        #when = [u"hostvars['host1'] is defined",
-#        #        u'hostvars["host1"] is defined',
-#        when = [u"some_dict.some_dict_key1 == hostvars['host3']"]
-#        ret = self._eval_con(when, variables)
-#        # FIXME/TODO: Is this correct? should this be false
-#        self.assertFalse(ret)
+        when = [u"some_dict.some_dict_key1 == hostvars['host3']"]
+        #self._eval_con(when, variables)
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                "The conditional check 'some_dict.some_dict_key1 == hostvars\['host3'\]' failed",
+                                #"The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed",
+                                #"The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed.",
+                                self._eval_con,
+                                when, variables)
 
     def test_dict_undefined_values_bare(self):
         variables = {'dict_value': 1,
@@ -111,8 +114,10 @@ class TestConditional(unittest.TestCase):
 
         # raises an exception when a non-string conditional is passed to extract_defined_undefined()
         when = [u"some_defined_dict_with_undefined_values"]
-        ret = self._eval_con(when, variables)
-        self.assertFalse(ret)
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                "The conditional check 'some_defined_dict_with_undefined_values' failed.",
+                                self._eval_con,
+                                when, variables)
 
     def test_dict_undefined_values_is_defined(self):
         variables = {'dict_value': 1,
@@ -122,9 +127,10 @@ class TestConditional(unittest.TestCase):
                                                                  }}
 
         when = [u"some_defined_dict_with_undefined_values is defined"]
-        ret = self._eval_con(when, variables)
-        # FIXME/TODO: Is this correct? should this be false
-        self.assertFalse(ret)
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
+                                self._eval_con,
+                                when, variables)
 
     def test_is_defined(self):
         variables = {'some_defined_thing': True}
@@ -162,7 +168,6 @@ class TestConditional(unittest.TestCase):
         ret = self._eval_con(when, variables)
         self.assertTrue(ret)
 
-
     def test_is_hostvars_quotes_is_defined(self):
         variables = {'hostvars': {'some_host': {}},
                      'compare_targets_single': "hostvars['some_host']",
@@ -188,8 +193,10 @@ class TestConditional(unittest.TestCase):
                 u'hostvars["some_host"] is defined',
                 u"{{ compare_targets.triple }} is defined",
                 u"{{ compare_targets.quadruple }} is defined"]
-        ret = self._eval_con(when, variables)
-        self.assertFalse(ret)
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                "The conditional check '{{ compare_targets.triple }} is defined' failed",
+                                self._eval_con,
+                                when, variables)
 
     def test_is_hostvars_host_is_defined(self):
         variables = {'hostvars': {'some_host': {}, }}
