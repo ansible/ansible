@@ -123,6 +123,14 @@ class ActionModule(ActionBase):
                     searchpath[:0] = C.DEFAULT_ROLES_PATH
                 searchpath.insert(1, self._task._role._role_path)
 
+            # add same with 'templates' if missing
+            b = []
+            for path in searchpath:
+                if not (path.endswith('templates/') or path.endswith('templates')):
+                    b.add(os.path.join(path, 'templates'))
+                b.add(path)
+            searchpath = b
+
             self._templar.environment.loader.searchpath = searchpath
 
             old_vars = self._templar._available_variables
