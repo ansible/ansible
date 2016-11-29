@@ -64,7 +64,7 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = filter_targets(targets, includes, errors=True, directories=False)
+    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda t: t.name)
 
     if requires:
         require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
