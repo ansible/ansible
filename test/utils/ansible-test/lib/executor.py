@@ -257,6 +257,14 @@ def windows_inventory(remotes):
     [windows:vars]
     ansible_connection=winrm
     ansible_winrm_server_cert_validation=ignore
+
+    # support winrm connection tests (temporary solution, does not support testing enable/disable of pipelining)
+    [winrm:children]
+    windows
+
+    # support winrm binary module tests (temporary solution)
+    [testhost_binary_modules:children]
+    windows
     """
 
     template = textwrap.dedent(template)
