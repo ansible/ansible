@@ -279,6 +279,23 @@ def wait(
             time.sleep(float(poll_interval))
 
 
+def ovirt_facts_full_argument_spec(**kwargs):
+    """
+    Extend parameters of facts module with parameters which are common to all
+    oVirt facts modules.
+
+    :param kwargs: kwargs to be extended
+    :return: extended dictionary with common parameters
+    """
+    spec = dict(
+        auth=dict(required=True, type='dict'),
+        fetch_nested=dict(default=False, type='bool'),
+        nested_attributes=dict(type='list'),
+    )
+    spec.update(kwargs)
+    return spec
+
+
 def ovirt_full_argument_spec(**kwargs):
     """
     Extend parameters of module with parameters which are common to all oVirt modules.
@@ -291,6 +308,8 @@ def ovirt_full_argument_spec(**kwargs):
         timeout=dict(default=180, type='int'),
         wait=dict(default=True, type='bool'),
         poll_interval=dict(default=3, type='int'),
+        fetch_nested=dict(default=False, type='bool'),
+        nested_attributes=dict(type='list'),
     )
     spec.update(kwargs)
     return spec
