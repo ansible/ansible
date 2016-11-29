@@ -9,7 +9,7 @@ target="windows/ci/group${args[1]}/"
 
 ansible-test windows-integration --explain 2>&1 | grep ' windows-integration: .* (targeted)$' > /tmp/windows.txt
 
-if [ ! -s /tmp/windows.txt ]; then
+if [ -s /tmp/windows.txt ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
     cat /tmp/windows.txt
     echo "Running Windows integration tests for multiple versions concurrently."
