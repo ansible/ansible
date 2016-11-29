@@ -225,7 +225,7 @@ def windows_run(args, version):
     :type version: str
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage)
     core_ci.start()
     core_ci.wait()
 
@@ -1097,6 +1097,8 @@ class EnvironmentConfig(CommonConfig):
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else None)  # type: str | None
+
+        self.remote_stage = args.remote_stage  # type: str
 
         self.requirements = args.requirements  # type: bool
 

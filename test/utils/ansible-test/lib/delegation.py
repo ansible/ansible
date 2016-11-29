@@ -227,7 +227,7 @@ def delegate_remote(args, exclude, require):
     platform = parts[0]
     version = parts[1]
 
-    core_ci = AnsibleCoreCI(args, platform, version)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
 
     try:
         core_ci.start()

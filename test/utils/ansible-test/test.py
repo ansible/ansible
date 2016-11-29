@@ -391,6 +391,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
         environments.set_defaults(
             docker=None,
             remote=None,
+            remote_stage=None,
         )
 
         return
@@ -406,6 +407,14 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               metavar='PLATFORM',
                               default=None,
                               help='run from a remote instance')
+
+    remote = parser.add_argument_group(title='remote arguments')
+
+    remote.add_argument('--remote-stage',
+                        metavar='STAGE',
+                        help='remote stage to use: %(choices)s',
+                        choices=['prod', 'dev'],
+                        default='prod')
 
 
 def add_extra_docker_options(parser):
