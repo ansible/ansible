@@ -161,6 +161,10 @@ def parse_args():
                              metavar='TARGET',
                              help='start at the specified target').completer = complete_target
 
+    integration.add_argument('--start-at-task',
+                             metavar='TASK',
+                             help='start at the specified task')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')

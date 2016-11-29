@@ -335,6 +335,8 @@ def command_integration_filtered(args, targets):
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
 
+    start_at_task = args.start_at_task
+
     for target in targets_iter:
         if args.start_at and not found:
             found = target.name == args.start_at
@@ -353,7 +355,8 @@ def command_integration_filtered(args, targets):
                     if target.script_path:
                         command_integration_script(args, target)
                     else:
-                        command_integration_role(args, target)
+                        command_integration_role(args, target, start_at_task)
+                        start_at_task = None
                     break
                 except SubprocessError:
                     if not tries:
@@ -409,10 +412,11 @@ def command_integration_script(args, target):
     intercept_command(args, cmd, env=env, cwd=cwd)
 
 
-def command_integration_role(args, target):
+def command_integration_role(args, target, start_at_task):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
+    :type start_at_task: str
     """
     display.info('Running %s integration test role' % target.name)
 
@@ -447,6 +451,9 @@ def command_integration_role(args, target):
         display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
         cmd = ['ansible-playbook', filename, '-i', inventory, '-e', '@%s' % vars_file]
+
+        if start_at_task:
+            cmd += ['--start-at-task', start_at_task]
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
@@ -1157,6 +1164,7 @@ class IntegrationConfig(TestConfig):
         super(IntegrationConfig, self).__init__(args, command)
 
         self.start_at = args.start_at  # type: str
+        self.start_at_task = args.start_at_task  # type: str
         self.allow_destructive = args.allow_destructive if 'allow_destructive' in args else False  # type: bool
         self.retry_on_error = args.retry_on_error  # type: bool
 
