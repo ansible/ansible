@@ -635,6 +635,7 @@ class AnsibleModule(object):
         see library/* for examples
         '''
 
+        self._name = os.path.basename(__file__) #initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
