@@ -22,6 +22,7 @@ __metaclass__ = type
 
 import ast
 import base64
+import datetime
 import imp
 import json
 import os
@@ -317,7 +318,12 @@ if __name__ == '__main__':
             # py3: zipped_mod will be text, py2: it's bytes.  Need bytes at the end
             sitecustomize = u'import sys\\nsys.path.insert(0,"%%s")\\n' %%  zipped_mod
             sitecustomize = sitecustomize.encode('utf-8')
-            z.writestr('sitecustomize.py', sitecustomize)
+            # Use a ZipInfo to work around zipfile limitation on hosts with
+            # clocks set to a pre-1980 year (for instance, Raspberry Pi)
+            zinfo = zipfile.ZipInfo()
+            zinfo.filename = 'sitecustomize.py'
+            zinfo.date_time = ( %(year)i, %(month)i, %(day)i, %(hour)i, %(minute)i, %(second)i)
+            z.writestr(zinfo, sitecustomize)
             z.close()
 
             exitcode = invoke_module(module, zipped_mod, ANSIBALLZ_PARAMS)
@@ -680,6 +686,7 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
+        now=datetime.datetime.utcnow()
         output.write(to_bytes(ACTIVE_ANSIBALLZ_TEMPLATE % dict(
             zipdata=zipdata,
             ansible_module=module_name,
@@ -687,6 +694,12 @@ def _find_snippet_imports(module_name, module_data, module_path, module_args, ta
             shebang=shebang,
             interpreter=interpreter,
             coding=ENCODING_STRING,
+            year=now.year,
+            month=now.month,
+            day=now.day,
+            hour=now.hour,
+            minute=now.minute,
+            second=now.second,
         )))
         module_data = output.getvalue()
 
