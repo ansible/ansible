@@ -9,6 +9,9 @@ import os
 tarfile.pwd = None
 tarfile.grp = None
 
+# To reduce archive time and size, ignore non-versioned files which are large or numerous.
+# Also ignore miscellaneous git related files since the .git directory is ignored.
+
 IGNORE_DIRS = (
     '.tox',
     '.git',
