@@ -147,6 +147,9 @@ Note that we do keep Ansible to a particular aesthetic, so if you are unclear ab
 is a good fit or not, having the discussion on the development list is often a lot easier than having
 to modify a pull request later.
 
+New module developers should read through `http://docs.ansible.com/ansible/dev_guide/developing_modules.html`_ for helpful pointers 
+and information about running adhoc tests `http://docs.ansible.com/ansible/dev_guide/developing_modules.html#testing-modules`_.
+
 When submitting patches, be sure to run the unit tests first ``make tests`` and always use, these are the same basic
 tests that will automatically run on Shippable when creating the PR. There are more in depth tests in the ``tests/integration``
 directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are set up
