@@ -47,6 +47,11 @@ def categorize_changes(paths, verbose_command=None):
 
             if verbose_command:
                 result = '%s: %s' % (verbose_command, tests.get(verbose_command) or 'none')
+
+                # identify targeted integration tests (those which only target a single integration command)
+                if 'integration' in verbose_command:
+                    if not any('integration' in command for command in tests.keys() if command != verbose_command):
+                        result += ' (targeted)'
             else:
                 result = '%s' % tests
 
