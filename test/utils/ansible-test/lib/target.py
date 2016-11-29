@@ -322,6 +322,9 @@ class CompletionTarget(object):
     def __lt__(self, other):
         return self.name.__lt__(other.name)
 
+    def __gt__(self, other):
+        return self.name.__gt__(other.name)
+
     def __hash__(self):
         return hash(self.__repr__())
 
