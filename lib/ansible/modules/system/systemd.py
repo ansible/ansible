@@ -384,7 +384,10 @@ def main():
                 if result['status']['ActiveState'] == 'active':
                     action = 'stop'
             else:
-                action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
+                if result['status']['ActiveState'] != 'active':
+                    action = 'start'
+                else:
+                    action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
                 result['state'] = 'started'
 
             if action:
