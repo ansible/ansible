@@ -411,7 +411,6 @@ class JenkinsPlugin(object):
 
     def install(self):
         changed = False
-
         plugin_file = (
             '%s/plugins/%s.jpi' % (
                 self.params['jenkins_home'],
@@ -421,7 +420,7 @@ class JenkinsPlugin(object):
             self.params['jenkins_home'],
             self.params['name'])
         if os.path.isfile(hpi_file):
-            os.rename(hpi_file, hpi_file+'.bak')
+            os.remove(hpi_file)
 
         if not self.is_installed and self.params['version'] is None:
             if not self.module.check_mode:
@@ -650,10 +649,8 @@ class JenkinsPlugin(object):
         return r
 
     def _write_file(self, f, data):
-
         # Store the plugin into a temp file and then move it
         tmp_f_tuple, tmp_f = tempfile.mkstemp()
-
 
         try:
             fd = open(tmp_f, 'wb')
