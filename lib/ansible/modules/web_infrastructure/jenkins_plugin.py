@@ -416,12 +416,6 @@ class JenkinsPlugin(object):
                 self.params['jenkins_home'],
                 self.params['name']))
 
-        hpi_file = '%s/plugins/%s.hpi' % (
-            self.params['jenkins_home'],
-            self.params['name'])
-        if os.path.isfile(hpi_file):
-            os.remove(hpi_file)
-
         if not self.is_installed and self.params['version'] is None:
             if not self.module.check_mode:
                 # Install the plugin (with dependencies)
@@ -447,6 +441,12 @@ class JenkinsPlugin(object):
                     msg_status="Cannot install plugin.",
                     msg_exception="Plugin installation has failed.",
                     data=data)
+
+                hpi_file = '%s/plugins/%s.hpi' % (
+                    self.params['jenkins_home'],
+                    self.params['name'])
+                if os.path.isfile(hpi_file):
+                    os.remove(hpi_file)
 
             changed = True
         else:
