@@ -31,6 +31,7 @@
 - name: test slurping a large binary file with path param and backslashes
   slurp: path="C:\Windows\explorer.exe"
   register: slurp_path_backslashes
+  no_log: true
 
 - name: check slurp result with path param and backslashes
   assert:

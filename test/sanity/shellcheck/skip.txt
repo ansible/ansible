@@ -1,0 +1,1 @@
+test/sanity/code-smell/boilerplate.sh
