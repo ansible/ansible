@@ -1,0 +1,28 @@
+# (c) 2016, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# FIXME: Unfortunately ansible_selinux could be a boolean or a dictionary !
+- debug:
+    msg: SELinux is disabled
+  when: ansible_selinux is defined and ansible_selinux == False
+
+- debug:
+    msg: SELinux is {{ ansible_selinux.status }}
+  when: ansible_selinux is defined and ansible_selinux != False
+
+- include: sefcontext.yml
+  when: ansible_selinux is defined and ansible_selinux != False and ansible_selinux.status == 'enabled'
