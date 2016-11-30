@@ -785,16 +785,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 
 def maybe_add_ssl_handler(url, validate_certs):
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] == 'https' and validate_certs:
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.get('scheme') == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
         # do the cert validation
-        netloc = parsed[1]
+        netloc = parsed.get('netloc')
         if '@' in netloc:
             netloc = netloc.split('@', 1)[1]
         if ':' in netloc:
@@ -823,10 +821,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if ssl_handler:
         handlers.append(ssl_handler)
 
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] != 'ftp':
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.get('scheme') != 'ftp':
         username = url_username
 
         if headers is None:
@@ -834,9 +830,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         if username:
             password = url_password
-            netloc = parsed[1]
-        elif '@' in parsed[1]:
-            credentials, netloc = parsed[1].split('@', 1)
+            netloc = parsed.get('netloc')
+        elif '@' in parsed.get('netloc'):
+            credentials, netloc = parsed.get('netloc').split('@', 1)
             if ':' in credentials:
                 username, password = credentials.split(':', 1)
             else:
@@ -844,7 +840,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                 password = ''
 
             parsed = list(parsed)
-            parsed[1] = netloc
+            parsed['netloc'] = netloc
 
             # reconstruct url without credentials
             url = urlunparse(parsed)
@@ -871,7 +867,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         else:
             try:
                 rc = netrc.netrc(os.environ.get('NETRC'))
-                login = rc.authenticators(parsed[1])
+                login = rc.authenticators(parsed.get('netloc'))
             except IOError:
                 login = None
 
