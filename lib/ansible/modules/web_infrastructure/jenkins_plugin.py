@@ -445,6 +445,7 @@ class JenkinsPlugin(object):
                 hpi_file = '%s/plugins/%s.hpi' % (
                     self.params['jenkins_home'],
                     self.params['name'])
+
                 if os.path.isfile(hpi_file):
                     os.remove(hpi_file)
 
