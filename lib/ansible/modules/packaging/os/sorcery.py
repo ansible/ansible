@@ -26,7 +26,7 @@ short_description: Package manager for Source Mage GNU/Linux
 description:
     - Manages "spells" on Source Mage GNU/Linux using I(sorcery) toolchain
 author: "Vlad Glagolev (@vaygr)"
-version_added: "2.2"
+version_added: "2.3"
 notes:
     - When all three components are selected, the update goes by the sequence --
       Sorcery -> Grimoire(s) -> Spell(s); you cannot override it.
