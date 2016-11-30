@@ -47,7 +47,7 @@ class ManageWindowsCI(object):
         env = ansible_environment(self.core_ci.args)
         cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
-        for _ in range(1, 60):
+        for _ in range(1, 90):
             try:
                 run_command(self.core_ci.args, cmd, env=env)
                 return
@@ -81,7 +81,7 @@ class ManagePosixCI(object):
 
     def wait(self):
         """Wait for instance to respond to SSH."""
-        for _ in range(1, 60):
+        for _ in range(1, 90):
             try:
                 self.ssh('id')
                 return

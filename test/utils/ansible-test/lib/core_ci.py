@@ -194,7 +194,7 @@ class AnsibleCoreCI(object):
 
     def wait(self):
         """Wait for the instance to become ready."""
-        for _ in range(1, 60):
+        for _ in range(1, 90):
             if self.get().running:
                 return
             time.sleep(10)
