@@ -100,8 +100,8 @@ class LookupModule(LookupBase):
                     "can't parse arg %s=%r as integer"
                         % (arg, arg_raw)
                 )
-            if 'format' in args:
-                self.format = args.pop("format")
+        if 'format' in args:
+            self.format = args.pop("format")
         if args:
             raise AnsibleError(
                 "unrecognized arguments to with_sequence: %r"
