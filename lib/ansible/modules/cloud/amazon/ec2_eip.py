@@ -382,6 +382,8 @@ def main():
         if device_id and device_id.startswith('i-'):
             is_instance = True
         elif device_id:
+            if device_id.startswith('eni-') and not in_vpc:
+                module.fail_json(msg="If you are specifying an ENI, in_vpc must be true")
             is_instance = False
 
     try:
