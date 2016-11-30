@@ -142,6 +142,7 @@ import fileinput
 import os
 import re
 import shutil
+import sys
 
 
 # auto-filled at module init
@@ -383,7 +384,7 @@ def match_depends(module):
                             if match.group('lstatus') == depends[d]:
                                 depends[d] = None
 
-                                print line,
+                                sys.stdout.write(line)
 
                             # status is not that we need, so keep this dependency
                             # in the list for further reverse switching;
@@ -391,9 +392,9 @@ def match_depends(module):
                             break
 
                     if not match:
-                        print line,
+                        sys.stdout.write(line)
                 else:
-                    print line,
+                    sys.stdout.write(line)
         except IOError:
             module.fail_json(msg="I/O error on the depends file")
     finally:
