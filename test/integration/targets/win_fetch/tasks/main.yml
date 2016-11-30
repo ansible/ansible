@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: define host-specific output_dir
+  set_fact:
+    output_dir: "{{ output_dir }}/{{ inventory_hostname }}"
+
 - name: clean out the test directory
   local_action: file name={{ output_dir|mandatory }} state=absent
   run_once: true
