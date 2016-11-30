@@ -608,7 +608,7 @@ def main():
     )
 
     if os.geteuid() != 0:
-        module.fail_json(msg="sudo/become is required for this operation")
+        module.fail_json(msg="root privileges are required for this operation")
 
     for c in SORCERY:
         SORCERY[c] = module.get_bin_path(c, True)
