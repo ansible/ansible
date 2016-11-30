@@ -562,7 +562,7 @@ def command_compile(args):
         if skip_paths:
             cmd += ['-x', '|'.join(skip_paths)]
 
-        cmd += [target.path for target in include]
+        cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
 
         version_commands.append((version, cmd))
 
