@@ -94,7 +94,7 @@ class ManagePosixCI(object):
 
     def configure(self):
         """Configure remote host for testing."""
-        self.upload('test/utils/ansible-test/setup/remote.sh', '/tmp')
+        self.upload('test/runner/setup/remote.sh', '/tmp')
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s' % self.core_ci.platform)
 
     def upload_source(self):

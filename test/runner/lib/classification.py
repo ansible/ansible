@@ -266,7 +266,7 @@ class PathMapper(object):
                 'units': os.path.dirname(path),
             }
 
-        if path.startswith('test/utils/ansible-test/'):
+        if path.startswith('test/runner/'):
             return all_tests()  # test infrastructure, run all tests
 
         if path.startswith('test/utils/shippable/'):

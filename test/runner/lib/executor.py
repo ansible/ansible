@@ -146,8 +146,8 @@ def generate_pip_install(command):
     :type command: str
     :return: list[str] | None
     """
-    constraints = 'test/utils/ansible-test/requirements/constraints.txt'
-    requirements = 'test/utils/ansible-test/requirements/%s.txt' % command
+    constraints = 'test/runner/requirements/constraints.txt'
+    requirements = 'test/runner/requirements/%s.txt' % command
 
     if not os.path.exists(requirements) or not os.path.getsize(requirements):
         return None
@@ -763,7 +763,7 @@ def get_coverage_path(args):
     if args.explain:
         return os.path.join(tmp_dir, '%stmp' % prefix, 'coverage')
 
-    src = os.path.abspath(os.path.join(os.getcwd(), 'test', 'utils', 'ansible-test', 'injector'))
+    src = os.path.abspath(os.path.join(os.getcwd(), 'test/runner/injector/'))
 
     coverage_path = tempfile.mkdtemp('', prefix, dir=tmp_dir)
     os.chmod(coverage_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd test/utils/ansible-test
+cd test/runner/
 
 pylint --max-line-length=120 --reports=n ./*.py ./*/*.py \
     --jobs 2 \

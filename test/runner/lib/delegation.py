@@ -73,8 +73,8 @@ def delegate_tox(args, exclude, require):
     }
 
     for version in versions:
-        tox = ['tox', '-c', 'test/utils/ansible-test/tox.ini', '-e', 'py' + version.replace('.', ''), '--']
-        cmd = generate_command(args, os.path.abspath('test/utils/ansible-test/ansible-test'), options, exclude, require)
+        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', ''), '--']
+        cmd = generate_command(args, os.path.abspath('test/runner/test.py'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -101,7 +101,7 @@ def delegate_docker(args, exclude, require):
         '--docker-util': 1,
     }
 
-    cmd = generate_command(args, '/root/ansible/test/utils/ansible-test/ansible-test', options, exclude, require)
+    cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
 
     if isinstance(args, IntegrationConfig):
         if not args.allow_destructive:
@@ -147,7 +147,7 @@ def delegate_docker(args, exclude, require):
             test_id = test_id.strip()
 
         # write temporary files to /root since /tmp isn't ready immediately on container start
-        docker_put(args, test_id, 'test/utils/ansible-test/setup/docker.sh', '/root/docker.sh')
+        docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
 
         run_command(args,
                     ['docker', 'exec', test_id, '/bin/bash', '/root/docker.sh'])
@@ -237,7 +237,7 @@ def delegate_remote(args, exclude, require):
             '--remote': 1,
         }
 
-        cmd = generate_command(args, 'ansible/test/utils/ansible-test/ansible-test', options, exclude, require)
+        cmd = generate_command(args, 'ansible/test/runner/test.py', options, exclude, require)
 
         if isinstance(args, IntegrationConfig):
             if not args.allow_destructive:

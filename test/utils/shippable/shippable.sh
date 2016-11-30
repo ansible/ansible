@@ -21,7 +21,7 @@ which pip
 pip --version
 pip list --disable-pip-version-check
 
-export PATH="test/utils/ansible-test:${PATH}"
+export PATH="test/runner:${PATH}"
 reorganize-tests.sh # temporary solution until repositories are merged
 
 function cleanup

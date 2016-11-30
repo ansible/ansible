@@ -2,7 +2,7 @@
 
 set -eu
 
-source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '..', '..', '..')))")
+source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '..', '..')))")
 
 cd "${source_root}"
 
