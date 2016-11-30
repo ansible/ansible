@@ -7,7 +7,7 @@ IFS='/:' read -ra args <<< "${TEST}"
 
 job="${args[1]}"
 
-ansible-test windows-integration --explain 2>&1 | grep ' windows-integration: .* (targeted)$' > /tmp/windows.txt
+ansible-test windows-integration --explain 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
