@@ -142,6 +142,7 @@ import fileinput
 import os
 import re
 import shutil
+import sys
 
 
 # auto-filled at module init
@@ -383,7 +384,10 @@ def match_depends(module):
                             if match.group('lstatus') == depends[d]:
                                 depends[d] = None
 
-                                print line,
+                                if sys.version_info[0] > 2:
+                                    print(line, end='')
+                                else:
+                                    print line,
 
                             # status is not that we need, so keep this dependency
                             # in the list for further reverse switching;
