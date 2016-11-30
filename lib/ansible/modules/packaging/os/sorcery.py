@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Vlad Glagolev <scm@vaygr.net>
+# (c) 2015-2016, Vlad Glagolev <scm@vaygr.net>
 #
 # This file is part of Ansible
 #
@@ -157,26 +157,12 @@ SORCERY_LOG_DIR = "/var/log/sorcery"
 SORCERY_STATE_DIR = "/var/state/sorcery"
 
 
-def exec_command(command, module):
-    """ Run sorcery commands without asking questions.
-
-    This prevents commands from stuck due to queries and forces to use default
-    answers. It also leverages output if a user has the VOYEUR option turned on
-    in Sorcery.
-
-    """
-
-    prompt_env = "env PROMPT_DELAY=0 VOYEUR=0"
-
-    return module.run_command("%s %s" % (prompt_env, command))
-
-
 def get_sorcery_ver(module):
     """ Get Sorcery version. """
 
     cmd_sorcery = "%s --version" % SORCERY['sorcery']
 
-    rc, stdout, stderr = exec_command(cmd_sorcery, module)
+    rc, stdout, stderr = module.run_command(cmd_sorcery)
 
     if rc != 0 or not stdout:
         module.fail_json(msg="unable to get Sorcery version")
@@ -217,7 +203,7 @@ def codex_list(module):
 
     cmd_scribe = "%s index" % SORCERY['scribe']
 
-    rc, stdout, stderr = exec_command(cmd_scribe, module)
+    rc, stdout, stderr = module.run_command(cmd_scribe)
 
     if rc != 0:
         module.fail_json("unable to list grimoire collection, fix your Codex")
@@ -255,7 +241,7 @@ def update_sorcery(module):
 
         cmd_sorcery = "%s update" % SORCERY['sorcery']
 
-        rc, stdout, stderr = exec_command(cmd_sorcery, module)
+        rc, stdout, stderr = module.run_command(cmd_sorcery)
 
         if rc != 0:
             module.fail_json(msg="unable to update Sorcery: " + stdout)
@@ -291,9 +277,11 @@ def update_codex(module):
             module.exit_json(changed=changed, msg="would have updated Codex")
     elif not fresh or params['name'] and params['state'] == 'latest':
         # SILENT is required as a workaround for query() in libgpg
-        cmd_scribe = "SILENT=1 %s update" % SORCERY['scribe']
+        module.run_command_environ_update.update(dict(SILENT=1))
 
-        rc, stdout, stderr = exec_command(cmd_scribe, module)
+        cmd_scribe = "%s update" % SORCERY['scribe']
+
+        rc, stdout, stderr = module.run_command(cmd_scribe)
 
         if rc != 0:
             module.fail_json(msg="unable to update Codex: " + stdout)
@@ -359,7 +347,7 @@ def match_depends(module):
 
     cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(depends_list))
 
-    rc, stdout, stderr = exec_command(cmd_gaze, module)
+    rc, stdout, stderr = module.run_command(cmd_gaze)
 
     if rc != 0:
         module.fail_json(msg="wrong dependencies for spell '%s'" % spell)
@@ -458,9 +446,12 @@ def manage_spells(module):
             except IOError:
                 module.fail_json(msg="failed to backup the update queue")
 
-            cmd_sorcery = "SILENT=1 %s queue"
+            # see update_codex()
+            module.run_command_environ_update.update(dict(SILENT=1))
 
-            rc, stdout, stderr = exec_command(cmd_sorcery, module)
+            cmd_sorcery = "%s queue"
+
+            rc, stdout, stderr = module.run_command(cmd_sorcery)
 
             if rc != 0:
                 module.fail_json(msg="failed to generate the update queue")
@@ -481,7 +472,7 @@ def manage_spells(module):
 
                 cmd_cast = "%s --queue" % SORCERY['cast']
 
-                rc, stdout, stderr = exec_command(cmd_cast, module)
+                rc, stdout, stderr = module.run_command(cmd_cast)
 
                 if rc != 0:
                     module.fail_json(msg="failed to update the system")
@@ -493,9 +484,9 @@ def manage_spells(module):
             if module.check_mode:
                 module.exit_json(changed=True, msg="would have rebuilt the system")
 
-            cmd = "%s rebuild" % SORCERY['sorcery']
+            cmd_sorcery = "%s rebuild" % SORCERY['sorcery']
 
-            rc, stdout, stderr = exec_command(cmd_gaze, module)
+            rc, stdout, stderr = module.run_command(cmd_sorcery)
 
             if rc != 0:
                 module.fail_json(msg="failed to rebuild the system: " + stdout)
@@ -508,7 +499,7 @@ def manage_spells(module):
             # extract versions from the 'gaze' command
             cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(spells))
 
-            rc, stdout, stderr = exec_command(cmd_gaze, module)
+            rc, stdout, stderr = module.run_command(cmd_gaze)
 
             # fail if any of spells cannot be found
             if rc != 0:
@@ -566,7 +557,7 @@ def manage_spells(module):
 
                 cmd_cast = "%s -c %s" % (SORCERY['cast'], ' '.join(cast_queue))
 
-                rc, stdout, stderr = exec_command(cmd_cast, module)
+                rc, stdout, stderr = module.run_command(cmd_cast)
 
                 if rc != 0:
                     module.fail_json(msg="failed to cast spell(s): %s" + stdout)
@@ -581,7 +572,7 @@ def manage_spells(module):
 
                 cmd_dispel = "%s %s" % (SORCERY['dispel'], ' '.join(dispel_queue))
 
-                rc, stdout, stderr = exec_command(cmd_dispel, module)
+                rc, stdout, stderr = module.run_command(cmd_dispel)
 
                 if rc != 0:
                     module.fail_json(msg="failed to dispel spell(s): %s" + stdout)
@@ -612,6 +603,9 @@ def main():
 
     for c in SORCERY:
         SORCERY[c] = module.get_bin_path(c, True)
+
+    # prepare environment: run sorcery commands without asking questions
+    module.run_command_environ_update = dict(PROMPT_DELAY=0, VOYEUR=0)
 
     params = module.params
 
