@@ -69,3 +69,6 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
     def on_deauthorize(self):
         pass
 
+    @staticmethod
+    def guess_network_os(conn):
+        pass
