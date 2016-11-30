@@ -73,12 +73,20 @@ author: "Steve (@groks)"
 '''
 
 EXAMPLES = '''
+
+# Since column is a special character in YAML, if your string contains a column, it's better to use quotes around the string
 - name: Set the options explicitly a device which must already exist
-  crypttab: name=luks-home state=present opts=discard,cipher=aes-cbc-essiv:sha256
+  crypttab:
+    name: luks-home
+    state: present
+    opts: 'discard,cipher=aes-cbc-essiv:sha256'
 
 - name: Add the 'discard' option to any existing options for all devices
-  crypttab: name={{ item.device }} state=opts_present opts=discard
-  with_items: "{{ ansible_mounts }}"
+  crypttab:
+    name: '{{ item.device }}'
+    state: opts_present
+    opts: discard
+  with_items: '{{ ansible_mounts }}'
   when: '/dev/mapper/luks-' in {{ item.device }}
 '''
 
