@@ -81,15 +81,16 @@ author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
 EXAMPLES = '''
-- hipchat:  room=notify msg="Ansible task finished"
+- hipchat:
+    room: notif
+    msg: Ansible task finished
 
 # Use Hipchat API version 2
-
 - hipchat:
-    api: "https://api.hipchat.com/v2/"
+    api: 'https://api.hipchat.com/v2/'
     token: OAUTH2_TOKEN
     room: notify
-    msg: "Ansible task finished"
+    msg: Ansible task finished
 '''
 
 # ===========================================

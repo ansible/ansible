@@ -51,10 +51,10 @@ options:
 EXAMPLES = """
 
 send a message to chat in playbook
-- telegram:  token=bot9999999:XXXXXXXXXXXXXXXXXXXXXXX
-    chat_id=000000
-    msg="Ansible task finished"
-
+- telegram:
+    token: 'bot9999999:XXXXXXXXXXXXXXXXXXXXXXX'
+    chat_id: 000000
+    msg: Ansible task finished
 """
 
 RETURN = """
@@ -64,8 +64,6 @@ msg:
   returned: success
   type: string
   sample: "Ansible task finished"
-
-
 """
 
 import urllib

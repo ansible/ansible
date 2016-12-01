@@ -89,18 +89,20 @@ requirements: [ ]
 '''
 
 EXAMPLES = '''
-- flowdock: type=inbox
-            token=AAAAAA
-            from_address=user@example.com
-            source='my cool app'
-            msg='test from ansible'
-            subject='test subject'
+- flowdock:
+    type: inbox
+    token: AAAAAA
+    from_address: user@example.com
+    source: my cool app
+    msg: test from ansible
+    subject: test subject
 
-- flowdock: type=chat
-            token=AAAAAA
-            external_user_name=testuser
-            msg='test from ansible'
-            tags=tag1,tag2,tag3
+- flowdock:
+    type: chat
+    token: AAAAAA
+    external_user_name: testuser
+    msg: test from ansible
+    tags: tag1,tag2,tag3
 '''
 
 import urllib

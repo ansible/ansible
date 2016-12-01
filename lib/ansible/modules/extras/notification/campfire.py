@@ -60,10 +60,18 @@ author: "Adam Garside (@fabulops)"
 '''
 
 EXAMPLES = '''
-- campfire: subscription=foo token=12345 room=123 msg="Task completed."
+- campfire:
+    subscription: foo
+    token: 12345
+    room: 123
+    msg: Task completed.
 
-- campfire: subscription=foo token=12345 room=123 notify=loggins
-        msg="Task completed ... with feeling."
+- campfire:
+    subscription: foo
+    token: 12345
+    room: 123
+    notify: loggins
+    msg: Task completed ... with feeling.
 '''
 
 import cgi
