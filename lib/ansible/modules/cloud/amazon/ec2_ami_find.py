@@ -356,8 +356,8 @@ def main():
         filter['architecture'] = architecture
     if hypervisor:
         filter['hypervisor'] = hypervisor
-    if is_public is not None:
-        filter['is_public'] = 'true' if is_public else 'false'
+    if is_public:
+        filter['is_public'] = 'true'
     if name:
         filter['name'] = name
     if platform:
