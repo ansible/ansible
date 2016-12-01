@@ -20,19 +20,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
 
-from ansible.compat.six import string_types
-from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
+
 from ansible.playbook.task_include import TaskInclude
-from ansible.template import Templar
-from ansible.executor import task_result
 
-from units.mock.loader import DictDataLoader
+import deepdiff
+import pprint
+pp = pprint.pprint
 
-class TestTastInclude(unittest.TestCase):
+
+class TestTaskInclude(unittest.TestCase):
 
     def test(self):
         parent_task_ds = {'debug': 'msg=foo'}
@@ -64,6 +62,8 @@ class TestTastInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds)
 
         task_include_copy = loaded_task.copy()
+        ddiff = deepdiff.DeepDiff(task_include, task_include_copy)
+        pp(ddiff)
         self.assertEqual(task_include_copy, task_include)
 
     def test_copy_parent(self):
@@ -90,6 +90,8 @@ class TestTastInclude(unittest.TestCase):
 
         task_include_copy = loaded_child_task.copy(exclude_parent=True, exclude_tasks=True)
         print(task_include_copy)
+        ddiff = deepdiff.DeepDiff(task_include, task_include_copy)
+        pp(ddiff)
         self.assertEqual(task_include_copy, loaded_child_task)
 
     def test_get_vars(self):
