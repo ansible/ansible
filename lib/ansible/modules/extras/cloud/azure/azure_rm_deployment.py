@@ -158,14 +158,19 @@ EXAMPLES = '''
       register: azure
 
     - name: Add new instance to host group
-      add_host: hostname={{ item['ips'][0].public_ip }} groupname=azure_vms
+      add_host:
+        hostname: '{{ item['ips'][0].public_ip }}'
+        groupname: azure_vms
       with_items: "{{ azure.deployment.instances }}"
 
     - hosts: azure_vms
       user: devopscle
       tasks:
         - name: Wait for SSH to come up
-          wait_for: port=22 timeout=2000 state=started
+          wait_for:
+            port: 22
+            timeout: 2000
+            state: started
         - name: echo the hostname of the vm
           shell: hostname
 
@@ -243,15 +248,13 @@ EXAMPLES = '''
         vnetID: "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
         subnetRef: "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
       resources:
-        -
-          type: "Microsoft.Storage/storageAccounts"
+        - type: "Microsoft.Storage/storageAccounts"
           name: "[parameters('newStorageAccountName')]"
           apiVersion: "2015-05-01-preview"
           location: "[variables('location')]"
           properties:
             accountType: "[variables('storageAccountType')]"
-        -
-          apiVersion: "2015-05-01-preview"
+        - apiVersion: "2015-05-01-preview"
           type: "Microsoft.Network/publicIPAddresses"
           name: "[variables('publicIPAddressName')]"
           location: "[variables('location')]"
@@ -259,8 +262,7 @@ EXAMPLES = '''
             publicIPAllocationMethod: "[variables('publicIPAddressType')]"
             dnsSettings:
               domainNameLabel: "[parameters('dnsNameForPublicIP')]"
-        -
-          type: "Microsoft.Network/virtualNetworks"
+        - type: "Microsoft.Network/virtualNetworks"
           apiVersion: "2015-05-01-preview"
           name: "[variables('virtualNetworkName')]"
           location: "[variables('location')]"
@@ -273,8 +275,7 @@ EXAMPLES = '''
                 name: "[variables('subnetName')]"
                 properties:
                   addressPrefix: "[variables('subnetPrefix')]"
-        -
-          type: "Microsoft.Network/networkInterfaces"
+        - type: "Microsoft.Network/networkInterfaces"
           apiVersion: "2015-05-01-preview"
           name: "[variables('nicName')]"
           location: "[variables('location')]"
@@ -291,8 +292,7 @@ EXAMPLES = '''
                     id: "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                   subnet:
                     id: "[variables('subnetRef')]"
-        -
-          type: "Microsoft.Compute/virtualMachines"
+        - type: "Microsoft.Compute/virtualMachines"
           apiVersion: "2015-06-15"
           name: "[variables('vmName')]"
           location: "[variables('location')]"

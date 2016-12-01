@@ -108,7 +108,9 @@ EXAMPLES = '''
   register: response
   # the response will have a `logs` key that will contain a log (up to 4KB) of the function execution in Lambda.
 
-- execute_lambda: name=test-function version_qualifier=PRODUCTION
+- execute_lambda:
+    name: test-function
+    version_qualifier: PRODUCTION
 '''
 
 RETURN = '''
