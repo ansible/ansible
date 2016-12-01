@@ -80,10 +80,14 @@ options:
 
 EXAMPLES = '''
 # Create direct exchange
-- rabbitmq_exchange: name=directExchange
+- rabbitmq_exchange:
+    name: directExchange
 
 # Create topic exchange on vhost
-- rabbitmq_exchange: name=topicExchange type=topic vhost=myVhost
+- rabbitmq_exchange:
+    name: topicExchange
+    type: topic
+    vhost: myVhost
 '''
 
 import requests

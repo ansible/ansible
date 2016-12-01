@@ -94,10 +94,15 @@ options:
 
 EXAMPLES = '''
 # Create a queue
-- rabbitmq_queue: name=myQueue
+- rabbitmq_queue:
+    name: myQueue
 
 # Create a queue on remote host
-- rabbitmq_queue: name=myRemoteQueue login_user=user login_password=secret login_host=remote.example.org
+- rabbitmq_queue:
+    name: myRemoteQueue
+    login_user: user
+    login_password: secret
+    login_host: remote.example.org
 '''
 
 import requests
