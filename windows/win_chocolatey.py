@@ -102,7 +102,7 @@ EXAMPLES = '''
   # Install notepadplusplus version 6.6
   win_chocolatey:
     name: notepadplusplus.install
-    version: 6.6
+    version: '6.6'
 
   # Uninstall git
   win_chocolatey:
