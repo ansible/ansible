@@ -65,9 +65,9 @@ EXAMPLES = '''
     master: true
     stratum: 12
     logging: false
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

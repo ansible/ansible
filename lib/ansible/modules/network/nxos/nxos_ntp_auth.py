@@ -77,9 +77,9 @@ EXAMPLES = '''
     key_id: 32
     md5string: hello
     auth_type: text
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

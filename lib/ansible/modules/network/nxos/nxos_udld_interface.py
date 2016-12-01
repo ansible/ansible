@@ -51,26 +51,26 @@ EXAMPLES = '''
     interface: Ethernet1/1
     mode: aggressive
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # Remove the aggressive config only if it's currently in aggressive mode and then disable udld (switch default)
 - nxos_udld_interface:
     interface: Ethernet1/1
     mode: aggressive
     state: absent
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # ensure Ethernet1/1 has aggressive mode enabled
 - nxos_udld_interface:
     interface: Ethernet1/1
     mode: enabled
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

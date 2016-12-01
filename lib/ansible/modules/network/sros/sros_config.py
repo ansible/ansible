@@ -186,7 +186,7 @@ vars:
 
 - name: load config from file
     sros_config:
-      src: {{ inventory_hostname }}.cfg
+      src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
 """

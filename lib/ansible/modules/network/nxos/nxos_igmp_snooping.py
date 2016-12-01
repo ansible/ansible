@@ -86,8 +86,8 @@ EXAMPLES = '''
    report_supp: true
    v3_report_supp: true
    host: "{{ inventory_hostname }}"
-   username: {{ un }}
-   password: {{ pwd }}
+   username: "{{ un }}"
+   password: "{{ pwd }}"
 '''
 
 RETURN = '''
