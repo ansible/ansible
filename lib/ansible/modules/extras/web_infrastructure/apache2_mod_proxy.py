@@ -71,21 +71,41 @@ options:
 
 EXAMPLES = '''
 # Get all current balancer pool members' attributes:
-- apache2_mod_proxy: balancer_vhost=10.0.0.2
+- apache2_mod_proxy:
+    balancer_vhost: 10.0.0.2
 
 # Get a specific member's attributes:
-- apache2_mod_proxy: balancer_vhost=myws.mydomain.org balancer_suffix="/lb/" member_host=node1.myws.mydomain.org
+- apache2_mod_proxy:
+    balancer_vhost: myws.mydomain.org
+    balancer_suffix: /lb/
+    member_host: node1.myws.mydomain.org
 
 # Enable all balancer pool members:
-- apache2_mod_proxy: balancer_vhost="{{ myloadbalancer_host }}"
+- apache2_mod_proxy:
+    balancer_vhost: '{{ myloadbalancer_host }}'
   register: result
-- apache2_mod_proxy: balancer_vhost="{{ myloadbalancer_host }}" member_host="{{ item.host }}" state=present
-  with_items: "{{ result.members }}"
+- apache2_mod_proxy:
+    balancer_vhost: '{{ myloadbalancer_host }}'
+    member_host: '{{ item.host }}'
+    state: present
+  with_items: '{{ result.members }}'
 
 # Gracefully disable a member from a loadbalancer node:
-- apache2_mod_proxy: balancer_vhost="{{ vhost_host }}" member_host="{{ member.host }}" state=drained delegate_to=myloadbalancernode
-- wait_for: host="{{ member.host }}" port={{ member.port }} state=drained delegate_to=myloadbalancernode
-- apache2_mod_proxy: balancer_vhost="{{ vhost_host }}" member_host="{{ member.host }}" state=absent delegate_to=myloadbalancernode
+- apache2_mod_proxy:
+    balancer_vhost: '{{ vhost_host }}'
+    member_host: '{{ member.host }}'
+    state: drained
+  delegate_to: myloadbalancernode
+- wait_for:
+    host: '{{ member.host }}'
+    port: '{{ member.port }}'
+    state: drained
+  delegate_to: myloadbalancernode
+- apache2_mod_proxy:
+    balancer_vhost: '{{ vhost_host }}'
+    member_host: '{{ member.host }}'
+    state: absent
+  delegate_to: myloadbalancernode
 '''
 
 RETURN = '''

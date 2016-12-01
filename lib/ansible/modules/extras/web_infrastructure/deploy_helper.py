@@ -163,69 +163,121 @@ procedure to remove it during cleanup.
 
 # Typical usage:
 - name: Initialize the deploy root and gather facts
-  deploy_helper: path=/path/to/root
+  deploy_helper:
+    path: /path/to/root
 - name: Clone the project to the new release folder
-  git: repo=git://foosball.example.org/path/to/repo.git dest={{ deploy_helper.new_release_path }} version=v1.1.1
+  git:
+    repo: 'git://foosball.example.org/path/to/repo.git'
+    dest: '{{ deploy_helper.new_release_path }}'
+    version: 'v1.1.1'
 - name: Add an unfinished file, to allow cleanup on successful finalize
-  file: path={{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }} state=touch
+  file:
+    path: '{{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }}'
+    state: touch
 - name: Perform some build steps, like running your dependency manager for example
-  composer: command=install working_dir={{ deploy_helper.new_release_path }}
+  composer:
+    command: install
+    working_dir: '{{ deploy_helper.new_release_path }}'
 - name: Create some folders in the shared folder
-  file: path='{{ deploy_helper.shared_path }}/{{ item }}' state=directory
-  with_items: ['sessions', 'uploads']
-- name: Add symlinks from the new release to the shared folder
-  file: path='{{ deploy_helper.new_release_path }}/{{ item.path }}'
-        src='{{ deploy_helper.shared_path }}/{{ item.src }}'
-        state=link
+  file:
+    path: '{{ deploy_helper.shared_path }}/{{ item }}'
+    state: directory
   with_items:
-      - { path: "app/sessions", src: "sessions" }
-      - { path: "web/uploads",  src: "uploads" }
+    - sessions
+    - uploads
+- name: Add symlinks from the new release to the shared folder
+  file:
+    path: '{{ deploy_helper.new_release_path }}/{{ item.path }}'
+    src: '{{ deploy_helper.shared_path }}/{{ item.src }}'
+    state: link
+  with_items:
+      - path: app/sessions
+        src: sessions
+      - path: web/uploads
+        src: uploads
 - name: Finalize the deploy, removing the unfinished file and switching the symlink
-  deploy_helper: path=/path/to/root release={{ deploy_helper.new_release }} state=finalize
+  deploy_helper:
+    path: /path/to/root
+    release: '{{ deploy_helper.new_release }}'
+    state: finalize
 
 # Retrieving facts before running a deploy
 - name: Run 'state=query' to gather facts without changing anything
-  deploy_helper: path=/path/to/root state=query
+  deploy_helper:
+    path: /path/to/root
+    state: query
 # Remember to set the 'release' parameter when you actually call 'state=present' later
 - name: Initialize the deploy root
-  deploy_helper: path=/path/to/root release={{ deploy_helper.new_release }} state=present
+  deploy_helper:
+    path: /path/to/root
+    release: '{{ deploy_helper.new_release }}'
+    state: present
 
 # all paths can be absolute or relative (to the 'path' parameter)
-- deploy_helper: path=/path/to/root
-                 releases_path=/var/www/project/releases
-                 shared_path=/var/www/shared
-                 current_path=/var/www/active
+- deploy_helper:
+    path: /path/to/root
+    releases_path: /var/www/project/releases
+    shared_path: /var/www/shared
+    current_path: /var/www/active
 
 # Using your own naming strategy for releases (a version tag in this case):
-- deploy_helper: path=/path/to/root release=v1.1.1 state=present
-- deploy_helper: path=/path/to/root release={{ deploy_helper.new_release }} state=finalize
+- deploy_helper:
+    path: /path/to/root
+    release: 'v1.1.1'
+    state: present
+- deploy_helper:
+    path: /path/to/root
+    release: '{{ deploy_helper.new_release }}'
+    state: finalize
 
 # Using a different unfinished_filename:
-- deploy_helper: path=/path/to/root
-                 unfinished_filename=README.md
-                 release={{ deploy_helper.new_release }}
-                 state=finalize
+- deploy_helper:
+    path: /path/to/root
+    unfinished_filename: README.md
+    release: '{{ deploy_helper.new_release }}'
+    state: finalize
 
 # Postponing the cleanup of older builds:
-- deploy_helper: path=/path/to/root release={{ deploy_helper.new_release }} state=finalize clean=False
-- deploy_helper: path=/path/to/root state=clean
+- deploy_helper:
+    path: /path/to/root
+    release: '{{ deploy_helper.new_release }}'
+    state: finalize
+    clean: False
+- deploy_helper:
+    path: /path/to/root
+    state: clean
 # Or running the cleanup ahead of the new deploy
-- deploy_helper: path=/path/to/root state=clean
-- deploy_helper: path=/path/to/root state=present
+- deploy_helper:
+    path: /path/to/root
+    state: clean
+- deploy_helper:
+    path: /path/to/root
+    state: present
 
 # Keeping more old releases:
-- deploy_helper: path=/path/to/root release={{ deploy_helper.new_release }} state=finalize keep_releases=10
+- deploy_helper:
+    path: /path/to/root
+    release: '{{ deploy_helper.new_release }}'
+    state: finalize
+    keep_releases: 10
 # Or, if you use 'clean=false' on finalize:
-- deploy_helper: path=/path/to/root state=clean keep_releases=10
+- deploy_helper:
+    path: /path/to/root
+    state: clean
+    keep_releases: 10
 
 # Removing the entire project root folder
-- deploy_helper: path=/path/to/root state=absent
+- deploy_helper:
+    path: /path/to/root
+    state: absent
 
 # Debugging the facts returned by the module
-- deploy_helper: path=/path/to/root
-- debug: var=deploy_helper
-
+- deploy_helper:
+    path: /path/to/root
+- debug:
+    var: deploy_helper
 '''
+
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception

@@ -105,59 +105,89 @@ author: "Steve Smith (@tarka)"
 EXAMPLES = """
 # Create a new issue and add a comment to it:
 - name: Create an issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=create
-        summary="Example Issue" description="Created using Ansible" issuetype=Task
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: create
+    summary: Example Issue
+    description: Created using Ansible
+    issuetype: Task
   register: issue
 
 - name: Comment on issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=comment 
-        comment="A comment added by Ansible"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: comment
+    comment: A comment added by Ansible
 
 # Assign an existing issue using edit
 - name: Assign an issue using free-form fields
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit
-        assignee=ssmith
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key}}'
+    operation: edit
+    assignee: ssmith
 
 # Create an issue with an existing assignee
 - name: Create an assigned issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=create
-        summary="Assigned issue" description="Created and assigned using Ansible" 
-        issuetype=Task assignee=ssmith
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: create
+    summary: Assigned issue
+    description: Created and assigned using Ansible
+    issuetype: Task
+    assignee: ssmith
 
-# Edit an issue using free-form fields
+# Edit an issue
 - name: Set the labels on an issue using free-form fields
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
-  args: { fields: {labels: ["autocreated", "ansible"]}}
-
-- name: Set the labels on an issue, YAML version
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=edit 
-  args: 
-    fields: 
-      labels:
-        - "autocreated"
-        - "ansible"
-        - "yaml"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: edit
+  args:
+    fields:
+        labels:
+          - autocreated
+          - ansible
 
 # Retrieve metadata for an issue and use it to create an account
 - name: Get an issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        project=ANS operation=fetch issue="ANS-63"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: ANS
+    operation: fetch
+    issue: ANS-63
   register: issue
 
 - name: Create a unix account for the reporter
-  sudo: true
-  user: name="{{issue.meta.fields.creator.name}}" comment="{{issue.meta.fields.creator.displayName}}"
+  become: true
+  user:
+    name: '{{ issue.meta.fields.creator.name }}'
+    comment: '{{issue.meta.fields.creator.displayName }}'
 
 # Transition an issue by target status
 - name: Close the issue
-  jira: uri={{server}} username={{user}} password={{pass}}
-        issue={{issue.meta.key}} operation=transition status="Done"
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    issue: '{{ issue.meta.key }}'
+    operation: transition
+    status: Done
 """
 
 try:
