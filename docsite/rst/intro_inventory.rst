@@ -33,15 +33,15 @@ The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this:
     two.example.com
     three.example.com
 
-The things in brackets are group names, which are used in classifying systems
+The headings in brackets are group names, which are used in classifying systems
 and deciding what systems you are controlling at what times and for what purpose.
 
 It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
-If you do, note that variables will come from all of the groups they are a member of, and variable precedence is detailed in a later chapter.
+If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  Ports listed in your SSH config file won't be used with the paramiko
-connection but will be used with the openssh connection.
+after the hostname with a colon.  Ports listed in your SSH config file won't be used with the `paramiko`
+connection but will be used with the `openssh` connection.
 
 To make things explicit, it is suggested that you set them if things are not running on the default port::
 
@@ -284,9 +284,9 @@ Examples from a host file::
 Non-SSH connection types
 ++++++++++++++++++++++++
 
-As stated in the previous section, Ansible is executing playbooks over SSH but is not limited to.
-With the host specific parameter ``ansible_connection=<connector>`` the connection type can be changed.
-Following non SSH based connectors are available:
+As stated in the previous section, Ansible executes playbooks over SSH but it is not limited to this connection type.
+With the host specific parameter ``ansible_connection=<connector>``, the connection type can be changed.
+The following non-SSH based connectors are available:
 
 **local**
 
@@ -294,7 +294,7 @@ This connector can be used to deploy the playbook to the control machine itself.
 
 **docker**
 
-This connector deploys the playbook directly into Docker containers using the local Docker client. Following parameters are processed by this connector:
+This connector deploys the playbook directly into Docker containers using the local Docker client. The following parameters are processed by this connector:
 
 ansible_host
     The name of the Docker container to connect to.
