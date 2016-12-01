@@ -108,7 +108,7 @@ EXAMPLES = '''
     minutes: 60
     service: host
     host: '{{ inventory_hostname }}'
-    comment: This host needs disciplined
+    comment: Rebuilding machine
 
 # schedule downtime for ALL services on HOST
 - nagios:
