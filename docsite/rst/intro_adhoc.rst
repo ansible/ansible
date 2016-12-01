@@ -108,10 +108,12 @@ the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
-So far we've been demoing simple command execution, but most Ansible modules usually do not work like
-simple scripts. They make the remote system look like a state, and run the commands necessary to
-get it there.  This is commonly referred to as 'idempotence', and is a core design goal of Ansible.
-However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
+So far we've been demoing simple command execution, but most Ansible modules are not simple imperative scripts. Instead, they use a declarative model,
+calculating and executing the actions required to reach a specified final state.
+Furthermore, they achieve a form of idempotence by checking the current state
+before they begin, and if the current state matches the specified final state,
+doing nothing.
+However, we also recognize that running arbitrary commands can be valuable, so Ansible easily supports both.
 
 .. _file_transfer:
 

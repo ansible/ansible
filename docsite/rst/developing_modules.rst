@@ -149,12 +149,11 @@ a lot shorter than this::
             if key == "time":
 
                 # now we'll affect the change.  Many modules
-                # will strive to be 'idempotent', meaning they
-                # will only make changes when the desired state
-                # expressed to the module does not match
-                # the current state.  Look at 'service'
-                # or 'yum' in the main git tree for an example
-                # of how that might look.
+                # will strive to be idempotent, generally
+                # by not performing any actions if the current
+                # state is the same as the desired state.
+                # See 'service' or 'yum' in the main git tree
+                # for an illustrative example.
 
                 rc = os.system("date -s \"%s\"" % value)
 

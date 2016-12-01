@@ -7,7 +7,7 @@ Introduction
 ````````````
 The purpose of this section is to explain how to put Ansible modules together to use Ansible in a CloudStack context. You will find more usage examples in the details section of each module.
 
-Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode and are designed to use idempotence and have been created, tested and are maintained by the community.
+Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode, are designed to be idempotent, have been created and tested, and are maintained by the community.
 
 .. note:: Some of the modules will require domain admin or root admin privileges.
 
