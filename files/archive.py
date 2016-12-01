@@ -63,13 +63,19 @@ notes:
 
 EXAMPLES = '''
 # Compress directory /path/to/foo/ into /path/to/foo.tgz
-- archive: path=/path/to/foo dest=/path/to/foo.tgz
+- archive:
+    path: /path/to/foo
+    dest: /path/to/foo.tgz
 
 # Compress regular file /path/to/foo into /path/to/foo.gz and remove it
-- archive: path=/path/to/foo remove=True
+- archive:
+    path: /path/to/foo
+    remove: True
 
 # Create a zip archive of /path/to/foo
-- archive: path=/path/to/foo format=zip
+- archive:
+    path: /path/to/foo
+    format: zip
 
 # Create a bz2 archive of multiple files, rooted at /path
 - archive:
