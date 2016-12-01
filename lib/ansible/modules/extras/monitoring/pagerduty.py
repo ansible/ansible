@@ -117,43 +117,54 @@ options:
 
 EXAMPLES='''
 # List ongoing maintenance windows using a user/passwd
-- pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: ongoing
 
 # List ongoing maintenance windows using a token
-- pagerduty: name=companyabc token=xxxxxxxxxxxxxx state=ongoing
+- pagerduty:
+    name: companyabc
+    token: xxxxxxxxxxxxxx
+    state: ongoing
 
 # Create a 1 hour maintenance window for service FOO123, using a user/passwd
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=running
-             service=FOO123
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: running
+    service: FOO123
 
 # Create a 5 minute maintenance window for service FOO123, using a token
-- pagerduty: name=companyabc
-             token=xxxxxxxxxxxxxx
-             hours=0
-             minutes=5
-             state=running
-             service=FOO123
+- pagerduty:
+    name: companyabc
+    token: xxxxxxxxxxxxxx
+    hours: 0
+    minutes: 5
+    state: running
+    service: FOO123
 
 
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=running
-             service=FOO123
-             hours=4
-             desc=deployment
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: running
+    service: FOO123
+    hours: 4
+    desc: deployment
   register: pd_window
 
 # Delete the previous maintenance window
-- pagerduty: name=companyabc
-             user=example@example.com
-             passwd=password123
-             state=absent
-             service={{ pd_window.result.maintenance_window.id }}
+- pagerduty:
+    name: companyabc
+    user: example@example.com
+    passwd: password123
+    state: absent
+    service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
 import datetime
