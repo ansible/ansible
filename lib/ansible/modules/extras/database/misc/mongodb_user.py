@@ -112,21 +112,54 @@ author: "Elliott Foster (@elliotttf)"
 
 EXAMPLES = '''
 # Create 'burgers' database user with name 'bob' and password '12345'.
-- mongodb_user: database=burgers name=bob password=12345 state=present
+- mongodb_user:
+    database: burgers
+    name: bob
+    password: 12345
+    state: present
 
 # Create a database user via SSL (MongoDB must be compiled with the SSL option and configured properly)
-- mongodb_user: database=burgers name=bob password=12345 state=present ssl=True
+- mongodb_user:
+    database: burgers
+    name: bob
+    password: 12345
+    state: present
+    ssl: True
 
 # Delete 'burgers' database user with name 'bob'.
-- mongodb_user: database=burgers name=bob state=absent
+- mongodb_user:
+    database: burgers
+    name: bob
+    state: absent
 
 # Define more users with various specific roles (if not defined, no roles is assigned, and the user will be added via pre mongo 2.2 style)
-- mongodb_user: database=burgers name=ben password=12345 roles='read' state=present
-- mongodb_user: database=burgers name=jim password=12345 roles='readWrite,dbAdmin,userAdmin' state=present
-- mongodb_user: database=burgers name=joe password=12345 roles='readWriteAnyDatabase' state=present
+- mongodb_user:
+    database: burgers
+    name: ben
+    password: 12345
+    roles: read
+    state: present
+- mongodb_user:
+    database: burgers
+    name: jim
+    password: 12345
+    roles: readWrite,dbAdmin,userAdmin
+    state: present
+- mongodb_user:
+    database: burgers
+    name: joe
+    password: 12345
+    roles: readWriteAnyDatabase
+    state: present
 
 # add a user to database in a replica set, the primary server is automatically discovered and written to
-- mongodb_user: database=burgers name=bob replica_set=belcher password=12345 roles='readWriteAnyDatabase' state=present
+- mongodb_user:
+    database: burgers
+    name: bob
+    replica_set: belcher
+    password: 12345
+    roles: readWriteAnyDatabase
+    state: present
 
 # add a user 'oplog_reader' with read only access to the 'local' database on the replica_set 'belcher'. This is usefull for oplog access (MONGO_OPLOG_URL).
 # please notice the credentials must be added to the 'admin' database because the 'local' database is not syncronized and can't receive user credentials
