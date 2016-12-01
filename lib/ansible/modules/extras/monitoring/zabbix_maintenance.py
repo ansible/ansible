@@ -122,40 +122,48 @@ notes:
 EXAMPLES = '''
 # Create maintenance window named "Update of www1"
 # for host www1.example.com for 90 minutes
-- zabbix_maintenance: name="Update of www1"
-                      host_name=www1.example.com
-                      state=present
-                      minutes=90
-                      server_url=https://monitoring.example.com
-                      login_user=ansible
-                      login_password=pAsSwOrD
+- zabbix_maintenance:
+    name: Update of www1
+    host_name: www1.example.com
+    state: present
+    minutes: 90
+    server_url: 'https://monitoring.example.com'
+    login_user: ansible
+    login_password: pAsSwOrD
 
 # Create maintenance window named "Mass update"
 # for host www1.example.com and host groups Office and Dev
-- zabbix_maintenance: name="Update of www1"
-                      host_name=www1.example.com
-                      host_groups=Office,Dev
-                      state=present
-                      server_url=https://monitoring.example.com
-                      login_user=ansible
-                      login_password=pAsSwOrD
+- zabbix_maintenance:
+    name: Update of www1
+    host_name: www1.example.com
+    host_groups:
+      - Office
+      - Dev
+    state: present
+    server_url: 'https://monitoring.example.com'
+    login_user: ansible
+    login_password: pAsSwOrD
 
 # Create maintenance window named "update"
 # for hosts www1.example.com and db1.example.com and without data collection.
-- zabbix_maintenance: name=update
-                      host_names=www1.example.com,db1.example.com
-                      state=present
-                      collect_data=false
-                      server_url=https://monitoring.example.com
-                      login_user=ansible
-                      login_password=pAsSwOrD
+- zabbix_maintenance:
+    name: update
+    host_names:
+      - www1.example.com
+      - db1.example.com
+    state: present
+    collect_data: false
+    server_url: 'https://monitoring.example.com'
+    login_user: ansible
+    login_password: pAsSwOrD
 
 # Remove maintenance window named "Test1"
-- zabbix_maintenance: name=Test1
-                      state=absent
-                      server_url=https://monitoring.example.com
-                      login_user=ansible
-                      login_password=pAsSwOrD
+- zabbix_maintenance:
+    name: Test1
+    state: absent
+    server_url: 'https://monitoring.example.com'
+    login_user: ansible
+    login_password: pAsSwOrD
 '''
 
 import datetime
