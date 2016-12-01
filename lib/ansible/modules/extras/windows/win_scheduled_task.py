@@ -74,6 +74,15 @@ options:
 '''
 
 EXAMPLES = '''
-  # Create a scheduled task to open a command prompt
-  win_scheduled_task: name="TaskName" execute="cmd" frequency="daily" time="9am" description="open command prompt" path="example" enable=yes state=present
+# Create a scheduled task to open a command prompt
+- win_scheduled_task:
+    name: TaskName
+    execute: cmd
+    frequency: daily
+    time: 9am
+    description: open command prompt
+    path: example
+    enable: yes
+    state: present
+    user: SYSTEM
 '''

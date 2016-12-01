@@ -42,7 +42,8 @@ EXAMPLES = '''
     path: 'C:\Windows\System32\cmd.exe'
   register: exe_file_version
 
-- debug: msg="{{exe_file_version}}"
+- debug:
+    msg: '{{ exe_file_version }}'
 
 '''
 
