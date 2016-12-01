@@ -67,18 +67,20 @@ notes:
 
 EXAMPLES = '''
 # Pause the check with the ID of 12345.
-- pingdom: uid=example@example.com
-           passwd=password123
-           key=apipassword123
-           checkid=12345
-           state=paused
+- pingdom:
+    uid: example@example.com
+    passwd: password123
+    key: apipassword123
+    checkid: 12345
+    state: paused
 
 # Unpause the check with the ID of 12345.
-- pingdom: uid=example@example.com
-           passwd=password123
-           key=apipassword123
-           checkid=12345
-           state=running
+- pingdom:
+    uid: example@example.com
+    passwd: password123
+    key: apipassword123
+    checkid: 12345
+    state: running
 '''
 
 try:
