@@ -39,7 +39,9 @@ notes:
 '''
 EXAMPLES = '''
 # Prevent python from being upgraded.
-- dpkg_selections: name=python selection=hold
+- dpkg_selections:
+    name: python
+    selection: hold
 '''
 
 def main():

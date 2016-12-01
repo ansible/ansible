@@ -46,11 +46,26 @@ options:
 notes:  []
 '''
 EXAMPLES = '''
-- macports: name=foo state=present
-- macports: name=foo state=present update_cache=yes
-- macports: name=foo state=absent
-- macports: name=foo state=active
-- macports: name=foo state=inactive
+- macports:
+    name: foo
+    state: present
+
+- macports:
+    name: foo
+    state: present
+    update_cache: yes
+
+- macports:
+    name: foo
+    state: absent
+
+- macports:
+    name: foo
+    state: active
+
+- macports:
+    name: foo
+    state: inactive
 '''
 
 import pipes

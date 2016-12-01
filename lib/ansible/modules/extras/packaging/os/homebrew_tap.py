@@ -59,10 +59,20 @@ requirements: [ homebrew ]
 '''
 
 EXAMPLES = '''
-homebrew_tap: name=homebrew/dupes
-homebrew_tap: name=homebrew/dupes state=absent
-homebrew_tap: name=homebrew/dupes,homebrew/science state=present
-homebrew_tap: name=telemachus/brew url=https://bitbucket.org/telemachus/brew
+- homebrew_tap:
+    name: homebrew/dupes
+
+- homebrew_tap:
+    name: homebrew/dupes
+    state: absent
+
+- homebrew_tap:
+    name: homebrew/dupes,homebrew/science
+    state: present
+
+- homebrew_tap:
+    name: telemachus/brew
+    url: 'https://bitbucket.org/telemachus/brew'
 '''
 
 

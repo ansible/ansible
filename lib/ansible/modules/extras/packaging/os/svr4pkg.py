@@ -75,19 +75,35 @@ options:
 
 EXAMPLES = '''
 # Install a package from an already copied file
-- svr4pkg: name=CSWcommon src=/tmp/cswpkgs.pkg state=present
+- svr4pkg:
+    name: CSWcommon
+    src: /tmp/cswpkgs.pkg
+    state: present
 
 # Install a package directly from an http site
-- svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present zone=current
+- svr4pkg:
+    name: CSWpkgutil
+    src: 'http://get.opencsw.org/now'
+    state: present
+    zone: current
 
 # Install a package with a response file
-- svr4pkg: name=CSWggrep src=/tmp/third-party.pkg response_file=/tmp/ggrep.response state=present
+- svr4pkg:
+    name: CSWggrep
+    src: /tmp/third-party.pkg
+    response_file: /tmp/ggrep.response
+    state: present
 
 # Ensure that a package is not installed.
-- svr4pkg: name=SUNWgnome-sound-recorder state=absent
+- svr4pkg:
+    name: SUNWgnome-sound-recorder
+    state: absent
 
 # Ensure that a category is not installed.
-- svr4pkg: name=FIREFOX state=absent category=true
+- svr4pkg:
+    name: FIREFOX
+    state: absent
+    category: true
 '''
 
 

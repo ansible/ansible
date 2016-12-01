@@ -119,16 +119,34 @@ options:
 
 EXAMPLES = '''
 # Download the latest version of the JUnit framework artifact from Maven Central
-- maven_artifact: group_id=junit artifact_id=junit dest=/tmp/junit-latest.jar
+- maven_artifact:
+    group_id: junit
+    artifact_id: junit
+    dest: /tmp/junit-latest.jar
 
 # Download JUnit 4.11 from Maven Central
-- maven_artifact: group_id=junit artifact_id=junit version=4.11 dest=/tmp/junit-4.11.jar
+- maven_artifact:
+    group_id: junit
+    artifact_id: junit
+    version: 4.11
+    dest: /tmp/junit-4.11.jar
 
 # Download an artifact from a private repository requiring authentication
-- maven_artifact: group_id=com.company artifact_id=library-name repository_url=https://repo.company.com/maven username=user password=pass dest=/tmp/library-name-latest.jar
+- maven_artifact:
+    group_id: com.company
+    artifact_id: library-name
+    repository_url: 'https://repo.company.com/maven'
+    username: user
+    password: pass
+    dest: /tmp/library-name-latest.jar
 
 # Download a WAR File to the Tomcat webapps directory to be deployed
-- maven_artifact: group_id=com.company artifact_id=web-app extension=war repository_url=https://repo.company.com/maven dest=/var/lib/tomcat7/webapps/web-app.war
+- maven_artifact:
+    group_id: com.company
+    artifact_id: web-app
+    extension: war
+    repository_url: 'https://repo.company.com/maven'
+    dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
 class Artifact(object):

@@ -101,26 +101,40 @@ author:
 
 EXAMPLES = '''
 - name: install the latest version of Apache
-  dnf: name=httpd state=latest
+  dnf:
+    name: httpd
+    state: latest
 
 - name: remove the Apache package
-  dnf: name=httpd state=absent
+  dnf:
+    name: httpd
+    state: absent
 
 - name: install the latest version of Apache from the testing repo
-  dnf: name=httpd enablerepo=testing state=present
+  dnf:
+    name: httpd
+    enablerepo: testing
+    state: present
 
 - name: upgrade all packages
-  dnf: name=* state=latest
+  dnf:
+    name: *
+    state: latest
 
 - name: install the nginx rpm from a remote repo
-  dnf: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+  dnf:
+    name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
+    state: present
 
 - name: install nginx rpm from a local file
-  dnf: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+  dnf:
+    name: /usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm
+    state: present
 
 - name: install the 'Development tools' package group
-  dnf: name="@Development tools" state=present
-
+  dnf:
+    name: '@Development tools'
+    state: present
 '''
 import os
 

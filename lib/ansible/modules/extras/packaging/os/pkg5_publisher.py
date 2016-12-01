@@ -65,10 +65,15 @@ options:
 '''
 EXAMPLES = '''
 # Fetch packages for the solaris publisher direct from Oracle:
-- pkg5_publisher: name=solaris sticky=true origin=https://pkg.oracle.com/solaris/support/
+- pkg5_publisher:
+    name: solaris
+    sticky: true
+    origin: https://pkg.oracle.com/solaris/support/
 
 # Configure a publisher for locally-produced packages:
-- pkg5_publisher: name=site origin=https://pkg.example.com/site/
+- pkg5_publisher:
+    name: site
+    origin: 'https://pkg.example.com/site/'
 '''
 
 def main():

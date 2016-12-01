@@ -183,28 +183,46 @@ notes:  []
 
 EXAMPLES = '''
 # Make sure package foo is installed
-- portage: package=foo state=present
+- portage:
+    package: foo
+    state: present
 
 # Make sure package foo is not installed
-- portage: package=foo state=absent
+- portage:
+    package: foo
+    state: absent
 
 # Update package foo to the "best" version
-- portage: package=foo update=yes
+- portage:
+    package: foo
+    update: yes
 
 # Install package foo using PORTAGE_BINHOST setup
-- portage: package=foo getbinpkg=yes
+- portage:
+    package: foo
+    getbinpkg: yes
 
 # Re-install world from binary packages only and do not allow any compiling
-- portage: package=@world usepkgonly=yes
+- portage:
+    package: @world
+    usepkgonly: yes
 
 # Sync repositories and update world
-- portage: package=@world update=yes deep=yes sync=yes
+- portage:
+    package: @world
+    update: yes
+    deep: yes
+    sync: yes
 
 # Remove unneeded packages
-- portage: depclean=yes
+- portage:
+    depclean: yes
 
 # Remove package foo if it is not explicitly needed
-- portage: package=foo state=absent depclean=yes
+- portage:
+    package: foo
+    state: absent
+    depclean: yes
 '''
 
 

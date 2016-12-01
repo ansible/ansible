@@ -45,16 +45,24 @@ options:
 
 EXAMPLES = '''
 # Install pear package
-- pear: name=Net_URL2 state=present
+- pear:
+    name: Net_URL2
+    state: present
 
 # Install pecl package
-- pear: name=pecl/json_post state=present
+- pear:
+    name: pecl/json_post
+    state: present
 
 # Upgrade package
-- pear: name=Net_URL2 state=latest
+- pear:
+    name: Net_URL2
+    state: latest
 
 # Remove packages
-- pear: name=Net_URL2,pecl/json_post state=absent
+- pear:
+    name: Net_URL2,pecl/json_post
+    state: absent
 '''
 
 import os
