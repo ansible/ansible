@@ -43,7 +43,7 @@ do
 	done
 
 	# move plugins
-	for myfile in $(find lib/ansible/modules/${subdir} -type f|grep -v '.github')
+	for myfile in $(find lib/ansible/modules/${subdir} -type f)
 	do
 		if [ -e ${myfile/$subdir\///} ]; then #mostly to avoid __init__.py clobering
 			echo "skipping ${myfile} as it already exists in destination"
