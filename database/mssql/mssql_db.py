@@ -81,10 +81,19 @@ author: Vedit Firat Arig
 
 EXAMPLES = '''
 # Create a new database with name 'jackdata'
-- mssql_db: name=jackdata state=present
+- mssql_db:
+    name: jackdata
+    state: present
+
 # Copy database dump file to remote host and restore it to database 'my_db'
-- copy: src=dump.sql dest=/tmp
-- mssql_db: name=my_db state=import target=/tmp/dump.sql
+- copy:
+    src: dump.sql
+    dest: /tmp
+
+- mssql_db:
+    name: my_db
+    state: import
+    target: /tmp/dump.sql
 '''
 
 RETURN  = '''
