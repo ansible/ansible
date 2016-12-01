@@ -55,7 +55,9 @@ options:
 
 EXAMPLES = '''
 # Ensure that the vhost /test exists.
-- rabbitmq_vhost: name=/test state=present
+- rabbitmq_vhost:
+    name: /test
+    state: present
 '''
 
 class RabbitMqVhost(object):

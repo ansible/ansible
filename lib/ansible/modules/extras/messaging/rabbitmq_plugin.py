@@ -56,7 +56,9 @@ options:
 
 EXAMPLES = '''
 # Enables the rabbitmq_management plugin
-- rabbitmq_plugin: names=rabbitmq_management state=enabled
+- rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
 '''
 
 import os
