@@ -50,13 +50,15 @@ EXAMPLES = '''
 # Gather facts about previously created domain
 - os_keystone_domain_facts:
     cloud: awesomecloud
-- debug: var=openstack_domains
+- debug:
+    var: openstack_domains
 
 # Gather facts about a previously created domain by name
 - os_keystone_domain_facts:
     cloud: awesomecloud
     name: demodomain
-- debug: var=openstack_domains
+- debug:
+    var: openstack_domains
 
 # Gather facts about a previously created domain with filter
 - os_keystone_domain_facts
@@ -64,7 +66,8 @@ EXAMPLES = '''
     name: demodomain
     filters:
       enabled: False
-- debug: var=openstack_domains
+- debug:
+    var: openstack_domains
 '''
 
 
