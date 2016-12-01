@@ -68,12 +68,13 @@ options:
 '''
 
 EXAMPLES = '''
-- rollbar_deployment: token=AAAAAA
-                      environment='staging'
-                      user='ansible'
-                      revision=4.2,
-                      rollbar_user='admin',
-                      comment='Test Deploy'
+- rollbar_deployment:
+    token: AAAAAA
+    environment: staging
+    user: ansible
+    revision: 4.2
+    rollbar_user: admin
+    comment: Test Deploy
 '''
 
 import urllib
