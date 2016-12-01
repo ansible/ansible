@@ -24,12 +24,65 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
-from ansible.playbook.role import Role
-from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.task import Task
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
+
+from ansible.playbook.role import Role
+from ansible.playbook.role.include import RoleInclude
+from ansible.playbook.role import hash_params
+
+
+class TestHashParams(unittest.TestCase):
+    def test(self):
+        params = {'foo': 'bar'}
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
+    def _assert_hashable(self, res):
+        a_dict = {}
+        try:
+            a_dict[res] = res
+        except TypeError as e:
+            self.fail('%s is not hashable: %s' % (res, e))
+
+    def _assert_set(self, res):
+        self.assertIsInstance(res, frozenset)
+
+    def test_dict_tuple(self):
+        params = {'foo': (1, 'bar',)}
+        res = hash_params(params)
+        self._assert_set(res)
+
+    def test_tuple(self):
+        params = (1, None, 'foo')
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_tuple_dict(self):
+        params = ({'foo': 'bar'}, 37)
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_dict_tuple_dict(self):
+        params = {({'foo': 'bar'}, 37): 'blippy'}
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_list(self):
+        params = ['foo', 'bar', 1, 37, None]
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
+    def test_dict_with_list_value(self):
+        params = {'foo': [1, 4, 'bar']}
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
 
 class TestRole(unittest.TestCase):
 
