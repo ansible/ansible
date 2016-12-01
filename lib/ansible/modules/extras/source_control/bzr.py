@@ -62,7 +62,10 @@ options:
 
 EXAMPLES = '''
 # Example bzr checkout from Ansible Playbooks
-- bzr: name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22
+- bzr:
+    name: 'bzr+ssh://foosball.example.org/path/to/branch'
+    dest: /srv/checkout
+    version: 22
 '''
 
 import re
