@@ -44,7 +44,11 @@ author: "Takashi Someda (@tksmd)"
 '''
 
 EXAMPLES = '''
-- typetalk: client_id=12345 client_secret=12345 topic=1 msg="install completed"
+- typetalk:
+    client_id: 12345
+    client_secret: 12345
+    topic: 1
+    msg: install completed
 '''
 
 import urllib

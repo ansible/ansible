@@ -43,7 +43,10 @@ author:
 '''
 
 EXAMPLES = '''
-- local_action: osx_say msg="{{inventory_hostname}} is all done" voice=Zarvox
+- osx_say:
+    msg: '{{ inventory_hostname }} is all done'
+    voice: Zarvox
+  delegate_to: localhost
 '''
 
 DEFAULT_VOICE='Trinoids'
