@@ -81,20 +81,20 @@ requirements: [ ]
 EXAMPLES = '''
 - bigpanda:
     component: myapp
-    version: 1.3
+    version: '1.3'
     token: '{{ bigpanda_token }}'
     state: started
 ...
 - bigpanda:
     component: myapp
-    version: 1.3
+    version: '1.3'
     token: '{{ bigpanda_token }}'
     state: finished
 
 # If outside servers aren't reachable from your machine, use delegate_to and override hosts:
 - bigpanda:
     component: myapp
-    version: 1.3
+    version: '1.3'
     token: '{{ bigpanda_token }}'
     hosts: '{{ ansible_hostname }}'
     state: started

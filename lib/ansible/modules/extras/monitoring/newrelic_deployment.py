@@ -80,7 +80,7 @@ EXAMPLES = '''
     token: AAAAAA
     app_name: myapp
     user: ansible deployment
-    revision: 1.0
+    revision: '1.0'
 '''
 
 import urllib
