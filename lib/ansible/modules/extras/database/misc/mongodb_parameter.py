@@ -92,7 +92,10 @@ author: "Loic Blot (@nerzhul)"
 
 EXAMPLES = '''
 # Set MongoDB syncdelay to 60 (this is an int)
-- mongodb_parameter: param="syncdelay" value=60 param_type="int"
+- mongodb_parameter:
+    param: syncdelay
+    value: 60
+    param_type: int
 '''
 
 RETURN = '''
