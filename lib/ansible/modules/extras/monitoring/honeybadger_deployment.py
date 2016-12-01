@@ -67,11 +67,12 @@ requirements: []
 '''
 
 EXAMPLES = '''
-- honeybadger_deployment: token=AAAAAA
-                          environment='staging'
-                          user='ansible'
-                          revision=b6826b8
-                          repo=git@github.com:user/repo.git
+- honeybadger_deployment:
+    token: AAAAAA
+    environment: staging
+    user: ansible
+    revision: b6826b8
+    repo: 'git@github.com:user/repo.git'
 '''
 
 RETURN = '''# '''
