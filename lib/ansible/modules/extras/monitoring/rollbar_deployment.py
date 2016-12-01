@@ -72,7 +72,7 @@ EXAMPLES = '''
     token: AAAAAA
     environment: staging
     user: ansible
-    revision: 4.2
+    revision: '4.2'
     rollbar_user: admin
     comment: Test Deploy
 '''
