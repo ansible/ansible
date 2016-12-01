@@ -266,6 +266,10 @@ class TestVariableManager(unittest.TestCase):
         # Overrided by /etc/ansible/group_vars/group1
         group_var_group1: group_var_group1_from_group_vars_all
         """)
+        fake_loader.push("group_vars/group1", """
+        playbook_group_var: playbook_group_var
+        group_var: group_var_from_playbook_vars_group1
+        """)
         fake_loader.push("/etc/ansible/group_vars/group1", """
         group_var: group_var_from_group_vars_group1
         inventory_group_var: inventory_group_var_from_group_vars_group1
@@ -278,10 +282,6 @@ class TestVariableManager(unittest.TestCase):
         """)
         fake_loader.push("/etc/ansible/host_vars/host1", """
         host_var: host_var_from_host_vars_host1
-        """)
-        fake_loader.push("group_vars/group1", """
-        playbook_group_var: playbook_group_var
-        group_var: group_var_from_playbook_vars_group1
         """)
         fake_loader.push("host_vars/host1", """
         playbook_host_var: playbook_host_var
