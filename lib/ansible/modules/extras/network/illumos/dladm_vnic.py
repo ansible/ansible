@@ -66,13 +66,23 @@ options:
 
 EXAMPLES = '''
 # Create 'vnic0' VNIC over 'bnx0' link
-dladm_vnic: name=vnic0 link=bnx0 state=present
+- dladm_vnic:
+    name: vnic0
+    link: bnx0
+    state: present
 
 # Create VNIC with specified MAC and VLAN tag over 'aggr0'
-dladm_vnic: name=vnic1 link=aggr0 mac=2:33:af:12:ab:cd vlan=4
+- dladm_vnic:
+    name: vnic1
+    link: aggr0
+    mac: '00:00:5E:00:53:23'
+    vlan: 4
 
 # Remove 'vnic0' VNIC
-dladm_vnic: name=vnic0 link=bnx0 state=absent
+- dladm_vnic:
+    name: vnic0
+    link: bnx0
+    state: absent
 '''
 
 RETURN = '''

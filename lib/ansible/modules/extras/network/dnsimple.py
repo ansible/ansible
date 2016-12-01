@@ -97,36 +97,67 @@ author: Alex Coomans
 '''
 
 EXAMPLES = '''
-# authenticate using email and API token
-- local_action: dnsimple account_email=test@example.com account_api_token=dummyapitoken
-
-# fetch all domains
-- local_action dnsimple
-  register: domains
+# authenticate using email and API token and fetch all domains
+- dnsimple:
+    account_email: test@example.com
+    account_api_token: dummyapitoken
+  delegate_to: localhost
 
 # fetch my.com domain records
-- local_action: dnsimple domain=my.com state=present
+- dnsimple:
+    domain: my.com
+    state: present
+  delegate_to: localhost
   register: records
 
 # delete a domain
-- local_action: dnsimple domain=my.com state=absent
+- dnsimple:
+    domain: my.com
+    state: absent
+  delegate_to: localhost
 
 # create a test.my.com A record to point to 127.0.0.01
-- local_action: dnsimple domain=my.com record=test type=A value=127.0.0.1
+- dnsimple:
+    domain: my.com
+    record: test
+    type: A
+    value: 127.0.0.1
+  delegate_to: localhost
   register: record
 
 # and then delete it
-- local_action: dnsimple domain=my.com record_ids={{ record['id'] }}
+- dnsimple:
+    domain: my.com
+    record_ids: '{{ record["id"] }}'
+  delegate_to: localhost
 
 # create a my.com CNAME record to example.com
-- local_action: dnsimple domain=my.com record= type=CNAME value=example.com state=present
+- dnsimple
+    domain: my.com
+    record: ''
+    type: CNAME
+    value: example.com
+    state: present
+  delegate_to: localhost
 
 # change it's ttl
-- local_action: dnsimple domain=my.com record= type=CNAME value=example.com ttl=600 state=present
+- dnsimple:
+    domain: my.com
+    record: ''
+    type: CNAME
+    value: example.com
+    ttl: 600
+    state: present
+  delegate_to: localhost
 
 # and delete the record
-- local_action: dnsimpledomain=my.com record= type=CNAME value=example.com state=absent
-
+- dnsimple:
+    domain: my.com
+    record: ''
+    type: CNAME
+    value: example.com
+    state: absent
+  delegate_to: localhost
 '''
 
 import os

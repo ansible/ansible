@@ -72,19 +72,22 @@ options:
 
 EXAMPLES = '''
 # Gather facts with SNMP version 2
-- snmp_facts: host={{ inventory_hostname }} version=2c community=public
-  connection: local
+- snmp_facts:
+    host: '{{ inventory_hostname }}'
+    version: 2c
+    community: public
+  delegate_to: local
 
 # Gather facts using SNMP version 3
 - snmp_facts:
-    host={{ inventory_hostname }}
-    version=v3
-    level=authPriv
-    integrity=sha
-    privacy=aes
-    username=snmp-user
-    authkey=abc12345
-    privkey=def6789
+    host: '{{ inventory_hostname }}'
+    version: v3
+    level: authPriv
+    integrity: sha
+    privacy: aes
+    username: snmp-user
+    authkey: abc12345
+    privkey: def6789
   delegate_to: localhost
 '''
 

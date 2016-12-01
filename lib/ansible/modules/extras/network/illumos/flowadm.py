@@ -92,13 +92,27 @@ options:
 
 EXAMPLES = '''
 # Limit SSH traffic to 100M via vnic0 interface
-flowadm: link=vnic0 flow=ssh_out transport=tcp local_port=22 maxbw=100M state=present
+- flowadm:
+    link: vnic0
+    flow: ssh_out
+    transport: tcp
+    local_port: 22
+    maxbw: 100M
+    state: present
 
 # Reset flow properties
-flowadm: name=dns state=resetted
+- flowadm:
+    name: dns
+    state: resetted
 
 # Configure policy for EF PHB (DSCP value of 101110 from RFC 2598) with a bandwidth of 500 Mbps and a high priority.
-flowadm: link=bge0 dsfield=0x2e:0xfc maxbw=500M priority=high flow=efphb-flow state=present
+- flowadm:
+    link: bge0
+    dsfield: '0x2e:0xfc'
+    maxbw: 500M
+    priority: high
+    flow: efphb-flow
+    state: present
 '''
 
 RETURN = '''

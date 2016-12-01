@@ -92,21 +92,48 @@ author: "Brice Burgess (@briceburg)"
 
 EXAMPLES = '''
 # fetch my.com domain records
-- dnsmadeeasy: account_key=key account_secret=secret domain=my.com state=present
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
   register: response
   
 # create / ensure the presence of a record
-- dnsmadeeasy: account_key=key account_secret=secret domain=my.com state=present record_name="test" record_type="A" record_value="127.0.0.1"
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_type: A
+    record_value: 127.0.0.1
 
 # update the previously created record
-- dnsmadeeasy: account_key=key account_secret=secret domain=my.com state=present record_name="test" record_value="192.168.0.1"
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
+    record_value: 192.0.2.23
 
 # fetch a specific record
-- dnsmadeeasy: account_key=key account_secret=secret domain=my.com state=present record_name="test"
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: present
+    record_name: test
   register: response
   
 # delete a record / ensure it is absent
-- dnsmadeeasy: account_key=key account_secret=secret domain=my.com state=absent record_name="test"
+- dnsmadeeasy:
+    account_key: key
+    account_secret: secret
+    domain: my.com
+    state: absent
+    record_name: test
 '''
 
 # ============================================
