@@ -54,9 +54,14 @@ notes:
 
 EXAMPLES = '''
 # Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
-- local_action: wakeonlan mac=00:00:5E:00:53:66 broadcast=192.0.2.23
+- wakeonlan:
+    mac: '00:00:5E:00:53:66'
+    broadcast: 192.0.2.23
+  delegate_to: loclahost
 
-- wakeonlan: mac=00:00:5E:00:53:66 port=9
+- wakeonlan:
+    mac: 00:00:5E:00:53:66
+    port: 9
   delegate_to: localhost
 '''
 

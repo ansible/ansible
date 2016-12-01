@@ -50,10 +50,14 @@ options:
 
 EXAMPLES = '''
 # Create vnic0 interface
-ipadm_if: name=vnic0 state=enabled
+- ipadm_if:
+    name: vnic0
+    state: enabled
 
 # Disable vnic0 interface
-ipadm_if: name=vnic0 state=disabled
+- ipadm_if:
+    name: vnic0
+    state: disabled
 '''
 
 RETURN = '''

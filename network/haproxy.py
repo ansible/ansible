@@ -23,6 +23,7 @@ DOCUMENTATION = '''
 module: haproxy
 version_added: "1.9"
 short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
+author: "Ravi Bhure (@ravibhure)"
 description:
     - Enable, disable, and set weights for HAProxy backend servers using socket
       commands.
@@ -97,36 +98,74 @@ options:
 
 EXAMPLES = '''
 # disable server in 'www' backend pool
-- haproxy: state=disabled host={{ inventory_hostname }} backend=www
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    backend: www
 
 # disable server without backend pool name (apply to all available backend pool)
-- haproxy: state=disabled host={{ inventory_hostname }}
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
 
 # disable server, provide socket file
-- haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
 
 # disable server, provide socket file, wait until status reports in maintenance
-- haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www wait=yes
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
+    wait: yes
 
 # disable backend server in 'www' backend pool and drop open sessions to it
-- haproxy: state=disabled host={{ inventory_hostname }} backend=www socket=/var/run/haproxy.sock shutdown_sessions=true
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    socket: /var/run/haproxy.sock
+    shutdown_sessions: true
 
 # disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
-- haproxy: state=disabled host={{ inventory_hostname }} fail_on_not_found=yes
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    fail_on_not_found: yes
 
 # enable server in 'www' backend pool
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
 
 # enable server in 'www' backend pool wait until healthy
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www wait=yes
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    wait: yes
 
 # enable server in 'www' backend pool wait until healthy. Retry 10 times with intervals of 5 seconds to retrieve the health
-- haproxy: state=enabled host={{ inventory_hostname }} backend=www wait=yes wait_retries=10 wait_interval=5
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    wait: yes
+    wait_retries: 10
+    wait_interval: 5
 
 # enable server in 'www' backend pool with change server(s) weight
-- haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
-
-author: "Ravi Bhure (@ravibhure)"
+- haproxy:
+    state: enabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    weight: 10
+    backend: www
 '''
 
 import socket

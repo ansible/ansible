@@ -49,10 +49,14 @@ options:
 
 EXAMPLES = '''
 # Create 'stub0' etherstub
-dladm_etherstub: name=stub0 state=present
+- dladm_etherstub:
+    name: stub0
+    state: present
 
 # Remove 'stub0 etherstub
-dladm_etherstub: name=stub0 state=absent
+- dladm_etherstub:
+    name: stub0
+    state: absent
 '''
 
 RETURN = '''
