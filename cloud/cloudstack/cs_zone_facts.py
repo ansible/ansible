@@ -35,11 +35,12 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- local_action:
-    module: cs_zone_facts
+- cs_zone_facts:
     name: ch-gva-1
+  delegate_to: localhost
 
-- debug: var=cloudstack_zone
+- debug:
+    var: cloudstack_zone
 '''
 
 RETURN = '''
