@@ -95,7 +95,8 @@ EXAMPLES = '''
       role: "arn:aws:iam::{{ account }}:role/API2LambdaExecRole"
 
   - name: show results
-    debug: var=lambda_facts
+    debug:
+      var: lambda_facts
 
 # The following will set the Dev alias to the latest version ($LATEST) since version is omitted (or = 0)
   - name: "alias 'Dev' for function {{ lambda_facts.FunctionName }} "
