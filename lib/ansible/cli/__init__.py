@@ -173,7 +173,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # enforce no newline chars at the end of passwords
         if vault_pass:
-            vault_pass = to_bytes(vault_pass, errors='strict', nonstring='simplerepr').strip()
+            vault_pass = to_text(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return vault_pass
 
@@ -189,7 +189,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             pass
 
         if new_vault_pass:
-            new_vault_pass = to_bytes(new_vault_pass, errors='strict', nonstring='simplerepr').strip()
+            new_vault_pass = to_text(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return new_vault_pass
 
@@ -630,7 +630,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             stdout, stderr = p.communicate()
             if p.returncode != 0:
                 raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))
-            vault_pass = stdout.strip('\r\n')
+            vault_pass = stdout.strip(b'\r\n')
         else:
             try:
                 f = open(this_path, "rb")
@@ -639,7 +639,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
-        return vault_pass
+        return to_text(vault_pass, errors='surrogate_or_strict')
 
     def get_opt(self, k, defval=""):
         """
