@@ -103,10 +103,13 @@ options:
 
 EXAMPLES = '''
 # Create a DNS zone on a UCS
-- udm_dns_zone: zone=example.com
-                type=forward_zone
-                nameserver=['ucs.example.com']
-                interfaces=['192.168.1.1']
+- udm_dns_zone:
+    zone: example.com
+    type: forward_zone
+    nameserver:
+      - ucs.example.com
+    interfaces:
+      - 192.0.2.1
 '''
 
 
