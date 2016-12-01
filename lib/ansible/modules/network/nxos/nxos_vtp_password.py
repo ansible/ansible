@@ -56,17 +56,17 @@ EXAMPLES = '''
 - nxos_vtp_password:
     password: ntc
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 
 # ENSURE VTP PASSWORD IS REMOVED
 - nxos_vtp_password:
     password: ntc
     state: absent
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

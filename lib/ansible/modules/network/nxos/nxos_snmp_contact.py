@@ -47,9 +47,9 @@ EXAMPLES = '''
 - nxos_snmp_contact:
     contact: Test
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

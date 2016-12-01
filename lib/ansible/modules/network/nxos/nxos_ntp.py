@@ -81,9 +81,9 @@ EXAMPLES = '''
     server: 1.2.3.4
     key_id: 32
     prefer: enabled
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

@@ -112,7 +112,7 @@ vars:
 
 - name: Enable NXAPI access with default configuration
   nxos_nxapi:
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 
 - name: Enable NXAPI with no HTTP, HTTPS at port 9443 and sandbox disabled
   nxos_nxapi:
@@ -120,12 +120,12 @@ vars:
     https_port: 9443
     https: yes
     enable_sandbox: no
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 
 - name: remove NXAPI configuration
   nxos_nxapi:
     state: absent
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 """
 
 RETURN = """
