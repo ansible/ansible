@@ -90,8 +90,8 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     host_name: ExampleHost
-    macro_name:Example macro
-    macro_value:Example value
+    macro_name: Example macro
+    macro_value: Example value
     state: present
 '''
 
