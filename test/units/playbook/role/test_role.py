@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
@@ -77,6 +79,45 @@ class TestHashParams(unittest.TestCase):
         res = hash_params(params)
         self._assert_set(res)
         self._assert_hashable(res)
+
+    def test_empty_set(self):
+        params = set([])
+        res = hash_params(params)
+        self._assert_hashable(res)
+        self._assert_set(res)
+
+    def test_generator(self):
+        def my_generator():
+            for i in ['a', 1, None, {}]:
+                yield i
+
+        params = my_generator()
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_container_but_not_iterable(self):
+        # This is a Container that is not iterable, which is unlikely but...
+        class MyContainer(collections.Container):
+            def __init__(self, some_thing):
+                self.data = []
+                self.data.append(some_thing)
+
+            def __contains__(self, item):
+                return item in self.data
+
+            def __hash__(self):
+                return hash(self.data)
+
+            def __len__(self):
+                return len(self.data)
+
+            def __call__(self):
+                return False
+
+        foo = MyContainer('foo bar')
+        params = foo
+
+        self.assertRaises(TypeError, hash_params, params)
 
 
 class TestRole(unittest.TestCase):
