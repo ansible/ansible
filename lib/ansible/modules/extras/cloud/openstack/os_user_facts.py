@@ -55,20 +55,23 @@ EXAMPLES = '''
 # Gather facts about previously created users
 - os_user_facts:
     cloud: awesomecloud
-- debug: var=openstack_users
+- debug:
+    var: openstack_users
 
 # Gather facts about a previously created user by name
 - os_user_facts:
     cloud: awesomecloud
     name: demouser
-- debug: var=openstack_users
+- debug:
+    var: openstack_users
 
 # Gather facts about a previously created user in a specific domain
 - os_user_facts
     cloud: awesomecloud
     name: demouser
     domain: admindomain
-- debug: var=openstack_users
+- debug:
+    var: openstack_users
 
 # Gather facts about a previously created user in a specific domain
   with filter
@@ -78,7 +81,8 @@ EXAMPLES = '''
     domain: admindomain
     filters:
       enabled: False
-- debug: var=openstack_users
+- debug:
+    var: openstack_users
 '''
 
 

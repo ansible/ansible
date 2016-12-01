@@ -55,20 +55,23 @@ EXAMPLES = '''
 # Gather facts about previously created projects
 - os_project_facts:
     cloud: awesomecloud
-- debug: var=openstack_projects
+- debug:
+    var: openstack_projects
 
 # Gather facts about a previously created project by name
 - os_project_facts:
     cloud: awesomecloud
     name: demoproject
-- debug: var=openstack_projects
+- debug:
+    var: openstack_projects
 
 # Gather facts about a previously created project in a specific domain
 - os_project_facts
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
-- debug: var=openstack_projects
+- debug:
+    var: openstack_projects
 
 # Gather facts about a previously created project in a specific domain
   with filter
@@ -78,7 +81,8 @@ EXAMPLES = '''
     domain: admindomain
     filters:
       enabled: False
-- debug: var=openstack_projects
+- debug:
+    var: openstack_projects
 '''
 
 
