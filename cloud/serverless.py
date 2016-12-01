@@ -60,11 +60,13 @@ author: "Ryan Scott Brown @ryansb"
 
 EXAMPLES = """
 # Basic deploy of a service
-- serverless: service_path={{ project_dir }} state=present
+- serverless:
+    service_path: '{{ project_dir }}'
+    state: present
 
 # Deploy specific functions
 - serverless:
-    service_path: "{{ project_dir }}"
+    service_path: '{{ project_dir }}'
     functions:
       - my_func_one
       - my_func_two
@@ -73,14 +75,14 @@ EXAMPLES = """
 - serverless:
     stage: dev
     region: us-east-1
-    service_path: "{{ project_dir }}"
+    service_path: '{{ project_dir }}'
   register: sls
 # The cloudformation stack is always named the same as the full service, so the
 # cloudformation_facts module can get a full list of the stack resources, as
 # well as stack events and outputs
 - cloudformation_facts:
     region: us-east-1
-    stack_name: "{{ sls.service_name }}"
+    stack_name: '{{ sls.service_name }}'
     stack_resources: true
 """
 
