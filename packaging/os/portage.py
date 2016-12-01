@@ -434,7 +434,7 @@ portage_absent_states = ['absent', 'unmerged', 'removed']
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            package=dict(default=None, aliases=['name']),
+            package=dict(default=None, aliases=['name'], type='list'),
             state=dict(
                 default=portage_present_states[0],
                 choices=portage_present_states + portage_absent_states,
@@ -475,7 +475,7 @@ def main():
 
     packages = []
     if p['package']:
-        packages.extend(p['package'].split(','))
+        packages.extend(p['package'])
 
     if p['depclean']:
         if packages and p['state'] not in portage_absent_states:
