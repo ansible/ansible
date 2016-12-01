@@ -64,19 +64,36 @@ author: "Trey Perry (@treyperry)"
 
 EXAMPLES = """
 # Creating or updating a znode with a given value
-- action: znode hosts=localhost:2181 name=/mypath value=myvalue state=present
+- znode:
+    hosts: 'localhost:2181'
+    name: /mypath
+    value: myvalue
+    state: present
 
 # Getting the value and stat structure for a znode
-- action: znode hosts=localhost:2181 name=/mypath op=get
+- znode:
+    hosts: 'localhost:2181'
+    name: /mypath
+    op: get
 
 # Listing a particular znode's children
-- action: znode hosts=localhost:2181 name=/zookeeper op=list
+- znode:
+    hosts: 'localhost:2181'
+    name: /zookeeper
+    op: list
 
 # Waiting 20 seconds for a znode to appear at path /mypath
-- action: znode hosts=localhost:2181 name=/mypath op=wait timeout=20
+- znode:
+    hosts: 'localhost:2181'
+    name: /mypath
+    op: wait
+    timeout: 20
 
 # Deleting a znode at path /mypath
-- action: znode hosts=localhost:2181 name=/mypath state=absent
+- znode:
+    hosts: 'localhost:2181'
+    name: /mypath
+    state: absent
 """
 
 try:
