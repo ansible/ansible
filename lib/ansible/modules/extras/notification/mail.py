@@ -146,11 +146,11 @@ EXAMPLES = '''
                 charset=utf8
 # Sending an e-mail using the remote machine, not the Ansible controller node
 - mail:
-    host='localhost'
-    port=25
-    to="John Smith <john.smith@example.com>"
-    subject='Ansible-report'
-    body='System {{ ansible_hostname }} has been successfully provisioned.'
+    host: localhost
+    port: 25
+    to: 'John Smith <john.smith@example.com>'
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
 '''
 
 import os

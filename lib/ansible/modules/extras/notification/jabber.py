@@ -78,12 +78,13 @@ EXAMPLES = '''
           msg="Ansible task finished"
 
 # send a message, specifying the host and port
-- jabber user=mybot@example.net
-         host=talk.example.net
-         port=5223
-         password=secret
-         to=mychaps@example.net
-         msg="Ansible task finished"
+- jabber
+    user: mybot@example.net
+    host: talk.example.net
+    port: 5223
+    password: secret
+    to: mychaps@example.net
+    msg: Ansible task finished
 '''
 
 import os
