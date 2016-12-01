@@ -52,11 +52,27 @@ options:
 notes:  []
 '''
 EXAMPLES = '''
-- opkg: name=foo state=present
-- opkg: name=foo state=present update_cache=yes
-- opkg: name=foo state=absent
-- opkg: name=foo,bar state=absent
-- opkg: name=foo state=present force=overwrite
+- opkg:
+    name: foo
+    state: present
+
+- opkg:
+    name: foo
+    state: present
+    update_cache: yes
+
+- opkg:
+    name: foo
+    state: absent
+
+- opkg:
+    name: foo,bar
+    state: absent
+
+- opkg:
+    name: foo
+    state: present
+    force: overwrite
 '''
 
 import pipes

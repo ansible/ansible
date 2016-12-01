@@ -410,6 +410,7 @@ EXAMPLES = '''
     file: external_repos
     baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
     gpgcheck: no
+
 - name: Add multiple repositories into the same file (2/2)
   yum_repository:
     name: rpmforge

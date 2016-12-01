@@ -48,13 +48,19 @@ author: "berenddeboer (@berenddeboer)"
 
 EXAMPLES = '''
 # Install package foo
-- portinstall: name=foo state=present
+- portinstall:
+    name: foo
+    state: present
 
 # Install package security/cyrus-sasl2-saslauthd
-- portinstall: name=security/cyrus-sasl2-saslauthd state=present
+- portinstall:
+    name: security/cyrus-sasl2-saslauthd
+    state: present
 
 # Remove packages foo and bar
-- portinstall: name=foo,bar state=absent
+- portinstall:
+    name: foo,bar
+    state: absent
 '''
 
 

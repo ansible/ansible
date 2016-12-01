@@ -78,28 +78,46 @@ options:
 
 EXAMPLES = '''
 description: Install "coffee-script" node.js package.
-- npm: name=coffee-script path=/app/location
+- npm:
+    name: coffee-script
+    path: /app/location
 
 description: Install "coffee-script" node.js package on version 1.6.1.
-- npm: name=coffee-script version=1.6.1 path=/app/location
+- npm:
+    name: coffee-script
+    version: '1.6.1'
+    path: /app/location
 
 description: Install "coffee-script" node.js package globally.
-- npm: name=coffee-script global=yes
+- npm:
+    name: coffee-script
+    global: yes
 
 description: Remove the globally package "coffee-script".
-- npm: name=coffee-script global=yes state=absent
+- npm:
+    name: coffee-script
+    global: yes
+    state: absent
 
 description: Install "coffee-script" node.js package from custom registry.
-- npm: name=coffee-script registry=http://registry.mysite.com
+- npm:
+    name: coffee-script
+    registry: 'http://registry.mysite.com'
 
 description: Install packages based on package.json.
-- npm: path=/app/location
+- npm:
+    path: /app/location
 
 description: Update packages based on package.json to their latest version.
-- npm: path=/app/location state=latest
+- npm:
+    path: /app/location
+    state: latest
 
 description: Install packages based on package.json using the npm installed with nvm v0.10.1.
-- npm: path=/app/location executable=/opt/nvm/v0.10.1/bin/npm state=present
+- npm:
+    path: /app/location
+    executable: /opt/nvm/v0.10.1/bin/npm
+    state: present
 '''
 
 import os
