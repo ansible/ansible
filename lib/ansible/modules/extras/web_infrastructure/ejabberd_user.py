@@ -59,14 +59,19 @@ notes:
 EXAMPLES = '''
 Example playbook entries using the ejabberd_user module to manage users state.
 
-    tasks:
+- name: create a user if it does not exists
+  ejabberd_user:
+    username: test
+    host: server
+    password: password
 
-    - name: create a user if it does not exists
-      action: ejabberd_user username=test host=server password=password
-
-    - name: delete a user if it exists
-      action: ejabberd_user username=test host=server state=absent
+- name: delete a user if it exists
+  ejabberd_user:
+    username: test
+    host: server
+    state: absent
 '''
+
 import syslog
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import *

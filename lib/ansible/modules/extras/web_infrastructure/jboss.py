@@ -52,11 +52,21 @@ author: "Jeroen Hoekx (@jhoekx)"
 
 EXAMPLES = """
 # Deploy a hello world application
-- jboss: src=/tmp/hello-1.0-SNAPSHOT.war deployment=hello.war state=present
+- jboss:
+    src: /tmp/hello-1.0-SNAPSHOT.war
+    deployment: hello.war
+    state: present
+
 # Update the hello world application
-- jboss: src=/tmp/hello-1.1-SNAPSHOT.war deployment=hello.war state=present
+- jboss:
+    src: /tmp/hello-1.1-SNAPSHOT.war
+    deployment: hello.war
+    state: present
+
 # Undeploy the hello world application
-- jboss: deployment=hello.war state=absent
+- jboss:
+    deployment: hello.war
+    state: absent
 """
 
 import os
