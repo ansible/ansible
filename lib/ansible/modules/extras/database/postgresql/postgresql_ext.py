@@ -70,7 +70,9 @@ author: Daniel Schep
 
 EXAMPLES = '''
 # Adds postgis to the database "acme"
-- postgresql_ext: name=postgis db=acme
+- postgresql_ext:
+    name: postgis
+    db: acme
 '''
 
 try:
