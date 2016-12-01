@@ -310,8 +310,8 @@ class NosystemdTimezone(Timezone):
             # Debian/Ubuntu
             self.update_timezone       = self.module.get_bin_path('dpkg-reconfigure', required=True)
             self.update_timezone      += ' --frontend noninteractive tzdata'
-            self.conf_files['name']    = '/etc/timezone',
-            self.conf_files['hwclock'] = '/etc/default/rcS',
+            self.conf_files['name']    = '/etc/timezone'
+            self.conf_files['hwclock'] = '/etc/default/rcS'
             self.regexps['name']       = re.compile(r'^([^\s]+)', re.MULTILINE)
             self.tzline_format         = '%s\n'
         else:
