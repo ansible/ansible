@@ -81,10 +81,12 @@ options:
 
 EXAMPLES = '''
 # Create a DNS record on a UCS
-- udm_dns_zone: name=www
-                zone=example.com
-                type=host_record
-                data=['a': '192.168.1.1']
+- udm_dns_zone:
+    name: www
+    zone: example.com
+    type: host_record
+    data:
+      - a: 192.0.2.1
 '''
 
 
