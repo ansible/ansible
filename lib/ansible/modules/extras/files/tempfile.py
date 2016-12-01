@@ -52,11 +52,15 @@ options:
 '''
 
 EXAMPLES = """
-  - name: create temporary build directory
-    tempfile: state=directory suffix=build
+- name: create temporary build directory
+  tempfile:
+    state: directory
+    suffix: build
 
-  - name: create temporary file
-    tempfile: state=file suffix=temp
+- name: create temporary file
+  tempfile:
+    state: file
+    suffix: temp
 """
 
 RETURN = '''
