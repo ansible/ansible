@@ -84,9 +84,21 @@ options:
 '''
 
 EXAMPLES = '''
-- stackdriver: key=AAAAAA event=deploy deployed_to=production deployed_by=leeroyjenkins repository=MyWebApp revision_id=abcd123
+- stackdriver:
+    key: AAAAAA
+    event: deploy
+    deployed_to: production
+    deployed_by: leeroyjenkins
+    repository: MyWebApp
+    revision_id: abcd123
 
-- stackdriver: key=AAAAAA event=annotation msg="Greetings from Ansible" annotated_by=leeroyjenkins level=WARN instance_id=i-abcd1234
+- stackdriver:
+    key: AAAAAA
+    event: annotation
+    msg: Greetings from Ansible
+    annotated_by: leeroyjenkins
+    level: WARN
+    instance_id: i-abcd1234
 '''
 
 # ===========================================
