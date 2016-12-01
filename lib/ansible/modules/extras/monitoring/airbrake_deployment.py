@@ -65,10 +65,11 @@ requirements: []
 '''
 
 EXAMPLES = '''
-- airbrake_deployment: token=AAAAAA
-                       environment='staging'
-                       user='ansible'
-                       revision=4.2
+- airbrake_deployment:
+    token: AAAAAA
+    environment: staging
+    user: ansible
+    revision: 4.2
 '''
 
 import urllib
