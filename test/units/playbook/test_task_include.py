@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
+from units.mock.loader import DictDataLoader
 
 from ansible.playbook.task import Task
 
@@ -59,12 +60,34 @@ class TestTaskInclude(unittest.TestCase):
     def test_copy(self):
         task_ds = {'include': 'include_test.yml'}
         task_include = TaskInclude()
-        loaded_task = task_include.load(task_ds)
+        fake_loader = DictDataLoader({})
+        loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy()
-        ddiff = deepdiff.DeepDiff(task_include, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
         pp(ddiff)
-        self.assertEqual(task_include_copy, task_include)
+        self.assertEqual(loaded_task, task_include)
+
+    def test_copy_exclude_parent(self):
+        task_ds = {'include': 'include_test.yml'}
+        task_include = TaskInclude()
+        loaded_task = task_include.load(task_ds)
+
+        task_include_copy = loaded_task.copy(exclude_parent=True)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
+        pp(ddiff)
+        self.assertEqual(loaded_task, task_include)
+
+    def test_copy_exclude_parent_exclude_tasks(self):
+        task_ds = {'include': 'include_test.yml'}
+        task_include = TaskInclude()
+        fake_loader = DictDataLoader({})
+        loaded_task = task_include.load(task_ds, loader=fake_loader)
+
+        task_include_copy = loaded_task.copy(exclude_parent=True, exclude_tasks=True)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
+        pp(ddiff)
+        self.assertEqual(loaded_task, task_include_copy)
 
     def test_copy_parent(self):
         task_ds = {'include': 'include_test.yml',
@@ -81,19 +104,24 @@ class TestTaskInclude(unittest.TestCase):
         loaded_child_task = child_task_include.load(child_task_ds, task_include=loaded_task)
 
         task_include_copy = loaded_child_task.copy()
-        print(task_include_copy)
-        #self.assertEqual(task_include_copy, loaded_child_task)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
+        pp(ddiff)
+        self.assertEqual(loaded_child_task, task_include_copy)
 
         task_include_copy = loaded_child_task.copy(exclude_parent=True)
-        print(task_include_copy)
-        #self.assertEqual(task_include_copy, loaded_child_task)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
+        pp(ddiff)
+        self.assertEqual(loaded_child_task, task_include_copy)
 
         task_include_copy = loaded_child_task.copy(exclude_parent=True, exclude_tasks=True)
-        print(task_include_copy)
-        ddiff = deepdiff.DeepDiff(task_include, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
         pp(ddiff)
-        self.assertEqual(task_include_copy, loaded_child_task)
+        self.assertEqual(loaded_child_task, task_include_copy)
 
+        self.assertEqual(loaded_task, loaded_child_task)
+
+
+class TestTaskIncludeGetVars(unittest.TestCase):
     def test_get_vars(self):
         task_ds = {'include': 'include_test.yml',
                    'blip': 'foo',
