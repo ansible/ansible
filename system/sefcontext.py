@@ -81,6 +81,7 @@ RETURN = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import selinux
@@ -94,21 +95,35 @@ try:
 except ImportError:
     HAVE_SEOBJECT=False
 
+### Add missing entries (backward compatible)
+seobject.file_types.update(dict(
+  a = seobject.SEMANAGE_FCONTEXT_ALL,
+  b = seobject.SEMANAGE_FCONTEXT_BLOCK,
+  c = seobject.SEMANAGE_FCONTEXT_CHAR,
+  d = seobject.SEMANAGE_FCONTEXT_DIR,
+  f = seobject.SEMANAGE_FCONTEXT_REG,
+  l = seobject.SEMANAGE_FCONTEXT_LINK,
+  p = seobject.SEMANAGE_FCONTEXT_PIPE,
+  s = seobject.SEMANAGE_FCONTEXT_SOCK,
+))
+
 ### Make backward compatible
-option_to_file_type_str = {
-    'a': 'all files',
-    'b': 'block device',
-    'c': 'character device',
-    'd': 'directory',
-    'f': 'regular file',
-    'l': 'symbolic link',
-    's': 'socket file',
-    'p': 'named pipe',
-}
+option_to_file_type_str = dict(
+  a = 'all files',
+  b = 'block device',
+  c = 'character device',
+  d = 'directory',
+  f = 'regular file',
+  l = 'symbolic link',
+  p = 'named pipe',
+  s = 'socket file',
+)
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
     ''' Get the SELinux file context mapping definition from policy. Return None if it does not exist. '''
-    record = (target, ftype)
+
+    # Beware that records comprise of a string representation of the file_type
+    record = (target, option_to_file_type_str[ftype])
     records = sefcontext.get_all()
     try:
         return records[record]
@@ -160,7 +175,7 @@ def semanage_fcontext_modify(module, result, target, ftype, setype, do_reload, s
 
     except Exception:
         e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
+        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)))
 
     if module._diff and prepared_diff:
         result['diff'] = dict(prepared=prepared_diff)
@@ -191,7 +206,7 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 
     except Exception:
         e = get_exception()
-        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
+        module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)))
 
     if module._diff and prepared_diff:
         result['diff'] = dict(prepared=prepared_diff)
@@ -230,9 +245,6 @@ def main():
     do_reload = module.params['reload']
 
     result = dict(target=target, ftype=ftype, setype=setype, state=state)
-
-    # Convert file types to (internally used) strings
-    ftype = option_to_file_type_str[ftype]
 
     if state == 'present':
         semanage_fcontext_modify(module, result, target, ftype, setype, do_reload, serange, seuser)
