@@ -63,13 +63,25 @@ notes:  []
 
 EXAMPLES = '''
 # install package foo
-- urpmi: pkg=foo state=present
+- urpmi:
+    pkg: foo
+    state: present
+
 # remove package foo
-- urpmi: pkg=foo state=absent
+- urpmi:
+    pkg: foo
+    state: absent
+
 # description: remove packages foo and bar 
-- urpmi: pkg=foo,bar state=absent
+- urpmi:
+    pkg: foo,bar
+    state: absent
+
 # description: update the package database (urpmi.update -a -q) and install bar (bar will be the updated if a newer version exists) 
-- urpmi: name=bar, state=present, update_cache=yes     
+- urpmi:
+    name: bar
+    state: present
+    update_cache: yes     
 '''
 
 

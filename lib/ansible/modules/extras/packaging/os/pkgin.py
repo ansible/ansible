@@ -91,31 +91,45 @@ options:
 
 EXAMPLES = '''
 # install package foo
-- pkgin: name=foo state=present
+- pkgin:
+    name: foo
+    state: present
 
 # Update database and install "foo" package
-- pkgin: name=foo update_cache=yes
+- pkgin:
+    name: foo
+    update_cache: yes
 
 # remove package foo
-- pkgin: name=foo state=absent
+- pkgin:
+    name: foo
+    state: absent
 
 # remove packages foo and bar
-- pkgin: name=foo,bar state=absent
+- pkgin:
+    name: foo,bar
+    state: absent
 
 # Update repositories as a separate step
-- pkgin: update_cache=yes
+- pkgin:
+    update_cache: yes
 
 # Upgrade main packages (equivalent to C(pkgin upgrade))
-- pkgin: upgrade=yes
+- pkgin:
+    upgrade: yes
 
 # Upgrade all packages (equivalent to C(pkgin full-upgrade))
-- pkgin: full_upgrade=yes
+- pkgin:
+    full_upgrade: yes
 
 # Force-upgrade all packages (equivalent to C(pkgin -F full-upgrade))
-- pkgin: full_upgrade=yes force=yes
+- pkgin:
+    full_upgrade: yes
+    force: yes
 
 # clean packages cache (equivalent to C(pkgin clean))
-- pkgin: clean=yes
+- pkgin:
+    clean: yes
 '''
 
 

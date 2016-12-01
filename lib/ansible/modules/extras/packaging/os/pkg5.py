@@ -48,10 +48,13 @@ options:
 '''
 EXAMPLES = '''
 # Install Vim:
-- pkg5: name=editor/vim
+- pkg5:
+    name: editor/vim
 
 # Remove finger daemon:
-- pkg5: name=service/network/finger state=absent
+- pkg5:
+    name: service/network/finger
+    state: absent
 
 # Install several packages at once:
 - pkg5:

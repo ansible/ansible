@@ -112,19 +112,29 @@ author: "Tim Hoiberg (@thoiberg)"
 
 EXAMPLES='''
 # Installs gems from a Gemfile in the current directory
-- bundler: state=present executable=~/.rvm/gems/2.1.5/bin/bundle
+- bundler:
+    state: present
+    executable: ~/.rvm/gems/2.1.5/bin/bundle
 
 # Excludes the production group from installing
-- bundler: state=present exclude_groups=production
+- bundler:
+    state: present
+    exclude_groups: production
 
 # Only install gems from the default and production groups
-- bundler: state=present deployment_mode=yes
+- bundler:
+    state: present
+    deployment_mode: yes
 
 # Installs gems using a Gemfile in another directory
-- bundler: state=present gemfile=../rails_project/Gemfile
+- bundler:
+    state: present
+    gemfile: ../rails_project/Gemfile
 
 # Updates Gemfile in another directory
-- bundler: state=latest chdir=~/rails_project
+- bundler:
+    state: latest
+    chdir: ~/rails_project
 '''
 
 

@@ -58,34 +58,54 @@ notes:
 
 EXAMPLES = '''
 # Update repositories and install "foo" package
-- apk: name=foo update_cache=yes
+- apk:
+    name: foo
+    update_cache: yes
 
 # Update repositories and install "foo" and "bar" packages
-- apk: name=foo,bar update_cache=yes
+- apk:
+    name: foo,bar
+    update_cache: yes
 
 # Remove "foo" package
-- apk: name=foo state=absent
+- apk:
+    name: foo
+    state: absent
 
 # Remove "foo" and "bar" packages
-- apk: name=foo,bar state=absent
+- apk:
+    name: foo,bar
+    state: absent
 
 # Install the package "foo"
-- apk: name=foo state=present
+- apk:
+    name: foo
+    state: present
 
 # Install the packages "foo" and "bar"
-- apk: name=foo,bar state=present
+- apk:
+    name: foo,bar
+    state: present
 
 # Update repositories and update package "foo" to latest version
-- apk: name=foo state=latest update_cache=yes
+- apk:
+    name: foo
+    state: latest
+    update_cache: yes
 
 # Update repositories and update packages "foo" and "bar" to latest versions
-- apk: name=foo,bar state=latest update_cache=yes
+- apk:
+    name: foo,bar
+    state: latest
+    update_cache: yes
 
 # Update all installed packages to the latest versions
-- apk: upgrade=yes
+- apk:
+    upgrade: yes
 
 # Update repositories as a separate step
-- apk: update_cache=yes
+- apk:
+    update_cache: yes
 '''
 
 import os

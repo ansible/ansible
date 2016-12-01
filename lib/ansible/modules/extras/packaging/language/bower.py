@@ -67,24 +67,37 @@ options:
 '''
 
 EXAMPLES = '''
-description: Install "bootstrap" bower package.
-- bower: name=bootstrap
+- name: Install "bootstrap" bower package.
+  bower:
+    name: bootstrap
 
-description: Install "bootstrap" bower package on version 3.1.1.
-- bower: name=bootstrap version=3.1.1
+- name: Install "bootstrap" bower package on version 3.1.1.
+ bower:
+    name: bootstrap
+    version: '3.1.1'
 
-description: Remove the "bootstrap" bower package.
-- bower: name=bootstrap state=absent
+- name: Remove the "bootstrap" bower package.
+  bower:
+    name: bootstrap
+    state: absent
 
-description: Install packages based on bower.json.
-- bower: path=/app/location
+- name: Install packages based on bower.json.
+  bower:
+    path: /app/location
 
-description: Update packages based on bower.json to their latest version.
-- bower: path=/app/location state=latest
+- name: Update packages based on bower.json to their latest version.
+  bower:
+    path: /app/location
+    state: latest
 
-description: install bower locally and run from there
-- npm: path=/app/location name=bower global=no
-- bower: path=/app/location relative_execpath=node_modules/.bin
+# install bower locally and run from there
+- npm:
+    path: /app/location
+    name: bower
+    global: no
+- bower:
+    path: /app/location
+    relative_execpath: node_modules/.bin
 '''
 
 

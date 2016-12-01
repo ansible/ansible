@@ -60,10 +60,15 @@ options:
 
 EXAMPLES = '''
 # Install a package
-pkgutil: name=CSWcommon state=present
+- pkgutil:
+    name: CSWcommon
+    state: present
 
 # Install a package from a specific repository
-pkgutil: name=CSWnrpe site='ftp://myinternal.repo/opencsw/kiel state=latest'
+- pkgutil:
+    name: CSWnrpe
+    site: 'ftp://myinternal.repo/opencsw/kiel'
+    state: latest
 '''
 
 import os
