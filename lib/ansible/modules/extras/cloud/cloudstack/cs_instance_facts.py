@@ -50,11 +50,12 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- local_action:
-    module: cs_instance_facts
+- cs_instance_facts:
     name: web-vm-1
+  delegate_to: localhost
 
-- debug: var=cloudstack_instance
+- debug:
+    var: cloudstack_instance
 '''
 
 RETURN = '''

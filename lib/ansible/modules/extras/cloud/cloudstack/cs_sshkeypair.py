@@ -64,15 +64,24 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create a new private / public key pair:
-- local_action: cs_sshkeypair name=linus@example.com
+- cs_sshkeypair:
+    name: linus@example.com
+  delegate_to: localhost
   register: key
-- debug: msg='private key is {{ key.private_key }}'
+- debug:
+    msg: 'Private key is {{ key.private_key }}'
 
 # remove a public key by its name:
-- local_action: cs_sshkeypair name=linus@example.com state=absent
+- cs_sshkeypair:
+    name: linus@example.com
+    state: absent
+  delegate_to: localhost
 
 # register your existing local public key:
-- local_action: cs_sshkeypair name=linus@example.com public_key='{{ lookup('file', '~/.ssh/id_rsa.pub') }}'
+- cs_sshkeypair:
+    name: linus@example.com
+    public_key: '{{ lookup('file', '~/.ssh/id_rsa.pub') }}'
+  delegate_to: localhost
 '''
 
 RETURN = '''
