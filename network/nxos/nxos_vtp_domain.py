@@ -45,9 +45,9 @@ EXAMPLES = '''
 # ENSURE VTP DOMAIN IS CONFIGURED
 - nxos_vtp_domain:
     domain: ntc
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 

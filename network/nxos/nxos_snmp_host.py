@@ -87,9 +87,9 @@ EXAMPLES = '''
     snmp_host: 3.3.3.3
     community: TESTING
     state: present
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''

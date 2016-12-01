@@ -148,7 +148,7 @@ vars:
 - name: Enable eAPI access with default configuration
   eos_eapi:
     state: started
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 
 - name: Enable eAPI with no HTTP, HTTPS at port 9443, local HTTP at port 80, and socket enabled
   eos_eapi:
@@ -158,12 +158,12 @@ vars:
     local_http: yes
     local_http_port: 80
     socket: yes
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 
 - name: Shutdown eAPI access
   eos_eapi:
     state: stopped
-    provider: {{ cli }}
+    provider: "{{ cli }}"
 """
 
 RETURN = """

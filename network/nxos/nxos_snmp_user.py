@@ -73,9 +73,9 @@ EXAMPLES = '''
     group: network-operator
     auth: md5
     pwd: test_password
-    host: {{ inventory_hostname }}
-    username: {{ un }}
-    password: {{ pwd }}
+    host: "{{ inventory_hostname }}"
+    username: "{{ un }}"
+    password: "{{ pwd }}"
 '''
 
 RETURN = '''
