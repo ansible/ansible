@@ -72,25 +72,38 @@ options:
 
 EXAMPLES = '''
 # Creates port eth2 on bridge br-ex
-- openvswitch_port: bridge=br-ex port=eth2 state=present
+- openvswitch_port:
+    bridge: br-ex
+    port: eth2
+    state: present
 
-# Creates port eth6 and set ofport equal to 6.
-- openvswitch_port: bridge=bridge-loop port=eth6 state=present
-                    set="Interface eth6 ofport_request=6"
+# Creates port eth6 
+- openvswitch_port:
+    bridge: bridge-loop
+    port: eth6
+    state: present
+    set: Interface eth6
 
 # Creates port vlan10 with tag 10 on bridge br-ex
-- openvswitch_port: bridge=br-ex port=vlan10 tag=10 state=present
-                    set="Interface vlan10 type=internal"
+- openvswitch_port:
+    bridge: br-ex
+    port: vlan10
+    tag: 10
+    state: present
+    set: Interface vlan10
 
 # Assign interface id server1-vifeth6 and mac address 52:54:00:30:6d:11
 # to port vifeth6 and setup port to be managed by a controller.
-- openvswitch_port: bridge=br-int port=vifeth6 state=present
+- openvswitch_port:
+    bridge: br-int
+    port: vifeth6
+    state: present
   args:
     external_ids:
-      iface-id: "{{inventory_hostname}}-vifeth6"
-      attached-mac: "52:54:00:30:6d:11"
-      vm-id: "{{inventory_hostname}}"
-      iface-status: "active"
+      iface-id: '{{ inventory_hostname }}-vifeth6'
+      attached-mac: '00:00:5E:00:53:23'
+      vm-id: '{{ inventory_hostname }}'
+      iface-status: active
 '''
 
 # pylint: disable=W0703

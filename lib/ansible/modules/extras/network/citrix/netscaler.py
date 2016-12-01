@@ -87,13 +87,26 @@ author: "Nandor Sivok (@dominis)"
 
 EXAMPLES = '''
 # Disable the server
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
 
 # Enable the server
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
+    action: enable
 
 # Disable the service local:8080
-ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
+- netscaler:
+    nsc_host: nsc.example.com
+    user: apiuser
+    password: apipass
+    name: 'local:8080'
+    type: service
+    action: disable
 '''
 
 
