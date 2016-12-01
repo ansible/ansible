@@ -74,13 +74,19 @@ options:
 
 EXAMPLES = '''
 - name: ensure the default vhost contains the HA policy via a dict
-  rabbitmq_policy: name=HA pattern='.*'
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
   args:
     tags:
-      "ha-mode": all
+      ha-mode: all
 
 - name: ensure the default vhost contains the HA policy
-  rabbitmq_policy: name=HA pattern='.*' tags="ha-mode=all"
+  rabbitmq_policy:
+    name: HA
+    pattern: .*
+    tags:
+      - ha-mode: all
 '''
 class RabbitMqPolicy(object):
     def __init__(self, module, name):
