@@ -15,7 +15,7 @@ logger = logging.getLogger('injector')  # pylint: disable=locally-disabled, inva
 
 def main():
     """Main entry point."""
-    formatter = logging.Formatter('%(asctime)s ' + str(os.getpid()) + ' %(levelname)s %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(process)d %(levelname)s %(message)s')
     log_name = 'ansible-test-coverage.%s.log' % getpass.getuser()
     self_dir = os.path.dirname(os.path.abspath(__file__))
 
