@@ -77,10 +77,20 @@ author: "Phillip Gentry, CX Inc (@pcgentry)"
 
 EXAMPLES = '''
 # Example creating a new service hook. It ignores duplicates.
-- github_hooks: action=create hookurl=http://11.111.111.111:2222 user={{ gituser }} oauthkey={{ oauthkey }} repo=https://api.github.com/repos/pcgentry/Github-Auto-Deploy
+- github_hooks:
+    action: create
+    hookurl: 'http://11.111.111.111:2222'
+    user: '{{ gituser }}'
+    oauthkey: '{{ oauthkey }}'
+    repo: 'https://api.github.com/repos/pcgentry/Github-Auto-Deploy'
 
 # Cleaning all hooks for this repo that had an error on the last update. Since this works for all hooks in a repo it is probably best that this would be called from a handler.
-- local_action: github_hooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
+- github_hooks:
+    action: cleanall
+    user: '{{ gituser }}'
+    oauthkey: '{{ oauthkey }}'
+    repo: '{{ repo }}'
+  delegate_to: localhost
 '''
 
 def _list(module, hookurl, oauthkey, repo, user):
