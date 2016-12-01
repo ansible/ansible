@@ -64,7 +64,7 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy()
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_task, task_include)
 
@@ -74,7 +74,7 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds)
 
         task_include_copy = loaded_task.copy(exclude_parent=True)
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_task, task_include)
 
@@ -85,7 +85,7 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy(exclude_parent=True, exclude_tasks=True)
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_task, task_include_copy)
 
@@ -104,17 +104,17 @@ class TestTaskInclude(unittest.TestCase):
         loaded_child_task = child_task_include.load(child_task_ds, task_include=loaded_task)
 
         task_include_copy = loaded_child_task.copy()
-        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_child_task, task_include_copy)
 
         task_include_copy = loaded_child_task.copy(exclude_parent=True)
-        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_child_task, task_include_copy)
 
         task_include_copy = loaded_child_task.copy(exclude_parent=True, exclude_tasks=True)
-        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy)
+        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
         pp(ddiff)
         self.assertEqual(loaded_child_task, task_include_copy)
 
