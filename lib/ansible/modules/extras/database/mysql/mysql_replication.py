@@ -103,16 +103,25 @@ extends_documentation_fragment: mysql
 
 EXAMPLES = '''
 # Stop mysql slave thread
-- mysql_replication: mode=stopslave
+- mysql_replication:
+    mode: stopslave
 
 # Get master binlog file name and binlog position
-- mysql_replication: mode=getmaster
+- mysql_replication:
+    mode: getmaster
 
-# Change master to master server 192.168.1.1 and use binary log 'mysql-bin.000009' with position 4578
-- mysql_replication: mode=changemaster master_host=192.168.1.1 master_log_file=mysql-bin.000009 master_log_pos=4578
+# Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
+- mysql_replication:
+    mode: changemaster
+    master_host: 192.0.2.1
+    master_log_file: mysql-bin.000009
+    master_log_pos: 4578
 
 # Check slave status using port 3308
-- mysql_replication: mode=getslave login_host=ansible.example.com login_port=3308
+- mysql_replication:
+    mode: getslave
+    login_host: ansible.example.com
+    login_port: 3308
 '''
 
 import os
