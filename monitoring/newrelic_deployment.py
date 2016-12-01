@@ -76,10 +76,11 @@ requirements: []
 '''
 
 EXAMPLES = '''
-- newrelic_deployment: token=AAAAAA
-                       app_name=myapp
-                       user='ansible deployment'
-                       revision=1.0
+- newrelic_deployment:
+    token: AAAAAA
+    app_name: myapp
+    user: ansible deployment
+    revision: 1.0
 '''
 
 import urllib
