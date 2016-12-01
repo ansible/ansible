@@ -223,8 +223,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 # Create a instance from an ISO
 # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
-- local_action:
-    module: cs_instance
+- cs_instance:
     name: web-vm-1
     iso: Linux Debian 7 64-bit
     hypervisor: VMware
@@ -237,50 +236,64 @@ EXAMPLES = '''
       - Server Integration
       - Sync Integration
       - Storage Integration
+  delegate_to: localhost
 
 # For changing a running instance, use the 'force' parameter
-- local_action:
-    module: cs_instance
+- cs_instance:
     name: web-vm-1
     display_name: web-vm-01.example.com
     iso: Linux Debian 7 64-bit
     service_offering: 2cpu_2gb
     force: yes
+  delegate_to: localhost
 
 # Create or update a instance on Exoscale's public cloud using display_name.
 # Note: user_data can be used to kickstart the instance using cloud-init yaml config.
-- local_action:
-    module: cs_instance
+- cs_instance:
     display_name: web-vm-1
     template: Linux Debian 7 64-bit
     service_offering: Tiny
     ssh_key: john@example.com
     tags:
-      - { key: admin, value: john }
-      - { key: foo,   value: bar }
+      - key: admin
+        value: john
+      - key: foo
+        value: bar
     user_data: |
         #cloud-config
         packages:
           - nginx
+  delegate_to: localhost
 
 # Create an instance with multiple interfaces specifying the IP addresses
-- local_action:
-    module: cs_instance
+- cs_instance:
     name: web-vm-1
     template: Linux Debian 7 64-bit
     service_offering: Tiny
     ip_to_networks:
-      - {'network': NetworkA, 'ip': '10.1.1.1'}
-      - {'network': NetworkB, 'ip': '192.168.1.1'}
+      - network: NetworkA
+        ip: 10.1.1.1
+      - network: NetworkB
+        ip: 192.0.2.1
+  delegate_to: localhost
 
 # Ensure an instance is stopped
-- local_action: cs_instance name=web-vm-1 state=stopped
+- cs_instance:
+    name: web-vm-1
+    state: stopped
+  delegate_to: localhost
 
 # Ensure an instance is running
-- local_action: cs_instance name=web-vm-1 state=started
+- cs_instance:
+    name: web-vm-1
+    state: started
+  delegate_to: localhost
 
 # Remove an instance
-- local_action: cs_instance name=web-vm-1 state=absent
+- cs_instance:
+    name: web-vm-1
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
