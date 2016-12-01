@@ -57,7 +57,7 @@ vars:
 
 - name: collect only the config and default facts
   vyos_facts:
-    gather_subset:config
+    gather_subset: config
 
 - name: collect everything exception the config
   vyos_facts:
