@@ -22,25 +22,25 @@ from ansible.module_utils import known_hosts
 class TestAnsibleModuleKnownHosts(unittest.TestCase):
     urls = {
         'ssh://one.example.org/example.git':
-            {'is_ssh_url': True, 'get_fqdn': 'one.example.org'},
+            {'is_ssh_url': True, 'get_fqdn': 'one.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'ssh+git://two.example.org/example.git':
-            {'is_ssh_url': True, 'get_fqdn': 'two.example.org'},
+            {'is_ssh_url': True, 'get_fqdn': 'two.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'rsync://three.example.org/user/example.git':
-            {'is_ssh_url': False, 'get_fqdn': 'three.example.org'},
+            {'is_ssh_url': False, 'get_fqdn': 'three.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'git@four.example.org:user/example.git':
-            {'is_ssh_url': True, 'get_fqdn': 'four.example.org'},
+            {'is_ssh_url': True, 'get_fqdn': 'four.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'git+ssh://five.example.org/example.git':
-            {'is_ssh_url': True, 'get_fqdn': 'five.example.org'},
+            {'is_ssh_url': True, 'get_fqdn': 'five.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'ssh://six.example.org:21/example.org':
-            {'is_ssh_url': True, 'get_fqdn': 'six.example.org'},
+            {'is_ssh_url': True, 'get_fqdn': 'six.example.org', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'ssh://[2001:DB8::abcd:abcd]/example.git':
-            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'ssh://[2001:DB8::abcd:abcd]:22/example.git':
-            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'username@[2001:DB8::abcd:abcd]/example.git':
-            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
         'username@[2001:DB8::abcd:abcd]:22/example.git':
-            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]', 'port': known_hosts.SSH_KEYSCAN_DEFAULT},
     }
 
     def test_is_ssh_url(self):
@@ -50,6 +50,10 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
     def test_get_fqdn(self):
         for u in self.urls:
             self.assertEqual(known_hosts.get_fqdn(u), self.urls[u]['get_fqdn'])
+
+    def test_get_fqdn_and_port(self):
+        for u in self.urls:
+            self.assertEqual(known_hosts.get_fqdn_and_port(u), (self.urls[u]['get_fqdn'], self.urls[u]['port']))
 
 
 
