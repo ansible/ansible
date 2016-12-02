@@ -354,7 +354,10 @@ class ActionModule(ActionBase):
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
         if self._remote_transport in [ 'docker' ]:
-            self._task.args['rsync_opts'] = "--rsh='%s exec -u %s -i'" % (self._docker_cmd, user)
+            if user is not None:
+                self._task.args['rsync_opts'] = "--rsh='%s exec -u %s -i'" % (self._docker_cmd, user)
+            else:
+                self._task.args['rsync_opts'] = "--rsh='%s exec -i'" % (self._docker_cmd)
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', task_vars=task_vars))
