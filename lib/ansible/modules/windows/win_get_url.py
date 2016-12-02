@@ -117,7 +117,7 @@ url:
     description: requested url
     returned: always
     type: string
-    sample: 'http://www.example.com/earthrise.jpg'
+    sample: http://www.example.com/earthrise.jpg
 dest:
     description: destination file/path
     returned: always
