@@ -110,20 +110,17 @@ class InventoryParser(object):
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
+                hostname_norange = re.sub(r'\[.+\]', '', hostname)
                 # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
-                if hostname.count(":") > 1:
+                if hostname_norange.count(":") > 1:
                     # Possible an IPv6 address, or maybe a host line with multiple ranges
                     # IPv6 with Port  XXX:XXX::XXX.port
                     # FQDN            foo.example.com
                     if hostname.count(".") == 1:
                         (hostname, port) = hostname.rsplit(".", 1)
-                elif ("[" in hostname and
-                    "]" in hostname and
-                    ":" in hostname and
-                    (hostname.rindex("]") < hostname.rindex(":")) or
-                    ("]" not in hostname and ":" in hostname)):
+                elif ":" in hostname_norange:
                         (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
