@@ -419,7 +419,7 @@ class TestInventory(unittest.TestCase):
 
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
-                        'group_names': ['greek', 'major-god']}
+                        'group_names': ['major-god', 'greek']}
 
     def test_allows_equals_sign_in_var(self):
         inventory = self.simple_inventory()
@@ -433,7 +433,7 @@ class TestInventory(unittest.TestCase):
 
         expected_vars = {'inventory_hostname': 'zeus',
                          'inventory_hostname_short': 'zeus',
-                         'group_names': ['greek', 'major-god'],
+                         'group_names': ['major-god', 'greek'],
                          'var_a': '3#4'}
 
         print "HOST     VARS=%s" % host_vars
