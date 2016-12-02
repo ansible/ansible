@@ -104,7 +104,7 @@ EXAMPLES = '''
     state: restarted
     username: test
     password: testpass
-    server_url: 'http://localhost:9001'
+    server_url: http://localhost:9001
 '''
 
 
