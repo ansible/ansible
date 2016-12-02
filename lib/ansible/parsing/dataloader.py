@@ -338,33 +338,6 @@ class DataLoader():
 
         return result
 
-    def read_vault_password_file(self, vault_password_file):
-        """
-        Read a vault password from a file or if executable, execute the script and
-        retrieve password from STDOUT
-        """
-
-        this_path = os.path.realpath(to_bytes(os.path.expanduser(vault_password_file), errors='surrogate_or_strict'))
-        if not os.path.exists(to_bytes(this_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
-
-        if self.is_executable(this_path):
-            try:
-                # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s)."
-                        " If this is not a script, remove the executable bit from the file." % (' '.join(this_path), to_native(e)))
-            stdout, stderr = p.communicate()
-            self.set_vault_password(stdout.strip('\r\n'))
-        else:
-            try:
-                f = open(this_path, "rb")
-                self.set_vault_password(f.read().strip())
-                f.close()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
-
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
         fd, content_tempfile = tempfile.mkstemp()
