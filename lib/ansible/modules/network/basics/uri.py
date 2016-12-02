@@ -154,7 +154,7 @@ author: "Romeo Theriault (@romeotheriault)"
 EXAMPLES = '''
 - name: Check that you can connect (GET) to a page and it returns a status 200
   uri:
-    url: 'http://www.example.com'
+    url: http://www.example.com
 
 # Check that a page returns a status 200 and fail if the word AWESOME is not
 # in the page contents.
