@@ -1111,7 +1111,12 @@ class Runner(object):
                 # no callbacks
                 return result
             if 'skipped' in data:
-                self.callbacks.on_skipped(host, inject.get('item',None))
+                if self.no_log:
+                    skipped = dict(changed=False, skipped=True)
+                    skipped = utils.censor_unlogged_data(skipped)
+                    self.callbacks.on_skipped(host, skipped)
+                else:
+                    self.callbacks.on_skipped(host, inject.get('item', None))
 
             if self.no_log:
                 data = utils.censor_unlogged_data(data)
