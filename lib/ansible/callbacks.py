@@ -508,7 +508,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_ok(self, host, host_result):
         if self.runner.delegate_to:
-            host = '%s -> %s' % (host, self.runner.delegate_to)
+            host = '%s -> %s' % (self.runner.delegate_to, host)
 
         item = host_result.get('item', None)
 
