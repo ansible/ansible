@@ -3259,6 +3259,11 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
+        if product_name == 'OpenStack Nova':
+            self.facts['virtualization_type'] = 'openstack'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
 
         if bios_vendor == 'Xen':
@@ -3291,6 +3296,11 @@ class LinuxVirtual(Virtual):
 
         if sys_vendor == 'oVirt':
             self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        if sys_vendor == 'OpenStack Foundation':
+            self.facts['virtualization_type'] = 'openstack'
             self.facts['virtualization_role'] = 'guest'
             return
 
