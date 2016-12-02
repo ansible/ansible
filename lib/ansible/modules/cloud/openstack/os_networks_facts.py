@@ -49,7 +49,7 @@ EXAMPLES = '''
 - name: Gather facts about previously created networks
   os_networks_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
@@ -61,7 +61,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created network by name
   os_networks_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
@@ -75,7 +75,7 @@ EXAMPLES = '''
   # Note: name and filters parameters are Not mutually exclusive
   os_networks_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
