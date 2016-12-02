@@ -58,10 +58,15 @@ notes:
 
 EXAMPLES = '''
 # Create a ext2 filesystem on /dev/sdb1.
-- filesystem: fstype=ext2 dev=/dev/sdb1
+- filesystem:
+    fstype: ext2
+    dev: /dev/sdb1
 
 # Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-- filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
+- filesystem:
+    fstype: ext4
+    dev: /dev/sdb1
+    opts: -cc
 '''
 
 def _get_dev_size(dev, module):

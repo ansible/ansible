@@ -89,13 +89,27 @@ options:
 
 EXAMPLES = '''
 # Add or modify nofile soft limit for the user joe
-- pam_limits: domain=joe limit_type=soft limit_item=nofile value=64000
+- pam_limits:
+    domain: joe
+    limit_type: soft
+    limit_item: nofile
+    value: 64000
 
 # Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
-- pam_limits: domain=smith limit_type=hard limit_item=fsize value=1000000 use_max=yes
+- pam_limits:
+    domain: smith
+    limit_type: hard
+    limit_item: fsize
+    value: 1000000
+    use_max: yes
 
 # Add or modify memlock, both soft and hard, limit for the user james with a comment.
-- pam_limits: domain=james limit_type=- limit_item=memlock value=unlimited comment="unlimited memory lock for james"
+- pam_limits:
+    domain: james
+    limit_type: -
+    limit_item: memlock
+    value: unlimited
+    comment: unlimited memory lock for james
 '''
 
 def main():

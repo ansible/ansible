@@ -88,18 +88,28 @@ options:
 
 EXAMPLES = '''
 # perform a discovery on 10.1.2.3 and show available target nodes
-- open_iscsi: show_nodes=yes discover=yes portal=10.1.2.3
+- open_iscsi:
+    show_nodes: yes
+    discover: yes
+    portal: 10.1.2.3
 
 # discover targets on portal and login to the one available
 # (only works if exactly one target is exported to the initiator)
-- open_iscsi: portal={{iscsi_target}} login=yes discover=yes
+- open_iscsi:
+    portal: '{{ iscsi_target }}'
+    login: yes
+    discover: yes
 
 # description: connect to the named target, after updating the local
 # persistent database (cache)
-- open_iscsi: login=yes target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
+- open_iscsi:
+    login: yes
+    target: 'iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d'
 
 # description: discconnect from the cached named target
-- open_iscsi: login=no target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d"
+- open_iscsi:
+    login: no
+    target: 'iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d'
 '''
 
 import glob

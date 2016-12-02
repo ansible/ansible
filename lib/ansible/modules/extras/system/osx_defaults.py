@@ -72,15 +72,43 @@ notes:
 '''
 
 EXAMPLES = '''
-- osx_defaults: domain=com.apple.Safari key=IncludeInternalDebugMenu type=bool value=true state=present
-- osx_defaults: domain=NSGlobalDomain key=AppleMeasurementUnits type=string value=Centimeters state=present
-- osx_defaults: domain=com.apple.screensaver host=currentHost key=showClock type=int value=1
-- osx_defaults: key=AppleMeasurementUnits type=string value=Centimeters
+- osx_defaults:
+    domain: com.apple.Safari
+    key: IncludeInternalDebugMenu
+    type: bool
+    value: true
+    state: present
+
+- osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: Centimeters
+    state: present
+
+- osx_defaults:
+    domain: com.apple.screensaver
+    host: currentHost
+    key: showClock
+    type: int
+    value: 1
+
+- osx_defaults:
+    key: AppleMeasurementUnits
+    type: string
+    value: Centimeters
+
 - osx_defaults:
     key: AppleLanguages
     type: array
-    value: ["en", "nl"]
-- osx_defaults: domain=com.geekchimp.macable key=ExampleKeyToRemove state=absent
+    value:
+      - en
+      - nl
+
+- osx_defaults:
+    domain: com.geekchimp.macable
+    key: ExampleKeyToRemove
+    state: absent
 '''
 
 import datetime

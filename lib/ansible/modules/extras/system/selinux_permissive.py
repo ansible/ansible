@@ -56,7 +56,9 @@ author: Michael Scherer <misc@zarb.org>
 '''
 
 EXAMPLES = '''
-- selinux_permissive: name=httpd_t permissive=true
+- selinux_permissive:
+    name: httpd_t
+    permissive: true
 '''
 
 HAVE_SEOBJECT = False

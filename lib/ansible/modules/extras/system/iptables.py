@@ -295,24 +295,48 @@ options:
 
 EXAMPLES = '''
 # Block specific IP
-- iptables: chain=INPUT source=8.8.8.8 jump=DROP
+- iptables:
+    chain: INPUT
+    source: 8.8.8.8
+    jump: DROP
   become: yes
 
 # Forward port 80 to 8600
-- iptables: table=nat chain=PREROUTING in_interface=eth0 protocol=tcp match=tcp destination_port=80 jump=REDIRECT to_ports=8600 comment="Redirect web traffic to port 8600"
+- iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    destination_port: 80
+    jump: REDIRECT
+    to_ports: 8600
+    comment: Redirect web traffic to port 8600
   become: yes
 
 # Allow related and established connections
-- iptables: chain=INPUT ctstate=ESTABLISHED,RELATED jump=ACCEPT
+- iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
   become: yes
 
 # Tag all outbound tcp packets with DSCP mark 8
-- iptables: chain=OUTPUT jump=DSCP table=mangle set_dscp_mark=8 protocol=tcp
+- iptables:
+    chain: OUTPUT
+    jump: DSCP
+    table: mangle
+    set_dscp_mark: 8
+    protocol: tcp
 
 # Tag all outbound tcp packets with DSCP DiffServ class CS1
-- iptables: chain=OUTPUT jump=DSCP table=mangle set_dscp_mark_class=CS1 protocol=tcp
+- iptables:
+    chain: OUTPUT
+    jump: DSCP
+    table: mangle
+    set_dscp_mark_class: CS1
+    protocol: tcp
 '''
-
 
 def append_param(rule, param, flag, is_list):
     if is_list:
