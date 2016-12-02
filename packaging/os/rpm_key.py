@@ -54,7 +54,7 @@ EXAMPLES = '''
 # Example action to import a key from a url
 - rpm_key:
     state: present
-    key: 'http://apt.sw.be/RPM-GPG-KEY.dag.txt'
+    key: http://apt.sw.be/RPM-GPG-KEY.dag.txt
 
 # Example action to import a key from a file
 - rpm_key:

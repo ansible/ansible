@@ -63,7 +63,7 @@ EXAMPLES = '''
 - rhn_channel:
     name: rhel-x86_64-server-v2vwin-6
     sysname: server01
-    url: 'https://rhn.redhat.com/rpc/api'
+    url: https://rhn.redhat.com/rpc/api
     user: rhnuser
     password: guessme
 '''

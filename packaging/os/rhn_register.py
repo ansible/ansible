@@ -112,7 +112,7 @@ EXAMPLES = '''
     state: present
     username: joe_user
     password: somepass'
-    server_url: 'https://xmlrpc.my.satellite/XMLRPC'
+    server_url: https://xmlrpc.my.satellite/XMLRPC
 
 # Register as user (joe_user) with password (somepass) and enable
 # channels (rhel-x86_64-server-6-foo-1) and (rhel-x86_64-server-6-bar-1).
