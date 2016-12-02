@@ -49,7 +49,7 @@ EXAMPLES = '''
 - name: Gather facts about previously created subnets
   os_subnets_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
@@ -61,7 +61,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created subnet by name
   os_subnets_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
@@ -75,7 +75,7 @@ EXAMPLES = '''
   # Note: name and filters parameters are not mutually exclusive
   os_subnets_facts:
     auth:
-      auth_url: 'https://your_api_url.com:9000/v2.0'
+      auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject

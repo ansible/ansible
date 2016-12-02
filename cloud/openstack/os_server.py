@@ -207,7 +207,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: 'https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/'
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
          username: admin
          password: admin
          project_name: admin
@@ -232,7 +232,7 @@ EXAMPLES = '''
       os_server:
         state: present
         auth:
-          auth_url: 'https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/'
+          auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
           username: username
           password: Equality7-2521
           project_name: username-project1
@@ -299,7 +299,7 @@ EXAMPLES = '''
     - name: launch an instance with a string
       os_server:
         auth:
-           auth_url: 'https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/'
+           auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
            username: admin
            password: admin
            project_name: admin
@@ -314,7 +314,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: 'https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/'
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
          username: admin
          password: admin
          project_name: admin
@@ -332,7 +332,7 @@ EXAMPLES = '''
   os_server:
     state: present
     auth:
-      auth_url: 'https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/'
+      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
       username: admin
       password: admin
       project_name: admin
