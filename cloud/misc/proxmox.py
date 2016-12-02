@@ -176,37 +176,114 @@ author: "Sergei Antipov @UnderGreen"
 
 EXAMPLES = '''
 # Create new container with minimal options
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
 
 # Create new container with minimal options with force(it will rewrite existing container)
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' force=yes
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    force: yes
 
 # Create new container with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
 
 # Create new container with minimal options defining network interface with dhcp
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' netif='{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif: '{"net0":"name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"}'
 
 # Create new container with minimal options defining network interface with static ip
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' netif='{"net0":"name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"}'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif: '{"net0":"name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"}'
 
 # Create new container with minimal options defining a mount
-- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' mounts='{"mp0":"local:8,mp=/mnt/test/"}'
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    mounts: '{"mp0":"local:8,mp=/mnt/test/"}'
 
 # Start container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=started
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: started
 
 # Stop container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: stopped
 
 # Stop container with force
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' force=yes state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_passwordL 1q2w3e
+    api_host: node1
+    force: yes
+    state: stopped
 
 # Restart container(stopped or mounted container you can't restart)
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: stopped
 
 # Remove container
-- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=absent
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: absent
 '''
 
 import os
