@@ -148,6 +148,7 @@ class Connection(object):
         stdout = ''
         stderr = ''
         rpipes = [p.stdout, p.stderr]
+        timeout = 1
         if indata:
             try:
                 stdin.write(indata)
@@ -156,7 +157,7 @@ class Connection(object):
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
         # Read stdout/stderr from process
         while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+            rfd, wfd, efd = select.select(rpipes, [], rpipes, timeout)
 
             # fail early if the become password is wrong
             if self.runner.become and sudoable:
@@ -182,19 +183,36 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
-            # only break out if no pipes are left to read or
-            # the pipes are completely read and
-            # the process is terminated
-            if (not rpipes or not rfd) and p.poll() is not None:
-                break
-            # No pipes are left to read but process is not yet terminated
-            # Only then it is safe to wait for the process to be finished
-            # NOTE: Actually p.poll() is always None here if rpipes is empty
-            elif not rpipes and p.poll() == None:
+
+            # Has the child process exited? If it has,
+            # and we've read all available output from it, we're done.
+
+            if p.poll() is not None:
+                if not rpipes or timeout == 0:
+                    break
+
+                # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
+                # first connection goes into the background and we never see EOF
+                # on stderr. If we see EOF on stdout and the process has exited,
+                # we're probably done. We call select again with a zero timeout,
+                # just to make certain we don't miss anything that may have been
+                # written to stderr between the time we called select() and when
+                # we learned that the process had finished.
+
+                if p.stdout not in rpipes:
+                    timeout = 0
+                    continue
+
+            # If the process has not yet exited, but we've already read EOF from
+            # its stdout and stderr (and thus removed both from rpipes), we can
+            # just wait for it to exit.
+
+            elif not rpipes:
                 p.wait()
-                # The process is terminated. Since no pipes to read from are
-                # left, there is no need to call select() again.
                 break
+
+            # Otherwise there may still be outstanding data to read.
+
         # close stdin after process is terminated and stdout/stderr are read
         # completely (see also issue #848)
         stdin.close()
