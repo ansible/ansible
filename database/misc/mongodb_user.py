@@ -180,7 +180,8 @@ EXAMPLES = '''
     state: present
     replica_set: belcher
     roles:
-     - { db: "local"  , role: "read" }
+      - db: local
+        role: read
 
 '''
 
