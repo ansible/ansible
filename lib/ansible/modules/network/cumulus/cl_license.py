@@ -61,7 +61,7 @@ EXAMPLES = '''
   tasks:
     - name: install license using http url
       cl_license:
-        src: 'http://10.1.1.1/license.txt'
+        src: http://10.1.1.1/license.txt
       notify: restart switchd
 
     - name: Triggers switchd to be restarted right away, before play, or role

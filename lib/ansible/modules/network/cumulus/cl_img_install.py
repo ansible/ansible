@@ -62,7 +62,7 @@ Example playbook entries using the cl_img_install module
 - name: Install image using using http url. Switch slots so the subsequent will load the new version
   cl_img_install:
     version: 2.0.1
-    src: 'http://10.1.1.1/CumulusLinux-2.0.1.bin'
+    src: http://10.1.1.1/CumulusLinux-2.0.1.bin
     switch_slot: yes
 
 ## Copy the software from the ansible server to the switch.
@@ -72,7 +72,7 @@ Example playbook entries using the cl_img_install module
 
 - name: Download cumulus linux to local system
   get_url:
-    src: 'ftp://cumuluslinux.bin'
+    src: ftp://cumuluslinux.bin
     dest: /root/CumulusLinux-2.0.1.bin
 
 - name: Install image from local filesystem. Get version from the filename.
@@ -85,7 +85,7 @@ Example playbook entries using the cl_img_install module
 
 - name: Download cumulus linux to local system
   get_url:
-    src: 'ftp://CumulusLinux-2.0.1.bin'
+    src: ftp://CumulusLinux-2.0.1.bin
     dest: /root/image.bin
 
 - name: install image and switch slots. only reboot needed
