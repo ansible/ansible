@@ -1063,6 +1063,7 @@ class Runner(object):
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
                 if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    result.result['last_msg'] = result.result['msg']
                     result.result['failed'] = True
                     result.result['msg'] = "Task failed as maximum retries was encountered"
             else:

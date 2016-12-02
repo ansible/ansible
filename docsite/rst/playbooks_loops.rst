@@ -238,7 +238,8 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
 The above example run the shell module recursively till the module's result has "all systems go" in its stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
-The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
+The task returns the results returned by the last task run, including the last 'msg' saved as 'last_msg'.
+The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
 .. _with_first_found:
