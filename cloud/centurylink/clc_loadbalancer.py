@@ -109,7 +109,8 @@ EXAMPLES = '''
         location: WA1
         port: 443
         nodes:
-          - { 'ipAddress': '10.11.22.123', 'privatePort': 80 }
+          - ipAddress: 10.11.22.123
+            privatePort: 80 
         state: present
 
 - name: Add node to an existing loadbalancer pool
@@ -124,7 +125,8 @@ EXAMPLES = '''
         location: WA1
         port: 443
         nodes:
-          - { 'ipAddress': '10.11.22.234', 'privatePort': 80 }
+          - ipAddress: 10.11.22.234
+            privatePort: 80 
         state: nodes_present
 
 - name: Remove node from an existing loadbalancer pool
@@ -139,7 +141,8 @@ EXAMPLES = '''
         location: WA1
         port: 443
         nodes:
-          - { 'ipAddress': '10.11.22.234', 'privatePort': 80 }
+          - ipAddress: 10.11.22.234
+            privatePort: 80 
         state: nodes_absent
 
 - name: Delete LoadbalancerPool
@@ -154,7 +157,8 @@ EXAMPLES = '''
         location: WA1
         port: 443
         nodes:
-          - { 'ipAddress': '10.11.22.123', 'privatePort': 80 }
+          - ipAddress: 10.11.22.123
+            privatePort: 80 
         state: port_absent
 
 - name: Delete Loadbalancer
@@ -169,7 +173,8 @@ EXAMPLES = '''
         location: WA1
         port: 443
         nodes:
-          - { 'ipAddress': '10.11.22.123', 'privatePort': 80 }
+          - ipAddress: 10.11.22.123
+            privatePort: 80 
         state: absent
 '''
 
