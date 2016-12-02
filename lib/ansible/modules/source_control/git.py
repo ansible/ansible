@@ -195,32 +195,32 @@ notes:
 EXAMPLES = '''
 # Example git checkout from Ansible Playbooks
 - git:
-    repo: 'git://foosball.example.org/path/to/repo.git'
+    repo: git://foosball.example.org/path/to/repo.git
     dest: /srv/checkout
     version: release-0.22
 
 # Example read-write git checkout from github
 - git:
-    repo: 'ssh://git@github.com/mylogin/hello.git'
+    repo: ssh://git@github.com/mylogin/hello.git
     dest: /home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
 - git:
-    repo: 'git://foosball.example.org/path/to/repo.git'
+    repo: git://foosball.example.org/path/to/repo.git
     dest: /srv/checkout
     update: no
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
 - git:
-    repo: 'git://foosball.example.org/path/to/repo.git'
+    repo: git://foosball.example.org/path/to/repo.git
     dest: /srv/checkout
     clone: no
     update: no
 
 # Example checkout a github repo and use refspec to fetch all pull requests
 - git:
-    repo: 'https://github.com/ansible/ansible-examples.git'
+    repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 '''
