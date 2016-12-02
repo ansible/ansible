@@ -59,6 +59,11 @@ class TaskInclude(Task):
         new_me.statically_loaded = self.statically_loaded
         return new_me
 
+    def __eq__(self, other):
+        if not isinstance(other, TaskInclude):
+            return False
+        return self._uuid == other._uuid
+
     def get_vars(self):
         '''
         We override the parent Task() classes get_vars here because
