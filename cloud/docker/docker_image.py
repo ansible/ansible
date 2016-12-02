@@ -206,7 +206,7 @@ EXAMPLES = '''
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
 
-- name: Build an image ad push it to a private repo
+- name: Build an image and push it to a private repo
   docker_image:
     path: ./sinatra
     name: registry.ansible.com/chouseknecht/sinatra
