@@ -219,8 +219,10 @@ EXAMPLES = '''
         - http-server
         - my-other-tag
       disks:
-        - { 'name' : 'disk-2', 'mode': 'READ_WRITE' }
-        - { 'name' : 'disk-3', 'mode': 'READ_ONLY' }
+        - name: disk-2
+          mode: READ_WRITE
+        - name: disk-3
+          mode: READ_ONLY
       disk_auto_delete: false
       network: foobar-network
       subnetwork: foobar-subnetwork-1
