@@ -200,7 +200,8 @@ class Runner(object):
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
-        self.become           = become
+        self.become_var       = become
+        self.become           = None
         self.become_method    = become_method
         self.become_user_var  = become_user
         self.become_user      = None
@@ -849,7 +850,9 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
-        # late processing of parameterized become_user (with_items,..)
+        # late processing of parameterized become and become_user (with_items,..)
+        if self.become_var is not None:
+            self.become = utils.boolean(template.template(self.basedir, self.become_var, inject))
         if self.become_user_var is not None:
             self.become_user = template.template(self.basedir, self.become_user_var, inject)
 

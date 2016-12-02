@@ -165,7 +165,7 @@ class Task(object):
         if (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')) and (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
             raise errors.AnsibleError('incompatible parameters ("su", "su_user", "su_pass") and sudo params "sudo", "sudo_user", "sudo_pass" in task: %s' % self.name)
 
-        self.become        = utils.boolean(ds.get('become', play.become))
+        self.become        = ds.get('become', play.become)
         self.become_method = ds.get('become_method', play.become_method)
         self.become_user   = ds.get('become_user', play.become_user)
         self.become_pass   = ds.get('become_pass', play.playbook.become_pass)
