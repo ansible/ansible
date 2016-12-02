@@ -59,11 +59,20 @@ requirements:
 
 EXAMPLES = '''
 # Example action to start service httpd, if not running
-- openwrt_init: state=started name=httpd
+- openwrt_init:
+    state: started
+    name: httpd
+
 # Example action to stop service cron, if running
-- openwrt_init: name=cron state=stopped
+- openwrt_init:
+    name: cron
+    state: stopped
+
 # Example action to reload service httpd, in all cases
-- openwrt_init: name=httpd state=reloaded
+- openwrt_init:
+    name: httpd
+    state: reloaded
+
 # Example action to enable service httpd
 - openwrt_init:
     name: httpd

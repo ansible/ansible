@@ -102,19 +102,25 @@ EXAMPLES = '''
 - puppet
 
 # Run puppet and timeout in 5 minutes
-- puppet: timeout=5m
+- puppet:
+    timeout: 5m
 
 # Run puppet using a different environment
-- puppet: environment=testing
+- puppet:
+    environment: testing
 
 # Run puppet using a specific certname
-- puppet: certname=agent01.example.com
+- puppet:
+    certname: agent01.example.com
+
 # Run puppet using a specific piece of Puppet code. Has no effect with a
 # puppetmaster.
-- puppet: execute='include ::mymodule'
+- puppet:
+    execute: 'include ::mymodule'
 
 # Run puppet using a specific tags
-- puppet: tags=update,nginx
+- puppet:
+    tags: update,nginx
 '''
 
 

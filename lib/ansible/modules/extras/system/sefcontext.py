@@ -72,7 +72,10 @@ author: Dag Wieers
 
 EXAMPLES = '''
 # Allow apache to modify files in /srv/git_repos
-- sefcontext: target='/srv/git_repos(/.*)?' setype=httpd_git_rw_content_t state=present
+- sefcontext:
+    target: '/srv/git_repos(/.*)?'
+    setype: httpd_git_rw_content_t
+    state: present
 '''
 
 RETURN = '''

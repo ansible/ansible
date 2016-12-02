@@ -92,52 +92,109 @@ notes:
 
 EXAMPLES = '''
 # Create a logical volume of 512m.
-- lvol: vg=firefly lv=test size=512
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512
 
 # Create a logical volume of 512m with disks /dev/sda and /dev/sdb
-- lvol: vg=firefly lv=test size=512 pvs=/dev/sda,/dev/sdb
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512
+    pvs: /dev/sda,/dev/sdb
 
 # Create cache pool logical volume
-- lvol: vg=firefly lv=lvcache size=512m opts='--type cache-pool'
+- lvol:
+    vg: firefly
+    lv: lvcache
+    size: 512m
+    opts: --type cache-pool
 
 # Create a logical volume of 512g.
-- lvol: vg=firefly lv=test size=512g
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512g
 
 # Create a logical volume the size of all remaining space in the volume group
-- lvol: vg=firefly lv=test size=100%FREE
+- lvol:
+    vg: firefly
+    lv: test
+    size: 100%FREE
 
 # Create a logical volume with special options
-- lvol: vg=firefly lv=test size=512g opts="-r 16"
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512g
+    opts: -r 16
 
 # Extend the logical volume to 1024m.
-- lvol: vg=firefly lv=test size=1024
+- lvol:
+    vg: firefly
+    lv: test
+    size: 1024
 
 # Extend the logical volume to consume all remaining space in the volume group
-- lvol: vg=firefly lv=test size=+100%FREE
+- lvol:
+    vg: firefly
+    lv: test
+    size: +100%FREE
 
 # Extend the logical volume to take all remaining space of the PVs
-- lvol: vg=firefly lv=test size=100%PVS
+- lvol:
+    vg: firefly
+    lv: test
+    size: 100%PVS
 
 # Resize the logical volume to % of VG
-- lvol: vg-firefly lv=test size=80%VG force=yes
+- lvol:
+    vg: firefly
+    lv: test
+    size: 80%VG
+    force: yes
 
 # Reduce the logical volume to 512m
-- lvol: vg=firefly lv=test size=512 force=yes
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512
+    force: yes
 
 # Set the logical volume to 512m and do not try to shrink if size is lower than current one
-- lvol: vg=firefly lv=test size=512 shrink=no
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512
+    shrink: no
 
 # Remove the logical volume.
-- lvol: vg=firefly lv=test state=absent force=yes
+- lvol:
+    vg: firefly
+    lv: test
+    state: absent
+    force: yes
 
 # Create a snapshot volume of the test logical volume.
-- lvol: vg=firefly lv=test snapshot=snap1 size=100m
+- lvol:
+    vg: firefly
+    lv: test
+    snapshot: snap1
+    size: 100m
 
 # Deactivate a logical volume
-- lvol: vg=firefly lv=test active=false
+- lvol:
+    vg: firefly
+    lv: test
+    active: false
 
 # Create a deactivated logical volume
-- lvol: vg=firefly lv=test size=512g active=false
+- lvol:
+    vg: firefly
+    lv: test
+    size: 512g
+    active: false
 '''
 
 import re

@@ -59,24 +59,40 @@ author: Brian Coca
 
 EXAMPLES = '''
 # get root user info
-- getent: database=passwd key=root
-- debug: var=getent_passwd
+- getent:
+    database: passwd
+    key: root
+- debug:
+    var: getent_passwd
 
 # get all groups
-- getent: database=group split=':'
-- debug: var=getent_group
+- getent:
+    database: group
+    split: ':'
+- debug:
+    var: getent_group
 
 # get all hosts, split by tab
-- getent: database=hosts
-- debug: var=getent_hosts
+- getent:
+    database: hosts
+- debug:
+    var: getent_hosts
 
 # get http service info, no error if missing
-- getent: database=services key=http fail_key=False
-- debug: var=getent_services
+- getent:
+    database: services
+    key: http
+    fail_key: False
+- debug:
+    var: getent_services
 
 # get user password hash (requires sudo/root)
-- getent: database=shadow key=www-data split=:
-- debug: var=getent_shadow
+- getent:
+    database: shadow
+    key: www-data
+    split: ':'
+- debug:
+    var: getent_shadow
 
 '''
 

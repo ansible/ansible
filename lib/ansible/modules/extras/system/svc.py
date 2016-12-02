@@ -67,22 +67,35 @@ options:
 
 EXAMPLES = '''
 # Example action to start svc dnscache, if not running
- - svc: name=dnscache state=started
+ - svc:
+    name: dnscache
+    state: started
 
 # Example action to stop svc dnscache, if running
- - svc: name=dnscache state=stopped
+ - svc:
+    name: dnscache
+    state: stopped
 
 # Example action to kill svc dnscache, in all cases
- - svc : name=dnscache state=killed
+ - svc:
+    name: dnscache
+    state: killed
 
 # Example action to restart svc dnscache, in all cases
- - svc : name=dnscache state=restarted
+ - svc:
+    name: dnscache
+    state: restarted
 
 # Example action to reload svc dnscache, in all cases
- - svc: name=dnscache state=reloaded
+ - svc:
+    name: dnscache
+    state: reloaded
 
 # Example using alt svc directory location
- - svc: name=dnscache state=reloaded service_dir=/var/service
+ - svc:
+    name: dnscache
+    state: reloaded
+    service_dir: /var/service
 '''
 
 import platform
