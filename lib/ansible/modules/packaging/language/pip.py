@@ -152,17 +152,17 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
-    name: 'svn+http://myrepo/svn/MyApp#'
+    name: svn+http://myrepo/svn/MyApp#
     egg: MyApp'
 
 # Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
 - pip:
-    name: 'git+http://myrepo/app/MyApp'
+    name: git+http://myrepo/app/MyApp
     editable: false
 
 # Install (MyApp) from local tarball
 - pip:
-    name: 'file:///path/to/MyApp.tar.gz'
+    name: file:///path/to/MyApp.tar.gz
 
 # Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
 - pip:
@@ -193,7 +193,7 @@ EXAMPLES = '''
 # Install specified python requirements and custom Index URL.
 - pip:
     requirements: /my_app/requirements.txt
-    extra_args: '-i https://example.com/pypi/simple'
+    extra_args: -i https://example.com/pypi/simple
 
 # Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
 - pip:
