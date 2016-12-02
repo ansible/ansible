@@ -183,7 +183,7 @@ EXAMPLES = '''
 
 - name: install the nginx rpm from a remote repo
   yum:
-    name: 'http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm'
+    name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
     state: present
 
 - name: install nginx rpm from a local file
