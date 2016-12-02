@@ -119,8 +119,10 @@ tasks:
     - sg-123abcde
     - sg-edcba321
   with_items:
-    - { name: HelloWorld, zip_file: 'hello-code.zip' }
-    - { name: ByeBye, zip_file: 'bye-code.zip' }
+    - name: HelloWorld
+      zip_file: hello-code.zip
+    - name: ByeBye
+      zip_file: bye-code.zip
 
 # Basic Lambda function deletion
 tasks:
