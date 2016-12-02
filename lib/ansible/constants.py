@@ -136,6 +136,9 @@ DEFAULT_ASK_SU_PASS       = get_config(p, DEFAULTS, 'ask_su_pass', 'ANSIBLE_ASK_
 DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
 DEFAULT_LOG_PATH          = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
+# galaxy related
+GALAXY_SERVER             = get_config(p, 'galaxy', 'server', 'ANSIBLE_GALAXY_SERVER', 'https://galaxy.ansible.com')
+
 # selinux
 DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf', islist=True)
 

@@ -207,7 +207,7 @@ def build_option_parser(action):
 
     if action in ("info","init","install"):
         parser.add_option(
-            '-s', '--server', dest='api_server', default="galaxy.ansible.com",
+            '-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
             help='The API server destination')
         parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
                           help='Ignore SSL certificate validation errors.')
@@ -257,7 +257,7 @@ def api_get_config(api_server, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/' % api_server
+        url = '%s/api/' % api_server
         data = json.load(open_url(url, validate_certs=validate_certs))
         if not data.get("current_version",None):
             return None
@@ -288,7 +288,7 @@ def api_lookup_role_by_name(api_server, role_name, parser, notify=True, ignore_c
         print "- invalid role name (%s). Specify role as format: username.rolename" % role_name
         sys.exit(1)
 
-    url = 'https://%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
+    url = '%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
     try:
         data = json.load(open_url(url, validate_certs=validate_certs))
         if len(data["results"]) == 0:
@@ -309,12 +309,12 @@ def api_fetch_role_related(api_server, related, role_id, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
+        url = '%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
         data = json.load(open_url(url, validate_certs=validate_certs))
         results = data['results']
         done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next_link'])
+            url = '%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
@@ -333,7 +333,7 @@ def api_get_list(api_server, what, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/v1/%s/?page_size' % (api_server, what)
+        url = '%s/api/v1/%s/?page_size' % (api_server, what)
         data = json.load(open_url(url, validate_certs=validate_certs))
         if "results" in data:
             results = data['results']
@@ -343,7 +343,7 @@ def api_get_list(api_server, what, ignore_certs=False):
         if "next_link" in data:
             done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next_link'])
+            url = '%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
@@ -606,7 +606,7 @@ def execute_init(args, options, parser):
     """
 
     init_path    = get_opt(options, 'init_path', './')
-    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     force        = get_opt(options, 'force', False)
     offline      = get_opt(options, 'offline', False)
     ignore_certs = get_opt(options, 'ignore_certs', False)
@@ -709,7 +709,7 @@ def execute_info(args, options, parser):
         print "- you must specify a user/role name"
         sys.exit(1)
 
-    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     api_config   = api_get_config(api_server)
     roles_path   = get_opt(options, "roles_path")
     ignore_certs = get_opt(options, "ignore_certs", False)
@@ -778,7 +778,7 @@ def execute_install(args, options, parser):
         print "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     no_deps      = get_opt(options, "no_deps", False)
     roles_path   = get_opt(options, "roles_path")
     ignore_certs = get_opt(options, "ignore_certs")
@@ -850,6 +850,10 @@ def execute_install(args, options, parser):
                         print "- the specified version (%s) was not found in the list of available versions (%s)." % (role['version'], role_versions)
                         exit_without_ignore(options)
                         continue
+
+                matched_version = filter( lambda v : v['name'] == role['version'] , role_versions )
+                if len(matched_version) == 1 :
+                    role_src = matched_version[0].get('url', role_src) or role_src
 
                 # download the role. if --no-deps was specified, we stop here, 
                 # otherwise we recursively grab roles and all of their deps.
