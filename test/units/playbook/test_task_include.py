@@ -26,10 +26,6 @@ from ansible.playbook.task import Task
 
 from ansible.playbook.task_include import TaskInclude
 
-import deepdiff
-import pprint
-pp = pprint.pprint
-
 
 class TestTaskInclude(unittest.TestCase):
 
@@ -41,7 +37,7 @@ class TestTaskInclude(unittest.TestCase):
         task_ds = {'include': 'include_test.yml'}
         task_include = TaskInclude()
         loaded_task = task_include.load(task_ds, task_include=parent_task)
-        print(loaded_task)
+        self.assertIsInstance(loaded_task, TaskInclude)
 
     def test_child(self):
         parent_task_ds = {'debug': 'msg=foo'}
@@ -51,11 +47,12 @@ class TestTaskInclude(unittest.TestCase):
         task_ds = {'include': 'include_test.yml'}
         task_include = TaskInclude()
         loaded_task = task_include.load(task_ds, task_include=parent_task)
+        self.assertIsInstance(loaded_task, TaskInclude)
 
         child_task_ds = {'include': 'other_include_test.yml'}
         child_task_include = TaskInclude()
         loaded_child_task = child_task_include.load(child_task_ds, task_include=loaded_task)
-        print(loaded_child_task)
+        self.assertIsInstance(loaded_child_task, TaskInclude)
 
     def test_copy(self):
         task_ds = {'include': 'include_test.yml'}
@@ -64,17 +61,6 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy()
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
-        print('loaded task vs task_include_copy')
-        pp(ddiff)
-        print('loaded_task')
-        pp(loaded_task.serialize())
-        print('task_include_copy')
-        pp(task_include_copy.serialize())
-        print('lt( %s, uuid=%s) == ti(%s, uuid=%s) : %s' % (loaded_task, loaded_task._uuid,
-                                                            task_include_copy, task_include_copy._uuid,
-                                                            (loaded_task == task_include_copy)))
-        print('t.s == tic.s: %s' % (loaded_task.serialize() == task_include_copy.serialize()))
         self.assertEqual(loaded_task, task_include_copy)
 
     def test_copy_static(self):
@@ -85,16 +71,6 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy()
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
-        print('s loaded task vs task_include_copy')
-        pp(ddiff)
-        print('s loaded_task')
-        pp(loaded_task.serialize())
-        print('s task_include_copy')
-        pp(task_include_copy.serialize())
-        print('lt( %s, uuid=%s) == ti(%s, uuid=%s) : %s' % (loaded_task, loaded_task._uuid,
-                                                            task_include, task_include._uuid,
-                                                            (loaded_task == task_include)))
         self.assertEqual(loaded_task, task_include_copy)
 
     def test_copy_exclude_parent(self):
@@ -103,8 +79,6 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds)
 
         task_include_copy = loaded_task.copy(exclude_parent=True)
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
-        pp(ddiff)
         self.assertEqual(loaded_task, task_include_copy)
 
     def test_copy_exclude_parent_exclude_tasks(self):
@@ -114,8 +88,6 @@ class TestTaskInclude(unittest.TestCase):
         loaded_task = task_include.load(task_ds, loader=fake_loader)
 
         task_include_copy = loaded_task.copy(exclude_parent=True, exclude_tasks=True)
-        ddiff = deepdiff.DeepDiff(loaded_task, task_include_copy, verbose_level=2)
-        pp(ddiff)
         self.assertEqual(loaded_task, task_include_copy)
 
     def test_copy_parent(self):
@@ -133,21 +105,7 @@ class TestTaskInclude(unittest.TestCase):
         loaded_child_task = child_task_include.load(child_task_ds, task_include=loaded_task)
 
         task_include_copy = loaded_child_task.copy()
-        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
-        pp(ddiff)
         self.assertEqual(loaded_child_task, task_include_copy)
-
-#        task_include_copy = loaded_child_task.copy(exclude_parent=True)
-#        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
-#        pp(ddiff)
-#        self.assertEqual(loaded_child_task, task_include_copy)
-
-#        task_include_copy = loaded_child_task.copy(exclude_parent=True, exclude_tasks=True)
-#        ddiff = deepdiff.DeepDiff(loaded_child_task, task_include_copy, verbose_level=2)
-#        pp(ddiff)
-#        self.assertEqual(loaded_child_task, task_include_copy)
-
-#        self.assertEqual(loaded_task, loaded_child_task)
 
 
 class TestTaskIncludeGetVars(unittest.TestCase):
