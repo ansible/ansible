@@ -54,22 +54,38 @@ author: "Johan Wiren (@johanwiren)"
 
 EXAMPLES = '''
 # Create a new file system called myfs in pool rpool with the setuid property turned off
-- zfs: name=rpool/myfs state=present setuid=off
+- zfs:
+    name: rpool/myfs
+    state: present
+    setuid: off
 
 # Create a new volume called myvol in pool rpool.
-- zfs: name=rpool/myvol state=present volsize=10M
+- zfs:
+    name: rpool/myvol
+    state: present
+    volsize: 10M
 
 # Create a snapshot of rpool/myfs file system.
-- zfs: name=rpool/myfs@mysnapshot state=present
+- zfs:
+    name: rpool/myfs@mysnapshot
+    state: present
 
 # Create a new file system called myfs2 with snapdir enabled
-- zfs: name=rpool/myfs2 state=present snapdir=enabled
+- zfs:
+    name: rpool/myfs2
+    state: present
+    snapdir: enabled
 
 # Create a new file system by cloning a snapshot
-- zfs: name=rpool/cloned_fs state=present origin=rpool/myfs@mysnapshot
+- zfs:
+    name: rpool/cloned_fs
+    state: present
+    origin: rpool/myfs@mysnapshot
 
 # Destroy a filesystem
-- zfs: name=rpool/myfs state=absent
+- zfs:
+    name: rpool/myfs
+    state: absent
 '''
 
 

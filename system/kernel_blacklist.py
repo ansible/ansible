@@ -52,7 +52,9 @@ requirements: []
 
 EXAMPLES = '''
 # Blacklist the nouveau driver module
-- kernel_blacklist: name=nouveau state=present
+- kernel_blacklist:
+    name: nouveau
+    state: present
 '''
 
 

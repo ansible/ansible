@@ -61,11 +61,25 @@ author: Dan Keder
 
 EXAMPLES = '''
 # Allow Apache to listen on tcp port 8888
-- seport: ports=8888 proto=tcp setype=http_port_t state=present
+- seport:
+    ports: 8888
+    proto: tcp
+    setype: http_port_t
+    state: present
+
 # Allow sshd to listen on tcp port 8991
-- seport: ports=8991 proto=tcp setype=ssh_port_t state=present
+- seport:
+    ports: 8991
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+
 # Allow memcached to listen on tcp ports 10000-10100 and 10112
-- seport: ports=10000-10100,10112 proto=tcp setype=memcache_port_t state=present
+- seport:
+    ports: 10000-10100,10112
+    proto: tcp
+    setype: memcache_port_t
+    state: present
 '''
 
 try:

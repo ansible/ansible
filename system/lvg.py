@@ -66,17 +66,24 @@ notes:
 
 EXAMPLES = '''
 # Create a volume group on top of /dev/sda1 with physical extent size = 32MB.
-- lvg:  vg=vg.services pvs=/dev/sda1 pesize=32
+- lvg:
+    vg: vg.services
+    pvs: /dev/sda1
+    pesize: 32
 
 # Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
 # If, for example, we already have VG vg.services on top of /dev/sdb1,
 # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
 # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
 # and then reduce by /dev/sda5.
-- lvg: vg=vg.services pvs=/dev/sdb1,/dev/sdc5
+- lvg:
+    vg: vg.services
+    pvs: /dev/sdb1,/dev/sdc5
 
 # Remove a volume group with name vg.services.
-- lvg: vg=vg.services state=absent
+- lvg:
+    vg: vg.services
+    state: absent
 '''
 
 def parse_vgs(data):

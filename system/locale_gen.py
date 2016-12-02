@@ -41,7 +41,9 @@ options:
 
 EXAMPLES = '''
 # Ensure a locale exists.
-- locale_gen: name=de_CH.UTF-8 state=present
+- locale_gen:
+    name: de_CH.UTF-8
+    state: present
 '''
 
 import os

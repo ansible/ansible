@@ -71,7 +71,8 @@ diff:
 
 EXAMPLES = '''
 - name: set timezone to Asia/Tokyo
-  timezone: name=Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
 '''
 
 

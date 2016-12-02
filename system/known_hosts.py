@@ -62,11 +62,11 @@ author: "Matthew Vernon (@mcv21)"
 '''
 
 EXAMPLES = '''
-# Example using with_file to set the system known_hosts file
 - name: tell the host about our servers it might want to ssh to
-  known_hosts: path='/etc/ssh/ssh_known_hosts'
-               name='foo.com.invalid'
-               key="{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+  known_hosts:
+    path: /etc/ssh/ssh_known_hosts
+    name: foo.com.invalid
+    key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
 '''
 
 # Makes sure public host keys are present or absent in the given known_hosts
