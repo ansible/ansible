@@ -33,7 +33,7 @@ if os.getenv('ANSIBLE_ETCD_URL') is not None:
 class Etcd(object):
     def __init__(self, url=ANSIBLE_ETCD_URL, validate_certs=True):
         self.url = url
-        self.baseurl = '%s/v1/keys' % (self.url)
+        self.baseurl = '%s/v2/keys' % (self.url)
         self.validate_certs = validate_certs
 
     def get(self, key):
@@ -48,10 +48,12 @@ class Etcd(object):
             return value
 
         try:
-            # {"action":"get","key":"/name","value":"Jane Jolie","index":5}
+            # {"action":"get","node":{"key":"/foo","value":"asdf","modifiedIndex":8,"createdIndex":8}}
             item = json.loads(data)
-            if 'value' in item:
-                value = item['value']
+            if 'node' in item:
+                node = item['node']
+                if 'value' in node:
+                    value = node['value']
             if 'errorCode' in item:
                 value = "ENOENT"
         except:
