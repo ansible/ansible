@@ -99,7 +99,7 @@ EXAMPLES = '''
 # Using github url as key source
 - authorized_key:
     user: charlie
-    key: 'https://github.com/charlie.keys'
+    key: https://github.com/charlie.keys
 
 # Using alternate directory locations:
 - authorized_key:
@@ -126,7 +126,7 @@ EXAMPLES = '''
 # Using validate_certs:
 - authorized_key:
     user: charlie
-    key: 'https://github.com/user.keys'
+    key: https://github.com/user.keys
     validate_certs: no
 
 # Set up authorized_keys exclusively with one key
