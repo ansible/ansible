@@ -149,8 +149,7 @@ EXAMPLES = '''
   gather_facts: False
   tasks:
   - name: Build instance request
-    local_action:
-      module: sl_vm
+    sl_vm:
       hostname: instance-1
       domain: anydomain.com
       datacenter: dal09
@@ -222,7 +221,6 @@ EXAMPLES = '''
         os_code: UBUNTU_LATEST
         ssh_keys: []
         wait: True
-    delegate_to: localhost
 
 - name: Cancel instances
   hosts: localhost
@@ -232,7 +230,6 @@ EXAMPLES = '''
     sl_vm:
       state: absent
       tags: ansible-module-test
-    delegate_to: localhost
 '''
 
 # TODO: Disabled RETURN as it is breaking the build for docs. Needs to be fixed.
