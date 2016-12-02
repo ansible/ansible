@@ -156,7 +156,7 @@ EXAMPLES = '''
     state: present
     region: us-east-1
     disable_rollback: true
-    template_url: 'https://s3.amazonaws.com/my-bucket/cloudformation.template'
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
   args:
     template_parameters:
       KeyName: jmartin
@@ -173,7 +173,7 @@ EXAMPLES = '''
     state: present
     region: us-east-1
     disable_rollback: true
-    template_url: 'https://s3.amazonaws.com/my-bucket/cloudformation.template'
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
     role_arn: 'arn:aws:iam::123456789012:role/cloudformation-iam-role'
   args:
     template_parameters:
