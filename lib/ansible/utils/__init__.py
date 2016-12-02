@@ -32,7 +32,9 @@ from ansible.module_utils.splitter import split_args, unquote
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.utils.unicode import to_bytes, to_unicode
 import ansible.constants as C
+from . import pybook
 import ast
+import pprint
 import time
 import StringIO
 import stat
@@ -780,10 +782,17 @@ def parse_yaml_from_file(path, vault_password=None):
         data = vault.decrypt(data)
         show_content = False
 
-    try:
-        return parse_yaml(data, path_hint=path)
-    except yaml.YAMLError, exc:
-        process_yaml_error(exc, data, path, show_content)
+    if re.match("#!.*python", data):
+        result = pybook.run_pybook(path)
+    else:
+        try:
+            result = parse_yaml(data, path_hint=path)
+        except yaml.YAMLError, exc:
+            process_yaml_error(exc, data, path, show_content)
+            
+    if VERBOSITY >= 3:
+        display("""Structure of file "%s":\n%s\n""" % (path, pprint.pformat(result)), color='yellow')
+    return result
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
