@@ -84,6 +84,7 @@ Function UserSearch
             return $apppoolobj.applicationPoolSid
         }
     }
+    Else
     {
         #Search by samaccountname
         $objUser = New-Object System.Security.Principal.NTAccount($accountName)
