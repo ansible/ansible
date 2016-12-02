@@ -74,43 +74,66 @@ requirements:
 
 EXAMPLES = '''
 # Define a new network
-- virt_net: command=define name=br_nat xml='{{ lookup("template", "network/bridge.xml.j2") }}'
+- virt_net:
+    command: define
+    name: br_nat
+    xml: '{{ lookup("template", "network/bridge.xml.j2") }}'
 
 # Start a network
-- virt_net: command=create name=br_nat
+- virt_net:
+    command: create
+    name: br_nat
 
 # List available networks
-- virt_net: command=list_nets
+- virt_net:
+    command: list_nets
 
 # Get XML data of a specified network
-- virt_net: command=get_xml name=br_nat
+- virt_net:
+    command: get_xml
+    name: br_nat
 
 # Stop a network
-- virt_net: command=destroy name=br_nat
+- virt_net:
+    command: destroy
+    name: br_nat
 
 # Undefine a network
-- virt_net: command=undefine name=br_nat
+- virt_net:
+    command: undefine
+    name: br_nat
 
 # Gather facts about networks
 # Facts will be available as 'ansible_libvirt_networks'
-- virt_net: command=facts
+- virt_net:
+    command: facts
 
 # Gather information about network managed by 'libvirt' remotely using uri
-- virt_net: command=info uri='{{ item }}'
-  with_items: "{{ libvirt_uris }}"
+- virt_net:
+    command: info
+    uri: '{{ item }}'
+  with_items: '{{ libvirt_uris }}'
   register: networks
 
 # Ensure that a network is active (needs to be defined and built first)
-- virt_net: state=active name=br_nat
+- virt_net:
+    state: active
+    name: br_nat
 
 # Ensure that a network is inactive
-- virt_net: state=inactive name=br_nat
+- virt_net:
+    state: inactive
+    name: br_nat
 
 # Ensure that a given network will be started at boot
-- virt_net: autostart=yes name=br_nat
+- virt_net:
+    autostart: yes
+    name: br_nat
 
 # Disable autostart for a given network
-- virt_net: autostart=no name=br_nat
+- virt_net:
+    autostart: no
+    name: br_nat
 '''
 
 VIRT_FAILED = 1

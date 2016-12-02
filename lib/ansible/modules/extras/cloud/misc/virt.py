@@ -66,7 +66,9 @@ author:
 
 EXAMPLES = '''
 # a playbook task line:
-- virt: name=alpha state=running
+- virt:
+    name: alpha
+    state: running
 
 # /usr/bin/ansible invocations
 ansible host -m virt -a "name=alpha command=status"
@@ -76,12 +78,16 @@ ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 # a playbook example of defining and launching an LXC guest
 tasks:
   - name: define vm
-    virt: name=foo
-          command=define
-          xml="{{ lookup('template', 'container-template.xml.j2') }}"
-          uri=lxc:///
+    virt:
+        name: foo
+        command: define
+        xml: '{{ lookup('template', 'container-template.xml.j2') }}'
+        uri: 'lxc:///'
   - name: start vm
-    virt: name=foo state=running uri=lxc:///
+    virt:
+        name: foo
+        state: running
+        uri: 'lxc:///'
 '''
 
 RETURN = '''

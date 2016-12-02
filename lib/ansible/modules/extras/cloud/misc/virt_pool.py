@@ -79,49 +79,76 @@ requirements:
 
 EXAMPLES = '''
 # Define a new storage pool
-- virt_pool: command=define name=vms xml='{{ lookup("template", "pool/dir.xml.j2") }}'
+- virt_pool:
+    command: define
+    name: vms
+    xml: '{{ lookup("template", "pool/dir.xml.j2") }}'
 
 # Build a storage pool if it does not exist
-- virt_pool: command=build name=vms
+- virt_pool:
+    command: build
+    name: vms
 
 # Start a storage pool
-- virt_pool: command=create name=vms
+- virt_pool:
+    command: create
+    name: vms
 
 # List available pools
-- virt_pool: command=list_pools
+- virt_pool:
+    command: list_pools
 
 # Get XML data of a specified pool
-- virt_pool: command=get_xml name=vms
+- virt_pool:
+    command: get_xml
+    name: vms
 
 # Stop a storage pool
-- virt_pool: command=destroy name=vms
+- virt_pool:
+    command: destroy
+    name: vms
 
 # Delete a storage pool (destroys contents)
-- virt_pool: command=delete name=vms
+- virt_pool:
+    command: delete
+    name: vms
 
 # Undefine a storage pool
-- virt_pool: command=undefine name=vms
+- virt_pool:
+    command: undefine
+    name: vms
 
 # Gather facts about storage pools
 # Facts will be available as 'ansible_libvirt_pools'
-- virt_pool: command=facts
+- virt_pool:
+    command: facts
 
 # Gather information about pools managed by 'libvirt' remotely using uri
-- virt_pool: command=info uri='{{ item }}'
-  with_items: "{{ libvirt_uris }}"
+- virt_pool:
+    command: info
+    uri: '{{ item }}'
+  with_items: '{{ libvirt_uris }}'
   register: storage_pools
 
 # Ensure that a pool is active (needs to be defined and built first)
-- virt_pool: state=active name=vms
+- virt_pool:
+    state: active
+    name: vms
 
 # Ensure that a pool is inactive
-- virt_pool: state=inactive name=vms
+- virt_pool:
+    state: inactive
+    name: vms
 
 # Ensure that a given pool will be started at boot
-- virt_pool: autostart=yes name=vms
+- virt_pool:
+    autostart: yes
+    name: vms
 
 # Disable autostart for a given pool
-- virt_pool: autostart=no name=vms
+- virt_pool:
+    autostart: no
+    name: vms
 '''
 
 VIRT_FAILED = 1
