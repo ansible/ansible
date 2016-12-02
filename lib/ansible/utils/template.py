@@ -246,7 +246,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
         environment.undefined = StrictUndefined
 
     try:
-        data = codecs.open(realpath, encoding="utf8").read()
+        data = codecs.open(realpath, encoding="utf8", errors="replace").read()
     except UnicodeDecodeError:
         raise errors.AnsibleError("unable to process as utf-8: %s" % realpath)
     except:
