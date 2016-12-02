@@ -105,18 +105,18 @@ options:
 EXAMPLES = '''
 # Checkout subversion repository to specified folder.
 - subversion:
-    repo: 'svn+ssh://an.example.org/path/to/repo'
+    repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
 
 # Export subversion directory to folder
 - subversion:
-    repo: 'svn+ssh://an.example.org/path/to/repo'
+    repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
 - subversion:
-    repo: 'svn+ssh://an.example.org/path/to/repo'
+    repo: svn+ssh://an.example.org/path/to/repo
     dest: /srv/checkout
     checkout: no
     update: no
