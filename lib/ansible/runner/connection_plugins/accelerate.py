@@ -53,6 +53,7 @@ class Connection(object):
         self.is_connected = False
         self.has_pipelining = False
         self.become_methods_supported=['sudo']
+        self.delegate = None
 
         if not self.port:
             self.port = constants.DEFAULT_REMOTE_PORT
@@ -104,7 +105,7 @@ class Connection(object):
         if getattr(self.runner, 'accelerate_inventory_host', False):
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
         else:
-            inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
+            inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.delegate or self.host))
         vvvv("attempting to start up the accelerate daemon...")
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
