@@ -354,6 +354,14 @@ The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars 
 
 .. _i_dont_see_my_question:
 
+
+Why don't you ship in X format?
++++++++++++++++++++++++++++++++
+
+Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
+In other cases there are technical issues, for example, for python wheels, our dependencies are not present and we would have to start doing packaging for other projects.
+
+
 I don't see my question here
 ++++++++++++++++++++++++++++
 
