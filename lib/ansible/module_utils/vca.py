@@ -42,7 +42,7 @@ def vca_argument_spec():
     return dict(
         username=dict(type='str', aliases=['user'], required=False),
         password=dict(type='str', aliases=['pass', 'passwd'], required=False, no_log=True),
-        token=dict(type='str', required=False, no_log=False),
+        token=dict(type='str', required=False, no_log=True),
         org_url=dict(type='str', required=False),
         org=dict(),
         service_id=dict(),
