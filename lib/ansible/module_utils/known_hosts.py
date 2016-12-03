@@ -103,8 +103,8 @@ def get_fqdn_and_port(repo_url):
             if result[0].startswith('['):
                 result = result.split(']', 1)[0] + ']'
             elif ":" in result:
-                result = result.split(":")[0]
-    return (result, SSH_KEYSCAN_DEFAULT_PORT)
+                (result, port) = result.split(":", 2)
+    return (result, port)
 
 def check_hostkey(module, fqdn):
    return not not_in_host_file(module, fqdn)
