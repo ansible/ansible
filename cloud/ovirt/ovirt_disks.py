@@ -280,7 +280,7 @@ def main():
             ret = disks_module.remove()
 
         # If VM was passed attach/detach disks to/from the VM:
-        if 'vm_id' in module.params or 'vm_name' in module.params and state != 'absent':
+        if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and state != 'absent':
             vms_service = connection.system_service().vms_service()
 
             # If `vm_id` isn't specified, find VM by name:
