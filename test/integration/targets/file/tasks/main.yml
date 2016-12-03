@@ -62,6 +62,22 @@
       - "file4_result.changed == true"
       - "file4_result.mode == '0600'"
 
+- name: change file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=A
+  register: file_attributes_result
+  ignore_errors: True
+
+- name: reapply file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=A
+  register: file_attributes_result_2
+  when: file_attributes_result is changed
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "file_attributes_result_2 is not changed"
+  when: file_attributes_result is changed
+
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
