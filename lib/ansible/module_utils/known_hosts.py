@@ -190,7 +190,10 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False, port=SSH_KEYSCA
     elif not os.path.isdir(user_ssh_dir):
         module.fail_json(msg="%s is not a directory" % user_ssh_dir)
 
-    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+    if port == SSH_KEYSCAN_DEFAULT_PORT:
+        this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+    else:
+        this_cmd = "%s -t %s %s -p %s" % (keyscan_cmd, key_type, fqdn, port)
 
     rc, out, err = module.run_command(this_cmd)
     # ssh-keyscan gives a 0 exit code and prints nothins on timeout
