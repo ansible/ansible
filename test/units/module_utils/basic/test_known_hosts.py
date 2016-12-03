@@ -106,8 +106,8 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
         self.module.get_bin_path = get_bin_path
 
         for u in self.urls:
-            if self.urls[u]["is_ssh_url"]:
-                known_hosts.add_host_key(self.module, self.urls[u]["get_fqdn"])
-                run_command.assert_called_with(keyscan_cmd + self.urls[u]["add_host_key_cmd"])
+            if self.urls[u]['is_ssh_url']:
+                known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
+                run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
 
 
