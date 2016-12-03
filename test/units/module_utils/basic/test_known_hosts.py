@@ -48,7 +48,7 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
              'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
         'ssh://six.example.org:21/example.org': # ssh on FTP Port? 
             {'is_ssh_url': True, 'get_fqdn': 'six.example.org',
-             'add_host_key_cmd': " -t rsa six.example.org",
+             'add_host_key_cmd': " -t rsa six.example.org -p 21", # should add port param, since it's different from default
              'port': "21"},
         'ssh://[2001:DB8::abcd:abcd]/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
@@ -57,6 +57,8 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
         'ssh://[2001:DB8::abcd:abcd]:22/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
              'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]", 
+             # even though it's explicitly specified we do not add port here (for backwards compatibility)'
+             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]",  
              'port': "22"},
         'username@[2001:DB8::abcd:abcd]/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
@@ -68,7 +70,7 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
              'port': "22"},
         'ssh://internal.git.server:7999/repos/repo.git':
             {'is_ssh_url': True, 'get_fqdn': 'internal.git.server',
-             'add_host_key_cmd': " -t rsa internal.git.server",
+             'add_host_key_cmd': " -t rsa internal.git.server -p 7999",
              'port': "7999"}
     }
 
