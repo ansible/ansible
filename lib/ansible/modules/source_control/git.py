@@ -420,12 +420,15 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     else:
         cmd.extend([ '--origin', remote ])
     if depth:
+        # only use depth if the remote object is branch or tag (i.e. fetchable)
         if version == 'HEAD' \
            or refspec  \
-           or is_remote_branch(git_path, module, dest, repo, version) \
-           or is_remote_tag(git_path, module, dest, repo, version):
-            # only use depth if the remote object is branch or tag (i.e. fetchable)
+           or is_remote_branch(git_path, module, dest, repo, version):
             cmd.extend([ '--depth', str(depth) ])
+        elif is_remote_tag(git_path, module, dest, repo, version):
+            cmd.extend([ '--depth', str(depth) ])
+            # For remote tags, make sure that the tag is actually fetched from repo
+            cmd.extend([ '--branch', str(version) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
