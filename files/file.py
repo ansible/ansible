@@ -100,8 +100,8 @@ EXAMPLES = '''
     group: foo
     state: link
 - file:
-    src: /tmp/{{ item.src }}
-    dest: "{{ item.dest }}"
+    src: '/tmp/{{ item.src }}'
+    dest: '{{ item.dest }}'
     state: link
   with_items:
     - { src: 'x', dest: 'y' }
@@ -124,7 +124,6 @@ EXAMPLES = '''
     path: /etc/some_directory
     state: directory
     mode: 0755
-
 '''
 
 import errno
