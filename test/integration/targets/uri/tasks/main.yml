@@ -175,6 +175,13 @@
     user: user
     password: passwd
 
+- name: test digest auth
+  uri:
+    url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: passwd
+    HEADER_Cookie: "fake=fake_value"
+
 - name: test PUT
   uri:
     url: 'http://{{ httpbin_host }}/put'
