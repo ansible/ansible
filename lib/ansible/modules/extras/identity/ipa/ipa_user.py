@@ -18,6 +18,7 @@
 DOCUMENTATION = '''
 ---
 module: ipa_user
+author: Thomas Krahn (@Nosmoht)
 short_description: Manage FreeIPA users
 description:
 - Add, modify and delete user within IPA server
@@ -99,7 +100,6 @@ version_added: "2.3"
 requirements:
 - base64
 - hashlib
-- json
 '''
 
 EXAMPLES = '''
@@ -139,83 +139,12 @@ user:
 import base64
 import hashlib
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils.ipa import IPAClient
 
+class UserIPAClient(IPAClient):
 
-class IPAClient:
     def __init__(self, module, host, port, protocol):
-        self.host = host
-        self.port = port
-        self.protocol = protocol
-        self.module = module
-        self.headers = None
-
-    def get_base_url(self):
-        return '%s://%s/ipa' % (self.protocol, self.host)
-
-    def get_json_url(self):
-        return '%s/session/json' % self.get_base_url()
-
-    def login(self, username, password):
-        url = '%s/session/login_password' % self.get_base_url()
-        data = 'user=%s&password=%s' % (username, password)
-        headers = {'referer': self.get_base_url(),
-                   'Content-Type': 'application/x-www-form-urlencoded',
-                   'Accept': 'text/plain'}
-        try:
-            resp, info = fetch_url(module=self.module, url=url, data=data, headers=headers)
-            status_code = info['status']
-            if status_code not in [200, 201, 204]:
-                self._fail('login', info['body'])
-
-            self.headers = {'referer': self.get_base_url(),
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'Cookie': resp.info().getheader('Set-Cookie')}
-        except Exception:
-            e = get_exception()
-            self._fail('login', str(e))
-
-    def _fail(self, msg, e):
-        if 'message' in e:
-            err_string = e.get('message')
-        else:
-            err_string = e
-        self.module.fail_json(msg='%s: %s' % (msg, err_string))
-
-    def _post_json(self, method, name, item=None):
-        if item is None:
-            item = {}
-        url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
-        try:
-            resp, info = fetch_url(module=self.module, url=url, data=json.dumps(data), headers=self.headers)
-            status_code = info['status']
-            if status_code not in [200, 201, 204]:
-                self._fail(method, info['body'])
-        except Exception:
-            e = get_exception()
-            self._fail('post %s' % method, str(e))
-
-        resp = json.loads(resp.read())
-        err = resp.get('error')
-        if err is not None:
-            self._fail('repsonse %s' % method, err)
-
-        if 'result' in resp:
-            result = resp.get('result')
-            if 'result' in result:
-                result = result.get('result')
-                if isinstance(result, list):
-                    if len(result) > 0:
-                        return result[0]
-                    else:
-                        return {}
-            return result
-        return None
+        super(UserIPAClient, self).__init__(module, host, port, protocol)
 
     def user_find(self, name):
         return self._post_json(method='user_find', name=None, item={'all': True, 'uid': name})
@@ -236,10 +165,11 @@ class IPAClient:
         return self._post_json(method='user_enable', name=name)
 
 
-def get_user_dict(givenname=None, loginshell=None, mail=None, nsaccountlock=False, sn=None, sshpubkey=None,
-                  telephonenumber=None,
-                  title=None):
+def get_user_dict(displayname=None, givenname=None, loginshell=None, mail=None, nsaccountlock=False, sn=None,
+                  sshpubkey=None, telephonenumber=None, title=None, userpassword=None):
     user = {}
+    if displayname is not None:
+        user['displayname'] = displayname
     if givenname is not None:
         user['givenname'] = givenname
     if loginshell is not None:
@@ -255,6 +185,8 @@ def get_user_dict(givenname=None, loginshell=None, mail=None, nsaccountlock=Fals
         user['telephonenumber'] = telephonenumber
     if title is not None:
         user['title'] = title
+    if userpassword is not None:
+        user['userpassword'] = userpassword
 
     return user
 
@@ -265,7 +197,7 @@ def get_user_diff(ipa_user, module_user):
         API returns everything as a list even if only a single value is possible.
         Therefore some more complexity is needed.
         The method will check if the value type of module_user.attr is not a list and
-        create a list with that element if the same attribute in ipa_user is list. In this way i hope that the method
+        create a list with that element if the same attribute in ipa_user is list. In this way I hope that the method
         must not be changed if the returned API dict is changed.
     :param ipa_user:
     :param module_user:
@@ -301,7 +233,7 @@ def get_user_diff(ipa_user, module_user):
 def get_ssh_key_fingerprint(ssh_key):
     """
     Return the public key fingerprint of a given public SSH key
-    in format "FB:0C:AC:0A:07:94:5B:CE:75:6E:63:32:13:AD:AD:D7 (ssh-rsa)"
+    in format "FB:0C:AC:0A:07:94:5B:CE:75:6E:63:32:13:AD:AD:D7 [user@host] (ssh-rsa)"
     :param ssh_key:
     :return:
     """
@@ -312,7 +244,12 @@ def get_ssh_key_fingerprint(ssh_key):
     key = base64.b64decode(parts[1].encode('ascii'))
 
     fp_plain = hashlib.md5(key).hexdigest()
-    return ':'.join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2])).upper() + ' (%s)' % key_type
+    key_fp = ':'.join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2])).upper()
+    if len(parts) < 3:
+        return "%s (%s)" % (key_fp, key_type)
+    else:
+        user_host = parts[2]
+        return "%s %s (%s)" % (key_fp, user_host, key_type)
 
 
 def ensure(module, client):
@@ -320,10 +257,13 @@ def ensure(module, client):
     name = module.params['name']
     nsaccountlock = state == 'disabled'
 
-    module_user = get_user_dict(givenname=module.params.get('givenname'), loginshell=module.params['loginshell'],
+    module_user = get_user_dict(displayname=module.params.get('displayname'),
+                                givenname=module.params.get('givenname'),
+                                loginshell=module.params['loginshell'],
                                 mail=module.params['mail'], sn=module.params['sn'],
                                 sshpubkey=module.params['sshpubkey'], nsaccountlock=nsaccountlock,
-                                telephonenumber=module.params['telephonenumber'], title=module.params['title'])
+                                telephonenumber=module.params['telephonenumber'], title=module.params['title'],
+                                userpassword=module.params['password'])
 
     ipa_user = client.user_find(name=name)
 
@@ -373,10 +313,10 @@ def main():
         supports_check_mode=True,
     )
 
-    client = IPAClient(module=module,
-                       host=module.params['ipa_host'],
-                       port=module.params['ipa_port'],
-                       protocol=module.params['ipa_prot'])
+    client = UserIPAClient(module=module,
+                           host=module.params['ipa_host'],
+                           port=module.params['ipa_port'],
+                           protocol=module.params['ipa_prot'])
 
     # If sshpubkey is defined as None than module.params['sshpubkey'] is [None]. IPA itself returns None (not a list).
     # Therefore a small check here to replace list(None) by None. Otherwise get_user_diff() would return sshpubkey
@@ -397,7 +337,6 @@ def main():
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url
 
 if __name__ == '__main__':
     main()

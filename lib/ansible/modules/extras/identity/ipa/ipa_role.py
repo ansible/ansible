@@ -18,6 +18,7 @@
 DOCUMENTATION = '''
 ---
 module: ipa_role
+author: Thomas Krahn (@Nosmoht)
 short_description: Manage FreeIPA role
 description:
 - Add, modify and delete a role within FreeIPA server using FreeIPA API
@@ -98,8 +99,6 @@ options:
     required: false
     default: true
 version_added: "2.3"
-requirements:
-- json
 '''
 
 EXAMPLES = '''
@@ -144,83 +143,12 @@ role:
   type: dict
 '''
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils.ipa import IPAClient
 
+class RoleIPAClient(IPAClient):
 
-class IPAClient:
     def __init__(self, module, host, port, protocol):
-        self.host = host
-        self.port = port
-        self.protocol = protocol
-        self.module = module
-        self.headers = None
-
-    def get_base_url(self):
-        return '%s://%s/ipa' % (self.protocol, self.host)
-
-    def get_json_url(self):
-        return '%s/session/json' % self.get_base_url()
-
-    def login(self, username, password):
-        url = '%s/session/login_password' % self.get_base_url()
-        data = 'user=%s&password=%s' % (username, password)
-        headers = {'referer': self.get_base_url(),
-                   'Content-Type': 'application/x-www-form-urlencoded',
-                   'Accept': 'text/plain'}
-        try:
-            resp, info = fetch_url(module=self.module, url=url, data=data, headers=headers)
-            status_code = info['status']
-            if status_code not in [200, 201, 204]:
-                self._fail('login', info['body'])
-
-            self.headers = {'referer': self.get_base_url(),
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'Cookie': resp.info().getheader('Set-Cookie')}
-        except Exception:
-            e = get_exception()
-            self._fail('login', str(e))
-
-    def _fail(self, msg, e):
-        if 'message' in e:
-            err_string = e.get('message')
-        else:
-            err_string = e
-        self.module.fail_json(msg='%s: %s' % (msg, err_string))
-
-    def _post_json(self, method, name, item=None):
-        if item is None:
-            item = {}
-        url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
-        try:
-            resp, info = fetch_url(module=self.module, url=url, data=json.dumps(data), headers=self.headers)
-            status_code = info['status']
-            if status_code not in [200, 201, 204]:
-                self._fail(method, info['body'])
-        except Exception:
-            e = get_exception()
-            self._fail('post %s' % method, str(e))
-
-        resp = json.loads(resp.read())
-        err = resp.get('error')
-        if err is not None:
-            self._fail('repsonse %s' % method, err)
-
-        if 'result' in resp:
-            result = resp.get('result')
-            if 'result' in result:
-                result = result.get('result')
-                if isinstance(result, list):
-                    if len(result) > 0:
-                        return result[0]
-                    else:
-                        return {}
-            return result
-        return None
+        super(RoleIPAClient, self).__init__(module, host, port, protocol)
 
     def role_find(self, name):
         return self._post_json(method='role_find', name=None, item={'all': True, 'cn': name})
@@ -390,10 +318,10 @@ def main():
         supports_check_mode=True,
     )
 
-    client = IPAClient(module=module,
-                       host=module.params['ipa_host'],
-                       port=module.params['ipa_port'],
-                       protocol=module.params['ipa_prot'])
+    client = RoleIPAClient(module=module,
+                           host=module.params['ipa_host'],
+                           port=module.params['ipa_port'],
+                           protocol=module.params['ipa_prot'])
 
     try:
         client.login(username=module.params['ipa_user'],
@@ -407,7 +335,6 @@ def main():
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url
 
 if __name__ == '__main__':
     main()
