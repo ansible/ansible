@@ -170,21 +170,30 @@ EXAMPLES = '''
 # Fetch metrics about the CPU load every 60 seconds,
 # the sensu server has a handler called 'relay' which forwards stats to graphite
 - name: get cpu metrics
-  sensu_check: name=cpu_load
-               command=/etc/sensu/plugins/system/cpu-mpstat-metrics.rb
-               metric=yes handlers=relay subscribers=common interval=60
+  sensu_check:
+    name: cpu_load
+    command: /etc/sensu/plugins/system/cpu-mpstat-metrics.rb
+    metric: yes
+    handlers: relay
+    subscribers: common
+    interval: 60
 
 # Check whether nginx is running
 - name: check nginx process
-  sensu_check: name=nginx_running
-               command='/etc/sensu/plugins/processes/check-procs.rb -f /var/run/nginx.pid'
-               handlers=default subscribers=nginx interval=60
+  sensu_check:
+    name: nginx_running
+    command: /etc/sensu/plugins/processes/check-procs.rb -f /var/run/nginx.pid
+    handlers: default
+    subscribers: nginx
+    interval: 60
 
 # Stop monitoring the disk capacity.
 # Note that the check will still show up in the sensu dashboard,
 # to remove it completely you need to issue a DELETE request to the sensu api.
 - name: check disk
-  sensu_check: name=check_disk_capacity state=absent
+  sensu_check:
+    name: check_disk_capacity
+    state: absent
 '''
 
 try:
