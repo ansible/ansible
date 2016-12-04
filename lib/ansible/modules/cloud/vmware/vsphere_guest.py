@@ -1818,7 +1818,7 @@ def main():
                 module.fail_json(
                     msg="Fact gather failed with exception %s" % e)
         # Power Changes
-        elif state in ['powered_on', 'powered_off', 'restarted']:
+        elif state in ['powered_on', 'powered_off', 'restarted', 'suspended']:
             state_result = power_state(vm, state, force)
 
             # Failure
