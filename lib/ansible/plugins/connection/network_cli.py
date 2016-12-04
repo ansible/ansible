@@ -116,7 +116,8 @@ class Connection(_Connection):
             data = self._shell.recv(256)
 
             recv.write(data)
-            recv.seek(recv.tell() - 256)
+            offset = recv.tell() - 256 if recv.tell() > 256 else 0
+            recv.seek(offset)
 
             window = self._strip(recv.read())
 
