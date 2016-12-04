@@ -24,7 +24,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - shell: "msg='matched pattern 1'"
+        - debug: "msg='matched pattern 1'"
           when: url | match("http://example.com/users/.*/resources/.*")
 
         - debug: "msg='matched pattern 2'"
