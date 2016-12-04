@@ -74,14 +74,14 @@ EXAMPLES='''
 - name: Create meter
   boundary_meter:
     apiid: AAAAAA
-    api_key: BBBBBB
+    apikey: BBBBBB
     state: present
     name: '{{ inventory_hostname }}'
 
 - name: Delete meter
   boundary_meter:
     apiid: AAAAAA
-    api_key: BBBBBB
+    apikey: BBBBBB
     state: absent
     name: '{{ inventory_hostname }}'
 '''
