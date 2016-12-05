@@ -78,7 +78,7 @@ EXAMPLES = '''
     vpc_region: '{{ ec2_region }}'
     zone: '{{ vpc_dns_zone }}'
     state: present
-    register: zone_out
+  register: zone_out
 
 - debug:
     var: zone_out
