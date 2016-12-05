@@ -1,5 +1,7 @@
 # Copyright 2016 Pieter Voet <pietervoet@nl.ibm.com>
 from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
