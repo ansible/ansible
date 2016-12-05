@@ -56,7 +56,31 @@ def shell_expand(path, expand_relative_paths=False):
     return path
 
 def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
-    ''' return a configuration variable with casting '''
+    ''' return a configuration variable with casting
+
+    :arg p: A ConfigParser object to look for the configuration in
+    :arg section: A section of the ini config that should be examined for this section.
+    :arg key: The config key to get this config from
+    :arg env_var: An Environment variable to check for the config var.  If
+        this is set to None then no environment variable will be used.
+    :arg default: A default value to assign to the config var if nothing else sets it.
+    :kwarg value_type: The type of the value.  This can be any of the following strings:
+        :boolean: sets the value to a True or False value
+        :integer: Sets the value to an integer or raises a ValueType error
+        :float: Sets the value to a float or raises a ValueType error
+        :list: Treats the value as a comma separated list.  Split the value
+            and return it as a python list.
+        :none: Sets the value to None
+        :path: Expands any environment variables and tilde's in the value.
+        :tmp_path: Create a unique temporary directory inside of the dirctory
+            specified by value and return its path.
+        :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
+            means colon separated strings.)  Split the value and then expand
+            each part for environment variables and tildes.
+    :kwarg expand_relative_paths: for pathlist and path types, if this is set
+        to True then also change any relative paths into absolute paths.  The
+        default is False.
+    '''
     value = _get_config(p, section, key, env_var, default)
     if value_type == 'boolean':
         value = mk_boolean(value)
@@ -77,7 +101,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
                 value = None
 
         elif value_type == 'path':
-            value = shell_expand(value)
+            value = shell_expand(value, expand_relative_paths=expand_relative_paths)
 
         elif value_type == 'tmppath':
             value = shell_expand(value)
