@@ -73,12 +73,12 @@ EXAMPLES = '''
 - name: Test module
   netapp_e_auth:
     name: trex
-    current_password: 'B4Dpwd'
-    new_password: 'W0rs3P4sswd'
+    current_password: OldPasswd
+    new_password: NewPasswd
     set_admin: yes
-    api_url: "{{ netapp_api_url }}"
-    api_username: "{{ netapp_api_username }}"
-    api_password: "{{ netapp_api_password }}"
+    api_url: '{{ netapp_api_url }}'
+    api_username: '{{ netapp_api_username }}'
+    api_password: '{{ netapp_api_password }}'
 '''
 
 RETURN = '''

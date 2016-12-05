@@ -81,17 +81,18 @@ EXAMPLES = '''
   tasks:
     - name: Create Public IP For Servers
       clc_publicip:
-        protocol: 'TCP'
+        protocol: TCP
         ports:
-            - 80
+          - 80
         server_ids:
-            - UC1TEST-SVR01
-            - UC1TEST-SVR02
+          - UC1TEST-SVR01
+          - UC1TEST-SVR02
         state: present
       register: clc
 
     - name: debug
-      debug: var=clc
+      debug:
+        var: clc
 
 - name: Delete Public IP from Server
   hosts: localhost
@@ -101,13 +102,14 @@ EXAMPLES = '''
     - name: Create Public IP For Servers
       clc_publicip:
         server_ids:
-            - UC1TEST-SVR01
-            - UC1TEST-SVR02
+          - UC1TEST-SVR01
+          - UC1TEST-SVR02
         state: absent
       register: clc
 
     - name: debug
-      debug: var=clc
+      debug:
+        var: clc
 '''
 
 RETURN = '''

@@ -78,9 +78,9 @@ EXAMPLES = '''
 - name: Authorize key with GitHub
   local_action:
     module: github_key
-    name: 'Access Key for Some Machine'
-    token: '{{github_access_token}}'
-    pubkey: '{{ssh_pub_key.stdout}}'
+    name: Access Key for Some Machine
+    token: '{{ github_access_token }}'
+    pubkey: '{{ ssh_pub_key.stdout }}'
 '''
 
 

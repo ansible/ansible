@@ -77,27 +77,28 @@ EXAMPLES = '''
 - librato_annotation:
     user: user@example.com
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    source: 'foo.bar'
-    description: 'This is a detailed description of the config change'
+    title: App Config Change
+    source: foo.bar
+    description: This is a detailed description of the config change
 
 # Create an annotation that includes a link
 - librato_annotation:
     user: user@example.com
     api_key: XXXXXXXXXXXXXXXXXX
-    name: 'code.deploy'
-    title: 'app code deploy'
-    description: 'this is a detailed description of a deployment'
+    name: code.deploy
+    title: app code deploy
+    description: this is a detailed description of a deployment
     links:
-      - { rel: 'example', href: 'http://www.example.com/deploy' }
+      - rel: example
+        href: http://www.example.com/deploy
 
 # Create an annotation with a start_time and end_time
 - librato_annotation:
     user: user@example.com
     api_key: XXXXXXXXXXXXXXXXXX
-    name: 'maintenance'
-    title: 'Maintenance window'
-    description: 'This is a detailed description of maintenance'
+    name: maintenance
+    title: Maintenance window
+    description: This is a detailed description of maintenance
     start_time: 1395940006
     end_time: 1395954406
 '''
