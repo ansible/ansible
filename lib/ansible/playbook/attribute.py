@@ -42,7 +42,7 @@ class Attribute:
         :kwarg priority: The order in which the fields should be parsed. Generally
             this does not need to be set, it is for rare situations where another
             field depends on the fact that another field was parsed first.
-        :kwarg class_type: If isa is set to “class”, this can be optionally set to
+        :kwarg class_type: If isa is set to "class", this can be optionally set to
             a class (not a string name). The YAML data for this field will be
             passed to the __init__ method of that class during post validation and
             the field will be an instance of that class.
