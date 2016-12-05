@@ -348,20 +348,6 @@ def get_stack_facts(cfn, stack_name):
 
     return stack_info
 
-IGNORE_CODE = 'Throttling'
-MAX_RETRIES=3
-def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
-    retries=0
-    while True:
-        try:
-            retval=function_ref(*argv, **kwargs)
-            return retval
-        except Exception as e:
-            # boto way of looking for retries
-            #if e.code != IGNORE_CODE or retries==MAX_RETRIES:
-            raise e
-        time.sleep(5 * (2**retries))
-        retries += 1
 
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
