@@ -312,6 +312,12 @@ class StrategyBase:
                     host = get_original_host(result[1])
                     result_item = result[2]
                     self._add_group(host, result_item)
+                    
+                # PV
+                elif result[0] == 'add_extra_var':
+                    var = result[1]['add_extra_var']
+                    if var[0] not in self._variable_manager._extra_vars:
+                        self._variable_manager._extra_vars[var[0]] = var[1]
 
                 elif result[0] == 'notify_handler':
                     task_result  = result[1]
