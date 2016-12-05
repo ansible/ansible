@@ -90,9 +90,11 @@ options:
     choices: ["present", "absent", "mounted", "unmounted"]
   fstab:
     description:
-      - File to use instead of C(/etc/fstab). You shouldn't use that option
+      - File to use instead of C(/etc/fstab). You shouldn't use this option
         unless you really know what you are doing. This might be useful if
-        you need to configure mountpoints in a chroot environment.
+        you need to configure mountpoints in a chroot environment.  OpenBSD
+        does not allow specifying alternate fstab files with mount so do not
+        use this on OpenBSD with any state that operates on the live filesystem.
     required: false
     default: /etc/fstab (/etc/vfstab on Solaris)
   boot:
@@ -308,14 +310,14 @@ def unset_mount(module, args):
 
     return (args['name'], changed)
 
-def _set_fstab_args(args):
+def _set_fstab_args(fstab_file):
     result = []
-    if 'fstab' in args and args['fstab'] != '/etc/fstab':
+    if fstab_file and fstab_file != '/etc/fstab':
         if get_platform().lower().endswith('bsd'):
             result.append('-F')
         else:
             result.append('-T')
-        result.append(args['fstab'])
+        result.append(fstab_file)
     return result
 
 def mount(module, args):
@@ -328,7 +330,13 @@ def mount(module, args):
     if ismount(name):
         return remount(module, mount_bin, args)
 
-    cmd += _set_fstab_args(args)
+    if get_platform().lower() == 'openbsd':
+        # Use module.params['fstab'] here as args['fstab'] has been set to the
+        # default value.
+        if module.params['fstab'] is not None:
+            module.fail_json(msg='OpenBSD does not support alternate fstab files.  Do not specify the fstab parameter for OpenBSD hosts')
+    else:
+        cmd += _set_fstab_args(args['fstab'])
 
     cmd += [name]
 
@@ -364,7 +372,13 @@ def remount(module, mount_bin, args):
     else:
         cmd += ['-o', 'remount' ]
 
-    cmd += _set_fstab_args(args)
+    if get_platform().lower() == 'openbsd':
+        # Use module.params['fstab'] here as args['fstab'] has been set to the
+        # default value.
+        if module.params['fstab'] is not None:
+            module.fail_json(msg='OpenBSD does not support alternate fstab files.  Do not specify the fstab parameter for OpenBSD hosts')
+    else:
+        cmd += _set_fstab_args(args['fstab'])
     cmd += [ args['name'], ]
     out = err = ''
     try:
@@ -564,7 +578,7 @@ def main():
         argument_spec=dict(
             boot=dict(default='yes', choices=['yes', 'no']),
             dump=dict(),
-            fstab=dict(default='/etc/fstab'),
+            fstab=dict(default=None),
             fstype=dict(),
             name=dict(required=True, type='path'),
             opts=dict(),
@@ -586,26 +600,32 @@ def main():
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
     # linux args:
     #   name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
-    if get_platform() == 'SunOS':
+    # Note: Do not modify module.params['fstab'] as we need to know if the user
+    # explicitly specified it in mount() and remount()
+    if get_platform().lower() == 'sunos':
         args = dict(
             name=module.params['name'],
             opts='-',
             passno='-',
-            fstab='/etc/vfstab',
+            fstab=module.params['fstab'],
             boot='yes'
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/vfstab'
     else:
         args = dict(
             name=module.params['name'],
             opts='defaults',
             dump='0',
             passno='0',
-            fstab='/etc/fstab'
+            fstab=module.params['fstab']
         )
+        if args['fstab'] is None:
+            args['fstab'] = '/etc/fstab'
 
-    # FreeBSD doesn't have any 'default' so set 'rw' instead
-    if get_platform() == 'FreeBSD':
-        args['opts'] = 'rw'
+        # FreeBSD doesn't have any 'default' so set 'rw' instead
+        if get_platform() == 'FreeBSD':
+            args['opts'] = 'rw'
 
     linux_mounts = []
 
@@ -623,9 +643,6 @@ def main():
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):
         if module.params[key] is not None:
             args[key] = module.params[key]
-
-    if get_platform() == 'SunOS' and args['fstab'] == '/etc/fstab':
-        args['fstab'] = '/etc/vfstab'
 
     # If fstab file does not exist, we first need to create it. This mainly
     # happens when fstab option is passed to the module.
