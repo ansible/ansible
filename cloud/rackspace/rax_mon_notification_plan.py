@@ -178,4 +178,5 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.rax import *
 
 # Invoke the module.
-main()
+if __name__ == '__main__':
+    main()
