@@ -159,7 +159,7 @@ class OVSPort(object):
         if rtc != 0:
             self.module.fail_json(msg=err)
 
-        return any(port.rstrip() == self.port for port in out.split('\n'))
+        return any(port.rstrip() == self.port for port in out.split('\n')) or self.port == self.bridge
 
     def set(self, set_opt):
         """ Set attributes on a port. """
