@@ -401,14 +401,14 @@ EXAMPLES = '''
   yum_repository:
     name: epel
     description: EPEL YUM repo
-    baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
 
 - name: Add multiple repositories into the same file (1/2)
   yum_repository:
     name: epel
     description: EPEL YUM repo
     file: external_repos
-    baseurl: http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
     gpgcheck: no
 
 - name: Add multiple repositories into the same file (2/2)
