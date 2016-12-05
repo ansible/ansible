@@ -738,4 +738,5 @@ def main():
         # try to start up the daemon
         daemonize(module, password, port, timeout, minutes, ipv6, pid_file)
 
-main()
+if __name__ == '__main__':
+    main()
