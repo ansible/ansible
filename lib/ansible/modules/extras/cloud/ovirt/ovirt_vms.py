@@ -60,6 +60,16 @@ options:
         description:
             - "Name of the template, which should be used to create Virtual Machine. Required if creating VM."
             - "If template is not specified and VM doesn't exist, VM will be created from I(Blank) template."
+    template_version:
+        description:
+            - "Version number of the template to be used for VM."
+            - "By default the latest available version of the template is used."
+        version_added: "2.3"
+    use_latest_template_version:
+        description:
+            - "Specify if latest template version should be used, when running a stateless VM."
+            - "If this parameter is set to I(true) stateless VM is created."
+        version_added: "2.3"
     memory:
         description:
             - "Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB)."
@@ -221,6 +231,13 @@ ovirt_vms:
     name: myvm
     template: rhel7_template
 
+# Creates a stateless VM which will always use latest template version:
+ovirt_vms:
+    name: myvm
+    template: rhel7
+    cluster: mycluster
+    use_latest_template_version: true
+
 # Creates a new server rhel7 Virtual Machine from Blank template
 # on brq01 cluster with 2GiB memory and 2 vcpu cores/sockets
 # and attach bootable disk with name rhel7_disk and attach virtio NIC
@@ -346,16 +363,38 @@ vm:
 
 class VmsModule(BaseModule):
 
+    def __get_template_with_version(self):
+        """
+        oVirt in version 4.1 doesn't support search by template+version_number,
+        so we need to list all templates with specific name and then iterate
+        throught it's version until we find the version we look for.
+        """
+        template = None
+        if self._module.params['template']:
+            templates_service = self._connection.system_service().templates_service()
+            templates = templates_service.list(search='name=%s' % self._module.params['template'])
+            if self._module.params['template_version']:
+                templates = [
+                    t for t in templates
+                    if t.version.version_number == self._module.params['template_version']
+                ]
+            if templates:
+                template = templates[0]
+
+        return template
+
     def build_entity(self):
+        template = self.__get_template_with_version()
         return otypes.Vm(
             name=self._module.params['name'],
             cluster=otypes.Cluster(
                 name=self._module.params['cluster']
             ) if self._module.params['cluster'] else None,
             template=otypes.Template(
-                name=self._module.params['template']
-            ) if self._module.params['template'] else None,
-            stateless=self._module.params['stateless'],
+                id=template.id,
+            ) if template else None,
+            use_latest_template_version=self._module.params['use_latest_template_version'],
+            stateless=self._module.params['stateless'] or self._module.params['use_latest_template_version'],
             delete_protected=self._module.params['delete_protected'],
             high_availability=otypes.HighAvailability(
                 enabled=self._module.params['high_availability']
@@ -403,6 +442,7 @@ class VmsModule(BaseModule):
             equal(self._module.params.get('stateless'), entity.stateless) and
             equal(self._module.params.get('cpu_shares'), entity.cpu_shares) and
             equal(self._module.params.get('delete_protected'), entity.delete_protected) and
+            equal(self._module.params.get('use_latest_template_version'), entity.use_latest_template_version) and
             equal(self._module.params.get('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
         )
 
@@ -658,6 +698,8 @@ def main():
         id=dict(default=None),
         cluster=dict(default=None),
         template=dict(default=None),
+        template_version=dict(default=None, type='int'),
+        use_latest_template_version=dict(default=None, type='bool'),
         disks=dict(default=[], type='list'),
         memory=dict(default=None),
         memory_guaranteed=dict(default=None),
