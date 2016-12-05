@@ -70,6 +70,7 @@ EXAMPLES = '''
     - publicA
     - publicB
     - publicC
+  register: subnet_facts
 
 - set_fact:
     subnet_ids: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
