@@ -147,21 +147,20 @@ try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     from zabbix_api import ZabbixAPIException
     from zabbix_api import Already_Exists
+
+    # Extend the ZabbixAPI
+    # Since the zabbix-api python module too old (version 1.0, and there's no higher version so far), it doesn't support the 'screenitem' api call,
+    # we have to inherit the ZabbixAPI class to add 'screenitem' support.
+    class ZabbixAPIExtends(ZabbixAPI):
+        screenitem = None
+
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+            self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-
-# Extend the ZabbixAPI
-# Since the zabbix-api python module too old (version 1.0, and there's no higher version so far), it doesn't support the 'screenitem' api call,
-# we have to inherit the ZabbixAPI class to add 'screenitem' support.
-class ZabbixAPIExtends(ZabbixAPI):
-    screenitem = None
-
-    def __init__(self, server, timeout, user, passwd, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
-        self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
-
 
 class Screen(object):
     def __init__(self, module, zbx):

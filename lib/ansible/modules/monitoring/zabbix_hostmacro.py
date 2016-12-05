@@ -107,16 +107,15 @@ import copy
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
+    # Extend the ZabbixAPI
+    # Since the zabbix-api python module too old (version 1.0, no higher version so far).
+    class ZabbixAPIExtends(ZabbixAPI):
+        def __init__(self, server, timeout, user, passwd, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
-
-
-# Extend the ZabbixAPI
-# Since the zabbix-api python module too old (version 1.0, no higher version so far).
-class ZabbixAPIExtends(ZabbixAPI):
-    def __init__(self, server, timeout, user, passwd, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
 
 
 class HostMacro(object):
