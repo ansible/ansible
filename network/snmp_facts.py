@@ -367,4 +367,5 @@ def main():
     module.exit_json(ansible_facts=results)
 
 
-main()
+if __name__ == '__main__':
+    main()
