@@ -286,16 +286,22 @@ def parse_assigned_metadata_initial(csvfile):
         :7: Deprecated
         :8: Notes
         :9: Team Notes
+        :10: Notes 2
+        :11: final supported_by field
     """
     with open(csvfile, 'rb') as f:
         for record in csv.reader(f):
             module = record[0]
 
-            supported_by = 'community'
-            if record[4]:
+            if record[11] == 'core':
                 supported_by = 'core'
-            elif record[5]:
+            elif record[11] == 'curated':
                 supported_by = 'committer'
+            elif record[11] == 'community':
+                supported_by = 'community'
+            else:
+                raise Exception('Module record has no supported_by field: %s' % record)
+                #supported_by = 'community'
 
             status = []
             if record[6]:
