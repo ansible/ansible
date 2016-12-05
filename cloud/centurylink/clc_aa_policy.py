@@ -74,13 +74,14 @@ EXAMPLES = '''
   tasks:
     - name: Create an Anti Affinity Policy
       clc_aa_policy:
-        name: 'Hammer Time'
-        location: 'UK3'
+        name: Hammer Time
+        location: UK3
         state: present
       register: policy
 
     - name: debug
-      debug: var=policy
+      debug:
+        var: policy
 
 ---
 - name: Delete AA Policy
@@ -90,13 +91,14 @@ EXAMPLES = '''
   tasks:
     - name: Delete an Anti Affinity Policy
       clc_aa_policy:
-        name: 'Hammer Time'
-        location: 'UK3'
+        name: Hammer Time
+        location: UK3
         state: absent
       register: policy
 
     - name: debug
-      debug: var=policy
+      debug:
+        var: policy
 '''
 
 RETURN = '''

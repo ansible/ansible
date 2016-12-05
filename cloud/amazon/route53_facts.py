@@ -134,7 +134,7 @@ EXAMPLES = '''
   route53_facts:
     profile: account_name
     query: record_sets
-    hosted_zone_id: 'ZZZ1111112222'
+    hosted_zone_id: ZZZ1111112222
     max_items: 20
   register: record_sets
 
@@ -149,13 +149,13 @@ EXAMPLES = '''
   route53_facts:
     query: health_check
     health_check_method: failure_reason
-    health_check_id: '00000000-1111-2222-3333-12345678abcd'
+    health_check_id: 00000000-1111-2222-3333-12345678abcd
   register: health_check_failure_reason
 
 - name: Retrieve reusable delegation set details
   route53_facts:
     query: reusable_delegation_set
-    delegation_set_id: 'delegation id'
+    delegation_set_id: delegation id
   register: delegation_sets
 
 '''

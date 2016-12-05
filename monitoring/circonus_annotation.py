@@ -64,22 +64,22 @@ EXAMPLES = '''
 # Create a simple annotation event with a source, defaults to start and end time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
 # Create an annotation with a duration of 5 minutes and a default start time of now
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
     duration: 300
 # Create an annotation with a start_time and end_time
 - circonus_annotation:
     api_key: XXXXXXXXXXXXXXXXX
-    title: 'App Config Change'
-    description: 'This is a detailed description of the config change'
-    category: 'This category groups like annotations'
+    title: App Config Change
+    description: This is a detailed description of the config change
+    category: This category groups like annotations
     start_time: 1395940006
     end_time: 1395954407
 '''

@@ -105,7 +105,7 @@ EXAMPLES = '''
         name: macvlan
         state: present
         config: {}
-        description: 'my macvlan profile'
+        description: my macvlan profile
         devices:
           eth0:
             nictype: macvlan
@@ -126,7 +126,7 @@ EXAMPLES = '''
       name: macvlan
       state: present
       config: {}
-      description: 'my macvlan profile'
+      description: my macvlan profile
       devices:
         eth0:
           nictype: macvlan
