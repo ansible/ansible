@@ -52,7 +52,7 @@ def hash_params(params):
         for k,v in iteritems(params):
             if isinstance(v, dict):
                 s.update((k, hash_params(v)))
-            elif isinstance(v, list):
+            elif isinstance(v, (list, set, tuple)):
                 things = []
                 for item in v:
                     things.append(hash_params(item))
