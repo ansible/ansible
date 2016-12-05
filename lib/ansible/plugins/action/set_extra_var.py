@@ -1,3 +1,4 @@
+# Copyright 2016 Pieter Voet <pietervoet@nl.ibm.com>
 from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
