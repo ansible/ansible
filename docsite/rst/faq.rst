@@ -268,7 +268,7 @@ The mkpasswd utility that is available on most Linux systems is a great option::
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
-password hashing library is installed.
+password hashing library is installed::
 
     pip install passlib
 
