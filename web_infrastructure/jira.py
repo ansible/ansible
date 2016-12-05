@@ -385,5 +385,5 @@ def main():
     module.exit_json(changed=True, meta=ret)
 
 
-
-main()
+if __name__ == '__main__':
+    main()
