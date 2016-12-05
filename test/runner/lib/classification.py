@@ -183,25 +183,43 @@ class PathMapper(object):
                     'units': 'test/units/plugins/connection/',
                 }
 
+            units_path = 'test/units/plugins/connection/test_%s.py' % name
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            integration_name = 'connection_%s' % name
+
+            if integration_name not in self.integration_targets_by_name:
+                integration_name = None
+
+            # entire integration test commands depend on these connection plugins
+
             if name == 'winrm':
                 return {
                     'windows-integration': 'all',
-                    'units': 'test/units/plugins/connection/',
+                    'units': units_path,
                 }
 
             if name == 'local':
                 return {
                     'integration': 'all',
                     'network-integration': 'all',
-                    'units': 'test/units/plugins/connections/',
+                    'units': units_path,
                 }
 
-            if 'connection_%s' % name in self.integration_targets_by_name:
+            if name == 'network_cli':
                 return {
-                    'integration': 'connection_%s' % name,
+                    'network-integration': 'all',
+                    'units': units_path,
                 }
 
-            return minimal
+            # other connection plugins have isolated integration and unit tests
+
+            return {
+                'integration': integration_name,
+                'units': units_path,
+            }
 
         if path.startswith('lib/ansible/utils/module_docs_fragments/'):
             return {
