@@ -214,7 +214,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
 
     data = json.dumps(request_data)
     response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] != 200:
+    if info['status'] != 201:
         module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
     try:
@@ -240,7 +240,7 @@ def absent(module, name, user, passwd, token, requester_id, service):
 
     data = json.dumps(request_data)
     response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
-    if info['status'] != 200:
+    if info['status'] != 204:
         module.fail_json(msg="failed to delete the window: %s" % info['msg'])
 
     try:
