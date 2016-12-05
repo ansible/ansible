@@ -308,4 +308,5 @@ def main():
     elif state == 'absent':
         delete_launch_config(connection, module)
 
-main()
+if __name__ == '__main__':
+    main()
