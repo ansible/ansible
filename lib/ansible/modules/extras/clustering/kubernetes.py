@@ -150,8 +150,13 @@ api_response:
             phase: "Active"
 '''
 
-import yaml
 import base64
+
+try:
+    import yaml
+    has_lib_yaml = True
+except ImportError:
+    has_lib_yaml = False
 
 ############################################################################
 ############################################################################
@@ -324,6 +329,9 @@ def main():
                               ('url_password', 'insecure')),
         required_one_of = (('file_reference', 'inline_data'),),
     )
+
+    if not has_lib_yaml:
+        module.fail_json(msg="missing python library: yaml")
 
     decode_cert_data(module)
 
