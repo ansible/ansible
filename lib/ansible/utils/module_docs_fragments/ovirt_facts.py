@@ -20,12 +20,9 @@
 
 class ModuleDocFragment(object):
 
-    # Standard oVirt documentation fragment
+    # facts standart oVirt documentation fragment
     DOCUMENTATION = '''
 options:
-    wait:
-        description:
-            - "I(True) if the module should wait for the entity to get into desired state."
     fetch_nested:
         description:
             - "If I(True) the module will fetch additional data from the API."
@@ -54,15 +51,6 @@ options:
             CA certificate store is used."
             - "C(kerberos) - A boolean flag indicating if Kerberos authentication
             should be used instead of the default basic authentication."
-    timeout:
-        description:
-            - "The amount of time in seconds the module should wait for the instance to
-               get into desired state."
-        default: 180
-    poll_interval:
-        description:
-            - "Number of the seconds the module waits until another poll request on entity status is sent."
-        default: 3
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.0.0
