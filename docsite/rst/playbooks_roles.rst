@@ -39,7 +39,7 @@ Tasks and plays both use the `include` keyword, but implement the keyword differ
     # this is a 'play' include
     - include: listofplays
 
-    - name: antoher play
+    - name: another play
       hosts: all
       tasks:
         - debug: msg=hello
