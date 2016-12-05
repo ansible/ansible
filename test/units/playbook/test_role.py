@@ -19,17 +19,106 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
-from ansible.playbook.role import Role
-from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.task import Task
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
+
+from ansible.playbook.role import Role
+from ansible.playbook.role.include import RoleInclude
+from ansible.playbook.role import hash_params
+
+
+class TestHashParams(unittest.TestCase):
+    def test(self):
+        params = {'foo': 'bar'}
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
+    def _assert_hashable(self, res):
+        a_dict = {}
+        try:
+            a_dict[res] = res
+        except TypeError as e:
+            self.fail('%s is not hashable: %s' % (res, e))
+
+    def _assert_set(self, res):
+        self.assertIsInstance(res, frozenset)
+
+    def test_dict_tuple(self):
+        params = {'foo': (1, 'bar',)}
+        res = hash_params(params)
+        self._assert_set(res)
+
+    def test_tuple(self):
+        params = (1, None, 'foo')
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_tuple_dict(self):
+        params = ({'foo': 'bar'}, 37)
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_list(self):
+        params = ['foo', 'bar', 1, 37, None]
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
+    def test_dict_with_list_value(self):
+        params = {'foo': [1, 4, 'bar']}
+        res = hash_params(params)
+        self._assert_set(res)
+        self._assert_hashable(res)
+
+    def test_empty_set(self):
+        params = set([])
+        res = hash_params(params)
+        self._assert_hashable(res)
+        self._assert_set(res)
+
+    def test_generator(self):
+        def my_generator():
+            for i in ['a', 1, None, {}]:
+                yield i
+
+        params = my_generator()
+        res = hash_params(params)
+        self._assert_hashable(res)
+
+    def test_container_but_not_iterable(self):
+        # This is a Container that is not iterable, which is unlikely but...
+        class MyContainer(collections.Container):
+            def __init__(self, some_thing):
+                self.data = []
+                self.data.append(some_thing)
+
+            def __contains__(self, item):
+                return item in self.data
+
+            def __hash__(self):
+                return hash(self.data)
+
+            def __len__(self):
+                return len(self.data)
+
+            def __call__(self):
+                return False
+
+        foo = MyContainer('foo bar')
+        params = foo
+
+        self.assertRaises(TypeError, hash_params, params)
+
 
 class TestRole(unittest.TestCase):
 
