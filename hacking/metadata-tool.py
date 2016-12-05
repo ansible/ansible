@@ -281,7 +281,7 @@ def parse_assigned_metadata_initial(csvfile):
         :2: Extras (x if so)
         :3: Category
         :4: Supported/SLA
-        :5: Curated
+        :5: Committer
         :6: Stable
         :7: Deprecated
         :8: Notes
@@ -295,7 +295,7 @@ def parse_assigned_metadata_initial(csvfile):
             if record[4]:
                 supported_by = 'core'
             elif record[5]:
-                supported_by = 'core_curated'
+                supported_by = 'committer'
 
             status = []
             if record[6]:
@@ -313,6 +313,7 @@ def parse_assigned_metadata(csvfile):
     Fields:
         :0: Module name
         :1: supported_by  string.  One of the valid support fields
+            core, community, unmaintained, committer
         :2: stableinterface
         :3: preview
         :4: deprecated
