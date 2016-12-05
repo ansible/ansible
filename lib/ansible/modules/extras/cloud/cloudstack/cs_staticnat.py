@@ -48,6 +48,12 @@ options:
     required: false
     default: null
     version_added: "2.2"
+  vpc:
+    description:
+      - Name of the VPC.
+    required: false
+    default: null
+    version_added: "2.3"
   state:
     description:
       - State of the static NAT.
@@ -235,6 +241,7 @@ def main():
         vm = dict(default=None),
         vm_guest_ip = dict(default=None),
         network = dict(default=None),
+        vpc = dict(default=None),
         state = dict(choices=['present', 'absent'], default='present'),
         zone = dict(default=None),
         domain = dict(default=None),
