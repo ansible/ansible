@@ -131,5 +131,5 @@ def main():
                      permissive=permissive, domain=domain)
 
 
-
-main()
+if __name__ == '__main__':
+    main()

@@ -127,4 +127,5 @@ def main():
 
     module.exit_json(**args)
 
-main()
+if __name__ == '__main__':
+    main()

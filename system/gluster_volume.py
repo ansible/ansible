@@ -522,4 +522,5 @@ def main():
 
     module.exit_json(changed=changed, ansible_facts=facts)
 
-main()
+if __name__ == '__main__':
+    main()
