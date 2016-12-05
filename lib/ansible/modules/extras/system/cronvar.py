@@ -437,4 +437,5 @@ def main():
     module.exit_json(msg="Unable to execute cronvar task.")
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -237,4 +237,5 @@ def main():
         module.exit_json(name=name, changed=changed, msg="OK")
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -480,4 +480,6 @@ def main():
     module.exit_json(changed=zone.changed, msg=', '.join(zone.msg))
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()
