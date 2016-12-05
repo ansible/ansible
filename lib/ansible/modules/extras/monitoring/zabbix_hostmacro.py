@@ -237,5 +237,6 @@ def main():
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
 
 from ansible.module_utils.basic import *
-main()
 
+if __name__ == '__main__':
+    main()
