@@ -40,8 +40,10 @@ options:
   vmid:
     description:
       - the instance id
+      - if not set, the next available VM ID will be fetched from ProxmoxAPI.
+      - if not set, will be fetched from PromoxAPI based on the hostname
     default: null
-    required: true
+    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
@@ -71,6 +73,7 @@ options:
     description:
       - the instance hostname
       - required only for C(state=present)
+      - must be unique if vmid is not passed
     default: null
     required: false
   ostemplate:
@@ -186,6 +189,9 @@ EXAMPLES = '''
     hostname: example.org
     ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
 
+# Create new container automatically selecting the next available vmid.
+- proxmox: node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
 # Create new container with minimal options with force(it will rewrite existing container)
 - proxmox:
     vmid: 100
@@ -297,6 +303,16 @@ except ImportError:
 
 VZ_TYPE=None
 
+def get_nextvmid(proxmox):
+  try:
+    vmid = proxmox.cluster.nextid.get()
+    return vmid
+  except Exception as e:
+    module.fail_json(msg="Unable to get next vmid. Failed with exception: %s")
+
+def get_vmid(proxmox, hostname):
+    return [ vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == hostname ]
+
 def get_instance(proxmox, vmid):
   return [ vm for vm in proxmox.cluster.resources.get(type='vm') if vm['vmid'] == int(vmid) ]
 
@@ -386,7 +402,7 @@ def main():
       api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
-      vmid = dict(required=True),
+      vmid = dict(required=False),
       validate_certs = dict(type='bool', default='no'),
       node = dict(),
       pool = dict(),
@@ -426,6 +442,7 @@ def main():
   memory = module.params['memory']
   swap = module.params['swap']
   storage = module.params['storage']
+  hostname = module.params['hostname']
   if module.params['ostemplate'] is not None:
     template_store = module.params['ostemplate'].split(":")[0]
   timeout = module.params['timeout']
@@ -445,10 +462,22 @@ def main():
   except Exception as e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
+  # If vmid not set get the Next VM id from ProxmoxAPI
+  # If hostname is set get the VM id from ProxmoxAPI
+  if not vmid and state == 'present':
+    vmid = get_nextvmid(proxmox)
+  elif not vmid and hostname:
+    vmid = get_vmid(proxmox, hostname)[0]
+  elif not vmid:
+    module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
+
   if state == 'present':
     try:
       if get_instance(proxmox, vmid) and not module.params['force']:
         module.exit_json(changed=False, msg="VM with vmid = %s is already exists" % vmid)
+      # If no vmid was passed, there cannot be another VM named 'hostname'
+      if not module.params['vmid'] and get_vmid(proxmox, hostname) and not module.params['force']:
+        module.exit_json(changed=False, msg="VM with hostname %s already exists and has ID number %s" % (hostname, get_vmid(proxmox, hostname)[0]))
       elif not (node, module.params['hostname'] and module.params['password'] and module.params['ostemplate']):
         module.fail_json(msg='node, hostname, password and ostemplate are mandatory for creating vm')
       elif not node_check(proxmox, node):
