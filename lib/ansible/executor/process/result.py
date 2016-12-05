@@ -169,6 +169,10 @@ class ResultProcess(multiprocessing.Process):
                         elif 'add_group' in result_item:
                             # this task added a new group (group_by module)
                             self._send_result(('add_group', result._host, result_item))
+                        # PV
+                        elif 'add_extra_var' in result_item:
+                            # this task added a new variable to VariableManager 'extra_vars'
+                            self._send_result(('add_extra_var', result_item))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
                             loop_var = 'item'
