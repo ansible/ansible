@@ -157,5 +157,5 @@ def main():
     module.fail_json(msg=msg)
 
 
-main()
-
+if __name__ == '__main__':
+    main()

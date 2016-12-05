@@ -370,4 +370,5 @@ class Options(dict):
                 ret.append('%s=%s' % (k, v))
         return ','.join(ret)
 
-main()
+if __name__ == '__main__':
+    main()

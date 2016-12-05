@@ -305,4 +305,5 @@ def main():
     results = enforce_state(module,module.params)
     module.exit_json(**results)
 
-main()
+if __name__ == '__main__':
+    main()
