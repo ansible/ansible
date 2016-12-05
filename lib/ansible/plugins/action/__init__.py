@@ -377,12 +377,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self._play_context.become_user)
-                if res['rc'] != 0 and remote_user == 'root':
-                    # chown failed even if remove_user is root
-                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.'
-                            '  Unprivileged become user would be unable to read the file.')
-                elif res['rc'] != 0:
+                # chown is a problematic operation:
+                # * On some platforms the admin account is not "root".  We have
+                #   no way to detect if the remote account has admin
+                #   capabilities or not.
+                # * On other platforms, chown can give away files for
+                #   unprivileged users.  Once we give away a directory we'd not
+                #   be able to put more files into it.
+                # So we only want to use chown if the remote account is
+                # an admin account.  The user has to specify the valid admin
+                # accounts in inventory or config
+                if remote_user in self._play_context.remote_admin_users:
+                    res = self._remote_chown(remote_paths, self._play_context.become_user)
+                    if res['rc'] != 0:
+                        # chown failed even if remove_user is root
+                        raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as root.')
+                else:
                     if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file

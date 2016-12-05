@@ -491,6 +491,7 @@ class VariableManager:
                 ansible_host=delegated_host_name,
                 ansible_port=new_port,
                 ansible_user=C.DEFAULT_REMOTE_USER,
+                ansible_admin_users=tuple(C.DEFAULT_ADMIN_USERS),
                 ansible_connection=C.DEFAULT_TRANSPORT,
             )
 

@@ -208,6 +208,7 @@ DEFAULT_MODULE_COMPRESSION= get_config(p, DEFAULTS, 'module_compression', None, 
 DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, value_type='integer')
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, value_type='integer')
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      None)
+DEFAULT_REMOTE_ADMIN_USERS= get_config(p, DEFAULTS, 'remote_admin_users', 'ANSIBLE_REMOTE_ADMIN_USERS', ['root', 'toor', 'admin'], value_type='list')
 DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, value_type='boolean')
 DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None, value_type='path')
 DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      None, value_type='integer')
