@@ -1,0 +1,21 @@
+# Inventory :
+#     group_all = { host_1, host_2, host_3 }
+#     group_one = { host_1 }
+#     group_two = { host_2, host3 }
+
+---
+- hosts: group_one
+  tasks:
+  - name: list /tmp
+    shell: ls /tmp
+    register: out
+
+  - name: set global variable
+    setglobal: name=myvar value="{{out}}"
+
+- hosts: group_two
+  tasks:
+  - debug: msg="{{myvar}}"
+
+
+# command :  ansible-playbook  set_extra_var.yml --limit group_all
