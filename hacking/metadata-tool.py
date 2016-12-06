@@ -4,6 +4,7 @@ import ast
 import csv
 import os
 import sys
+from collections import defaultdict
 from distutils.version import StrictVersion
 from pprint import pformat, pprint
 
@@ -16,6 +17,10 @@ from ansible.plugins import module_loader
 # There's a few files that are not new-style modules.  Have to blacklist them
 NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
 NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
+
+# Default metadata
+DEFAULT_METADATA = {'version': '1.0', 'status': ['preview'], 'supported_by':'community'}
+
 
 class ParseError(Exception):
     """Thrown when parsing a file fails"""
@@ -311,6 +316,7 @@ def parse_assigned_metadata_initial(csvfile):
             else:
                 print('Module %s has no supported_by field.  Using community' % record[0])
                 supported_by = 'community'
+                supported_by = DEFAULT_METADATA['supported_by']
 
             status = []
             if record[6]:
@@ -318,9 +324,9 @@ def parse_assigned_metadata_initial(csvfile):
             if record[7]:
                 status.append('deprecated')
             if not status:
-                status.append('preview')
+                status.extend(DEFAULT_METADATA['status'])
 
-            yield (module, {'version': '1.0', 'supported_by': supported_by, 'status': status})
+            yield (module, {'version': DEFAULT_METADATA['version'], 'supported_by': supported_by, 'status': status})
 
 
 def parse_assigned_metadata(csvfile):
@@ -397,25 +403,41 @@ def write_metadata(filename, new_metadata, version=None, overwrite=False):
         f.write(module_data)
 
 
+def return_metadata(plugins):
+
+    metadata = {}
+    for name, filename in plugins:
+        # There may be several files for a module (if it is written in another
+        # language, for instance) but only one of them (the .py file) should
+        # contain the metadata.
+        if name not in metadata or metadata[name] is not None:
+            with open(filename, 'rb') as f:
+                module_data = f.read()
+            metadata[name] = extract_metadata(module_data)[0]
+    return metadata
+
 def metadata_summary(plugins, version=None):
     """Compile information about the metadata status for a list of modules
 
     :arg plugins: List of plugins to look for.  Each entry in the list is
         a tuple of (module name, full path to module)
     :kwarg version: If given, make sure the modules have this version of
-        metadata or highe.
+        metadata or higher.
     :returns: A tuple consisting of a list of modules with no metadata at the
         required version and a list of files that have metadata at the
         required version.
     """
     no_metadata = {}
     has_metadata = {}
-    for name, filename in plugins:
-        if name not in no_metadata and name not in has_metadata:
-            with open(filename, 'rb') as f:
-                module_data = f.read()
+    supported_by = defaultdict(set)
+    status = defaultdict(set)
 
-            metadata = extract_metadata(module_data)[0]
+    plugins = list(plugins)
+    all_mods_metadata = return_metadata(plugins)
+    for name, filename in plugins:
+        # Does the module have metadata?
+        if name not in no_metadata and name not in has_metadata:
+            metadata = all_mods_metadata[name]
             if metadata is None:
                 no_metadata[name] = filename
             elif version is not None and ('version' not in metadata or StrictVersion(metadata['version']) < StrictVersion(version)):
@@ -423,7 +445,17 @@ def metadata_summary(plugins, version=None):
             else:
                 has_metadata[name] = filename
 
-    return list(no_metadata.values()), list(has_metadata.values())
+        # What categories does the plugin belong in?
+        if all_mods_metadata[name] is None:
+            # No metadata for this module.  Use the default metadata
+            supported_by[DEFAULT_METADATA['supported_by']].add(filename)
+            status[DEFAULT_METADATA['status'][0]].add(filename)
+        else:
+            supported_by[all_mods_metadata[name]['supported_by']].add(filename)
+            for one_status in all_mods_metadata[name]['status']:
+                status[one_status].add(filename)
+
+    return list(no_metadata.values()), list(has_metadata.values()), supported_by, status
 
 #
 # Subcommands
@@ -466,15 +498,12 @@ def add_default(version=None, overwrite=False):
     plugins = ((os.path.splitext((os.path.basename(p)))[0], p) for p in plugins)
     plugins = (p for p in plugins if p[0] not in NONMODULE_MODULE_NAMES)
 
-    # Default metadata
-    new_metadata = {'version': '1.0', 'status': 'preview', 'supported_by':'community'}
-
     # Iterate through each plugin
     processed = set()
     diagnostic_messages = []
     for name, filename in (info for info in plugins if info[0] not in processed):
         try:
-            write_metadata(filename, new_metadata, version, overwrite)
+            write_metadata(filename, DEFAULT_METADATA, version, overwrite)
         except ParseError as e:
             diagnostic_messages.append(e.args[0])
             continue
@@ -496,17 +525,43 @@ def report(version=None):
     """
     # List of all plugins
     plugins = module_loader.all(path_only=True)
+    plugins = list(plugins)
     plugins = ((os.path.splitext((os.path.basename(p)))[0], p) for p in plugins)
     plugins = (p for p in plugins if p[0] != NONMODULE_MODULE_NAMES)
+    plugins = list(plugins)
 
-    no_metadata, has_metadata = metadata_summary(plugins, version=version)
+    no_metadata, has_metadata, support, status = metadata_summary(plugins, version=version)
 
     print('== Has metadata ==')
     pprint(sorted(has_metadata))
+    print('')
+
     print('== Has no metadata ==')
     pprint(sorted(no_metadata))
     print('')
-    print('No Metadata: {0}        Has Metadata: {1}'.format(len(no_metadata), len(has_metadata)))
+
+    print('== Supported by core ==')
+    pprint(sorted(support['core']))
+    print('== Supported by committers ==')
+    pprint(sorted(support['committer']))
+    print('== Supported by community ==')
+    pprint(sorted(support['community']))
+    print('')
+
+    print('== Status: stableinterface ==')
+    pprint(sorted(status['stableinterface']))
+    print('== Status: preview ==')
+    pprint(sorted(status['preview']))
+    print('== Status: deprecated ==')
+    pprint(sorted(status['deprecated']))
+    print('== Status: removed ==')
+    pprint(sorted(status['removed']))
+    print('')
+
+    print('== Summary ==')
+    print('No Metadata: {0}             Has Metadata: {1}'.format(len(no_metadata), len(has_metadata)))
+    print('Supported by core: {0}      Supported by community: {1}    Supported by committer: {2}'.format(len(support['core']), len(support['community']), len(support['committer'])))
+    print('Status StableInterface: {0} Status Preview: {1}            Status Deprecated: {2}      Status Removed: {3}'.format(len(status['stableinterface']), len(status['preview']), len(status['deprecated']), len(status['removed'])))
 
     return 0
 
