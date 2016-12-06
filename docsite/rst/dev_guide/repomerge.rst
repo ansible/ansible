@@ -28,7 +28,8 @@ Metadata - Support/Ownership and Module Status
 As part of this move, we will be introducing module metadata, which will contain a couple of pieces of information regarding modules:
 
 1. Support Status: This field indicates who supports the module, whether it's the core team, the community, the person who wrote it, or if it is an abandoned module which is not receiving regular updates. The Ansible team has gone through the list of modules and we have marked about 100 of them as "Core Supported", meaning a member of the Ansible core team should be actively fixing bugs on those modules. The vast majority of the rest will be community supported. This is not really a change from the status quo, this just makes it clearer.
-2. Module Status: This field indicates how well supported that module may be. This generally applies to the maturity of  the module code however, not necessarily its bug status.
+2. Module Status: This field indicates how well supported that module may be. This generally applies to the maturity of the module's parameters, however, not necessarily its bug status.
+
 
 The documentation pages for modules will be updated to reflect the above information as well, so that users can evaluate the status of a module before committing to using it in playbooks and roles.
 
