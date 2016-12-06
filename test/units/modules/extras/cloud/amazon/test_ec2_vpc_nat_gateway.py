@@ -19,7 +19,7 @@ from ansible.inventory import Inventory
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 
-import ansible.modules.extras.cloud.amazon.ec2_vpc_nat_gateway as ng
+import ansible.modules.cloud.amazon.ec2_vpc_nat_gateway as ng
 
 Options = (
     namedtuple(

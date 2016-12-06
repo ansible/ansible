@@ -12,7 +12,7 @@ if not HAS_BOTO3:
 
 import unittest
 
-import ansible.modules.extras.cloud.amazon.kinesis_stream as kinesis_stream
+import ansible.modules.cloud.amazon.kinesis_stream as kinesis_stream
 
 aws_region = 'us-west-2'
 

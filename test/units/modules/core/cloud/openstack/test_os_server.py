@@ -4,7 +4,7 @@ import yaml
 import inspect
 import collections
 
-from ansible.modules.core.cloud.openstack import os_server
+from ansible.modules.cloud.openstack import os_server
 
 
 class AnsibleFail(Exception):
