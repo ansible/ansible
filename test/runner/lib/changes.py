@@ -71,7 +71,12 @@ class ShippableChanges(object):
         else:
             merge_runs = self.get_merge_runs(self.project_id, self.branch)
             last_successful_commit = self.get_last_successful_commit(merge_runs)
-            self.paths = sorted(git.get_diff_names([last_successful_commit, self.commit]))
+
+            if last_successful_commit:
+                self.paths = sorted(git.get_diff_names([last_successful_commit, self.commit]))
+            else:
+                # tracked files (including unchanged)
+                self.paths = sorted(git.get_file_names(['--cached']))
 
     def get_merge_runs(self, project_id, branch):
         """
