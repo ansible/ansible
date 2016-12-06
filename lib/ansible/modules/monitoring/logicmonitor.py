@@ -89,7 +89,7 @@ options:
       - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and 'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services before a Collector remove.
       - "Host: Perform actions on a host device."
       - "Hostgroup: Perform actions on a LogicMonitor host group."
-      - NOTE Host and Hostgroup tasks should always be performed via local_action. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.
+      - NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.
     required: true
     default: null
     choices: ['collector', 'host', 'datsource', 'hostgroup']
@@ -220,7 +220,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Deploy LogicMonitor Host
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: host
       action: add
@@ -245,7 +245,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: SDT a datasource
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: datasource
       action: sdt
@@ -266,7 +266,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Create a host group
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor
       target: hostgroup
       action: add
@@ -288,7 +288,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: SDT hosts
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: host
       action: sdt
@@ -310,7 +310,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: SDT a host group
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: sdt
@@ -331,7 +331,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Update a list of hosts
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: host
       action: update
@@ -355,7 +355,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Update a host group
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: update
@@ -379,7 +379,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Remove LogicMonitor hosts
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: host
       action: remove
@@ -399,7 +399,7 @@ EXAMPLES = '''
     password: mypassword
   tasks:
   - name: Remove LogicMonitor development servers hostgroup
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: remove
@@ -409,7 +409,7 @@ EXAMPLES = '''
       fullpath: /servers/development
     delegate_to: localhost
   - name: Remove LogicMonitor servers hostgroup
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: remove
@@ -419,7 +419,7 @@ EXAMPLES = '''
       fullpath: /servers
     delegate_to: localhost
   - name: Remove LogicMonitor datacenter1 hostgroup
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: remove
@@ -429,7 +429,7 @@ EXAMPLES = '''
       fullpath: /datacenter1
     delegate_to: localhost
   - name: Remove LogicMonitor datacenter5 hostgroup
-    # All tasks except for target=collector should use local_action
+    # All tasks except for target=collector should use delegate_to: localhost
     logicmonitor:
       target: hostgroup
       action: remove
