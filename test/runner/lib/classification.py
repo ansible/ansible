@@ -269,9 +269,6 @@ class PathMapper(object):
                 'network-integration': 'all',
             }
 
-        if path.startswith('test/samples/'):
-            return minimal
-
         if path.startswith('test/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks

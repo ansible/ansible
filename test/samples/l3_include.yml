@@ -1,4 +1,0 @@
-- debug: msg="this is the l3 include"
-- debug: msg="a second task for l3"
-- debug: msg="a third task for l3"
-- include: common_include.yml
