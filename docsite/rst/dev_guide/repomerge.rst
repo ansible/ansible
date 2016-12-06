@@ -2,7 +2,7 @@ Repo Merge
 
 Background
 ----------
-On Tuesday 6th December 2016, the Ansible Core Team will be re-merging the module repositories back into ansible/ansible on GitHub. The two module repos will be essentially locked, though they will be kept in place for the existing 2.1 and 2.2 dependencies. Once 2.2 moves out of official support (in about a year), we'll completely remove those repositories. Until then, any issues/PRs opened there will be auto-closed with a note to open it on ansible/ansible.
+On Tuesday 6th December 2016, the Ansible Core Team re-merged the module repositories back into `ansible/ansible` in GitHub. The two module repos will be essentially locked, though they will be kept in place for the existing 2.1 and 2.2 dependencies. Once 2.2 moves out of official support (in about a year), we'll completely remove those repositories. Until then, any issues/PRs opened there will be auto-closed with a note to open it on ansible/ansible.
 
 Why Are We Doing This (Again...)?
 -----------------------------------
@@ -34,4 +34,9 @@ The documentation pages for modules will be updated to reflect the above informa
 
 Move Issues and PRs to new Repo
 -------------------------------
-Link to PR mover
+A tool has been developed to move a PR from the old repos to `ansible/ansible` this can be found at FIXMEADDLINKAFTERTESTING
+
+
+To move move issues please use https://github-issue-mover.appspot.com/
+
+For support please use `#ansible-devel` on Freenode IRC
