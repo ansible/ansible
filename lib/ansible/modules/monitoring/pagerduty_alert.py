@@ -78,37 +78,37 @@ options:
 EXAMPLES = '''
 # Trigger an incident with just the basic options
 - pagerduty_alert:
-        name: companyabc
-        service_key=xxx
-        api_key:yourapikey
-        state=triggered
-        desc="problem that led to this trigger"
+    name: companyabc
+    service_key: xxx
+    api_key: yourapikey
+    state: triggered
+    desc: problem that led to this trigger
 
 # Trigger an incident with more options
 - pagerduty_alert:
-        service_key=xxx
-        api_key=yourapikey
-        state=triggered
-        desc="problem that led to this trigger"
-        incident_key=somekey
-        client="Sample Monitoring Service"
-        client_url=http://service.example.com
+    service_key: xxx
+    api_key: yourapikey
+    state: triggered
+    desc: problem that led to this trigger
+    incident_key: somekey
+    client: Sample Monitoring Service
+    client_url: http://service.example.com
 
 # Acknowledge an incident based on incident_key
 - pagerduty_alert:
-        service_key=xxx
-        api_key=yourapikey
-        state=acknowledged
-        incident_key=somekey
-        desc="some text for incident's log"
+    service_key: xxx
+    api_key: yourapikey
+    state: acknowledged
+    incident_key: somekey
+    desc: "some text for incident's log"
 
 # Resolve an incident based on incident_key
 - pagerduty_alert:
-        service_key=xxx
-        api_key=yourapikey
-        state=resolved
-        incident_key=somekey
-        desc="some text for incident's log"
+    service_key: xxx
+    api_key: yourapikey
+    state: resolved
+    incident_key: somekey
+    desc: "some text for incident's log"
 '''
 
 
