@@ -5,7 +5,7 @@ import csv
 import os
 import sys
 from distutils.version import StrictVersion
-from pprint import pprint
+from pprint import pformat, pprint
 
 import yaml
 
@@ -267,9 +267,18 @@ def remove_metadata(module_data, start_line, start_col, end_line, end_col):
 
 def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE_METADATA',)):
     """Insert a new set of metadata at a specified line"""
-    new_line = '{} = {}'.format(' = '.join(targets), new_metadata)
-    lines = module_data.split('\n')
-    lines.insert(insertion_line, new_line)
+    assignments = ' = '.join(targets)
+    pretty_metadata = pformat(new_metadata, width=1).split('\n')
+
+    new_lines = []
+    new_lines.append('{} = {}'.format(assignments, pretty_metadata[0]))
+
+    if len(pretty_metadata) > 1:
+        for line in pretty_metadata[1:]:
+            new_lines.append('{}{}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
+
+    old_lines = module_data.split('\n')
+    lines = old_lines[:insertion_line] + new_lines + [''] + old_lines[insertion_line:]
     return '\n'.join(lines)
 
 
@@ -293,15 +302,15 @@ def parse_assigned_metadata_initial(csvfile):
         for record in csv.reader(f):
             module = record[0]
 
-            if record[11] == 'core':
+            if record[12] == 'core':
                 supported_by = 'core'
-            elif record[11] == 'curated':
+            elif record[12] == 'curated':
                 supported_by = 'committer'
-            elif record[11] == 'community':
+            elif record[12] == 'community':
                 supported_by = 'community'
             else:
-                raise Exception('Module record has no supported_by field: %s' % record)
-                #supported_by = 'community'
+                print('Module %s has no supported_by field.  Using community' % record[0])
+                supported_by = 'community'
 
             status = []
             if record[6]:
