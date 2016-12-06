@@ -235,7 +235,7 @@ def main():
         argument_spec=dict(
             name=dict(default=None, aliases=['pkg', 'package'], type='list'),
             state=dict(default='present', choices=['present', 'installed',
-                                                   "latest", 'absent',
+                                                   'latest', 'absent',
                                                    'removed']),
             recurse=dict(default=False, type='bool'),
             force=dict(default=False, type='bool'),
