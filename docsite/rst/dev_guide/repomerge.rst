@@ -17,11 +17,6 @@ For those who've been using Ansible long enough, you know that originally we sta
 4. git submodules are notoriously complicated, even for contributors with decent git experience. The constant need to update git submodule pointers for devel and each stable branch can lead to testing surprises and really buys us nothing in terms of flexibility.
 5. Users can already be confused about where to open issues, especially when the problem appears to be with a module but is actually an action plugin (ie. template) or something more fundamental like includes. Having everything back in one repo makes it easier to link issues, and you're always sure to open a bug report in the right place.
 
-Issues and PRs
-----------------
-
-We're working on creating a tool which will allow users to migrate their issues from ansible-modules-core and ansible-modules-extras, details of that will be available next week as well. PRs will be a bit more tricky, though we are working on a script/process to make it easier for users to move their PRs from the existing repos into the ansible/ansible code base post-merge, however in most cases PRs will need to be resubmitted or left in the respective module repository until we can revisit them ourselves.
-
 Metadata - Support/Ownership and Module Status
 ----------------------------------------------------------------------
 
