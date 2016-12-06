@@ -22,6 +22,10 @@ import os
 import platform
 import tempfile
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: solaris_zone

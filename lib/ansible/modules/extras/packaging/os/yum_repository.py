@@ -25,6 +25,10 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: yum_repository

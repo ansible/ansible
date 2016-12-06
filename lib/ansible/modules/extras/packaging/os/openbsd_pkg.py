@@ -26,6 +26,10 @@ import sqlite3
 
 from distutils.version import StrictVersion
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: openbsd_pkg

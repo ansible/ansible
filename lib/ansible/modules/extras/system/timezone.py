@@ -24,6 +24,10 @@ from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.six import iteritems
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: timezone

@@ -36,6 +36,10 @@ from univention.admin.handlers.dns import (
 )
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: udm_dns_record

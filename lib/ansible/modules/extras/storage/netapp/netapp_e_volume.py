@@ -20,6 +20,10 @@
 
 from ansible.module_utils.api import basic_auth_argument_spec
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: netapp_e_volume
