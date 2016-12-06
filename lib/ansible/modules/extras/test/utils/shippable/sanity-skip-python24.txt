@@ -1,0 +1,16 @@
+/cloud/
+/clustering/consul.*.py
+/clustering/znode.py
+/database/influxdb/
+/database/mssql/
+/monitoring/zabbix.*.py
+/network/f5/
+/notification/pushbullet.py
+/packaging/language/maven_artifact.py
+/packaging/os/dnf.py
+/packaging/os/layman.py
+/remote_management/ipmi/
+/univention/
+/web_infrastructure/letsencrypt.py
+/infrastructure/foreman/
+/network/nmcli.py
