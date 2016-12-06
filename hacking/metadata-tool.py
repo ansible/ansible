@@ -19,7 +19,7 @@ NONMODULE_PY_FILES = frozenset(('async_wrapper.py',))
 NONMODULE_MODULE_NAMES = frozenset(os.path.splitext(p)[0] for p in NONMODULE_PY_FILES)
 
 # Default metadata
-DEFAULT_METADATA = {'version': '1.0', 'status': 'preview', 'supported_by':'community'}
+DEFAULT_METADATA = {'version': '1.0', 'status': ['preview'], 'supported_by':'community'}
 
 
 class ParseError(Exception):
@@ -324,7 +324,7 @@ def parse_assigned_metadata_initial(csvfile):
             if record[7]:
                 status.append('deprecated')
             if not status:
-                status.append(DEFAULT_METADATA['status'])
+                status.extend(DEFAULT_METADATA['status'])
 
             yield (module, {'version': DEFAULT_METADATA['version'], 'supported_by': supported_by, 'status': status})
 
