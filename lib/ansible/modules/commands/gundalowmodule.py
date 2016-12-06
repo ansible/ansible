@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 
 DOCUMENTATION = '''
 ---
-module:  gundalowmodule
+module: gundalowmodule
 short_description: Executes a command on a remote node
 version_added: 2.2
 description:
