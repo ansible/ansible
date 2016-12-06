@@ -1,7 +1,0 @@
-- hosts: localhost
-  tasks:
-  - debug: msg="this is play 1"
-
-- hosts: localhost
-  tasks:
-  - debug: msg="this is play 2, facts should not have gathered"
