@@ -2,4 +2,3 @@ async_wrapper
 fireball
 win_dotnet_ngen
 xenserver_facts
-znode
