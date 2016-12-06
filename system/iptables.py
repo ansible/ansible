@@ -23,6 +23,10 @@ BINS = dict(
     ipv6='ip6tables',
 )
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: iptables

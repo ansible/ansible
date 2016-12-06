@@ -18,6 +18,10 @@
 
 """An Ansible module to utilize GCE image resources."""
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: gce_img

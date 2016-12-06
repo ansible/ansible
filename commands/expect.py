@@ -27,6 +27,10 @@ except ImportError:
     HAS_PEXPECT = False
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: expect
