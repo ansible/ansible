@@ -129,8 +129,8 @@ EXAMPLES = r"""
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
     content: |
-      <h1>Welcome to {{ansible_hostname}}</h1>
-      <p>Last updated on {{ansible_date_time.iso8601}}</p>
+      <h1>Welcome to {{ ansible_hostname }}</h1>
+      <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
 - name: remove HTML as well as surrounding markers
   blockinfile:
@@ -142,8 +142,8 @@ EXAMPLES = r"""
   blockinfile:
     dest: /etc/hosts
     block: |
-      {{item.ip}} {{item.name}}
-    marker: "# {mark} ANSIBLE MANAGED BLOCK {{item.name}}"
+      {{ item.ip }} {{ item.name }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
   with_items:
     - { name: host1, ip: 10.10.1.10 }
     - { name: host2, ip: 10.10.1.11 }
