@@ -80,6 +80,7 @@ author:
 '''
 
 EXAMPLES = '''
+foo
 '''
 
 import datetime
