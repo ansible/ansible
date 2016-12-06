@@ -25,6 +25,10 @@ try:
 except ImportError:
     print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: quantum_router

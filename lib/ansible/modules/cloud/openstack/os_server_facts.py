@@ -24,6 +24,10 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: os_server_facts

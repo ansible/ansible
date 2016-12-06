@@ -23,7 +23,12 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    HAVE_DEPS = False
+
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: quantum_router_interface

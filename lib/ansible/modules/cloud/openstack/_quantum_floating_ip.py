@@ -27,6 +27,10 @@ try:
 except ImportError:
     print("failed=True msg='novaclient,keystoneclient and quantumclient (or neutronclient) are required'")
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip

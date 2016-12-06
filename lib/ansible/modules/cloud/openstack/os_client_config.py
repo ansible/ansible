@@ -18,6 +18,10 @@
 import os_client_config
 from os_client_config import exceptions
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: os_client_config
