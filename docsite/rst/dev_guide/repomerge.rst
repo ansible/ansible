@@ -2,7 +2,7 @@ Repo Merge
 
 Background
 ----------
-On Tuesday 6th December 2016, the Ansible Core Team re-merged the module repositories back into `ansible/ansible` in GitHub. The two module repos will be essentially locked, though they will be kept in place for the existing 2.1 and 2.2 dependencies. Once 2.2 moves out of official support (early 2018), these repositories will be fully readonly for all branches. Until then, any issues/PRs opened there will be auto-closed with a note to open it on ansible/ansible.
+On Tuesday 6th December 2016, the Ansible Core Team re-merged the module repositories back into `ansible/ansible <https://github.com/ansible/ansible/>`_ in GitHub. The two module repos will be essentially locked, though they will be kept in place for the existing 2.1 and 2.2 dependencies. Once 2.2 moves out of official support (early 2018), these repositories will be fully readonly for all branches. Until then, any issues/PRs opened there will be auto-closed with a note to open it on `ansible/ansible <https://github.com/ansible/ansible/>`_.
 
 Why Are We Doing This (Again...)?
 -----------------------------------
