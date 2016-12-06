@@ -1,7 +1,3 @@
-lib/ansible/modules/core/utilities/logic/async_status.py
-lib/ansible/modules/core/utilities/helper/_fireball.py
-lib/ansible/modules/core/utilities/helper/_accelerate.py
-lib/ansible/modules/core/test
-lib/ansible/modules/core/.github
-lib/ansible/modules/extras/test
-lib/ansible/modules/extras/.github
+lib/ansible/modules/utilities/logic/async_status.py
+lib/ansible/modules/utilities/helper/_fireball.py
+lib/ansible/modules/utilities/helper/_accelerate.py

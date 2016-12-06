@@ -2,7 +2,7 @@ import collections
 import os
 import unittest
 
-from ansible.modules.core.cloud.docker._docker import get_split_image_tag
+from ansible.modules.cloud.docker._docker import get_split_image_tag
 
 class DockerSplitImageTagTestCase(unittest.TestCase):
 
