@@ -72,17 +72,17 @@ def main():
         if tqm is not None:
             tqm.cleanup()
 
-    print "UP ***********"
+    print("UP ***********")
     for host, result in callback.host_ok.items():
-        print '{} >>> {}'.format(host, result._result['stdout'])
+        print('{} >>> {}'.format(host, result._result['stdout']))
 
-    print "FAILED *******"
+    print("FAILED *******")
     for host, result in callback.host_failed.items():
-        print '{} >>> {}'.format(host, result._result['msg'])
+        print('{} >>> {}'.format(host, result._result['msg']))
 
-    print "DOWN *********"
+    print("DOWN *********")
     for host, result in callback.host_unreachable.items():
-        print '{} >>> {}'.format(host, result._result['msg'])
+        print('{} >>> {}'.format(host, result._result['msg']))
 
 if __name__ == '__main__':
     main()
