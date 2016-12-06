@@ -32,7 +32,7 @@ options:
     description:
       - The device path to attach the volume to, e.g. /dev/xvde
     default: null
-    required: true
+    required: false
   volume:
     description:
       - Name or id of the volume to attach/detach
@@ -188,7 +188,7 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            device=dict(required=True),
+            device=dict(required=False),
             volume=dict(required=True),
             server=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
