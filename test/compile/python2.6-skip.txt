@@ -1,2 +1,0 @@
-/contrib/inventory/vagrant.py
-/hacking/dump_playbook_attributes.py
