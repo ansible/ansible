@@ -138,7 +138,7 @@ options:
 EXAMPLES = '''
 - name: Delete Gitlab Project
   gitlab_project:
-    server_url: http://gitlab.dj-wasabi.local
+    server_url: http://gitlab.example.com
     validate_certs: False
     login_token: WnUzDsxjy8230-Dy_k
     name: my_first_project
@@ -147,7 +147,7 @@ EXAMPLES = '''
 
 - name: Create Gitlab Project in group Ansible
   gitlab_project:
-    server_url: https://gitlab.dj-wasabi.local
+    server_url: https://gitlab.example.com
     validate_certs: True
     login_user: dj-wasabi
     login_password: MySecretPassword
