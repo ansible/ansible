@@ -33,7 +33,6 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import network_cli
 
 
-
 class TestConnectionClass(unittest.TestCase):
 
     @patch("ansible.plugins.connection.network_cli.terminal_loader")
@@ -69,21 +68,27 @@ class TestConnectionClass(unittest.TestCase):
         conn.ssh = MagicMock()
         conn.receive = MagicMock()
 
-        terminal = MagicMock()
-        conn._terminal = terminal
+        mock_terminal = MagicMock()
+        conn._terminal = mock_terminal
+
+        mock__connect = MagicMock()
+        conn._connect = mock__connect
 
         conn.open_shell()
 
-        self.assertTrue(terminal.on_open_shell.called)
-        self.assertFalse(terminal.on_authorize.called)
+        self.assertTrue(mock__connect.called)
+        self.assertTrue(mock_terminal.on_open_shell.called)
+        self.assertFalse(mock_terminal.on_authorize.called)
 
-        terminal.reset_mock()
+        mock_terminal.reset_mock()
+
         conn._play_context.become = True
         conn._play_context.become_pass = 'password'
 
         conn.open_shell()
 
-        terminal.on_authorize.assert_called_with(passwd='password')
+        self.assertTrue(mock__connect.called)
+        mock_terminal.on_authorize.assert_called_with(passwd='password')
 
     def test_network_cli_close_shell(self):
         pc = PlayContext()
