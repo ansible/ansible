@@ -5,14 +5,15 @@ set -e
 set -u
 
 # get current stuff
-git clone git@github.com:ansible/ansible.git ansible_unified
+git clone https://github.com/ansible/ansible.git ansible_unified
 cd ansible_unified/
 git submodule init
 git submodule update
+git remote add upstream git@github.com:ansible/ansible.git
 
 # add submodules as remotes
-git remote add core_modules git@github.com:ansible/ansible-modules-core.git
-git remote add extras_modules git@github.com:ansible/ansible-modules-extras.git
+git remote add core_modules https://github.com/ansible/ansible-modules-core.git
+git remote add extras_modules https://github.com/ansible/ansible-modules-extras.git
 git fetch --all
 
 # remove submodules
@@ -52,5 +53,5 @@ do
 		fi
 	done
 
-	git rm -rf lib/ansible/modules/${subdir}
+	rm -rf lib/ansible/modules/${subdir}
 done
