@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible.compat.six import string_types, iteritems
 from ansible import constants as C
 
 from ansible.errors import AnsibleParserError
@@ -204,7 +204,7 @@ class Play(Base, Taggable, Become):
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
                 display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
-                for vname, prompt in prompt_data.iteritems():
+                for vname, prompt in iteritems(prompt_data):
                     vars_prompts.append(dict(
                         name      = vname,
                         prompt    = prompt,
