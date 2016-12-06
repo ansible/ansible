@@ -35,6 +35,6 @@ Move Issues and PRs to new Repo
 A tool has been developed to move a PR from the old repos to `ansible/ansible` this can be found at `prmover tool <https://prmover.pythonanywhere.com/>`_
 
 
-To move move issues please use `GitHub Issue Mover <https://github-issue-mover.appspot.com/>`_
+To move issues please use `GitHub Issue Mover <https://github-issue-mover.appspot.com/>`_
 
 For support please use `#ansible-devel` on Freenode IRC
