@@ -880,17 +880,9 @@ class TaskParameters(DockerBaseClass):
         result = []
         if self.volumes:
             for vol in self.volumes:
-                if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        host, container, _ = vol.split(':')
-                        result.append(container)
-                        continue
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
-                            result.append(parts[1])
-                            continue
-                result.append(vol)
+                parts = vol.split(':')
+                if len(parts) == 1:
+                    result.append(parts[0])
         self.log("mounts:")
         self.log(result, pretty_print=True)
         return result
