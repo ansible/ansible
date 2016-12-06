@@ -72,14 +72,14 @@ changed: [192.168.86.221] => {
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bigswitch_utils import Rest, Response
+from ansible.module_utils.pycompat24 import get_exception
 
 def chain(module):
-    if 'access_token' in module.params and module.params['access_token']:
-        access_token = module.params['access_token']
-    elif 'BIGSWITCH_ACCESS_TOKEN' in os.environ and os.environ['BIGSWITCH_ACCESS_TOKEN']:
-        access_token = os.environ['BIGSWITCH_ACCESS_TOKEN']
-    else:
-        module.fail_json(msg='Unable to load access token' )
+    try:
+        access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
+    except KeyError:
+        e = get_exception()
+        module.fail_json(msg='Unable to load %s' % e.message )
 
     name = module.params['name']
     state = module.params['state']
@@ -134,7 +134,8 @@ def main():
 
     try:
         chain(module)
-    except Exception as e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg=str(e))
 
 if __name__ == '__main__':
