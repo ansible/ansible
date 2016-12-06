@@ -1,2 +1,0 @@
-- include: included_playbook.yml a=1
-  tags: include

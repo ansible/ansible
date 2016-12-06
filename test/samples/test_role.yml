@@ -1,9 +1,0 @@
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  vars:
-    foo: "BAD!!"
-  roles:
-  - { role: test_role, foo: bar }
-  tasks:
-  - debug: msg="done"
