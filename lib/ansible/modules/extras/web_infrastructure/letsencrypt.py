@@ -24,6 +24,10 @@ import locale
 import textwrap
 from datetime import datetime
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: letsencrypt

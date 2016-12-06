@@ -15,6 +15,10 @@
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 module: sns_topic
 short_description: Manages AWS SNS topics and subscriptions
