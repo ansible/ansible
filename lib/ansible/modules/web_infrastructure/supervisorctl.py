@@ -21,6 +21,10 @@
 import os
 from ansible.module_utils.basic import AnsibleModule, is_executable
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: supervisorctl

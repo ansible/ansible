@@ -21,6 +21,10 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 module: os_image_facts
 short_description: Retrieve facts about an image within OpenStack.

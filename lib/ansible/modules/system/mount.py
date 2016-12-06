@@ -30,6 +30,10 @@ from ansible.module_utils.six import iteritems
 import os
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: mount

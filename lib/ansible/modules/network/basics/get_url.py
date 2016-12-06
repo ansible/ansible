@@ -25,6 +25,10 @@ import datetime
 import re
 import tempfile
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: get_url

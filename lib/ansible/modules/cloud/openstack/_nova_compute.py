@@ -29,6 +29,10 @@ try:
 except ImportError:
     print("failed=True msg='novaclient is required for this module'")
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nova_compute
