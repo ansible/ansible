@@ -30,6 +30,10 @@ try:
 except ImportError:
     HAS_NOVACLIENT = False
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: nova_compute

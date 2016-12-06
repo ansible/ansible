@@ -20,6 +20,10 @@
 #
 # see examples/playbooks/uri.yml
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: uri

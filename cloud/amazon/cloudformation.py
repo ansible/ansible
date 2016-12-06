@@ -21,6 +21,10 @@
 # - move create/update code out of main
 # - unit tests
 
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cloudformation

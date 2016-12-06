@@ -28,6 +28,10 @@ try:
 except ImportError:
     HAVE_DEPS = False
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate

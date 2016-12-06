@@ -17,6 +17,10 @@
 
 # Based on Jimmy Tang's implementation
 
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: keystone_user
