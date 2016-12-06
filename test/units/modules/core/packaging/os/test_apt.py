@@ -6,7 +6,7 @@ from ansible.compat.tests import mock
 from ansible.compat.tests import unittest
 
 try:
-    from ansible.modules.core.packaging.os.apt import (
+    from ansible.modules.packaging.os.apt import (
         expand_pkgspec_from_fnmatches,
     )
 except:
