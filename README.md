@@ -9,9 +9,9 @@ Ansible is a radically simple IT automation system.  It handles configuration-ma
 
 Read the documentation and more at https://ansible.com/
 
-Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.  
+Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.
 
-You can find instructions [here](https://docs.ansible.com/intro_getting_started.html) for a variety of platforms.  If you decide to go with the development branch, be sure to run `git submodule update --init --recursive` after doing a checkout. 
+You can find instructions [here](https://docs.ansible.com/intro_getting_started.html) for a variety of platforms.  If you decide to go with the development branch, be sure to run `git submodule update --init --recursive` after doing a checkout.
 
 If you want to download a tarball of a release, go to [releases.ansible.com](https://releases.ansible.com/ansible), though most users use `yum` (using the EPEL instructions linked above), `apt` (using the PPA instructions linked above), or `pip install ansible`.
 
@@ -27,11 +27,11 @@ Design Principles
    * Allow module development in any dynamic language, not just Python
    * Be usable as non-root
    * Be the easiest IT automation system to use, ever.
-  
+
 Get Involved
 ============
 
-   * Read [Community Information](https://docs.ansible.com/community.html) for all kinds of ways to contribute to and interact with the project, including mailing list information and how to submit bug reports and code to Ansible.  
+   * Read [Community Information](https://docs.ansible.com/community.html) for all kinds of ways to contribute to and interact with the project, including mailing list information and how to submit bug reports and code to Ansible.
    * All code submissions are done through pull requests.  Take care to make sure no merge commits are in the submission, and use `git rebase` vs `git merge` for this reason.  If submitting a large code change (other than modules), it's probably a good idea to join ansible-devel and talk about what you would like to do or add first and to avoid duplicate efforts.  This not only helps everyone know what's going on, it also helps save time and effort if we decide some changes are needed.
    * Users list: [ansible-project](https://groups.google.com/group/ansible-project)
    * Development list: [ansible-devel](https://groups.google.com/group/ansible-devel)
@@ -43,7 +43,7 @@ Branch Info
 
    * Releases are named after Led Zeppelin songs. (Releases prior to 2.0 were named after Van Halen songs.)
    * The devel branch corresponds to the release actively under development.
-   * As of 1.8, modules are kept in different repos, you'll want to follow [core](https://github.com/ansible/ansible-modules-core) and [extras](https://github.com/ansible/ansible-modules-extras)
+   * For releases 1.8 - 2.2, modules are kept in different repos, you'll want to follow [core](https://github.com/ansible/ansible-modules-core) and [extras](https://github.com/ansible/ansible-modules-extras)
    * Various release-X.Y branches exist for previous releases.
    * We'd love to have your contributions, read [Community Information](https://docs.ansible.com/community.html) for notes on how to get started.
 
@@ -56,7 +56,7 @@ Ansible is sponsored by [Ansible, Inc](https://ansible.com)
 
 Licence
 =======
-GNU 
+GNU
 Click on the [Link](COPYING) to see the full text.
 
 
