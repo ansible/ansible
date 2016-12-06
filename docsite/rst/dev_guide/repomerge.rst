@@ -32,7 +32,7 @@ The documentation pages for modules will be updated to reflect the above informa
 .. _PRMover:
 Move Issues and PRs to new Repo
 -------------------------------
-A tool has been developed to move a PR from the old repos to `ansible/ansible` this can be found at FIXMEADDLINKAFTERTESTING
+A tool has been developed to move a PR from the old repos to `ansible/ansible` this can be found at `prmover tool <https://prmover.pythonanywhere.com/>`_
 
 
 To move move issues please use `GitHub Issue Mover <https://github-issue-mover.appspot.com/>`_
