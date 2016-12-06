@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
-module: bigmon_inline_chain
+module: bigmon_chain
 short_description: Create and remove a bigmon inline service chain.
 description:
     - Create and remove a bigmon inline service chain.
@@ -45,10 +45,28 @@ requirements:
 
 
 EXAMPLES = '''
+- name: bigmon inline service chain
+      bigmon_chain:
+        name: MyChain
+        controller: '{{ inventory_hostname }}'
+        state: present
 '''
 
 
 RETURN = '''
+changed: [192.168.86.221] => {
+    "changed": true,
+    "invocation": {
+        "module_args": {
+            "access_token": null,
+            "controller": "192.168.86.221",
+            "name": "MyChain",
+            "state": "present",
+            "validate_certs": false
+        },
+        "module_name": "bigmon_chain"
+    }
+}
 '''
 
 import os
@@ -56,10 +74,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bigswitch_utils import Rest, Response
 
 def chain(module):
-    try:
-        access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
+    if 'access_token' in module.params and module.params['access_token']:
+        access_token = module.params['access_token']
+    elif 'BIGSWITCH_ACCESS_TOKEN' in os.environ and os.environ['BIGSWITCH_ACCESS_TOKEN']:
+        access_token = os.environ['BIGSWITCH_ACCESS_TOKEN']
+    else:
+        module.fail_json(msg='Unable to load access token' )
 
     name = module.params['name']
     state = module.params['state']
@@ -69,7 +89,7 @@ def chain(module):
                 {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
                 'https://'+controller+':8443/api/v1/data/controller/applications/bigchain')
 
-    if name is None:
+    if None in (name, state, controller):
         module.fail_json(msg='parameter `name` is missing')
 
     response = rest.get('chain?config=true', data={})

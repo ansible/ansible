@@ -57,10 +57,34 @@ requirements:
 
 
 EXAMPLES = '''
+    - name: bigmon inline service chain endpointpair
+      bigmon_chain_endpointpair:
+        name: MyChain
+        endpoint1: ethernet1
+        endpoint2: ethernet2
+        switch: 00:00:00:00:00:00:00:0b
+        controller: '{{ inventory_hostname }}'
+        state: present
 '''
 
 
 RETURN = '''
+changed: [192.168.86.221] => {
+    "changed": true,
+    "invocation": {
+        "module_args": {
+            "access_token": null,
+            "controller": "192.168.86.221",
+            "endpoint1": "ethernet1",
+            "endpoint2": "ethernet2",
+            "name": "MyChain",
+            "state": "present",
+            "switch": "00:00:00:00:00:00:00:0b",
+            "validate_certs": false
+        },
+        "module_name": "bigmon_chain_endpointpair"
+    }
+}
 '''
 
 import os
@@ -68,10 +92,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bigswitch_utils import Rest, Response
 
 def endpointpair(module):
-    try:
-        access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
+    if 'access_token' in module.params and module.params['access_token']:
+        access_token = module.params['access_token']
+    elif 'BIGSWITCH_ACCESS_TOKEN' in os.environ and os.environ['BIGSWITCH_ACCESS_TOKEN']:
+        access_token = os.environ['BIGSWITCH_ACCESS_TOKEN']
+    else:
+        module.fail_json(msg='Unable to load access token' )
 
     name = module.params['name']
     switch = module.params['switch']
