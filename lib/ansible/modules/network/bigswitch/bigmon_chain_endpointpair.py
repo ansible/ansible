@@ -21,7 +21,7 @@ module: bigmon_chain_endpointpair
 short_description: add/delete bigmon inline service chain endpoints (interfaces)
 description:
     - add/delete bigmon inline service chain endpoints (interfaces).
-version_added: "2.2"
+version_added: "2.3"
 options:
   name:
     description:
@@ -69,7 +69,7 @@ EXAMPLES = '''
 
 
 RETURN = '''
-changed: [192.168.86.221] => {
+{
     "changed": true,
     "invocation": {
         "module_args": {

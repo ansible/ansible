@@ -21,7 +21,7 @@ module: bigmon_chain
 short_description: Create and remove a bigmon inline service chain.
 description:
     - Create and remove a bigmon inline service chain.
-version_added: "2.2"
+version_added: "2.3"
 options:
   name:
     description:
@@ -54,7 +54,7 @@ EXAMPLES = '''
 
 
 RETURN = '''
-changed: [192.168.86.221] => {
+{
     "changed": true,
     "invocation": {
         "module_args": {
