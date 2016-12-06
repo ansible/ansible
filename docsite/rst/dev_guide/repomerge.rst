@@ -1,4 +1,6 @@
+==========
 Repo Merge
+==========
 
 Background
 ----------
@@ -16,7 +18,7 @@ For those who've been using Ansible long enough, you know that originally we sta
 5. Users can already be confused about where to open issues, especially when the problem appears to be with a module but is actually an action plugin (ie. template) or something more fundamental like includes. Having everything back in one repo makes it easier to link issues, and you're always sure to open a bug report in the right place.
 
 Issues and PRs
-----------------------
+----------------
 
 We're working on creating a tool which will allow users to migrate their issues from ansible-modules-core and ansible-modules-extras, details of that will be available next week as well. PRs will be a bit more tricky, though we are working on a script/process to make it easier for users to move their PRs from the existing repos into the ansible/ansible code base post-merge, however in most cases PRs will need to be resubmitted or left in the respective module repository until we can revisit them ourselves.
 
@@ -31,12 +33,12 @@ As part of this move, we will be introducing module metadata, which will contain
 The documentation pages for modules will be updated to reflect the above information as well, so that users can evaluate the status of a module before committing to using it in playbooks and roles.
 
 
-
+.. _PRMover:
 Move Issues and PRs to new Repo
 -------------------------------
 A tool has been developed to move a PR from the old repos to `ansible/ansible` this can be found at FIXMEADDLINKAFTERTESTING
 
 
-To move move issues please use https://github-issue-mover.appspot.com/
+To move move issues please use `GitHub Issue Mover <https://github-issue-mover.appspot.com/>`_
 
 For support please use `#ansible-devel` on Freenode IRC
