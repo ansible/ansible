@@ -1,8 +1,0 @@
-cryptography
-junit-xml
-ndg-httpsclient
-pyasn1
-pyopenssl
-requests
-pywinrm
-xmltodict
