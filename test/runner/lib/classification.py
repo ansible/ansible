@@ -9,6 +9,7 @@ from lib.target import (
     walk_integration_targets,
     walk_units_targets,
     walk_compile_targets,
+    walk_sanity_targets,
 )
 
 from lib.util import (
@@ -76,10 +77,12 @@ class PathMapper(object):
         self.module_targets = list(walk_module_targets())
         self.compile_targets = list(walk_compile_targets())
         self.units_targets = list(walk_units_targets())
+        self.sanity_targets = list(walk_sanity_targets())
 
         self.compile_paths = set(t.path for t in self.compile_targets)
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(t.path for t in self.units_targets)
+        self.sanity_paths = set(t.path for t in self.sanity_targets)
 
         self.module_names_by_path = dict((t.path, t.module) for t in self.module_targets)
         self.integration_targets_by_name = dict((t.name, t) for t in self.integration_targets)
@@ -107,7 +110,7 @@ class PathMapper(object):
             result['compile'] = path
 
         # run sanity on path unless result specified otherwise
-        if 'sanity' not in result:
+        if path in self.sanity_paths and 'sanity' not in result:
             result['sanity'] = path
 
         return result
