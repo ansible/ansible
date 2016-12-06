@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: xbps
@@ -93,6 +97,8 @@ packages:
 
 
 import os
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def is_installed(xbps_output):
@@ -292,9 +298,6 @@ def main():
         elif p['state'] == 'absent':
             remove_packages(module, xbps_path, pkgs)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == "__main__":
     main()
