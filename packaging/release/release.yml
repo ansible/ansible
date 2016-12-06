@@ -31,6 +31,10 @@
   #  prompt: "Enter the release code name (only used if doing a final release)"
   #  default: ""
   #  private: no
+  - name: has_submodules
+    prompt: "Does this branch have git submodules?"
+    default: "yes"
+    private: no
   - name: is_final
     prompt: "Is this a final release (not a beta/rc)?"
     default: "no"
@@ -113,6 +117,7 @@
     with_items:
     - core
     - extras
+    when: has_submodules|bool
 
   - name: Update the VERSION file for the modules
     copy:
@@ -121,6 +126,7 @@
     with_items:
     - core
     - extras
+    when: has_submodules|bool
 
   - name: Add and commit the updated files for the core modules
     shell:
@@ -129,6 +135,7 @@
     with_items:
     - core
     - extras
+    when: has_submodules|bool
 
   - name: Add and commit the updated files for the main repo
     shell:
@@ -160,6 +167,7 @@
     with_items:
     - core
     - extras
+    when: has_submodules|bool
 
   - name: create the dist tar.gz
     command:
@@ -189,6 +197,7 @@
       with_items:
       - core
       - extras
+      when: has_submodules|bool
 
     - name: Push the updates and/or tag
       shell:
