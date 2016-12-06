@@ -24,7 +24,7 @@ setup(name='ansible',
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
-         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1', 'galaxy/data/*/*.*', 'galaxy/data/*/*/*.*', 'galaxy/data/*/tests/inventory'],
+         '': ['module_utils/*.ps1', 'modules/windows/*.ps1', 'modules/windows/*.ps1', 'galaxy/data/*/*.*', 'galaxy/data/*/*/*.*', 'galaxy/data/*/tests/inventory'],
       },
       classifiers=[
           'Development Status :: 5 - Production/Stable',
