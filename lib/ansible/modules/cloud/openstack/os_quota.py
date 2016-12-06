@@ -39,6 +39,11 @@ options:
         description:
             - Name for the project
         required: true
+    state:
+        description:
+            - Should the quota be set or returned to the system defaults
+        required: False
+        default: present
     backup_gigabytes:
         required: False
         default: None
@@ -171,6 +176,12 @@ EXAMPLES = '''
 - os_quota:
     cloud: mycloud
     name: demoproject
+
+# Set a Project back to the defaults
+- os_quota:
+    cloud: mycloud
+    name: demoproject
+    state: absent
 
 # Update a Project Quota for cores
 - os_quota:
@@ -351,6 +362,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
+        state=dict(default='present', choices=['absent', 'present']),
         backup_gigabytes=dict(required=False, type='int', default=None),
         backups=dict(required=False, type='int', default=None),
         cores=dict(required=False, type='int', default=None),
@@ -407,27 +419,59 @@ def main():
 
         #Get current quota values
         project_quota_output = _get_quotas(cloud, cloud_params['name'])
+        changes_required = False
 
-        if module.check_mode:
-            module.exit_json(changed=_system_state_change(module, project_quota_output))
+        if module.params['state'] == "absent":
+            #If a quota state is set to absent we should assume there will be changes.
+            #The default quota values are not accessible so we can not determine if
+            #no changes will occur or not.
+            if module.check_mode:
+                module.exit_json(changed=True)
 
-        changes_required, quota_change_request = _system_state_change_details(
-                module,
-                project_quota_output
-            )
+            #Calling delete_network_quotas when a quota has not been set results
+            #in an error, according to the shade docs it should return the
+            #current quota.
+            #The following error string is returned:
+            #network client call failed: Quota for tenant 69dd91d217e949f1a0b35a4b901741dc could not be found.
+            neutron_msg1 = "network client call failed: Quota for tenant"
+            neutron_msg2 = "could not be found"
 
-        if changes_required:
-            for quota_type in quota_change_request.keys():
-                quota_call = getattr(cloud, 'set_%s_quotas' % (quota_type))
-                quota_call(cloud_params['name'], **quota_change_request[quota_type])
+            for quota_type in project_quota_output.keys():
+                quota_call = getattr(cloud, 'delete_%s_quotas' % (quota_type))
+                try:
+                    quota_call(cloud_params['name'])
+                except shade.OpenStackCloudException as e:
+                    error_msg = str(e)
+                    if error_msg.find(neutron_msg1) > -1 and error_msg.find(neutron_msg2) > -1:
+                        pass
+                    else:
+                        module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-            #Get quota state post changes for validation
-            project_quota_update = _get_quotas(cloud, cloud_params['name'])
+            project_quota_output = _get_quotas(cloud, cloud_params['name'])
+            changes_required = True
 
-            if project_quota_output == project_quota_update:
-                module.fail_json(msg='Could not apply quota update')
 
-            project_quota_output = project_quota_update
+        elif module.params['state'] == "present":
+            if module.check_mode:
+                module.exit_json(changed=_system_state_change(module, project_quota_output))
+
+            changes_required, quota_change_request = _system_state_change_details(
+                    module,
+                    project_quota_output
+                )
+
+            if changes_required:
+                for quota_type in quota_change_request.keys():
+                    quota_call = getattr(cloud, 'set_%s_quotas' % (quota_type))
+                    quota_call(cloud_params['name'], **quota_change_request[quota_type])
+
+                #Get quota state post changes for validation
+                project_quota_update = _get_quotas(cloud, cloud_params['name'])
+
+                if project_quota_output == project_quota_update:
+                    module.fail_json(msg='Could not apply quota update')
+
+                project_quota_output = project_quota_update
 
         module.exit_json(changed=changes_required,
             openstack_quotas=project_quota_output
