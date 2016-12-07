@@ -54,7 +54,7 @@ options:
     name:
         description:
             - "Name of the external provider, can be used as glob expression."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -111,7 +111,7 @@ def main():
             default=None,
             required=True,
             choices=[
-                'os_image', 'os_network', 'os_volume',  'foreman',
+                'os_image', 'os_network', 'os_volume', 'foreman',
             ],
             aliases=['provider'],
         ),

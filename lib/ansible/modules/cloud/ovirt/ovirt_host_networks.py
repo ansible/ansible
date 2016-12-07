@@ -19,13 +19,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import traceback
+
 try:
-    import ovirtsdk4 as sdk
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.ovirt import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -359,10 +370,10 @@ def main():
             'host_nic': get_dict_of_struct(nic),
         })
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=False)
 
-from ansible.module_utils.basic import *
+
 if __name__ == "__main__":
     main()
