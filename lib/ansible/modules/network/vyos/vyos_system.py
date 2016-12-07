@@ -34,8 +34,7 @@ RETURN = """
 EXAMPLES = """
 """
 
-#from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.basic import AnsibleModule as LocalAnsibleModule
+from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.vyos2 import run_commands, get_config
 
 
@@ -100,6 +99,7 @@ def main():
     have = config_to_dict(module)
 
     commands = spec_to_commands(want, have)
+    result['commands'] = commands
 
     module.exit_json(**result)
 
