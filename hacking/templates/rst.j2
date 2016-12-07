@@ -168,9 +168,11 @@ Notes
 {% endfor %}
 {% endif %}
 
-
 {% if not deprecated %}
-    {% if core %}
+Module Status: @{ ','.join(metadata.status) }@
+--------------------
+
+    {% if metadata.supported_by == 'core' %}
 
 This is a Core Module
 ---------------------
@@ -179,7 +181,7 @@ For more information on what this means please read :doc:`modules_core`
 
     {% else %}
 
-This is an Extras Module
+This is module is supported by: @{ metadata.supported_by }@
 ------------------------
 
 For more information on what this means please read :doc:`modules_extra`
