@@ -575,8 +575,13 @@ class VariableManager:
 
         rval = AnsibleInventoryVarsData()
         rval.path = path
+
         if data is not None:
-            rval.update(data)
+            if not isinstance(data, dict):
+                raise AnsibleError("Problem parsing file '%s': line %d, column %d" % data.ansible_pos)
+            else:
+                rval.update(data)
+
         return rval
 
     def add_host_vars_file(self, path, loader):
