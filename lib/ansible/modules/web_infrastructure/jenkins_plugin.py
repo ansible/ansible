@@ -567,7 +567,7 @@ class JenkinsPlugin(object):
                 msg_exception="Updates download failed.")
 
             # Write the updates file
-            updates_file = tempfile.mkstemp()
+            int_fd, updates_file = tempfile.mkstemp()
 
             try:
                 fd = open(updates_file, 'wb')
@@ -581,6 +581,7 @@ class JenkinsPlugin(object):
 
             try:
                 fd.close()
+                os.close(int_fd)
             except IOError:
                 e = get_exception()
                 self.module.fail_json(
@@ -644,7 +645,7 @@ class JenkinsPlugin(object):
 
     def _write_file(self, f, data):
         # Store the plugin into a temp file and then move it
-        tmp_f = tempfile.mkstemp()
+        int_fd, tmp_f = tempfile.mkstemp()
 
         try:
             fd = open(tmp_f, 'wb')
@@ -663,6 +664,7 @@ class JenkinsPlugin(object):
 
         try:
             fd.close()
+            os.close(int_fd)
         except IOError:
             e = get_exception()
             self.module.fail_json(
