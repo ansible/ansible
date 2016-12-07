@@ -83,14 +83,15 @@ class TimeoutError(Exception):
 
 def timeout(seconds=10, error_message="Timer expired"):
 
+    if 'GATHER_TIMEOUT' in globals():
+        if GATHER_TIMEOUT:
+            seconds = GATHER_TIMEOUT
+
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
-            if 'GATHER_TIMEOUT' in globals():
-                if GATHER_TIMEOUT:
-                    seconds = GATHER_TIMEOUT
             signal.signal(signal.SIGALRM, _handle_timeout)
             signal.alarm(seconds)
             try:
