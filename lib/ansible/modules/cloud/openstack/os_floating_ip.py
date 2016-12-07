@@ -206,8 +206,7 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
-                        (nat_destination and f_ip.internal_network == fixed_address),
+                if all([(fixed_address and f_ip.fixed_ip_address != fixed_address),
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "
