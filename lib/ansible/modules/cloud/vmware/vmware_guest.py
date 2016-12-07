@@ -834,7 +834,21 @@ class PyVmomiHelper(object):
                 pass
 
             for device in self.params.get('nic'):
-                network = get_obj(self.content, [vim.Network], device['network'])
+                # FIXME: Do network_vlan compatible with vSwitch
+                network_name = None
+                if 'network_vlan' in device:
+                    dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                    for dvp in dvps:
+                        if dvp.config.defaultPortConfig.vlan.vlanId == device['network_vlan']:
+                            network_name = dvp.config.name
+                    if not network_name:
+                        self.module.fail_json(msg="network_vlan not found")
+                elif 'network' in device:
+                    network_name = device['network']
+                else:
+                    self.module.fail_json(msg="nic need a network or a network_vlan")
+
+                network = get_obj(self.content, [vim.Network], network_name)
 
                 nic = vim.vm.device.VirtualDeviceSpec()
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
@@ -848,9 +862,9 @@ class PyVmomiHelper(object):
                     elif device['type'].lower() == "vmxnet2":
                         nic.device = vim.vm.device.VirtualVmxnet2()
 
-                if hasattr(get_obj(self.content, [vim.Network], device['network']), 'portKeys'):
+                if hasattr(get_obj(self.content, [vim.Network], network_name), 'portKeys'):
                     # VDS switch
-                    pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], device['network'])
+                    pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
                     dvs_port_connection = vim.dvs.PortConnection()
                     dvs_port_connection.portgroupKey= pg_obj.key
                     dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
@@ -860,8 +874,8 @@ class PyVmomiHelper(object):
                 else:
                     # vSwitch
                     nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                    nic.device.backing.network = get_obj(self.content, [vim.Network], device['network'])
-                    nic.device.backing.deviceName = device['network']
+                    nic.device.backing.network = get_obj(self.content, [vim.Network], network_name)
+                    nic.device.backing.deviceName = network_name
 
                 nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
                 nic.device.connectable.startConnected = True
