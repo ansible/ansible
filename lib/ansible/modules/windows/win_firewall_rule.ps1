@@ -206,7 +206,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
 $direction = Get-AnsibleParam -obj $params -name "direction" -failifempty $true -validateSet "in","out"
 $action = Get-AnsibleParam -obj $params -name "action" -failifempty $true -validateSet "allow","block","bypass"
 $program = Get-AnsibleParam -obj $params -name "program"
-$service = Get-AnsibleParam -obj $params -name "service" -default "any"
+$service = Get-AnsibleParam -obj $params -name "service"
 $description = Get-AnsibleParam -obj $params -name "description"
 $enable = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "enable" -default "true")
 $winprofile = Get-AnsibleParam -obj $params -name "profile" -default "any"
@@ -247,7 +247,9 @@ $fwsettings.Add("LocalIP", $localip);
 $fwsettings.Add("RemoteIP", $remoteip);
 $fwsettings.Add("LocalPort", $localport);
 $fwsettings.Add("RemotePort", $remoteport);
-$fwsettings.Add("Service", $service);
+If ($service) { 
+    $fwsettings.Add("Service", $service);
+}
 $fwsettings.Add("Protocol", $protocol);
 $fwsettings.Add("Profiles", $winprofile)
 

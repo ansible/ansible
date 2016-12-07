@@ -91,7 +91,7 @@ options:
     service:
         description:
             - the service this rule applies to
-        default: 'any'
+        default: null
         required: false
     protocol:
         description:
