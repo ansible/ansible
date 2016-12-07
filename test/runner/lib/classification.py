@@ -281,7 +281,7 @@ class PathMapper(object):
                 }
 
             return {
-                'units': os.path.dirname(path),
+                'units': '%s/' % os.path.dirname(path),
             }
 
         if path.startswith('test/runner/'):
