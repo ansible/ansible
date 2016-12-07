@@ -89,6 +89,18 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server
+    required: false
+    default: null
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities
+    required: false
+    default: null
+    version_added: '2.3'
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
@@ -242,6 +254,8 @@ def main():
             lc_collate=dict(default=""),
             lc_ctype=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
+            ssl_mode=dict(default=""),
+            ssl_rootcert=dict(default=""),
         ),
         supports_check_mode = True
     )
@@ -266,7 +280,9 @@ def main():
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
-        "port":"port"
+        "port":"port",
+        "ssl_mode":"sslmode",
+        "ssl_rootcert":"sslrootcert"
     }
     kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' )
