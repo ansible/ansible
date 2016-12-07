@@ -152,7 +152,7 @@ class NailGun(object):
         self._server = server
         self._entities = entities
         self._module = module
-        entity_mixins.TASK_TIMEOUT = 1000
+        entity_mixins.TASK_TIMEOUT = 36000
 
     def find_organization(self, name, **params):
         org = self._entities.Organization(self._server, name=name, **params)
@@ -414,6 +414,10 @@ class NailGun(object):
         version = self.find_content_view_version(params['name'], params['organization'], params['from_environment'])
 
         data = {'environment_id': to_environment.id}
+
+        if 'force' in params.keys():
+            data['force'] = params['force']
+
         return version.promote(data=data)
 
     def lifecycle_environment(self, params):
