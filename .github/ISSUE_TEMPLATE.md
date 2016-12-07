@@ -3,7 +3,6 @@ Please do not report issues/requests related to Ansible modules here !!
 
 Report them to the appropriate modules-core or modules-extras project:
   - https://github.com/ansible/ansible-modules-core/issues
-  - https://github.com/ansible/ansible-modules-extras/issues
 
 Also verify first that your issue/request is not already reported in GitHub
 -->
