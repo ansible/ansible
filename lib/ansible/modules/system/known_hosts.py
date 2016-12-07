@@ -145,8 +145,8 @@ def enforce_state(module, params):
         try:
             outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path))
             if inf is not None:
-                for line_number, line in enumerate(inf, start=1):
-                    if found_line==line_number and (replace_or_add or state=='absent'):
+                for line_number, line in enumerate(inf):
+                    if found_line==(line_number + 1) and (replace_or_add or state=='absent'):
                         continue # skip this line to replace its key
                     outf.write(line)
                 inf.close()
