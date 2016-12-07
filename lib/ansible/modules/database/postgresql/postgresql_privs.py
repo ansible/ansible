@@ -120,6 +120,18 @@ options:
       - 'Alias: I(login_password))'
     default: null
     required: no
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server
+    required: false
+    default: null
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities
+    required: false
+    default: null
+    version_added: '2.3'
 notes:
   - Default authentication assumes that postgresql_privs is run by the
     C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
@@ -274,6 +286,8 @@ class Connection(object):
             "password":"password",
             "port":"port",
             "database": "database",
+            "ssl_mode":"sslmode",
+            "ssl_rootcert":"sslrootcert"
         }
         kw = dict( (params_map[k], getattr(params, k)) for k in params_map
                    if getattr(params, k) != '' )
@@ -541,7 +555,9 @@ def main():
             port=dict(type='int', default=5432),
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True)
+            password=dict(default='', aliases=['login_password'], no_log=True),
+            ssl_mode=dict(default=''),
+            ssl_rootcert=dict(default='')
         ),
         supports_check_mode = True
     )
