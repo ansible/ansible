@@ -99,7 +99,7 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
+                    doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
                     display.vvv(traceback.format_exc())
                     display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
@@ -124,6 +124,7 @@ class DocCLI(CLI):
                     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
                     doc['plainexamples']    = plainexamples
                     doc['returndocs']       = returndocs
+                    doc['metadata']         = metadata
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
@@ -185,7 +186,7 @@ class DocCLI(CLI):
                 continue
 
             try:
-                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename)
                 desc = self.tty_ify(doc.get('short_description', '?')).strip()
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
@@ -254,8 +255,18 @@ class DocCLI(CLI):
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
 
+        # FUTURE: move deprecation to metadata-only
+
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+
+        metadata = doc['metadata']
+
+        supported_by = metadata['supported_by']
+        text.append("Supported by: %s\n" % supported_by)
+
+        status = metadata['status']
+        text.append("Status: %s\n" % ", ".join(status))
 
         if 'action' in doc and doc['action']:
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
