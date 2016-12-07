@@ -73,6 +73,12 @@ options:
     required: false
     default: null
     version_added: "1.9"
+  stack_policy_during_update:
+    description:
+      - The path of a policy override to pass during an update operation (if passed, overrides stack_policy for this update).
+    required: false
+    default: null
+    version_added: "2.2"
   tags:
     description:
       - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
@@ -353,6 +359,7 @@ def main():
             template=dict(default=None, required=False, type='path'),
             notification_arns=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
+            stack_policy_during_update=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
             template_format=dict(default=None, choices=['json', 'yaml'], required=False),
@@ -433,6 +440,10 @@ def main():
         # AWS will tell us if the stack template and parameters are the same and
         # don't need to be updated.
         try:
+
+            if module.params['stack_policy_during_update'] is not None:
+              stack_params['StackPolicyDuringUpdateBody'] = open(module.params['stack_policy_during_update'], 'r').read()
+
             cfn.update_stack(**stack_params)
             result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
         except Exception as err:
