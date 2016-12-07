@@ -250,7 +250,7 @@ def set_rules(api, name, rules_list):
         return False
     rules_list = list(enumerate(rules_list))
     try:
-        current_rules = map(lambda x: (x['priority'], x['rule_name']), get_rules(api, name))
+        current_rules = list(map(lambda x: (x['priority'], x['rule_name']), get_rules(api, name)))
         to_add_rules = []
         for i, x in rules_list:
             if (i, x) not in current_rules:
