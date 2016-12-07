@@ -238,9 +238,9 @@ def main():
 
             # Update clusters networks:
             for param_cluster in module.params.get('clusters', []):
-                cluster = search_by_name(clusters_service, param_cluster.get('name', None))
+                cluster = search_by_name(clusters_service, param_cluster.get('name'))
                 if cluster is None:
-                    raise Exception("Cluster '%s' was not found." % cluster_name)
+                    raise Exception("Cluster '%s' was not found." % param_cluster.get('name'))
                 cluster_networks_service = clusters_service.service(cluster.id).networks_service()
                 cluster_networks_module = ClusterNetworksModule(
                     network_id=ret['id'],
