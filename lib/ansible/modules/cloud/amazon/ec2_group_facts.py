@@ -102,7 +102,7 @@ try:
     from botocore.exceptions import ClientError
     HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = Falsentry
+    HAS_BOTO3 = False
 
 import traceback
 
