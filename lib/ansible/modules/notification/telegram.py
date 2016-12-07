@@ -22,7 +22,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'version': '1.1'}
 
 DOCUMENTATION = """
 
@@ -56,7 +56,7 @@ EXAMPLES = """
 
 send a message to chat in playbook
 - telegram:
-    token: 'bot9999999:XXXXXXXXXXXXXXXXXXXXXXX'
+    token: '9999999:XXXXXXXXXXXXXXXXXXXXXXX'
     chat_id: 000000
     msg: Ansible task finished
 """
@@ -86,7 +86,7 @@ def main():
     chat_id = urllib.quote(module.params.get('chat_id'))
     msg = urllib.quote(module.params.get('msg'))
 
-    url = 'https://api.telegram.org/' + token + '/sendMessage?text=' + msg + '&chat_id=' + chat_id
+    url = 'https://api.telegram.org/bot' + token + '/sendMessage?text=' + msg + '&chat_id=' + chat_id
 
     if module.check_mode:
         module.exit_json(changed=False)
