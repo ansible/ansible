@@ -89,7 +89,7 @@ options:
       - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and 'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services before a Collector remove.
       - "Host: Perform actions on a host device."
       - "Hostgroup: Perform actions on a LogicMonitor host group."
-      - NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.
+      - 'NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.'
     required: true
     default: null
     choices: ['collector', 'host', 'datsource', 'hostgroup']
