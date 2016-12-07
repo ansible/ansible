@@ -25,7 +25,8 @@ DOCUMENTATION = """
 module: znode
 version_added: "2.0"
 short_description: Create, delete, retrieve, and update znodes using ZooKeeper
-description: Create, delete, retrieve, and update znodes using ZooKeeper.
+description:
+    - Create, delete, retrieve, and update znodes using ZooKeeper.
 options:
     hosts:
         description:
