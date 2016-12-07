@@ -475,7 +475,7 @@ def privileges_unpack(priv, mode):
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
             for i in output[pieces[0]]:
-                privs.append(re.sub(r'\(.*\)','',i))
+                privs.append(re.sub(r'\s*\(.*\)','',i))
         else:
             output[pieces[0]] = pieces[1].upper().split(',')
             privs = output[pieces[0]]
