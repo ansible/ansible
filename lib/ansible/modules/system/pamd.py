@@ -197,7 +197,10 @@ dest:
 
 
 # The PamdRule class encapsulates a rule in a pam.d service
+<<<<<<< HEAD
 
+=======
+>>>>>>> d1ab0a0d86bca4bdc9c2c86ec5b7354da0c02ca1
 class PamdRule(object):
 
     def __init__(self, rule_type,
