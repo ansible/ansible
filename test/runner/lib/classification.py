@@ -81,7 +81,7 @@ class PathMapper(object):
 
         self.compile_paths = set(t.path for t in self.compile_targets)
         self.units_modules = set(t.module for t in self.units_targets if t.module)
-        self.units_paths = set(t.path for t in self.units_targets)
+        self.units_paths = set(a for t in self.units_targets for a in t.aliases)
         self.sanity_paths = set(t.path for t in self.sanity_targets)
 
         self.module_names_by_path = dict((t.path, t.module) for t in self.module_targets)
@@ -280,9 +280,17 @@ class PathMapper(object):
                     'units': path,
                 }
 
-            return {
-                'units': '%s/' % os.path.dirname(path),
-            }
+            # changes to files which are not unit tests should trigger tests from the nearest parent directory
+
+            test_path = os.path.dirname(path)
+
+            while test_path:
+                if test_path + '/' in self.units_paths:
+                    return {
+                        'units': test_path + '/',
+                    }
+
+                test_path = os.path.dirname(test_path)
 
         if path.startswith('test/runner/'):
             return all_tests()  # test infrastructure, run all tests
