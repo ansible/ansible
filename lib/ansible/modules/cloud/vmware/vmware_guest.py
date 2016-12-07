@@ -71,11 +71,14 @@ options:
         required: False
    disk:
         description:
-            - A list of disks to add
+            - A list of disks to add.
+            - Attributes such as operation ('add' to add a new disk or undefined to edit first disk), type (thin or undefined), size_[tb|gb|mb|kb] (integer)
         required: False
    nic:
         description:
-            - A list of nics to add
+            - A list of nics to add.
+            - Attributes such as network (network name define in vcenter), network_vlan (vlan_id), type (e1000, vmxnet2, default: vmxnet3)
+            - If network_vlan is defined network is ignored
         required: False
    wait_for_ip_address:
         description:
