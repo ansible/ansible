@@ -94,18 +94,6 @@ options:
         is set to False, this argument is silently ignored.
     required: false
     default: configured by junos_config
-  replace:
-    description:
-      - The C(replace) argument will instruct the remote device to
-        replace the current configuration hierarchy with the one specified
-        in the corresponding hierarchy of the source configuration loaded
-        from this module.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the I(update) argument to C(replace).  This argument
-        will be removed in a future release.
-    required: false
-    choices: ['yes', 'no']
-    default: false
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -117,6 +105,24 @@ options:
     default: no
     choices: ['yes', 'no']
     version_added: "2.2"
+  update:
+    description:
+      - This argument will decide how to load the configuration
+        data particulary when the candidate configuration and loaded
+        configuration contain conflicting statements. Following are
+        accepted values.
+        merge: Combines the data in the loaded configuration with the
+               candidate configuration. If statements in the loaded
+               configuration conflict with statements in the candidate
+               configuration, the loaded statements replace the candidate ones.
+        overwrite: Discards the entire candidate configuration and replaces it
+                  with the loaded configuration.
+        replace: Substitutes each hierarchy level in the loaded configuration
+                 for the corresponding level.
+    required: false
+    default: merge
+    choices: ['merge', 'overwrite', 'replace']
+    version_added: "2.3"
 requirements:
   - junos-eznc
 notes:
@@ -242,7 +248,7 @@ def load_config(module, result):
     kwargs = dict()
     kwargs['comment'] = module.params['comment']
     kwargs['confirm'] = module.params['confirm']
-    kwargs['replace'] = module.params['replace']
+    kwargs[module.params['update']] = True
     kwargs['commit'] = not module.check_mode
 
     if module.params['src']:
@@ -306,7 +312,8 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        replace=dict(default=False, type='bool'),
+        update=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
+
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
 
