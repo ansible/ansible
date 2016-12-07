@@ -729,7 +729,7 @@ def main():
                 native_vlan=native_vlan, trunk_vlans=trunk_vlans,
                 trunk_allowed_vlans=trunk_allowed_vlans)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     interface = interface.lower()
 

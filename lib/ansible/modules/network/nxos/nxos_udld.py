@@ -380,7 +380,7 @@ def get_commands_config_udld_global(delta, reset):
         'msg_time': 'udld message-time {msg_time}'
     }
     commands = []
-    for param, value in delta.iteritems():
+    for param, value in delta.items():
         if param == 'aggressive':
             if value == 'enabled':
                 command = 'udld aggressive'
@@ -404,7 +404,7 @@ def get_commands_remove_udld_global(delta):
         'msg_time': 'no udld message-time {msg_time}',
     }
     commands = []
-    for param, value in delta.iteritems():
+    for param, value in delta.items():
         command = config_args.get(param, 'DNE').format(**delta)
         if command and command != 'DNE':
             commands.append(command)
@@ -460,12 +460,12 @@ def main():
                                  'between 7 and 90')
 
     args = dict(aggressive=aggressive, msg_time=msg_time, reset=reset)
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_udld_global(module)
     end_state = existing
 
-    delta = set(proposed.iteritems()).difference(existing.iteritems())
+    delta = set(proposed.items()).difference(existing.items())
     changed = False
 
     commands = []
@@ -475,7 +475,7 @@ def main():
             commands.append(command)
 
     elif state == 'absent':
-        common = set(proposed.iteritems()).intersection(existing.iteritems())
+        common = set(proposed.items()).intersection(existing.items())
         if common:
             command = get_commands_remove_udld_global(dict(common))
             commands.append(command)

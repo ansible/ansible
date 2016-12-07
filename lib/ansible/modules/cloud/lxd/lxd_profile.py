@@ -284,7 +284,7 @@ class LXDProfileManagement(object):
 
     def _apply_profile_configs(self):
         config = self.old_profile_json.copy()
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             config[k] = v
         self.client.do('PUT', '/1.0/profiles/{}'.format(self.name), config)
         self.actions.append('apply_profile_configs')

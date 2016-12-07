@@ -375,11 +375,11 @@ def main():
 
     existing = invoke('get_existing', module, args)
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if str(value).lower() == 'true':
             value = True
         elif str(value).lower() == 'false':

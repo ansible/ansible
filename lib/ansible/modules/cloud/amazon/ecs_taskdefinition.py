@@ -244,7 +244,7 @@ def main():
 
             def _right_has_values_of_left(left, right):
                 # Make sure the values are equivalent for everything left has
-                for k, v in left.iteritems():
+                for k, v in left.items():
                     if not ((not v and (k not in right or not right[k])) or (k in right and v == right[k])):
                         # We don't care about list ordering because ECS can change things
                         if isinstance(v, list) and k in right:
@@ -261,7 +261,7 @@ def main():
                             return False
 
                 # Make sure right doesn't have anything that left doesn't
-                for k, v in right.iteritems():
+                for k, v in right.items():
                     if v and k not in left:
                         return False
 
