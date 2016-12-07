@@ -17,41 +17,127 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
 module: "vyos_system"
 version_added: "2.3"
 author: "Nathaniel Case (@qalthos)"
+short_description: Run `set system` commands on VyOS devices
+description:
+  - The vyos_system module allows running one or more commands on remote
+    devices running VyOS.  This module can also be introspected
+    to validate key parameters before returning successfully.
+options:
+  hostname:
+    description:
+      - The new hostname to apply to the device.
+    required: false
+    default: null
+  domain_name:
+    description:
+      - The new domain name to apply to the device.
+    required: false
+    default: null
+  name_server:
+    description:
+      - A list of name servers to use with the device.
+    required: false
+    default: null
+  domain_search:
+    description:
+      - A list of domain names to search.
+    required: false
+    default: null
+  state:
+    description:
+      - Whether to apply (C(present)) or remove (C(absent)) the settings.
+    required: false
+    default: present
+    choices: ['present', 'absent']
 """
 
 RETURN = """
+commands:
+  description: The list of configuration mode commands to send to the device
+  returned: always
+  type: list
+  sample:
+    - set system hostname vyos01
+    - set system domain-name foo.example.com
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 
 EXAMPLES = """
+- name: configure hostname and domain-name
+  vyos_system:
+    hostname: vyos01
+    domain_name: foo.example.com
+
+- name: remove all configuration
+  vyos_system:
+    state: absent
+
+- name: configure name servers
+  vyos_system:
+    name_server:
+      - 8.8.8.8
+      - 8.8.4.4
+
+- name: configure domain search suffixes
+  vyos_system:
+    domain_search:
+      - sub1.example.com
+      - sub2.example.com
 """
 
 from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.vyos2 import run_commands, get_config
+from ansible.module_utils.vyos import get_config, load_config
+
+
+def spec_key_to_device_key(key):
+    device_key = key.replace('_', '-')
+
+    # domain-search is longer than just it's key
+    if device_key == 'domain-search':
+        device_key += ' domain'
+
+    return device_key
 
 
 def config_to_dict(module):
     data = get_config(module)
 
-    config = {'domain-search': [], 'name-server': []}
+    config = {'domain_search': [], 'name_server': []}
 
-    for line in data:
-        if line.startswith('set system hostname'):
-            config['hostname'] = line[20:]
+    for line in data.split('\n'):
+        if line.startswith('set system host-name'):
+            config['host_name'] = line[22:-1]
         elif line.startswith('set system domain-name'):
-            config['domain-name'] = line[23:]
-        elif line.startswith('set system domain-search'):
-            config['domain-search'].append(line[25:])
-        elif line.startswith('set system name-servers'):
-            config['name-server'].append(line[24:])
+            config['domain_name'] = line[24:-1]
+        elif line.startswith('set system domain-search domain'):
+            config['domain_search'].append(line[33:-1])
+        elif line.startswith('set system name-server'):
+            config['name_server'].append(line[24:-1])
 
     return config
 
@@ -59,47 +145,67 @@ def config_to_dict(module):
 def spec_to_commands(want, have):
     commands = []
 
-    state = want['state']
+    state = want.pop('state')
+
+    # state='absent' by itself has special meaning
+    if state == 'absent' and all(v is None for v in want.values()):
+        # Clear everything
+        for key in have:
+            commands.append('delete system %s' % spec_key_to_device_key(key))
 
     for key in want:
-        # These keys do not map to commnads directly
-        if key in ('state', 'purge'):
+        if want[key] is None:
             continue
 
-        device_key = key.replace('_', '-')
         current = have.get(key)
-        if state == 'absent' and current:
-            commands.append('delete system %s' % device_key)
-        elif state == 'present' and current != want[key]:
-            if key in ['domain-search', 'name-servers']:
-                for config in want[key]:
-                    commands.append('set system %s %s' % (device_key, config))
-            else:
-                commands.append('set system %s %s' % (device_key, want[key]))
+        proposed = want[key]
+        device_key = spec_key_to_device_key(key)
+
+        # These keys are lists which may need to  be reconciled with the device
+        if key in ['domain_search', 'name_server']:
+            if not proposed:
+                # Empty list was passed, delete all values
+                commands.append("delete system %s" % device_key)
+            for config in proposed:
+                if state == 'absent' and config in current:
+                    commands.append("delete system %s '%s'" % (device_key, config))
+                elif state == 'present' and config not in current:
+                    commands.append("set system %s '%s'" % (device_key, config))
+        else:
+            if state == 'absent' and current and proposed:
+                commands.append('delete system %s' % device_key)
+            elif state == 'present' and proposed and proposed != current:
+                commands.append("set system %s '%s'" % (device_key, proposed))
 
     return commands
 
 
 def main():
     argument_spec = dict(
-        hostname=dict(type='str'),
+        host_name=dict(type='str'),
         domain_name=dict(type='str'),
         domain_search=dict(type='list'),
-        name_servers=dict(type='list'),
-        state=dict(type='str', default='present', choices=['present', 'absent'])
+        name_server=dict(type='list'),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
     module = LocalAnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        mutually_exclusive=[('domain_name', 'domain_search')],
     )
 
     result = {'changed': False}
-    want = module.params
+    want = dict(module.params)
     have = config_to_dict(module)
 
     commands = spec_to_commands(want, have)
     result['commands'] = commands
+
+    if commands:
+        commit = not module.check_mode
+        response = load_config(module, commands, commit=commit)
+        result['changed'] = True
 
     module.exit_json(**result)
 
