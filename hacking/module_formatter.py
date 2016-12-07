@@ -251,7 +251,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
     print("rendering: %s" % module)
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples, returndocs = module_docs.get_docstring(fname, verbose=options.verbose)
+    doc, examples, returndocs, metadata = module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:

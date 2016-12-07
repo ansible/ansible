@@ -499,7 +499,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing = module_loader.find_plugin(self.name, mod_type='.py')
-                existing_doc, _, _ = get_docstring(existing, verbose=True)
+                existing_doc, _, _, _ = get_docstring(existing, verbose=True)
                 existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
