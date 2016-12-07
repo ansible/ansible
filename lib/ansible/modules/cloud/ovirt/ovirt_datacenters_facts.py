@@ -50,7 +50,7 @@ options:
       description:
         - "Search term which is accepted by oVirt search backend."
         - "For example to search datacenter I(X) use following pattern: I(name=X)"
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''

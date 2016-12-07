@@ -55,7 +55,7 @@ options:
     name:
         description:
             - "Name of the NIC, can be used as glob expression."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''

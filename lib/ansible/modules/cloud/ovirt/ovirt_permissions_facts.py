@@ -67,7 +67,7 @@ options:
         description:
             - "Namespace of the authorization provider, where user/group resides."
         required: false
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
