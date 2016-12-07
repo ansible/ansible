@@ -716,6 +716,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+            if 'rc' in res:
+                data['rc'] = res['rc']
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
@@ -797,7 +799,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
 
-        if not('failed' in peek_result and peek_result['failed']) or peek_result.get('rc', 0) == 0:
+        if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
             if peek_result['state'] == 'absent':
                 diff['before'] = ''
