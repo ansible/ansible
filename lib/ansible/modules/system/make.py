@@ -34,7 +34,7 @@ description:
 options:
   target:
     description:
-      - The target to run
+      - The target to run. As of Ansible 2.3, options can be specified as well.
     required: false
     default: none
   params:
@@ -66,14 +66,16 @@ EXAMPLES = '''
     params:
       NUM_THREADS: 4
       BACKEND: lapack
+
+# Skip building a file as part of a target
+- make:
+    chdir: /home/ubuntu/cool-project
+    target: 'all -o somefile'
 '''
 
 # TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
 # fix this
 RETURN = '''# '''
-
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.basic import AnsibleModule
 
 
 def run_command(command, module, check_rc=True):
@@ -100,9 +102,9 @@ def sanitize_output(output):
     :return: sanitized output
     """
     if output is None:
-        return ''
+        return b('')
     else:
-        return output.rstrip("\r\n")
+        return output.rstrip(b("\r\n"))
 
 
 def main():
@@ -111,18 +113,19 @@ def main():
         argument_spec=dict(
             target=dict(required=False, default=None, type='str'),
             params=dict(required=False, default=None, type='dict'),
-            chdir=dict(required=True, default=None, type='path'),
+            chdir=dict(required=True, default=None, type='str'),
         ),
     )
     # Build up the invocation of `make` we are going to use
     make_path = module.get_bin_path('make', True)
-    make_target = module.params['target']
+    make_target = module.params['target'].split()
     if module.params['params'] is not None:
-        make_parameters = [k + '=' + str(v) for k, v in iteritems(module.params['params'])]
+        make_parameters = [k + '=' + str(v) for k, v in module.params['params'].iteritems()]
     else:
         make_parameters = []
 
-    base_command = [make_path, make_target]
+    base_command = [make_path]
+    base_command.extend(make_target)
     base_command.extend(make_parameters)
 
     # Check if the target is already up to date
@@ -156,6 +159,8 @@ def main():
         chdir=module.params['chdir']
     )
 
+
+from ansible.module_utils.basic import AnsibleModule, b
 
 if __name__ == '__main__':
     main()
