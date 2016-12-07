@@ -81,6 +81,7 @@ def get_volume_info(volume):
     volume_info = {
                     'create_time': volume.create_time,
                     'id': volume.id,
+                    'encrypted': volume.encrypted,
                     'iops': volume.iops,
                     'size': volume.size,
                     'snapshot_id': volume.snapshot_id,
