@@ -264,17 +264,17 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
     def create_or_update_pip(self, pip):
         try:
             poller = self.network_client.public_ip_addresses.create_or_update(self.resource_group, self.name, pip)
+            pip = self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error creating or updating {0} - {1}".format(self.name, str(exc)))
-        pip = self.get_poller_result(poller)
         return pip_to_dict(pip)
 
     def delete_pip(self):
         try:
             poller = self.network_client.public_ip_addresses.delete(self.resource_group, self.name)
+            self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(self.name, str(exc)))
-        self.get_poller_result(poller)
         # Delete returns nada. If we get here, assume that all is well.
         self.results['state']['status'] = 'Deleted'
         return True

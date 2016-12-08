@@ -31,25 +31,20 @@ options:
     description:
       - Bucket name. 
     required: true
-    default: null 
-    aliases: []
   object:
     description:
       - Keyname of the object inside the bucket. Can be also be used to create "virtual directories" (see examples).
     required: false
     default: null
-    aliases: []
   src:
     description:
       - The source file path when performing a PUT operation.
     required: false
     default: null
-    aliases: []
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
-    aliases: []
   force:
     description:
       - Forces an overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -62,23 +57,21 @@ options:
     required: false
     default: private 
   headers:
-    version_added: 2.0
+    version_added: "2.0"
     description:
       - Headers to attach to object.
     required: false
-    default: {}
+    default: '{}'
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only available when public-read is the acl for the object.
     required: false
     default: null
-    aliases: []
   mode:
     description:
       - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket). 
     required: true
     default: null
-    aliases: []
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
   gs_secret_key:
     description:

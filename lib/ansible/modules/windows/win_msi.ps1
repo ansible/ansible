@@ -27,13 +27,17 @@ $creates = Get-Attr $params "creates" $false
 $extra_args = Get-Attr $params "extra_args" ""
 $wait = Get-Attr $params "wait" $false | ConvertTo-Bool
 
-If (-not $params.path.GetType)
+$result = New-Object psobject @{
+    changed = $false
+};
+
+If (($creates -ne $false) -and ($state -ne "absent") -and (Test-Path $creates))
 {
-    Fail-Json $result "missing required arguments: path"
+    Exit-Json $result;
 }
 
 $logfile = [IO.Path]::GetTempFileName();
-If ($params.state.GetType -and $params.state -eq "absent")
+if ($state -eq "absent")
 {
   If ($wait)
   {

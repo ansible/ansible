@@ -39,35 +39,28 @@ options:
     description:
       - name of the cloudformation stack
     required: true
-    default: null
-    aliases: []
   disable_rollback:
     description:
       - If a stacks fails to form, rollback will remove the stack
     required: false
     default: "false"
     choices: [ "true", "false" ]
-    aliases: []
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
     required: false
     default: {}
-    aliases: []
   state:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
         If state is "absent", stack will be removed.
     required: true
-    default: null
-    aliases: []
   template:
     description:
       - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
         Must give full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
     required: false
     default: null
-    aliases: []
   notification_arns:
     description:
       - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
@@ -79,14 +72,12 @@ options:
       - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified. (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     required: false
     default: null
-    aliases: []
     version_added: "1.9"
   tags:
     description:
       - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
     required: false
     default: null
-    aliases: []
     version_added: "1.4"
   template_url:
     description:

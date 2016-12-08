@@ -26,12 +26,6 @@ description:
     - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
 options:
-  region:
-    description:
-      - region in which the resource exists. 
-    required: false
-    default: null
-    aliases: ['aws_region', 'ec2_region']
   resource:
     description:
       - The EC2 resource id. 
@@ -53,7 +47,9 @@ options:
     aliases: []
 
 author: "Lester Wade (@lwade)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

@@ -56,7 +56,7 @@ options:
     aliases: [ 'pkg' ]
   exclude:
     description:
-      - "Package name(s) to exlude when state=present, or latest
+      - "Package name(s) to exclude when state=present, or latest"
     required: false
     version_added: "2.0"
     default: null

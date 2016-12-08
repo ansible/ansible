@@ -76,7 +76,9 @@ options:
     default: false
     required: false
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

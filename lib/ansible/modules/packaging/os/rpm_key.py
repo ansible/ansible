@@ -154,7 +154,7 @@ class RpmKey:
             gpg = self.module.get_bin_path('gpg2')
 
         if not gpg:
-            self.json_fail(msg="rpm_key requires a command lne gpg or gpg2, none found")
+            self.json_fail(msg="rpm_key requires a command line gpg or gpg2, none found")
 
         stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
         for line in stdout.splitlines():

@@ -349,12 +349,21 @@ def user_delete(cursor, user):
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
 
-def has_table_privilege(cursor, user, table, priv):
-    if priv == 'ALL':
-        priv = ','.join([ p for p in VALID_PRIVS['table'] if p != 'ALL' ])
-    query = 'SELECT has_table_privilege(%s, %s, %s)'
-    cursor.execute(query, (user, table, priv))
-    return cursor.fetchone()[0]
+def has_table_privileges(cursor, user, table, privs):
+    """
+    Return the difference between the privileges that a user already has and
+    the privileges that they desire to have.
+
+    :returns: tuple of:
+        * privileges that they have and were requested
+        * privileges they currently hold but were not requested
+        * privileges requested that they do not hold
+    """
+    cur_privs = get_table_privileges(cursor, user, table)
+    have_currently = cur_privs.intersection(privs)
+    other_current = cur_privs.difference(privs)
+    desired = privs.difference(cur_privs)
+    return (have_currently, other_current, desired)
 
 def get_table_privileges(cursor, user, table):
     if '.' in table:
@@ -364,26 +373,21 @@ def get_table_privileges(cursor, user, table):
     query = '''SELECT privilege_type FROM information_schema.role_table_grants
     WHERE grantee=%s AND table_name=%s AND table_schema=%s'''
     cursor.execute(query, (user, table, schema))
-    return set([x[0] for x in cursor.fetchall()])
+    return frozenset([x[0] for x in cursor.fetchall()])
 
-def grant_table_privilege(cursor, user, table, priv):
+def grant_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
-    prev_priv = get_table_privileges(cursor, user, table)
+    privs = ', '.join(privs)
     query = 'GRANT %s ON TABLE %s TO %s' % (
-        priv, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
+        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
     cursor.execute(query)
-    curr_priv = get_table_privileges(cursor, user, table)
-    return len(curr_priv) > len(prev_priv)
 
-def revoke_table_privilege(cursor, user, table, priv):
+def revoke_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
-    prev_priv = get_table_privileges(cursor, user, table)
+    privs = ', '.join(privs)
     query = 'REVOKE %s ON TABLE %s FROM %s' % (
-        priv, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
+        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role') )
     cursor.execute(query)
-    curr_priv = get_table_privileges(cursor, user, table)
-    return len(curr_priv) < len(prev_priv)
-
 
 def get_database_privileges(cursor, user, db):
     priv_map = {
@@ -395,53 +399,61 @@ def get_database_privileges(cursor, user, db):
     cursor.execute(query, (db,))
     datacl = cursor.fetchone()[0]
     if datacl is None:
-        return []
+        return set()
     r = re.search('%s=(C?T?c?)/[a-z]+\,?' % user, datacl)
     if r is None:
-        return []
-    o = []
+        return set()
+    o = set()
     for v in r.group(1):
-        o.append(priv_map[v])
-    return o
+        o.add(priv_map[v])
+    return normalize_privileges(o, 'database')
 
-def has_database_privilege(cursor, user, db, priv):
-    if priv == 'ALL':
-        priv = ','.join([ p for p in VALID_PRIVS['database'] if p != 'ALL' ])
-    query = 'SELECT has_database_privilege(%s, %s, %s)'
-    cursor.execute(query, (user, db, priv))
-    return cursor.fetchone()[0]
+def has_database_privileges(cursor, user, db, privs):
+    """
+    Return the difference between the privileges that a user already has and
+    the privileges that they desire to have.
 
-def grant_database_privilege(cursor, user, db, priv):
+    :returns: tuple of:
+        * privileges that they have and were requested
+        * privileges they currently hold but were not requested
+        * privileges requested that they do not hold
+    """
+    cur_privs = get_database_privileges(cursor, user, db)
+    have_currently = cur_privs.intersection(privs)
+    other_current = cur_privs.difference(privs)
+    desired = privs.difference(cur_privs)
+    return (have_currently, other_current, desired)
+
+def grant_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
-    prev_priv = get_database_privileges(cursor, user, db)
+    privs =', '.join(privs)
     if user == "PUBLIC":
         query = 'GRANT %s ON DATABASE %s TO PUBLIC' % (
-                priv, pg_quote_identifier(db, 'database'))
+                privs, pg_quote_identifier(db, 'database'))
     else:
         query = 'GRANT %s ON DATABASE %s TO %s' % (
-                priv, pg_quote_identifier(db, 'database'),
+                privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
     cursor.execute(query)
-    curr_priv = get_database_privileges(cursor, user, db)
-    return len(curr_priv) > len(prev_priv)
 
-def revoke_database_privilege(cursor, user, db, priv):
+def revoke_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
-    prev_priv = get_database_privileges(cursor, user, db)
+    privs = ', '.join(privs)
     if user == "PUBLIC":
         query = 'REVOKE %s ON DATABASE %s FROM PUBLIC' % (
-                priv, pg_quote_identifier(db, 'database'))
+                privs, pg_quote_identifier(db, 'database'))
     else:
         query = 'REVOKE %s ON DATABASE %s FROM %s' % (
-                priv, pg_quote_identifier(db, 'database'),
+                privs, pg_quote_identifier(db, 'database'),
                 pg_quote_identifier(user, 'role'))
     cursor.execute(query)
-    curr_priv = get_database_privileges(cursor, user, db)
-    return len(curr_priv) < len(prev_priv)
 
 def revoke_privileges(cursor, user, privs):
     if privs is None:
         return False
+
+    revoke_funcs = dict(table=revoke_table_privileges, database=revoke_database_privileges)
+    check_funcs = dict(table=has_table_privileges, database=has_database_privileges)
 
     changed = False
     for type_ in privs:
@@ -498,6 +510,17 @@ def parse_role_attrs(role_attr_flags):
     o_flags = ' '.join(flag_set)
     return o_flags
 
+def normalize_privileges(privs, type_):
+    new_privs = set(privs)
+    if 'ALL' in new_privs:
+        new_privs.update(VALID_PRIVS[type_])
+        new_privs.remove('ALL')
+    if 'TEMP' in new_privs:
+        new_privs.add('TEMPORARY')
+        new_privs.remove('TEMP')
+
+    return new_privs
+
 def parse_privs(privs, db):
     """
     Parse privilege string to determine permissions for database db.
@@ -530,6 +553,8 @@ def parse_privs(privs, db):
         if not priv_set.issubset(VALID_PRIVS[type_]):
             raise InvalidPrivsError('Invalid privs specified for %s: %s' %
                 (type_, ' '.join(priv_set.difference(VALID_PRIVS[type_]))))
+
+        priv_set = normalize_privileges(priv_set, type_)
         o_privs[type_][name] = priv_set
 
     return o_privs

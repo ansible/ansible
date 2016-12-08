@@ -31,11 +31,11 @@ description:
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - default, where supported, restores params default value
+    - default, where supported, restores params default value.
 options:
     interface:
         description:
-            - Interface name for the VXLAN Network Virtualization Endpoint
+            - Interface name for the VXLAN Network Virtualization Endpoint.
         required: true
     vni:
         description:
@@ -77,7 +77,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
@@ -489,7 +490,6 @@ def main():
             suppress_arp=dict(required=False, type='bool'),
             ingress_replication=dict(required=False, type='str',
                                      choices=['bgp', 'static', 'default']),
-            m_facts=dict(required=False, default=False, type='bool'),
             state=dict(choices=['present', 'absent'], default='present',
                        required=False),
             include_defaults=dict(default=True),

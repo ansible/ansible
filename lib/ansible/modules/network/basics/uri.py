@@ -66,6 +66,7 @@ options:
       - The serialization format of the body. When set to json, encodes the
         body argument, if needed, and automatically sets the Content-Type header accordingly.
     required: false
+    choices: [ "raw", "json" ]
     default: raw
     version_added: "2.0"
   method:

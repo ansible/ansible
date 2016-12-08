@@ -57,6 +57,7 @@ options:
         required: false
         description:
             - Optionally sets the seuser type (user_u) on selinux enabled systems.
+        version_added: "2.1"
     group:
         required: false
         description:

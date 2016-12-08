@@ -31,7 +31,8 @@ DOCUMENTATION = '''
 ---
 module: os_object
 short_description: Create or Delete objects and containers from OpenStack
-version_added: "1.10"
+version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 extends_documentation_fragment: openstack
 description:
    - Create or Delete objects and containers from OpenStack
@@ -60,7 +61,6 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-requirements: ["shade"]
 '''
 
 EXAMPLES = '''

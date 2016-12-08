@@ -584,7 +584,7 @@ def main():
                 if overwrite == 'always':
                     download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
             else:
                 sum_matches = False
 
@@ -594,7 +594,7 @@ def main():
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
 
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
-        if sum_matches is True and overwrite is False:
+        if sum_matches is True and overwrite == 'never':
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...

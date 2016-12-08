@@ -30,33 +30,26 @@ options:
     description:
       - Specifies the action to take.  
     required: true
-    default: null
-    aliases: []
     choices: [ 'get', 'create', 'delete' ]
   zone:
     description:
       - The DNS zone to modify
     required: true
-    default: null
-    aliases: []
   hosted_zone_id:
     description:
       - The Hosted Zone ID of the DNS zone to modify
     required: false
-    version_added: 2.0
+    version_added: "2.0"
     default: null
   record:
     description:
       - The full DNS record to create or delete
     required: true
-    default: null
-    aliases: []
   ttl:
     description:
       - The TTL to give the new record
     required: false
     default: 3600 (one hour)
-    aliases: []
   type:
     description:
       - The type of DNS record to create
@@ -66,40 +59,36 @@ options:
     description:
       - Indicates if this is an alias record.
     required: false
-    version_added: 1.9
+    version_added: "1.9"
     default: False
-    aliases: []
     choices: [ 'True', 'False' ]
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
     required: false
-    version_added: 1.9
+    version_added: "1.9"
     default: null
   alias_evaluate_target_health:
     description:
       - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
     required: false
-    version_added: "2.0"
+    version_added: "2.1"
     default: false
   value:
     description:
       - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values for the record must be specified or Route53 will not delete it.
     required: false
     default: null
-    aliases: []
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
     required: false
     default: null
-    aliases: []
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain names, the default of 500 seconds may be too long.
     required: false
     default: 500
-    aliases: []
   private_zone:
     description:
       - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default is to use the public zone.
@@ -316,6 +305,7 @@ import distutils.version
 
 try:
     import boto
+    import boto.ec2
     from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
@@ -496,26 +486,11 @@ def main():
     except boto.exception.BotoServerError as e:
         module.fail_json(msg = e.error_message)
 
-    # Get all the existing hosted zones and save their ID's
-    zones = {}
-    results = conn.get_all_hosted_zones()
-    for r53zone in results['ListHostedZonesResponse']['HostedZones']:
-        # only save this zone id if the private status of the zone matches
-        # the private_zone_in boolean specified in the params
-        if module.boolean(r53zone['Config'].get('PrivateZone', False)) == private_zone_in:
-            zone_id = r53zone['Id'].replace('/hostedzone/', '')
-            # only save when unique hosted_zone_id is given and is equal
-            # hosted_zone_id_in is specified in the params
-            if hosted_zone_id_in and zone_id == hosted_zone_id_in:
-                zones[r53zone['Name']] = zone_id
-            elif not hosted_zone_id_in:
-                zones[r53zone['Name']] = zone_id
+    # Find the named zone ID
+    zone = get_zone_by_name(conn, module, zone_in, private_zone_in, hosted_zone_id_in, vpc_id_in)
 
     # Verify that the requested zone is already defined in Route53
-    if not zone_in in zones and hosted_zone_id_in:
-        errmsg = "Hosted_zone_id %s does not exist in Route53" % hosted_zone_id_in
-        module.fail_json(msg = errmsg)
-    if not zone_in in zones:
+    if zone is None:
         errmsg = "Zone %s does not exist in Route53" % zone_in
         module.fail_json(msg = errmsg)
 
@@ -551,6 +526,8 @@ def main():
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
+            if hosted_zone_id_in:
+                record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
             record['weight'] = rset.weight
             record['region'] = rset.region

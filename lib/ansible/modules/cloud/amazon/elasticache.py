@@ -74,7 +74,7 @@ options:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
     required: false
     default: None
-    version_added: "1.7"
+    version_added: "2.0"
   security_group_ids:
     description:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
@@ -103,13 +103,9 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = """

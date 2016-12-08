@@ -59,11 +59,6 @@ options:
     description:
       - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security group names or IDs.
     required: false
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
   volumes:
     description:
       - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
@@ -110,7 +105,7 @@ options:
       - Id of ClassicLink enabled VPC
     required: false
     version_added: "2.0"
-  classic_link_vpc_security_groups"
+  classic_link_vpc_security_groups:
     description:
       - A list of security group id's with which to associate the ClassicLink VPC instances.
     required: false

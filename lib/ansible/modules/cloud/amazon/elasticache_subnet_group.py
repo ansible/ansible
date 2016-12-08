@@ -31,34 +31,25 @@ options:
       - Specifies whether the subnet should be present or absent.
     required: true
     default: present
-    aliases: []
     choices: [ 'present' , 'absent' ]
   name:
     description:
       - Database subnet group identifier.
     required: true
-    default: null
-    aliases: []
   description:
     description:
       - Elasticache subnet group description. Only set when a new group is added.
     required: false
     default: null
-    aliases: []
   subnets:
     description:
       - List of subnet IDs that make up the Elasticache subnet group.
     required: false
     default: null
-    aliases: []
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
-author: Tim Mahoney
-extends_documentation_fragment: aws
+author: "Tim Mahoney (@timmahoney)"
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

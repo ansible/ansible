@@ -109,7 +109,7 @@ options:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
     version_added: 1.8
-  wait
+  wait:
     description:
       - wait for the scaling group to finish provisioning the minimum amount of
         servers
@@ -121,7 +121,7 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace
 '''
 

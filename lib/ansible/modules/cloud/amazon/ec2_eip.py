@@ -47,12 +47,6 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: [ ec2_region ]
   in_vpc:
     description:
       - allocate an EIP inside a VPC or not

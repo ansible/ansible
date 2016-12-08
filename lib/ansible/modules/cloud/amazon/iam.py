@@ -36,24 +36,22 @@ options:
     description:
       - Name of IAM resource to create or identify
     required: true
-    aliases: []
   new_name:
     description:
       - When state is update, will replace name with new_name on IAM resource
     required: false
-    aliases: []
+    default: null
   new_path:
     description:
       - When state is update, will replace the path with new_path on the IAM resource
     required: false
-    aliases: []
+    default: null
   state:
     description:
       - Whether to create, delete or update the IAM resource. Note, roles cannot be updated.
     required: true
     default: null
     choices: [ "present", "absent", "update" ]
-    aliases: []
   path:
     description:
       - When creating or updating, specify the desired path of the resource. If state is present, it will replace the current path to match what is passed in when they do not match.
@@ -77,13 +75,11 @@ options:
     required: false
     default: null
     choices: [ "create", "remove", "active", "inactive"]
-    aliases: []
   key_count:
     description:
       - When access_key_state is create it will ensure this quantity of keys are present. Defaults to 1.
     required: false
     default: '1'
-    aliases: []
   access_key_ids:
     description:
       - A list of the keys that you want impacted by the access_key_state parameter.
@@ -92,13 +88,11 @@ options:
       - A list of groups the user should belong to. When update, will gracefully remove groups not listed.
     required: false
     default: null
-    aliases: []
   password:
     description:
       - When type is user and state is present, define the users login password. Also works with update. Note that always returns changed.
     required: false
     default: null
-    aliases: []
   update_password:
     required: false
     default: always

@@ -51,12 +51,6 @@ options:
       - create or deregister/delete image
     required: false
     default: 'present'
-  region:
-    description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the AMI.
@@ -74,10 +68,10 @@ options:
     required: false
     default: null
   device_mapping:
-    version_added: "1.9"
+    version_added: "2.0"
     description:
       - An optional list of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
-      - Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)
+      - "Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)"
     required: false
     default: null
   delete_snapshot:
@@ -305,6 +299,7 @@ import time
 try:
     import boto
     import boto.ec2
+    from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -365,6 +360,7 @@ def create_image(module, ec2):
     wait_timeout = int(module.params.get('wait_timeout'))
     description = module.params.get('description')
     no_reboot = module.params.get('no_reboot')
+    device_mapping = module.params.get('device_mapping')
     tags =  module.params.get('tags')
     launch_permissions = module.params.get('launch_permissions')
 

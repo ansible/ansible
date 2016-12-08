@@ -33,8 +33,7 @@ description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
        sections if they don't exist.
-     - Comments are discarded when the source file is read, and therefore will not
-       show up in the destination file.
+     - Before version 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
 version_added: "0.9"
 options:
   dest:

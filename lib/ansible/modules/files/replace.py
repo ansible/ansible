@@ -30,8 +30,9 @@ DOCUMENTATION = """
 ---
 module: replace
 author: "Evan Kaufman (@EvanK)"
-extends_documentation_fragment: files
-extends_documentation_fragment: validate
+extends_documentation_fragment:
+    - files
+    - validate
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression.
 description:

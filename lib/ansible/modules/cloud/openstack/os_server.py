@@ -45,12 +45,10 @@ options:
      description:
         - Name that has to be given to the instance
      required: true
-     default: None
    image:
      description:
         - The name or id of the base image to boot.
      required: true
-     default: None
    image_exclude:
      description:
         - Text to use to filter image names, for the case, such as HP, where
@@ -110,7 +108,7 @@ options:
      default: 'yes'
      aliases: ['auto_floating_ip', 'public_ip']
    floating_ips:
-     decription:
+     description:
         - list of valid floating IPs that pre-exist to assign to this node
      required: false
      default: None
@@ -648,4 +646,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

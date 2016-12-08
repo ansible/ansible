@@ -116,7 +116,10 @@ options:
      required: false
      default: publicURL
      version_added: "1.7"
-requirements: ["glanceclient", "keystoneclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-glanceclient"
+    - "python-keystoneclient"
 
 '''
 
@@ -136,9 +139,14 @@ EXAMPLES = '''
 import time
 try:
     import glanceclient
-    from keystoneclient.v2_0 import client as ksclient
+    HAS_GLANCECLIENT = True
 except ImportError:
-    print("failed=True msg='glanceclient and keystone client are required'")
+    HAS_GLANCECLIENT = False
+try:
+    from keystoneclient.v2_0 import client as ksclient
+    HAS_KEYSTONECLIENT = True
+except ImportError:
+    HAS_KEYSTONECLIENT= False
 
 
 def _get_ksclient(module, kwargs):
@@ -269,4 +277,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

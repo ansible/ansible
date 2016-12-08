@@ -32,7 +32,7 @@ DOCUMENTATION = '''
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Add or Remove rule from an existing security group
 options:
@@ -81,7 +81,6 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-
 requirements: ["shade"]
 '''
 
@@ -257,7 +256,6 @@ def _system_state_change(module, secgroup, remotegroup):
 
 
 def main():
-
     argument_spec = openstack_full_argument_spec(
         security_group   = dict(required=True),
         # NOTE(Shrews): None is an acceptable protocol value for
