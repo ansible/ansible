@@ -101,7 +101,7 @@ EXAMPLES = r"""
     validate: '/usr/sbin/apache2ctl -f %s -t'
 """
 
-def write_changes(module,contents,dest):
+def write_changes(module, contents, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
@@ -160,8 +160,8 @@ def main():
         contents = f.read()
         f.close()
 
-    mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], contents, 0)
+    mre = re.compile(to_bytes(params['regexp']), re.MULTILINE)
+    result = re.subn(mre, to_bytes(params['replace']), contents, 0)
 
     if result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
@@ -189,6 +189,7 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils._text import to_bytes
 
 if __name__ == '__main__':
     main()
