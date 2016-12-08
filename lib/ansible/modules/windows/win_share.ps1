@@ -28,7 +28,7 @@ Function UserSearch
     $searchDomain = $false
     $searchDomainUPN = $false
     if ($accountName.Split("\").count -gt 1)
-        {
+    {
         if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME)
         {
             $searchDomain = $true

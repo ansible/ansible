@@ -28,7 +28,7 @@ module: file
 version_added: "historical"
 short_description: Sets attributes of files
 extends_documentation_fragment: files
-description: 
+description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
        the M(file) module - including M(copy), M(template), and M(assemble).
@@ -44,7 +44,7 @@ options:
       - 'path to the file being managed.  Aliases: I(dest), I(name)'
     required: true
     default: []
-    aliases: ['dest', 'name'] 
+    aliases: ['dest', 'name']
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
@@ -78,7 +78,7 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
     description:
-      - 'force the creation of the symlinks in two cases: the source file does 
+      - 'force the creation of the symlinks in two cases: the source file does
         not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
   follow:

@@ -87,7 +87,7 @@ Function UserSearch
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
- 
+
         If ($searchDomainUPN -eq $false) {
             $Searcher.Filter = "sAMAccountName=$($accountName)"
         }

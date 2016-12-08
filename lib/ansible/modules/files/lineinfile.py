@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: 
+author:
     - "Daniel Hokka Zakrissoni (@dhozac)"
     - "Ahti Kitsik (@ahtik)"
 extends_documentation_fragment:

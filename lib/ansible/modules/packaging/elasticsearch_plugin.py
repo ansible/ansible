@@ -78,8 +78,8 @@ options:
         default: None
         version_added: "2.1"
     version:
-        description: 
-            - Version of the plugin to be installed.  
+        description:
+            - Version of the plugin to be installed.
               If plugin exists with previous version, it will NOT be updated
         required: False
         default: None

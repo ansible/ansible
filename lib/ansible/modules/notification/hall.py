@@ -47,10 +47,10 @@ options:
     description:
       - "The full URL to the image you wish to use for the Icon of the message. Defaults to U(http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627)"
     required: false
-"""      
+"""
 
 EXAMPLES = """
-- name: Send Hall notifiation 
+- name: Send Hall notifiation
   local_action:
     module: hall
     room_token: <hall room integration token>
@@ -61,7 +61,7 @@ EXAMPLES = """
   when: ec2.instances|length > 0
   local_action:
     module: hall
-    room_token: <hall room integration token>  
+    room_token: <hall room integration token>
     title: Server Creation
     msg: "Created EC2 instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region."
   with_items: "{{ ec2.instances }}"
@@ -70,7 +70,7 @@ EXAMPLES = """
 HALL_API_ENDPOINT  = 'https://hall.com/api/1/services/generic/%s'
 
 def send_request_to_hall(module, room_token, payload):
-    headers = {'Content-Type': 'application/json'}        
+    headers = {'Content-Type': 'application/json'}
     payload=module.jsonify(payload)
     api_endpoint = HALL_API_ENDPOINT % (room_token)
     response, info = fetch_url(module, api_endpoint, data=payload, headers=headers)
@@ -87,7 +87,7 @@ def main():
             picture     = dict(type='str', default='http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627'),
         )
     )
-    
+
     room_token = module.params['room_token']
     message = module.params['msg']
     title = module.params['title']

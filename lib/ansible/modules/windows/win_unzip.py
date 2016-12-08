@@ -66,7 +66,7 @@ options:
       - If this file or directory exists the specified src will not be extracted.
     required: no
     default: null
-author: Phil Schwartz 
+author: Phil Schwartz
 '''
 
 EXAMPLES = r'''
