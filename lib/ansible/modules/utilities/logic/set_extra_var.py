@@ -62,6 +62,6 @@ EXAMPLES = '''
 - hosts: group_two
   tasks:
   - debug: msg="{{myvar}}"
-# Example command 
+# Example command
 ansible-playbook  my_playbook.yml --limit group_all
 '''
