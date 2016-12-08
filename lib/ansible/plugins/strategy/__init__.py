@@ -455,6 +455,7 @@ class StrategyBase:
 
                     # PV
                     elif 'add_extra_var' in result_item:
+                        # this task added a new 'extra var' variable
                         var = result_item['add_extra_var']
                         if var[0] not in self._variable_manager._extra_vars:
                             self._variable_manager._extra_vars[var[0]] = var[1]
