@@ -152,8 +152,9 @@ def _object_service(connection, module):
     if object_id is None:
         sdk_object = search_by_name(objects_service, module.params['object_name'])
         if sdk_object is None:
-            raise Exception(
-                "'%s' object '%s' was not found." % (
+            module.exit_json(
+                changed=False,
+                msg="'%s' object '%s' was not found." % (
                     module.params['object_type'],
                     module.params['object_name']
                 )
