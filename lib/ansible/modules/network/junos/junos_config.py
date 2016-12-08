@@ -111,14 +111,14 @@ options:
         data particulary when the candidate configuration and loaded
         configuration contain conflicting statements. Following are
         accepted values.
-        merge: Combines the data in the loaded configuration with the
-               candidate configuration. If statements in the loaded
-               configuration conflict with statements in the candidate
-               configuration, the loaded statements replace the candidate ones.
-        overwrite: Discards the entire candidate configuration and replaces it
-                  with the loaded configuration.
-        replace: Substitutes each hierarchy level in the loaded configuration
-                 for the corresponding level.
+        C(merge) combines the data in the loaded configuration with the
+        candidate configuration. If statements in the loaded configuration
+        conflict with statements in the candidate configuration, the loaded
+        statements replace the candidate ones.
+        C(overwrite) discards the entire candidate configuration and replaces
+        it with the loaded configuration.
+        C(replace) substitutes each hierarchy level in the loaded configuration
+        for the corresponding level.
     required: false
     default: merge
     choices: ['merge', 'overwrite', 'replace']
