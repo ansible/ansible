@@ -73,7 +73,7 @@ EXAMPLES='''
     reboot_timeout_sec: 3600
 '''
 
-RETURNS='''
+RETURN='''
 rebooted:
     description: true if the machine was rebooted
     returned: always

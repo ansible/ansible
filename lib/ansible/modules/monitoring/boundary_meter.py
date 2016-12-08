@@ -72,11 +72,18 @@ notes:
 
 EXAMPLES='''
 - name: Create meter
-  boundary_meter: apiid=AAAAAA api_key=BBBBBB state=present name={{ inventory_hostname }}"
+  boundary_meter:
+    apiid: AAAAAA
+    apikey: BBBBBB
+    state: present
+    name: '{{ inventory_hostname }}'
 
 - name: Delete meter
-  boundary_meter: apiid=AAAAAA api_key=BBBBBB state=absent name={{ inventory_hostname }}"
-
+  boundary_meter:
+    apiid: AAAAAA
+    apikey: BBBBBB
+    state: absent
+    name: '{{ inventory_hostname }}'
 '''
 
 import base64

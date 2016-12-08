@@ -1,2 +1,0 @@
-/examples/scripts/uptime.py
-/test/samples/multi.py

@@ -29,7 +29,7 @@ for aclass in class_list:
 
     # build ordered list to loop over and dict with attributes
     clist.append(name)
-    oblist[name] = {x: aobj.__dict__['_attributes'][x] for x in aobj.__dict__['_attributes']  if 'private' not in x or not x.private}
+    oblist[name] = dict((x, aobj.__dict__['_attributes'][x]) for x in aobj.__dict__['_attributes']  if 'private' not in x or not x.private)
 
     # loop is really with_ for users
     if name == 'Task':
