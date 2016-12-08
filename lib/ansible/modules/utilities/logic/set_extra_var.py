@@ -41,7 +41,7 @@ EXAMPLES = '''
 # Example setting host facts using key=value pairs
 - set_extra_var: name="my_var" value="my_value"
 # Example setting host facts using other variables
-- set_fact:
+- set_extra_var:
      name: my_var
      value: "{{ local_var * 2 }}"
      
@@ -58,7 +58,7 @@ EXAMPLES = '''
     shell: ls /tmp
     register: out
   - name: set global variable
-    setglobal: name=myvar value="{{out}}"
+    set_extra_var: name=myvar value="{{out}}"
 - hosts: group_two
   tasks:
   - debug: msg="{{myvar}}"
