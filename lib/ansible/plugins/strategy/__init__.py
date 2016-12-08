@@ -229,6 +229,13 @@ class StrategyBase:
             return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
+    def get_task_hosts(self, iterator, task_host, task):
+        if task.run_once:
+            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+        else:
+            host_list = [task_host]
+        return host_list
+
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
         Reads results off the final queue and takes appropriate action
@@ -348,10 +355,7 @@ class StrategyBase:
 
             run_once = templar.template(original_task.run_once)
             if original_task.register:
-                if run_once:
-                    host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                else:
-                    host_list = [original_host]
+                host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                 clean_copy = strip_internal_keys(task_result._result)
                 if 'invocation' in clean_copy:
@@ -477,7 +481,7 @@ class StrategyBase:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
 
-                    elif 'ansible_facts' in result_item:
+                    if 'ansible_facts' in result_item:
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
@@ -491,29 +495,36 @@ class StrategyBase:
                         else:
                             actual_host = original_host
 
+                        host_list = self.get_task_hosts(iterator, actual_host, original_task)
                         if original_task.action == 'include_vars':
+
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually refering too here, which may
                                 # be a host that is not really in inventory at all
-
-                                if run_once:
-                                    host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                                else:
-                                    host_list = [actual_host]
-
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            if run_once:
-                                host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                            else:
-                                host_list = [actual_host]
-
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
                                 else:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                    if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
+
+                        if 'per_host' not in result_item['ansible_stats'] or result_item['ansible_stats']['per_host']:
+                            host_list = self.get_task_hosts(iterator, original_host, original_task)
+                        else:
+                            host_list = [None]
+
+                        data = result_item['ansible_stats']['data']
+                        aggregate = 'aggregate' in result_item['ansible_stats'] and result_item['ansible_stats']['aggregate']
+                        for myhost in host_list:
+                            for k in data.keys():
+                                if aggregate:
+                                    self._tqm._stats.update_custom_stats(k, data[k], myhost)
+                                else:
+                                    self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
                 if 'diff' in task_result._result:
                     if self._diff:
