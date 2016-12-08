@@ -1,11 +1,5 @@
 <!---
-Please do not report issues/requests related to Ansible modules here !!
-
-Report them to the appropriate modules-core or modules-extras project:
-  - https://github.com/ansible/ansible-modules-core/issues
-  - https://github.com/ansible/ansible-modules-extras/issues
-
-Also verify first that your issue/request is not already reported in GitHub
+Please verify first that your issue/request is not already reported in GitHub
 -->
 
 
@@ -16,7 +10,7 @@ Also verify first that your issue/request is not already reported in GitHub
  - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Name of the plugin/task/feature -->
+<!--- Name of the module/plugin/task/feature -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from “ansible --version” between quotes below -->
