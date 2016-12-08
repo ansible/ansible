@@ -101,7 +101,7 @@ options:
      - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will error out if your user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
-author: 
+author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
 extends_documentation_fragment: aws

@@ -33,7 +33,7 @@ short_description: Retrieve an auth token
 version_added: "2.0"
 author: "Monty Taylor (@emonty)"
 description:
-   - Retrieve an auth token from an OpenStack Cloud
+    - Retrieve an auth token from an OpenStack Cloud
 requirements:
     - "python >= 2.6"
     - "shade"

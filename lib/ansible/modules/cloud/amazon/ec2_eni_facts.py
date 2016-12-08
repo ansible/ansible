@@ -92,7 +92,7 @@ def list_ec2_snapshots_boto3(connection, module):
 
 
 def get_eni_info(interface):
-    
+
     # Private addresses
     private_addresses = []
     for ip in interface.private_ip_addresses:
@@ -125,23 +125,23 @@ def get_eni_info(interface):
                                         'attach_time': interface.attachment.attach_time,
                                         'delete_on_termination': interface.attachment.delete_on_termination,
                                         }
-    
+
     return interface_info
-    
+
 
 def list_eni(connection, module):
-    
+
     filters = module.params.get("filters")
     interface_dict_array = []
-    
+
     try:
         all_eni = connection.get_all_network_interfaces(filters=filters)
     except BotoServerError as e:
         module.fail_json(msg=e.message)
-    
+
     for interface in all_eni:
         interface_dict_array.append(get_eni_info(interface))
-        
+
     module.exit_json(interfaces=interface_dict_array)
 
 
@@ -152,12 +152,12 @@ def main():
             filters = dict(default=None, type='dict')
         )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
-    
+
     if HAS_BOTO3:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 

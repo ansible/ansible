@@ -28,7 +28,7 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  
+      - Specifies the action to take.
     required: true
     choices: [ 'get', 'create', 'delete' ]
   zone:

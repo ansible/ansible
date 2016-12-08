@@ -36,7 +36,7 @@ options:
         as privilege escalation requires a shell.
     required: false
     version_added: "1.0"
-description: 
+description:
      - Executes a low-down and dirty SSH command, not going through the module
        subsystem. This is useful and should only be done in two cases. The
        first case is installing C(python-simplejson) on older (Python 2.4 and

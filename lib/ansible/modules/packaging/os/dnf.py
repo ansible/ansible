@@ -60,7 +60,7 @@ options:
     required: false
     default: null
     aliases: []
-    
+
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
