@@ -19,15 +19,16 @@
 
 import operator
 import os
+import time
 
 try:
     from novaclient.v1_1 import client as nova_client
     from novaclient.v1_1 import floating_ips
     from novaclient import exceptions
     from novaclient import utils
-    import time
+    HAS_NOVACLIENT = True
 except ImportError:
-    print("failed=True msg='novaclient is required for this module'")
+    HAS_NOVACLIENT = False
 
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
@@ -37,7 +38,7 @@ DOCUMENTATION = '''
 ---
 module: nova_compute
 version_added: "1.2"
-deprecated: Deprecated in 1.10. Use os_server instead
+deprecated: Deprecated in 2.0. Use os_server instead
 short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
@@ -179,7 +180,9 @@ options:
      required: false
      default: None
      version_added: "1.9"
-requirements: ["novaclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-novaclient"
 '''
 
 EXAMPLES = '''
@@ -567,6 +570,9 @@ def main():
         ],
     )
 
+    if not HAS_NOVACLIENT:
+        module.fail_json(msg='python-novaclient is required for this module')
+
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
                               module.params['login_tenant_name'],
@@ -593,4 +599,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

@@ -61,7 +61,7 @@ options:
             - true
             - false
         default: false
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = '''

@@ -86,6 +86,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+    version_added: '2.1'
   sha256sum:
     description:
       - If a SHA-256 checksum is passed to this parameter, the digest of the

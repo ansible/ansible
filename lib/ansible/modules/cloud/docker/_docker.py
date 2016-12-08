@@ -74,11 +74,10 @@ options:
     version_added: "1.5"
   ports:
     description:
-      - List containing private to public port mapping specification. Use docker
-      - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
-      - where  8000 is a container port, 9000 is a host port, and 0.0.0.0 is
-      - a host interface. The container ports need to be exposed either in the 
-      - Dockerfile or via the next option.
+      - "List containing private to public port mapping specification.
+        Use docker 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
+        where 8000 is a container port, 9000 is a host port, and 0.0.0.0 is - a host interface.
+        The container ports need to be exposed either in the Dockerfile or via the C(expose) option."
     default: null
     version_added: "1.5"
   expose:
@@ -154,10 +153,7 @@ options:
     description:
       - RAM allocated to the container as a number of bytes or as a human-readable
         string like "512MB". Leave as "0" to specify no limit.
-    required: false
-    default: null
-    aliases: []
-    default: 256MB
+    default: 0
   docker_url:
     description:
       - URL of the host running the docker daemon. This will default to the env
@@ -878,7 +874,7 @@ class DockerManager(object):
         we lack the capability.
         """
         if not self._capabilities:
-            self._check_capabilties()
+            self._check_capabilities()
 
         if capability in self._capabilities:
             return True
@@ -1054,7 +1050,7 @@ class DockerManager(object):
             elif p_len == 3:
                 # Bind `container_port` of the container to port `parts[1]` on
                 # IP `parts[0]` of the host machine. If `parts[1]` empty bind
-                # to a dynamically allocacted port of IP `parts[0]`.
+                # to a dynamically allocated port of IP `parts[0]`.
                 bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
 
             if container_port in binds:
@@ -1643,23 +1639,10 @@ class DockerManager(object):
                   'name':         self.module.params.get('name'),
                   'stdin_open':   self.module.params.get('stdin_open'),
                   'tty':          self.module.params.get('tty'),
-                  'volumes_from': self.module.params.get('volumes_from'),
-                  'dns':          self.module.params.get('dns'),
                   'cpuset':       self.module.params.get('cpu_set'),
                   'cpu_shares':   self.module.params.get('cpu_shares'),
                   'user':         self.module.params.get('docker_user'),
                   }
-        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
-            params['volumes_from'] = ""
-
-        if params['volumes_from'] is not None:
-            self.ensure_capability('volumes_from')
-
-        extra_params = {}
-        if self.module.params.get('insecure_registry'):
-            if self.ensure_capability('insecure_registry', fail=False):
-                extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
-
         if self.ensure_capability('host_config', fail=False):
             params['host_config'] = self.create_host_config()
 

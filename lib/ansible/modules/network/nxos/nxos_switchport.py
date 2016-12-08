@@ -145,8 +145,8 @@ end_state:
 updates:
     description: command string sent to the device
     returned: always
-    type: string
-    sample: "interface eth1/5 ; switchport access vlan 20 ;"
+    type: list
+    sample: ["interface eth1/5", "switchport access vlan 20"]
 changed:
     description: check to see if a change was made on the device
     returned: always

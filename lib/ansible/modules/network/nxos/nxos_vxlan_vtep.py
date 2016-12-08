@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_vxlan_vtep
 version_added: "2.2"
-short_description: Manages VXLAN Network Virtualization Endpoint (NVE)
+short_description: Manages VXLAN Network Virtualization Endpoint (NVE).
 description:
     - Manages VXLAN Network Virtualization Endpoint (NVE) overlay interface
       that terminates VXLAN tunnels.
@@ -32,13 +32,13 @@ author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
     - The module is used to manage NVE properties, not to create NVE
-      interfaces. Use nxos_interface if you wish to do so.
-    - State 'absent' removes the interface
-    - default, where supported, restores params default value
+      interfaces. Use M(nxos_interface) if you wish to do so.
+    - C(state=absent) removes the interface.
+    - Default, where supported, restores params default value.
 options:
     interface:
         description:
-            - Interface name for the VXLAN Network Virtualization Endpoint
+            - Interface name for the VXLAN Network Virtualization Endpoint.
         required: true
     description:
         description:
@@ -71,7 +71,8 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']

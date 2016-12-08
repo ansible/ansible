@@ -26,7 +26,7 @@ module: gce_net
 version_added: "1.5"
 short_description: create/destroy GCE networks and firewall rules
 description:
-    - This module can create and destroy Google Compue Engine networks and
+    - This module can create and destroy Google Compute Engine networks and
       firewall rules U(https://developers.google.com/compute/docs/networking).
       The I(name) parameter is reserved for referencing a network while the
       I(fwname) parameter is used to reference firewall rules.

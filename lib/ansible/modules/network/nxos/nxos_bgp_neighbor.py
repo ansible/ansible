@@ -24,18 +24,18 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp_neighbor
 version_added: "2.2"
-short_description: Manages BGP neighbors configurations
+short_description: Manages BGP neighbors configurations.
 description:
-    - Manages BGP neighbors configurations on NX-OS switches
+    - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 extends_documentation_fragment: nxos
 notes:
-    - State 'absent' removes the whole BGP neighbor configuration
-    - default, where supported, restores params default value
+    - C(state=absent) removes the whole BGP neighbor configuration.
+    - Default, where supported, restores params default value.
 options:
     asn:
         description:
-            - BGP autonomous system number. Valid values are String,
+            - BGP autonomous system number. Valid values are string,
               Integer in ASPLAIN or ASDOT notation.
         required: true
     vrf:
@@ -180,16 +180,11 @@ options:
         default: null
     state:
         description:
-            - Determines whether the config should be present or not on the device.
+            - Determines whether the config should be present or not
+              on the device.
         required: false
         default: present
         choices: ['present','absent']
-    m_facts:
-        description:
-            - Used to print module facts
-        required: false
-        default: false
-        choices: ['true','false']
 '''
 EXAMPLES = '''
 # create a new neighbor
@@ -210,7 +205,7 @@ EXAMPLES = '''
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
-    returned: always
+    returned: verbose mode
     type: dict
     sample: {"asn": "65535", "description": "just a description",
             "local_as": "20", "neighbor": "3.3.3.3",
@@ -218,11 +213,12 @@ proposed:
             "update_source": "Ethernet1/3", "vrf": "default"}
 existing:
     description: k/v pairs of existing BGP neighbor configuration
+    returned: verbose mode
     type: dict
     sample: {}
 end_state:
     description: k/v pairs of BGP neighbor configuration after module execution
-    returned: always
+    returned: verbose mode
     type: dict
     sample: {"asn": "65535", "capability_negotiation": false,
             "connected_check": false, "description": "just a description",
@@ -250,12 +246,7 @@ changed:
 '''
 
 # COMMON CODE FOR MIGRATION
-
 import re
-import time
-import collections
-import itertools
-import shlex
 
 import ansible.module_utils.nxos
 from ansible.module_utils.basic import get_exception
@@ -263,200 +254,17 @@ from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 from ansible.module_utils.network import NetworkModule
 from ansible.module_utils.shell import ShellError
 
-DEFAULT_COMMENT_TOKENS = ['#', '!']
 
-class ConfigLine(object):
-
-    def __init__(self, text):
-        self.text = text
-        self.children = list()
-        self.parents = list()
-        self.raw = None
-
-    @property
-    def line(self):
-        line = ['set']
-        line.extend([p.text for p in self.parents])
-        line.append(self.text)
-        return ' '.join(line)
-
-    def __str__(self):
-        return self.raw
-
-    def __eq__(self, other):
-        if self.text == other.text:
-            return self.parents == other.parents
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-def ignore_line(text, tokens=None):
-    for item in (tokens or DEFAULT_COMMENT_TOKENS):
-        if text.startswith(item):
-            return True
-
-def get_next(iterable):
-    item, next_item = itertools.tee(iterable, 2)
-    next_item = itertools.islice(next_item, 1, None)
-    return itertools.izip_longest(item, next_item)
-
-def parse(lines, indent, comment_tokens=None):
-    toplevel = re.compile(r'\S')
-    childline = re.compile(r'^\s*(.+)$')
-
-    ancestors = list()
-    config = list()
-
-    for line in str(lines).split('\n'):
-        text = str(re.sub(r'([{};])', '', line)).strip()
-
-        cfg = ConfigLine(text)
-        cfg.raw = line
-
-        if not text or ignore_line(text, comment_tokens):
-            continue
-
-        # handle top level commands
-        if toplevel.match(line):
-            ancestors = [cfg]
-
-        # handle sub level commands
+def to_list(val):
+     if isinstance(val, (list, tuple)):
+         return list(val)
+     elif val is not None:
+         return [val]
         else:
-            match = childline.match(line)
-            line_indent = match.start(1)
-            level = int(line_indent / indent)
-            parent_level = level - 1
-
-            cfg.parents = ancestors[:level]
-
-            if level > len(ancestors):
-                config.append(cfg)
-                continue
-
-            for i in range(level, len(ancestors)):
-                ancestors.pop()
-
-            ancestors.append(cfg)
-            ancestors[parent_level].children.append(cfg)
-
-        config.append(cfg)
-
-    return config
+         return list()
 
 
-class CustomNetworkConfig(object):
-
-    def __init__(self, indent=None, contents=None, device_os=None):
-        self.indent = indent or 1
-        self._config = list()
-        self._device_os = device_os
-
-        if contents:
-            self.load(contents)
-
-    @property
-    def items(self):
-        return self._config
-
-    @property
-    def lines(self):
-        lines = list()
-        for item, next_item in get_next(self.items):
-            if next_item is None:
-                lines.append(item.line)
-            elif not next_item.line.startswith(item.line):
-                lines.append(item.line)
-        return lines
-
-    def __str__(self):
-        text = ''
-        for item in self.items:
-            if not item.parents:
-                expand = self.get_section(item.text)
-                text += '%s\n' % self.get_section(item.text)
-        return str(text).strip()
-
-    def load(self, contents):
-        self._config = parse(contents, indent=self.indent)
-
-    def load_from_file(self, filename):
-        self.load(open(filename).read())
-
-    def get(self, path):
-        if isinstance(path, basestring):
-            path = [path]
-        for item in self._config:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def search(self, regexp, path=None):
-        regex = re.compile(r'^%s' % regexp, re.M)
-
-        if path:
-            parent = self.get(path)
-            if not parent or not parent.children:
-                return
-            children = [c.text for c in parent.children]
-            data = '\n'.join(children)
-        else:
-            data = str(self)
-
-        match = regex.search(data)
-        if match:
-            if match.groups():
-                values = match.groupdict().values()
-                groups = list(set(match.groups()).difference(values))
-                return (groups, match.groupdict())
-            else:
-                return match.group()
-
-    def findall(self, regexp):
-        regexp = r'%s' % regexp
-        return re.findall(regexp, str(self))
-
-    def expand(self, obj, items):
-        block = [item.raw for item in obj.parents]
-        block.append(obj.raw)
-
-        current_level = items
-        for b in block:
-            if b not in current_level:
-                current_level[b] = collections.OrderedDict()
-            current_level = current_level[b]
-        for c in obj.children:
-            if c.raw not in current_level:
-                current_level[c.raw] = collections.OrderedDict()
-
-    def to_lines(self, section):
-        lines = list()
-        for entry in section[1:]:
-            line = ['set']
-            line.extend([p.text for p in entry.parents])
-            line.append(entry.text)
-            lines.append(' '.join(line))
-        return lines
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            if self._device_os == 'junos':
-                return self.to_lines(section)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
+class CustomNetworkConfig(NetworkConfig):
 
     def expand_section(self, configobj, S=None):
         if S is None:
@@ -468,14 +276,6 @@ class CustomNetworkConfig(object):
             self.expand_section(child, S)
         return S
 
-    def flatten(self, data, obj=None):
-        if obj is None:
-            obj = list()
-        for k, v in data.items():
-            obj.append(k)
-            self.flatten(v, obj)
-        return obj
-
     def get_object(self, path):
         for item in self.items:
             if item.text == path[-1]:
@@ -483,93 +283,23 @@ class CustomNetworkConfig(object):
                 if parents == path[:-1]:
                     return item
 
-    def get_children(self, path):
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
         obj = self.get_object(path)
-        if obj:
-            return obj.children
-
-    def difference(self, other, path=None, match='line', replace='line'):
-        updates = list()
-
-        config = self.items
-        if path:
-            config = self.get_children(path) or list()
-
-        if match == 'line':
-            for item in config:
-                if item not in other.items:
-                    updates.append(item)
-
-        elif match == 'strict':
-            if path:
-                current = other.get_children(path) or list()
-            else:
-                current = other.items
-
-            for index, item in enumerate(config):
-                try:
-                    if item != current[index]:
-                        updates.append(item)
-                except IndexError:
-                    updates.append(item)
-
-        elif match == 'exact':
-            if path:
-                current = other.get_children(path) or list()
-            else:
-                current = other.items
-
-            if len(current) != len(config):
-                updates.extend(config)
-            else:
-                for ours, theirs in itertools.izip(config, current):
-                    if ours != theirs:
-                        updates.extend(config)
-                        break
-
-        if self._device_os == 'junos':
-            return updates
-
-        diffs = collections.OrderedDict()
-        for update in updates:
-            if replace == 'block' and update.parents:
-                update = update.parents[-1]
-            self.expand(update, diffs)
-
-        return self.flatten(diffs)
-
-    def replace(self, replace, text=None, regex=None, parents=None,
-            add_if_missing=False, ignore_whitespace=False):
-        match = None
-
-        parents = parents or list()
-        if text is None and regex is None:
-            raise ValueError('missing required arguments')
-
-        if not regex:
-            regex = ['^%s$' % text]
-
-        patterns = [re.compile(r, re.I) for r in to_list(regex)]
-
-        for item in self.items:
-            for regexp in patterns:
-                if ignore_whitespace is True:
-                    string = item.text
-                else:
-                    string = item.raw
-                if regexp.search(item.text):
-                    if item.text != replace:
-                        if parents == [p.text for p in item.parents]:
-                            match = item
-                            break
-
-        if match:
-            match.text = replace
-            indent = len(match.raw) - len(match.raw.lstrip())
-            match.raw = replace.rjust(len(replace) + indent)
-
-        elif add_if_missing:
-            self.add(replace, parents=parents)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
 
 
     def add(self, lines, parents=None):
@@ -621,303 +351,44 @@ class CustomNetworkConfig(object):
                     self.items.append(item)
 
 
-def argument_spec():
-    return dict(
-        # config options
-        running_config=dict(aliases=['config']),
-        save_config=dict(type='bool', default=False, aliases=['save'])
-    )
-nxos_argument_spec = argument_spec()
-
-
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    transport=dict(default='cli', choices=['cli', 'nxapi']),
-    use_ssl=dict(default=False, type='bool'),
-    validate_certs=dict(default=True, type='bool'),
-    provider=dict(type='dict'),
-    timeout=dict(default=10, type='int')
-)
-
-NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
-
-NXAPI_ENCODINGS = ['json', 'xml']
-
-CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
-]
-
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"^% \w+", re.M),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-    re.compile(r"syntax error"),
-    re.compile(r"unknown command")
-]
-
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-class Nxapi(object):
-
-    def __init__(self, module):
-        self.module = module
-
-        # sets the module_utils/urls.py req parameters
-        self.module.params['url_username'] = module.params['username']
-        self.module.params['url_password'] = module.params['password']
-
-        self.url = None
-        self._nxapi_auth = None
-
-    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
-        """Encodes a NXAPI JSON request message
-        """
-        if isinstance(commands, (list, set, tuple)):
-            commands = ' ;'.join(commands)
-
-        if encoding not in NXAPI_ENCODINGS:
-            msg = 'invalid encoding, received %s, exceped one of %s' % \
-                    (encoding, ','.join(NXAPI_ENCODINGS))
-            self.module_fail_json(msg=msg)
-
-        msg = {
-            'version': version,
-            'type': command_type,
-            'chunk': chunk,
-            'sid': sid,
-            'input': commands,
-            'output_format': encoding
-        }
-        return dict(ins_api=msg)
-
-    def connect(self):
-        host = self.module.params['host']
-        port = self.module.params['port']
-
-        if self.module.params['use_ssl']:
-            proto = 'https'
-            if not port:
-                port = 443
-        else:
-            proto = 'http'
-            if not port:
-                port = 80
-
-        self.url = '%s://%s:%s/ins' % (proto, host, port)
-
-    def send(self, commands, command_type='cli_show_ascii', encoding='json'):
-        """Send commands to the device.
-        """
-        clist = to_list(commands)
-
-        if command_type not in NXAPI_COMMAND_TYPES:
-            msg = 'invalid command_type, received %s, exceped one of %s' % \
-                    (command_type, ','.join(NXAPI_COMMAND_TYPES))
-            self.module_fail_json(msg=msg)
-
-        data = self._get_body(clist, command_type, encoding)
-        data = self.module.jsonify(data)
-
-        headers = {'Content-Type': 'application/json'}
-        if self._nxapi_auth:
-            headers['Cookie'] = self._nxapi_auth
-
-        response, headers = fetch_url(self.module, self.url, data=data,
-                headers=headers, method='POST')
-
-        self._nxapi_auth = headers.get('set-cookie')
-
-        if headers['status'] != 200:
-            self.module.fail_json(**headers)
-
-        response = self.module.from_json(response.read())
-        result = list()
-
-        output = response['ins_api']['outputs']['output']
-        for item in to_list(output):
-            if item['code'] != '200':
-                self.module.fail_json(**item)
-            else:
-                result.append(item['body'])
-
-        return result
-
-
-class Cli(object):
-
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
-
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
-
-        username = self.module.params['username']
-        password = self.module.params['password']
-        timeout = self.module.params['timeout']
-        key_filename = self.module.params['ssh_keyfile']
-
-        allow_agent = (key_filename is not None) or (key_filename is None and password is None)
-
+def get_network_module(**kwargs):
         try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE,
-                    errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username,
-                    password=password, key_filename=key_filename,
-                    allow_agent=allow_agent, timeout=timeout)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
+        return get_module(**kwargs)
+    except NameError:
+        return NetworkModule(**kwargs)
 
-    def send(self, commands, encoding='text'):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
-
-
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
-
-    @property
-    def connected(self):
-        return self._connected
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        cls = globals().get(str(self.params['transport']).capitalize())
-        try:
-            self.connection = cls(self)
-        except TypeError:
-            e = get_exception()
-            self.fail_json(msg=e.message)
-
-        self.connection.connect()
-
-        if self.params['transport'] == 'cli':
-            self.connection.send('terminal length 0')
-
-        self._connected = True
-
-    def configure(self, commands):
-        commands = to_list(commands)
-        if self.params['transport'] == 'cli':
-            return self.configure_cli(commands)
-        else:
-            return self.execute(commands, command_type='cli_conf')
-
-    def configure_cli(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure')
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
-
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=2)
-
-    def get_config(self):
-        cmd = 'show running-config'
-        if self.params.get('include_defaults'):
-            cmd += ' all'
-        response = self.execute(cmd)
-        return response[0]
-
-
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
-
-    module = NetworkModule(**kwargs)
-
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    return module
-
-
-def custom_get_config(module, include_defaults=False):
-    config = module.params['running_config']
+def get_config(module, include_defaults=False):
+    config = module.params['config']
     if not config:
-        cmd = 'show running-config'
-        if module.params['include_defaults']:
-            cmd += ' all'
-        if module.params['transport'] == 'nxapi':
-            config = module.execute([cmd], command_type='cli_show_ascii')[0]
-        else:
-            config = module.execute([cmd])[0]
-
+        try:
+            config = module.get_config()
+        except AttributeError:
+            defaults = module.params['include_defaults']
+            config = module.config.get_config(include_defaults=defaults)
     return CustomNetworkConfig(indent=2, contents=config)
 
 def load_config(module, candidate):
-    config = custom_get_config(module)
+    config = get_config(module)
 
     commands = candidate.difference(config)
     commands = [str(c).strip() for c in commands]
 
-    save_config = module.params['save_config']
+    save_config = module.params['save']
 
     result = dict(changed=False)
 
     if commands:
         if not module.check_mode:
+            try:
             module.configure(commands)
+            except AttributeError:
+                module.config(commands)
+
             if save_config:
+                try:
                 module.config.save_config()
+                except AttributeError:
+                    module.execute(['copy running-config startup-config'])
 
         result['changed'] = True
         result['updates'] = commands
@@ -1045,7 +516,7 @@ def get_custom_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = custom_get_config(module)
+    netcfg = get_config(module)
     custom = [
         'log_neighbor_changes',
         'pwd',
@@ -1207,12 +678,13 @@ def main():
             m_facts=dict(required=False, default=False, type='bool'),
             state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True)
+            include_defaults=dict(default=True),
+            config=dict(),
+            save=dict(type='bool', default=False)
     )
-    argument_spec.update(nxos_argument_spec)
-    module = get_module(argument_spec=argument_spec,
-                        required_together=[['pwd', 'pwd_type'],
-                                           ['timers_holdtime', 'timers_keepalive']],
+    module = get_network_module(argument_spec=argument_spec,
+                                required_together=[['timer_bgp_hold',
+                                            'timer_bgp_keepalive']],
                         supports_check_mode=True)
 
     state = module.params['state']
@@ -1281,7 +753,7 @@ def main():
         result['updates'] = []
 
     result['connected'] = module.connected
-    if module.params['m_facts']:
+    if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state
         result['existing'] = existing

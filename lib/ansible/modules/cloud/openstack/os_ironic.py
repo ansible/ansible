@@ -32,6 +32,7 @@ DOCUMENTATION = '''
 module: os_ironic
 short_description: Create/Delete Bare Metal Resources from OpenStack
 extends_documentation_fragment: openstack
+author: "Monty Taylor (@emonty)"
 version_added: "2.0"
 description:
     - Create or Remove Ironic nodes from OpenStack.
@@ -75,28 +76,30 @@ options:
         - Information for this server's driver. Will vary based on which
           driver is in use. Any sub-field which is populated will be validated
           during creation.
+      suboptions:
         power:
-          - Information necessary to turn this server on / off. This often
-            includes such things as IPMI username, password, and IP address.
+            description:
+                - Information necessary to turn this server on / off.
+                  This often includes such things as IPMI username, password, and IP address.
           required: true
         deploy:
-          - Information necessary to deploy this server directly, without
-            using Nova. THIS IS NOT RECOMMENDED.
+            description:
+                - Information necessary to deploy this server directly, without using Nova. THIS IS NOT RECOMMENDED.
         console:
-          - Information necessary to connect to this server's serial console.
-            Not all drivers support this.
+            description:
+                - Information necessary to connect to this server's serial console.  Not all drivers support this.
         management:
-          - Information necessary to interact with this server's management
-            interface. May be shared by power_info in some cases.
+            description:
+                - Information necessary to interact with this server's management interface. May be shared by power_info in some cases.
       required: true
     nics:
       description:
-        - A list of network interface cards, eg, " - mac: aa:bb:cc:aa:bb:cc"
+        - 'A list of network interface cards, eg, " - mac: aa:bb:cc:aa:bb:cc"'
       required: true
     properties:
       description:
-        - Definition of the physical characteristics of this server, used for
-          scheduling purposes
+        - Definition of the physical characteristics of this server, used for scheduling purposes
+      suboptions:
         cpu_arch:
           description:
             - CPU architecture (x86_64, i686, ...)
@@ -111,8 +114,7 @@ options:
           default: 1
         disk_size:
           description:
-            - size of first storage device in this machine (typically
-              /dev/sda), in GB
+            - size of first storage device in this machine (typically /dev/sda), in GB
           default: 1
     skip_update_of_driver_password:
       description:

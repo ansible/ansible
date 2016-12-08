@@ -33,7 +33,7 @@ options:
         required: true
         choices: ['present', 'absent']
     name:
-        desciption:
+        description:
           - Unique name for the alarm
         required: true
     metric:
@@ -75,7 +75,7 @@ options:
         options: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
     description:
         description:
-          - A longer desciption of the alarm
+          - A longer description of the alarm
         required: false
     dimensions:
         description:
@@ -93,7 +93,9 @@ options:
         description:
           - A list of the names of action(s) to take when the alarm is in the 'ok' status
         required: false
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''

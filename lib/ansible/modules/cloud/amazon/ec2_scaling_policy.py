@@ -41,7 +41,7 @@ options:
       - Name of the associated autoscaling group
     required: true
   adjustment_type:
-    desciption:
+    description:
       - The type of change in capacity of the autoscaling group
     required: false
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
@@ -57,7 +57,9 @@ options:
     description:
       - The minimum period of time between which autoscaling actions can take place
     required: false
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''

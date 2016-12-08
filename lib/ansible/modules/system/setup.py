@@ -80,7 +80,7 @@ notes:
     - If the target host is Windows, you will not currently have the ability to use
       C(filter) as this is provided by a simpler implementation of the module.
     - If the target host is Windows you can now use C(fact_path). Make sure that this path 
-      exists on the target host. Files in this path MUST be PowerShell scripts (*.ps1) and 
+      exists on the target host. Files in this path MUST be PowerShell scripts (``*.ps1``) and 
       their output must be formattable in JSON (Ansible will take care of this). Test the 
       output of your scripts.
       This option was added in Ansible 2.1.

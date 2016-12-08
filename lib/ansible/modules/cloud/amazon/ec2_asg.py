@@ -69,7 +69,7 @@ options:
     required: false
   replace_all_instances:
     description:
-      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuraiton.
+      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
     required: false
     version_added: "1.8"
     default: False
@@ -91,11 +91,6 @@ options:
     required: false
     version_added: "1.8"
     default: True
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
@@ -142,7 +137,7 @@ options:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
         - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the current termination policies are maintained.
     required: false
-    default: Default. Eg, when used to create a new autoscaling group, the “Default” value is used. When used to change an existent autoscaling group, the current termination policies are mantained
+    default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
   notification_topic:

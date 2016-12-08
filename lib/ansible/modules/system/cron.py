@@ -137,7 +137,7 @@ options:
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab. Only has effect if state=present
-    version_added: "1.9"
+    version_added: "2.0"
     required: false
     default: false
   env:
@@ -152,14 +152,14 @@ options:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted after the declaration of specified environment variable.
-    version_added: "2"
+    version_added: "2.1"
     required: false
     default: null
   insertbefore:
     description:
       - Used with C(state=present) and C(env). If specified, the environment variable will be
         inserted before the declaration of specified environment variable.
-    version_added: "2"
+    version_added: "2.1"
     required: false
     default: null
 requirements:

@@ -33,7 +33,7 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-        version_added: 1.5.1
+        version_added: '1.5.1'
 description:
      - This module fetches data from the metadata servers in ec2 (aws) as per
        http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html.

@@ -26,7 +26,6 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: command
-version_added: historical
 short_description: Executes a command on a remote node
 version_added: historical
 description:
@@ -42,7 +41,6 @@ options:
         See the examples!
     required: true
     default: null
-    aliases: []
   creates:
     description:
       - a filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.

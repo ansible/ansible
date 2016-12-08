@@ -25,9 +25,9 @@ DOCUMENTATION = '''
 
 module: nxos_vtp
 version_added: "2.2"
-short_description: Manages VTP configuration.
+short_description: Manages VTP password configuration.
 description:
-    - Manages VTP configuration
+    - Manages VTP password configuration.
 extends_documentation_fragment: nxos
 author:
     - Gabriele Gerbino (@GGabriele)

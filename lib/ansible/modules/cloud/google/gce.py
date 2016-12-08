@@ -36,35 +36,30 @@ options:
        - image string to use for the instance
     required: false
     default: "debian-7"
-    aliases: []
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
     required: false
     default: null
-    aliases: []
   machine_type:
     description:
       - machine type to use for the instance, use 'n1-standard-1' by default
     required: false
     default: "n1-standard-1"
-    aliases: []
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
     required: false
     default: null
-    aliases: []
   service_account_email:
-    version_added: 1.5.1
+    version_added: "1.5.1"
     description:
       - service account email
     required: false
     default: null
-    aliases: []
   service_account_permissions:
-    version_added: 2.0
+    version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
@@ -78,7 +73,7 @@ options:
       "storage-rw", "taskqueue", "userinfo-email"
     ]
   pem_file:
-    version_added: 1.5.1
+    version_added: "1.5.1"
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
@@ -91,12 +86,11 @@ options:
     default: null
     required: false
   project_id:
-    version_added: 1.5.1
+    version_added: "1.5.1"
     description:
       - your GCE project ID
     required: false
     default: null
-    aliases: []
   name:
     description:
       - either a name of a single instance or when used with 'num_instances',
@@ -126,7 +120,6 @@ options:
       - if set, create the instance with a persistent boot disk
     required: false
     default: "false"
-    aliases: []
   disks:
     description:
       - a list of persistent disks to attach to the instance; a string value
@@ -135,7 +128,6 @@ options:
         will be the boot disk (which must be READ_WRITE).
     required: false
     default: null
-    aliases: []
     version_added: "1.7"
   state:
     description:
@@ -148,13 +140,11 @@ options:
       - a comma-separated list of tags to associate with the instance
     required: false
     default: null
-    aliases: []
   zone:
     description:
       - the GCE zone to use
     required: true
     default: "us-central1-a"
-    aliases: []
   ip_forward:
     version_added: "1.9"
     description:
@@ -162,14 +152,12 @@ options:
         gateways)
     required: false
     default: "false"
-    aliases: []
   external_ip:
     version_added: "1.9"
     description:
       - type of external ip, ephemeral by default; alternatively, a list of fixed gce ips or ip names can be given (if there is not enough specified ip, 'ephemeral' will be used). Specify 'none' if no external ip is desired.
     required: false
     default: "ephemeral"
-    aliases: []
   disk_auto_delete:
     version_added: "1.9"
     description:

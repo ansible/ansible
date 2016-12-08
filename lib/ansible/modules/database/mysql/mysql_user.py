@@ -98,7 +98,7 @@ options:
     required: false
     default: always
     choices: ['always', 'on_create']
-    version_added: "1.9"
+    version_added: "2.0"
     description:
       - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 notes:
@@ -301,13 +301,6 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
     changed = False
     grant_option = False
 
-    # Handle clear text and hashed passwords.
-    if bool(password):
-        # Determine what user management method server uses
-        old_user_mgmt = server_version_check(cursor)
-
-    # to simplify code, if we have a specific host and no host_all, we create
-    # a list with just host and loop over that
     if host_all:
         hostnames = user_get_hostnames(cursor, [user])
     else:
@@ -348,7 +341,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if module.check_mode:
                         return True
                     if old_user_mgmt:
-                        cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                        cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
                         cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
                     changed = True
@@ -614,7 +607,7 @@ def main():
             module.fail_json(msg="invalid privileges string: %s" % str(e))
 
     if state == "present":
-        if user_exists(cursor, user, host):
+        if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
                     changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)

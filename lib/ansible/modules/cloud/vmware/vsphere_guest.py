@@ -203,6 +203,10 @@ EXAMPLES = '''
         type: vmxnet3
         network: VM Network
         network_type: standard
+      nic2:
+        type: vmxnet3
+        network: dvSwitch Network
+        network_type: dvs
     vm_hardware:
       memory_mb: 2048
       num_cpus: 2
@@ -251,7 +255,6 @@ EXAMPLES = '''
       hostname: esx001.mydomain.local
 
 # Deploy a guest from a template
-# No reconfiguration of the destination guest is done at this stage, a reconfigure would be needed to adjust memory/cpu etc..
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser

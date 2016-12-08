@@ -24,9 +24,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_location
+version_added: "2.2"
 short_description: Manages SNMP location information.
 description:
     - Manages SNMP location configuration.
+extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)

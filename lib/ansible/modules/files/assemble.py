@@ -90,9 +90,11 @@ options:
         validate is passed in via '%s' which must be present as in the sshd example below.
         The command is passed securely so shell features like expansion and pipes won't work.
     required: false
-    default: ""
+    default: null
+    version_added: "2.0"
 author: "Stephen Fromm (@sfromm)"
-extends_documentation_fragment: files
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''

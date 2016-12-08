@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 
 module: nxos_ntp_options
+version_added: "2.2"
 short_description: Manages NTP options.
 description:
     - Manages NTP options, e.g. authoritative server and logging.

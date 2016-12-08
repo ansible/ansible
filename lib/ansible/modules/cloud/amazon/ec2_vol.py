@@ -105,7 +105,9 @@ options:
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
 author: "Lester Wade (@lwade)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

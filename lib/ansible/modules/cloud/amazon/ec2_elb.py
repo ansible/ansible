@@ -45,11 +45,6 @@ options:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
     required: false
     default: None
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
   enable_availability_zone:
     description:
       - Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already
@@ -77,7 +72,9 @@ options:
     required: false
     default: 0
     version_added: "1.6"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = """

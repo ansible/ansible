@@ -25,53 +25,53 @@ DOCUMENTATION = '''
 ---
 module: nxos_vrrp
 version_added: "2.1"
-short_description: Manages VRRP configuration on NX-OS switches
+short_description: Manages VRRP configuration on NX-OS switches.
 description:
-    - Manages VRRP configuration on NX-OS switches
+    - Manages VRRP configuration on NX-OS switches.
 extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
-    - VRRP feature needs to be enabled first on the system
-    - SVIs must exist before using this module
-    - Interface must be a L3 port before using this module
-    - I(state)=absent removes the vrrp group if it exists on the device
-    - VRRP cannot be configured on loopback interfaces
+    - VRRP feature needs to be enabled first on the system.
+    - SVIs must exist before using this module.
+    - Interface must be a L3 port before using this module.
+    - C(state=absent) removes the VRRP group if it exists on the device.
+    - VRRP cannot be configured on loopback interfaces.
 options:
     group:
         description:
-            - VRRP group number
+            - VRRP group number.
         required: true
     interface:
         description:
-            - Full name of interface that is being managed for VRRP
+            - Full name of interface that is being managed for VRRP.
         required: true
     priority:
         description:
-            - VRRP priority
+            - VRRP priority.
         required: false
         default: null
     vip:
         description:
-            - VRRP virtual IP address
+            - VRRP virtual IP address.
         required: false
         default: null
     authentication:
         description:
-            - clear text authentication string
+            - Clear text authentication string.
         required: false
         default: null
     admin_state:
         description:
-            - Used to enable or disable the VRRP process
+            - Used to enable or disable the VRRP process.
         required: false
         choices: ['shutdown', 'no shutdown']
         default: no shutdown
         version_added: "2.2"
     state:
         description:
-            - Specify desired state of the resource
+            - Specify desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']

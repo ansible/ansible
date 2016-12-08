@@ -82,7 +82,7 @@ options:
     version_added: "2.0"
   health_check:
     description:
-      - An associative array of health check configuration settigs (see example)
+      - An associative array of health check configuration settings (see example)
     require: false
     default: None
   access_logs:
@@ -131,7 +131,7 @@ options:
     version_added: "2.0"
   cross_az_load_balancing:
     description:
-      - Distribute load across all configured Availablity Zones
+      - Distribute load across all configured Availability Zones
     required: false
     default: "no"
     choices: ["yes", "no"]
@@ -163,7 +163,9 @@ options:
     required: false
     version_added: "2.1"
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = """
@@ -271,7 +273,7 @@ EXAMPLES = """
     purge_listeners: no
 
 # Normally, this module will leave availability zones that are enabled
-# on the ELB alone. If purge_zones is true, then any extreneous zones
+# on the ELB alone. If purge_zones is true, then any extraneous zones
 # will be removed
 - local_action:
     module: ec2_elb_lb
@@ -762,7 +764,7 @@ class ElbManager(object):
                 # Does it match exactly?
                 if listener_as_tuple != existing_listener_found:
                     # The ports are the same but something else is different,
-                    # so we'll remove the exsiting one and add the new one
+                    # so we'll remove the existing one and add the new one
                     listeners_to_remove.append(existing_listener_found)
                     listeners_to_add.append(listener_as_tuple)
                 else:

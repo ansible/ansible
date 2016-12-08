@@ -22,8 +22,9 @@ try:
     except ImportError:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    HAVE_DEPS = False
 
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
@@ -108,7 +109,10 @@ options:
         - Whether the state should be marked as up or down
      required: false
      default: true
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-neutronclient or python-quantumclient"
+    - "python-keystoneclient"
 
 '''
 
@@ -259,6 +263,9 @@ def main():
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
+    if not HAVE_DEPS:
+        module.fail_json(msg='python-keystoneclient and either python-neutronclient or python-quantumclient are required')
+
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
             if not module.params['provider_physical_network']:
                 module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
@@ -290,5 +297,6 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
 

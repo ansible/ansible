@@ -65,7 +65,9 @@ options:
     default: null
     aliases: []
 author: "Scott Anderson (@tastychutney)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

@@ -47,7 +47,6 @@ options:
      description:
         - Name of volume
      required: true
-     default: None
    display_description:
      description:
        - String describing the volume
@@ -59,7 +58,7 @@ options:
      required: false
      default: None
    image:
-     descritpion:
+     description:
        - Image name or id for boot from volume
      required: false
      default: None
@@ -73,7 +72,9 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-requirements: ["shade"]
+requirements:
+     - "python >= 2.6"
+     - "shade"
 '''
 
 EXAMPLES = '''
@@ -162,4 +163,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

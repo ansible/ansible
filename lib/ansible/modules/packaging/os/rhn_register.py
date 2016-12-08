@@ -71,13 +71,13 @@ options:
             - supply a custom ssl CA certificate file for use with registration
         required: False
         default: None
-        version_added: "2.0"
+        version_added: "2.1"
     systemorgid:
         description:
             - supply an organizational id for use with registration
         required: False
         default: None
-        version_added: "2.0"
+        version_added: "2.1"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.

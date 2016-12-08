@@ -32,7 +32,9 @@ DOCUMENTATION = '''
 ---
 module: os_ironic_node
 short_description: Activate/Deactivate Bare Metal Resources from OpenStack
+author: "Monty Taylor (@emonty)"
 extends_documentation_fragment: openstack
+version_added: "2.0"
 description:
     - Deploy to nodes controlled by Ironic.
 options:
@@ -71,6 +73,7 @@ options:
         - Definition of the instance information which is used to deploy
           the node.  This information is only required when an instance is
           set to present.
+      suboptions:
         image_source:
           description:
             - An HTTP(S) URL where the image can be retrieved from.
