@@ -57,7 +57,7 @@ options:
   update_password:
     description:
       - C(always) will update passwords if they differ.  C(on_create) will
-      only set the password for newly created users.
+        only set the password for newly created users.
     required: false
     choices: [ 'always', 'on_create' ]
     default: always

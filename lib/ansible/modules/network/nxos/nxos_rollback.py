@@ -95,7 +95,7 @@ def to_list(val):
          return list(val)
      elif val is not None:
          return [val]
-        else:
+     else:
          return list()
 
 
@@ -187,7 +187,7 @@ class CustomNetworkConfig(NetworkConfig):
 
 
 def get_network_module(**kwargs):
-        try:
+    try:
         return get_module(**kwargs)
     except NameError:
         return NetworkModule(**kwargs)
@@ -215,13 +215,13 @@ def load_config(module, candidate):
     if commands:
         if not module.check_mode:
             try:
-            module.configure(commands)
+                module.configure(commands)
             except AttributeError:
                 module.config(commands)
 
             if save_config:
                 try:
-                module.config.save_config()
+                    module.config.save_config()
                 except AttributeError:
                     module.execute(['copy running-config startup-config'])
 
@@ -248,18 +248,18 @@ def execute_commands(cmds, module, command_type=None):
         module.fail_json(msg='Error sending {0}'.format(cmds),
                          error=str(clie))
     except AttributeError:
-    try:
-        if command_type:
+        try:
+            if command_type:
                 command_type = command_type_map.get(command_type)
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
-        else:
+            else:
                 module.cli.add_commands(cmds, output=command_type)
                 response = module.cli.run_commands()
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
+        except ShellError:
+            clie = get_exception()
+            module.fail_json(msg='Error sending {0}'.format(cmds),
+                             error=str(clie))
     return response
 
 
@@ -278,7 +278,7 @@ def checkpoint(filename, module):
 def rollback(filename, module):
     commands = ['rollback running-config file %s' % filename]
     try:
-    module.configure(commands)
+        module.configure(commands)
     except AttributeError:
         try:
             module.cli.add_commands(commands, output='config')

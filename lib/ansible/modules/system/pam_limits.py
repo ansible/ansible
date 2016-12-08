@@ -170,12 +170,12 @@ def main():
     space_pattern = re.compile(r'\s+')
 
     message = ''
-        f = open (limits_conf, 'r')
+    f = open (limits_conf, 'r')
     # Tempfile
     nf = tempfile.NamedTemporaryFile()
 
     found = False
-    new_value       = value
+    new_value = value
 
     for line in f:
 
