@@ -234,7 +234,7 @@ class LibvirtConnection(object):
 
         self.module = module
 
-            conn = libvirt.open(uri)
+        conn = libvirt.open(uri)
 
         if not conn:
             raise Exception("hypervisor connection failure")
@@ -439,10 +439,10 @@ class VirtStoragePool(object):
     def list_pools(self, state=None):
         results = []
         for entry in self.conn.find_entry(-1):
-                if state:
+            if state:
                 if state == self.conn.get_status2(entry):
                     results.append(entry.name())
-                else:
+            else:
                 results.append(entry.name())
         return results
 

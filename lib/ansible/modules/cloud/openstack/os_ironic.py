@@ -81,7 +81,7 @@ options:
             description:
                 - Information necessary to turn this server on / off.
                   This often includes such things as IPMI username, password, and IP address.
-          required: true
+            required: true
         deploy:
             description:
                 - Information necessary to deploy this server directly, without using Nova. THIS IS NOT RECOMMENDED.
@@ -91,7 +91,7 @@ options:
         management:
             description:
                 - Information necessary to interact with this server's management interface. May be shared by power_info in some cases.
-      required: true
+            required: true
     nics:
       description:
         - 'A list of network interface cards, eg, " - mac: aa:bb:cc:aa:bb:cc"'

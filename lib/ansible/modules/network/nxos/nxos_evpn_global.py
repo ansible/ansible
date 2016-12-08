@@ -88,7 +88,7 @@ def to_list(val):
          return list(val)
      elif val is not None:
          return [val]
-        else:
+     else:
          return list()
 
 
@@ -189,7 +189,7 @@ def get_config(module, include_defaults=False):
     config = module.params['config']
     if not config:
         try:
-        config = module.get_config()
+            config = module.get_config()
         except AttributeError:
             defaults = module.params['include_defaults']
             config = module.config.get_config(include_defaults=defaults)
@@ -208,13 +208,13 @@ def load_config(module, candidate):
     if commands:
         if not module.check_mode:
             try:
-            module.configure(commands)
+                module.configure(commands)
             except AttributeError:
                 module.config(commands)
 
             if save_config:
                 try:
-                module.config.save_config()
+                    module.config.save_config()
                 except AttributeError:
                     module.execute(['copy running-config startup-config'])
 
@@ -287,7 +287,7 @@ def main():
             save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+                                supports_check_mode=True)
 
     existing = invoke('get_existing', module)
     end_state = existing

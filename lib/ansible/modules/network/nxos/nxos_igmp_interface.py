@@ -254,7 +254,7 @@ def to_list(val):
          return list(val)
      elif val is not None:
          return [val]
-        else:
+     else:
          return list()
 
 
@@ -346,7 +346,7 @@ class CustomNetworkConfig(NetworkConfig):
 
 
 def get_network_module(**kwargs):
-        try:
+    try:
         return get_module(**kwargs)
     except NameError:
         return NetworkModule(**kwargs)
@@ -374,13 +374,13 @@ def load_config(module, candidate):
     if commands:
         if not module.check_mode:
             try:
-            module.configure(commands)
+                module.configure(commands)
             except AttributeError:
                 module.config(commands)
 
             if save_config:
                 try:
-                module.config.save_config()
+                    module.config.save_config()
                 except AttributeError:
                     module.execute(['copy running-config startup-config'])
 
@@ -756,7 +756,7 @@ def main():
             save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
-                        supports_check_mode=True)
+                                supports_check_mode=True)
 
     state = module.params['state']
     interface = module.params['interface']
