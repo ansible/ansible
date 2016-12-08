@@ -26,7 +26,8 @@ DOCUMENTATION = '''
 ---
 module: cs_vmsnapshot
 short_description: Manages VM snapshots on Apache CloudStack based clouds.
-description: Create, remove and revert VM from snapshots.
+description:
+    - Create, remove and revert VM from snapshots.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -260,12 +261,12 @@ def main():
         vm = dict(required=True),
         description = dict(default=None),
         zone = dict(default=None),
-        snapshot_memory = dict(choices=BOOLEANS, default=False),
+        snapshot_memory = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent', 'revert'], default='present'),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(type='bool', choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     required_together = cs_required_together()
@@ -292,7 +293,7 @@ def main():
 
         result = acs_vmsnapshot.get_result(snapshot)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

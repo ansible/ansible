@@ -62,7 +62,9 @@ options:
     default: null
 notes:
   - In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

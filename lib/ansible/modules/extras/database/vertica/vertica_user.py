@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = """
 ---
 module: vertica_user
-version_added: '1.0'
+version_added: '2.0'
 short_description: Adds or removes Vertica database users and assigns roles.
 description:
   - Adds or removes Vertica database user and, optionally, assigns roles.
@@ -111,7 +111,7 @@ notes:
     and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
     to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
 requirements: [ 'unixODBC', 'pyodbc' ]
-author: Dariusz Owczarek
+author: "Dariusz Owczarek (@dareko)"
 """
 
 EXAMPLES = """

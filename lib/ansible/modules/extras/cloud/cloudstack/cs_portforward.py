@@ -53,21 +53,21 @@ options:
     required: false
     default: 'tcp'
     choices: [ 'tcp', 'udp' ]
-  public_port
+  public_port:
     description:
       - Start public port for this rule.
     required: true
-  public_end_port
+  public_end_port:
     description:
       - End public port for this rule.
       - If not specified equal C(public_port).
     required: false
     default: null
-  private_port
+  private_port:
     description:
       - Start private port for this rule.
     required: true
-  private_end_port
+  private_end_port:
     description:
       - End private port for this rule.
       - If not specified equal C(private_port).
@@ -350,14 +350,14 @@ def main():
         private_port = dict(type='int', required=True),
         private_end_port = dict(type='int', default=None),
         state = dict(choices=['present', 'absent'], default='present'),
-        open_firewall = dict(choices=BOOLEANS, default=False),
+        open_firewall = dict(type='bool', default=False),
         vm_guest_ip = dict(default=None),
         vm = dict(default=None),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -376,7 +376,7 @@ def main():
 
         result = acs_pf.get_result(pf_rule)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

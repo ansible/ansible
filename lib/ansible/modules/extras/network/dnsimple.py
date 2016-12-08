@@ -97,7 +97,7 @@ options:
     default: null
 
 requirements: [ dnsimple ]
-author: Alex Coomans
+author: "Alex Coomans (@drcapulet)"
 '''
 
 EXAMPLES = '''

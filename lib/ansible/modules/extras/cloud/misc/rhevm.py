@@ -175,9 +175,9 @@ vm:
                 "size": 40
             }
         ],
-        "eth0": "00:1b:4a:1f:de:f4",
-        "eth1": "00:1b:4a:1f:de:f5",
-        "eth2": "00:1b:4a:1f:de:f6",
+        "eth0": "00:00:5E:00:53:00",
+        "eth1": "00:00:5E:00:53:01",
+        "eth2": "00:00:5E:00:53:02",
         "exists": true,
         "failed": false,
         "ifaces": [

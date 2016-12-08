@@ -58,7 +58,7 @@ options:
 notes:
    - "Not all databases support enumeration, check system documentation for details"
 requirements: [ ]
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 '''
 
 EXAMPLES = '''

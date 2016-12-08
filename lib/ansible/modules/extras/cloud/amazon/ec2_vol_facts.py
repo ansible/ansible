@@ -23,7 +23,7 @@ module: ec2_vol_facts
 short_description: Gather facts about ec2 volumes in AWS
 description:
     - Gather facts about ec2 volumes in AWS
-version_added: "2.0"
+version_added: "2.1"
 author: "Rob White (@wimnat)"
 options:
   filters:

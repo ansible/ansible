@@ -31,19 +31,15 @@ options:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
     default: null
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
-    required: false
-    default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
   state:
     description:
       - Create or terminate the IGW
     required: false
     default: present
     choices: [ 'present', 'absent' ]
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

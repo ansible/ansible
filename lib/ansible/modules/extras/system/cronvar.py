@@ -87,7 +87,7 @@ options:
     default: false
 requirements:
   - cron
-author: Doug Luce
+author: "Doug Luce (@dougluce)"
 """
 
 EXAMPLES = '''

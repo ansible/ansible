@@ -96,7 +96,7 @@ EXAMPLES = '''
     state: present
     set: Interface vlan10
 
-# Assign interface id server1-vifeth6 and mac address 52:54:00:30:6d:11
+# Assign interface id server1-vifeth6 and mac address 00:00:5E:00:53:23
 # to port vifeth6 and setup port to be managed by a controller.
 - openvswitch_port:
     bridge: br-int

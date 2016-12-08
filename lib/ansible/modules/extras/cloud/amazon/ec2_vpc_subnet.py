@@ -24,7 +24,7 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle, @erydo
+author: Robert Estelle (@erydo)
 options:
   az:
     description:
@@ -33,7 +33,7 @@ options:
     default: null
   cidr:
     description:
-      - "The CIDR block for the subnet. E.g. 10.0.0.0/16. Only required when state=present."
+      - "The CIDR block for the subnet. E.g. 192.0.2.0/24. Only required when state=present."
     required: false
     default: null
   tags:
@@ -53,8 +53,9 @@ options:
       - "VPC ID of the VPC in which to create the subnet."
     required: false
     default: null
-    
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -159,7 +160,7 @@ def get_resource_tags(vpc_conn, resource_id):
                 vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
 
 
-def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
+def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
         if cur_tags == tags:
@@ -167,11 +168,11 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
 
         to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
         if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=dry_run)
+            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
 
         to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
         if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=dry_run)
+            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
 
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
@@ -203,13 +204,6 @@ def ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags, check_mode):
         subnet.tags = tags
         changed = True
 
-    if tags is not None:
-        tag_result = ensure_tags(vpc_conn, subnet.id, tags, add_only=True,
-                                 dry_run=check_mode)
-        tags = tag_result['tags']
-        changed = changed or tag_result['changed']
-    else:
-        tags = get_resource_tags(vpc_conn, subnet.id)
     subnet_info = get_subnet_info(subnet)
 
     return {
@@ -222,11 +216,9 @@ def ensure_subnet_absent(vpc_conn, vpc_id, cidr, check_mode):
     subnet = get_matching_subnet(vpc_conn, vpc_id, cidr)
     if subnet is None:
         return {'changed': False}
-    elif check_mode:
-        return {'changed': True}
 
     try:
-        vpc_conn.delete_subnet(subnet.id)
+        vpc_conn.delete_subnet(subnet.id, dry_run=check_mode)
         return {'changed': True}
     except EC2ResponseError as e:
         raise AnsibleVPCSubnetDeletionException(
@@ -244,16 +236,14 @@ def main():
             tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
             vpc_id = dict(default=None, required=True)
         )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
     )
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    if not region:
-        module.fail_json(msg='Region must be specified')
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     if region:
         try:
@@ -267,14 +257,14 @@ def main():
     tags = module.params.get('tags')
     cidr = module.params.get('cidr')
     az = module.params.get('az')
-    state = module.params.get('state', 'present')
+    state = module.params.get('state')
 
     try:
         if state == 'present':
-            result = ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags,
+            result = ensure_subnet_present(connection, vpc_id, cidr, az, tags,
                                            check_mode=module.check_mode)
         elif state == 'absent':
-            result = ensure_subnet_absent(vpc_conn, vpc_id, cidr,
+            result = ensure_subnet_absent(connection, vpc_id, cidr,
                                           check_mode=module.check_mode)
     except AnsibleVPCSubnetException as e:
         module.fail_json(msg=str(e))

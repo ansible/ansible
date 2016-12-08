@@ -70,7 +70,7 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the virtual machine is in.
+      - Name of the zone in which the IP address is in.
       - If not set, default zone is used.
     required: false
     default: null
@@ -88,7 +88,7 @@ EXAMPLES = '''
     module: cs_ip_address
     network: My Network
   register: ip_address
-  when: create_instance|changed
+  when: instance.public_ip is undefined
 
 # Disassociate an IP address
 - local_action:
@@ -210,7 +210,7 @@ def main():
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -233,7 +233,7 @@ def main():
 
         result = acs_ip_address.get_result(ip_address)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

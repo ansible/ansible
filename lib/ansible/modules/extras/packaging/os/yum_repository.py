@@ -33,7 +33,7 @@ DOCUMENTATION = '''
 ---
 module: yum_repository
 author: Jiri Tyr (@jtyr)
-version_added: '2.0'
+version_added: '2.1'
 short_description: Add and remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.

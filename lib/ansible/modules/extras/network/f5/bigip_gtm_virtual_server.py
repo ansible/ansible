@@ -73,7 +73,7 @@ EXAMPLES = '''
   - name: Enable virtual server
     local_action: >
       bigip_gtm_virtual_server
-      server=192.168.0.1
+      server=192.0.2.1
       user=admin
       password=mysecret
       virtual_server_name=myname

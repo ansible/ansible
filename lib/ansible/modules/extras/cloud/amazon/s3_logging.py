@@ -30,11 +30,6 @@ options:
     description:
       - "Name of the s3 bucket."
     required: true
-  region:
-    description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
-    required: false
-    default: null
   state:
     description:
       - "Enable or disable logging."
@@ -51,8 +46,9 @@ options:
       - "The prefix that should be prepended to the generated log files written to the target_bucket."
     required: false
     default: ""
-
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

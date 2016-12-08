@@ -58,6 +58,7 @@ options:
     required: false
     default: Ansible
   comment:
+    version_added: "2.0"
     description:
      - Comment for C(downtime) action.
     required: false

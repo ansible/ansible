@@ -36,10 +36,13 @@ options:
     description:
       - Name of the scheduled task
     required: true
+  description:
+    description:
+      - The description for the scheduled task
+    required: false
   enabled:
     description:
       - Enable/disable the task
-    required: false
     choices:
       - yes
       - no
@@ -47,26 +50,34 @@ options:
   state:
     description:
       - State that the task should become
-    required: false
+    required: true
     choices:
       - present
       - absent
+  user:
+    description:
+      - User to run scheduled task as
+    required: false
   execute:
     description:
       - Command the scheduled task should execute
     required: false
+  argument:
+    description:
+      - Arguments to provide scheduled task action
+    required: false
   frequency:
     description:
       - The frequency of the command, not idempotent
+    required: false
     choices:
       - daily
       - weekly
-    required: false
   time:
     description:
       - Time to execute scheduled task, not idempotent
     required: false
-  daysOfWeek:
+  days_of_week:
     description:
       - Days of the week to run a weekly task, not idempotent
     required: false
@@ -74,7 +85,6 @@ options:
     description:
       - Task folder in which this task will be stored
     default: '\'
-    required: false
 '''
 
 EXAMPLES = '''

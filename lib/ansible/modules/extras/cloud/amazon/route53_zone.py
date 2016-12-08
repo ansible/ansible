@@ -50,7 +50,9 @@ options:
             - Comment associated with the zone
         required: false
         default: ''
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 author: "Christopher Troup (@minichate)"
 '''
 

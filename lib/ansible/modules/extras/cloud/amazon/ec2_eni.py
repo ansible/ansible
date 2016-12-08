@@ -202,7 +202,7 @@ interface:
     mac_address:
       description: interface's physical address
       type: string
-      sample: "06:9a:27:6a:6f:99"
+      sample: "00:00:5E:00:53:23"
     owner_id:
       description: aws account id
       type: string

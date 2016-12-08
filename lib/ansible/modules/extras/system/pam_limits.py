@@ -122,7 +122,7 @@ def main():
 
     pam_types = [ 'soft', 'hard', '-' ]
 
-    limits_conf = '/home/slyce/limits.conf'
+    limits_conf = '/etc/security/limits.conf'
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
@@ -134,7 +134,8 @@ def main():
             use_max           = dict(default=False, type='bool'),
             use_min           = dict(default=False, type='bool'),
             backup            = dict(default=False, type='bool'),
-            dest              = dict(default=limits_conf, type='str')
+            dest              = dict(default=limits_conf, type='str'),
+            comment           = dict(required=False, default='', type='str')
         )
     )
 
@@ -146,6 +147,7 @@ def main():
     use_min     =       module.params['use_min']
     backup      =       module.params['backup']
     limits_conf =       module.params['dest']
+    new_comment =       module.params['comment']
 
     changed = False
 
@@ -176,6 +178,7 @@ def main():
     new_value       = value
 
     for line in f:
+
         if line.startswith('#'):
             nf.write(line)
             continue
@@ -184,6 +187,21 @@ def main():
         if not newline:
             nf.write(line)
             continue
+
+        # Remove comment in line
+        newline = newline.split('#',1)[0]
+        try:
+            old_comment = line.split('#',1)[1]
+        except:
+            old_comment = ''
+
+        newline = newline.rstrip()
+
+        if not new_comment:
+            new_comment = old_comment
+
+        if new_comment:
+            new_comment = "\t#"+new_comment
 
         line_fields = newline.split(' ')
 

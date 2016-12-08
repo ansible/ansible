@@ -41,7 +41,9 @@ options:
       What voice to use
     required: false
 requirements: [ say ]
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan (@mpdehaan)"
 '''
 
 EXAMPLES = '''

@@ -34,7 +34,9 @@ options:
     required: false
     default: null
     aliases: ['elb_ids', 'ec2_elbs']
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

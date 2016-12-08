@@ -30,7 +30,9 @@ short_description: Zabbix host macro creates/updates/deletes
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
-author: Dean Hailin Song
+author: 
+    - "(@cave)"
+    - Dean Hailin Song
 requirements:
     - "python >= 2.6"
     - zabbix-api

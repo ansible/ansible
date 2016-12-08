@@ -260,9 +260,9 @@ ovirt:
     url: https://ovirt.example.com
     hostname: testansible
     domain: ansible.local
-    ip: 192.168.1.100
+    ip: 192.0.2.100
     netmask: 255.255.255.0
-    gateway: 192.168.1.1
+    gateway: 192.0.2.1
     rootpw: bigsecret
 
 '''

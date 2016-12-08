@@ -78,7 +78,7 @@ options:
         required: false
         default: []
         description:
-            - "Additional data for this record, e.g. ['a': '192.168.1.1'].
+            - "Additional data for this record, e.g. ['a': '192.0.2.1'].
                Required if C(state=present)."
 '''
 

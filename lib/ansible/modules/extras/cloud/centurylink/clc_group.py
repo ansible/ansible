@@ -28,7 +28,7 @@ module: clc_group
 short_description: Create/delete Server Groups at Centurylink Cloud
 description:
   - Create or delete Server Groups at Centurylink Centurylink Cloud
-version_added: 1.0
+version_added: "2.0"
 options:
   name:
     description:
@@ -70,8 +70,8 @@ notes:
           - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
     - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
       CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
-          - CLC_V2_API_TOKEN: the API token generated from https://api.ctl.io/v2/authentication/login
-          - CLC_ACCT_ALIAS: the account alias associated with the centurylink cloud
+          - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
+          - CLC_ACCT_ALIAS, the account alias associated with the centurylink cloud
     - Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
 '''
 

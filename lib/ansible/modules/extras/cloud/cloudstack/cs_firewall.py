@@ -26,7 +26,8 @@ DOCUMENTATION = '''
 ---
 module: cs_firewall
 short_description: Manages firewall rules on Apache CloudStack based clouds.
-description: Creates and removes firewall rules.
+description:
+    - Creates and removes firewall rules.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -100,6 +101,12 @@ options:
   project:
     description:
       - Name of the project the firewall rule is related to.
+    required: false
+    default: null
+  zone:
+    description:
+      - Name of the zone in which the virtual machine is in.
+      - If not set, default zone is used.
     required: false
     default: null
   poll_async:
@@ -378,10 +385,11 @@ def main():
         start_port = dict(type='int', aliases=['port'], default=None),
         end_port = dict(type='int', default=None),
         state = dict(choices=['present', 'absent'], default='present'),
+        zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     required_together = cs_required_together()
@@ -414,7 +422,7 @@ def main():
 
         result = acs_fw.get_result(fw_rule)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

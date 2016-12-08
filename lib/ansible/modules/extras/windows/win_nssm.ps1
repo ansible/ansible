@@ -412,7 +412,7 @@ Function Nssm-Update-Credentials
         }
         else {
             $fullUser = $user
-            If (-not($user -contains "@") -and ($user.Split("\").count -eq 1)) {
+            If (-Not($user.contains("@")) -And ($user.Split("\").count -eq 1)) {
                 $fullUser = ".\" + $user
             }
 

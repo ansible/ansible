@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-author: Willy Barro
+author: "Willy Barro (@willybarro)"
 requirements: [ pushbullet.py ]
 module: pushbullet
 short_description: Sends notifications to Pushbullet

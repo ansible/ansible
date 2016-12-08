@@ -27,6 +27,7 @@ short_description: Creates or removes locales.
 description:
      - Manages locales by editing /etc/locale.gen and invoking locale-gen.
 version_added: "1.6"
+author: "Augustus Kling (@AugustusKling)"
 options:
     name:
         description:

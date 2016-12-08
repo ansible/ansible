@@ -28,7 +28,7 @@ module: circonus_annotation
 short_description: create an annotation in circonus
 description:
     - Create an annotation event with a given category, title and description. Optionally start, end or durations can be provided
-author: Nick Harring
+author: "Nick Harring (@NickatEpic)"
 version_added: 2.0
 requirements:
     - urllib3

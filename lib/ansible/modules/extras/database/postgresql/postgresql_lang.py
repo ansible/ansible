@@ -113,7 +113,7 @@ notes:
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: Jens Depuydt
+author: "Jens Depuydt (@jensdepuydt)"
 '''
 
 EXAMPLES = '''

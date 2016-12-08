@@ -374,7 +374,7 @@ def main():
 
         result = acs_acc.get_result(account)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: win_chocolatey
-version_added: "1.8"
+version_added: "1.9"
 short_description: Installs packages using chocolatey
 description:
     - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages

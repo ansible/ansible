@@ -34,7 +34,7 @@ description:
     - Note that this is a very basic packaging system. It will not enforce
       dependencies on install or remove.
 version_added: "0.9"
-author: Boyd Adamson
+author: "Boyd Adamson (@brontitall)"
 options:
   name:
     description:

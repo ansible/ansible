@@ -114,7 +114,7 @@ mac:
     description: MAC address to use for VNIC
     returned: if mac is specified
     type: string
-    sample: "00:aa:bc:fe:11:22"
+    sample: "00:00:5E:00:53:42"
 vlan:
     description: VLAN to use for VNIC
     returned: success

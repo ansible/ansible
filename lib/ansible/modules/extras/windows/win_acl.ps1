@@ -27,7 +27,7 @@
 #Functions
 Function UserSearch
 {
-    Param ([string]$AccountName)
+    Param ([string]$accountName)
     #Check if there's a realm specified
 
     $searchDomain = $false
@@ -46,27 +46,25 @@ Function UserSearch
         }
         else
         {
-            $IsDomainAccount = $true
-            $IsUpn = $false
+            $searchDomain = $true
+            $accountName = $accountName.split("\")[1]
         }
- 
     }
-    Elseif ($AccountName -contains "@")
+    Elseif ($accountName.contains("@"))
     {
-        $IsDomainAccount = $true
-        $IsUpn = $true
+        $searchDomain = $true
+        $searchDomainUPN = $true
     }
     Else
     {
         #Default to local user account
-        $accountname = $env:COMPUTERNAME + "\" + $AccountName
-        $IsLocalAccount = $true
+        $accountName = $env:COMPUTERNAME + "\" + $accountName
     }
 
     if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
     {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
-        $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
+        $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
         if ($localaccount)
         {
             return $localaccount.SID
@@ -86,13 +84,18 @@ Function UserSearch
             return $apppoolobj.applicationPoolSid
         }
     }
-    ElseIf (($IsDomainAccount -eq $true) -and ($IsUpn -eq $false))
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
-        $Searcher.Filter = "sAMAccountName=$($accountname.split("\")[1])"
-        $result = $Searcher.FindOne()
  
+        If ($searchDomainUPN -eq $false) {
+            $Searcher.Filter = "sAMAccountName=$($accountName)"
+        }
+        Else {
+            $Searcher.Filter = "userPrincipalName=$($accountName)"
+        }
+
+        $result = $Searcher.FindOne() 
         if ($result)
         {
             $user = $result.GetDirectoryEntry()
@@ -104,7 +107,6 @@ Function UserSearch
             return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
         }
     }
- 
 }
  
 $params = Parse-Args $args;

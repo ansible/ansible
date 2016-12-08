@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 module: pkg5_publisher
 author: "Peter Oliver (@mavit)"
 short_description: Manages Solaris 11 Image Packaging System publishers
+version_added: 1.9
 description:
   - IPS packages are the native packages in Solaris 11 and higher.
   - This modules will configure which publishers a client will download IPS

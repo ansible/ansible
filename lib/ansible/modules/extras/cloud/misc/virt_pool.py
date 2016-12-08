@@ -234,12 +234,6 @@ class LibvirtConnection(object):
 
         self.module = module
 
-        cmd = "uname -r"
-        rc, stdout, stderr = self.module.run_command(cmd)
-
-        if "xen" in stdout:
-            conn = libvirt.open(None)
-        else:
             conn = libvirt.open(uri)
 
         if not conn:
@@ -253,14 +247,12 @@ class LibvirtConnection(object):
         results = []
 
         # Get active entries
-        entries = self.conn.listStoragePools()
-        for name in entries:
+        for name in self.conn.listStoragePools():
             entry = self.conn.storagePoolLookupByName(name)
             results.append(entry)
 
         # Get inactive entries
-        entries = self.conn.listDefinedStoragePools()
-        for name in entries:
+        for name in self.conn.listDefinedStoragePools():
             entry = self.conn.storagePoolLookupByName(name)
             results.append(entry)
 
@@ -445,24 +437,18 @@ class VirtStoragePool(object):
         return self.conn.find_entry(entryid)
 
     def list_pools(self, state=None):
-        entries = self.conn.find_entry(-1)
         results = []
-        for x in entries:
-            try:
+        for entry in self.conn.find_entry(-1):
                 if state:
-                    entrystate = self.conn.get_status2(x)
-                    if entrystate == state:
-                        results.append(x.name())
+                if state == self.conn.get_status2(entry):
+                    results.append(entry.name())
                 else:
-                    results.append(x.name())
-            except:
-                pass
+                results.append(entry.name())
         return results
 
     def state(self):
-        entries = self.list_pools()
         results = []
-        for entry in entries:
+        for entry in self.list_pools():
             state_blurb = self.conn.get_status(entry)
             results.append("%s %s" % (entry,state_blurb))
         return results
@@ -509,13 +495,12 @@ class VirtStoragePool(object):
     def refresh(self, entryid):
         return self.conn.refresh(entryid)
 
-    def info(self, facts_mode='info'):
-        return self.facts(facts_mode)
+    def info(self):
+        return self.facts(facts_mode='info')
 
     def facts(self, facts_mode='facts'):
-        entries = self.list_pools()
         results = dict()
-        for entry in entries:
+        for entry in self.list_pools():
             results[entry] = dict()
             if self.conn.find_entry(entry):
                 data = self.conn.get_info(entry)
