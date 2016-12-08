@@ -139,7 +139,7 @@ Example from Ansible playbook
     - name: create the VM
       vmware_guest:
         validate_certs: False
-        hostname: 192.168.1.209
+        hostname: 192.0.2.44
         username: administrator@vsphere.local
         password: vmware
         name: testvm_2
@@ -159,7 +159,7 @@ Example from Ansible playbook
             osid: centos64guest
             scsi: paravirtual
         datacenter: datacenter1
-        esxi_hostname: 192.168.1.117
+        esxi_hostname: 192.0.2.117
         template: template_el7
         wait_for_ip_address: yes
       register: deploy
@@ -536,11 +536,8 @@ class PyVmomiHelper(object):
 	if current_state == expected_state:
             result['changed'] = False
             result['failed'] = False
-
 	else:
-
             task = None
-
             try:
                 if expected_state == 'poweredoff':
                     task = vm.PowerOff()
@@ -597,9 +594,6 @@ class PyVmomiHelper(object):
             mac = device.macAddress
             ips = list(device.ipAddress)
             netDict[mac] = ips
-        #facts['network'] = {}
-        #facts['network']['ipaddress_v4'] = None
-        #facts['network']['ipaddress_v6'] = None
         for k,v in netDict.iteritems():
             for ipaddress in v:
                 if ipaddress:
@@ -609,7 +603,6 @@ class PyVmomiHelper(object):
                         facts['ipv4'] = ipaddress
 
 	for idx,entry in enumerate(vm.config.hardware.device):
-
 	    if not hasattr(entry, 'macAddress'):
 		continue
 
@@ -624,7 +617,6 @@ class PyVmomiHelper(object):
 	    }
 	    facts['hw_interfaces'].append('eth'+str(idx))
 
-        #import epdb; epdb.st()
         return facts
 
 

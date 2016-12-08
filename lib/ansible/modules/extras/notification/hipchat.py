@@ -76,7 +76,7 @@ options:
     description:
       - API url if using a self-hosted hipchat server. For hipchat api version 2 use C(/v2) path in URI
     required: false
-    default: 'https://api.hipchat.com/v1/rooms/message'
+    default: 'https://api.hipchat.com/v1'
     version_added: 1.6.0
 
 
@@ -101,7 +101,6 @@ EXAMPLES = '''
 # HipChat module specific support methods.
 #
 
-MSG_URI = "https://api.hipchat.com/v1/rooms/message"
 import urllib
 try:
     import json
@@ -195,7 +194,7 @@ def main():
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
             validate_certs=dict(default='yes', type='bool'),
-            api=dict(default=MSG_URI),
+            api=dict(default=DEFAULT_URI),
         ),
         supports_check_mode=True
     )

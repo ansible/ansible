@@ -447,8 +447,9 @@ def main():
             port=dict(required=False,default=None),
             rich_rule=dict(required=False,default=None),
             zone=dict(required=False,default=None),
-            permanent=dict(type='bool',required=True),
             immediate=dict(type='bool',default=False),
+            source=dict(required=False,default=None),
+            permanent=dict(type='bool',required=False,default=None),
             state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int',required=False,default=0),
             interface=dict(required=False,default=None),
@@ -528,6 +529,7 @@ def main():
     msgs = []
     service = module.params['service']
     rich_rule = module.params['rich_rule']
+    source = module.params['source']
 
     if module.params['port'] != None:
         port, protocol = module.params['port'].split('/')

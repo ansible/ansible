@@ -26,7 +26,9 @@ short_description: Pause/unpause Pingdom alerts
 description:
     - This module will let you pause/unpause Pingdom alerts
 version_added: "1.2"
-author: Justin Johns
+author: 
+    - "Dylan Silva (@thaumos)"
+    - "Justin Johns"
 requirements:
     - "This pingdom python library: https://github.com/mbabineau/pingdom-python"
 options:
@@ -132,7 +134,7 @@ def main():
     )
 
     if not HAS_PINGDOM:
-        module.fail_json(msg="Missing requried pingdom module (check docs)")
+        module.fail_json(msg="Missing required pingdom module (check docs)")
 
     checkid = module.params['checkid']
     state = module.params['state']

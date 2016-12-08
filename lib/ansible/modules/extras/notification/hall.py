@@ -27,13 +27,13 @@ DOCUMENTATION = """
 module: hall
 short_description: Send notification to Hall
 description:
-    - The M(hall) module connects to the U(https://hall.com) messaging API and allows you to deliver notication messages to rooms.
-version_added: 1.6
-author: Billy Kimble <basslines@gmail.com>
+    - "The M(hall) module connects to the U(https://hall.com) messaging API and allows you to deliver notication messages to rooms."
+version_added: "2.0"
+author: Billy Kimble (@bkimble) <basslines@gmail.com>
 options:
   room_token:
     description:
-      - Room token provided to you by setting up the Ansible room integation on U(https://hall.com)
+      - "Room token provided to you by setting up the Ansible room integation on U(https://hall.com)"
     required: true
   msg:
     description:
@@ -45,7 +45,7 @@ options:
     required: true
   picture:
     description:
-      - The full URL to the image you wish to use for the Icon of the message. Defaults to U(http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627)
+      - "The full URL to the image you wish to use for the Icon of the message. Defaults to U(http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627)"
     required: false
 """      
 

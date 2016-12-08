@@ -54,10 +54,10 @@ options:
     required: false
   next_marker:
     description:
-      - Some requests such as list_command: hosted_zones will return a maximum
+      - "Some requests such as list_command: hosted_zones will return a maximum
         number of entries - EG 100. If the number of entries exceeds this maximum
         another request can be sent using the NextMarker entry from the first response
-        to get the next page of results
+        to get the next page of results"
     required: false
   delegation_set_id:
     description:
@@ -65,8 +65,8 @@ options:
     required: false
   start_record_name:
     description:
-      - The first name in the lexicographic ordering of domain names that you want
-        the list_command: record_sets to start listing from
+      - "The first name in the lexicographic ordering of domain names that you want
+        the list_command: record_sets to start listing from"
     required: false
   type:
     description:
@@ -89,9 +89,9 @@ options:
     required: false
   hosted_zone_method:
     description:
-      - This is used in conjunction with query: hosted_zone.
+      - "This is used in conjunction with query: hosted_zone.
         It allows for listing details, counts or tags of various
-        hosted zone details.
+        hosted zone details."
     required: false
     choices: [
         'details',
@@ -103,9 +103,9 @@ options:
     default: 'list'
   health_check_method:
     description:
-      - This is used in conjunction with query: health_check.
+      - "This is used in conjunction with query: health_check.
         It allows for listing details, counts or tags of various
-        health check details.
+        health check details."
     required: false
     choices: [
         'list',

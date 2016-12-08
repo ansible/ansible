@@ -199,8 +199,8 @@ EXAMPLES = '''
     record_data:
       - '192.0.2.23'
       - '10.4.5.6'
-      - '10.7.8.9'
-      - '192.168.5.10'
+      - '198.51.100.5'
+      - '203.0.113.10'
 
 # Change the value of an existing record with multiple record_data.
 - gcdns_record:

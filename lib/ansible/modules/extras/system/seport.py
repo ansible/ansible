@@ -27,7 +27,7 @@ module: seport
 short_description: Manages SELinux network port type definitions
 description:
      - Manages SELinux network port type definitions.
-version_added: "1.7.1"
+version_added: "2.0"
 options:
   ports:
     description:

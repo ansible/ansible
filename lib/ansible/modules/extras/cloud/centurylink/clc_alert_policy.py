@@ -85,7 +85,7 @@ notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
           - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
-          - CLC_V2_API_PASSWORD, the account passwod for the centurylink cloud
+          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
     - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
       CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
           - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
@@ -302,7 +302,7 @@ class ClcAlertPolicy:
         """
         Ensures that the alert policy is present
         :return: (changed, policy)
-                 canged: A flag representing if anything is modified
+                 changed: A flag representing if anything is modified
                  policy: the created/updated alert policy
         """
         changed = False
@@ -327,7 +327,7 @@ class ClcAlertPolicy:
         """
         Ensures that the alert policy is absent
         :return: (changed, None)
-                 canged: A flag representing if anything is modified
+                 changed: A flag representing if anything is modified
         """
         changed = False
         p = self.module.params
@@ -349,10 +349,10 @@ class ClcAlertPolicy:
 
     def _ensure_alert_policy_is_updated(self, alert_policy):
         """
-        Ensures the aliert policy is updated if anything is changed in the alert policy configuration
-        :param alert_policy: the targetalert policy
+        Ensures the alert policy is updated if anything is changed in the alert policy configuration
+        :param alert_policy: the target alert policy
         :return: (changed, policy)
-                 canged: A flag representing if anything is modified
+                 changed: A flag representing if anything is modified
                  policy: the updated the alert policy
         """
         changed = False

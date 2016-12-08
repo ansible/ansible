@@ -37,14 +37,10 @@ options:
     description:
       - File to be unzipped (provide absolute path)
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
     required: true
-    default: null
-    aliases: []
   rm:
     description:
       - Remove the zip file, after unzipping
@@ -55,7 +51,6 @@ options:
       - yes
       - no
     default: false
-    aliases: []
   recurse:
     description:
       - Recursively expand zipped files within the src file.
@@ -66,13 +61,11 @@ options:
       - false
       - yes
       - no
-    aliases: []
   creates:
     description:
       - If this file or directory exists the specified src will not be extracted.
     required: no
     default: null
-    aliases: []
 author: Phil Schwartz 
 '''
 

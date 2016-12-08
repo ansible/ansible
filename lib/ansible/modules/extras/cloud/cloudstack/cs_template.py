@@ -605,19 +605,19 @@ def main():
         vm = dict(default=None),
         snapshot = dict(default=None),
         os_type = dict(default=None),
-        is_ready = dict(type='bool', choices=BOOLEANS, default=False),
-        is_public = dict(type='bool', choices=BOOLEANS, default=True),
-        is_featured = dict(type='bool', choices=BOOLEANS, default=False),
-        is_dynamically_scalable = dict(type='bool', choices=BOOLEANS, default=False),
-        is_extractable = dict(type='bool', choices=BOOLEANS, default=False),
-        is_routing = dict(type='bool', choices=BOOLEANS, default=False),
+        is_ready = dict(type='bool', default=False),
+        is_public = dict(type='bool', default=True),
+        is_featured = dict(type='bool', default=False),
+        is_dynamically_scalable = dict(type='bool', default=False),
+        is_extractable = dict(type='bool', default=False),
+        is_routing = dict(type='bool', default=False),
         checksum = dict(default=None),
         template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         hypervisor = dict(choices=CS_HYPERVISORS, default=None),
         requires_hvm = dict(type='bool', default=False),
         password_enabled = dict(type='bool', default=False),
         template_tag = dict(default=None),
-        sshkey_enabled = dict(type='bool', choices=BOOLEANS, default=False),
+        sshkey_enabled = dict(type='bool', default=False),
         format = dict(choices=['QCOW2', 'RAW', 'VHD', 'OVA'], default=None),
         details = dict(default=None),
         bits = dict(type='int', choices=[ 32, 64 ], default=64),
@@ -628,7 +628,7 @@ def main():
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(type='bool', choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -661,7 +661,7 @@ def main():
 
         result = acs_tpl.get_result(tpl)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

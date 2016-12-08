@@ -32,7 +32,7 @@ module: elasticsearch_plugin
 short_description: Manage Elasticsearch plugins
 description:
     - Manages Elasticsearch plugins.
-version_added: ""
+version_added: "2.0"
 author: Mathew Davies (@ThePixelDeveloper)
 options:
     name:
@@ -52,7 +52,7 @@ options:
         default: None
     timeout:
         description:
-            - Timeout setting: 30s, 1m, 1h...
+            - "Timeout setting: 30s, 1m, 1h..."
         required: False
         default: 1m
     plugin_bin:

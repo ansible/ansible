@@ -300,7 +300,7 @@ def main():
 
         result = acs_project.get_result(project)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

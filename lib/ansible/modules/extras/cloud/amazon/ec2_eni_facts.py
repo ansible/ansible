@@ -91,13 +91,6 @@ def list_ec2_snapshots_boto3(connection, module):
     module.exit_json(**snaked_network_interfaces_result)
 
 
-def get_error_message(xml_string):
-    
-    root = ET.fromstring(xml_string)
-    for message in root.findall('.//Message'):            
-        return message.text
-    
-    
 def get_eni_info(interface):
     
     # Private addresses
@@ -138,15 +131,13 @@ def get_eni_info(interface):
 
 def list_eni(connection, module):
     
-    eni_id = module.params.get("eni_id")
-
     filters = module.params.get("filters")
     interface_dict_array = []
     
     try:
         all_eni = connection.get_all_network_interfaces(filters=filters)
     except BotoServerError as e:
-        module.fail_json(msg=get_error_message(e.args[2]))
+        module.fail_json(msg=e.message)
     
     for interface in all_eni:
         interface_dict_array.append(get_eni_info(interface))

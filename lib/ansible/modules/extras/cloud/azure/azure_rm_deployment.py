@@ -239,7 +239,7 @@ EXAMPLES = '''
         imageOffer: "UbuntuServer"
         OSDiskName: "osdiskforlinuxsimple"
         nicName: "myVMNic"
-        addressPrefix: "10.0.0.0/16"
+        addressPrefix: "192.0.2.0/24"
         subnetName: "Subnet"
         subnetPrefix: "10.0.0.0/24"
         storageAccountType: "Standard_LRS"

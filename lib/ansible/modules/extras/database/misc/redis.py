@@ -102,7 +102,7 @@ notes:
      this needs to be in the redis.conf in the masterauth variable
 
 requirements: [ redis ]
-author: Xabier Larrakoetxea
+author: "Xabier Larrakoetxea (@slok)"
 '''
 
 EXAMPLES = '''

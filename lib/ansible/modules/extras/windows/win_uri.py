@@ -125,10 +125,11 @@ use_basic_parsing:
   type: bool
   sample: True
 body:
-  description: The content of the body used (added in version 2.2)
+  description: The content of the body used
   returned: when body is specified
   type: string
   sample: '{"id":1}'
+  version_added: "2.3"
 status_code:
   description: The HTTP Status Code of the response.
   returned: success

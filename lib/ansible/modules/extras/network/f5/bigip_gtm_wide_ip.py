@@ -61,7 +61,7 @@ EXAMPLES = '''
   - name: Set lb method
     local_action: >
       bigip_gtm_wide_ip
-      server=192.168.0.1
+      server=192.0.2.1
       user=admin
       password=mysecret
       lb_method=round_robin

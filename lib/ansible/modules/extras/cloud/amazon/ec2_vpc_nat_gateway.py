@@ -24,7 +24,7 @@ module: ec2_vpc_nat_gateway
 short_description: Manage AWS VPC NAT Gateways.
 description:
   - Ensure the state of AWS VPC NAT Gateways based on their id, allocation and subnet ids.
-version_added: "2.1"
+version_added: "2.2"
 requirements: [boto3, botocore]
 options:
   state:

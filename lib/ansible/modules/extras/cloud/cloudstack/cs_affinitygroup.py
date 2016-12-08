@@ -26,7 +26,8 @@ DOCUMENTATION = '''
 ---
 module: cs_affinitygroup
 short_description: Manages affinity groups on Apache CloudStack based clouds.
-description: Create and remove affinity groups.
+description:
+    - Create and remove affinity groups.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -58,6 +59,11 @@ options:
   account:
     description:
       - Account the affinity group is related to.
+    required: false
+    default: null
+  project:
+    description:
+      - Name of the project the affinity group is related to.
     required: false
     default: null
   poll_async:
@@ -104,6 +110,21 @@ affinity_type:
   returned: success
   type: string
   sample: host anti-affinity
+project:
+  description: Name of project the affinity group is related to.
+  returned: success
+  type: string
+  sample: Production
+domain:
+  description: Domain the affinity group is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the affinity group is related to.
+  returned: success
+  type: string
+  sample: example account
 '''
 
 # import cloudstack common
@@ -223,7 +244,7 @@ def main():
 
         result = acs_ag.get_result(affinity_group)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

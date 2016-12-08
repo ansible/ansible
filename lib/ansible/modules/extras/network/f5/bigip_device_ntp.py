@@ -66,7 +66,7 @@ EXAMPLES = '''
 - name: Set NTP server
   bigip_device_ntp:
       ntp_servers:
-          - "192.168.10.12"
+          - "192.0.2.23"
       password: "secret"
       server: "lb.mydomain.com"
       user: "admin"
@@ -88,7 +88,7 @@ ntp_servers:
     description: The NTP servers that were set on the device
     returned: changed
     type: list
-    sample: ["192.168.10.10", "172.27.10.10"]
+    sample: ["192.0.2.23", "192.0.2.42"]
 timezone:
     description: The timezone that was set on the device
     returned: changed

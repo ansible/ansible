@@ -29,7 +29,7 @@ module: selinux_permissive
 short_description: Change permissive domain in SELinux policy
 description:
   - Add and remove domain from the list of permissive domain.
-version_added: "1.9"
+version_added: "2.0"
 options:
   domain:
     description:

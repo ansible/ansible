@@ -197,7 +197,7 @@ record:
             description: the record content (details depend on record type)
             returned: success
             type: string
-            sample: 192.168.100.20
+            sample: 192.0.2.91
         created_on:
             description: the record creation date
             returned: success

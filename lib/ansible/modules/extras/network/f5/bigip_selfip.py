@@ -197,7 +197,7 @@ address:
     description: The address for the Self IP
     returned: created
     type: string
-    sample: "192.168.10.10"
+    sample: "192.0.2.10"
 name:
     description: The name of the Self IP
     returned:

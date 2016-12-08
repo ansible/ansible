@@ -120,7 +120,7 @@ EXAMPLES = r"""
     dest: /etc/network/interfaces
     block: |
       iface eth0 inet static
-          address 192.168.0.1
+          address 192.0.2.23
           netmask 255.255.255.0
 
 - name: insert/update HTML surrounded by custom markers after <body> line

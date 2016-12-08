@@ -70,8 +70,9 @@ options:
     description:
       - "VPC ID of the VPC in which to create the route table."
     required: true
-
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

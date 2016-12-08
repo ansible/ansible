@@ -34,8 +34,6 @@ options:
     description:
       - The name of the virtual directory to create or remove
     required: true
-    default: null
-    aliases: []
   state:
     description:
       - Whether to add or remove the specified virtual directory
@@ -53,13 +51,11 @@ options:
       - The application under which the virtual directory is created or exists.
     required: false
     default: null
-    aliases: []
   physical_path:
     description:
       - The physical path to the folder in which the new virtual directory is created. The specified folder must already exist.
     required: false
     default: null
-    aliases: []
 author: Henrik Wallström
 '''
 

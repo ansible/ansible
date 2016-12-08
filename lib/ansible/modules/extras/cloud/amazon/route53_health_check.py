@@ -93,7 +93,9 @@ options:
     default: 3
     choices: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 author: "zimbatm (@zimbatm)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

@@ -155,9 +155,9 @@ def main():
                        choices=['none', 'http', 'icmp', 'oco']),
             state=dict(default='present', choices=['present', 'absent']),
             endpoint=dict(required=True),
-            application_key=dict(required=True),
-            application_secret=dict(required=True),
-            consumer_key=dict(required=True),
+            application_key=dict(required=True, no_log=True),
+            application_secret=dict(required=True, no_log=True),
+            consumer_key=dict(required=True, no_log=True),
             timeout=dict(default=120, type='int')
         )
     )

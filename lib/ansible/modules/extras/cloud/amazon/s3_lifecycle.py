@@ -50,11 +50,6 @@ options:
       - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
     required: false
     default: null
-  region:
-    description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
-    required: false
-    default: null
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -89,8 +84,9 @@ options:
       - "Indicates when, in days, an object transitions to a different storage class. If transition_date is not specified, this parameter is required."
     required: false
     default: null
-
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

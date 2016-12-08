@@ -29,7 +29,7 @@ short_description: get details reported by lldp
 description:
   - Reads data out of lldpctl
 options: {}
-author: Andy Hill
+author: "Andy Hill (@andyhky)"
 notes:
   - Requires lldpd running and lldp enabled on switches 
 '''

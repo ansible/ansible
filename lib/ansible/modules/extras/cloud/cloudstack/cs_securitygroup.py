@@ -23,9 +23,11 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'version': '1.0'}
 
 DOCUMENTATION = '''
+---
 module: cs_securitygroup
 short_description: Manages security groups on Apache CloudStack based clouds.
-description: Create and remove security groups.
+description:
+    - Create and remove security groups.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -210,7 +212,7 @@ def main():
 
         result = acs_sg.get_result(sg)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

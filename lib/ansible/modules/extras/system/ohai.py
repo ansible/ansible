@@ -36,7 +36,9 @@ version_added: "0.6"
 options: {}
 notes: []
 requirements: [ "ohai" ]
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan (@mpdehaan)"
 '''
 
 EXAMPLES = '''

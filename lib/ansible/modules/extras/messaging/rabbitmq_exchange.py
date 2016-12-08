@@ -1,10 +1,30 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2015, Manuel Sousa <manuel.sousa@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
 DOCUMENTATION = '''
+---
 module: rabbitmq_exchange
 author: "Manuel Sousa (@manuel-sousa)"
 version_added: "2.0"
@@ -56,14 +76,14 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: yes
-    exchangeType:
+    exchange_type:
         description:
             - type for the exchange
         required: false
         choices: [ "fanout", "direct", "headers", "topic" ]
         aliases: [ "type" ]
         default: direct
-    autoDelete:
+    auto_delete:
         description:
             - if the exchange should delete itself after all queues/exchanges unbound from it
         required: false
@@ -104,7 +124,7 @@ def main():
             state = dict(default='present', choices=['present', 'absent'], type='str'),
             name = dict(required=True, type='str'),
             login_user = dict(default='guest', type='str'),
-            login_password = dict(default='guest', type='str'),
+            login_password = dict(default='guest', type='str', no_log=True),
             login_host = dict(default='localhost', type='str'),
             login_port = dict(default='15672', type='str'),
             vhost = dict(default='/', type='str'),
@@ -121,7 +141,7 @@ def main():
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
-        module.params['name']
+        urllib.quote(module.params['name'],'')
     )
 
     # Check if exchange already exists
@@ -145,12 +165,12 @@ def main():
         change_required = exchange_exists
 
     # Check if attributes change on existing exchange
-    if not changeRequired and r.status_code==200 and module.params['state'] == 'present':
+    if not change_required and r.status_code==200 and module.params['state'] == 'present':
         if not (
             response['durable'] == module.params['durable'] and
-            response['auto_delete'] == module.params['autoDelete'] and
+            response['auto_delete'] == module.params['auto_delete'] and
             response['internal'] == module.params['internal'] and
-            response['type'] == module.params['exchangeType']
+            response['type'] == module.params['exchange_type']
         ):
             module.fail_json(
                 msg = "RabbitMQ RESTAPI doesn't support attribute changes for existing exchanges"
@@ -159,15 +179,14 @@ def main():
     # Exit if check_mode
     if module.check_mode:
         module.exit_json(
-            changed= changeRequired,
-            result = "Success",
+            changed= change_required,
             name = module.params['name'],
             details = response,
             arguments = module.params['arguments']
         )
 
     # Do changes
-    if changeRequired:
+    if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
                     url,
@@ -175,9 +194,9 @@ def main():
                     headers = { "content-type": "application/json"},
                     data = json.dumps({
                         "durable": module.params['durable'],
-                        "auto_delete": module.params['autoDelete'],
+                        "auto_delete": module.params['auto_delete'],
                         "internal": module.params['internal'],
-                        "type": module.params['exchangeType'],
+                        "type": module.params['exchange_type'],
                         "arguments": module.params['arguments']
                     })
                 )
@@ -187,7 +206,6 @@ def main():
         if r.status_code == 204:
             module.exit_json(
                 changed = True,
-                result = "Success",
                 name = module.params['name']
             )
         else:
@@ -200,7 +218,6 @@ def main():
     else:
         module.exit_json(
             changed = False,
-            result = "Success",
             name = module.params['name']
         )
 
