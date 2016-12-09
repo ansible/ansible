@@ -89,6 +89,6 @@ if __name__ == '__main__':
 
     if args.host:
         host_info = get_host_attributes(api, args.host)
-        print json.dumps(host_info, indent=1, sort_keys=True)
+        print( json.dumps(host_info, indent=1, sort_keys=True))
     elif args.list:
         list_groups(api)
