@@ -397,12 +397,13 @@ class ElastiCacheManager(object):
             return True
 
         # check vpc security groups
-        vpc_security_groups = []
-        security_groups = self.data['SecurityGroups'] or []
-        for sg in security_groups:
-            vpc_security_groups.append(sg['SecurityGroupId'])
-        if set(vpc_security_groups) != set(self.security_group_ids):
-            return True
+        if len(self.security_group_ids) > 0:
+            vpc_security_groups = []
+            security_groups = self.data['SecurityGroups'] or []
+            for sg in security_groups:
+                vpc_security_groups.append(sg['SecurityGroupId'])
+            if set(vpc_security_groups) != set(self.security_group_ids):
+                return True
 
         return False
 
