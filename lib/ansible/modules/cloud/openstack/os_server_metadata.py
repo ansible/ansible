@@ -140,7 +140,7 @@ def main():
                 msg='Could not find server %s' % server_param)
 
         # convert the metadata to dict, in case it was provided as CSV
-        if type(meta_param) is str:
+        if isinstance(meta_param, str):
             metas = {}
             for kv_str in meta_param.split(","):
                 k, v = kv_str.split("=")
