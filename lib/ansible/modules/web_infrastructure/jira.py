@@ -199,11 +199,17 @@ EXAMPLES = """
   become: true
   user:
     name: '{{ issue.meta.fields.creator.name }}'
-    comment: '{{issue.meta.fields.creator.displayName }}'
+    comment: '{{ issue.meta.fields.creator.displayName }}'
 
 - name: Create link from HSP-1 to MKY-1
-  jira: uri={{server}} username={{user}} password={{pass}} operation=link
-        linktype=Relate inwardissue=HSP-1 outwardissue=MKY-1
+  jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    operation: link
+    linktype: Relate
+    inwardissue: HSP-1
+    outwardissue: MKY-1
 
 # Transition an issue by target status
 - name: Close the issue
