@@ -70,7 +70,6 @@ import urllib
 class Pushover(object):
     ''' Instantiates a pushover object, use it to send notifications '''
     base_uri = 'https://api.pushover.net'
-    port = 443
 
     def __init__(self, module, user, token):
         self.module = module
@@ -80,7 +79,7 @@ class Pushover(object):
     def run(self, priority, msg):
         ''' Do, whatever it is, we do. '''
 
-        url = '%s:%s/1/messages.json' % (self.base_uri, self.port)
+        url = '%s/1/messages.json' % (self.base_uri)
 
         # parse config
         options = dict(user=self.user,
