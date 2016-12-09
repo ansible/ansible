@@ -46,10 +46,6 @@ options:
       required: false
     rules_egress:
       description:
-
-    required: false
-  rules_egress:
-    description:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
