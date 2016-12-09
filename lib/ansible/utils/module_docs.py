@@ -42,7 +42,6 @@ except ImportError:
 BLACKLIST_MODULES = frozenset((
    'async_wrapper',
    'accelerate',
-   'fireball',
 ))
 
 def get_docstring(filename, verbose=False):
