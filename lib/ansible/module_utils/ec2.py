@@ -119,6 +119,19 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
 
 boto3_inventory_conn = _boto3_conn
 
+
+def boto_exception(err):
+    '''boto error message handler'''
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = err.message
+    else:
+        error = '%s: %s' % (Exception, err)
+
+    return error
+
+
 def aws_common_argument_spec():
     return dict(
         ec2_url=dict(),
