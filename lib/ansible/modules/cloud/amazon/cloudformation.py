@@ -30,9 +30,9 @@ DOCUMENTATION = '''
 module: cloudformation
 short_description: Create or delete an AWS CloudFormation stack
 description:
-     - Launches an AWS CloudFormation stack and waits for it complete.
+     - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML.  This will change (in fact, it may change before 2.3 is out).
+     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML. This will change (in fact, it may change before 2.3 is out).
 version_added: "1.1"
 options:
   stack_name:
@@ -57,8 +57,9 @@ options:
     required: true
   template:
     description:
-      - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
-        Must give full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
+      - The local path of the cloudformation template.
+      - This must be the full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json".
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     default: null
   notification_arns:
@@ -81,7 +82,8 @@ options:
     version_added: "1.4"
   template_url:
     description:
-      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack. This parameter is mutually exclusive with 'template'. Either one of them is required if "state" parameter is "present"
+      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
   template_format:
@@ -249,6 +251,7 @@ def boto_version_required(version_tuple):
         boto_version.append(-1)
     return tuple(boto_version) >= tuple(version_tuple)
 
+
 def get_stack_events(cfn, stack_name):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
     ret = {'events':[], 'log':[]}
@@ -273,6 +276,46 @@ def get_stack_events(cfn, stack_name):
             ret['log'].append(failline)
 
     return ret
+
+
+def create_stack(module, stack_params, cfn):
+    if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
+        module.fail_json(msg="Either 'template' or 'template_url' is required when the stack does not exist.")
+
+    # 'disablerollback' only applies on creation, not update.
+    stack_params['DisableRollback'] = module.params['disable_rollback']
+
+    try:
+        cfn.create_stack(**stack_params)
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
+    except Exception as err:
+        error_msg = boto_exception(err)
+        module.fail_json(msg=error_msg)
+    if not result:
+        module.fail_json(msg="empty result")
+    return result
+
+
+def update_stack(module, stack_params, cfn):
+    if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
+        stack_params['UsePreviousTemplate'] = True
+
+    # if the state is present and the stack already exists, we try to update it.
+    # AWS will tell us if the stack template and parameters are the same and
+    # don't need to be updated.
+    try:
+        cfn.update_stack(**stack_params)
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+    except Exception as err:
+        error_msg = boto_exception(err)
+        if 'No updates are to be performed.' in error_msg:
+            result = dict(changed=False, output='Stack is already up-to-date.')
+        else:
+            module.fail_json(msg=error_msg)
+    if not result:
+        module.fail_json(msg="empty result")
+    return result
+
 
 def stack_operation(cfn, stack_name, operation):
     '''gets the status of a stack while it is created/updated/deleted'''
@@ -370,17 +413,15 @@ def main():
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-      'Capabilities':['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+      'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
     }
     state = module.params['state']
     stack_params['StackName'] = module.params['stack_name']
 
-    if module.params['template'] is None and module.params['template_url'] is None:
-        if state == 'present':
-            module.fail_json(msg='Module parameter "template" or "template_url" is required if "state" is "present"')
-
     if module.params['template'] is not None:
         stack_params['TemplateBody'] = open(module.params['template'], 'r').read()
+    elif module.params['template_url'] is not None:
+        stack_params['TemplateURL'] = module.params['template_url']
 
     if module.params.get('notification_arns'):
         stack_params['NotificationARNs'] = module.params['notification_arns'].split(',')
@@ -396,13 +437,9 @@ def main():
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
 
-    if module.params.get('template_url'):
-        stack_params['TemplateURL'] = module.params['template_url']
-
     if module.params.get('role_arn'):
         stack_params['RoleARN'] = module.params['role_arn']
 
-    update = False
     result = {}
 
     try:
@@ -413,40 +450,14 @@ def main():
 
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
 
-    # if state is present we are going to ensure that the stack is either
-    # created or updated
-    if state == 'present' and not stack_info:
-        try:
-            # 'disablerollback' only applies on creation, not update.
-            stack_params['DisableRollback'] = module.params['disable_rollback']
+    if state == 'present':
+        if not stack_info:
+            result = create_stack(module, stack_params, cfn)
+        else:
+            result = update_stack(module, stack_params, cfn)
 
-            cfn.create_stack(**stack_params)
-        except Exception as err:
-            error_msg = boto_exception(err)
-            #return {'error': error_msg}
-            module.fail_json(msg=error_msg)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
-        if not result: module.fail_json(msg="empty result")
+        # format the stack output
 
-    if state == 'present' and stack_info:
-        # if the state is present and the stack already exists, we try to update it.
-        # AWS will tell us if the stack template and parameters are the same and
-        # don't need to be updated.
-        try:
-            cfn.update_stack(**stack_params)
-            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
-        except Exception as err:
-            error_msg = boto_exception(err)
-            if 'No updates are to be performed.' in error_msg:
-                result = dict(changed=False, output='Stack is already up-to-date.')
-            else:
-                module.fail_json(msg=error_msg)
-        if not result: module.fail_json(msg="empty result")
-
-    # check the status of the stack while we are creating/updating it.
-    # and get the outputs of the stack
-
-    if state == 'present' or update:
         stack = get_stack_facts(cfn, stack_params['StackName'])
         if result.get('stack_outputs') is None:
             # always define stack_outputs, but it may be empty
@@ -466,12 +477,11 @@ def main():
             })
         result['stack_resources'] = stack_resources
 
-    # absent state is different because of the way delete_stack works.
-    # problem is it it doesn't give an error if stack isn't found
-    # so must describe the stack first
+    elif state == 'absent':
+        # absent state is different because of the way delete_stack works.
+        # problem is it it doesn't give an error if stack isn't found
+        # so must describe the stack first
 
-    if state == 'absent':
-        #result = {}
         try:
             stack = get_stack_facts(cfn, stack_params['StackName'])
             if not stack:
@@ -487,7 +497,6 @@ def main():
             'since Ansible 2.3, JSON and YAML templates are now passed '
             'directly to the CloudFormation API.')]
     module.exit_json(**result)
-
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
