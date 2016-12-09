@@ -103,16 +103,17 @@ except ImportError:
     HAVE_SEOBJECT=False
 
 ### Add missing entries (backward compatible)
-seobject.file_types.update(dict(
-  a = seobject.SEMANAGE_FCONTEXT_ALL,
-  b = seobject.SEMANAGE_FCONTEXT_BLOCK,
-  c = seobject.SEMANAGE_FCONTEXT_CHAR,
-  d = seobject.SEMANAGE_FCONTEXT_DIR,
-  f = seobject.SEMANAGE_FCONTEXT_REG,
-  l = seobject.SEMANAGE_FCONTEXT_LINK,
-  p = seobject.SEMANAGE_FCONTEXT_PIPE,
-  s = seobject.SEMANAGE_FCONTEXT_SOCK,
-))
+if HAVE_SEOBJECT:
+    seobject.file_types.update(dict(
+        a = seobject.SEMANAGE_FCONTEXT_ALL,
+        b = seobject.SEMANAGE_FCONTEXT_BLOCK,
+        c = seobject.SEMANAGE_FCONTEXT_CHAR,
+        d = seobject.SEMANAGE_FCONTEXT_DIR,
+        f = seobject.SEMANAGE_FCONTEXT_REG,
+        l = seobject.SEMANAGE_FCONTEXT_LINK,
+        p = seobject.SEMANAGE_FCONTEXT_PIPE,
+        s = seobject.SEMANAGE_FCONTEXT_SOCK,
+    ))
 
 ### Make backward compatible
 option_to_file_type_str = dict(
