@@ -301,6 +301,7 @@ class DataLoader():
                 result = test_path
         else:
             search = []
+            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
             for path in paths:
                 upath = unfrackpath(path)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
@@ -315,18 +316,20 @@ class DataLoader():
                         search.append(os.path.join(b_mydir, b_source))
                     else:
                         # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] == b_dirname:
-                            search.append(os.path.join(b_upath, b_source))
-                        else:
+                        if b_source.split(b'/')[0] != b_dirname:
                             search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b'tasks', b_source))
+                        search.append(os.path.join(b_upath, b_source))
+
                 elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
-                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                    if b_source.split(b'/')[0] != dirname:
+                        search.append(os.path.join(b_upath, b_dirname, b_source))
                     search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+            # don't add dirname if user already is using it in source
+            if b_source.split(b'/')[0] != dirname:
+                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
             search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
