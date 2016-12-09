@@ -43,7 +43,7 @@ options:
    force:
      description:
        - Allows or disallows snapshot of a volume to be created when the volume
-       is attached to an instance.
+         is attached to an instance.
      required: false
      default: False
    state:
