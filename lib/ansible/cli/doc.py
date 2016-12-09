@@ -59,6 +59,8 @@ class DocCLI(CLI):
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
+        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_modules',
+                help='Show documentation for all modules')
 
         super(DocCLI, self).parse()
 
@@ -80,6 +82,13 @@ class DocCLI(CLI):
 
             self.pager(self.get_module_list_text())
             return 0
+
+        # process all modules
+        if self.options.all_modules:
+            paths = module_loader._get_paths()
+            for path in paths:
+                self.find_modules(path)
+            self.args = sorted(set(self.module_list) - module_docs.BLACKLIST_MODULES)
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
@@ -143,26 +152,26 @@ class DocCLI(CLI):
         return 0
 
     def find_modules(self, path):
+        for module in os.listdir(path):
+            full_path = '/'.join([path, module])
 
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
+            if module.startswith('.'):
+                continue
+            elif os.path.isdir(full_path):
+                continue
+            elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                continue
+            elif module.startswith('__'):
+                continue
+            elif module in C.IGNORE_FILES:
+                continue
+            elif module.startswith('_'):
+                if os.path.islink(full_path):  # avoids aliases
                     continue
-                elif os.path.isdir(module):
-                    self.find_modules(module)
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-                elif module.startswith('__'):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
-                        continue
 
-                module = os.path.splitext(module)[0] # removes the extension
-                self.module_list.append(module)
+            module = os.path.splitext(module)[0]  # removes the extension
+            module = module.lstrip('_')  # remove underscore from deprecated modules
+            self.module_list.append(module)
 
     def get_module_list_text(self):
         columns = display.columns
