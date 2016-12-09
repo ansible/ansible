@@ -213,7 +213,7 @@ def boto_exception(err):
     return error
 
 # the following function, calculate_multipart_etag, is from tlastowka
-# on github and is used under its (compatible) MIT license. So this
+# on github and is used under its (compatible) GPL license. So this
 # license applies to the following function.
 # source: https://github.com/tlastowka/calculate_multipart_etag/blob/master/calculate_multipart_etag.py
 #
@@ -374,10 +374,11 @@ def filter_list(s3, bucket, s3filelist, strategy):
     for e in keeplist:
       e['_strategy'] = strategy
 
-    # fetch info from S3 if we're going to use it for comparisons
+    # init/fetch info from S3 if we're going to use it for comparisons
     if not strategy == 'force':
         keeplist = head_s3(s3, bucket, s3filelist)
 
+    # now actually run the strategies
     if strategy == 'checksum':
         for entry in keeplist:
             if entry.get('s3_head'):
