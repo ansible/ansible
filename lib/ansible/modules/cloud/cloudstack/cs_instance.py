@@ -533,6 +533,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     if not vpc_id and self.is_vm_in_vpc(vm=v):
                         continue
                     if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
+                        # Query the user data if we need to
+                        if 'userdata' not in v and self.get_user_data() is not None:
+                            res = self.cs.getVirtualMachineUserData(virtualmachineid=v['id'])
+                            v['userdata'] = res['virtualmachineuserdata'].get('userdata',"")
                         self.instance = v
                         break
         return self.instance
