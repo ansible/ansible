@@ -29,6 +29,10 @@ options:
     description:
       - VPC id of the requesting VPC.
     required: false
+  peering_id:
+    description:
+      - Peering connection id.
+    required: false
   peer_vpc_id:
     description:
       - VPC id of the accepting VPC.
