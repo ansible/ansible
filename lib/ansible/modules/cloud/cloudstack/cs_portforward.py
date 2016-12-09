@@ -84,6 +84,18 @@ options:
       - VM guest NIC secondary IP address for the port forwarding rule.
     required: false
     default: false
+  network:
+    description:
+      - Name of the network.
+    required: false
+    default: false
+    version_added: "2.3"
+  vpc:
+    description:
+      - Name of the VPC.
+    required: false
+    default: false
+    version_added: "2.3"
   domain:
     description:
       - Domain the C(vm) is related to.
@@ -246,6 +258,8 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             args['account'] = self.get_account(key='name')
             args['domainid'] = self.get_domain(key='id')
             args['projectid'] = self.get_project(key='id')
+            # TODO: check if networkid is required for VPC
+            args['networkid'] = self.get_network(key='id')
             portforwarding_rules = self.cs.listPortForwardingRules(**args)
 
             if portforwarding_rules and 'portforwardingrule' in portforwarding_rules:
@@ -279,6 +293,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['virtualmachineid']    = self.get_vm(key='id')
         args['account']             = self.get_account(key='name')
         args['domainid']            = self.get_domain(key='id')
+        args['networkid']           = self.get_network(key='id')
 
         portforwarding_rule = None
         self.result['changed'] = True
@@ -300,6 +315,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['vmguestip']           = self.get_vm_guest_ip()
         args['ipaddressid']         = self.get_ip_address(key='id')
         args['virtualmachineid']    = self.get_vm(key='id')
+        args['networkid']           = self.get_network(key='id')
 
         if self.has_changed(args, portforwarding_rule):
             self.result['changed'] = True
@@ -353,6 +369,8 @@ def main():
         open_firewall = dict(type='bool', default=False),
         vm_guest_ip = dict(default=None),
         vm = dict(default=None),
+        vpc = dict(default=None),
+        network = dict(default=None),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
