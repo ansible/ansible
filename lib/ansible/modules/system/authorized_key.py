@@ -98,16 +98,19 @@ EXAMPLES = '''
 # Example using key data from a local file on the management machine
 - authorized_key:
     user: charlie
+    state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
 # Using github url as key source
 - authorized_key:
     user: charlie
+    state: present
     key: https://github.com/charlie.keys
 
 # Using alternate directory locations:
 - authorized_key:
     user: charlie
+    state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     path: /etc/ssh/authorized_keys/charlie
     manage_dir: no
@@ -116,7 +119,8 @@ EXAMPLES = '''
 - name: Set up authorized_keys for the deploy user
   authorized_key:
     user: deploy
-    key: "{{ item }}"
+    state: present
+    key: '{{ item }}'
   with_file:
     - public_keys/doe-jane
     - public_keys/doe-john
@@ -124,19 +128,21 @@ EXAMPLES = '''
 # Using key_options:
 - authorized_key:
     user: charlie
+    state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
 # Using validate_certs:
 - authorized_key:
     user: charlie
+    state: present
     key: https://github.com/user.keys
     validate_certs: no
 
 # Set up authorized_keys exclusively with one key
 - authorized_key:
     user: root
-    key: "{{ item }}"
+    key: '{{ item }}'
     state: present
     exclusive: yes
   with_file:
@@ -145,9 +151,9 @@ EXAMPLES = '''
 # Copies the key from the user who is running ansible to the remote machine user ubuntu
 - authorized_key:
     user: ubuntu
+    state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
   become: yes
-
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
