@@ -101,6 +101,7 @@ class SynchronizeTester(object):
 
     def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
+        self.final_module_args = module_args
         self.final_task_vars = task_vars
         return {}
 
