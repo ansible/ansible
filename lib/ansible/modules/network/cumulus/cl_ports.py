@@ -47,24 +47,27 @@ options:
             - List of 10G ports that will be ganged to form a 40G port.
 '''
 EXAMPLES = '''
-Example playbook entries using the cl_ports module to manage the switch
-attributes defined in the ports.conf file on Cumulus Linux
+# Use cl_ports module to manage the switch attributes defined in the
+# ports.conf file on Cumulus Linux
 
-## Unganged port config using simple args
-   - name: configure ports.conf setup
-     cl_ports:
-        speed_4_by_10g: "swp1, swp32"
-        speed_40g: "swp2-31"
-     notify: restart switchd
+## Unganged port configuration on certain ports
+- name: configure ports.conf setup
+  cl_ports:
+    speed_4_by_10g:
+      - swp1
+      - swp32
+    speed_40g:
+      - swp2-31
 
-## Unganged port configuration on certain ports using complex args
-
-    - name: configure ports.conf setup
-      cl_ports:
-          speed_4_by_10g: ['swp1-3', 'swp6']
-          speed_40g: ['swp4-5', 'swp7-32']
-      notify: restart switchd
-
+## Unganged port configuration on certain ports
+- name: configure ports.conf setup
+  cl_ports:
+    speed_4_by_10g:
+      - swp1-3
+      - swp6
+    speed_40g:
+      - swp4-5
+      - swp7-32
 '''
 
 RETURN = '''
