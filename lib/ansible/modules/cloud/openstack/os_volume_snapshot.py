@@ -77,6 +77,20 @@ EXAMPLES = '''
       volume: test_volume
 '''
 
+RETURN = '''
+snapshot:
+    description: The snapshot instance after the change
+    returned: success
+    type: dict
+    sample:
+      id: 837aca54-c0ee-47a2-bf9a-35e1b4fdac0c
+      name: test_snapshot
+      volume_id: ec646a7c-6a35-4857-b38b-808105a24be6
+      size: 2
+      status: available
+      display_name: test_snapshot
+'''
+
 try:
     import shade
 
