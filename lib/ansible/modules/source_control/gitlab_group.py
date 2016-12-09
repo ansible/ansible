@@ -78,23 +78,25 @@ options:
 '''
 
 EXAMPLES = '''
-- name: "Delete Gitlab Group"
-  local_action: gitlab_group
-                server_url="http://gitlab.dj-wasabi.local"
-                validate_certs=false
-                login_token="WnUzDsxjy8230-Dy_k"
-                name=my_first_group
-                state=absent
+- name: Delete Gitlab Group
+  gitlab_group:
+    server_url: http://gitlab.example.com
+    validate_certs: False
+    login_token: WnUzDsxjy8230-Dy_k
+    name: my_first_group
+    state: absent
+  delegate_to: localhost
 
-- name: "Create Gitlab Group"
-  local_action: gitlab_group
-                server_url="https://gitlab.dj-wasabi.local"
-                validate_certs=true
-                login_user=dj-wasabi
-                login_password="MySecretPassword"
-                name=my_first_group
-                path=my_first_group
-                state=present
+- name: Create Gitlab Group
+  gitlab_group:
+    server_url: https://gitlab.example.com
+    validate_certs: True
+    login_user: dj-wasabi
+    login_password: MySecretPassword
+    name: my_first_group
+    path: my_first_group
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''
