@@ -116,7 +116,7 @@ options:
     aliases: []
   wait:
     description:
-      - wait for the instance to be 'running' before returning.  Does not wait for SSH, see 'wait_for' example for details.
+      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for' example for details.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
