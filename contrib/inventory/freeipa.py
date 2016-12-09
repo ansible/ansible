@@ -2,6 +2,7 @@
 
 import argparse
 from ipalib import api
+from ipalib import errors
 import json
 
 def initialize():
@@ -66,24 +67,28 @@ def parse_args():
 
     return parser.parse_args()
 
-def print_host(host):
+def get_host_attributes(api, host):
     '''
-    This function is really a stub, it could return variables to be used in 
-    a playbook. However, at this point there are no variables stored in 
-    FreeIPA/IPA.
-
+    This function returns a hosts attributes from FreeIPA.
     This function expects one string, this hostname to lookup variables for.
     '''
-
-    print(json.dumps({}))
-
-    return None
+    try:
+        result = api.Command.host_show(unicode(host))['result']
+        try:
+            del result['usercertificate']
+        except KeyError:
+            pass
+        inv_string = json.dumps(result, indent=1, sort_keys=True)
+        return result
+    except errors.NotFound:
+       return {}
 
 if __name__ == '__main__':
     args = parse_args()
+    api = initialize()
 
     if args.host:
-        print_host(args.host)
+        host_info = get_host_attributes(api, args.host)
+        print json.dumps(host_info, indent=1, sort_keys=True)
     elif args.list:
-        api = initialize()
         list_groups(api)
