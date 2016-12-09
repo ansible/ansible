@@ -29,6 +29,7 @@ description:
 author:
     - Andy Hill (@andyhky)
     - Tim Rupp
+options: {}
 '''
 
 import platform

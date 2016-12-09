@@ -40,6 +40,7 @@ notes:
     - there's no way to test if they've been completed (?)
     - the stdout is quite likely to be several megabytes
 author: Peter Mounce
+options: {}
 '''
 
 EXAMPLES = '''
