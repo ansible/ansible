@@ -119,25 +119,27 @@ author:
 EXAMPLES = '''
 - irc:
     server: irc.example.net
-    channel: "#t1"
-    msg: "Hello world"
+    channel: #t1
+    msg: Hello world
 
 - local_action:
     module: irc
     port: 6669
-    server: "irc.example.net"
-    channel: "#t1"
-    msg: "All finished at {{ ansible_date_time.iso8601 }}"
+    server: irc.example.net
+    channel: #t1
+    msg: 'All finished at {{ ansible_date_time.iso8601 }}'
     color: red
     nick: ansibleIRC
 
 - local_action:
     module: irc
     port: 6669
-    server: "irc.example.net"
-    channel: "#t1"
-    nick_to: ["nick1", "nick2"]
-    msg: "All finished at {{ ansible_date_time.iso8601 }}"
+    server: irc.example.net
+    channel: #t1
+    nick_to:
+      - nick1
+      - nick2
+    msg: 'All finished at {{ ansible_date_time.iso8601 }}'
     color: red
     nick: ansibleIRC
 '''
