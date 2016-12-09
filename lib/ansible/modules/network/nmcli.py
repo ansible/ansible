@@ -524,7 +524,8 @@ class Nmcli(object):
 
     platform='Generic'
     distribution=None
-    bus=dbus.SystemBus()
+    if HAVE_DBUS:
+        bus=dbus.SystemBus()
     # The following is going to be used in dbus code
     DEVTYPES={1: "Ethernet",
                    2: "Wi-Fi",
