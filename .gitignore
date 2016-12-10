@@ -57,6 +57,7 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/units/.coverage.*
 # Development
 /test/develop
 venv
