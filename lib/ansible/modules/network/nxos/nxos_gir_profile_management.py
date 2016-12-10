@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: nxos_gir_profile
+module: nxos_gir_profile_management
 version_added: "2.2"
 short_description: Create a maintenance-mode or normal-mode profile for GIR.
 description:
