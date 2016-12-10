@@ -48,7 +48,7 @@ options:
         - "Search term which is accepted by oVirt search backend."
         - "For example to search host X from datacenter Y use following pattern:
            name=X and datacenter=Y"
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -73,7 +73,7 @@ ovirt_hosts:
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)

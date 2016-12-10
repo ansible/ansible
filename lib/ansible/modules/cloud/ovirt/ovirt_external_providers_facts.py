@@ -27,7 +27,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
 )
 
 
@@ -54,7 +54,7 @@ options:
     name:
         description:
             - "Name of the external provider, can be used as glob expression."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -105,7 +105,7 @@ def _external_provider_service(provider_type, system_service):
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         name=dict(default=None, required=False),
         type=dict(
             default=None,
