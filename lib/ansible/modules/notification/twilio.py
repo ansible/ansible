@@ -70,25 +70,25 @@ EXAMPLES = '''
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "All servers with webserver role are now configured."
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15552014545"
-    to_number: "+15553035681"
+    msg: All servers with webserver role are now configured.
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15552014545
+    to_number: +15553035681
   delegate_to: localhost
 
 # send an SMS to multiple phone numbers about the deployment
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "This server's configuration is now complete."
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15553258899"
+    msg: This server configuration is now complete.
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15553258899
     to_number:
-      - "+15551113232"
-      - "+12025551235"
-      - "+19735559010"
+      - +15551113232
+      - +12025551235
+      - +19735559010
   delegate_to: localhost
 
 # send an MMS to a single recipient with an update on the deployment
@@ -96,12 +96,12 @@ EXAMPLES = '''
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "Deployment complete!"
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15552014545"
-    to_number: "+15553035681"
-    media_url: "https://demo.twilio.com/logo.png"
+    msg: Deployment complete!
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15552014545
+    to_number: +15553035681
+    media_url: https://demo.twilio.com/logo.png
   delegate_to: localhost
 '''
 
