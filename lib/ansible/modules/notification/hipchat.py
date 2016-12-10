@@ -91,7 +91,7 @@ EXAMPLES = '''
 
 # Use Hipchat API version 2
 - hipchat:
-    api: 'https://api.hipchat.com/v2/'
+    api: https://api.hipchat.com/v2/
     token: OAUTH2_TOKEN
     room: notify
     msg: Ansible task finished
