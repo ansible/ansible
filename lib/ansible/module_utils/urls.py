@@ -41,6 +41,8 @@ import socket
 import sys
 import tempfile
 import traceback
+import base64
+import shutil
 
 try:
     import httplib
@@ -1324,3 +1326,41 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         tempfile.tempdir = old_tempdir
 
     return r, info
+
+
+def fetch_file(module, url, data=None, headers=None, method=None,
+               use_proxy=True, force=False, last_mod_time=None, timeout=10):
+    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+    This is basically a wrapper around fetch_url().
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A string, the path to the downloaded file.
+    '''
+    # download file
+    bufsize = 65536
+    tempdir = tempfile.mkdtemp()
+    filepath = os.path.join(tempdir, to_native(url.rsplit('/', 1)[1], errors='surrogate_or_strict'))
+    try:
+        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
+        if not rsp:
+            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+        f = open(filepath, 'wb')
+        data = rsp.read(bufsize)
+        while data:
+            f.write(data)
+            data = rsp.read(bufsize)
+        f.close()
+    except Exception as e:
+        shutil.rmtree(tempdir)
+        module.fail_json(msg="Failure downloading %s, %s" % (url, e))
+    return filepath
