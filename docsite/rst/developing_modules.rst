@@ -453,17 +453,17 @@ the ``copy`` module::
         description: destination file/path
         returned: success
         type: string
-        sample: "/path/to/file.txt"
+        sample: /path/to/file.txt
     src:
         description: source file used for the copy on the target machine
         returned: changed
         type: string
-        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+        sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
         description: md5 checksum of the file after running copy
         returned: when supported
         type: string
-        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+        sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
 
