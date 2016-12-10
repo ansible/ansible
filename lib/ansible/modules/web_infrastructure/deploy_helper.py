@@ -171,9 +171,9 @@ procedure to remove it during cleanup.
     path: /path/to/root
 - name: Clone the project to the new release folder
   git:
-    repo: 'git://foosball.example.org/path/to/repo.git'
+    repo: git://foosball.example.org/path/to/repo.git
     dest: '{{ deploy_helper.new_release_path }}'
-    version: 'v1.1.1'
+    version: v1.1.1
 - name: Add an unfinished file, to allow cleanup on successful finalize
   file:
     path: '{{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }}'
@@ -227,7 +227,7 @@ procedure to remove it during cleanup.
 # Using your own naming strategy for releases (a version tag in this case):
 - deploy_helper:
     path: /path/to/root
-    release: 'v1.1.1'
+    release: v1.1.1
     state: present
 - deploy_helper:
     path: /path/to/root
