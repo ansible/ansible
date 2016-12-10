@@ -51,12 +51,12 @@ options:
     choices: [ 'User', 'DomainAdmin', 'ResourceAdmin', 'Admin' ]
   description:
     description:
-      - Description of the role
+      - Description of the role.
     required: false
     default: null
   state:
     description:
-      - State of the pod.
+      - State of the role.
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
