@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_publicip_facts
+module: azure_rm_publicipaddress_facts
 
 version_added: "2.1"
 
