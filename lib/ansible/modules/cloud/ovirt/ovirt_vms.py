@@ -19,13 +19,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import traceback
+
 try:
-    import ovirtsdk4 as sdk
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.ovirt import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+)
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -679,7 +692,7 @@ def _get_initialization(sysprep, cloud_init, cloud_init_nics):
         initialization = otypes.Initialization(
             **sysprep
         )
-    return  initialization
+    return initialization
 
 
 def control_state(vm, vms_service, module):
@@ -879,10 +892,10 @@ def main():
 
         module.exit_json(**ret)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=False)
 
-from ansible.module_utils.basic import *
+
 if __name__ == "__main__":
     main()

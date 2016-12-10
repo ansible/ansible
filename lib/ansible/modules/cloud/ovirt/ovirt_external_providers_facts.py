@@ -111,7 +111,7 @@ def main():
             default=None,
             required=True,
             choices=[
-                'os_image', 'os_network', 'os_volume',  'foreman',
+                'os_image', 'os_network', 'os_volume', 'foreman',
             ],
             aliases=['provider'],
         ),
