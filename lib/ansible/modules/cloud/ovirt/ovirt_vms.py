@@ -794,8 +794,9 @@ def main():
         if state == 'present' or state == 'running' or state == 'next_run':
             sysprep = module.params['sysprep']
             cloud_init = module.params['cloud_init']
-            cloud_init_nics = module.params['cloud_init_nics']
-            cloud_init_nics.append(cloud_init)
+            cloud_init_nics = module.params['cloud_init_nics'] or []
+            if cloud_init is not None:
+                cloud_init_nics.append(cloud_init)
 
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:

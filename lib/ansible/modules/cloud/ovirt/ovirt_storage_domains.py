@@ -239,7 +239,7 @@ class StorageDomainModule(BaseModule):
                 vfs_type=storage.get('vfs_type'),
                 address=storage.get('address'),
                 path=storage.get('path'),
-            )
+            ) if storage_type is not None else None
         )
 
     def _attached_sds_service(self):
