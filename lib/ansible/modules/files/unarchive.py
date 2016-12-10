@@ -126,13 +126,13 @@ EXAMPLES = '''
 - unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
-    remote_src: yes
+    remote_src: True
 
 # Unarchive a file that needs to be downloaded (added in 2.0)
 - unarchive:
-    src: "https://example.com/example.zip"
+    src: https://example.com/example.zip
     dest: /usr/local/bin
-    remote_src: yes
+    remote_src: True
 '''
 
 import re
