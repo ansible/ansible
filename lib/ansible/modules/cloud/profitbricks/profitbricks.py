@@ -292,6 +292,7 @@ def _create_machine(module, profitbricks, datacenter, name):
         bus=bus)
 
     n = NIC(
+        name=str(uuid.uuid4()).replace('-', '')[:10],
         lan=int(lan)
         )
 
@@ -319,6 +320,7 @@ def _create_machine(module, profitbricks, datacenter, name):
     except Exception as e:
         module.fail_json(msg="failed to create the new server: %s" % str(e))
     else:
+        server_response['nic'] = server_response['entities']['nics']['items'][0]
         return server_response
 
 

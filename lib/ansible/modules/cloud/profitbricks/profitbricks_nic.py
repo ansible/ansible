@@ -285,7 +285,7 @@ def main():
 
         try:
             (nic_dict) = create_nic(module, profitbricks)
-            module.exit_json(nics=nic_dict)
+            module.exit_json(**nic_dict)
         except Exception as e:
             module.fail_json(msg='failed to set nic state: %s' % str(e))
 
