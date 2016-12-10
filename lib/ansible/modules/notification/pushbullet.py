@@ -77,24 +77,24 @@ EXAMPLES = '''
 
 # Sends a link to a device
 - pushbullet: 
-    api_key: "ABC123abc123ABC123abc123ABC123ab"
-    device: "Chrome"
-    push_type: "link"
-    title: "Ansible Documentation"
-    body: "http://docs.ansible.com/"
+    api_key: ABC123abc123ABC123abc123ABC123ab
+    device: Chrome
+    push_type: link
+    title: Ansible Documentation
+    body: http://docs.ansible.com/
 
 # Sends a push notification to a channel
 - pushbullet: 
-    api_key: "ABC123abc123ABC123abc123ABC123ab"
-    channel: "my-awesome-channel"
-    title: "Broadcasting a message to the #my-awesome-channel folks"
+    api_key: ABC123abc123ABC123abc123ABC123ab
+    channel: my-awesome-channel
+    title: Broadcasting a message to the #my-awesome-channel folks
 
 # Sends a push notification with title and body to a channel
 - pushbullet: 
-    api_key: "ABC123abc123ABC123abc123ABC123ab"
-    channel: "my-awesome-channel"
-    title: "ALERT! Signup service is down"
-    body: "Error rate on signup service is over 90% for more than 2 minutes"
+    api_key: ABC123abc123ABC123abc123ABC123ab
+    channel: my-awesome-channel
+    title: ALERT! Signup service is down
+    body: Error rate on signup service is over 90% for more than 2 minutes
 '''
 
 try:
