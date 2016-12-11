@@ -137,55 +137,52 @@ options:
 '''
 
 EXAMPLES = '''
-# Create a maintenance window for 10 minutes on server1.example.com, with
-automation to stop the maintenance.
-- statusio_maintenance:
-      title: "Router Upgrade from ansible"
-      desc: "Performing a Router Upgrade"
-      components: "server1.example.com"
-      api_id: "api_id"
-      api_key: "api_key"
-      statuspage: "statuspage_id"
-      maintenance_notify_1_hr: true
-      automation: true
+- name: Create a maintenance window for 10 minutes on server1, with automation to stop the maintenance
+  statusio_maintenance:
+    title: Router Upgrade from ansible
+    desc: Performing a Router Upgrade
+    components: server1.example.com
+    api_id: api_id
+    api_key: api_key
+    statuspage: statuspage_id
+    maintenance_notify_1_hr: True
+    automation: True
 
-# Create a maintenance window for 60 minutes on multiple hosts
-- name: "Create maintenance window for server1 and server2"
-  local_action:
-    module: statusio_maintenance
-    title: "Routine maintenance"
-    desc: "Some security updates"
+- name: Create a maintenance window for 60 minutes on server1 and server2
+  statusio_maintenance:
+    title: Routine maintenance
+    desc: Some security updates
     components:
-      - "server1.example.com"
-      - "server2.example.com"
-    minutes: "60"
-    api_id: "api_id"
-    api_key: "api_key"
-    statuspage: "statuspage_id"
-    maintenance_notify_1_hr: true
-    automation: true
+      - server1.example.com
+      - server2.example.com
+    minutes: 60
+    api_id: api_id
+    api_key: api_key
+    statuspage: statuspage_id
+    maintenance_notify_1_hr: True
+    automation: True
+  delegate_to: localhost
 
-# Create a future maintenance window for 24 hours to all hosts inside the
-# Primary Data Center
-- statusio_maintenance:
-      title: Data center downtime
-      desc: Performing a Upgrade to our data center
-      components: "Primary Data Center"
-      api_id: "api_id"
-      api_key: "api_key"
-      statuspage: "statuspage_id"
-      start_date: "01/01/2016"
-      start_time: "12:00"
-      minutes: 1440
+- name: Create a future maintenance window for 24 hours to all hosts inside the Primary Data Center
+  statusio_maintenance:
+    title: Data center downtime
+    desc: Performing a Upgrade to our data center
+    components: Primary Data Center
+    api_id: api_id
+    api_key: api_key
+    statuspage: statuspage_id
+    start_date: 01/01/2016
+    start_time: 12:00
+    minutes: 1440
 
-# Delete a maintenance window
-- statusio_maintenance:
-     title: "Remove a maintenance window"
-     maintenance_id: "561f90faf74bc94a4700087b"
-     statuspage: "statuspage_id"
-     api_id: "api_id"
-     api_key: "api_key"
-     state: absent
+- name: Delete a maintenance window
+  statusio_maintenance:
+    title: Remove a maintenance window
+    maintenance_id: 561f90faf74bc94a4700087b
+    statuspage: statuspage_id
+    api_id: api_id
+    api_key: api_key
+    state: absent
 
 '''
 # TODO: Add RETURN documentation.
