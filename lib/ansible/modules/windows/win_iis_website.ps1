@@ -49,7 +49,7 @@ $bind_hostname = Get-Attr $params "hostname" $FALSE;
 $bind_ssl = Get-Attr $params "ssl" $FALSE;
 
 # Custom site Parameters from string where properties
-# are seperated by a pipe and property name/values by colon.
+# are separated by a pipe and property name/values by colon.
 # Ex. "foo:1|bar:2"
 $parameters = Get-Attr $params "parameters" $null;
 if($parameters -ne $null) {

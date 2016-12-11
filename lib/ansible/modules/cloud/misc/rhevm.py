@@ -667,7 +667,7 @@ class RHEVConn(object):
             setChanged()
         try:
             NIC.update()
-            setMsg('iface has succesfully been updated.')
+            setMsg('iface has successfully been updated.')
         except Exception as e:
             setMsg("Failed to update the iface.")
             setMsg(str(e))

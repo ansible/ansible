@@ -107,7 +107,7 @@ options:
 """
 
 EXAMPLES = r"""
-- name: insert/update "Match User" configuation block in /etc/ssh/sshd_config
+- name: insert/update "Match User" configuration block in /etc/ssh/sshd_config
   blockinfile:
     dest: /etc/ssh/sshd_config
     block: |

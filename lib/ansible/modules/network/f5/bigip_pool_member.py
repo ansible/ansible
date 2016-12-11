@@ -105,7 +105,7 @@ options:
   ratio:
     description:
       - Pool member ratio weight. Valid values range from 1 through 100.
-        New pool members -- unless overriden with this value -- default
+        New pool members -- unless overridden with this value -- default
         to 1.
     required: false
     default: null

@@ -111,7 +111,7 @@ def remove_packages(module, opkg_path, packages):
         force = "--force-%s" % force
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, opkg_path, package):

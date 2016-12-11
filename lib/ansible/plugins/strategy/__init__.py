@@ -479,7 +479,7 @@ class StrategyBase:
 
                         if original_task.action == 'include_vars':
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
-                                # find the host we're actually refering too here, which may
+                                # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
 
                                 if original_task.run_once:

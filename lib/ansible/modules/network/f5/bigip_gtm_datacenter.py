@@ -193,7 +193,7 @@ class BigIpGtmDatacenter(object):
         )
 
         if hasattr(r, 'servers'):
-            # Deliberately using sets to supress duplicates
+            # Deliberately using sets to suppress duplicates
             p['servers'] = set([str(x) for x in r.servers])
         if hasattr(r, 'contact'):
             p['contact'] = str(r.contact)

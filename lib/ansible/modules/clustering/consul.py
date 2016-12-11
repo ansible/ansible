@@ -56,7 +56,7 @@ options:
     service_name:
         description:
           - Unique name for the service on a node, must be unique per node,
-            required if registering a service. May be ommitted if registering
+            required if registering a service. May be omitted if registering
             a node level check
         required: false
     service_id:

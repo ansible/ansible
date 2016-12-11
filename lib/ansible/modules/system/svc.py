@@ -127,7 +127,7 @@ def _load_dist_subclass(cls, *args, **kwargs):
 
 class Svc(object):
     """
-    Main class that handles daemontools, can be subclassed and overriden in case
+    Main class that handles daemontools, can be subclassed and overridden in case
     we want to use a 'derivative' like encore, s6, etc
     """
 

@@ -23,7 +23,7 @@ from ansible.parsing.dataloader import DataLoader
 
 class TaskResult:
     '''
-    This class is responsible for interpretting the resulting data
+    This class is responsible for interpreting the resulting data
     from an executed task, and provides helper methods for determining
     the result of a given task.
     '''

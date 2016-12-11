@@ -106,7 +106,7 @@
       - "dir_attrs.stat.pw_name == 'nobody'"
       - "dir_attrs.stat.mode == '0755'"
 
-- name: Check that template to a dirctory where the directory does not end with a / is allowed
+- name: Check that template to a directory where the directory does not end with a / is allowed
   template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ group.stdout }}
 
 - name: make a symlink to the templated file

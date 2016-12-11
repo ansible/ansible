@@ -70,7 +70,7 @@ notes:
 """
 
 EXAMPLES = """
-# Syncs the contents of one diretory to another.
+# Syncs the contents of one directory to another.
 $ ansible -i hosts all -m win_robocopy -a "src=C:\\DirectoryOne dest=C:\\DirectoryTwo"
 
 # Sync the contents of one directory to another, including subdirectories.

@@ -116,7 +116,7 @@ function BackupFile($path) {
 function Present($dest, $regexp, $line, $insertafter, $insertbefore, $create, $backup, $backrefs, $validate, $encodingobj, $linesep) {
 
 	# Note that we have to clean up the dest path because ansible wants to treat / and \ as 
-	# interchangable in windows pathnames, but .NET framework internals do not support that.
+	# interchangeable in windows pathnames, but .NET framework internals do not support that.
 	$cleandest = $dest.Replace("/", "\");
 
 	# Check if destination exists. If it does not exist, either create it if create == "yes"

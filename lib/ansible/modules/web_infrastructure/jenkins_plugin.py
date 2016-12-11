@@ -128,7 +128,7 @@ options:
       - Defines whether to install plugin dependencies.
 
 notes:
-  - Plugin installation shoud be run under root or the same user which owns
+  - Plugin installation should be run under root or the same user which owns
     the plugin files on the disk. Only if the plugin is not installed yet and
     no version is specified, the API installation is performed which requires
     only the Web UI credentials.

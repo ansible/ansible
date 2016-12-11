@@ -122,7 +122,7 @@ def create_scaling_policy(connection, module):
             if getattr(policy, 'min_adjustment_step') != module.params.get('min_adjustment_step'):
                 changed = True
 
-        # set the min adjustment step incase the user decided to change their
+        # set the min adjustment step in case the user decided to change their
         # adjustment type to percentage
         setattr(policy, 'min_adjustment_step', module.params.get('min_adjustment_step'))
 

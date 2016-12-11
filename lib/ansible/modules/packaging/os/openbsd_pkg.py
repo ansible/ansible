@@ -448,7 +448,7 @@ def upgrade_packages(module):
     # Attempt to upgrade all packages.
     rc, stdout, stderr = execute_command("%s" % upgrade_cmd, module)
 
-    # Try to find any occurance of a package changing version like:
+    # Try to find any occurrence of a package changing version like:
     # "bzip2-1.0.6->1.0.6p0: ok".
     match = re.search("\W\w.+->.+: ok\W", stdout)
     if match:

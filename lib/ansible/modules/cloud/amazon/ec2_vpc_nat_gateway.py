@@ -960,7 +960,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
             changed = True
             success = True
             err_msg = (
-                'NAT gateway {0} is in a deleting state. Delete was successfull'
+                'NAT gateway {0} is in a deleting state. Delete was successful'
                 .format(nat_gateway_id)
             )
 

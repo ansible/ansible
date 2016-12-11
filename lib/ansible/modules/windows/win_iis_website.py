@@ -91,7 +91,7 @@ options:
     aliases: []
   parameters:
     description:
-      - Custom site Parameters from string where properties are seperated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
+      - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
     required: false
     default: null
     aliases: []

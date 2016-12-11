@@ -120,7 +120,7 @@ notes:
       so if Zabbix server's time and host's time are not synchronized,
       you will get strange results.
     - Install required module with 'pip install zabbix-api' command.
-    - Checks existance only by maintenance name.
+    - Checks existence only by maintenance name.
 '''
 
 EXAMPLES = '''
@@ -349,7 +349,7 @@ def main():
 
         (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
+            module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
         if not maintenance:
             if not host_names and not host_groups:
@@ -368,7 +368,7 @@ def main():
 
         (rc, maintenance, error) = get_maintenance_id(zbx, name)
         if rc != 0:
-            module.fail_json(msg="Failed to check maintenance %s existance: %s" % (name, error))
+            module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
         if maintenance:
             if module.check_mode:

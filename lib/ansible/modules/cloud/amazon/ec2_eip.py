@@ -77,7 +77,7 @@ notes:
      pause to delay further playbook execution until the instance is reachable,
      if necessary.
    - This module returns multiple changed statuses on disassociation or release.
-     It returns an overall status based on any changes occuring. It also returns
+     It returns an overall status based on any changes occurring. It also returns
      individual changed statuses for disassociation and release.
 '''
 

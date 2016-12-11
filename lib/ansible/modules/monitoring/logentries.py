@@ -108,7 +108,7 @@ def unfollow_log(module, le_path, logs):
 
     removed_count = 0
 
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for log in logs:
         # Query the log first, to see if we even need to remove.
         if not query_log_status(module, le_path, log):

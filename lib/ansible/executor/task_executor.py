@@ -413,7 +413,7 @@ class TaskExecutor:
             # loop error takes precedence
             if self._loop_eval_error is not None:
                 raise self._loop_eval_error
-            # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
+            # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
             if self._task.action not in ['include', 'include_role']:
                 raise
 

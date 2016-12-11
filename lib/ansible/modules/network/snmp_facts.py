@@ -56,7 +56,7 @@ options:
         required: false
     integrity:
         description:
-            - Hashing algoritm, required if version is v3
+            - Hashing algorithm, required if version is v3
         choices: [ 'md5', 'sha' ]
         required: false
     authkey:
@@ -65,7 +65,7 @@ options:
         required: false
     privacy:
         description:
-            - Encryption algoritm, required if level is authPriv
+            - Encryption algorithm, required if level is authPriv
         choices: [ 'des', 'aes' ]
         required: false
     privkey:

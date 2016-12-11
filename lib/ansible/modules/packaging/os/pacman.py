@@ -216,7 +216,7 @@ def remove_packages(module, pacman_path, packages):
         args = "R"
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         installed, updated, unknown = query_package(module, pacman_path, package)

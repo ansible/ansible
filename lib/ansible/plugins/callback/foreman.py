@@ -45,7 +45,7 @@ class CallbackModule(CallbackBase):
     FOREMAN_SSL_CERT: X509 certificate to authenticate to Foreman if
       https is used
     FOREMAN_SSL_KEY: the corresponding private key
-    FOREMAN_SSL_VERIFY: wether to verify the Foreman certificate
+    FOREMAN_SSL_VERIFY: whether to verify the Foreman certificate
       It can be set to '1' to verify SSL certificates using the
       installed CAs or to a path pointing to a CA bundle. Set to '0'
       to disable certificate checking.

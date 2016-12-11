@@ -37,7 +37,7 @@ options:
   basedir:
     description:
       - Path of a base directory in which the patch file will be applied.
-        May be ommitted when C(dest) option is specified, otherwise required.
+        May be omitted when C(dest) option is specified, otherwise required.
     required: false
   dest:
     description:

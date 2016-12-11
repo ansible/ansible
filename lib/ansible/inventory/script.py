@@ -152,7 +152,7 @@ class InventoryScript:
             try:
                 got = self.host_vars_from_top.get(host.name, {})
             except AttributeError as e:
-                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_native(e)))
+                raise AnsibleError("Improperly formatted host information for %s: %s" % (host.name,to_native(e)))
             return got
 
         cmd = [self.filename, "--host", host.name]

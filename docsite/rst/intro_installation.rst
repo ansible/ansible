@@ -90,7 +90,7 @@ You also need Python 2.4 or later. If you are running less than Python 2.5 on th
 
    Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
 
-   By default, Ansible uses Python 2 in order to maintain compability with older distributions
+   By default, Ansible uses Python 2 in order to maintain compatibility with older distributions
    such as RHEL 5 and RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions

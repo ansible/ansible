@@ -284,7 +284,7 @@ class BigIpDeviceSshd(object):
         r = self.api.tm.sys.sshd.load()
 
         if hasattr(r, 'allow'):
-            # Deliberately using sets to supress duplicates
+            # Deliberately using sets to suppress duplicates
             p['allow'] = set([str(x) for x in r.allow])
         if hasattr(r, 'banner'):
             p['banner'] = str(r.banner)

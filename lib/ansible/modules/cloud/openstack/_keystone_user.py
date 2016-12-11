@@ -284,7 +284,7 @@ def ensure_user_role_exists(keystone, user_name, tenant_name, role_name,
 
         Return (True, id) if a new role was created or if the role was newly
         assigned to the user for the tenant. (False, id) if the role already
-        exists and was already assigned to the user ofr the tenant.
+        exists and was already assigned to the user for the tenant.
 
     """
     # Check if the user has the role in the tenant

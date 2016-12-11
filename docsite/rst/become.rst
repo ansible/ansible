@@ -20,7 +20,7 @@ privilege escalation tools, which you probably already use or have configured, l
 
 Directives
 -----------
-These can be set from play to task level, but are overriden by connection variables as they can be host specific.
+These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
     set to 'true'/'yes' to activate privilege escalation.

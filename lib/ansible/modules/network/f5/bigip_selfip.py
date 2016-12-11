@@ -536,7 +536,7 @@ class BigIpSelfIp(object):
         BIG-IP, we need to massage the values that are provided by the
         user so that they include the partition.
 
-        :return: List of vlans formatted with preceeding partition
+        :return: List of vlans formatted with preceding partition
         """
         partition = self.params['partition']
         vlans = self.api.tm.net.vlans.get_collection()
