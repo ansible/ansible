@@ -79,7 +79,7 @@ EXAMPLES = '''
     value: "World"
   register: result
 
-- name: Delete the key 
+- name: Delete the key
   ssm_parameter_store:
     name: "Hello"
     state: absent
@@ -126,7 +126,7 @@ from ansible.module_utils.ec2 import boto3_conn, AnsibleAWSError, ec2_argument_s
 
 def create_update_parameter(client, module):
     changed = False
-  
+
     args = dict(
               Name=module.params.get('name'),
               Value=module.params.get('value'),
@@ -138,7 +138,7 @@ def create_update_parameter(client, module):
        args.update(Description=module.params.get('description'))
 
     if module.params.get('string_type') is 'SecureString':
-       args.update(KeyId=module.params.get('key_id'))   
+       args.update(KeyId=module.params.get('key_id'))
 
     try:
       nacl = client.put_parameter(**args)
@@ -167,7 +167,7 @@ def delete_parameter(client, module):
                   Names=[module.params.get('name')]
     )
     if get_nacl['Parameters']:
-      try: 
+      try:
         nacl = client.delete_parameter(
                 Name=module.params.get('name')
         )
@@ -196,11 +196,11 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 are required.')
     state = module.params.get('state').lower()
-    try: 
+    try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % str(e)) 
+        module.fail_json(msg="Can't authorize connection - %s" % str(e))
 
     invocations = {
       "present": create_update_parameter,
