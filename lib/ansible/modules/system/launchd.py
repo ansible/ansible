@@ -27,7 +27,7 @@ author:
     - 'Ansible Core Team'
     - 'Theo Crevon (@tcr-ableton)'
     - 'Björn Albers <bjoernalbers@gmail.com>'
-version_added: '2.2'
+version_added: '2.3'
 short_description: Manage Mac OS X launchd services.
 description:
     - Manage (start, stop and restart) Mac OS X launchd services via launchctl.
