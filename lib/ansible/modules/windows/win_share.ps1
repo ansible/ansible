@@ -245,7 +245,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to create share $name"
+    Fail-Json $result "an error occurred when attempting to create share $name"
 }
 
 Exit-Json $result

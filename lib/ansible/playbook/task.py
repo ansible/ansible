@@ -427,7 +427,7 @@ class Task(Base, Conditional, Taggable, Become):
         path_stack = []
 
         dep_chain = self.get_dep_chain()
-        # inside role: add the dependency chain from current to dependant
+        # inside role: add the dependency chain from current to dependent
         if dep_chain:
             path_stack.extend(reversed([x._role_path for x in dep_chain]))
 

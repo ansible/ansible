@@ -101,7 +101,7 @@ EXAMPLES = '''
           - key: 'private/foo'
             policy: deny
 
-    - name: create an acl with specific token with both key and serivce rules
+    - name: create an acl with specific token with both key and service rules
       consul_acl:
         mgmt_token: 'some_management_acl'
         name: 'Foo access'
@@ -186,7 +186,7 @@ def update_acl(module):
                 changed = True
             except Exception as e:
                 module.fail_json(
-                    msg="No token returned, check your managment key and that \
+                    msg="No token returned, check your management key and that \
                          the host is in the acl datacenter %s" % e)
     except Exception as e:
         module.fail_json(msg="Could not create/update acl %s" % e)

@@ -84,7 +84,7 @@ options:
         default: None
     vm_shell_env:
         description:
-            - Comma seperated list of envirnoment variable, specified in the guest OS notation
+            - Comma separated list of envirnoment variable, specified in the guest OS notation
         required: False
         default: None
     vm_shell_cwd:

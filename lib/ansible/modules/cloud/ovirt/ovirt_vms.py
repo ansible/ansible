@@ -401,7 +401,7 @@ class VmsModule(BaseModule):
         """
         oVirt in version 4.1 doesn't support search by template+version_number,
         so we need to list all templates with specific name and then iterate
-        throught it's version until we find the version we look for.
+        through it's version until we find the version we look for.
         """
         template = None
         if self._module.params['template']:

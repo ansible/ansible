@@ -72,7 +72,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
             and return it as a python list.
         :none: Sets the value to None
         :path: Expands any environment variables and tilde's in the value.
-        :tmp_path: Create a unique temporary directory inside of the dirctory
+        :tmp_path: Create a unique temporary directory inside of the directory
             specified by value and return its path.
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
             means colon separated strings.)  Split the value and then expand

@@ -1526,7 +1526,7 @@ class Host(LogicMonitor):
                          groups,
                          properties,
                          alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a host using the rpc function"""
         self.module.debug("Running Host._build_host_hash...")
 
@@ -2017,7 +2017,7 @@ class Hostgroup(LogicMonitor):
                                description,
                                properties,
                                alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a hostgroup using the rpc function"""
         self.module.debug("Running Hostgroup._build_host_hash")
 

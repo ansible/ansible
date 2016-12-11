@@ -284,7 +284,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                                                                   subnet)
             new_subnet = self.get_poller_result(poller)
         except Exception as exc:
-            self.fail("Error creating or updateing subnet {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error creating or updating subnet {0} - {1}".format(self.name, str(exc)))
         self.check_provisioning_state(new_subnet)
         return subnet_to_dict(new_subnet)
 

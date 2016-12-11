@@ -108,7 +108,7 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the rule shoud be created.
+      - Name of the zone in which the rule should be created.
       - If not set, default zone is used.
     required: false
     default: null

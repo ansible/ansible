@@ -153,7 +153,7 @@ class BigIpDeviceNtp(object):
         r = self.api.tm.sys.ntp.load()
 
         if hasattr(r, 'servers'):
-            # Deliberately using sets to supress duplicates
+            # Deliberately using sets to suppress duplicates
             p['servers'] = set([str(x) for x in r.servers])
         if hasattr(r, 'timezone'):
             p['timezone'] = str(r.timezone)

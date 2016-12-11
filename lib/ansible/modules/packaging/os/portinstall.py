@@ -109,7 +109,7 @@ def matching_packages(module, name):
 
     ports_glob_path = module.get_bin_path('ports_glob', True)
     rc, out, err = module.run_command("%s %s" % (ports_glob_path, name))
-    #counts the numer of packages found
+    # counts the number of packages found
     occurrences = out.count('\n')
     if occurrences == 0:
         name_without_digits = re.sub('[0-9]', '', name)
@@ -130,7 +130,7 @@ def remove_packages(module, packages):
         pkg_delete_path = module.get_bin_path('pkg', True)
         pkg_delete_path = pkg_delete_path + " delete -y"
 
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, package):

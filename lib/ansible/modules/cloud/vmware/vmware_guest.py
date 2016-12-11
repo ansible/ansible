@@ -794,7 +794,7 @@ class PyVmomiHelper(object):
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
 
-        # lets try and assign a static ip addresss
+        # lets try and assign a static ip address
         if self.params['customize'] is True:
             ip_settings = list()
             if self.params['ips']:

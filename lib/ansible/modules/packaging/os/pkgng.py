@@ -141,7 +141,7 @@ def pkgng_older_than(module, pkgng_path, compare_version):
 def remove_packages(module, pkgng_path, packages, dir_arg):
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, pkgng_path, package, dir_arg):
