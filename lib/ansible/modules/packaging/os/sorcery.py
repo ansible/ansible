@@ -305,7 +305,7 @@ def update_codex(module):
             module.exit_json(changed=changed, msg="would have updated Codex")
     elif not fresh or params['name'] and params['state'] == 'latest':
         # SILENT is required as a workaround for query() in libgpg
-        module.run_command_environ_update.update(dict(SILENT=1))
+        module.run_command_environ_update.update(dict(SILENT='1'))
 
         cmd_scribe = "%s update" % SORCERY['scribe']
 
@@ -475,7 +475,7 @@ def manage_spells(module):
                 module.fail_json(msg="failed to backup the update queue")
 
             # see update_codex()
-            module.run_command_environ_update.update(dict(SILENT=1))
+            module.run_command_environ_update.update(dict(SILENT='1'))
 
             cmd_sorcery = "%s queue"
 
@@ -617,9 +617,8 @@ def main():
             state = dict(default='present', choices=['present', 'latest',
                          'absent', 'cast', 'dispelled', 'rebuild']),
             depends = dict(default=None),
-            update = dict(default=False, choices=BOOLEANS, type='bool'),
-            update_cache = dict(default=False, aliases=['update_codex'],
-                                choices=BOOLEANS, type='bool'),
+            update = dict(default=False, type='bool'),
+            update_cache = dict(default=False, aliases=['update_codex'], type='bool'),
             cache_valid_time = dict(default=0, type='int')
         ),
         required_one_of = [['name', 'update', 'update_cache']],
@@ -633,7 +632,7 @@ def main():
         SORCERY[c] = module.get_bin_path(c, True)
 
     # prepare environment: run sorcery commands without asking questions
-    module.run_command_environ_update = dict(PROMPT_DELAY=0, VOYEUR=0)
+    module.run_command_environ_update = dict(PROMPT_DELAY='0', VOYEUR='0')
 
     params = module.params
 
