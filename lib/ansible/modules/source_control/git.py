@@ -401,7 +401,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
            or refspec  \
            or is_remote_branch(git_path, module, dest, repo, version) \
            or is_remote_tag(git_path, module, dest, repo, version):
-            # only use depth if the remote opject is branch or tag (i.e. fetchable)
+            # only use depth if the remote object is branch or tag (i.e. fetchable)
             cmd.extend([ '--depth', str(depth) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
@@ -902,7 +902,7 @@ def main():
         os.umask(umask)
 
     # Certain features such as depth require a file:/// protocol for path based urls
-    # so force a protocal here ...
+    # so force a protocol here ...
     if repo.startswith('/'):
         repo = 'file://' + repo
 
