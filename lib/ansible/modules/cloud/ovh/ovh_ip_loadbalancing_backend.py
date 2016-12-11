@@ -45,7 +45,7 @@ options:
         default: present
         choices: ['present', 'absent']
         description:
-            - Determines wether the backend is to be created/modified 
+            - Determines whether the backend is to be created/modified
               or deleted
     probe:
         required: false

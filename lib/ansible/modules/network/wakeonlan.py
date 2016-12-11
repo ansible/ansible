@@ -84,7 +84,7 @@ def wakeonlan(module, mac, broadcast, port):
 
     mac_orig = mac
 
-    # Remove possible seperator from MAC address
+    # Remove possible separator from MAC address
     if len(mac) == 12 + 5:
         mac = mac.replace(mac[2], '')
 

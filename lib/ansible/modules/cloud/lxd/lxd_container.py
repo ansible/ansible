@@ -38,7 +38,7 @@ options:
         required: true
     architecture:
         description:
-          - The archiecture for the container (e.g. "x86_64" or "i686").
+          - The architecture for the container (e.g. "x86_64" or "i686").
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     config:

@@ -149,7 +149,7 @@ def has_changed(string):
     return "Nothing to install or update" not in string
 
 def get_available_options(module, command='install'):
-    # get all availabe options from a composer command using composer help to json
+    # get all available options from a composer command using composer help to json
     rc, out, err = composer_command(module, "help %s --format=json" % command)
     if rc != 0:
         output = parse_out(err)

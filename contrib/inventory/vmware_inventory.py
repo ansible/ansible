@@ -5,7 +5,7 @@
 
 # TODO:
 #   * more jq examples
-#   * optional folder heirarchy 
+#   * optional folder heriarchy
 
 """
 $ jq '._meta.hostvars[].config' data.json | head

@@ -94,7 +94,7 @@ options:
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuruation to use as the base
-        config for comparision.
+        config for comparison.
     required: false
     default: null
 """

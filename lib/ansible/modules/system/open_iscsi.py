@@ -80,7 +80,7 @@ options:
         - whether the list of target nodes on the portal should be
           (re)discovered and added to the persistent iscsi database.
           Keep in mind that iscsiadm discovery resets configurtion, like node.startup
-          to manual, hence combined with auto_node_startup=yes will allways return
+          to manual, hence combined with auto_node_startup=yes will always return
           a changed state.
     show_nodes:
         required: false

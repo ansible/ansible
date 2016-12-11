@@ -50,7 +50,7 @@ options:
     aliases: []
   attributes:
     description:
-      - Application Pool attributes from string where attributes are seperated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
+      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
     required: false
     default: null
     aliases: []

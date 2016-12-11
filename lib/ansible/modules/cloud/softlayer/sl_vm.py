@@ -118,7 +118,7 @@ options:
     default: null
   post_uri:
     description:
-      - URL of a post provisioning script ot be loaded and exectued on virtual instance
+      - URL of a post provisioning script to be loaded and executed on virtual instance
     required: false
     default: null
   state:
