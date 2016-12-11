@@ -22,6 +22,8 @@ import re
 import os
 import tempfile
 
+from ansible.module_utils._text import to_text, to_bytes
+
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -105,7 +107,7 @@ def write_changes(module,contents,dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
-    f.write(contents)
+    f.write(to_bytes(contents))
     f.close()
 
     validate = module.params.get('validate', None)
@@ -157,7 +159,7 @@ def main():
         module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
     else:
         f = open(dest, 'rb')
-        contents = f.read()
+        contents = to_text(f.read(), errors='surrogate_or_strict')
         f.close()
 
     mre = re.compile(params['regexp'], re.MULTILINE)
