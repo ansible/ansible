@@ -76,8 +76,12 @@ foreach ($object in $objects) {
     If ($object.type -eq 'folder') {
         Create-Folder -path $object.path
         If ($object.shared -ne $null) {
-            Remove-SmbShare -Force -Name $object.shared -ErrorAction 'SilentlyContinue' | Out-Null
-            New-SmbShare -Name $object.shared -Path $object.path | Out-Null
+            $share_stat = Get-WmiObject -Class Win32_Share -Filter "name='$($object.shared)'"
+            If ($share_stat) {
+                $share_stat.Delete()
+            }
+            $wmi = [wmiClass] 'Win32_Share'
+            $wmi.Create($object.path, $object.shared, 0)
         }
     } ElseIf ($object.type -eq 'file') {
         Create-File -path $object.path -text $object.text
