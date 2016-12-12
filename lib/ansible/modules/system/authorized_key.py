@@ -95,28 +95,27 @@ author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-# Example using key data from a local file on the management machine
-- authorized_key:
+- name: Set authorized key took from file
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-# Using github url as key source
-- authorized_key:
+- name: Set authorized key took from url
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/charlie.keys
 
-# Using alternate directory locations:
-- authorized_key:
+- name: Set authorized key in alternate location
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     path: /etc/ssh/authorized_keys/charlie
-    manage_dir: no
+    manage_dir: False
 
-# Using with_file
-- name: Set up authorized_keys for the deploy user
+- name: Set up multiple authorized keys
   authorized_key:
     user: deploy
     state: present
@@ -125,35 +124,34 @@ EXAMPLES = '''
     - public_keys/doe-jane
     - public_keys/doe-john
 
-# Using key_options:
-- authorized_key:
+- name: Set authorized key defining key options
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
-# Using validate_certs:
-- authorized_key:
+- name: Set authorized key without validating SSH certificates
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/user.keys
-    validate_certs: no
+    validate_certs: False
 
-# Set up authorized_keys exclusively with one key
-- authorized_key:
+- name: Set authorized key, removing all the authorized key already set
+  authorized_key:
     user: root
     key: '{{ item }}'
     state: present
-    exclusive: yes
+    exclusive: True
   with_file:
     - public_keys/doe-jane
 
-# Copies the key from the user who is running ansible to the remote machine user ubuntu
-- authorized_key:
+- name: Set authorized key for user ubuntu copying it from current user
+  authorized_key:
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-  become: yes
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
