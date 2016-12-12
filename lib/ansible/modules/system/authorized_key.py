@@ -131,7 +131,7 @@ EXAMPLES = '''
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
-- name: Set authorized key without validating the HTTPS certificates
+- name: Set authorized key without validating the TLS/SSL certificates
   authorized_key:
     user: charlie
     state: present
