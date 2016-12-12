@@ -677,7 +677,7 @@ class TgzArchive(object):
                 out += line + '\n'
             if not self.file_args['mode'] and MODE_DIFF_RE.search(line):
                 out += line + '\n'
-            if MOD_TIME_DIFF_RE.search(line):
+            if not self.module.params['keep_newer'] and MOD_TIME_DIFF_RE.search(line):
                 out += line + '\n'
             if MISSING_FILE_RE.search(line):
                 out += line + '\n'
