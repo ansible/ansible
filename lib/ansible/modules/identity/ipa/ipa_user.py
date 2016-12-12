@@ -143,10 +143,12 @@ user:
 import base64
 import hashlib
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class UserIPAClient(IPAClient):
 
+class UserIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(UserIPAClient, self).__init__(module, host, port, protocol)
 
@@ -195,7 +197,7 @@ def get_user_dict(displayname=None, givenname=None, loginshell=None, mail=None, 
     return user
 
 
-def get_user_diff(ipa_user, module_user):
+def get_user_diff(client, ipa_user, module_user):
     """
         Return the keys of each dict whereas values are different. Unfortunately the IPA
         API returns everything as a list even if only a single value is possible.
@@ -207,8 +209,6 @@ def get_user_diff(ipa_user, module_user):
     :param module_user:
     :return:
     """
-    #    return [item for item in module_user.keys() if module_user.get(item, None) != ipa_user.get(item, None)]
-    result = []
     # sshpubkeyfp is the list of ssh key fingerprints. IPA doesn't return the keys itself but instead the fingerprints.
     # These are used for comparison.
     sshpubkey = None
@@ -217,16 +217,9 @@ def get_user_diff(ipa_user, module_user):
         # Remove the ipasshpubkey element as it is not returned from IPA but save it's value to be used later on
         sshpubkey = module_user['ipasshpubkey']
         del module_user['ipasshpubkey']
-    for key in module_user.keys():
-        mod_value = module_user.get(key, None)
-        ipa_value = ipa_user.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(mod_value, list):
-            mod_value = [mod_value]
-        if isinstance(ipa_value, list) and isinstance(mod_value, list):
-            mod_value = sorted(mod_value)
-            ipa_value = sorted(ipa_value)
-        if mod_value != ipa_value:
-            result.append(key)
+
+    result = client.get_diff(ipa_data=ipa_user, module_data=module_user)
+
     # If there are public keys, remove the fingerprints and add them back to the dict
     if sshpubkey is not None:
         del module_user['sshpubkeyfp']
@@ -278,7 +271,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
-            diff = get_user_diff(ipa_user, module_user)
+            diff = get_user_diff(client, ipa_user, module_user)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -338,9 +331,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()
