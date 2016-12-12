@@ -23,7 +23,7 @@ version_added: "0.1"
 short_description:  Manage services.
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
-      OpenRC, SysV, Solaris SMF, systemd, upstart.
+      OpenRC, SysV, Solaris SMF, systemd, upstart, simpleinit-msb.
     - For Windows targets, use the M(win_service) module instead.
 options:
     name:
@@ -433,7 +433,7 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'telinit', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
@@ -475,6 +475,10 @@ class LinuxService(Service):
             self.__systemd_unit = self.name
             self.svc_cmd = location['systemctl']
             self.enable_cmd = location['systemctl']
+
+        elif location.get('telinit', False) and os.path.exists("/etc/init.d/smgl_init"):
+            self.svc_cmd = location['telinit']
+            self.enable_cmd = location['telinit']
 
         elif location.get('initctl', False) and os.path.exists("/etc/init/%s.conf" % self.name):
             # service is managed by upstart
@@ -879,6 +883,44 @@ class LinuxService(Service):
                 return (rc, out, err)
 
         #
+        # telinit (Source Mage GNU/Linux)
+        #
+        if self.enable_cmd.endswith("telinit"):
+            (rc, out, err) = self.execute_command("%s list" % self.enable_cmd)
+
+            service_exists = False
+
+            rex = re.compile('^\w+\s+%s$' % self.name)
+
+            for line in out.splitlines():
+                if rex.match(line):
+                    service_exists = True
+                    break
+
+            if not service_exists:
+                self.module.fail_json(msg='telinit could not find the requested service: %s' % self.name)
+
+            if self.enable:
+                action = "bootenable"
+            else:
+                action = "bootdisable"
+
+            (rc, out, err) = self.execute_command("%s %s %s" % (self.enable_cmd, action, self.name))
+
+            for line in err.splitlines():
+                if self.enable and line.find('already enabled') != -1:
+                    self.changed = False
+                    break
+                if not self.enable and line.find('already disabled') != -1:
+                    self.changed = False
+                    break
+
+            if not self.changed:
+                return
+
+            return (rc, out, err)
+
+        #
         # If we've gotten to the end, the service needs to be updated
         #
         self.changed = True
@@ -917,6 +959,22 @@ class LinuxService(Service):
                     # initctl commands take the form <cmd> <action> <name>
                     svc_cmd = self.svc_cmd
                     arguments = "%s %s" % (self.name, arguments)
+                # telinit
+                elif self.svc_cmd.endswith("telinit"):
+                    (rc, out, err) = self.execute_command("%s list" % self.enable_cmd)
+
+                    service_exists = False
+
+                    rex = re.compile('^\w+\s+%s$' % self.name)
+
+                    for line in out.splitlines():
+                        if rex.match(line):
+                            service_exists = True
+                            break
+
+                    if not service_exists:
+                        self.module.fail_json(msg='telinit could not find the requested service: %s' % self.name)
+                    svc_cmd = "%s run %s" % (self.svc_cmd, self.name)
                 else:
                     # SysV and OpenRC take the form <cmd> <name> <action>
                     svc_cmd = "%s %s" % (self.svc_cmd, self.name)
