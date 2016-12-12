@@ -959,7 +959,7 @@ class LinuxService(Service):
                     # initctl commands take the form <cmd> <action> <name>
                     svc_cmd = self.svc_cmd
                     arguments = "%s %s" % (self.name, arguments)
-                # telinit
+                # telinit takes the form <cmd> run <name> <action>
                 elif self.svc_cmd.endswith("telinit"):
                     (rc, out, err) = self.execute_command("%s list" % self.enable_cmd)
 
