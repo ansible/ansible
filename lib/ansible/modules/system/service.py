@@ -974,6 +974,7 @@ class LinuxService(Service):
 
                     if not service_exists:
                         self.module.fail_json(msg='telinit could not find the requested service: %s' % self.name)
+
                     svc_cmd = "%s run %s" % (self.svc_cmd, self.name)
                 else:
                     # SysV and OpenRC take the form <cmd> <name> <action>
