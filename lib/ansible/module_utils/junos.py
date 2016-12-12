@@ -184,8 +184,8 @@ class Netconf(object):
             merge = False
             overwrite = False
         elif overwrite:
-            merge = True
-            overwrite = False
+            merge = False
+            overwrite = True
         else:
             merge = True
             overwrite = False
