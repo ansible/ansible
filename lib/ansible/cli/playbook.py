@@ -66,6 +66,8 @@ class PlaybookCLI(CLI):
         )
 
         # ansible playbook specific opts
+        parser.add_option('--list-modules', dest='listmodules', action='store_true',
+            help="list all modules that would be executed")
         parser.add_option('--list-tasks', dest='listtasks', action='store_true',
             help="list all tasks that would be executed")
         parser.add_option('--list-tags', dest='listtags', action='store_true',
@@ -104,7 +106,7 @@ class PlaybookCLI(CLI):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # don't deal with privilege escalation or passwords when we don't need to
-        if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
+        if not self.options.listhosts and not self.options.listmodules and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
             (sshpass, becomepass) = self.ask_passwords()
             passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
@@ -155,6 +157,7 @@ class PlaybookCLI(CLI):
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
 
         results = pbex.run()
+        module_freq = dict(__all__={})
 
         if isinstance(results, list):
             for p in results:
@@ -174,10 +177,14 @@ class PlaybookCLI(CLI):
                     display.display(msg)
 
                     all_tags = set()
-                    if self.options.listtags or self.options.listtasks:
+
+                    if self.options.listtags or self.options.listtasks or self.options.listmodules:
                         taskmsg = ''
                         if self.options.listtasks:
                             taskmsg = '    tasks:\n'
+
+                        if self.options.listmodules:
+                            taskmsg = '    modules:\n'
 
                         def _process_block(b):
                             taskmsg = ''
@@ -197,6 +204,17 @@ class PlaybookCLI(CLI):
                                         else:
                                             taskmsg += "      %s" % task.action
                                         taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+                                    elif self.options.listmodules:
+                                        # Accumulate per-play module counts
+                                        if play.name not in module_freq:
+                                            module_freq[play.name] = dict()
+                                        if task.action not in module_freq[play.name]:
+                                            module_freq[play.name][task.action] = 0
+                                        module_freq[play.name][task.action] += 1
+                                        # Accumulate total module counts
+                                        if task.action not in module_freq['__all__']:
+                                            module_freq['__all__'][task.action] = 0
+                                        module_freq['__all__'][task.action] += 1
 
                             return taskmsg
 
@@ -212,8 +230,16 @@ class PlaybookCLI(CLI):
                             cur_tags = list(mytags.union(all_tags))
                             cur_tags.sort()
                             taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
+                        if self.options.listmodules:
+                            for action in sorted(module_freq[play.name], key=module_freq[play.name].get, reverse=True):
+                                taskmsg += "      %s: %s\n" % (action, module_freq[play.name][action])
 
                         display.display(taskmsg)
+
+                if self.options.listmodules:
+                    display.display('\n  module summary:\n')
+                    for action in sorted(module_freq['__all__'], key=module_freq['__all__'].get, reverse=True):
+                        display.display("      %s: %s\n" % (action, module_freq['__all__'][action]))
 
             return 0
         else:
