@@ -25,6 +25,7 @@ version_added: "1.6"
 short_description: Interface with dnsimple.com (a DNS hosting service).
 description:
    - "Manages domains and records via the DNSimple API, see the docs: U(http://developer.dnsimple.com/)"
+host_affinity: localhost
 options:
   account_email:
     description:

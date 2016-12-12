@@ -87,6 +87,15 @@ Options
 
 {% endif %}
 
+{% if host_affinity is defined %}
+Host Affinity
+-------------
+{% if host_affinity %}
+This module is designed to be run only on @{ host_affinity }@.
+{% else %}
+This module is designed to be run on every host.
+{% endif %}
+{% endif %}
 
 {% if examples or plainexamples -%}
 Examples

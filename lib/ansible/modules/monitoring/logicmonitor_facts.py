@@ -67,6 +67,7 @@ version_added: "2.2"
 author: [Ethan Culler-Mayeno (@ethanculler), Jeff Wozniak (@woz5999)]
 notes:
   - You must have an existing LogicMonitor account for this module to function.
+host_affinity: localhost
 requirements: ["An existing LogicMonitor account", "Linux"]
 options:
     target:
