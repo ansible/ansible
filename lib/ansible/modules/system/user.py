@@ -249,9 +249,9 @@ from ansible.module_utils._text import to_native
 
 try:
     import spwd
-    HAVE_SPWD=True
+    HAS_SPWD=True
 except:
-    HAVE_SPWD=False
+    HAS_SPWD=False
 
 
 class User(object):
@@ -590,7 +590,7 @@ class User(object):
 
     def user_password(self):
         passwd = ''
-        if HAVE_SPWD:
+        if HAS_SPWD:
             try:
                 passwd = spwd.getspnam(self.name)[1]
             except KeyError:

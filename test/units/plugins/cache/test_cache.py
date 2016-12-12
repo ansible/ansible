@@ -24,21 +24,21 @@ from ansible.plugins.cache import FactCache
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 
-HAVE_MEMCACHED = True
+HAS_MEMCACHED = True
 try:
     import memcache
 except ImportError:
-    HAVE_MEMCACHED = False
+    HAS_MEMCACHED = False
 else:
     # Use an else so that the only reason we skip this is for lack of
     # memcached, not errors importing the plugin
     from ansible.plugins.cache.memcached import CacheModule as MemcachedCache
 
-HAVE_REDIS = True
+HAS_REDIS = True
 try:
     import redis
 except ImportError:
-    HAVE_REDIS = False
+    HAS_REDIS = False
 else:
     from ansible.plugins.cache.redis import CacheModule as RedisCache
 
@@ -103,13 +103,13 @@ class TestAbstractClass(unittest.TestCase):
 
         self.assertIsInstance(CacheModule3(), CacheModule3)
 
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
+    @unittest.skipUnless(HAS_MEMCACHED, 'python-memcached module not installed')
     def test_memcached_cachemodule(self):
         self.assertIsInstance(MemcachedCache(), MemcachedCache)
 
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
+    @unittest.skipUnless(HAS_REDIS, 'Redis python module not installed')
     def test_redis_cachemodule(self):
         self.assertIsInstance(RedisCache(), RedisCache)

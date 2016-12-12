@@ -62,15 +62,15 @@ EXAMPLES = '''
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAS_SELINUX=True
 except ImportError:
-    HAVE_SELINUX=False
+    HAS_SELINUX=False
 
 try:
     import semanage
-    HAVE_SEMANAGE=True
+    HAS_SEMANAGE=True
 except ImportError:
-    HAVE_SEMANAGE=False
+    HAS_SEMANAGE=False
 
 def has_boolean_value(module, name):
     bools = []
@@ -174,10 +174,10 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAVE_SELINUX:
+    if not HAS_SELINUX:
         module.fail_json(msg="This module requires libselinux-python support")
 
-    if not HAVE_SEMANAGE:
+    if not HAS_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
 
     if not selinux.is_selinux_enabled():

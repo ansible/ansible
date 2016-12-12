@@ -68,7 +68,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         try:
             self.clear_modules(['selinux', 'ansible.module_utils.basic'])
             mod = builtins.__import__('ansible.module_utils.basic')
-            self.assertTrue(mod.module_utils.basic.HAVE_SELINUX)
+            self.assertTrue(mod.module_utils.basic.HAS_SELINUX)
         except ImportError:
             # no selinux on test system, so skip
             pass
@@ -76,7 +76,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.clear_modules(['selinux', 'ansible.module_utils.basic'])
         mock_import.side_effect = _mock_import
         mod = builtins.__import__('ansible.module_utils.basic')
-        self.assertFalse(mod.module_utils.basic.HAVE_SELINUX)
+        self.assertFalse(mod.module_utils.basic.HAS_SELINUX)
 
     @patch.object(builtins, '__import__')
     def test_module_utils_basic_import_json(self, mock_import):
@@ -442,10 +442,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
             argument_spec = dict(),
         )
 
-        basic.HAVE_SELINUX = False
+        basic.HAS_SELINUX = False
         self.assertEqual(am.selinux_mls_enabled(), False)
 
-        basic.HAVE_SELINUX = True
+        basic.HAS_SELINUX = True
         basic.selinux = Mock()
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.is_selinux_mls_enabled', return_value=0):
@@ -480,7 +480,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         # not installed, which has two paths: one in which the system
         # does have selinux installed (and the selinuxenabled command
         # is present and returns 0 when run), or selinux is not installed
-        basic.HAVE_SELINUX = False
+        basic.HAS_SELINUX = False
         am.get_bin_path = MagicMock()
         am.get_bin_path.return_value = '/path/to/selinuxenabled'
         am.run_command = MagicMock()
@@ -491,7 +491,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         # finally we test the case where the python selinux lib is installed,
         # and both possibilities there (enabled vs. disabled)
-        basic.HAVE_SELINUX = True
+        basic.HAS_SELINUX = True
         basic.selinux = Mock()
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.is_selinux_enabled', return_value=0):
@@ -512,11 +512,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.selinux_enabled = MagicMock(return_value=True)
 
         # we first test the cases where the python selinux lib is not installed
-        basic.HAVE_SELINUX = False
+        basic.HAS_SELINUX = False
         self.assertEqual(am.selinux_default_context(path='/foo/bar'), [None, None, None, None])
 
         # all following tests assume the python selinux bindings are installed
-        basic.HAVE_SELINUX = True
+        basic.HAS_SELINUX = True
 
         basic.selinux = Mock()
 
@@ -548,11 +548,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.selinux_enabled = MagicMock(return_value=True)
 
         # we first test the cases where the python selinux lib is not installed
-        basic.HAVE_SELINUX = False
+        basic.HAS_SELINUX = False
         self.assertEqual(am.selinux_context(path='/foo/bar'), [None, None, None, None])
 
         # all following tests assume the python selinux bindings are installed
-        basic.HAVE_SELINUX = True
+        basic.HAS_SELINUX = True
 
         basic.selinux = Mock()
 
@@ -669,13 +669,13 @@ class TestModuleUtilsBasic(ModuleTestCase):
             argument_spec = dict(),
         )
 
-        basic.HAVE_SELINUX = False
+        basic.HAS_SELINUX = False
 
         am.selinux_enabled = MagicMock(return_value=False)
         self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True), True)
         self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), False)
 
-        basic.HAVE_SELINUX = True
+        basic.HAS_SELINUX = True
 
         am.selinux_enabled = MagicMock(return_value=True)
         am.selinux_context = MagicMock(return_value=['bar_u', 'bar_r', None, None])

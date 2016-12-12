@@ -492,17 +492,17 @@ tenant_ip: "203.0.113.77/23"
 # import ansible.module_utils.basic
 import os
 import sys
-HAVE_DBUS=False
+HAS_DBUS=False
 try:
     import dbus
-    HAVE_DBUS=True
+    HAS_DBUS=True
 except ImportError:
     pass
 
-HAVE_NM_CLIENT=False
+HAS_NM_CLIENT=False
 try:
     from gi.repository import NetworkManager, NMClient
-    HAVE_NM_CLIENT=True
+    HAS_NM_CLIENT=True
 except ImportError:
     pass
 
@@ -524,7 +524,7 @@ class Nmcli(object):
 
     platform='Generic'
     distribution=None
-    if HAVE_DBUS:
+    if HAS_DBUS:
         bus=dbus.SystemBus()
     # The following is going to be used in dbus code
     DEVTYPES={1: "Ethernet",
@@ -1135,10 +1135,10 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAVE_DBUS:
+    if not HAS_DBUS:
         module.fail_json(msg="This module requires dbus python bindings")
 
-    if not HAVE_NM_CLIENT:
+    if not HAS_NM_CLIENT:
         module.fail_json(msg="This module requires NetworkManager glib API")
 
     nmcli=Nmcli(module)

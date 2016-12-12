@@ -92,18 +92,18 @@ from ansible.module_utils._text import to_native
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAS_SELINUX=True
 except ImportError:
-    HAVE_SELINUX=False
+    HAS_SELINUX=False
 
 try:
     import seobject
-    HAVE_SEOBJECT=True
+    HAS_SEOBJECT=True
 except ImportError:
-    HAVE_SEOBJECT=False
+    HAS_SEOBJECT=False
 
 ### Add missing entries (backward compatible)
-if HAVE_SEOBJECT:
+if HAS_SEOBJECT:
     seobject.file_types.update(dict(
         a = seobject.SEMANAGE_FCONTEXT_ALL,
         b = seobject.SEMANAGE_FCONTEXT_BLOCK,
@@ -235,10 +235,10 @@ def main():
             ),
         supports_check_mode = True,
     )
-    if not HAVE_SELINUX:
+    if not HAS_SELINUX:
         module.fail_json(msg="This module requires libselinux-python")
 
-    if not HAVE_SEOBJECT:
+    if not HAS_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
     if not selinux.is_selinux_enabled():

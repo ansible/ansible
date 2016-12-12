@@ -131,10 +131,10 @@ try:
     import apt_pkg
     import aptsources.distro as aptsources_distro
     distro = aptsources_distro.get_distro()
-    HAVE_PYTHON_APT = True
+    HAS_PYTHON_APT = True
 except ImportError:
     distro = None
-    HAVE_PYTHON_APT = False
+    HAS_PYTHON_APT = False
 
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
@@ -156,12 +156,12 @@ def install_python_apt(module):
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
             rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
             if rc == 0:
-                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
+                global apt, apt_pkg, aptsources_distro, distro, HAS_PYTHON_APT
                 import apt
                 import apt_pkg
                 import aptsources.distro as aptsources_distro
                 distro = aptsources_distro.get_distro()
-                HAVE_PYTHON_APT = True
+                HAS_PYTHON_APT = True
             else:
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
     else:
@@ -508,7 +508,7 @@ def main():
 
     sourceslist = None
 
-    if not HAVE_PYTHON_APT:
+    if not HAS_PYTHON_APT:
         if params['install_python_apt']:
             install_python_apt(module)
         else:

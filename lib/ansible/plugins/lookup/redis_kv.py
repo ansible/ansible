@@ -20,10 +20,10 @@ __metaclass__ = type
 import os
 import re
 
-HAVE_REDIS=False
+HAS_REDIS=False
 try:
     import redis        # https://github.com/andymccurdy/redis-py/
-    HAVE_REDIS=True
+    HAS_REDIS=True
 except ImportError:
     pass
 
@@ -40,7 +40,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        if not HAVE_REDIS:
+        if not HAS_REDIS:
             raise AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
 
         ret = []

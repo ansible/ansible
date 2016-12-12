@@ -39,9 +39,9 @@ from ansible.module_utils._text import to_native, to_text
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAS_SELINUX=True
 except ImportError:
-    HAVE_SELINUX=False
+    HAS_SELINUX=False
 
 try:
     # Check if we have SSLContext support
@@ -417,7 +417,7 @@ class Facts(object):
             self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
 
     def get_selinux_facts(self):
-        if not HAVE_SELINUX:
+        if not HAS_SELINUX:
             self.facts['selinux'] = False
             return
         self.facts['selinux'] = {}

@@ -24,9 +24,9 @@ try:
     except ImportError:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
+    HAS_DEPS = True
 except ImportError:
-    HAVE_DEPS = False
+    HAS_DEPS = False
 
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
@@ -197,7 +197,7 @@ def main():
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAVE_DEPS:
+    if not HAS_DEPS:
         module.fail_json(msg='python-novaclient, python-keystoneclient, and either python-neutronclient or python-quantumclient are required')
 
     try:

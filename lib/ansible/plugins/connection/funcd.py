@@ -24,10 +24,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-HAVE_FUNC = False
+HAS_FUNC = False
 try:
     import func.overlord.client as fc
-    HAVE_FUNC = True
+    HAS_FUNC = True
 except ImportError:
     pass
 
@@ -54,7 +54,7 @@ class Connection(object):
         self.port = port
 
     def connect(self, port=None):
-        if not HAVE_FUNC:
+        if not HAS_FUNC:
             raise AnsibleError("func is not installed")
 
         self.client = fc.Client(self.host)

@@ -65,10 +65,10 @@ EXAMPLES = '''
     permissive: true
 '''
 
-HAVE_SEOBJECT = False
+HAS_SEOBJECT = False
 try:
     import seobject
-    HAVE_SEOBJECT = True
+    HAS_SEOBJECT = True
 except ImportError:
     pass
 from ansible.module_utils.basic import *
@@ -93,7 +93,7 @@ def main():
     domain = module.params['domain']
     no_reload = module.params['no_reload']
 
-    if not HAVE_SEOBJECT:
+    if not HAS_SEOBJECT:
         module.fail_json(changed=False, msg="policycoreutils-python required for this module")
 
     try:

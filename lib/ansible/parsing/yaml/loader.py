@@ -21,15 +21,15 @@ __metaclass__ = type
 
 try:
     from _yaml import CParser, CEmitter
-    HAVE_PYYAML_C = True
+    HAS_PYYAML_C = True
 except ImportError:
-    HAVE_PYYAML_C = False
+    HAS_PYYAML_C = False
 
 from yaml.resolver import Resolver
 
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 
-if HAVE_PYYAML_C:
+if HAS_PYYAML_C:
 
     class AnsibleLoader(CParser, AnsibleConstructor, Resolver):
         def __init__(self, stream, file_name=None, vault_password=None):

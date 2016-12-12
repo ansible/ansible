@@ -34,10 +34,10 @@ options: {}
 
 import platform
 
-HAVE_XENAPI = False
+HAS_XENAPI = False
 try:
     import XenAPI
-    HAVE_XENAPI = True
+    HAS_XENAPI = True
 except ImportError:
     pass
 
@@ -169,7 +169,7 @@ def get_srs(session):
 def main():
     module = AnsibleModule({})
 
-    if not HAVE_XENAPI:
+    if not HAS_XENAPI:
         module.fail_json(changed=False, msg="python xen api required for this module")
 
     obj = XenServerFacts()

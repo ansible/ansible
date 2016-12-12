@@ -31,13 +31,13 @@ from ansible.module_utils.univention_umc import (
     uldap,
 )
 
-HAVE_UNIVENTION = False
+HAS_UNIVENTION = False
 try:
     from univention.admin.handlers.dns import (
         forward_zone,
         reverse_zone,
     )
-    HAVE_UNIVENTION = True
+    HAS_UNIVENTION = True
 except ImportError:
     pass
 
@@ -125,7 +125,7 @@ def main():
         ])
     )
 
-    if not HAVE_UNIVENTION:
+    if not HAS_UNIVENTION:
         module.fail_json(msg="This module requires univention python bindings")
 
     type        = module.params['type']
