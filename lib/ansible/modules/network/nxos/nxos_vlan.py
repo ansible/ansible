@@ -381,7 +381,7 @@ def get_vlan_config_commands(vlan, vid):
 
     commands = []
 
-    for param, value in vlan.iteritems():
+    for param, value in vlan.items():
         if param == 'mapped_vni' and value == 'default':
             command = 'no vn-segment'
         else:
@@ -589,7 +589,7 @@ def main():
     args = dict(name=name, vlan_state=vlan_state,
                 admin_state=admin_state, mapped_vni=mapped_vni)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     proposed_vlans_list = numerical_sort(vlan_range_to_list(
         vlan_id or vlan_range))
@@ -620,7 +620,7 @@ def main():
                 proposed.get('mapped_vni') == 'default'):
                 proposed.pop('mapped_vni')
             delta = dict(set(
-                proposed.iteritems()).difference(existing.iteritems()))
+                proposed.items()).difference(existing.items()))
             if delta or not existing:
                 commands = get_vlan_config_commands(delta, vlan_id)
 

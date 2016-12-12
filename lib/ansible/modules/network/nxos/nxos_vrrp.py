@@ -622,7 +622,7 @@ def main():
                 vip=vip, authentication=authentication,
                 admin_state=admin_state)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
     existing = get_existing_vrrp(interface, group, module, name)
 
     changed = False
@@ -631,7 +631,7 @@ def main():
 
     if state == 'present':
         delta = dict(
-            set(proposed.iteritems()).difference(existing.iteritems()))
+            set(proposed.items()).difference(existing.items()))
         if delta:
             command = get_commands_config_vrrp(delta, group)
             commands.append(command)

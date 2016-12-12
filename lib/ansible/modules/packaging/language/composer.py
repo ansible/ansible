@@ -215,7 +215,7 @@ def main():
         'ignore_platform_reqs': 'ignore-platform-reqs',
         }
 
-    for param, option in option_params.iteritems():
+    for param, option in option_params.items():
         if module.params.get(param) and option in available_options:
             option = "--%s" % option
             options.append(option)

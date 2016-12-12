@@ -432,7 +432,7 @@ def get_snmp_host(host, module):
 
         if find:
             fix_find = {}
-            for (key, value) in find.iteritems():
+            for (key, value) in find.items():
                 if isinstance(value, str):
                     fix_find[key] = value.strip()
                 else:
@@ -507,7 +507,7 @@ def config_snmp_host(delta, proposed, existing, module):
         'src_intf': 'snmp-server host {0} source-interface {src_intf}'
     }
 
-    for key, value in delta.iteritems():
+    for key, value in delta.items():
         if key in ['vrf_filter', 'vrf', 'udp', 'src_intf']:
             command = CMDS.get(key, None)
             if command:
@@ -597,9 +597,9 @@ def main():
             snmp_type=snmp_type
             )
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     changed = False
     commands = []

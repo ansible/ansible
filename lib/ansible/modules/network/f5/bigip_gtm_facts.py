@@ -227,7 +227,7 @@ class BigIpGtmFactsCommon(object):
         result = dict()
         for attribute in self.attributes_to_remove:
             parameters.pop(attribute, None)
-        for key, val in parameters.iteritems():
+        for key, val in parameters.items():
             result[key] = str(val)
         return result
 
@@ -276,7 +276,7 @@ class BigIpGtmFactsPools(BigIpGtmFactsCommon):
 
     def get_facts_with_types(self):
         result = []
-        for key, type in self.gtm_types.iteritems():
+        for key, type in self.gtm_types.items():
             facts = self.get_all_facts_by_type(key, type)
             if facts:
                 result.append(facts)
@@ -330,7 +330,7 @@ class BigIpGtmFactsWideIps(BigIpGtmFactsCommon):
 
     def get_facts_with_types(self):
         result = []
-        for key, type in self.gtm_types.iteritems():
+        for key, type in self.gtm_types.items():
             facts = self.get_all_facts_by_type(key, type)
             if facts:
                 result.append(facts)

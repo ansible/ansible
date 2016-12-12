@@ -177,7 +177,7 @@ def get_instance(module):
 def present(module, instance, commands):
     commands.append('feature nxapi')
     setters = set()
-    for key, value in module.argument_spec.iteritems():
+    for key, value in module.argument_spec.items():
         setter = value.get('setter') or 'set_%s' % key
         if setter not in setters:
             setters.add(setter)

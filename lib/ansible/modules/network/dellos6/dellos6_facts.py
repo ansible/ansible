@@ -240,7 +240,7 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, interfaces, desc, properties):
         facts = dict()
-        for key, value in interfaces.iteritems():
+        for key, value in interfaces.items():
             intf = dict()
             intf['description'] = self.parse_description(key,desc)
             intf['macaddress'] = self.parse_macaddress(value)
@@ -433,7 +433,7 @@ def main():
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in facts.items():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 

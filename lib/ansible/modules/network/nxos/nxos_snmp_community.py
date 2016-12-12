@@ -405,7 +405,7 @@ def get_snmp_community(module, find_filter=None):
         return {}
     else:
         fix_find = {}
-        for (key, value) in find.iteritems():
+        for (key, value) in find.items():
             if isinstance(value, str):
                 fix_find[key] = value.strip()
             else:
@@ -419,7 +419,7 @@ def config_snmp_community(delta, community):
         'acl': 'snmp-server community {0} use-acl {acl}'
     }
     commands = []
-    for k, v in delta.iteritems():
+    for k, v in delta.items():
         cmd = CMDS.get(k).format(community, **delta)
         if cmd:
             commands.append(cmd)
@@ -461,8 +461,8 @@ def main():
 
     existing = get_snmp_community(module, community)
     args = dict(group=group, acl=acl)
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     changed = False
     end_state = existing

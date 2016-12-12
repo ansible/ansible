@@ -129,7 +129,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
 
             volume.get()
 
-        for key, value in vars(volume).iteritems():
+        for key, value in vars(volume).items():
             if (isinstance(value, NON_CALLABLES) and
                     not key.startswith('_')):
                 instance[key] = value

@@ -689,7 +689,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
           module.fail_json(msg='Getting information for VM with vmid = %s failed with exception: %s' % (vmid, e))
 
         # Sanitize kwargs. Remove not defined args and ensure True and False converted to int.
-        kwargs = dict((k,v) for k, v in kwargs.iteritems() if v is not None)
+        kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
 
         # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
         for k in kwargs.keys():
@@ -698,7 +698,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
              del kwargs[k]
 
         # Split information by type
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
           if re.match(r'net[0-9]', k) is not None:
             interface = k
             k = vm[k]
@@ -723,8 +723,8 @@ def create_vm(module, proxmox, vmid, node, name, memory, cpu, cores, sockets, ti
   proxmox_node = proxmox.nodes(node)
 
   # Sanitize kwargs. Remove not defined args and ensure True and False converted to int.
-  kwargs = dict((k,v) for k, v in kwargs.iteritems() if v is not None)
-  kwargs.update(dict([k, int(v)] for k, v in kwargs.iteritems() if isinstance(v, bool)))
+  kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
+  kwargs.update(dict([k, int(v)] for k, v in kwargs.items() if isinstance(v, bool)))
 
   # The features work only on PVE 4
   if PVE_MAJOR_VERSION < 4:

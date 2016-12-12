@@ -506,7 +506,7 @@ def main():
 
         args = dict(user=user, pwd=pwd, group=group, privacy=privacy,
                     encrypt=encrypt, authentication=authentication)
-        proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+        proposed = dict((k, v) for k, v in args.items() if v is not None)
 
         if not existing:
             if encrypt:
@@ -522,7 +522,7 @@ def main():
                 proposed['encrypt'] = 'aes-128'
 
             delta = dict(
-                    set(proposed.iteritems()).difference(existing.iteritems()))
+                    set(proposed.items()).difference(existing.items()))
 
             if delta.get('pwd'):
                 delta['authentication'] = authentication
