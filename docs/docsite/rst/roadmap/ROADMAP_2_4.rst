@@ -8,6 +8,9 @@ Target: June/July 2017
 This is meant to be a living document, and is **DRAFT** until
 stated otherwise in the document.
 
+- **Python 2.4 support discontinuation**
+  - Python 2.4 will no longer be supported. Going forward, Python 2.6+ will be supported.
+
 - **Ansible-Config**
   - New yaml format for config
   - Extend the ability of the current config system by adding creating an ansible-config command and add the following:
