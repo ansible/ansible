@@ -166,6 +166,7 @@ $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 
 *NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
 
+*NOTE* As with the rest of the integration tests, they can be found grouped by module in `test/integration/targets/MODULENAME/`
 
 To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
 
@@ -184,8 +185,8 @@ $ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.y
 
 Test cases are added to roles based on the module being testing. Test cases
 should include both `cli` and `eapi` test cases. Cli test cases should be
-added to `targets/modulename/tests/cli` and eapi tests should be added to
-`targets/modulename/tests/eapi`.
+added to `test/integration/targets/modulename/tests/cli` and eapi tests should be added to
+`test/integration/targets/modulename/tests/eapi`.
 
 In addition to positive testing, negative tests are required to ensure user friendly warnings & errors are generated, rather than backtraces, for example:
 
