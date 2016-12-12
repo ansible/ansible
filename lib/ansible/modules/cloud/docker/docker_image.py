@@ -339,6 +339,8 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
+                    if image and image == self.results['image']:
+                        self.results['changed'] = False
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
