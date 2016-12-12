@@ -597,7 +597,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
-            os.write(tmp_fd, DUMMY_CA_CERT)
+            os.write(tmp_fd, DUMMY_CA_CERT.encode())
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
