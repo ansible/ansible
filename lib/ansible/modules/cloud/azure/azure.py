@@ -156,6 +156,7 @@ EXAMPLES = '''
     ssh_cert_path: /path/to/azure_x509_cert.pem
     storage_account: my-storage-account
     wait: True
+    state: present
   delegate_to: localhost
 
 - name: Terminate virtual machine example
@@ -179,7 +180,9 @@ EXAMPLES = '''
     storage_account: benooytes
     user: admin
     wait: True
+    state: present
     virtual_network_name: '{{ vnet_name }}'
+  delegate_to: localhost
 '''
 
 import base64
