@@ -191,7 +191,7 @@ def cloud_check(module, state, entity_id, label, check_type,
             # Only force a recreation of the check if one of the *specified*
             # keys is missing or has a different value.
             if details:
-                for (key, value) in details.iteritems():
+                for (key, value) in details.items():
                     if key not in check.details:
                         should_delete = should_create = True
                     elif value != check.details[key]:

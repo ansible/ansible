@@ -815,7 +815,7 @@ class TaskParameters(DockerBaseClass):
             kernel_memory='kernel_memory'
         )
         result = dict()
-        for key, value in update_parameters.iteritems():
+        for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
                 result[key] = getattr(self, value)
         return result
@@ -927,7 +927,7 @@ class TaskParameters(DockerBaseClass):
             pid_mode='pid_mode'
         )
         params = dict()
-        for key, value in host_config_params.iteritems():
+        for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
                 params[key] = getattr(self, value)
 
@@ -1116,10 +1116,10 @@ class TaskParameters(DockerBaseClass):
         final_env = {}
         if self.env_file:
             parsed_env_file = utils.parse_env_file(self.env_file)
-            for name, value in parsed_env_file.iteritems():
+            for name, value in parsed_env_file.items():
                 final_env[name] = str(value)
         if self.env:
-            for name, value in self.env.iteritems():
+            for name, value in self.env.items():
                 final_env[name] = str(value)
         return final_env
 
@@ -1258,7 +1258,7 @@ class Container(DockerBaseClass):
         )
 
         differences = []
-        for key, value in config_mapping.iteritems():
+        for key, value in config_mapping.items():
             self.log('check differences %s %s vs %s' % (key, getattr(self.parameters, key), str(value)))
             if getattr(self.parameters, key, None) is not None:
                 if isinstance(getattr(self.parameters, key), list) and isinstance(value, list):
@@ -1314,7 +1314,7 @@ class Container(DockerBaseClass):
         '''
         if not isinstance(dict_a, dict) or not isinstance(dict_b, dict):
             return False
-        for key, value in dict_a.iteritems():
+        for key, value in dict_a.items():
             if isinstance(value, dict):
                 match = self._compare_dicts(value, dict_b.get(key))
             elif isinstance(value, list):
@@ -1353,7 +1353,7 @@ class Container(DockerBaseClass):
         )
 
         differences = []
-        for key, value in config_mapping.iteritems():
+        for key, value in config_mapping.items():
             if getattr(self.parameters, key, None) and getattr(self.parameters, key) != value:
                 # no match. record the differences
                 item = dict()
@@ -1402,7 +1402,7 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('links') and connected_networks[network['name']].get('Links'):
                     expected_links = []
-                    for link, alias in network['links'].iteritems():
+                    for link, alias in network['links'].items():
                         expected_links.append("%s:%s" % (link, alias))
                     for link in expected_links:
                         if link not in connected_networks[network['name']].get('Links', []):
@@ -1433,7 +1433,7 @@ class Container(DockerBaseClass):
 
         connected_networks = self.container['NetworkSettings'].get('Networks')
         if connected_networks:
-            for network, network_config in connected_networks.iteritems():
+            for network, network_config in connected_networks.items():
                 keep = False
                 if self.parameters.networks:
                     for expected_network in self.parameters.networks:
@@ -1485,7 +1485,7 @@ class Container(DockerBaseClass):
         if not self.parameters.published_ports:
             return None
         expected_bound_ports = {}
-        for container_port, config in self.parameters.published_ports.iteritems():
+        for container_port, config in self.parameters.published_ports.items():
             if isinstance(container_port, int):
                 container_port = "%s/tcp" % container_port
             if len(config) == 1:
@@ -1504,7 +1504,7 @@ class Container(DockerBaseClass):
         self.log('parameter links:')
         self.log(self.parameters.links, pretty_print=True)
         exp_links = []
-        for link, alias in self.parameters.links.iteritems():
+        for link, alias in self.parameters.links.items():
             exp_links.append("/%s:%s/%s" % (link, ('/' + self.parameters.name), alias))
         return exp_links
 
@@ -1635,7 +1635,7 @@ class Container(DockerBaseClass):
         if getattr(self.parameters, param_name, None) is None:
             return None
         results = []
-        for key, value in getattr(self.parameters, param_name).iteritems():
+        for key, value in getattr(self.parameters, param_name).items():
             results.append("%s%s%s" % (key, join_with, value))
         return results
 

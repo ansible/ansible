@@ -427,7 +427,7 @@ def state_present(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if value is True:
             commands.append(key)
 
@@ -481,7 +481,7 @@ def state_absent(module, existing, proposed, candidate):
     parents = ['router ospf {0}'.format(module.params['ospf'])]
     if module.params['vrf'] == 'default':
         existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
-        for key, value in existing_commands.iteritems():
+        for key, value in existing_commands.items():
             if value:
                 if key == 'timers throttle lsa':
                     command = 'no {0} {1} {2} {3}'.format(
@@ -548,11 +548,11 @@ def main():
 
     existing = invoke('get_existing', module, args)
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key != 'interface':
             if str(value).lower() == 'true':
                 value = True

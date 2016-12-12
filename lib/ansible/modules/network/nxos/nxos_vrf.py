@@ -367,7 +367,7 @@ def apply_key_map(key_map, table):
 
 def get_commands_to_config_vrf(delta, vrf):
     commands = []
-    for param, value in delta.iteritems():
+    for param, value in delta.items():
         command = ''
         if param == 'description':
             command = 'description {0}'.format(value)
@@ -479,7 +479,7 @@ def main():
 
     end_state = existing
     changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     """Since 'admin_state' is either 'Up' or 'Down' from outputs,
     we use the following to make sure right letter case is used so that delta
@@ -488,7 +488,7 @@ def main():
         if existing['admin_state'].lower() == admin_state:
             proposed['admin_state'] = existing['admin_state']
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
     changed = False
     end_state = existing
     commands = []

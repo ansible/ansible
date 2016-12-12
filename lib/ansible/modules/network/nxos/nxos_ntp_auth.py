@@ -518,12 +518,12 @@ def main():
                 authentication=authentication)
 
     changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_ntp_auth_info(key_id, module)
     end_state = existing
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     commands = []
     if state == 'present':
@@ -553,7 +553,7 @@ def main():
                 clie = get_exception()
                 module.fail_json(msg=str(clie) + ": " + cmds)
             end_state = get_ntp_auth_info(key_id, module)
-            delta = dict(set(end_state.iteritems()).difference(existing.iteritems()))
+            delta = dict(set(end_state.items()).difference(existing.items()))
             if delta or (len(existing) != len(end_state)):
                 changed = True
             if 'configure' in cmds:

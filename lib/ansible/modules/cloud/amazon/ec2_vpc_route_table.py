@@ -233,7 +233,7 @@ def get_resource_tags(vpc_conn, resource_id):
 
 def tags_match(match_tags, candidate_tags):
     return all((k in candidate_tags and candidate_tags[k] == v
-                for k, v in match_tags.iteritems()))
+                for k, v in match_tags.items()))
 
 
 def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):

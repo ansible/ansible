@@ -352,7 +352,7 @@ def get_consul_api(module, token=None):
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
     ''' iterate the registered services and find one with the given id '''
-    for name, service in consul_api.agent.services().iteritems():
+    for name, service in consul_api.agent.services().items():
         if service['ID'] == service_id_or_name or service['Service'] == service_id_or_name:
             return ConsulService(loaded=service)
 

@@ -736,7 +736,7 @@ def fix_proposed(module, proposed, existing):
     commands = list()
     command = ''
     fixed_proposed = {}
-    for key, value in proposed.iteritems():
+    for key, value in proposed.items():
         if key in DAMPENING_PARAMS:
             if value != 'default':
                 command = 'dampening {0} {1} {2} {3}'.format(
@@ -874,7 +874,7 @@ def state_present(module, existing, proposed, candidate):
     fixed_proposed, commands = fix_proposed(module, proposed, existing)
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, fixed_proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if key == 'address-family':
             addr_family_command = "address-family {0} {1}".format(
                             module.params['afi'], module.params['safi'])
@@ -1060,7 +1060,7 @@ def main():
                              existing_asn=existing.get('asn'))
 
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     if proposed_args.get('networks'):
@@ -1071,7 +1071,7 @@ def main():
             proposed_args['inject_map'] = 'default'
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)

@@ -286,7 +286,7 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, interfaces):
         facts = dict()
-        for key, value in interfaces.iteritems():
+        for key, value in interfaces.items():
             intf = dict()
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
@@ -307,7 +307,7 @@ class Interfaces(FactsBase):
         return facts
 
     def populate_ipv6_interfaces(self, data):
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (\S+)', value, re.M)
@@ -556,7 +556,7 @@ def main():
         module.exit_json(out=module.from_json(runner.items))
 
     ansible_facts = dict()
-    for key, value in facts.iteritems():
+    for key, value in facts.items():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 

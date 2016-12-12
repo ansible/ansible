@@ -385,7 +385,7 @@ def main():
     # checks all lists and removes it, so that functions expecting
     # an empty list, get this result. May upstream this fix into
     # the AnsibleModule code to have it check for this.
-    for k, _param in module.params.iteritems():
+    for k, _param in module.params.items():
         if isinstance(_param, list):
             module.params[k] = [x for x in _param if x]
 

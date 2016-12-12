@@ -660,7 +660,7 @@ def main():
     existing, address_list = get_ip_interface(interface, version, module)
 
     args = dict(addr=addr, mask=mask, interface=interface)
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
     commands = []
     changed = False
     end_state = existing

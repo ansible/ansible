@@ -97,7 +97,7 @@ class Ec2Metadata(object):
 
     def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
         new_fields = {}
-        for key, value in fields.iteritems():
+        for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)

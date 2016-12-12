@@ -513,7 +513,7 @@ def main():
                 auth_port=auth_port, acct_port=acct_port,
                 tacacs_port=tacacs_port)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
     changed = False
 
     if encrypt_type and not key:
@@ -543,7 +543,7 @@ def main():
                     msg='host_timeout must be an integer between 1 and 60')
 
         delta = dict(
-                set(proposed.iteritems()).difference(existing.iteritems()))
+                set(proposed.items()).difference(existing.items()))
         if delta:
             union = existing.copy()
             union.update(delta)
@@ -553,7 +553,7 @@ def main():
 
     elif state == 'absent':
         intersect = dict(
-                set(proposed.iteritems()).intersection(existing.iteritems()))
+                set(proposed.items()).intersection(existing.items()))
         if intersect.get('address') and intersect.get('server_type'):
             command = 'no {0}-server host {1}'.format(
                         intersect.get('server_type'), intersect.get('address'))

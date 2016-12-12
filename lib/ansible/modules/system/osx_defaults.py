@@ -137,7 +137,7 @@ class OSXDefaults(object):
         self.current_value = None
 
         # Just set all given parameters
-        for key, val in kwargs.iteritems():
+        for key, val in kwargs.items():
             setattr(self, key, val)
 
         # Try to find the defaults executable

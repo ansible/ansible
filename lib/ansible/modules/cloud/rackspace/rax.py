@@ -484,7 +484,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
         if not boot_from_volume and not boot_volume and not image:
             module.fail_json(msg='image is required for the "rax" module')
 
-        for arg, value in dict(name=name, flavor=flavor).iteritems():
+        for arg, value in dict(name=name, flavor=flavor).items():
             if not value:
                 module.fail_json(msg='%s is required for the "rax" module' %
                                      arg)

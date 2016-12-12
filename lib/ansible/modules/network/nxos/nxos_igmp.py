@@ -301,11 +301,11 @@ def get_commands(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
     if module.params['state'] == 'default':
-        for key, value in proposed_commands.iteritems():
+        for key, value in proposed_commands.items():
             if existing_commands.get(key):
                 commands.append('no {0}'.format(key))
     else:
-        for key, value in proposed_commands.iteritems():
+        for key, value in proposed_commands.items():
             if value is True:
                 commands.append(key)
             else:
@@ -361,7 +361,7 @@ def main():
     existing = invoke('get_existing', module, args)
     end_state = existing
 
-    proposed = dict((k, v) for k, v in module.params.iteritems()
+    proposed = dict((k, v) for k, v in module.params.items()
                 if v is not None and k in args)
 
     proposed_args = proposed.copy()

@@ -542,7 +542,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         'auto_recovery': '{auto_recovery} auto-recovery',
         }
 
-    for param, value in vpc.iteritems():
+    for param, value in vpc.items():
         command = CONFIG_ARGS.get(param, 'DNE').format(**vpc)
         if command and command != 'DNE':
             commands.append(command.strip())
@@ -614,14 +614,14 @@ def main():
             module.fail_json(msg='The VRF you are trying to use for the peer '
                                  'keepalive link is not on device yet. Add it'
                                  ' first, please.')
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
     changed = False
     existing = get_vpc(module)
     end_state = existing
 
     commands = []
     if state == 'present':
-        delta = set(proposed.iteritems()).difference(existing.iteritems())
+        delta = set(proposed.items()).difference(existing.items())
         if delta:
             command = get_commands_to_config_vpc(module, delta, domain, existing)
             commands.append(command)

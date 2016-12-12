@@ -141,7 +141,7 @@ def create_tags_container(tags):
 
     tag_set = TagSet()
     tags_obj = Tags()
-    for key, val in tags.iteritems():
+    for key, val in tags.items():
         tag_set.add_tag(key, val)
 
     tags_obj.add_tag_set(tag_set)

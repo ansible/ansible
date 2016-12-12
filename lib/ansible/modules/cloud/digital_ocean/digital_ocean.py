@@ -231,7 +231,7 @@ class Droplet(JsonfyMixIn):
 
     def update_attr(self, attrs=None):
         if attrs:
-            for k, v in attrs.iteritems():
+            for k, v in attrs.items():
                 setattr(self, k, v)
         else:
             json = self.manager.show_droplet(self.id)

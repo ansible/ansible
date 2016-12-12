@@ -210,7 +210,7 @@ def tags_changed(pcx_id, client, module):
     if pcx['VpcPeeringConnections']:
         pcx_values = [t.values() for t in pcx['VpcPeeringConnections'][0]['Tags']]
         pcx_tags = [item for sublist in pcx_values for item in sublist]
-        tag_values = [[key, str(value)] for key, value in tags.iteritems()]
+        tag_values = [[key, str(value)] for key, value in tags.items()]
         tags = [item for sublist in tag_values for item in sublist]
         if sorted(pcx_tags) == sorted(tags):
             changed = False
@@ -305,7 +305,7 @@ def accept_reject_delete(state, client, module):
 def load_tags(module):
     tags = []
     if module.params.get('tags'):
-        for name, value in module.params.get('tags').iteritems():
+        for name, value in module.params.get('tags').items():
             tags.append({'Key': name, 'Value': str(value)})
     return tags
 

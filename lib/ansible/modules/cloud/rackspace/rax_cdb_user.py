@@ -93,7 +93,7 @@ def find_user(instance, name):
 
 def save_user(module, cdb_id, name, password, databases, host):
 
-    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
+    for arg, value in dict(cdb_id=cdb_id, name=name).items():
         if not value:
             module.fail_json(msg='%s is required for the "rax_cdb_user" '
                                  'module' % arg)
@@ -148,7 +148,7 @@ def save_user(module, cdb_id, name, password, databases, host):
 
 def delete_user(module, cdb_id, name):
 
-    for arg, value in dict(cdb_id=cdb_id, name=name).iteritems():
+    for arg, value in dict(cdb_id=cdb_id, name=name).items():
         if not value:
             module.fail_json(msg='%s is required for the "rax_cdb_user"'
                                  ' module' % arg)

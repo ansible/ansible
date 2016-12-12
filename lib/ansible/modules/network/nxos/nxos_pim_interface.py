@@ -661,7 +661,7 @@ def config_pim_interface(delta, existing, jp_bidir, isauth):
             if command:
                 commands.append(command)
 
-    for k, v in delta.iteritems():
+    for k, v in delta.items():
         if k in ['dr_prio', 'hello_interval', 'hello_auth_key', 'border',
                  'sparse']:
             if v:
@@ -726,7 +726,7 @@ def get_pim_interface_defaults():
                 hello_interval=hello_interval,
                 hello_auth_key=hello_auth_key)
 
-    default = dict((param, value) for (param, value) in args.iteritems()
+    default = dict((param, value) for (param, value) in args.items()
                    if value is not None)
 
     return default
@@ -746,7 +746,7 @@ def default_pim_interface_policies(existing, jp_bidir):
 
     elif not jp_bidir:
         command = None
-        for k, v in existing.iteritems():
+        for k, v in existing.items():
             if k == 'jp_policy_in':
                 if existing.get('jp_policy_in'):
                     if existing.get('jp_type_in') == 'prefix':
@@ -783,8 +783,8 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 
     # returns a dict
     defaults = get_pim_interface_defaults()
-    delta = dict(set(defaults.iteritems()).difference(
-                                                     existing.iteritems()))
+    delta = dict(set(defaults.items()).difference(
+                                                     existing.items()))
     if delta:
         # returns a list
         command = config_pim_interface(delta, existing,
@@ -866,7 +866,7 @@ def main():
         'neighbor_type',
         'neighbor_policy'
         ]
-    proposed = dict((k, v) for k, v in module.params.iteritems()
+    proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     '''
@@ -879,7 +879,7 @@ def main():
     if hello_interval:
         proposed['hello_interval'] = str(proposed['hello_interval'] * 1000)
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     if state == 'present':
         if delta:

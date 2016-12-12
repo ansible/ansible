@@ -161,7 +161,7 @@ def icmp_present(entry):
 def load_tags(module):
     tags = []
     if module.params.get('tags'):
-        for name, value in module.params.get('tags').iteritems():
+        for name, value in module.params.get('tags').items():
             tags.append({'Key': name, 'Value': str(value)})
         tags.append({'Key': "Name", 'Value': module.params.get('name')})
     else:
@@ -239,7 +239,7 @@ def tags_changed(nacl_id, client, module):
     if nacl['NetworkAcls']:
         nacl_values = [t.values() for t in nacl['NetworkAcls'][0]['Tags']]
         nacl_tags = [item for sublist in nacl_values for item in sublist]
-        tag_values = [[key, str(value)] for key, value in tags.iteritems()]
+        tag_values = [[key, str(value)] for key, value in tags.items()]
         tags = [item for sublist in tag_values for item in sublist]
         if sorted(nacl_tags) == sorted(tags):
             changed = False

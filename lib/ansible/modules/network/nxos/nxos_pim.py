@@ -275,7 +275,7 @@ def get_commands(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         command = '{0} {1}'.format(key, value)
         commands.append(command)
 
@@ -305,7 +305,7 @@ def main():
 
     existing = invoke('get_existing', module, args)
     end_state = existing
-    proposed = dict((k, v) for k, v in module.params.iteritems()
+    proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     result = {}

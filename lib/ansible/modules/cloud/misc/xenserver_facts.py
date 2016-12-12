@@ -129,7 +129,7 @@ def change_keys(recs, key='uuid', filter_func=None):
     """
     new_recs = {}
 
-    for ref, rec in recs.iteritems():
+    for ref, rec in recs.items():
         if filter_func is not None and not filter_func(rec):
             continue
 

@@ -168,7 +168,7 @@ class Zfs(object):
         if volblocksize:
             cmd += ['-b', 'volblocksize']
         if properties:
-            for prop, value in properties.iteritems():
+            for prop, value in properties.items():
                 cmd += ['-o', '%s="%s"' % (prop, value)]
         if origin:
             cmd.append(origin)
@@ -203,7 +203,7 @@ class Zfs(object):
 
     def set_properties_if_changed(self):
         current_properties = self.get_current_properties()
-        for prop, value in self.properties.iteritems():
+        for prop, value in self.properties.items():
             if current_properties.get(prop, None) != value:
                 self.set_property(prop, value)
 
@@ -242,7 +242,7 @@ def main():
 
     # Get all valid zfs-properties
     properties = dict()
-    for prop, value in module.params.iteritems():
+    for prop, value in module.params.items():
         # All freestyle params are zfs properties
         if prop not in module.argument_spec:
             # Reverse the boolification of freestyle zfs properties

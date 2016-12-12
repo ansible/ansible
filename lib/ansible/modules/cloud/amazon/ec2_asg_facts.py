@@ -206,7 +206,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 def match_asg_tags(tags_to_match, asg):
-    for key, value in tags_to_match.iteritems():
+    for key, value in tags_to_match.items():
         for tag in asg['Tags']:
             if key == tag['Key'] and value == tag['Value']:
                 break

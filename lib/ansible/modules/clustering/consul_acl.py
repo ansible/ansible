@@ -217,7 +217,7 @@ def load_rules_for_token(module, consul_api, token):
         if info and info['Rules']:
             rule_set = hcl.loads(to_ascii(info['Rules']))
             for rule_type in rule_set:
-                for pattern, policy in rule_set[rule_type].iteritems():
+                for pattern, policy in rule_set[rule_type].items():
                     rules.add_rule(rule_type, Rule(pattern, policy['policy']))
         return rules
     except Exception as e:
@@ -272,7 +272,7 @@ class Rules:
 
         rules = ""
         for rule_type in RULE_TYPES:
-            for pattern, rule in self.rules[rule_type].iteritems():
+            for pattern, rule in self.rules[rule_type].items():
                 rules += template % (rule_type, pattern, rule.policy)
         return to_ascii(rules)
 
@@ -288,7 +288,7 @@ class Rules:
             return False
 
         for rule_type in RULE_TYPES:
-            for name, other_rule in other.rules[rule_type].iteritems():
+            for name, other_rule in other.rules[rule_type].items():
                 if not name in self.rules[rule_type]:
                     return False
                 rule = self.rules[rule_type][name]

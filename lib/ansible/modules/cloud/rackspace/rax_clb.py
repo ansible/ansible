@@ -200,7 +200,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                 'protocol': protocol,
                 'timeout': timeout
             }
-            for att, value in atts.iteritems():
+            for att, value in atts.items():
                 current = getattr(balancer, att)
                 if current != value:
                     changed = True

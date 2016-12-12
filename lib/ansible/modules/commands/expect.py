@@ -146,7 +146,7 @@ def main():
     echo = module.params['echo']
 
     events = dict()
-    for key, value in responses.iteritems():
+    for key, value in responses.items():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
