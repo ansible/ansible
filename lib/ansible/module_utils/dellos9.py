@@ -42,8 +42,9 @@ def get_config(module):
     if not contents:
         contents = module.config.get_config()
         module.params['config'] = contents
-
-    return NetworkConfig(indent=1, contents=contents[0])
+        return NetworkConfig(indent=1, contents=contents[0])
+    else:
+        return NetworkConfig(indent=1, contents=contents)
 
 
 def get_sublevel_config(running_config, module):
@@ -54,11 +55,13 @@ def get_sublevel_config(running_config, module):
         contents = obj.children
     contents[:0] = module.params['parents']
 
+    indent = 0
     for c in contents:
         if isinstance(c, str):
-            current_config_contents.append(c)
+            current_config_contents.append(c.rjust(len(c) + indent, ' '))
         if isinstance(c, ConfigLine):
             current_config_contents.append(c.raw)
+        indent = indent + 1
     sublevel_config = '\n'.join(current_config_contents)
 
     return sublevel_config
