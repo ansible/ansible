@@ -25,6 +25,7 @@ short_description: create or terminate a virtual machine in azure
 description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
+host_affinity: localhost
 options:
   name:
     description:
