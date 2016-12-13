@@ -71,6 +71,11 @@ You also need Python 2.4 or later. If you are running less than Python 2.5 on th
 
 * ``python-simplejson``
 
+For apt related modules in Debian, you will also need:
+
+* ``python-apt``
+* ``python-pycurl``
+
 .. note::
 
    Ansible's "raw" module (for executing commands in a quick and dirty
