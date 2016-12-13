@@ -388,7 +388,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
+        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.values()])
 
     def _get_addresses(self):
         try:
