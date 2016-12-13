@@ -28,5 +28,6 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
    playbooks_blocks
    playbooks_strategies
    playbooks_best_practices
+   playbooks_troubleshooting
 
 
