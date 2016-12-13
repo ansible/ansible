@@ -30,6 +30,10 @@ On a Linux control machine::
 
 Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
 
+On arch-linux:
+   
+   Please make sure to target the python installation ansible is using. pip will target python3, use pip2.7 instead. 
+
 Active Directory Support
 ++++++++++++++++++++++++
 
