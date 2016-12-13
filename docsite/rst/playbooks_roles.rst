@@ -158,8 +158,13 @@ inside another.
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
    decide what include file to use.  All hosts contained within the
-   play are going to get the same tasks.  ('*when*' provides some
-   ability for hosts to conditionally skip tasks).
+   play are going to get the same tasks.
+
+   So something like ``include: {{ ansible_os_family }}.yml`` would not work. But there is a workaround.  With the ``when`` clause you can provide some ability for hosts to conditionally skip tasks::
+
+       - include: tasks/_RedHat.yml
+         when: ansible_os_family == "RedHat"
+
 
 
 .. _dynamic_static:
