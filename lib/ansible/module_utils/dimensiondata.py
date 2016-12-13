@@ -22,7 +22,8 @@
 #
 # Common methods to be used by versious module components
 import os
-import ConfigParser
+from ansible.module_utils.six.moves.configparser import ConfigParser
+from ansible.module_utils.pycompat24 import get_exception
 from os.path import expanduser
 from uuid import UUID
 
@@ -91,7 +92,7 @@ def get_credentials():
         try:
             user_id = config.get("dimensiondatacloud", "DIDATA_USER")
             key = config.get("dimensiondatacloud", "DIDATA_PASSWORD")
-        except ConfigParser.NoSectionError, ConfigParser.NoOptionError:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
 
     # One or more credentials not found. Function can't recover from this
@@ -114,11 +115,8 @@ def get_dd_regions():
     # Get endpoints
     all_regions = API_ENDPOINTS.keys()
 
-    # filter to only DimensionData endpoints
-    region_list = filter(lambda i: i.startswith('dd-'), all_regions)
-
-    # Strip prefix
-    regions = [region[3:] for region in region_list]
+    # Only Dimension Data endpoints (no prefix)
+    regions = [region[3:] for region in all_regions if region.startswith('dd-')]
 
     return regions
 
@@ -128,7 +126,7 @@ def get_network_domain_by_name(driver, name, location):
     Get a network domain object by its name
     """
     networks = driver.ex_list_network_domains(location=location)
-    found_networks = filter(lambda x: x.name == name, networks)
+    found_networks = [network for network in networks if network.name == name]
 
     if not found_networks:
         raise UnknownNetworkError("Network '%s' could not be found" % name)
@@ -145,7 +143,7 @@ def get_network_domain(driver, locator, location):
     else:
         name = locator
         networks = driver.ex_list_network_domains(location=location)
-        found_networks = filter(lambda x: x.name == name, networks)
+        found_networks = [network for network in networks if network.name == name]
 
         if not found_networks:
             raise UnknownNetworkError("Network '%s' could not be found" % name)
@@ -164,7 +162,7 @@ def get_vlan(driver, locator, location, network_domain):
     else:
         vlans = driver.ex_list_vlans(location=location,
                                      network_domain=network_domain)
-        found_vlans = filter(lambda x: x.name == locator, vlans)
+        found_vlans = [vlan for vlan in vlans if vlan.name == locator]
 
         if not found_vlans:
             raise UnknownVLANError("VLAN '%s' could not be found" % locator)
@@ -215,10 +213,11 @@ def get_public_ip_block(module, driver, network_domain, block_id=False,
     Get public IP block details
     """
     # Block ID given, try to use it.
-    if block_id is not 'False':
+    if block_id is not False:
         try:
             block = driver.ex_get_public_ip_block(block_id)
-        except DimensionDataAPIException as e:
+        except DimensionDataAPIException:
+            e = get_exception()
             # 'UNEXPECTED_ERROR' should be removed once upstream bug is fixed.
             # Currently any call to ex_get_public_ip_block where the block does
             # not exist will return UNEXPECTED_ERROR rather than
@@ -235,7 +234,7 @@ def get_public_ip_block(module, driver, network_domain, block_id=False,
     else:
         blocks = list_public_ip_blocks(module, driver, network_domain)
         if blocks is not False:
-            block = filter(lambda x: x.base_ip == base_ip, blocks)[0]
+            block = next(block for block in blocks if block.base_ip == base_ip)
         else:
             module.exit_json(changed=False, msg="IP block starting with "
                              "'%s' does not exist." % base_ip)
@@ -286,12 +285,17 @@ def get_block_allocation(module, cp_driver, lb_driver, network_domain, block):
     block_detailed = {'id': block.id, 'addresses': []}
     for ip in pub_ips:
         allocated = False
-        nat_match = filter(lambda x: x.external_ip == ip, nat_rules)
-        lb_match = filter(lambda x: x.ip == ip, balancers)
+
+        nat_match = [nat_rule for nat_rule in nat_rules
+                     if nat_rule.external_ip == ip]
+        lb_match = [balancer for balancer in balancers
+                    if balancer.ip == ip]
+
         if len(nat_match) > 0 or len(lb_match) > 0:
             allocated = True
         else:
             allocated = False
+
         block_detailed['addresses'].append({'address': ip,
                                             'allocated': allocated})
     return block_detailed
@@ -351,9 +355,9 @@ def get_unallocated_public_ips(module, cp_driver, lb_driver, network_domain,
         for i in range(num_needed):
             block = cp_driver.ex_add_public_ip_block_to_network_domain(
                 network_domain)
-            b_dict = get_block_allocation(module, cp_driver, lb_driver,
-                                          network_domain, block)
-            for addr in b_dict['addresses']:
+            block_dict = get_block_allocation(module, cp_driver, lb_driver,
+                                              network_domain, block)
+            for addr in block_dict['addresses']:
                 free_ips.append(addr['address'])
             if len(free_ips) >= count:
                 break
@@ -384,7 +388,9 @@ def get_node_by_name_and_ip(module, lb_driver, name, ip):
     found_nodes = []
     if not is_ipv4_addr(ip):
         module.fail_json(msg="Node '%s' ip is not a valid IPv4 address" % ip)
-    found_nodes = filter(lambda x: x.name == name and x.ip == ip, nodes)
+
+    found_nodes = [node for node in nodes
+                   if node.name == name and node.ip == ip]
     if len(found_nodes) == 0:
         return None
     elif len(found_nodes) == 1:
