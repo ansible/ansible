@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Dimension Data
@@ -19,6 +18,7 @@
 # Authors:
 #   - Aimon Bustardo <aimon.bustardo@dimensiondata.com>
 #   - Mark Maglana   <mmaglana@gmail.com>
+#   - Adam Friedman  <tintoy@tintoy.io>
 #
 # Common methods to be used by versious module components
 import os
