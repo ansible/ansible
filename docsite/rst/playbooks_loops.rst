@@ -282,6 +282,27 @@ One of the provided strings will be selected at random.
 
 At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
 
+.. _allocating_loop:
+
+Allocating Loop
+```````````````
+
+The 'allocate' feature can be used to allocate some list of things over another list of "slots" in round-robin fashion.  You could use it to distribute a list of resources into some subset.  This returns each item and its assigned slot in the following format::
+
+    - debug: msg="{{ item.current }} is in {{ item.slot }}"
+      with_allocate:
+         slots:
+         - "zone1"
+         - "zone2"
+         items:
+         - "my_server1"
+         - "my_server2"
+         - "my_server3"
+         - "my_server4"
+         - "my_server5"
+
+This can be useful for distributing hosts into a set of zones or networks, for example.
+
 .. _do_until_loops:
 
 Do-Until Loops
