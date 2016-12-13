@@ -130,7 +130,7 @@ a lot shorter than this::
 
     # For this module, we're going to do key=value style arguments.
     # Modules can choose to receive json instead by adding the string:
-    #   WANT_JSON
+    #   WANT_JSON <- this line should be deleted in this example
     # Somewhere in the file.
     # Modules can also take free-form arguments instead of key-value or json
     # but this is not recommended.
@@ -198,6 +198,10 @@ a lot shorter than this::
 Let's test that module::
 
     ansible/hacking/test-module -m ./timetest.py -a "time=\"March 14 12:23\""
+
+Sometimes you need test your module with root privileges (e.g. change system time in this example)::
+
+    sudo -E ansible/hacking/test-module -m ./timetest.py -a "time=\"March 14 12:23\""
 
 This should return something like::
 
