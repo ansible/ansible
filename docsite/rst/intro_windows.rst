@@ -172,6 +172,9 @@ In group_vars/windows.yml, define the following inventory variables::
     # The following is necessary for Python 2.7.9+ (or any older Python that has backported SSLContext, eg, Python 2.7.5 on RHEL7) when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
+    # The following is necessary if a domain account is to be used:
+    ansible_user: Administrator@domain.local
+
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
 
 Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
