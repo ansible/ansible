@@ -178,12 +178,12 @@ Internet, or if they are in private networks::
 
 You can check which values are specifically network ranges::
 
-    # {{ test_list | ipaddr('net') }}
+    # {{ test_list | ipaddr('subnet') }}
     ['192.168.32.0/24', '2001:db8:32c:faad::/64']
 
 You can also check how many IP addresses can be in a certain range::
 
-    # {{ test_list | ipaddr('net') | ipaddr('size') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('size') }}
     [256, 18446744073709551616L]
 
 By specifying a network range as a query, you can check if given value is in
@@ -197,27 +197,27 @@ treat this as an index and will return specific IP address from a network
 range, in the 'host/prefix' format::
 
     # First IP address (network address)
-    # {{ test_list | ipaddr('net') | ipaddr('0') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('0') }}
     ['192.168.32.0/24', '2001:db8:32c:faad::/64']
 
     # Second IP address (usually gateway host)
-    # {{ test_list | ipaddr('net') | ipaddr('1') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('1') }}
     ['192.168.32.1/24', '2001:db8:32c:faad::1/64']
 
     # Last IP address (broadcast in IPv4 networks)
-    # {{ test_list | ipaddr('net') | ipaddr('-1') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('-1') }}
     ['192.168.32.255/24', '2001:db8:32c:faad:ffff:ffff:ffff:ffff/64']
 
 You can also select IP addresses from a range by their index, from the start or
 end of the range::
 
-    # {{ test_list | ipaddr('net') | ipaddr('200') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('200') }}
     ['192.168.32.200/24', '2001:db8:32c:faad::c8/64']
 
-    # {{ test_list | ipaddr('net') | ipaddr('-200') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('-200') }}
     ['192.168.32.56/24', '2001:db8:32c:faad:ffff:ffff:ffff:ff38/64']
 
-    # {{ test_list | ipaddr('net') | ipaddr('400') }}
+    # {{ test_list | ipaddr('subnet') | ipaddr('400') }}
     ['2001:db8:32c:faad::190/64']
 
 
@@ -311,7 +311,7 @@ This result can be canonicalised with ``ipaddr()`` to produce a subnet in CIDR f
     # {{ net_mask | ipaddr('prefix') }}
     '24'
 
-    # {{ net_mask | ipaddr('net') }}
+    # {{ net_mask | ipaddr('subnet') }}
     '192.168.0.0/24'
 
 
