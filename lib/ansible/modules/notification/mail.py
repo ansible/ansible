@@ -22,9 +22,9 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'committer',
                     'version': '1.0'}
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
-author: "Dag Wieers (@dagwieers)" 
+author: "Dag Wieers (@dagwieers)"
 module: mail
 short_description: Send an email
 description:
@@ -91,8 +91,8 @@ options:
     required: false
   port:
     description:
-      - The mail server port
-    default: '25'
+      - The mail server port.  This must be a valid integer between 1 and 65534
+    default: 25
     required: false
     version_added: "1.0"
   attach:
@@ -120,7 +120,25 @@ options:
     default: 'plain'
     required: false
     version_added: "2.0"
-"""
+  secure:
+    description:
+        - If C(always), the connection will only send email if the connection is Encrypted.
+          If the server doesn't accept the encrypted connection it will fail.
+        - If C(try), the connection will attempt to setup a secure SSL/TLS session, before trying to send.
+        - If C(never), the connection will not attempt to setup a secure SSL/TLS session, before sending
+        - If C(starttls), the connection will try to upgrade to a secure SSL/TLS connection, before sending.
+          If it is unable to do so it will fail.
+    choices: [ "always", "never", "try", "starttls"]
+    default: 'try'
+    required: false
+    version_added: "2.3"
+  timeout:
+    description:
+      - Sets the Timeout in seconds for connection attempts
+    default: 20
+    required: false
+    version_added: "2.3"
+'''
 
 EXAMPLES = '''
 # Example playbook sending mail to root
@@ -160,27 +178,49 @@ EXAMPLES = '''
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
     body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+
+# Sending an e-mail using Legacy SSL to the remote machine
+- mail:
+    host: localhost
+    port: 25
+    to: John Smith <john.smith@example.com>
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    secure: always
+
+ # Sending an e-mail using StartTLS to the remote machine
+- mail:
+    host: localhost
+    port: 25
+    to: John Smith <john.smith@example.com>
+    subject: Ansible-report
+    body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+    secure: starttls
+
 '''
 
 import os
-import sys
 import smtplib
 import ssl
 
 try:
+    # Python 2.6+
     from email import encoders
-    import email.utils
     from email.utils import parseaddr, formataddr
     from email.mime.base import MIMEBase
-    from mail.mime.multipart import MIMEMultipart
+    from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 except ImportError:
+    # Python 2.4 & 2.5
     from email import Encoders as encoders
-    import email.Utils
     from email.Utils import parseaddr, formataddr
     from email.MIMEBase import MIMEBase
     from email.MIMEMultipart import MIMEMultipart
     from email.MIMEText import MIMEText
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def main():
 
@@ -189,7 +229,7 @@ def main():
             username = dict(default=None),
             password = dict(default=None, no_log=True),
             host = dict(default='localhost'),
-            port = dict(default='25'),
+            port = dict(default=25, type='int'),
             sender = dict(default='root', aliases=['from']),
             to = dict(default='root', aliases=['recipients']),
             cc = dict(default=None),
@@ -199,7 +239,9 @@ def main():
             attach = dict(default=None),
             headers = dict(default=None),
             charset = dict(default='us-ascii'),
-            subtype = dict(default='plain')
+            subtype = dict(default='plain'),
+            secure = dict(default='try', choices=['always', 'never', 'try', 'starttls'], type='str'),
+            timeout = dict(default=20, type='int')
         )
     )
 
@@ -217,28 +259,76 @@ def main():
     headers = module.params.get('headers')
     charset = module.params.get('charset')
     subtype = module.params.get('subtype')
+    secure = module.params.get('secure')
+    timeout = module.params.get('timeout')
     sender_phrase, sender_addr = parseaddr(sender)
+    secure_state = False
+    code = 0
+    auth_flag = ""
 
     if not body:
         body = subject
 
-    try:
-        try:
-            smtp = smtplib.SMTP_SSL(host, port=int(port))
-        except (smtplib.SMTPException, ssl.SSLError):
-            smtp = smtplib.SMTP(host, port=int(port))
-    except Exception:
-        e = get_exception()
-        module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
+    smtp = smtplib.SMTP(timeout=timeout)
 
-    smtp.ehlo()
-    if username and password:
-        if smtp.has_extn('STARTTLS'):
-            smtp.starttls()
+    if secure in ('never', 'try', 'starttls'):
         try:
-            smtp.login(username, password)
-        except smtplib.SMTPAuthenticationError:
-            module.fail_json(msg="Authentication to %s:%s failed, please check your username and/or password" % (host, port))
+            code, smtpmessage = smtp.connect(host, port=port)
+        except smtplib.SMTPException:
+            e = get_exception()
+            if secure == 'try':
+                try:
+                    smtp = smtplib.SMTP_SSL(timeout=timeout)
+                    code, smtpmessage = smtp.connect(host, port=port)
+                    secure_state = True
+                except ssl.SSLError:
+                    e = get_exception()
+                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+            else:
+                    module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
+
+
+    if (secure == 'always'):
+        try:
+            smtp = smtplib.SMTP_SSL(timeout=timeout)
+            code, smtpmessage = smtp.connect(host, port=port)
+            secure_state = True
+        except ssl.SSLError:
+            e = get_exception()
+            module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+
+    if int(code) > 0:
+        try:
+            smtp.ehlo()
+        except smtplib.SMTPException:
+            e = get_exception()
+            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, e))
+
+        auth_flag = smtp.has_extn('AUTH')
+
+        if secure in ('try', 'starttls'):
+            if smtp.has_extn('STARTTLS'):
+                try:
+                    smtp.starttls()
+                    smtp.ehlo()
+                    secure_state = True
+                except smtplib.SMTPException:
+                    e = get_exception()
+                    module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
+            else:
+                if secure == 'starttls':
+                    module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
+
+    if username and password:
+        if auth_flag:
+            try:
+                smtp.login(username, password)
+            except smtplib.SMTPAuthenticationError:
+                module.fail_json(rc=1, msg='Authentication to %s:%s failed, please check your username and/or password' % (host, port))
+            except smtplib.SMTPException:
+                module.fail_json(rc=1, msg='No Suitable authentication method was found on %s:%s' % (host, port))
+        else:
+            module.fail_json(rc=1, msg="No Authentication on the server at %s:%s" % (host, port))
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -307,11 +397,11 @@ def main():
 
     smtp.quit()
 
-    module.exit_json(changed=False)
+    if not secure_state and (username and password):
+        module.exit_json(changed=False, msg='Username and Password was sent without encryption')
+    else:
+        module.exit_json(changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()
