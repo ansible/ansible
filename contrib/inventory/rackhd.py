@@ -14,7 +14,7 @@ class RackhdInventory(object):
         for nodeid in nodeids:
             self._load_inventory_data(nodeid)
         inventory = {}
-        for nodeid,info in self._inventory.iteritems():
+        for nodeid,info in self._inventory.items():
             inventory[nodeid]= (self._format_output(nodeid, info))
         print(json.dumps(inventory))
 
@@ -24,7 +24,7 @@ class RackhdInventory(object):
         info['lookup'] = RACKHD_URL + '/api/common/lookups/?q={0}'.format(nodeid)
 
         results = {}
-        for key,url in info.iteritems():
+        for key,url in info.items():
             r = requests.get( url, verify=False)
             results[key] = r.text
         self._inventory[nodeid] = results
@@ -36,7 +36,7 @@ class RackhdInventory(object):
             if len(node_info) > 0:
                 ipaddress = node_info[0]['ipAddress']
             output = { 'hosts':[ipaddress],'vars':{}}
-            for key,result in info.iteritems():
+            for key,result in info.items():
                 output['vars'][key] = json.loads(result)
             output['vars']['ansible_ssh_user'] = 'monorail'
         except KeyError:
