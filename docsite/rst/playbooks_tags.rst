@@ -23,7 +23,7 @@ Example::
 
 If you wanted to just run the "configuration" and "packages" part of a very long playbook, you could do this::
 
-    ansible-playbook example.yml --tags "configuration,packages"
+    ansible-playbook example.yml --tags "configuration packages"
 
 On the other hand, if you want to run a playbook *without* certain tasks, you could do this::
 
