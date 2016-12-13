@@ -143,13 +143,17 @@ As well as delete directories (recursively) and delete files::
 
     $ ansible webservers -m file -a "dest=/path/to/c state=absent"
 
+In both examples, the ``state`` argument you may have never encounter yet. In Ansible philosophy, this is a way to express in which state you want the host system to be when the command is ran, rather than specifying an action. In case of the deletion of directories, one wants those directories to be vanished once the command has been run, hence the "absent" ``state``.
+
 .. _managing_packages:
 
 Managing Packages
 `````````````````
 
-There are modules available for yum and apt.  Here are some examples
-with yum.
+A very common sysadmin task is managing packages: installing and uninstalling
+softwares. This is something very easy to do with Ansible, as there are modules
+available for, say, ``yum`` and ``apt``. Here are some examples with yum. See
+how the ``state`` argument is used to induce actions on the ``webservers`` host:
 
 Ensure a package is installed, but don't update it::
 
