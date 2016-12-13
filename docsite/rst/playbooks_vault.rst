@@ -46,6 +46,15 @@ the file, saving it back when done and removing the temporary file::
 
    ansible-vault edit foo.yml
 
+.. _viewing_files:
+
+Viewing Encrypted Files
+```````````````````````
+
+If you simply wish to view your encrypted files without changing them, in Ansible 1.8 you can run the `ansible-vault view` command. Note that the `view` command does not accept more than one filename::
+
+    ansible-vault view foo.yml
+
 .. _rekeying_files:
 
 Rekeying Encrypted Files
