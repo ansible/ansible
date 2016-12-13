@@ -305,6 +305,27 @@ in :doc:`playbooks_filters_ipaddr`.
 
 .. _hash_filters:
 
+Hostname lookup filter
+----------------------
+.. versionadded:: 2.0
+
+To resolve a hostname to an ip address::
+
+    {{ my_var | resolv }}
+
+To resolve a hostname to a list of ip addresses (e.g., for a hostname that
+has multiple `A` records in DNS)::
+
+    {{ myvar | resolv_all }}
+
+For example, to show a list of all ``google.com`` addresses::
+
+    google.com is available at:
+
+    {% for addr in 'google.com' | resolv_all %}
+    - {{addr}}
+    {% endfor %}
+
 Hashing filters
 --------------------
 .. versionadded:: 1.9
