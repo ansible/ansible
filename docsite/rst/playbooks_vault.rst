@@ -89,6 +89,25 @@ If you want to view the contents of an encrypted file without editing it, you ca
 
 .. _running_a_playbook_with_vault:
 
+Inventory Variables
+```````````````````
+
+In some cases encrypting just the inventory variable values may be desirable, such as in the case where dev and operations teams need to collaborate on settings, but not necessarily passwords and keys. The following example encrypts the passwords in a list of database accounts, while leaving the rest of the configuration unencrypted::
+
+    group_vars/group1/          # group1 is a directory instead of a file
+       main.yml                 # the group variables file is unencrypted 
+          my_database:
+              - user: myuser1
+                password: "{{ my_database_myuser1_password }}"
+              - user: myuser2
+                password: "{{ my_database_myuser2_password }}"
+
+       secrets.yml              # the secrets file is encrypted
+          my_database_myuser1_password: secret1 
+          my_database_myuser2_password: secret2
+
+.. _inventory_variables:
+
 Running a Playbook With Vault
 `````````````````````````````
 
