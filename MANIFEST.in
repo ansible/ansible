@@ -1,4 +1,3 @@
-prune v2
 prune docsite
 prune ticket_stubs
 prune packaging
