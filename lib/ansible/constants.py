@@ -125,7 +125,7 @@ def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
     if env_var is not None:
         value = os.environ.get(env_var, None)
-        if value is not None:
+        if value:
             return value
     if p is not None:
         try:
