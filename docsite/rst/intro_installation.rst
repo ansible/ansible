@@ -277,6 +277,15 @@ If you are installing on OS X Mavericks, you may encounter some noise from your 
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
+.. note::
+
+   Ansible is reported to not install correctly into a virtualenv when built
+   from a `wheel <http://wheel.readthedocs.org/>` (see `this issue`
+   <https://github.com/ansible/ansible/issues/8875>). So if you tend to build
+   wheels for your Python packages, you may want to skip building a wheel for
+   Ansible and/or pass the ``--no-use-wheel`` flag when doing a ``pip
+   install``.
+
 .. _tagged_releases:
 
 Tarballs of Tagged Releases
