@@ -20,15 +20,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
-from ansible.errors import *
-from ansible.plugins import filter_loader, lookup_loader, module_loader
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
+from ansible.vars.unsafe_proxy import AnsibleUnsafe
 
 from units.mock.loader import DictDataLoader
+
 
 class TestTemplar(unittest.TestCase):
 
@@ -52,6 +52,58 @@ class TestTemplar(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_lookup_missing_plugin(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                'lookup plugin \(not_a_real_lookup_plugin\) not found',
+                                self.templar._lookup,
+                                'not_a_real_lookup_plugin',
+                                'an_arg', a_keyword_arg='a_keyword_arg_value')
+
+    def test_lookup_list(self):
+        res = self.templar._lookup('list', 'an_arg', 'another_arg')
+        self.assertEquals(res, 'an_arg,another_arg')
+
+    def test_lookup_jinja(self):
+        res = self.templar._lookup('list', '{{ a_jinja_var }}')
+        print(res)
+        print(type(res))
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_string_passed(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                "with_dict expects a dict",
+                                self.templar._lookup,
+                                'dict',
+                                '{{ a_jinja_var }}')
+
+    def test_lookup_jinja_dict_list_passed(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                "with_dict expects a dict",
+                                self.templar._lookup,
+                                'dict',
+                                ['foo', 'bar'])
+
+    def test_lookup_jinja_kwargs(self):
+        res = self.templar._lookup('list', 'blip', random_keyword='12345')
+        print(res)
+        print(type(res))
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_list_wantlist(self):
+        res = self.templar._lookup('list', '{{ a_jinja_var }}', wantlist=True)
+        print(res)
+        print(type(res))
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict(self):
+        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ a_jinja_var }}'})
+        self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_none(self):
+        res = self.templar._lookup('list', None)
+        self.assertIsNone(res)
 
     def test_templar_simple(self):
 
@@ -110,4 +162,3 @@ class TestTemplar(unittest.TestCase):
             self.assertEqual(templar._get_extensions(), ['foo', 'bar'])
         finally:
             C.DEFAULT_JINJA2_EXTENSIONS = old_exts
-
