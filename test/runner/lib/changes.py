@@ -10,6 +10,7 @@ from lib.util import (
     SubprocessError,
     MissingEnvironmentVariable,
     CommonConfig,
+    display,
 )
 
 from lib.http import (
@@ -97,9 +98,13 @@ class ShippableChanges(object):
     @staticmethod
     def get_last_successful_commit(merge_runs):
         """
-        :type merge_runs: list[dict]
+        :type merge_runs: dict | list[dict]
         :rtype: str
         """
+        if 'id' in merge_runs and merge_runs['id'] == 4004:
+            display.warning('Unable to find project. Cannot determine changes. All tests will be executed.')
+            return None
+
         merge_runs = sorted(merge_runs, key=lambda r: r['createdAt'])
         known_commits = set()
         last_successful_commit = None
