@@ -64,7 +64,6 @@ __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'AnsibleJSONUnsafeEncoder', 'AnsibleJ
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
 
-
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
     pass
 
@@ -101,7 +100,7 @@ class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
 def _wrap_dict(v):
     for k in v.keys():
         if v[k] is not None:
-            v[k] = wrap_var(v[k])
+            v[wrap_var(k)] = wrap_var(v[k])
     return v
 
 
