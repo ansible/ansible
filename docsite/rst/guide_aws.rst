@@ -72,7 +72,7 @@ instance.::
              group: test
              instance_type: t2.micro
              image: "{{ ami_id }}"
-             wait: true 
+             wait: yes 
              exact_count: 5
              count_tag:
                 Name: Demo
@@ -98,7 +98,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
              group: test
              instance_type: t2.micro
              image: "{{ ami_id }}"
-             wait: true 
+             wait: yes 
              exact_count: 5
              count_tag:
                 Name: Demo
