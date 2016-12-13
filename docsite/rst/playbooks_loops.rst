@@ -209,6 +209,7 @@ It might happen like so::
          - "{{ users }}"
          - authorized
 
+New in version 2.0.
 Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
 
     - name: Setup MySQL users
@@ -220,6 +221,7 @@ Given the mysql hosts and privs subkey lists, you can also iterate over a list i
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
 
+New in version 2.0.
 Optionally,  you can add a third element to the subelements list, that holds a
 dictionary of flags. Currently you can add the 'skip_missing' flag. If set to
 True, the lookup plugin will skip the lists items that do not contain the given
