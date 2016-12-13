@@ -393,6 +393,10 @@ def parse_args():
 def setup():
     default_creds_file = os.path.expanduser('~/.rackspace_cloud_credentials')
 
+    # pyrax does not honor the environment variable CLOUD_VERIFY_SSL=False, so let's help pyrax
+    if 'CLOUD_VERIFY_SSL' in os.environ:
+        pyrax.set_setting('verify_ssl', os.environ['CLOUD_VERIFY_SSL'] in [1, 'true', 'True'])
+
     env = get_config(p, 'rax', 'environment', 'RAX_ENV', None)
     if env:
         pyrax.set_environment(env)
