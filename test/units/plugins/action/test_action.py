@@ -38,6 +38,7 @@ from ansible.compat.tests.mock import patch, MagicMock, mock_open
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
+from ansible.vars.unsafe_proxy import AnsibleUnsafe
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
@@ -609,8 +610,8 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
 
 
 class TestActionBaseParseReturnedData(unittest.TestCase):
-    def test(self):
 
+    def _action_base(self):
         fake_loader = DictDataLoader({
         })
         mock_module_loader = MagicMock()
@@ -627,6 +628,65 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                                         loader=fake_loader,
                                         templar=None,
                                         shared_loader_obj=mock_shared_loader_obj)
+        return action_base
 
-        res = action_base._parse_returned_data('foo')
+    def test_fail_no_json(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = 'foo\nbar\n'
+        err = 'oopsy'
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertFalse(res['_ansible_parsed'])
+        self.assertTrue(res['failed'])
+        self.assertEquals(res['module_stderr'], err)
+
+    def test_json_empty(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '{}\n'
+        err = ''
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertTrue(res['_ansible_parsed'])
+
+    def test_json_facts(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"}}\n'
+        err = ''
+
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
         print(res)
+        self.assertTrue(res['_ansible_parsed'])
+        print(type(res['ansible_facts']))
+        self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+
+    def test_json_facts_add_host(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '''{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
+        "add_host": {"host_vars": {"some_key": ["whatever the add_host object is"]}
+        }
+        }\n'''
+        err = ''
+
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        print(res)
+        self.assertTrue(res['_ansible_parsed'])
+        print(type(res['ansible_facts']))
+        self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
