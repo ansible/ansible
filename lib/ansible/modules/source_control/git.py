@@ -70,12 +70,18 @@ options:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
+    key:
+         required: false
+         default: None
+         version_added: "2.4"
+         description:
+             - Specify an optional SSH private key to use for the checkout.
     key_file:
         required: false
         default: None
         version_added: "1.5"
         description:
-            - Specify an optional private key file to use for the checkout.
+            - Specify an optional file containing an SSH private key to use for the checkout.
     reference:
         required: false
         default: null
@@ -380,6 +386,25 @@ fi
     st = os.stat(wrapper_path)
     os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
     return wrapper_path
+
+
+def write_key_file(key):
+    '''Write the Git private key to a temporary file'''
+    module_dir = get_module_path()
+    try:
+        # make sure we have full permission to the module_dir, which
+        # may not be the case if we're sudo'ing to a non-root user
+        if os.access(module_dir, os.W_OK | os.R_OK | os.X_OK):
+            fd, key_file = tempfile.mkstemp(prefix=module_dir + '/')
+        else:
+            raise OSError
+    except (IOError, OSError):
+        fd, key_file = tempfile.mkstemp()
+    fh = os.fdopen(fd, 'w+b')
+    fh.write(key)
+    fh.close()
+    os.chmod(key_file, 384) # 0600 octal
+    return key_file
 
 
 def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
@@ -991,6 +1016,7 @@ def main():
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
             accept_hostkey=dict(default='no', type='bool'),
+            key=dict(default=None, required=False),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
@@ -1016,6 +1042,7 @@ def main():
     verify_commit = module.params['verify_commit']
     reference = module.params['reference']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
+    key = module.params['key']
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
@@ -1063,6 +1090,9 @@ def main():
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
     # for git to use the wrapper script
+    if key:
+        key_file = write_key_file(key)
+        module.add_cleanup_file(path=key_file)
     ssh_wrapper = write_ssh_wrapper()
     set_git_ssh(ssh_wrapper, key_file, ssh_opts)
     module.add_cleanup_file(path=ssh_wrapper)
