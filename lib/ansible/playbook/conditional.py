@@ -19,12 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+
 from jinja2.exceptions import UndefinedError
 
 from ansible.compat.six import text_type
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+
+LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 
 class Conditional:
 
@@ -95,9 +99,12 @@ class Conditional:
                 return conditional
 
             # a Jinja2 evaluation that results in something Python can eval!
+            if hasattr(conditional, '__UNSAFE__') and LOOKUP_REGEX.match(conditional):
+                raise AnsibleError("The conditional '%s' contains variables which came from an unsafe " \
+                                   "source and also contains a lookup() call, failing conditional check" % conditional)
+
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            conditional = templar.template(presented)
-            val = conditional.strip()
+            val = templar.template(presented).strip()
             if val == "True":
                 return True
             elif val == "False":

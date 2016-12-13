@@ -95,7 +95,7 @@ class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
 def _wrap_dict(v):
     for k in v.keys():
         if v[k] is not None:
-            v[k] = wrap_var(v[k])
+            v[wrap_var(k)] = wrap_var(v[k])
     return v
 
 
