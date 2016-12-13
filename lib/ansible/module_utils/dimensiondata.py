@@ -247,7 +247,8 @@ def list_nat_rules(module, driver, network_domain):
     """
     try:
         return driver.ex_list_nat_rules(network_domain)
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
         module.fail_json(msg="Failed to list NAT rules: %s" % e.message)
 
 
@@ -258,7 +259,9 @@ def list_public_ip_blocks(module, driver, network_domain):
     try:
         blocks = driver.ex_list_public_ip_blocks(network_domain)
         return blocks
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
+
         module.fail_json(msg="Error retreving Public IP Blocks: %s" % e)
 
 
@@ -304,7 +307,9 @@ def get_block_allocation(module, cp_driver, lb_driver, network_domain, block):
 def list_balancers(module, lb_driver):
     try:
         return lb_driver.list_balancers()
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
+
         module.fail_json(msg="Failed to list Load Balancers: %s" % e.message)
 
 
