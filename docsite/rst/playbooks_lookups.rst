@@ -433,6 +433,25 @@ template)::
 
       - debug: msg="motd value is {{ motd_value }}"
 
+Lookup contexts
+```````````````
+
+When using a lookup in a key="{{ lookup() }}" context, the quote type that surrounds the {{...}} template will have to be escaped (\' or \") within the looked-up files, so that they won't match the key=" portion.  So::
+
+    tasks:
+      # filename.txt must escape any double quotes, b/c of msg="
+      - debug: msg="{{ lookup('file', 'filename.txt') }}"
+
+      # filename.txt must escape any single quotes, b/c of msg='
+      - debug: msg='{{ lookup("file", "filename.txt") }}'
+
+However, a better solution is not to use key= syntax, but instead yaml key: syntax, where escaping is unnecessary::
+
+    tasks:
+      - debug:
+        msg: "{{ lookup('file', 'filename.txt') }}"  # filename.txt may contain any type of quotes.
+
+
 .. seealso::
 
    :doc:`playbooks`
