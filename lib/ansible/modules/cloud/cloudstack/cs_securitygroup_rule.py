@@ -243,10 +243,10 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         icmp_code                = self.module.params.get('icmp_code')
         icmp_type                = self.module.params.get('icmp_type')
 
-        if protocol in ['tcp', 'udp'] and not (start_port and end_port):
+        if protocol in ['tcp', 'udp'] and (start_port is None or end_port is None):
             self.module.fail_json(msg="no start_port or end_port set for protocol '%s'" % protocol)
 
-        if protocol == 'icmp' and not (icmp_type and icmp_code):
+        if protocol == 'icmp' and (icmp_type is None or icmp_code is None):
             self.module.fail_json(msg="no icmp_type or icmp_code set for protocol '%s'" % protocol)
 
         for rule in rules:
