@@ -3315,6 +3315,7 @@ code.code-large, .rst-content tt.code-large {
 .wy-plain-list-disc li, .rst-content .section ul li, .rst-content .toctree-wrapper ul li {
     list-style: disc;
     margin-left: 24px;
+    word-break: normal;
 }
 
 .wy-plain-list-disc li ul, .rst-content .section ul li ul, .rst-content .toctree-wrapper ul li ul {
