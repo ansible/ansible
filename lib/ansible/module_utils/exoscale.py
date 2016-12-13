@@ -143,7 +143,7 @@ class ExoDns(object):
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         changed = False
-        for key, value in want_dict.iteritems():
+        for key, value in want_dict.items():
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
                 continue

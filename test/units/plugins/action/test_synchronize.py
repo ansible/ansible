@@ -29,7 +29,7 @@ from ansible.plugins.action.synchronize import ActionModule
 '''
 import copy
 safe_vars = {}
-for k,v in task_vars.iteritems():
+for k,v in task_vars.items():
     if k not in ['vars', 'hostvars']:
         safe_vars[k] = copy.deepcopy(v)
     else:    

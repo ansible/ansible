@@ -201,7 +201,7 @@ class NSoTInventory(object):
         _inventory_group()
         '''
         inventory = dict()
-        for group, contents in self.config.iteritems():
+        for group, contents in self.config.items():
             group_response = self._inventory_group(group, contents)
             inventory.update(group_response)
         inventory.update({'_meta': self._meta})

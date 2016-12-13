@@ -240,12 +240,12 @@ class AzureRMModuleBase(object):
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         changed = False
         if isinstance(self.module.params.get('tags'), dict):
-            for key, value in self.module.params['tags'].iteritems():
+            for key, value in self.module.params['tags'].items():
                 if not new_tags.get(key) or new_tags[key] != value:
                     changed = True
                     new_tags[key] = value
             if isinstance(tags, dict):
-                for key, value in tags.iteritems():
+                for key, value in tags.items():
                     if not self.module.params['tags'].get(key):
                         new_tags.pop(key)
                         changed = True
@@ -318,7 +318,7 @@ class AzureRMModuleBase(object):
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
         if env_credentials['profile']:
@@ -337,7 +337,7 @@ class AzureRMModuleBase(object):
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = params.get(attribute, None)
 
         # try module params
