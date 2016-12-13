@@ -207,6 +207,15 @@ We can define specific hardware variance in systems in a host_vars file, but avo
 Again, if we are using dynamic inventory sources, many dynamic groups are automatically created.  So a tag like "class:webserver" would load in 
 variables from the file "group_vars/ec2_tag_class_webserver" automatically. 
 
+You can also use a directory instead of a flat file for group and host variables, and all files in the directory will be used as a variable file::
+
+    ---
+    # file: host_vars/db-bos-1.example.com/agent_ports.yml
+    foo_agent_port: 86
+    bar_agent_port: 99
+
+This permit a more flexible approach, by letting you merge the content of 2 source control repositories just by extracting their content.
+
 .. _split_by_role:
 
 Top Level Playbooks Are Separated By Role
