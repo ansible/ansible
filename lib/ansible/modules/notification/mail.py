@@ -263,7 +263,7 @@ def main():
     timeout = module.params.get('timeout')
     sender_phrase, sender_addr = parseaddr(sender)
     secure_state = False
-    code = 000
+    code = 0
     auth_flag = ""
 
     if not body:
@@ -297,7 +297,7 @@ def main():
             e = get_exception()
             module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
 
-    if int(code) > 000:
+    if int(code) > 0:
         try:
             smtp.ehlo()
         except smtplib.SMTPException:
