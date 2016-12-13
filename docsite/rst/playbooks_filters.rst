@@ -482,6 +482,14 @@ To add quotes for shell usage::
 
     - shell: echo {{ string_value | quote }}
 
+To split a comma-delimited string and return the first element:
+
+    {{ string | splitpart(0) }}
+
+To split a string with another delimiter, and return the second element:
+
+    {{ string | splitpart(1, ':') }}
+
 To use one value on true and another on false (new in version 1.9)::
 
    {{ (name == "John") | ternary('Mr','Ms') }}

@@ -125,6 +125,10 @@ def quote(a):
     ''' return its argument quoted for shell usage '''
     return shlex_quote(a)
 
+def splitpart(input, index, delimiter = ','):
+    ''' split input string on delimiter, returning element with given index '''
+    return input.split(delimiter)[index]
+
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
     return [ g for g in glob.glob(pathname) if os.path.isfile(g) ]
@@ -475,6 +479,9 @@ class FilterModule(object):
 
             # quote string for shell usage
             'quote': quote,
+
+            # split string and return one element
+            'splitpart': splitpart,
 
             # hash filters
             # md5 hex digest of string
