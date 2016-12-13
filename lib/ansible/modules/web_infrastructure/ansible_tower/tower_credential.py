@@ -217,6 +217,7 @@ def main():
             client = dict(),
             secret = dict(),
             tenant = dict(),
+            subscription = dict(),
             domain = dict(),
             become_method = dict(),
             become_username = dict(),
