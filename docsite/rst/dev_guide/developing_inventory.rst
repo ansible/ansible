@@ -77,7 +77,7 @@ The data to be added to the top level JSON dictionary looks like this::
         "_meta" : {
            "hostvars" : {
               "moocow.example.com"     : { "asdf" : 1234 },
-              "llama.example.com"      : { "asdf" : 5678 },
+              "llama.example.com"      : { "asdf" : 5678 }
            }
         }
 
