@@ -23,6 +23,7 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
