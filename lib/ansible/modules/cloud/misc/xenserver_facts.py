@@ -94,7 +94,7 @@ def get_networks(session):
     recs = session.xenapi.network.get_all_records()
     xs_networks = {}
     networks = change_keys(recs, key='uuid')
-    for network in networks.itervalues():
+    for network in networks.values():
         xs_networks[network['name_label']] = network
     return xs_networks
 
@@ -104,7 +104,7 @@ def get_pifs(session):
     pifs = change_keys(recs, key='uuid')
     xs_pifs = {}
     devicenums = range(0, 7)
-    for pif in pifs.itervalues():
+    for pif in pifs.values():
         for eth in devicenums:
             interface_name = "eth%s" % (eth)
             bond_name = interface_name.replace('eth', 'bond')
@@ -151,7 +151,7 @@ def get_vms(session):
         return None
 
     vms = change_keys(recs, key='uuid')
-    for vm in vms.itervalues():
+    for vm in vms.values():
        xs_vms[vm['name_label']] = vm
     return xs_vms
 
@@ -162,7 +162,7 @@ def get_srs(session):
     if not recs:
         return None
     srs = change_keys(recs, key='uuid')
-    for sr in srs.itervalues():
+    for sr in srs.values():
        xs_srs[sr['name_label']] = sr
     return xs_srs
 
