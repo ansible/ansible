@@ -210,7 +210,7 @@ class VMWareInventory(object):
         config.read(vmware_ini_path)
 
         # apply defaults
-        for k,v in defaults['vmware'].iteritems():
+        for k,v in defaults['vmware'].items():
             if not config.has_option('vmware', k):
                     config.set('vmware', k, str(v))
 
@@ -356,7 +356,7 @@ class VMWareInventory(object):
 
 
         # Reset the inventory keys
-        for k,v in name_mapping.iteritems():
+        for k,v in name_mapping.items():
 
             if not host_mapping or not k in host_mapping:
                 continue
@@ -389,7 +389,7 @@ class VMWareInventory(object):
                 continue
             self.debugl('# filter: %s' % hf)
             filter_map = self.create_template_mapping(inventory, hf, dtype='boolean')
-            for k,v in filter_map.iteritems():
+            for k,v in filter_map.items():
                 if not v:
                     # delete this host
                     inventory['all']['hosts'].remove(k)
@@ -402,7 +402,7 @@ class VMWareInventory(object):
         # Create groups
         for gbp in self.groupby_patterns:
             groupby_map = self.create_template_mapping(inventory, gbp)
-            for k,v in groupby_map.iteritems():
+            for k,v in groupby_map.items():
                 if v not in inventory:
                     inventory[v] = {}
                     inventory[v]['hosts'] = []
@@ -417,7 +417,7 @@ class VMWareInventory(object):
         ''' Return a hash of uuid to templated string from pattern '''
 
         mapping = {}
-        for k,v in inventory['_meta']['hostvars'].iteritems():
+        for k,v in inventory['_meta']['hostvars'].items():
             t = jinja2.Template(pattern)
             newkey = None
             try:           
