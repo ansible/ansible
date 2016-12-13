@@ -39,7 +39,7 @@ options:
     - Alias label to the key. One of C(key_alias) or C(key_arn) are required.
     required: false
   key_arn:
-    decription:
+    description:
     - Full ARN to the key. One of C(key_alias) or C(key_arn) are required.
     required: false
   role_name:
