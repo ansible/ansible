@@ -11,8 +11,8 @@ to kick them off all at once and then poll until they are done.
 You will also want to use asynchronous mode on very long running
 operations that might be subject to timeout.
 
-To launch a task asynchronously, specify its maximum runtime
-and how frequently you would like to poll for status.  The default
+To launch a task asynchronously, specify its maximum runtime in seconds
+and how frequently you would like to poll for status in seconds.  The default
 poll value is 10 seconds if you do not specify a value for `poll`::
 
     ---
