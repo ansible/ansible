@@ -36,7 +36,25 @@ a module that just outputs the current time.
 
 We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
-is fine.
+is fine. Modules work by printing json to the stdout. The filename is the modulename, so for example
+if you have a  module written in Julia and it's called juliamodule.jl, then you call it like this in your
+playbook: 
+    - name: Run my custom module
+      sudo: no
+      action: juliamodule.jl
+You *can* output something other than json, but then you get an error during execution like this:
+invalid output was: "my output"
+
+How does Ansible find your custom modules?
+The most reliable way seems to be to specify --module-path=/your/path/to/yourmodule.py|.js|.jl ..
+on your ansible-playbook call.
+
+How does Ansible know how to execute your custom language module?
+Use #!/your/custom/language/interpreter at the top of your module e.g. in case of bash: #!/bin/bash
+
+Python modules have some built-in argument handlers, unfortunately currently other languages have to do
+a special workaround: You only get the path to a file as your argument, then you need to read the
+actual arguments from that file before you can use them.
 
 Now Python Ansible modules contain some extremely powerful shortcuts (that all the core modules use)
 but first we are going to build a module the very hard way.  The reason we do this is because modules
