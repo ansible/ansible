@@ -52,7 +52,7 @@ Loops are actually a combination of things `with_` + `lookup()`, so any lookup p
 Nested Loops
 ````````````
 
-Loops can be nested as well::
+Loops can be nested as well (outer loops come earlier in the list)::
 
     - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
