@@ -512,9 +512,15 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
                 newheaders = dict((k,v) for k,v in req.headers.items()
                                   if k.lower() not in ("content-length", "content-type")
                                  )
+                try:
+                    # Python 2-3.3
+                    origin_req_host = req.get_origin_req_host()
+                except AttributeError:
+                    # Python 3.4+
+                    origin_req_host = req.origin_req_host
                 return urllib_request.Request(newurl,
                                headers=newheaders,
-                               origin_req_host=req.get_origin_req_host(),
+                               origin_req_host=origin_req_host,
                                unverifiable=True)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
@@ -862,6 +868,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     opener = urllib_request.build_opener(*handlers)
     urllib_request.install_opener(opener)
 
+    data = to_bytes(data, nonstring='passthru')
     if method:
         if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
