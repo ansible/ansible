@@ -4858,3 +4858,7 @@ table {
         padding: 8px 13px;
     }
 }
+
+#page-content {
+    overflow-x: scroll;
+}
