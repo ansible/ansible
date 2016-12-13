@@ -659,11 +659,17 @@ For example::
       # something that applies to all app servers.
    {% endfor %}
 
-A frequently used idiom is walking a group to find all IP addresses in that group::
+A frequently used idiom is walking a group to find all IP addresses in that group.::
 
    {% for host in groups['app_servers'] %}
       {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
    {% endfor %}
+   
+Note that for this example, facts must be gathered for all hosts for the ansible_eth0 variable to be populated.
+To do this, set up an empty tasks list at the beginning of your playbook like this::
+
+   - hosts: all
+     tasks: []
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
 You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
