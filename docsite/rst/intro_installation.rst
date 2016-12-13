@@ -223,6 +223,10 @@ The preferred way to install ansible on a Mac is via pip.
 
 The instructions can be found in `Latest Releases Via Pip`_ section.
 
+by default ansible will be looking for your host file in "/usr/local/etc/ansible/hosts", check the `Inventory Configuration 
+<http://docs.ansible.com/intro_configuration.html#inventory>`_ on how to change this.
+
+
 .. _from_pkgutil:
 
 Latest Releases Via OpenCSW (Solaris)
