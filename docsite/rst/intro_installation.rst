@@ -138,6 +138,15 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 
 .. _from_apt:
 
+Latest Release Via Homebrew
++++++++++++++++++++++++++++
+
+If you already have [Homebrew](http://brew.sh/) installed, then it is as simple as:
+
+> brew install ansible
+
+That's it!
+
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
