@@ -30,8 +30,9 @@ from numbers import Number
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.nodes import EvalContext
 from jinja2.utils import concat as j2_concat
-from jinja2.runtime import StrictUndefined
+from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
 from ansible.compat.six import string_types, text_type
@@ -41,7 +42,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.module_utils._text import to_native, to_text
-
+from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
     from hashlib import sha1
@@ -126,6 +127,62 @@ def _count_newlines_from_end(in_str):
         # Uncommon cases: zero length string and string containing only newlines
         return i
 
+class AnsibleEvalContext(EvalContext):
+    '''
+    A custom jinja2 EvalContext, which is currently unused and saved
+    here for possible future use.
+    '''
+    pass
+
+class AnsibleContext(Context):
+    '''
+    A custom context, which intercepts resolve() calls and sets a flag
+    internally if any variable lookup returns an AnsibleUnsafe value. This
+    flag is checked post-templating, and (when set) will result in the
+    final templated result being wrapped via UnsafeProxy.
+    '''
+    def __init__(self, *args, **kwargs):
+        super(AnsibleContext, self).__init__(*args, **kwargs)
+        self.eval_ctx = AnsibleEvalContext(self.environment, self.name)
+        self.unsafe = False
+
+    def _is_unsafe(self, val):
+        '''
+        Our helper function, which will also recursively check dict and
+        list entries due to the fact that they may be repr'd and contain
+        a key or value which contains jinja2 syntax and would otherwise
+        lose the AnsibleUnsafe value.
+        '''
+        if isinstance(val, dict):
+            for key in val.keys():
+                if self._is_unsafe(val[key]):
+                    return True
+        elif isinstance(val, list):
+            for item in val:
+                if self._is_unsafe(item):
+                    return True
+        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
+            return True
+        return False
+
+    def resolve(self, key):
+        '''
+        The intercepted resolve(), which uses the helper above to set the
+        internal flag whenever an unsafe variable value is returned.
+        '''
+        val = super(AnsibleContext, self).resolve(key)
+        if val is not None and not self.unsafe:
+            if self._is_unsafe(val):
+                self.unsafe = True
+        return val
+
+class AnsibleEnvironment(Environment):
+    '''
+    Our custom environment, which simply allows us to override the class-level
+    values for the Template and Context classes used by jinja2 internally.
+    '''
+    context_class = AnsibleContext
+    template_class = AnsibleJ2Template
 
 class Templar:
     '''
@@ -159,14 +216,13 @@ class Templar:
         self._fail_on_filter_errors    = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = Environment(
+        self.environment = AnsibleEnvironment(
             trim_blocks=True,
             undefined=StrictUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
             loader=FileSystemLoader(self._basedir),
         )
-        self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
@@ -229,7 +285,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from a string '''
 
-        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
+        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__') or hasattr(orig_data, '__UNSAFE__'):
             return orig_data
 
         with contextlib.closing(StringIO(orig_data)) as data:
@@ -292,11 +348,12 @@ class Templar:
         # Don't template unsafe variables, instead drop them back down to their constituent type.
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
-                return self._clean_data(variable)
+                rval = self._clean_data(variable)
             else:
                 # Do we need to convert these into text_type as well?
                 # return self._clean_data(to_text(variable._obj, nonstring='passthru'))
-                return self._clean_data(variable._obj)
+                rval = self._clean_data(variable._obj)
+            return rval
 
         try:
             if convert_bare:
@@ -328,14 +385,23 @@ class Templar:
                     if cache and sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
                     else:
-                        result = self.do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        result = self.do_template(
+                            variable,
+                            preserve_trailing_newlines=preserve_trailing_newlines,
+                            escape_backslashes=escape_backslashes,
+                            fail_on_undefined=fail_on_undefined,
+                            overrides=overrides,
+                        )
                         if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                                     result.startswith("[") or result in ("True", "False"):
+                                unsafe = hasattr(result, '__UNSAFE__')
                                 eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
                                 if eval_results[1] is None:
                                     result = eval_results[0]
+                                    if unsafe:
+                                        result = wrap_var(result)
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
                                     pass
@@ -435,7 +501,6 @@ class Templar:
                 ran = None
 
             if ran:
-                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
@@ -505,6 +570,8 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
+                if new_context.unsafe:
+                    res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
                     errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
