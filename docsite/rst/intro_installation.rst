@@ -74,7 +74,7 @@ You also need Python 2.4 or later. If you are running less than Python 2.5 on th
 .. note::
 
    Ansible's "raw" module (for executing commands in a quick and dirty
-   way) and the script module don't even need that.  So technically, you can use
+   way) and the script module doesn't even need that.  So technically, you can use
    Ansible to install python-simplejson using the raw module, which
    then allows you to use everything else.  (That's jumping ahead
    though.)
