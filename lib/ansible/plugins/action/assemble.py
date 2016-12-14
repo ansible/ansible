@@ -79,15 +79,16 @@ class ActionModule(ActionBase):
         return temp_path
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = "skipped, this module does not support check_mode."
+        if result.get('skipped', False):
             return result
+
+        if task_vars is None:
+            task_vars = dict()
 
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
@@ -102,7 +103,6 @@ class ActionModule(ActionBase):
             result['msg'] = "src and dest are required"
             return result
 
-        remote_user = self._play_context.remote_user
         if boolean(remote_src):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
@@ -115,8 +115,7 @@ class ActionModule(ActionBase):
                 return result
 
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         if not os.path.isdir(src):
             result['failed'] = True
@@ -160,7 +159,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_file(path, remote_path)
 
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, remote_path), remote_user)
+            self._fixup_perms2((tmp, remote_path))
 
             new_module_args.update( dict( src=xfered,))
 

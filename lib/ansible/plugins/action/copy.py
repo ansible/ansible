@@ -40,6 +40,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped'):
+            return result
+
         source  = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest    = self._task.args.get('dest', None)
@@ -48,17 +51,17 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False))
         follow  = boolean(self._task.args.get('follow', False))
 
+        result['failed'] = True
         if (source is None and content is None) or dest is None:
-            result['failed'] = True
             result['msg'] = "src (or content) and dest are required"
-            return result
         elif source is not None and content is not None:
-            result['failed'] = True
             result['msg'] = "src and content are mutually exclusive"
-            return result
         elif content is not None and dest is not None and dest.endswith("/"):
-            result['failed'] = True
             result['msg'] = "dest must be a file if content is defined"
+        else:
+            del result['failed']
+
+        if result.get('failed'):
             return result
 
         # Check if the source ends with a "/"
@@ -87,7 +90,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars))
+            result.update(self._execute_module(task_vars=task_vars))
             return result
         else:  # find in expected paths
             try:
@@ -139,11 +142,9 @@ class ActionModule(ActionBase):
         delete_remote_tmp = (len(source_files) == 1)
 
         # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
-        remote_user = self._play_context.remote_user
         if not delete_remote_tmp:
             if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path(remote_user)
-                self._cleanup_remote_tmp = True
+                tmp = self._make_tmp_path()
 
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
@@ -209,8 +210,7 @@ class ActionModule(ActionBase):
                 # If this is recursive we already have a tmp path.
                 if delete_remote_tmp:
                     if tmp is None or "-tmp-" not in tmp:
-                        tmp = self._make_tmp_path(remote_user)
-                        self._cleanup_remote_tmp = True
+                        tmp = self._make_tmp_path()
 
                 if self._play_context.diff and not raw:
                     diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
@@ -237,7 +237,7 @@ class ActionModule(ActionBase):
 
                 # fix file permissions when the copy is done as a different user
                 if remote_path:
-                    self._fixup_perms2((tmp, remote_path), remote_user)
+                    self._fixup_perms2((tmp, remote_path))
 
                 if raw:
                     # Continue to next iteration if raw is defined.
