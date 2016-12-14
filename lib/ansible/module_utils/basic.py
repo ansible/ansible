@@ -637,6 +637,7 @@ def _load_params():
     inside it as a copy in your own code.
     '''
     global _ANSIBLE_ARGS
+    json_source = None
     if _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
     else:
@@ -649,12 +650,15 @@ def _load_params():
                 fd = open(sys.argv[1], 'rb')
                 buffer = fd.read()
                 fd.close()
+                json_source = 'file'
             else:
                 buffer = sys.argv[1]
                 if PY3:
                     buffer = buffer.encode('utf-8', errors='surrogateescape')
+                json_source = 'argument'
         # default case, read from stdin
         else:
+            json_source = 'stdin'
             if PY2:
                 buffer = sys.stdin.read()
             else:
@@ -664,8 +668,8 @@ def _load_params():
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
-        # This helper used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode valid JSON on stdin.  Unable to figure out what parameters were passed", "failed": true}')
+        message = '\n{{"msg": "Error: Module unable to decode valid JSON.  Unable to figure out what parameters were passed", "failed": true, "json_source": "{}", "json_file":"{}", "buffer_contents":"{}"}}'.format(json_source, sys.argv[1], buffer)
+        print(message)
         sys.exit(1)
 
     if PY2:
