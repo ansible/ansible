@@ -137,7 +137,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_external_providers=[
-                    get_dict_of_struct(c) for c in external_providers
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in external_providers
                 ],
             ),
         )

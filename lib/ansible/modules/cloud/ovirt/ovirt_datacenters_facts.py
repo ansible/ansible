@@ -88,7 +88,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_datacenters=[
-                    get_dict_of_struct(c) for c in datacenters
+                    get_dict_of_struct(
+                        struct=d,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for d in datacenters
                 ],
             ),
         )
