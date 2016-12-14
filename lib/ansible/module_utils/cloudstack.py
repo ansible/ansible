@@ -263,6 +263,9 @@ class AnsibleCloudStack(object):
         zone = self.module.params.get('zone')
         zones = self.cs.listZones()
 
+        if not zones:
+            self.module.fail_json(msg="No zones available. Please create a zone first")
+
         # use the first zone if no zone param given
         if not zone:
             self.zone = zones['zone'][0]
