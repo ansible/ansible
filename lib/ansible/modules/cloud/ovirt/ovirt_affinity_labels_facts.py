@@ -144,7 +144,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 affinity_labels=[
-                    get_dict_of_struct(l) for l in labels
+                    get_dict_of_struct(
+                        struct=l,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for l in labels
                 ],
             ),
         )
