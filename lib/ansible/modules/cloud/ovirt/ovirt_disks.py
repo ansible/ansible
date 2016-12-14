@@ -19,13 +19,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import traceback
+
 try:
-    import ovirtsdk4 as sdk
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.ovirt import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    convert_to_bytes,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -149,7 +160,6 @@ disk_attachment:
                   https://ovirt.example.com/ovirt-engine/api/model#types/disk_attachment."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
 '''
-
 
 
 def _search_by_lun(disks_service, lun_id):
@@ -312,11 +322,10 @@ def main():
 
         module.exit_json(**ret)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=False)
 
 
-from ansible.module_utils.basic import *
 if __name__ == "__main__":
     main()
