@@ -402,7 +402,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.password is not None:
@@ -515,7 +515,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires:
-            cmd.append('--expiredate')
+            cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
