@@ -39,6 +39,7 @@ AWS_REGIONS = [
     'cn-north-1',
     'eu-central-1',
     'eu-west-1',
+    'eu-west-2',
     'sa-east-1',
     'us-east-1',
     'us-west-1',
