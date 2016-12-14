@@ -31,7 +31,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_link_name,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
     search_by_name,
 )
 
@@ -67,7 +67,7 @@ options:
         description:
             - "Namespace of the authorization provider, where user/group resides."
         required: false
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -106,7 +106,7 @@ def _permissions_service(connection, module):
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         authz_name=dict(required=True, aliases=['domain']),
         user_name=dict(rdefault=None),
         group_name=dict(default=None),
