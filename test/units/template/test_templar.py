@@ -25,7 +25,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
-from ansible.vars.unsafe_proxy import AnsibleUnsafe
+from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var
 
 from units.mock.loader import DictDataLoader
 
@@ -47,6 +47,10 @@ class TestTemplar(unittest.TestCase):
             bad_dict="{a='b'",
             var_list=[1],
             recursive="{{recursive}}",
+            some_var="blip",
+            some_keyword="{{ foo }}",
+            some_unsafe_var=wrap_var("unsafe_blip"),
+            some_unsafe_keyword=wrap_var("{{ foo }}"),
         )
         self.templar = Templar(loader=fake_loader, variables=variables)
 
@@ -64,10 +68,14 @@ class TestTemplar(unittest.TestCase):
         res = self.templar._lookup('list', 'an_arg', 'another_arg')
         self.assertEquals(res, 'an_arg,another_arg')
 
-    def test_lookup_jinja(self):
-        res = self.templar._lookup('list', '{{ a_jinja_var }}')
-        print(res)
-        print(type(res))
+    def test_lookup_jinja_undefined(self):
+        self.assertRaisesRegexp(AnsibleUndefinedVariable,
+                                "'an_undefined_jinja_var' is undefined",
+                                self.templar._lookup,
+                                'list', '{{ an_undefined_jinja_var }}')
+
+    def test_lookup_jinja_defined(self):
+        res = self.templar._lookup('list', '{{ some_var }}')
         self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict_string_passed(self):
@@ -75,7 +83,7 @@ class TestTemplar(unittest.TestCase):
                                 "with_dict expects a dict",
                                 self.templar._lookup,
                                 'dict',
-                                '{{ a_jinja_var }}')
+                                '{{ some_var }}')
 
     def test_lookup_jinja_dict_list_passed(self):
         self.assertRaisesRegexp(AnsibleError,
@@ -91,15 +99,50 @@ class TestTemplar(unittest.TestCase):
         self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_list_wantlist(self):
-        res = self.templar._lookup('list', '{{ a_jinja_var }}', wantlist=True)
+        res = self.templar._lookup('list', '{{ some_var }}', wantlist=True)
         print(res)
         print(type(res))
-        self.assertIsInstance(res, AnsibleUnsafe)
+        self.assertEquals(res, ["blip"])
+
+    def test_lookup_jinja_list_wantlist_undefined(self):
+        self.assertRaisesRegexp(AnsibleUndefinedVariable,
+                                "'some_undefined_var' is undefined",
+                                self.templar._lookup,
+                                'list',
+                                '{{ some_undefined_var }}',
+                                wantlist=True)
+
+    def test_lookup_jinja_list_wantlist_unsafe(self):
+        res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
+        print(res)
+        print(type(res))
+        for lookup_result in res:
+            self.assertIsInstance(lookup_result, AnsibleUnsafe)
+
+        # Should this be an AnsibleUnsafe
+        # self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict(self):
-        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ a_jinja_var }}'})
+        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_var }}'})
+        print(res)
+        self.assertEquals(res['{{ a_keyword }}'], "blip")
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
+        #self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_unsafe(self):
+        res = self.templar._lookup('list', {'{{ some_unsafe_key }}': '{{ some_unsafe_var }}'})
+        print(res)
+        self.assertIsInstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_unsafe_value(self):
+        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_unsafe_var }}'})
+        print(res)
         self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
-        self.assertIsInstance(res, AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_none(self):
         res = self.templar._lookup('list', None)
