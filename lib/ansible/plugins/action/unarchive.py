@@ -59,10 +59,8 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
-        remote_user = self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -110,7 +108,7 @@ class ActionModule(ActionBase):
 
         if not remote_src:
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, tmp_src), remote_user)
+            self._fixup_perms2((tmp, tmp_src))
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(

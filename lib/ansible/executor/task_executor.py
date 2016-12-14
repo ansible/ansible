@@ -517,6 +517,7 @@ class TaskExecutor:
             if self._task.async > 0:
                 if self._task.poll > 0 and not result.get('skipped'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    #FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -757,15 +758,12 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
+        # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._task.action in self._shared_loader_obj.action_loader:
-            if self._task.async != 0:
-                raise AnsibleError("async mode is not supported with the %s module" % self._task.action)
             handler_name = self._task.action
-        elif self._task.async == 0:
+        else:
             pc_conn = self._shared_loader_obj.connection_loader.get(self._play_context.connection, class_only=True)
             handler_name = getattr(pc_conn, 'action_handler', 'normal')
-        else:
-            handler_name = 'async'
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

@@ -12,7 +12,6 @@
     - asyncresult.started == 1
     - asyncresult.finished == 0
     - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
-    - asyncresult._suppress_tmpdir_delete == true
 
 - name: async poll immediate success
   async_test:

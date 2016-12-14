@@ -256,7 +256,6 @@ lib/ansible/playbook/attribute.py
 lib/ansible/playbook/block.py
 lib/ansible/playbook/role/__init__.py
 lib/ansible/playbook/role/metadata.py
-lib/ansible/plugins/action/async.py
 lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/synchronize.py

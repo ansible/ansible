@@ -41,14 +41,12 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = 'check mode not supported for this module'
+        if result.get('skipped', False):
             return result
 
         # Parse out any hostname:port patterns

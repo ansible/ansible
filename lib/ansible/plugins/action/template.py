@@ -52,6 +52,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+
         if task_vars is None:
             task_vars = dict()
 
@@ -145,10 +146,8 @@ class ActionModule(ActionBase):
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
-        remote_user = self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
@@ -171,7 +170,7 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((tmp, xfered), remote_user)
+                self._fixup_perms2((tmp, xfered))
 
                 # run the copy module
                 new_module_args.update(

@@ -435,7 +435,7 @@ $result = @{
     finished=0;
     results_file=$results_path;
     ansible_job_id=$local_jid;
-    _suppress_tmpdir_delete=$true;
+    _ansible_suppress_tmpdir_delete=$true;
     ansible_async_watchdog_pid=$watchdog_pid
 }
 
