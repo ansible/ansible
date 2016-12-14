@@ -33,24 +33,17 @@ except ImportError:
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
+
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s)\n'
-                               'Check fact cache config options :\n'
-                               'Current values:\n'
-                               '    fact_caching: %s\n'
-                               '    fact_caching_connection: %s' %
-                               (C.CACHE_PLUGIN, C.CACHE_PLUGIN, C.CACHE_PLUGIN_CONNECTION))
+            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        if self._plugin is None:
-            display.warning("Failed to load fact cache plugins")
-            return
 
     def __getitem__(self, key):
-        if key not in self:
+        if not self._plugin.contains(key):
             raise KeyError
         return self._plugin.get(key)
 
