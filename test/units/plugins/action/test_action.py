@@ -601,8 +601,6 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
                 'ansible_ssh_host_key_somehost': 'some key here',
                 'some_other_var': 'foo bar'}
         res = action_base._clean_returned_data(data)
-        print(res)
-        print('data: %s' % data)
         self.assertNotIn('ansible_playbook_python', data)
         self.assertNotIn('ansible_python_interpreter', data)
         self.assertIn('ansible_ssh_host_key_somehost', data)
@@ -667,10 +665,9 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        print(res)
         self.assertTrue(res['_ansible_parsed'])
-        print(type(res['ansible_facts']))
-        self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe?
+        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
 
     def test_json_facts_add_host(self):
         action_base = self._action_base()
@@ -686,7 +683,6 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        print(res)
         self.assertTrue(res['_ansible_parsed'])
-        print(type(res['ansible_facts']))
-        self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe?
+        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
