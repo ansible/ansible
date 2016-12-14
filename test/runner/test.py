@@ -387,6 +387,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                                   action='store_true',
                                   help='run from a tox virtualenv')
 
+    tox = parser.add_argument_group(title='tox arguments')
+
+    tox.add_argument('--tox-sitepackages',
+                     action='store_true',
+                     help='allow access to globally installed packages')
+
     if tox_only:
         environments.set_defaults(
             docker=None,

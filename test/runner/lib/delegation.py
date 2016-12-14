@@ -70,10 +70,17 @@ def delegate_tox(args, exclude, require):
 
     options = {
         '--tox': args.tox_args,
+        '--tox-sitepackages': 0,
     }
 
     for version in versions:
-        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', ''), '--']
+        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', '')]
+
+        if args.tox_sitepackages:
+            tox.append('--sitepackages')
+
+        tox.append('--')
+
         cmd = generate_command(args, os.path.abspath('test/runner/test.py'), options, exclude, require)
 
         if not args.python:
