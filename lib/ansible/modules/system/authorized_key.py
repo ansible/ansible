@@ -233,16 +233,16 @@ class keydict(dict):
             yield key, self[key][indexes[key]]
 
     def iteritems(self):
-        return self._item_generator()
+        raise NotImplementedError("Do not use this as it's not available on py3")
 
     def items(self):
-        return list(self.iteritems())
+        return list(self._item_generator())
 
     def itervalues(self):
-        return (item[1] for item in self.iteritems())
+        raise NotImplementedError("Do not use this as it's not available on py3")
 
     def values(self):
-        return list(self.itervalues())
+        return [item[1] for item in self.items()]
 
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
