@@ -158,7 +158,7 @@ class AnsibleCloudStack(object):
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         result = False
-        for key, value in want_dict.iteritems():
+        for key, value in iteritems(want_dict):
 
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
@@ -581,12 +581,12 @@ class AnsibleCloudStack(object):
         if resource:
             returns = self.common_returns.copy()
             returns.update(self.returns)
-            for search_key, return_key in returns.iteritems():
+            for search_key, return_key in iteritems(returns):
                 if search_key in resource:
                     self.result[return_key] = resource[search_key]
 
             # Bad bad API does not always return int when it should.
-            for search_key, return_key in self.returns_to_int.iteritems():
+            for search_key, return_key in iteritems(self.returns_to_int):
                 if search_key in resource:
                     self.result[return_key] = int(resource[search_key])
 

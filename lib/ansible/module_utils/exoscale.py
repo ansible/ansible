@@ -42,6 +42,7 @@ from ConfigParser import ConfigParser, NoSectionError
 # import module snippets
 from ansible.module_utils.urls import *
 from ansible.module_utils.basic import *
+from ansible.module_utils.six import iteritems
 
 EXO_DNS_BASEURL="https://api.exoscale.ch/dns/v1"
 
@@ -143,7 +144,7 @@ class ExoDns(object):
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         changed = False
-        for key, value in want_dict.iteritems():
+        for key, value in iteritems(want_dict):
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
                 continue

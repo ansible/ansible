@@ -651,7 +651,7 @@ def format_attributes(attributes):
 
 def get_flags_from_attributes(attributes):
     flags = []
-    for key,attr in FILE_ATTRIBUTES.iteritems():
+    for key,attr in iteritems(FILE_ATTRIBUTES):
         if attr in attributes:
             flags.append(key)
     return ''.join(flags)
