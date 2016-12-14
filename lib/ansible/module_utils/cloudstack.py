@@ -407,6 +407,9 @@ class AnsibleCloudStack(object):
             zone = os.environ.get('CLOUDSTACK_ZONE')
         zones = self.cs.listZones()
 
+        if not zones:
+            self.module.fail_json(msg="No zones available. Please create a zone first")
+
         # use the first zone if no zone param given
         if not zone:
             self.zone = zones['zone'][0]
