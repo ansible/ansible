@@ -24,7 +24,10 @@ DOCUMENTATION = '''
 ---
 module: apache2_module
 version_added: 1.6
-author: "Christian Berendt (@berendt)"
+author:
+    - Christian Berendt (@berendt)
+    - Ralf Hertel (@n0trax)
+    - Robin Roth (@robinro)
 short_description: enables/disables a module of the Apache2 webserver
 description:
    - Enables or disables a specified module of the Apache2 webserver.
@@ -37,15 +40,20 @@ options:
      description:
         - force disabling of default modules and override Debian warnings
      required: false
-     choices: ['yes', 'no']
-     default: no
+     choices: ['True', 'False']
+     default: False
      version_added: "2.1"
    state:
      description:
         - indicate the desired state of the resource
      choices: ['present', 'absent']
      default: present
-
+   ignore_configcheck:
+     description:
+        - Ignore configuration checks about inconsistent module configuration. Especially for mpm_* modules.
+     choices: ['True', 'False']
+     default: False
+     version_added: "2.3"
 requirements: ["a2enmod","a2dismod"]
 '''
 
@@ -54,11 +62,43 @@ EXAMPLES = '''
 - apache2_module:
     state: present
     name: wsgi
-
 # disables the Apache2 module "wsgi"
 - apache2_module:
     state: absent
     name: wsgi
+# disable default modules for Debian
+- apache2_module:
+    state: absent
+    name: autoindex
+    force: True
+# disable mpm_worker and ignore warnings about missing mpm module
+- apache2_module:
+    state: absent
+    name: mpm_worker
+    ignore_configcheck: True
+'''
+
+RETURN = '''
+result:
+    description: message about action taken
+    returned: always
+    type: string
+warnings:
+    description: list of warning messages
+    returned: when needed
+    type: list
+rc:
+    description: return code of underlying command
+    returned: failed
+    type: int
+stdout:
+    description: stdout of underlying command
+    returned: failed
+    type: string
+stderr:
+    description: stderr of underlying command
+    returned: failed
+    type: string
 '''
 
 import re
@@ -80,11 +120,14 @@ def _get_ctl_binary(module):
             return ctl_binary
 
     module.fail_json(
-      msg="None of httpd, apachectl or apach2ctl found. At least one apache control binary is necessary.")
+      msg="Neither of apache2ctl nor apachctl found."
+          " At least one apache control binary is necessary."
+    )
 
 def _module_is_enabled(module):
     control_binary = _get_ctl_binary(module)
     name = module.params['name']
+    ignore_configcheck = module.params['ignore_configcheck']
 
     result, stdout, stderr = module.run_command("%s -M" % control_binary)
 
@@ -95,12 +138,20 @@ def _module_is_enabled(module):
         name = "php7"
 
     if result != 0:
-        module.fail_json(msg="Error executing %s: %s" % (control_binary, stderr))
+        error_msg = "Error executing %s: %s" % (control_binary, stderr)
+        if ignore_configcheck:
+            if 'AH00534' in stderr and 'mpm_' in name:
+                module.warnings.append(
+                    "No MPM module loaded! apache2 reload AND other module actions"
+                    " will fail if no MPM module is loaded immediatly."
+                )
+            else:
+                module.warnings.append(error_msg)
+            return False
+        else:
+            module.fail_json(msg=error_msg)
 
-    if re.search(r' ' + name + r'_module', stdout):
-        return True
-    else:
-        return False
+    return bool(re.search(r' ' + name + r'_module', stdout))
 
 def _set_state(module, state):
     name = module.params['name']
@@ -113,7 +164,9 @@ def _set_state(module, state):
 
     if _module_is_enabled(module) != want_enabled:
         if module.check_mode:
-            module.exit_json(changed = True, result = success_msg)
+            module.exit_json(changed=True,
+                             result=success_msg,
+                             warnings=module.warnings)
 
         a2mod_binary = module.get_bin_path(a2mod_binary)
         if a2mod_binary is None:
@@ -126,21 +179,31 @@ def _set_state(module, state):
         result, stdout, stderr = module.run_command("%s %s" % (a2mod_binary, name))
 
         if _module_is_enabled(module) == want_enabled:
-            module.exit_json(changed = True, result = success_msg)
+            module.exit_json(changed=True,
+                             result=success_msg,
+                             warnings=module.warnings)
         else:
-            module.fail_json(msg="Failed to set module %s to %s: %s" % (name, state_string, stdout), rc=result, stdout=stdout, stderr=stderr)
+            module.fail_json(msg="Failed to set module %s to %s: %s" % (name, state_string, stdout),
+                             rc=result,
+                             stdout=stdout,
+                             stderr=stderr)
     else:
-        module.exit_json(changed = False, result = success_msg)
+        module.exit_json(changed=False,
+                         result=success_msg,
+                         warnings=module.warnings)
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             name  = dict(required=True),
             force = dict(required=False, type='bool', default=False),
-            state = dict(default='present', choices=['absent', 'present'])
+            state = dict(default='present', choices=['absent', 'present']),
+            ignore_configcheck=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode = True,
     )
+
+    module.warnings = []
 
     name = module.params['name']
     if name == 'cgi' and _run_threaded(module):
