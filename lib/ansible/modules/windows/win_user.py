@@ -137,19 +137,16 @@ author:
 '''
 
 EXAMPLES = '''
-# Ad-hoc example
-$ ansible -i hosts -m win_user -a "name=bob password=Password12345 groups=Users" all
-$ ansible -i hosts -m win_user -a "name=bob state=absent" all
+- name: Ensure user bob is present
+  win_user:
+    name: bob
+    password: B0bP4ssw0rd
+    state: present
+    groups:
+      - Users
 
-# Playbook example
----
-- name: Add a user
-  hosts: all
-  gather_facts: false
-  tasks:
-    - name: Add User
-      win_user:
-        name: ansible
-        password: "@ns1bl3"
-        groups: ["Users"]
+- name: Ensure user bob is absent
+  win_user:
+    name: bob
+    state: absent
 '''
