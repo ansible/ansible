@@ -32,6 +32,11 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    'async' keyword, the task runs synchronously, which is Ansible's
    default.
 
+.. note::
+   Asynchronous tasks are not compatible with lookup plugins or iterators
+   (with_*).  Combining the two will generate a fatal error of your playbook
+   at runtime.
+
 Alternatively, if you do not need to wait on the task to complete, you may
 "fire and forget" by specifying a poll value of 0::
 
