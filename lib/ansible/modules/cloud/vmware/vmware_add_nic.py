@@ -14,12 +14,12 @@ options:
   label:
     description:
       - The label of the NIC you want to update or remove. This has no effect when trying to
-        create a NIC due to a limitation in VMWare's API 
+        create a NIC due to a limitation in VMWare's API
     required: false
   dvs:
     description:
-      - Whether the NICs network should be standard or DVS. 
-    default: false 
+      - Whether the NICs network should be standard or DVS.
+    default: false
   state:
     description:
       - The action desired. If 'create', a new NIC will be created everytime. Update will check
@@ -28,22 +28,22 @@ options:
     required: True
   type:
     description:
-      - The type of NIC you wish to create 
+      - The type of NIC you wish to create
     required: false
-    default: vmxnet3 
+    default: vmxnet3
     choices: ['vmxnet','vmxnet2','vmxnet3','e1000','e1000e','pcnet32']
   network_name:
     description:
-      - The name label of the network you wish to associate the NIC with. 
+      - The name label of the network you wish to associate the NIC with.
         Valid for create and update states.
     required: False
   datacenter:
     description:
       - The datacenter name in which the VM resides
-    required: True 
+    required: True
 notes:
   - This module should run from a system that can access vSphere directly.
-    Either by using local_action, or using delegate_to. 
+    Either by using local_action, or using delegate_to.
 author: "Jonathan Davila <jdavila@redhat.com>"
 requirements:
   - "python >= 2.6"
@@ -52,8 +52,8 @@ requirements:
 
 
 EXAMPLES = '''
-# Update the NIC 'Network adapter 1' on the 'SharekVM1' VM inside of /sharks/megladon/ 
-# within the Ocean datacenter 
+# Update the NIC 'Network adapter 1' on the 'SharekVM1' VM inside of /sharks/megladon/
+# within the Ocean datacenter
 
 - name: Update NIC
   vmware_nic:
@@ -66,7 +66,7 @@ EXAMPLES = '''
       network_name: Servers
       label: Network adapter 1
 
-# Create a new vmxnet3 NIC, associate with Servers network, and attach to SharkVM1.  
+# Create a new vmxnet3 NIC, associate with Servers network, and attach to SharkVM1.
 - name: Create NIC
   vmware_nic:
       vm_path: /sharks/megladon/SharkVM1
@@ -79,6 +79,7 @@ EXAMPLES = '''
       type: vmxnet3
 '''
 
+from ansible.module_utils.six import iteritems
 
 try:
     from pyVmomi import vim
@@ -90,7 +91,7 @@ except ImportError:
 def get_obj_by_name(content, vimtype, name):
     """
      Get the vsphere object associated with a given text name
-    """    
+    """
     obj = None
     container = content.viewManager.CreateContainerView(content.rootFolder, vimtype, True)
     for c in container.view:
@@ -106,7 +107,7 @@ def objwalk(obj, path_elements):
             if new_obj.name != 'vm':
                 # 'vm' is an invisible folder that exists at the datacenter root so we ignore it
                 path_elements.append(new_obj.name)
-            
+
             objwalk(new_obj, path_elements)
 
     return path_elements
@@ -125,7 +126,7 @@ def get_vm_object(module, conn, path, datacenter):
 
     try:
         if len(matching_vms) > 1:
-            
+
             for vm_obj in matching_vms:
                 elements = []
                 if set(path_list).issubset(set(objwalk(vm_obj, elements))):
@@ -133,7 +134,7 @@ def get_vm_object(module, conn, path, datacenter):
 
         elif len(matching_vms) == 0:
             module.fail_json(msg="VM: %s not found at path: %s" % (name, path))
-        
+
         else:
             return matching_vms[0]
 
@@ -175,14 +176,14 @@ def create_nic(module, conn, vm, desired_nic):
     else:
         nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
         nic_spec.device.backing.network = get_obj_by_name(conn, [vim.Network], desired_nic['network'])
-    
+
     nic_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
     nic_spec.device.connectable.connected = True
     nic_spec.device.connectable.startConnected = True
     nic_spec.device.connectable.allowGuestControl = True
     nic_spec.device.wakeOnLanEnabled = True
     nic_spec.device.deviceInfo = vim.Description()
-    nic_spec.device.deviceInfo.summary = desired_nic['network']     
+    nic_spec.device.deviceInfo.summary = desired_nic['network']
     nic_spec.device.backing.deviceName = desired_nic['network']
     nic_spec.device.addressType = 'generated'
 
@@ -220,7 +221,7 @@ def remove_nic(module, conn, vm, desired_nic, all_nics):
         module.fail_json(msg="One or more NICs with the label: %s have been found. You'll have to remove the proper NIC manually" % desired_nic['label'])
     elif len(matching_nics) == 0:
         module.exit_json(msg="No NIC with the name: %s was found" % desired_nic['label'])
-    
+
     nic_obj = matching_nics[0]
 
     nic_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
@@ -271,14 +272,14 @@ def update_nic(module, conn, vm, desired_nic, all_nics):
     else:
         nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
         nic_spec.device.backing.network = get_obj_by_name(conn, [vim.Network], desired_nic['network'])
-    
+
     nic_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
     nic_spec.device.connectable.connected = True
     nic_spec.device.connectable.startConnected = True
     nic_spec.device.connectable.allowGuestControl = True
     nic_spec.device.wakeOnLanEnabled = True
     nic_spec.device.deviceInfo = vim.Description()
-    nic_spec.device.deviceInfo.summary = desired_nic['network']     
+    nic_spec.device.deviceInfo.summary = desired_nic['network']
     nic_spec.device.backing.deviceName = desired_nic['network']
 
     changes.append(nic_spec)
@@ -340,7 +341,7 @@ def main():
                 datacenter=dict(required=True, type='str'),
                 )
         )
-    
+
     module = AnsibleModule(argument_spec=argument_spec,
 			required_if= [('state','create',['network_name']),
 			              ('state','update',['network_name','label']),
@@ -392,13 +393,13 @@ def main():
                                                    network=nic.backing.deviceName
                                                    )
         )
-    
+
     elif state == 'absent':
         changed = True
         results = remove_nic(module, conn, proper_vm, desired_nic, all_nics)
 
         module.exit_json(changed=changed, msg="NIC removed")
-    
+
     elif state == 'update':
         if needs_update(module, desired_nic, all_nics):
             changed=True
