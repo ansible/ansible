@@ -163,7 +163,7 @@ def main():
 
 
 # this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import import *
-from ansible.module_utils.vmware import import *
+from ansible.module_utils.basic import *
+from ansible.module_utils.vmware import *
 if __name__ == '__main__':
     main()
