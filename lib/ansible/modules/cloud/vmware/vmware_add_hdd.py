@@ -1,5 +1,20 @@
 #!/usr/bin/python
 
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 DOCUMENTATION = '''
 ---
 module: vmware_add_hdd
@@ -108,7 +123,7 @@ def get_vm_object(module, conn, path):
     path_list = filter(None, path.split('/'))
     name = path_list.pop()
 
-    for vm_obj, label in iteritems(all_vms)
+    for vm_obj, label in iteritems(all_vms):
         if label == name:
             matching_vms.append(vm_obj)
 
