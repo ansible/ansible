@@ -38,17 +38,14 @@ options:
 author: Sam Liu
 '''
 
-EXAMPLES = '''
-# get C:\Windows\System32\cmd.exe version in playbook
----
+EXAMPLES = r'''
 - name: Get acm instance version
   win_file_version:
-    path: 'C:\Windows\System32\cmd.exe'
+    path: C:\Windows\System32\cmd.exe
   register: exe_file_version
 
 - debug:
     msg: '{{ exe_file_version }}'
-
 '''
 
 RETURN = """
