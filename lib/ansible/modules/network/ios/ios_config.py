@@ -104,10 +104,10 @@ options:
     choices: ['line', 'block']
   multiline_delimiter:
     description:
-      - This arugment is used when pushing a multiline configuration
+      - This argument is used when pushing a multiline configuration
         element to the IOS device.  It specifies the character to use
         as the delimiting character.  This only applies to the
-        configuration action
+        configuration action.
     required: false
     default: "@"
     version_added: "2.3"
