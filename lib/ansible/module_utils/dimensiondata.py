@@ -89,7 +89,7 @@ def get_configured_credentials(module):
         return None
 
     return dict(
-        user_id=module.params['mcp_user']
+        user_id=module.params['mcp_user'],
         key=module.params['mcp_password']
     )
 
