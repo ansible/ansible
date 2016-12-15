@@ -409,7 +409,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
                 entry['whytime'] = '{} / {}'.format(local_modified_epoch, remote_modified_epoch)
                 entry['whysize'] = '{} / {}'.format(local_size, remote_size)
 
-                if local_modified_epoch <= remote_modified_epoch or local_size != remote_size:
+                if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
                     entry['skip_flag'] = True
             else:
                 entry['why'] = "no s3_head"
