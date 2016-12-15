@@ -31,7 +31,7 @@ except ImportError:
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
-from ansible.module_utils.six.moves import StringIO
+from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_native
 
 ANSI_RE = [
@@ -132,23 +132,23 @@ class Shell(object):
         raise ShellError('timeout trying to send command: %s' % self._history[-1])
 
     def receive(self, cmd=None):
-        recv = StringIO()
+        recv = BytesIO()
         handled = False
 
         while True:
             data = self.shell.recv(200)
 
             recv.write(data)
-            recv.seek(recv.tell() - 200)
+            recv.seek(recv.tell() - len(data))
 
-            window = self.strip(recv.read())
+            window = self.strip(recv.read().decode('utf8'))
 
             if hasattr(cmd, 'prompt') and not handled:
                 handled = self.handle_prompt(window, cmd)
 
             try:
                 if self.find_prompt(window):
-                    resp = self.strip(recv.getvalue())
+                    resp = self.strip(recv.getvalue().decode('utf8'))
                     return self.sanitize(cmd, resp)
             except ShellError:
                 exc = get_exception()
