@@ -68,21 +68,21 @@ def get_credentials():
 
     To set in environment:
 
-        export DIDATA_USER='myusername'
-        export DIDATA_PASSWORD='mypassword'
+        export MCP_USER='myusername'
+        export MCP_PASSWORD='mypassword'
 
     To set in dot file place a file at ~/.dimensiondata with
     the following contents:
 
         [dimensiondatacloud]
-        DIDATA_USER: myusername
-        DIDATA_PASSWORD: mypassword
+        MCP_USER: myusername
+        MCP_PASSWORD: mypassword
     """
     check_libcloud_or_fail()
 
     # Attempt to grab from environment
-    user_id = os.environ.get('DIDATA_USER', None)
-    key = os.environ.get('DIDATA_PASSWORD', None)
+    user_id = os.environ.get('MCP_USER', None)
+    key = os.environ.get('MCP_PASSWORD', None)
 
     # Environment failed try dot file
     if not user_id or not key:
@@ -90,8 +90,8 @@ def get_credentials():
         config = ConfigParser.RawConfigParser()
         config.read("%s/.dimensiondata" % home)
         try:
-            user_id = config.get("dimensiondatacloud", "DIDATA_USER")
-            key = config.get("dimensiondatacloud", "DIDATA_PASSWORD")
+            user_id = config.get("dimensiondatacloud", "MCP_USER")
+            key = config.get("dimensiondatacloud", "MCP_PASSWORD")
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
 
