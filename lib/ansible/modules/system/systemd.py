@@ -239,6 +239,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
 
+
+def is_running_service(service_status):
+    return service_status['ActiveState'] in {'active', 'activating'}
+
+
 # ===========================================
 # Main control flow
 
@@ -382,13 +387,13 @@ def main():
         if 'ActiveState' in result['status']:
             action = None
             if module.params['state'] == 'started':
-                if result['status']['ActiveState'] != 'active':
+                if not is_running_service(result['status']):
                     action = 'start'
             elif module.params['state'] == 'stopped':
-                if result['status']['ActiveState'] == 'active':
+                if is_running_service(result['status']):
                     action = 'stop'
             else:
-                if result['status']['ActiveState'] != 'active':
+                if not is_running_service(result['status']):
                     action = 'start'
                 else:
                     action = module.params['state'][:-2] # remove 'ed' from restarted/reloaded
