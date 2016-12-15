@@ -19,6 +19,7 @@
 #
 
 import inspect
+import os
 import time
 
 from abc import ABCMeta, abstractmethod
@@ -279,6 +280,32 @@ def wait(
             time.sleep(float(poll_interval))
 
 
+def __get_auth_dict():
+    OVIRT_URL = os.environ.get('OVIRT_URL')
+    OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
+    OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
+    OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
+    OVIRT_CAFILE = os.environ.get('OVIRT_CAFILE')
+    OVIRT_INSECURE = OVIRT_CAFILE is None
+
+    env_vars = None
+    if OVIRT_URL and ((OVIRT_USERNAME and OVIRT_PASSWORD) or OVIRT_TOKEN):
+        env_vars = {
+            'url': OVIRT_URL,
+            'username': OVIRT_USERNAME,
+            'password': OVIRT_PASSWORD,
+            'insecure': OVIRT_INSECURE,
+            'token': OVIRT_TOKEN,
+            'ca_file': OVIRT_CAFILE,
+        }
+    if env_vars is not None:
+        auth = dict(default=env_vars, type='dict')
+    else:
+        auth = dict(required=True, type='dict')
+
+    return auth
+
+
 def ovirt_facts_full_argument_spec(**kwargs):
     """
     Extend parameters of facts module with parameters which are common to all
@@ -288,7 +315,7 @@ def ovirt_facts_full_argument_spec(**kwargs):
     :return: extended dictionary with common parameters
     """
     spec = dict(
-        auth=dict(required=True, type='dict'),
+        auth=__get_auth_dict(),
         fetch_nested=dict(default=False, type='bool'),
         nested_attributes=dict(type='list'),
     )
@@ -304,7 +331,7 @@ def ovirt_full_argument_spec(**kwargs):
     :return: extended dictionary with common parameters
     """
     spec = dict(
-        auth=dict(required=True, type='dict'),
+        auth=__get_auth_dict(),
         timeout=dict(default=180, type='int'),
         wait=dict(default=True, type='bool'),
         poll_interval=dict(default=3, type='int'),
