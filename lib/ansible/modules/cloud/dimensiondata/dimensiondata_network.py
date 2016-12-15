@@ -54,6 +54,17 @@ options:
       - Note that the region values are available as list from dd_regions().
       - Note that the default value "na" stands for "North America".  The code prepends 'dd-' to the region choice.
     default: na
+  mcp_user:
+    description:
+      - The username used to authenticate to the CloudControl API.
+      - If not specified, will fall back to MCP_USER from environment variable or  ~/.dimensiondata.
+    required: false
+  mcp_password:
+    description:
+      - The password used to authenticate to the CloudControl API.
+      - If not specified, will fall back to MCP_PASSWORD from environment variable or  ~/.dimensiondata.
+      - Required if mcp_user is specified.
+    required: false
   location:
     description:
       - The target datacenter.
@@ -108,6 +119,8 @@ EXAMPLES = '''
 # Create an MCP 2.0 network
 - dimensiondata_network:
     region: na
+    mcp_user: my_user
+    mcp_password: my_password
     location: NA9
     name: mynet
     service_plan: ADVANCED
@@ -248,6 +261,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             region=dict(default='na', choices=dd_regions),
+            mcp_user=dict(required=False, type='str'),
+            mcp_password=dict(required=False, type='str'),
             location=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             description=dict(required=False, type='str'),
@@ -261,13 +276,15 @@ def main():
         )
     )
 
-    if not HAS_LIBCLOUD:
+    try:
+        credentials = get_configured_credentials(module) or get_credentials()
+    except LibcloudNotFound:
         module.fail_json(msg='libcloud is required for this module.')
 
-    # set short vars for readability
-    credentials = get_credentials()
-    if credentials is False:
+    if not credentials:
         module.fail_json(msg="User credentials not found")
+
+    # set short vars for readability
     user_id = credentials['user_id']
     key = credentials['key']
     region = 'dd-%s' % module.params['region']
