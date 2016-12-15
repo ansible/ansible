@@ -196,6 +196,50 @@ class TestTemplar(unittest.TestCase):
         self.assertEquals(res, 'Unsafe_blip')
         self.assertIsInstance(res, AnsibleUnsafe)
 
+    @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
+    def test_template_unsafe_clean_data_exception(self, mock_clean_data):
+        self.assertRaises(AnsibleError,
+                          self.templar.template,
+                          wrap_var('blip bar'))
+
+# TODO: not sure what template is supposed to do it, but it currently throws attributeError
+#    @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
+#    def test_template_unsafe_non_string_clean_data_exception(self, mock_clean_data):
+#        unsafe_obj = AnsibleUnsafe()
+#        self.templar.template(unsafe_obj)
+
+    def test_clean_data(self):
+        res = self.templar._clean_data(u'some string')
+        self.assertEquals(res, u'some string')
+
+    def test_clean_data_not_stringtype(self):
+        res = self.templar._clean_data(None)
+        # None vs NoneType
+        self.assertEquals(res, None)
+
+    def test_clean_data_jinja(self):
+        res = self.templar._clean_data(u'1 2 {what} 3 4 {{foo}} 5 6 7')
+        self.assertEquals(res, u'1 2 {what} 3 4 {#foo#} 5 6 7')
+
+    def test_clean_data_block(self):
+        res = self.templar._clean_data(u'1 2 {%what%} 3 4 {{foo}} 5 6 7')
+        self.assertEquals(res, u'1 2 {#what#} 3 4 {#foo#} 5 6 7')
+
+#    def test_clean_data_weird(self):
+#        res = self.templar._clean_data(u'1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7')
+#        print(res)
+
+        self.assertEquals(res, u'1 2 {#what#} 3 4 {#foo#} 5 6 7')
+
+    def test_clean_data_object(self):
+        obj = {'foo': [1, 2, 3, 'bdasdf', '{what}', '{{foo}}', 5]}
+        res = self.templar._clean_data(obj)
+        self.assertEquals(res, obj)
+
+    def test_clean_data_bad_dict(self):
+        res = self.templar._clean_data(u'{{bad_dict}}')
+        self.assertEquals(res, u'{#bad_dict#}')
+
     def test_templar_simple(self):
 
         templar = self.templar
