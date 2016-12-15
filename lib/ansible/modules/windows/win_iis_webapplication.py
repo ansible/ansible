@@ -66,7 +66,11 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
-$ ansible -i hosts -m win_iis_webapplication -a "name=api site=acme physical_path=c:\\apps\\acme\\api" host
-
+EXAMPLES = r'''
+- name: Add ACME webapplication on IIS
+  win_iis_webapplication:
+    name: api
+    site: acme
+    state: present
+    physical_path: C:\apps\acme\api
 '''
