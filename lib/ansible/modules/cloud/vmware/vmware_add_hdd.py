@@ -45,7 +45,8 @@ EXAMPLES = '''
 
 
 try:
-    from pyVmomi import import vim, vmodl
+    from pyVmomi import import vim
+    from pyVmomi import import vmodl
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
