@@ -16,13 +16,93 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: template out setup script
-  win_template:
-    src: setup.ps1.tmpl
-    dest: "{{win_output_dir}}\\setup.ps1"
+- name: remove links if they exist as win_file struggles
+  win_command: cmd.exe /c rmdir "{{item}}"
+  ignore_errors: True
+  with_items:
+  - "{{win_stat_dir}}\\link"
+  - "{{win_stat_dir}}\\nested\\hard-link.ps1"
+  - "{{win_stat_dir}}\\junction-link"
 
-- name: run setup script
-  win_command: powershell "{{win_output_dir}}\\setup.ps1"
+- name: ensure the testing directory is cleared before the run
+  win_file:
+    path: "{{win_stat_dir}}"
+    state: absent
+
+- name: ensure win testing directories exist
+  win_file:
+    path: "{{item}}"
+    state: directory
+  with_items:
+  - "{{win_stat_dir}}\\folder"
+  - "{{win_stat_dir}}\\folder space"
+  - "{{win_stat_dir}}\\nested"
+  - "{{win_stat_dir}}\\nested\\nested"
+  - "{{win_stat_dir}}\\shared"
+  - "{{win_stat_dir}}\\hidden"
+  - "{{win_stat_dir}}\\link-dest"
+  - "{{win_stat_dir}}\\junction-dest"
+
+- name: create empty test files
+  win_file:
+    path: "{{item}}"
+    state: touch
+  with_items:
+  - "{{win_stat_dir}}\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\nested\\read-only.ps1"
+  - "{{win_stat_dir}}\\nested\\archive.ps1"
+  - "{{win_stat_dir}}\\nested\\hidden.ps1"
+  - "{{win_stat_dir}}\\nested\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\folder space\\file.ps1"
+
+- name: populate files with a test string
+  win_lineinfile:
+    dest: "{{item}}"
+    line: abc
+  with_items:
+  - "{{win_stat_dir}}\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\nested\\read-only.ps1"
+  - "{{win_stat_dir}}\\nested\\archive.ps1"
+  - "{{win_stat_dir}}\\nested\\hidden.ps1"
+  - "{{win_stat_dir}}\\nested\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\folder space\\file.ps1"
+
+- name: create share
+  script: setup_share.ps1 {{win_stat_dir}}\shared
+
+- name: create links
+  win_command: cmd.exe /c mklink /{{item.type}} {{item.source}} {{item.target}}
+  with_items:
+  - { type: 'D', source: "{{win_stat_dir}}\\link", target: "{{win_stat_dir}}\\link-dest" }
+  - { type: 'H', source: "{{win_stat_dir}}\\nested\\hard-link.ps1", target: "{{win_stat_dir}}\\nested\\file.ps1" }
+  - { type: 'J', source: "{{win_stat_dir}}\\junction-link", target: "{{win_stat_dir}}\\junction-dest" }
+
+- name: set modification date on files/folders
+  script: set_filedate.ps1 "{{item}}"
+  with_items:
+  - "{{win_stat_dir}}\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\nested\\read-only.ps1"
+  - "{{win_stat_dir}}\\nested\\archive.ps1"
+  - "{{win_stat_dir}}\\nested\\hidden.ps1"
+  - "{{win_stat_dir}}\\nested\\nested\\file.ps1"
+  - "{{win_stat_dir}}\\folder space\\file.ps1"
+  - "{{win_stat_dir}}\\folder"
+  - "{{win_stat_dir}}\\folder space"
+  - "{{win_stat_dir}}\\nested"
+  - "{{win_stat_dir}}\\nested\\nested"
+  - "{{win_stat_dir}}\\shared"
+  - "{{win_stat_dir}}\\hidden"
+  - "{{win_stat_dir}}\\link-dest"
+  - "{{win_stat_dir}}\\junction-dest"
+
+- name: set file attributes for test
+  script: set_attributes.ps1 {{item.path}} {{item.attr}}
+  with_items:
+  - { path: "{{win_stat_dir}}\\hidden", attr: "Hidden" }
+  - { path: "{{win_stat_dir}}\\nested\\read-only.ps1", attr: "ReadOnly" }
+  - { path: "{{win_stat_dir}}\\nested\\archive.ps1", attr: "Archive" }
+  - { path: "{{win_stat_dir}}\\nested\\hidden.ps1", attr: "Hidden" }
+# End setup of test files
 
 - name: test win_stat module on file
   win_stat:
@@ -35,7 +115,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 34d4150adc3347f1dd8ce19fdf65b74d971ab602
+        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -48,10 +128,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for file
   assert:
@@ -70,7 +150,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 34d4150adc3347f1dd8ce19fdf65b74d971ab602
+        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -85,7 +165,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for file without md5
   assert:
@@ -104,7 +184,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 552bab6864c7a7b69a502ed1854b9245c0e1a30f008aaa0b281da62585fdb025
+        checksum: aec4cd5ed4c05ed5cf9dea5a8b30f5e655ad87b937b36e3c059840ce3cf3642f
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -117,10 +197,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for file with sha256
   assert:
@@ -139,7 +219,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: fdaeef7c96bcb25e206826709ede56f46b8a843d3159e05a8714584ff7bbc33f51635b5a503e91ee0c07227085caadde
+        checksum: 862076ed4ef117cb61395daa839ccfe20a880e8cd048e76b3b1503d39d72f4c09d58ab3c44cdd5a3272ca8da9d8d8666
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -152,10 +232,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for file with sha384
   assert:
@@ -174,7 +254,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: e3bcf148cf4aba61ad59042dcca53e018f685cdc009f5e9f239e6f83de6dcc4d8ef0c714721b596627b7d8f9e2edb6c093298f95589c47ba82e439e1ae519f41
+        checksum: 6d821d068cd8f09582de9ef14550666547eb6d4ae1d34cfc5aea921e595dbb9c462bf7f4c88a90190a69e52d69ac157e8146b555ed679a3e997061ca69632d0f
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -187,10 +267,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for file with sha512
   assert:
@@ -208,7 +288,7 @@
       changed: False
       stat:
         attributes: "Hidden, Archive"
-        checksum: 34d4150adc3347f1dd8ce19fdf65b74d971ab602
+        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -221,10 +301,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\hidden.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for hidden file
   assert:
@@ -242,7 +322,7 @@
       changed: False
       stat:
         attributes: "ReadOnly, Archive"
-        checksum: 34d4150adc3347f1dd8ce19fdf65b74d971ab602
+        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -255,10 +335,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\read-only.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for readonly file
   assert:
@@ -276,7 +356,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 34d4150adc3347f1dd8ce19fdf65b74d971ab602
+        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -289,10 +369,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c13b6afecf97ea6b38d21a8f5167fa1e
+        md5: c627105fad747457b7e88ed1016e065f
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\hard-link.ps1"
-        size: 5
+        size: 8
 
 - name: check actual for hard link file
   assert:
@@ -323,7 +403,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested"
-        size: 25
+        size: 40
 
 - name: check actual for directory
   assert:
@@ -385,7 +465,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\folder space"
-        size: 5
+        size: 8
 
 - name: check actual for directory with space in name
   assert:
