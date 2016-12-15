@@ -57,25 +57,23 @@ options:
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
-EXAMPLES = '''
-# Playbook example
----
+EXAMPLES = r'''
 - name: Disable inherited ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: absent
 
 - name: Disable and copy inherited ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: absent
-    reorganize: yes
+    reorganize: True
 
 - name: Enable and remove dedicated ACE's
   win_acl_inheritance:
-    path: 'C:\\apache\\'
+    path: C:\apache
     state: present
-    reorganize: yes
+    reorganize: True
 '''
 
 RETURN = '''
