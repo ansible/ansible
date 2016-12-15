@@ -26,6 +26,10 @@ library. Hence, such dependency must be installed in the system to run this scri
 The default configuration file is named 'vultr.ini' and is located alongside this script. You can
 choose any other file by setting the VULTR_INI_PATH environment variable.
 
+Most notably, the VultrDigitalOcean API Token must be specified. It can be specified
+in the INI file or with the following environment variables:
+    export VULTR_API_TOKEN='abc123'
+
 The following variables are established for every host. They can be retrieved from the hostvars
 dictionary.
  - vultr_os
@@ -112,15 +116,20 @@ class VultrInventory:
         directory than this file, unless the environment variable BROOK_INI_PATH says otherwise.
         """
 
-        vultr_ini_default_path = \
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), 'vultr.ini')
-        vultr_ini_path = os.environ.get('VULTR_INI_PATH', vultr_ini_default_path)
+        try:
+            vultr_ini_default_path = \
+                os.path.join(os.path.dirname(os.path.realpath(__file__)), 'vultr.ini')
+            vultr_ini_path = os.environ.get('VULTR_INI_PATH', vultr_ini_default_path)
+    
+            config = ConfigParser(defaults={
+                'api_token': '',
+            })
+            config.read(vultr_ini_path)
+            self.api_token = config.get('vultr', 'api_token')
+        except:
+            pass
 
-        config = ConfigParser(defaults={
-            'api_token': '',
-        })
-        config.read(vultr_ini_path)
-        self.api_token = config.get('vultr', 'api_token')
+        if 'VULTR_API_TOKEN' in os.environ:  self.api_token = os.environ.get("VULTR_API_TOKEN")
 
         if not self.api_token:
             print('You must provide (at least) your Vultr.com API token to generate the dynamic '
