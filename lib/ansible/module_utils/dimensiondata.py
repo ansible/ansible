@@ -61,9 +61,42 @@ def check_libcloud_or_fail():
         raise LibcloudNotFound("apache-libcloud is required.")
 
 
+def get_configured_credentials(module):
+    """
+    Attempt to retrieve credentials from the module parameters.
+    If 'mcp_user' is present then 'mcp_password' is also required.
+
+    Returns None if 'mcp_user' is not present.
+
+    If successful, returns a dict with 'user_id' and 'key'
+    representing the MCP username and password.
+    """
+
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud is required for this module.')
+
+        return None
+
+    if 'mcp_user' not in module.params:
+        return None
+
+    if 'mcp_password' not in module.params:
+        module.fail_json(
+            '"mcp_user" parameter was specified, but not "mcp_password" ' +
+            '(either both must be specified, or neither).'
+        )
+
+        return None
+
+    return dict(
+        user_id=module.params['mcp_user']
+        key=module.params['mcp_password']
+    )
+
+
 def get_credentials():
     """
-    This method will get user_id and key from environemnt or dot file.
+    This method will get user_id and key from module configuration, environment, or dotfile.
     Environment takes priority.
 
     To set in environment:
