@@ -668,6 +668,7 @@ def _load_params():
     try:
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
+        # This helper used too early for fail_json to work.
         message = '\n{{"msg": "Error: Module unable to decode valid JSON.  Unable to figure out what parameters were passed", "failed": true, "json_source": "{}", "json_file":"{}", "buffer_contents":"{}"}}'.format(json_source, sys.argv[1], buffer)
         print(message)
         sys.exit(1)
