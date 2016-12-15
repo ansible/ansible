@@ -24,11 +24,11 @@ from distutils.version import StrictVersion
 
 DOCUMENTATION = '''
 ---
-module: os_aggregate
+module: os_nova_host_aggregate
 short_description: Manage OpenStack host aggregates
 extends_documentation_fragment: openstack
 author: "Jakub Jursa"
-version_added: "2.2"
+version_added: "2.3"
 description:
     - Create, update, or delete OpenStack host aggregates. If a aggregate
       with the supplied name already exists, it will be updated with the
@@ -60,7 +60,7 @@ requirements:
 
 EXAMPLES = '''
 # Create a host aggregate
-- os_aggregate:
+- os_nova_host_aggregate:
     cloud: mycloud
     state: present
     name: db_aggregate
@@ -70,7 +70,7 @@ EXAMPLES = '''
     metadata:
       type: dbcluster
 # Delete an aggregate
-- os_aggregate:
+- os_nova_host_aggregate:
     cloud: mycloud
     state: absent
     name: db_aggregate
@@ -167,7 +167,7 @@ def main():
                         for i in (set(aggregate.metadata.keys()) - set(metadata.keys())):
                             if i != 'availability_zone':
                                 metas[i] = None
-                        cloud.set_aggregate_metadata(aggregate.id, metadata)
+                        cloud.set_aggregate_metadata(aggregate.id, metas)
                     if hosts is not None:
                         for i in (set(aggregate.hosts) - set (hosts)):
                             cloud.remove_host_from_aggregate(aggregate.id, i)
