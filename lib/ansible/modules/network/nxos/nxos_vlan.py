@@ -595,7 +595,7 @@ def main():
         vlan_id or vlan_range))
     existing_vlans_list = numerical_sort(get_list_of_vlans(module))
     commands = []
-    existing = None
+    existing = {}
 
     if vlan_range:
         if state == 'present':
