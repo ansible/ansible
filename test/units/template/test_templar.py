@@ -19,13 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.nodes import EvalContext
+from jinja2 import Environment
+from jinja2.runtime import Context
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.strategy import SharedPluginLoaderObj
-from ansible.template import Templar
+from ansible.template import Templar, AnsibleEvalContext, AnsibleContext, AnsibleEnvironment
 from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var
 
 from units.mock.loader import DictDataLoader
@@ -297,3 +301,66 @@ class TestTemplar(unittest.TestCase):
             self.assertEqual(templar._get_extensions(), ['foo', 'bar'])
         finally:
             C.DEFAULT_JINJA2_EXTENSIONS = old_exts
+
+
+class TestAnsibleEnvironment(unittest.TestCase):
+    def test(self):
+        env = AnsibleEnvironment()
+        self.assertIsInstance(env, AnsibleEnvironment)
+        self.assertIsInstance(env, Environment)
+
+
+class TestAnsibleEvalContext(unittest.TestCase):
+    def test(self):
+        env = AnsibleEnvironment()
+        eval_context = AnsibleEvalContext(env)
+        self.assertIsInstance(eval_context, AnsibleEvalContext)
+        self.assertIsInstance(eval_context, EvalContext)
+
+
+class TestAnsibleContext(unittest.TestCase):
+    def _context(self, variables=None):
+        variables = variables or {}
+
+        env = AnsibleEnvironment()
+        context = AnsibleContext(env, parent={}, name='some_context',
+                                 blocks={})
+
+        for key, value in variables.items():
+            context.vars[key] = value
+
+        return context
+
+    def test(self):
+        context = self._context()
+        self.assertIsInstance(context, AnsibleContext)
+        self.assertIsInstance(context, Context)
+
+    def test_resolve_unsafe(self):
+        context = self._context(variables={'some_unsafe_key': wrap_var('some_unsafe_string')})
+        res = context.resolve('some_unsafe_key')
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_resolve_unsafe_list(self):
+        context = self._context(variables={'some_unsafe_key': [wrap_var('some unsafe string 1')]})
+        res = context.resolve('some_unsafe_key')
+        self.assertIsInstance(res[0], AnsibleUnsafe)
+
+    def test_resolve_unsafe_dict(self):
+        context = self._context(variables={'some_unsafe_key':
+                                           {'an_unsafe_dict': wrap_var('some unsafe string 1')}
+                                           })
+        res = context.resolve('some_unsafe_key')
+        self.assertIsInstance(res['an_unsafe_dict'], AnsibleUnsafe)
+
+    def test_resolve(self):
+        context = self._context(variables={'some_key': 'some_string'})
+        res = context.resolve('some_key')
+        self.assertEquals(res, 'some_string')
+        self.assertNotIsInstance(res, AnsibleUnsafe)
+
+    def test_resolve_none(self):
+        context = self._context(variables={'some_key': None})
+        res = context.resolve('some_key')
+        self.assertEquals(res, None)
+        self.assertNotIsInstance(res, AnsibleUnsafe)
