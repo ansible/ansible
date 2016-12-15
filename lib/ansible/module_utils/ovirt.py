@@ -29,7 +29,6 @@ from enum import Enum
 
 try:
     import ovirtsdk4 as sdk
-    import ovirtsdk4.types as otypes
     import ovirtsdk4.version as sdk_version
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
 except ImportError:
@@ -127,6 +126,7 @@ def create_connection(auth):
         kerberos=auth.get('kerberos', None),
     )
 
+
 def convert_to_bytes(param):
     """
     This method convert units to bytes, which follow IEC standard.
@@ -210,7 +210,7 @@ def search_by_attributes(service, **kwargs):
     else:
         res = [
             e for e in service.list() if len([
-                 k for k, v in kwargs.items() if getattr(e, k, None) == v
+                k for k, v in kwargs.items() if getattr(e, k, None) == v
             ]) == len(kwargs)
         ]
 
