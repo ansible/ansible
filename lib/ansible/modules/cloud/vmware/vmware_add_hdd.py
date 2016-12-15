@@ -108,7 +108,7 @@ def get_vm_object(module, conn, path):
     path_list = filter(None, path.split('/'))
     name = path_list.pop()
 
-    for vm_obj, label in all_vms.iteritems():
+    for vm_obj, label in iteritems(all_vms)
         if label == name:
             matching_vms.append(vm_obj)
 
