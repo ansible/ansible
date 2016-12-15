@@ -119,7 +119,7 @@ def is_params_diff(before_params, after_params):
 
 def convert_params_format(params):
     result = []
-    for k, v in params.iteritems():
+    for k, v in list(params.items()):
         result.append({
             "ParameterName": str(k),
             "ParameterValue": str(v)
