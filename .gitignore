@@ -77,3 +77,13 @@ packaging/release/ansible_release
 # old submodule dirs
 lib/ansible/modules/core
 lib/ansible/modules/extras
+# python 'rope' stuff
+.ropeproject
+# local 'ack' config files
+.ackrc
+# default 'coverage html' results
+htmlcov/
+# default 'coverage' tool data
+.coverage
+# ansible-test coverage results
+test/units/.coverage.*
