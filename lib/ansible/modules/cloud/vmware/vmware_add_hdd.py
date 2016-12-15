@@ -51,6 +51,8 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+from ansible.module_utils.six import iteritems
+
 
 def add_disk(module, vm, disk_size, thinDisk):
         spec = vim.vm.ConfigSpec()
