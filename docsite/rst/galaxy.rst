@@ -77,7 +77,7 @@ install a specific commit:
 Installing multiple roles from a file
 =====================================
 
-Beginning with Asible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
+Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
 file extension must be either *.yml* or *.yaml*.
 
 Use the following command to install roles included in *requirements.yml*:
