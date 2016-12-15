@@ -224,6 +224,8 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    add_extra_docker_options(units, integration=False)
+
     compiler = subparsers.add_parser('compile',
                                      parents=[test],
                                      help='compile tests')
@@ -236,6 +238,8 @@ def parse_args():
                           metavar='VERSION',
                           choices=COMPILE_PYTHON_VERSIONS,
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
+
+    add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
                                    parents=[test],
@@ -265,6 +269,8 @@ def parse_args():
                         metavar='VERSION',
                         choices=SUPPORTED_PYTHON_VERSIONS,
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+
+    add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',
                                   parents=[common],
@@ -423,11 +429,20 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         default='prod')
 
 
-def add_extra_docker_options(parser):
+def add_extra_docker_options(parser, integration=True):
     """
     :type parser: argparse.ArgumentParser
+    :type integration: bool
     """
     docker = parser.add_argument_group(title='docker arguments')
+
+    docker.add_argument('--docker-no-pull',
+                        action='store_false',
+                        dest='docker_pull',
+                        help='do not explicitly pull the latest docker images')
+
+    if not integration:
+        return
 
     docker.add_argument('--docker-util',
                         metavar='IMAGE',
