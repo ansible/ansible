@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import patch
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
@@ -161,11 +162,39 @@ class TestTemplar(unittest.TestCase):
     #    print(res)
     def test_templatable(self):
         res = self.templar.templatable('foo')
-        print(res)
+        self.assertTrue(res)
 
-    def test_templatablei_none(self):
+    def test_templatable_none(self):
         res = self.templar.templatable(None)
-        print(res)
+        self.assertTrue(res)
+
+    @patch('ansible.template.Templar.template', side_effect=AnsibleError)
+    def test_templatable_exception(self, mock_template):
+        res = self.templar.templatable('foo')
+        self.assertFalse(res)
+
+    def test_template_convert_bare_string(self):
+        # Note: no bare_deprecated=False so we hit the deprecation path
+        res = self.templar.template('foo', convert_bare=True)
+        self.assertEquals(res, 'bar')
+
+    def test_template_convert_bare_nested(self):
+        res = self.templar.template('bam', convert_bare=True, bare_deprecated=False)
+        self.assertEquals(res, 'bar')
+
+    def test_template_convert_bare_unsafe(self):
+        res = self.templar.template('some_unsafe_var', convert_bare=True, bare_deprecated=False)
+        self.assertEquals(res, 'unsafe_blip')
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_template_convert_bare_filter(self):
+        res = self.templar.template('bam|capitalize', convert_bare=True, bare_deprecated=False)
+        self.assertEquals(res, 'Bar')
+
+    def test_template_convert_bare_filter_unsafe(self):
+        res = self.templar.template('some_unsafe_var|capitalize', convert_bare=True, bare_deprecated=False)
+        self.assertEquals(res, 'Unsafe_blip')
+        self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_templar_simple(self):
 
