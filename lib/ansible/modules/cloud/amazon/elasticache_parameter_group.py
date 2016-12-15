@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 DOCUMENTATION = """
 ---
 module: elasticache_parameter_group
