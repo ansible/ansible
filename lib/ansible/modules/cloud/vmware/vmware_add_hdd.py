@@ -157,7 +157,7 @@ def main():
         unitNumber, controlerKey = add_disk(module, vmToWorkOn, diskSize, thinDisk)
         module.exit_json(changed=True, vm=vm, diskUnitNumber=unitNumber, controlerKey=controlerKey, isThinDisk=thinDisk)
 
-    except Exception, e:
+    except Exception as  e:
         module.fail_json(msg='Could not add disk', err=e.message)
 
 
