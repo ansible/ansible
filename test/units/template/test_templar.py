@@ -48,6 +48,7 @@ class TestTemplar(unittest.TestCase):
             var_list=[1],
             recursive="{{recursive}}",
             some_var="blip",
+            some_static_var="static_blip",
             some_keyword="{{ foo }}",
             some_unsafe_var=wrap_var("unsafe_blip"),
             some_unsafe_keyword=wrap_var("{{ foo }}"),
@@ -94,14 +95,10 @@ class TestTemplar(unittest.TestCase):
 
     def test_lookup_jinja_kwargs(self):
         res = self.templar._lookup('list', 'blip', random_keyword='12345')
-        print(res)
-        print(type(res))
         self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_list_wantlist(self):
         res = self.templar._lookup('list', '{{ some_var }}', wantlist=True)
-        print(res)
-        print(type(res))
         self.assertEquals(res, ["blip"])
 
     def test_lookup_jinja_list_wantlist_undefined(self):
@@ -114,8 +111,6 @@ class TestTemplar(unittest.TestCase):
 
     def test_lookup_jinja_list_wantlist_unsafe(self):
         res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
-        print(res)
-        print(type(res))
         for lookup_result in res:
             self.assertIsInstance(lookup_result, AnsibleUnsafe)
 
@@ -124,22 +119,20 @@ class TestTemplar(unittest.TestCase):
 
     def test_lookup_jinja_dict(self):
         res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_var }}'})
-        print(res)
         self.assertEquals(res['{{ a_keyword }}'], "blip")
         # TODO: Should this be an AnsibleUnsafe
         #self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
         #self.assertIsInstance(res, AnsibleUnsafe)
 
+
     def test_lookup_jinja_dict_unsafe(self):
         res = self.templar._lookup('list', {'{{ some_unsafe_key }}': '{{ some_unsafe_var }}'})
-        print(res)
         self.assertIsInstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
         # TODO: Should this be an AnsibleUnsafe
         #self.assertIsInstance(res, AnsibleUnsafe)
 
     def test_lookup_jinja_dict_unsafe_value(self):
         res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_unsafe_var }}'})
-        print(res)
         self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
         # TODO: Should this be an AnsibleUnsafe
         #self.assertIsInstance(res, AnsibleUnsafe)
@@ -147,6 +140,32 @@ class TestTemplar(unittest.TestCase):
     def test_lookup_jinja_none(self):
         res = self.templar._lookup('list', None)
         self.assertIsNone(res)
+
+#    def test_templar_template_static_dict(self):
+#        res = self.templar.template("{{var_dict}}", static_vars=['blip'])
+#        print(res)
+        #self.assertEqual(templar.template("{{var_dict}}"), dict(a="b"))
+
+#    def test_lookup_jinja_dict_key_in_static_vars(self):
+#        res = self.templar.template({'some_static_var': '{{ some_var }}'},
+#                                   static_vars=['some_static_var'])
+#        res = self.templar.template({'some_other_static_var': '{{ some_var }}'},
+#                                   static_vars=['different_static_vars', 'some_other_static_var'])
+#        res = self.templar.template({'some_static_var': '{{ some_var }}'},
+#                                   static_vars=['different_static_vars', 'some_other_static_var'])
+
+    #def test_lookup_jinja_dict_key_in_static_vars(self):
+    #    res = self.templar.template("{'some_static_var': '{{ some_var }}'}",
+    #                               static_vars=['some_static_var'])
+    #    #self.assertEquals(res['{{ a_keyword }}'], "blip")
+    #    print(res)
+    def test_templatable(self):
+        res = self.templar.templatable('foo')
+        print(res)
+
+    def test_templatablei_none(self):
+        res = self.templar.templatable(None)
+        print(res)
 
     def test_templar_simple(self):
 
