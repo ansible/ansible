@@ -18,9 +18,11 @@
 # Authors:
 #   - Aimon Bustardo <aimon.bustardo@dimensiondata.com>
 #   - Bert Diwa      <Lamberto.Diwa@dimensiondata.com>
+#   - Adam Friedman  <tintoy@tintoy.io>
 #
 from ansible.module_utils.basic import *
 from ansible.module_utils.dimensiondata import *
+from ansible.module_utils.pycompat24 import get_exception
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -185,7 +187,7 @@ def create_network(module, driver, mcp_version, location,
 
     # Make sure service_plan argument is defined
     if mcp_version == '2.0' and 'service_plan' not in module.params:
-        module.fail_json('service_plan required when creating netowrk and ' +
+        module.fail_json('service_plan required when creating network and ' +
                          'location is MCP 2.0')
     service_plan = module.params['service_plan']
 
@@ -198,7 +200,9 @@ def create_network(module, driver, mcp_version, location,
             res = driver.ex_create_network_domain(location, name,
                                                   service_plan,
                                                   description=description)
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
+
         module.fail_json(msg="Failed to create new network: %s" % str(e))
     if module.params['wait'] is True:
         wait_for_network_state(module, driver, res.id, 'NORMAL')
@@ -219,7 +223,9 @@ def delete_network(module, driver, matched_network, mcp_version):
                              matched_network[0].id)
         module.fail_json("Unexpected failure deleting network with " +
                          "id %s", matched_network[0].id)
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
+
         module.fail_json(msg="Failed to delete network: %s" % str(e))
 
 
@@ -230,7 +236,9 @@ def wait_for_network_state(module, driver, net_id, state_to_wait_for):
             module.params['wait_poll_interval'],
             module.params['wait_time'], net_id
         )
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
+
         module.fail_json(msg='Network did not reach % state in time: %s'
                          % (state, e.msg))
 
