@@ -343,7 +343,7 @@ def camel_dict_to_snake_dict(camel_dict):
 
 
     snake_dict = {}
-    for k, v in camel_dict.iteritems():
+    for k, v in camel_dict.items():
         if isinstance(v, dict):
             snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
         elif isinstance(v, list):
@@ -378,7 +378,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     """
 
     filters_list = []
-    for k,v in filters_dict.iteritems():
+    for k,v in filters_dict.items():
         filter_dict = {'Name': k}
         if isinstance(v, string_types):
             filter_dict['Values'] = [v]
@@ -443,7 +443,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
     """
 
     tags_list = []
-    for k,v in tags_dict.iteritems():
+    for k,v in tags_dict.items():
         tags_list.append({'Key': k, 'Value': v})
 
     return tags_list

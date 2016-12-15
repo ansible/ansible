@@ -651,7 +651,7 @@ def format_attributes(attributes):
 
 def get_flags_from_attributes(attributes):
     flags = []
-    for key,attr in FILE_ATTRIBUTES.iteritems():
+    for key,attr in FILE_ATTRIBUTES.items():
         if attr in attributes:
             flags.append(key)
     return ''.join(flags)
@@ -672,6 +672,7 @@ class AnsibleModule(object):
         see library/* for examples
         '''
 
+        self._name = os.path.basename(__file__) #initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
@@ -751,7 +752,7 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=False)
 
-        if not self.no_log and self._verbosity >= 3:
+        if not self.no_log:
             self._log_invocation()
 
         # finally, make sure we're in a sane working dir
@@ -2086,12 +2087,14 @@ class AnsibleModule(object):
                         try:
                             os.rename(b_tmp_dest_name, b_dest)
                         except (shutil.Error, OSError, IOError):
+                            e = get_exception()
                             if unsafe_writes:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest, get_exception())
+                                self._unsafe_writes(b_tmp_dest_name, b_dest, e)
                             else:
-                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
                     except (shutil.Error, OSError, IOError):
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+                        e = get_exception()
+                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
@@ -2129,6 +2132,15 @@ class AnsibleModule(object):
       
       else:
           self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+
+    def _read_from_pipes(self, rpipes, rfds, file_descriptor):
+        data = b('')
+        if file_descriptor in rfds:
+            data = os.read(file_descriptor.fileno(), 9000)
+            if data == b(''):
+                rpipes.remove(file_descriptor)
+
+        return data
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
@@ -2326,17 +2338,9 @@ class AnsibleModule(object):
                 cmd.stdin.close()
 
             while True:
-                rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
-                if cmd.stdout in rfd:
-                    dat = os.read(cmd.stdout.fileno(), 9000)
-                    stdout += dat
-                    if dat == b(''):
-                        rpipes.remove(cmd.stdout)
-                if cmd.stderr in rfd:
-                    dat = os.read(cmd.stderr.fileno(), 9000)
-                    stderr += dat
-                    if dat == b(''):
-                        rpipes.remove(cmd.stderr)
+                rfds, wfds, efds = select.select(rpipes, [], rpipes, 1)
+                stdout += self._read_from_pipes(rpipes, rfds, cmd.stdout)
+                stderr += self._read_from_pipes(rpipes, rfds, cmd.stderr)
                 # if we're checking for prompts, do it now
                 if prompt_re:
                     if prompt_re.search(stdout) and not data:
@@ -2348,7 +2352,7 @@ class AnsibleModule(object):
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
-                if (not rpipes or not rfd) and cmd.poll() is not None:
+                if (not rpipes or not rfds) and cmd.poll() is not None:
                     break
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished

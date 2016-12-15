@@ -17,7 +17,7 @@ by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 By default, everything that ships with Ansible is pulled from its source tree, but
 additional paths can be added.
 
-The directory i:file:`./library`, alongside your top level :term:`playbooks`, is also automatically
+The directory :file:`./library`, alongside your top level :term:`playbooks`, is also automatically
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
@@ -149,12 +149,11 @@ a lot shorter than this::
             if key == "time":
 
                 # now we'll affect the change.  Many modules
-                # will strive to be 'idempotent', meaning they
-                # will only make changes when the desired state
-                # expressed to the module does not match
-                # the current state.  Look at 'service'
-                # or 'yum' in the main git tree for an example
-                # of how that might look.
+                # will strive to be idempotent, generally
+                # by not performing any actions if the current
+                # state is the same as the desired state.
+                # See 'service' or 'yum' in the main git tree
+                # for an illustrative example.
 
                 rc = os.system("date -s \"%s\"" % value)
 
@@ -247,6 +246,10 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
+ 
+Returning a new fact from a python module could be done like::
+
+        module.exit_json(msg=message, ansible_facts=dict(leptons=5000, colors=my_colors))
 
 .. _common_module_boilerplate:
 
@@ -760,7 +763,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

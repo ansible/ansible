@@ -34,7 +34,8 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.utils.boolean import boolean
+
+boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 
@@ -60,6 +61,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
    pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
    shell            = ('ansible_shell_type',),
+   network_os       = ('ansible_network_os',),
    become           = ('ansible_become',),
    become_method    = ('ansible_become_method',),
    become_user      = ('ansible_become_user',),
@@ -164,6 +166,7 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _network_os       = FieldAttribute(isa='string')
     _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args  = FieldAttribute(isa='string')
     _sftp_extra_args  = FieldAttribute(isa='string')
@@ -554,7 +557,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                #FIXME: make shell independant
+                #FIXME: make shell independent
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
             elif self.become_method == 'dzdo':

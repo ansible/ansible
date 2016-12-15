@@ -32,12 +32,13 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 
 .. _tag_reuse:
 
-Tag Resuse
+Tag Reuse
 ```````````````
 You can apply the same tag name to more than one task, in the same file 
 or included files. This will run all tasks with that tag.
 
 Example::
+
     ---
     # file: roles/common/tasks/main.yml
 

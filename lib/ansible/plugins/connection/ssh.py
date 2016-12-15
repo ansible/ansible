@@ -35,9 +35,9 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
 
+boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -628,7 +628,10 @@ class Connection(ConnectionBase):
                 cmd = self._build_command('sftp', to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
             elif method == 'scp':
-                cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
+                if sftp_action == 'get':
+                    cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
+                else:
+                    cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
 
             in_data = to_bytes(in_data, nonstring='passthru')

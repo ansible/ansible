@@ -376,7 +376,7 @@ class ModuleValidator(Validator):
             errors.extend(e.errors)
 
         options = doc.get('options', {})
-        for key, option in (options or {}).iteritems():
+        for key, option in (options or {}).items():
             try:
                 option_schema(option)
             except Exception as e:
@@ -499,7 +499,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing = module_loader.find_plugin(self.name, mod_type='.py')
-                existing_doc, _, _ = get_docstring(existing, verbose=True)
+                existing_doc, _, _, _ = get_docstring(existing, verbose=True)
                 existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -525,7 +525,7 @@ class ModuleValidator(Validator):
         should_be = '.'.join(ansible_version.split('.')[:2])
         strict_ansible_version = StrictVersion(should_be)
 
-        for option, details in options.iteritems():
+        for option, details in options.items():
             new = not bool(existing_options.get(option))
             if not new:
                 continue

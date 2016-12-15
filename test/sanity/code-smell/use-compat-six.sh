@@ -6,7 +6,7 @@ BASEDIR=${1-"lib"}
 # digital_ocean is checking for six because dopy doesn't specify the
 #   requirement on six so it needs to try importing six to give the correct error
 #   message
-WHITELIST='(lib/ansible/modules/core/cloud/digital_ocean/digital_ocean.py)'
+WHITELIST='(lib/ansible/modules/cloud/digital_ocean/digital_ocean.py)'
 
 SIX_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -wH six '{}' '+' \
     | grep import \

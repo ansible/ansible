@@ -12,11 +12,11 @@ The following is a list of module_utils files and a general description. The mod
 - api.py - Adds shared support for generic API modules.
 - asa.py - Module support utilities for managing Cisco ASA network devices.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
-- basic.py - General definitions and helper utilites for Ansible modules.
+- basic.py - General definitions and helper utilities for Ansible modules.
 - cloudstack.py  - Utilities for CloudStack modules.
 - database.py - Miscellaneous helper functions for PostGRES and MySQL
-- docker_common.py - Definitions and helper utilites for modules working with Docker.
-- ec2.py - Definitions and utilites for modules working with Amazon EC2
+- docker_common.py - Definitions and helper utilities for modules working with Docker.
+- ec2.py - Definitions and utilities for modules working with Amazon EC2
 - eos.py - Helper functions for modules working with EOS networking devices. 
 - f5.py - Helper functions for modules working with F5 networking devices. 
 - facts.py - Helper functions for modules that return facts.
@@ -25,7 +25,7 @@ The following is a list of module_utils files and a general description. The mod
 - iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices
 - ismount.py - Contains single helper function that fixes os.path.ismount
 - junos.py -  Definitions and helper functions for modules that manage Junos networking devices
-- known_hosts.py - Utilites for working with known_hosts file
+- known_hosts.py - utilities for working with known_hosts file
 - mysql.py - Allows modules to connect to a MySQL instance
 - netcfg.py - Configuration utility functions for use by networking modules
 - netcmd.py - Defines commands and comparison operators for use in networking modules
@@ -40,7 +40,7 @@ The following is a list of module_utils files and a general description. The mod
 - service.py - Contains utilities to enable modules to work with Linux services (placeholder, not in use).
 - shell.py - Functions to allow modules to create shells and work with shell commands
 - six.py - Module utils for working with the Six python 2 and 3 compatibility library
-- splitter.py - String splitting and manipulation utilites for working with Jinja2 templates
+- splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
 - vca.py - Contains utilities for modules that work with VMware vCloud Air 
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs

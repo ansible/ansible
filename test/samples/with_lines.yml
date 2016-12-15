@@ -1,6 +1,0 @@
-- hosts: localhost
-  gather_facts: no
-  tasks:
-  - debug: msg="line is {{item}}"
-    with_lines:
-    - "cat /etc/hosts"

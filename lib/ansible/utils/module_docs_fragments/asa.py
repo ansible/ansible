@@ -78,8 +78,9 @@ options:
     default: none
   timeout:
     description:
-      - Specifies idle timeout for the connection, in seconds. Useful if the console
-        freezes before continuing. For example when saving configurations.
+      - Specifies idle timeout in seconds for the connection, in seconds. Useful
+        if the console freezes before continuing. For example when saving
+        configurations.
     required: false
     default: 10
   provider:

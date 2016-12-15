@@ -27,8 +27,8 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
-from ansible.utils.boolean import boolean
 
+boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 
@@ -115,13 +115,22 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(b_source))
             )
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                if C.DEFAULT_ROLES_PATH:
-                    searchpath[:0] = C.DEFAULT_ROLES_PATH
-                searchpath.insert(1, self._task._role._role_path)
+
+            searchpath = []
+            # set jinja2 internal search path for includes
+            if 'ansible_search_path' in task_vars:
+                searchpath = task_vars['ansible_search_path']
+                # our search paths aren't actually the proper ones for jinja includes.
+
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
 

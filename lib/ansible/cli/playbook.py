@@ -148,8 +148,7 @@ class PlaybookCLI(CLI):
 
         # flush fact cache if requested
         if self.options.flush_cache:
-            for host in inventory.list_hosts():
-                variable_manager.clear_facts(host)
+            self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
@@ -218,3 +217,8 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
+
+    def _flush_cache(self, inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)

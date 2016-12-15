@@ -149,12 +149,11 @@ a lot shorter than this::
             if key == "time":
 
                 # now we'll affect the change.  Many modules
-                # will strive to be 'idempotent', meaning they
-                # will only make changes when the desired state
-                # expressed to the module does not match
-                # the current state.  Look at 'service'
-                # or 'yum' in the main git tree for an example
-                # of how that might look.
+                # will strive to be idempotent, generally
+                # by not performing any actions if the current
+                # state is the same as the desired state.
+                # See 'service' or 'yum' in the main git tree
+                # for an illustrative example.
 
                 rc = os.system("date -s \"%s\"" % value)
 
@@ -454,17 +453,17 @@ the ``copy`` module::
         description: destination file/path
         returned: success
         type: string
-        sample: "/path/to/file.txt"
+        sample: /path/to/file.txt
     src:
         description: source file used for the copy on the target machine
         returned: changed
         type: string
-        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+        sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
         description: md5 checksum of the file after running copy
         returned: when supported
         type: string
-        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+        sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
 
@@ -779,7 +778,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

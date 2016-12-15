@@ -7,7 +7,7 @@ Introduction
 ````````````
 The purpose of this section is to explain how to put Ansible modules together to use Ansible in a CloudStack context. You will find more usage examples in the details section of each module.
 
-Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode and are designed to use idempotence and have been created, tested and are maintained by the community.
+Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode, are designed to be idempotent, have been created and tested, and are maintained by the community.
 
 .. note:: Some of the modules will require domain admin or root admin privileges.
 
@@ -164,7 +164,7 @@ This is how our inventory looks like:
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 
-The configure the jumphost, web servers and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver and db-server. The cloud-vm is there for specifing the defaults of our cloud infrastructure.
+The configure the jumphost, web servers and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
 
 .. code-block:: yaml
 
@@ -231,7 +231,7 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
 
 In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connetion=local`` to execute the API calls locally from our workstation.
 
-In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an exisiting VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
+In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
 In the second task we ensure the ports are opened if we give a public IP to the VM.
 

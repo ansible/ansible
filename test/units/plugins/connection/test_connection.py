@@ -38,6 +38,7 @@ from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnec
 from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
 #from ansible.plugins.connection.winrm import Connection as WinRmConnection
+from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -127,3 +128,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
 #    def test_winrm_connection_module(self):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
+
+    def test_network_cli_connection_module(self):
+        self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), NetworkCliConnection)
+        self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), ParamikoConnection)

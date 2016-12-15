@@ -29,7 +29,7 @@ from ansible.plugins.action.synchronize import ActionModule
 '''
 import copy
 safe_vars = {}
-for k,v in task_vars.iteritems():
+for k,v in task_vars.items():
     if k not in ['vars', 'hostvars']:
         safe_vars[k] = copy.deepcopy(v)
     else:    
@@ -99,11 +99,12 @@ class SynchronizeTester(object):
     execute_called = False
 
 
-    def _execute_module(self, module_name, task_vars=None):
+    def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
+        self.final_module_args = module_args
         self.final_task_vars = task_vars
         return {}
-    
+
     def runtest(self, fixturepath='fixtures/synchronize/basic'):
 
         metapath = os.path.join(fixturepath, 'meta.yaml')

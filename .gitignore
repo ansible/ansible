@@ -52,7 +52,6 @@ credentials.yml
 # test output
 *.retry
 *.out
-.coverage
 .tox
 .cache
 results.xml
@@ -67,3 +66,14 @@ ansible.egg-info/
 /shippable/
 # Release directory
 packaging/release/ansible_release
+/.cache/
+/test/results/coverage/coverage*
+/test/results/reports/coverage.xml
+/test/results/reports/coverage/
+/test/results/junit/*.xml
+/test/results/logs/*.log
+/test/integration/inventory.remote
+/test/integration/inventory.winrm
+# old submodule dirs
+lib/ansible/modules/core
+lib/ansible/modules/extras

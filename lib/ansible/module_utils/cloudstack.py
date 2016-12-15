@@ -158,7 +158,7 @@ class AnsibleCloudStack(object):
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         result = False
-        for key, value in want_dict.iteritems():
+        for key, value in want_dict.items():
 
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
@@ -407,6 +407,9 @@ class AnsibleCloudStack(object):
             zone = os.environ.get('CLOUDSTACK_ZONE')
         zones = self.cs.listZones()
 
+        if not zones:
+            self.module.fail_json(msg="No zones available. Please create a zone first")
+
         # use the first zone if no zone param given
         if not zone:
             self.zone = zones['zone'][0]
@@ -578,12 +581,12 @@ class AnsibleCloudStack(object):
         if resource:
             returns = self.common_returns.copy()
             returns.update(self.returns)
-            for search_key, return_key in returns.iteritems():
+            for search_key, return_key in returns.items():
                 if search_key in resource:
                     self.result[return_key] = resource[search_key]
 
             # Bad bad API does not always return int when it should.
-            for search_key, return_key in self.returns_to_int.iteritems():
+            for search_key, return_key in self.returns_to_int.items():
                 if search_key in resource:
                     self.result[return_key] = int(resource[search_key])
 

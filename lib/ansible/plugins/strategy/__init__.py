@@ -479,7 +479,7 @@ class StrategyBase:
 
                         if original_task.action == 'include_vars':
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
-                                # find the host we're actually refering too here, which may
+                                # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
 
                                 if original_task.run_once:
@@ -819,7 +819,7 @@ class StrategyBase:
             display.debug("User ran task")
             ret = True
         elif resp.lower() in ['c', 'continue']:
-            display.debug("User ran task and cancled step mode")
+            display.debug("User ran task and canceled step mode")
             self._step = False
             ret = True
         else:
