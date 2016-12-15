@@ -278,7 +278,7 @@ def rollback_config(module, result):
 
 def zeroize_config(module, result):
     if not module.check_mode:
-        module.cli.run_commands('request system zeroize')
+        module.connection.cli('request system zeroize')
     result['changed'] = True
 
 def confirm_config(module, result):
