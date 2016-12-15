@@ -59,7 +59,7 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a virtual directory if it does not exist
   win_iis_virtualdirectory:
     name: somedirectory
