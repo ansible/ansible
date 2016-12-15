@@ -1,0 +1,6 @@
+:000000 100644 000000000... 0263399fe... A      lib/ansible/modules/network/illumos/dladm_iptun.py
+:000000 100644 000000000... 4a708de23... A      lib/ansible/modules/network/illumos/dladm_linkprop.py
+:000000 100644 000000000... 9122d126d... A      lib/ansible/modules/network/illumos/dladm_vlan.py
+:000000 100644 000000000... ddfacf7d8... A      lib/ansible/modules/network/illumos/ipadm_addr.py
+:000000 100644 000000000... 0dd5a50aa... A      lib/ansible/modules/network/illumos/ipadm_addrprop.py
+:000000 100644 000000000... 8ca1dc882... A      lib/ansible/modules/network/illumos/ipadm_ifprop.py
