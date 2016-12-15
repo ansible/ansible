@@ -38,9 +38,6 @@ options:
 
 notes:
   - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
-
-requirements:
-  - "python >= 2.6"
 '''
 
 
