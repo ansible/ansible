@@ -88,7 +88,10 @@ options:
     version_added: "2.0"
   launch_permissions:
     description:
-      - Users and groups that should be able to launch the ami. Expects dictionary with a key of user_ids and/or group_names. user_ids should be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
+      - Users and groups that should be able to launch the ami. Expects
+        dictionary with a key of user_ids and/or group_names. user_ids should
+        be a list of account ids. group_name should be a list of groups, "all"
+        is the only acceptable value currently.
     required: false
     default: null
     version_added: "2.0"
@@ -488,7 +491,7 @@ def update_image(module, ec2):
     """
 
     image_id = module.params.get('image_id')
-    launch_permissions = module.params.get('launch_permissions')
+    launch_permissions = module.params.get('launch_permissions') or []
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
 
