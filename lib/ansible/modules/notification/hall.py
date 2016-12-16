@@ -51,20 +51,20 @@ options:
 
 EXAMPLES = """
 - name: Send Hall notifiation
-  local_action:
-    module: hall
+  hall:
     room_token: <hall room integration token>
     title: Nginx
-    msg: Created virtual host file on {{ inventory_hostname }}
+    msg: 'Created virtual host file on {{ inventory_hostname }}'
+  delegate_to: loclahost
 
 - name: Send Hall notification if EC2 servers were created.
-  when: ec2.instances|length > 0
-  local_action:
-    module: hall
+  hall:
     room_token: <hall room integration token>
     title: Server Creation
-    msg: "Created EC2 instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region."
-  with_items: "{{ ec2.instances }}"
+    msg: 'Created EC2 instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region.'
+  delegate_to: loclahost
+  when: ec2.instances|length > 0
+  with_items: '{{ ec2.instances }}'
 """
 
 HALL_API_ENDPOINT  = 'https://hall.com/api/1/services/generic/%s'

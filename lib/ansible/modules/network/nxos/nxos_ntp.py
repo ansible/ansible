@@ -439,7 +439,7 @@ def get_ntp_peer(module):
             args = dict(peer_type=peer_type, address=address, prefer=prefer,
                         vrf_name=vrf_name, key_id=key_id)
 
-            ntp_peer = dict((k, v) for k, v in args.iteritems())
+            ntp_peer = dict((k, v) for k, v in args.items())
             ntp_peer_list.append(ntp_peer)
         except AttributeError:
             ntp_peer_list = []
@@ -573,7 +573,7 @@ def main():
                 prefer=prefer, vrf_name=vrf_name, source_type=source_type,
                 source=source)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing, peer_server_list = get_ntp_existing(address, peer_type, module)
 
@@ -582,7 +582,7 @@ def main():
     commands = []
 
     if state == 'present':
-        delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+        delta = dict(set(proposed.items()).difference(existing.items()))
         if delta:
             command = config_ntp(delta, existing)
             if command:

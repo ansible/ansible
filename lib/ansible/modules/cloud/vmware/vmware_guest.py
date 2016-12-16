@@ -594,7 +594,7 @@ class PyVmomiHelper(object):
             mac = device.macAddress
             ips = list(device.ipAddress)
             netDict[mac] = ips
-        for k,v in netDict.iteritems():
+        for k,v in netDict.items():
             for ipaddress in v:
                 if ipaddress:
                     if '::' in ipaddress:
@@ -794,7 +794,7 @@ class PyVmomiHelper(object):
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
 
-        # lets try and assign a static ip addresss
+        # lets try and assign a static ip address
         if self.params['customize'] is True:
             ip_settings = list()
             if self.params['ips']:
@@ -979,7 +979,7 @@ class PyVmomiHelper(object):
                              timeout=10, headers=None)
 
         # save all of the transfer data
-        for k,v in info.iteritems():
+        for k,v in info.items():
             result[k] = v
 
         # exit early if xfer failed
@@ -1045,7 +1045,7 @@ class PyVmomiHelper(object):
         result['msg'] = str(rsp.read())
 
         # save all of the transfer data
-        for k,v in info.iteritems():
+        for k,v in info.items():
             result[k] = v
 
         return result

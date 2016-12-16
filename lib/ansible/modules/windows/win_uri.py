@@ -71,31 +71,24 @@ author: Corwin Brown (@blakfeld)
 """
 
 EXAMPLES = """
-# Send a GET request and store the output:
----
 - name: Perform a GET and Store Output
   win_uri:
-    url: http://www.somesite.com/myendpoint
+    url: http://example.com/endpoint
   register: http_output
 
 # Set a HOST header to hit an internal webserver:
----
 - name: Hit a Specific Host on the Server
   win_uri:
-    url: http://my.internal.server.com
+    url: http://example.com
     method: GET
     headers:
-      host: "www.somesite.com"
+      host: www.somesite.com
 
-# Do a HEAD request on an endpoint
----
 - name: Perform a HEAD on an Endpoint
   win_uri:
-    url: http://www.somesite.com
+    url: http://www.example.com
     method: HEAD
 
-# Post a body to an endpoint
----
 - name: POST a Body to an Endpoint
   win_uri:
     url: http://www.somesite.com

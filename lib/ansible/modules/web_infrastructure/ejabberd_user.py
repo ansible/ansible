@@ -81,7 +81,7 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import *
 
 class EjabberdUserException(Exception):
-    """ Base exeption for EjabberdUser class object """
+    """ Base exception for EjabberdUser class object """
     pass
 
 class EjabberdUser(object):

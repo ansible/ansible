@@ -77,7 +77,7 @@ install a specific commit:
 Installing multiple roles from a file
 =====================================
 
-Beginning with Asible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
+Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
 file extension must be either *.yml* or *.yaml*.
 
 Use the following command to install roles included in *requirements.yml*:
@@ -209,7 +209,7 @@ Container Enabled
 
 If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
-the role using [Ansible Container](https://github.com/ansible/ansible-container), and the meta directory includes a *container.yml* file.
+the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
 Search for roles
 ----------------

@@ -411,7 +411,7 @@ def get_commands_config_mtu(delta, interface):
     }
 
     commands = []
-    for param, value in delta.iteritems():
+    for param, value in delta.items():
         command = CONFIG_ARGS.get(param, 'DNE').format(**delta)
         if command and command != 'DNE':
             commands.append(command)
@@ -428,7 +428,7 @@ def get_commands_remove_mtu(delta, interface):
         'sysmtu': 'no system jumbomtu {sysmtu}',
     }
     commands = []
-    for param, value in delta.iteritems():
+    for param, value in delta.items():
         command = CONFIG_ARGS.get(param, 'DNE').format(**delta)
         if command and command != 'DNE':
             commands.append(command)
@@ -552,8 +552,8 @@ def main():
                                          'number between 576 and 9216')
 
     args = dict(mtu=mtu, sysmtu=sysmtu)
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     changed = False
     end_state = existing
@@ -565,7 +565,7 @@ def main():
             commands.append(command)
 
     elif state == 'absent':
-        common = set(proposed.iteritems()).intersection(existing.iteritems())
+        common = set(proposed.items()).intersection(existing.items())
         if common:
             command = get_commands_remove_mtu(dict(common), interface)
             commands.append(command)

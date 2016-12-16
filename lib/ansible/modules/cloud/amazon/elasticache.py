@@ -385,7 +385,7 @@ class ElastiCacheManager(object):
             'NumCacheNodes': self.num_nodes,
             'EngineVersion': self.cache_engine_version
         }
-        for key, value in modifiable_data.iteritems():
+        for key, value in modifiable_data.items():
             if value is not None and self.data[key] != value:
                 return True
 
@@ -397,12 +397,13 @@ class ElastiCacheManager(object):
             return True
 
         # check vpc security groups
-        vpc_security_groups = []
-        security_groups = self.data['SecurityGroups'] or []
-        for sg in security_groups:
-            vpc_security_groups.append(sg['SecurityGroupId'])
-        if set(vpc_security_groups) != set(self.security_group_ids):
-            return True
+        if len(self.security_group_ids) > 0:
+            vpc_security_groups = []
+            security_groups = self.data['SecurityGroups'] or []
+            for sg in security_groups:
+                vpc_security_groups.append(sg['SecurityGroupId'])
+            if set(vpc_security_groups) != set(self.security_group_ids):
+                return True
 
         return False
 
@@ -418,7 +419,7 @@ class ElastiCacheManager(object):
         # Only check for modifications if zone is specified
         if self.zone is not None:
             unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
-        for key, value in unmodifiable_data.iteritems():
+        for key, value in unmodifiable_data.items():
             if getattr(self, key) is not None and getattr(self, key) != value:
                 return True
         return False

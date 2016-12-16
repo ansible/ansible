@@ -52,20 +52,18 @@ options:
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
-EXAMPLES = '''
-# Playbook example
----
+EXAMPLES = r'''
 - name: Change owner of Path
   win_owner:
-    path: 'C:\\apache\\'
+    path: C:\apache
     user: apache
-    recurse: yes
+    recurse: True
 
 - name: Set the owner of root directory
   win_owner:
-    path: 'C:\\apache\\'
+    path: C:\apache
     user: SYSTEM
-    recurse: no
+    recurse: False
 '''
 
 RETURN = '''

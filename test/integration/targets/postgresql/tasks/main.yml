@@ -442,7 +442,7 @@
       - "result.stdout_lines[-1] == '(0 rows)'"
 
 #
-# Test settings privleges
+# Test settings privileges
 #
 - name: Create db
   become_user: postgres

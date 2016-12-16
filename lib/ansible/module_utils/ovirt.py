@@ -460,7 +460,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def pre_remove(self, entity):
@@ -512,7 +517,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def action(
@@ -582,7 +592,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def search_entity(self, search_params=None):

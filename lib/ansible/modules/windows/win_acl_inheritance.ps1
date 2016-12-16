@@ -80,7 +80,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to disable inheritance"
+    Fail-Json $result "an error occurred when attempting to disable inheritance"
 }
  
 Exit-Json $result

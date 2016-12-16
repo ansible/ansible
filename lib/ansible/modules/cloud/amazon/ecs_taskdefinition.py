@@ -48,7 +48,7 @@ options:
         type: int
     containers:
         description:
-            - A list of containers definitions 
+            - A list of containers definitions
         required: False
         type: list of dicts with container definitions
     volumes:
@@ -138,8 +138,24 @@ class EcsTaskManager:
             return None
 
     def register_task(self, family, container_definitions, volumes):
+        validated_containers = []
+
+        # Ensures the number parameters are int as required by boto
+        for container in container_definitions:
+            for param in ('memory', 'cpu', 'memoryReservation'):
+                if param in container:
+                    container[param] = int(container[param])
+
+            if 'portMappings' in container:
+                for port_mapping in container['portMappings']:
+                    for port in ('hostPort', 'containerPort'):
+                        if port in port_mapping:
+                            port_mapping[port] = int(port_mapping[port])
+
+            validated_containers.append(container)
+
         response = self.ecs.register_task_definition(family=family,
-            containerDefinitions=container_definitions, volumes=volumes)
+            containerDefinitions=validated_containers, volumes=volumes)
         return response['taskDefinition']
 
     def describe_task_definitions(self, family):
@@ -228,7 +244,7 @@ def main():
 
             def _right_has_values_of_left(left, right):
                 # Make sure the values are equivalent for everything left has
-                for k, v in left.iteritems():
+                for k, v in left.items():
                     if not ((not v and (k not in right or not right[k])) or (k in right and v == right[k])):
                         # We don't care about list ordering because ECS can change things
                         if isinstance(v, list) and k in right:
@@ -245,7 +261,7 @@ def main():
                             return False
 
                 # Make sure right doesn't have anything that left doesn't
-                for k, v in right.iteritems():
+                for k, v in right.items():
                     if v and k not in left:
                         return False
 

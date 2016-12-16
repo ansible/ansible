@@ -120,46 +120,24 @@ options:
 '''
 
 EXAMPLES = '''
-#example of querying a list of hosts
-```
----
-- hosts: hosts
-  user: root
-  vars:
-    company: 'yourcompany'
-    user: 'Luigi'
-    password: 'ImaLuigi,number1!'
-  tasks:
-  - name: query a list of hosts
-    # All tasks should use local_action
-    local_action:
-      logicmonitor_facts:
-        target: host
-        company: '{{ company }}'
-        user: '{{ user }}'
-        password: '{{ password }}'
-```
+# Always run those modules on localhost using delegate_to:localhost, or localaction
 
-#example of querying a hostgroup
-```
----
-- hosts: somemachine.superheroes.com
-  user: root
-  vars:
-    company: 'yourcompany'
-    user: 'mario'
-    password: 'itsame.Mario!'
-  tasks:
-  - name: query a host group
-    # All tasks should use local_action
-    local_action:
-      logicmonitor_facts:
-        target: hostgroup
-        fullpath: '/servers/production'
-        company: '{{ company }}'
-        user: '{{ user }}'
-        password: '{{ password }}'
-```
+- name: query a list of hosts
+  logicmonitor_facts:
+    target: host
+    company: yourcompany
+    user: Luigi
+    password: ImaLuigi,number1!
+  delegate_to: localhost
+
+- name: query a host group
+  logicmonitor_facts:
+    target: hostgroup
+    fullpath: /servers/production
+    company: yourcompany
+    user: mario
+    password: itsame.Mario!
+  delegate_to: localhost
 '''
 
 

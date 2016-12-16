@@ -466,7 +466,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
         '''
-        x = "0"  # unknown error has occured
+        x = "0"  # unknown error has occurred
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
@@ -517,19 +517,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
-        '''
-        Transfer and run a module along with its arguments.
-        '''
-        if task_vars is None:
-            task_vars = dict()
-
-        # if a module name was not specified for this execution, use
-        # the action from the task
-        if module_name is None:
-            module_name = self._task.action
-        if module_args is None:
-            module_args = self._task.args
+    def _update_module_args(self, module_args, task_vars):
 
         # set check mode in the module arguments, if required
         if self._play_context.check_mode:
@@ -538,9 +526,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = True
         else:
             module_args['_ansible_check_mode'] = False
-
-        # Get the connection user for permission checks
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
         # set no log in the module arguments, if required
         module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
@@ -558,13 +543,32 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_version'] = __version__
 
         # give the module information about its name
-        module_args['_ansible_module_name'] = module_name
+        module_args['_ansible_module_name'] = self._task.action
 
         # set the syslog facility to be used in the module
         module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
 
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
+        '''
+        Transfer and run a module along with its arguments.
+        '''
+        if task_vars is None:
+            task_vars = dict()
+
+        # if a module name was not specified for this execution, use
+        # the action from the task
+        if module_name is None:
+            module_name = self._task.action
+        if module_args is None:
+            module_args = self._task.args
+
+        # Get the connection user for permission checks
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+        self._update_module_args(module_args, task_vars)
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)

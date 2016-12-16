@@ -109,12 +109,12 @@ options:
     default: 1
   subscription_user:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
+      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
     required: false
     default: null
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
     required: false
     default: null
   wait:

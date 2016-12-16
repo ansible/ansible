@@ -50,8 +50,7 @@ options:
     default: null
   volume_type:
     description:
-      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
-        and continues to remain the Ansible default for backwards compatibility.
+      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD). "Standard" is the old EBS default and continues to remain the Ansible default for backwards compatibility.
     required: false
     default: standard
     version_added: "1.9"
@@ -484,7 +483,7 @@ def main():
             id = dict(),
             name = dict(),
             volume_size = dict(),
-            volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
+            volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
             iops = dict(),
             encrypted = dict(type='bool', default=False),
             device_name = dict(),
@@ -583,7 +582,7 @@ def main():
         elif inst is not None:
             volume, changed = attach_volume(module, ec2, volume, inst)
 
-        # Add device, volume_id and volume_type parameters separately to maintain backward compatability
+        # Add device, volume_id and volume_type parameters separately to maintain backward compatibility
         volume_info = get_volume_info(volume, state)
         module.exit_json(changed=changed, volume=volume_info, device=volume_info['attachment_set']['device'], volume_id=volume_info['id'], volume_type=volume_info['type'])
     elif state == 'absent':

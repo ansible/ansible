@@ -114,7 +114,7 @@ def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
 
     for arg, value in dict(name=name, flavor=flavor,
                            volume=volume, type=cdb_type, version=cdb_version
-                           ).iteritems():
+                           ).items():
         if not value:
             module.fail_json(msg='%s is required for the "rax_cdb"'
                                  ' module' % arg)

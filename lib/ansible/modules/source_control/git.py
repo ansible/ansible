@@ -401,7 +401,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
            or refspec  \
            or is_remote_branch(git_path, module, dest, repo, version) \
            or is_remote_tag(git_path, module, dest, repo, version):
-            # only use depth if the remote opject is branch or tag (i.e. fetchable)
+            # only use depth if the remote object is branch or tag (i.e. fetchable)
             cmd.extend([ '--depth', str(depth) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
@@ -888,7 +888,7 @@ def main():
     ssh_opts  = module.params['ssh_opts']
     umask  = module.params['umask']
 
-    result = dict( warnings=list() )
+    result = dict(changed = False, warnings=list())
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
@@ -902,7 +902,7 @@ def main():
         os.umask(umask)
 
     # Certain features such as depth require a file:/// protocol for path based urls
-    # so force a protocal here ...
+    # so force a protocol here ...
     if repo.startswith('/'):
         repo = 'file://' + repo
 
@@ -968,7 +968,7 @@ def main():
         # this does no checking that the repo is the actual repo
         # requested.
         result['before'] = get_version(module, git_path, dest)
-        result.update(changed=False, after=result['before'])
+        result.update(after=result['before'])
         module.exit_json(**result)
     else:
         # else do a pull
@@ -981,6 +981,7 @@ def main():
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
+                result.update(changed=True, msg='Local modifications exist.')
 
         # exit if already at desired sha version
         if module.check_mode:
@@ -990,26 +991,19 @@ def main():
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
         result.update(remote_url_changed=remote_url_changed)
 
-        if need_fetch:
-            if module.check_mode:
-                remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
-                result.update(changed=(result['before'] != remote_head), after=remote_head)
-                # FIXME: This diff should fail since the new remote_head is not fetched yet?!
-                if module._diff:
-                    diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
-                    if diff:
-                        result['diff'] = diff
-                module.exit_json(**result)
-            else:
-                fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
+        if module.check_mode:
+            remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
+            result.update(changed=(result['before'] != remote_head), after=remote_head)
+            # FIXME: This diff should fail since the new remote_head is not fetched yet?!
+            if module._diff:
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                if diff:
+                    result['diff'] = diff
+            module.exit_json(**result)
+        else:
+            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
 
         result['after'] = get_version(module, git_path, dest)
-
-        if result['before'] == result['after']:
-            if local_mods:
-                result.update(changed=True, after=remote_head, msg='Local modifications exist')
-                # no diff, since the repo didn't change
-                module.exit_json(**result)
 
     # switch to version specified regardless of whether
     # we got new revisions from the repository
@@ -1033,7 +1027,6 @@ def main():
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
 
-    result.update(changed=False)
     if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:

@@ -20,14 +20,14 @@
 
 class ModuleDocFragment(object):
 
-    # facts standart oVirt documentation fragment
+    # facts standard oVirt documentation fragment
     DOCUMENTATION = '''
 options:
     fetch_nested:
         description:
             - "If I(True) the module will fetch additional data from the API."
             - "It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
-               attributes of the nested entities by specifing C(nested_attributes)."
+               attributes of the nested entities by specifying C(nested_attributes)."
         version_added: "2.3"
     nested_attributes:
         description:

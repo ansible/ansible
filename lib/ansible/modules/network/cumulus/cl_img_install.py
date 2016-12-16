@@ -59,10 +59,7 @@ requirements: ["Cumulus Linux OS"]
 
 '''
 EXAMPLES = '''
-Example playbook entries using the cl_img_install module
-
 ## Download and install the image from a webserver.
-
 - name: Install image using using http url. Switch slots so the subsequent will load the new version
   cl_img_install:
     version: 2.0.1
@@ -83,7 +80,6 @@ Example playbook entries using the cl_img_install module
   cl_img_install:
     src: /root/CumulusLinux-2.0.1.bin
 
-
 ## If the image name has been changed from the original name, use the `version` option
 ## to inform the module exactly what code version is been installed
 
@@ -92,7 +88,7 @@ Example playbook entries using the cl_img_install module
     src: ftp://CumulusLinux-2.0.1.bin
     dest: /root/image.bin
 
-- name: install image and switch slots. only reboot needed
+- name: install image and switch slots. Only reboot needed
   cl_img_install:
     version: 2.0.1
     src: /root/image.bin

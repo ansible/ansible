@@ -27,7 +27,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
 )
 
 
@@ -44,7 +44,7 @@ version_added: "2.3"
 description:
     - "Retrieve facts about one or more oVirt affinity labels."
 notes:
-    - "This module creates a new top-level C(affinity_labels) fact, which
+    - "This module creates a new top-level C(ovirt_affinity_labels) fact, which
        contains a list of affinity labels."
 options:
     name:
@@ -56,7 +56,7 @@ options:
     host:
       description:
         - "Name of the host, which affinity labels should be listed."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -93,7 +93,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-ovirt_vms:
+ovirt_affinity_labels:
     description: "List of dictionaries describing the affinity labels. Affinity labels attribues are mapped to dictionary keys,
                   all affinity labels attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
     returned: On success.
@@ -102,7 +102,7 @@ ovirt_vms:
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         name=dict(default=None),
         host=dict(default=None),
         vm=dict(default=None),
@@ -143,8 +143,13 @@ def main():
         module.exit_json(
             changed=False,
             ansible_facts=dict(
-                affinity_labels=[
-                    get_dict_of_struct(l) for l in labels
+                ovirt_affinity_labels=[
+                    get_dict_of_struct(
+                        struct=l,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for l in labels
                 ],
             ),
         )

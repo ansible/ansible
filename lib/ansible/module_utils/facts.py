@@ -600,7 +600,7 @@ class Distribution(object):
     """
     This subclass of Facts fills the distribution, distribution_version and distribution_release variables
 
-    To do so it checks the existance and content of typical files in /etc containing distribution information
+    To do so it checks the existence and content of typical files in /etc containing distribution information
 
     This is unit tested. Please extend the tests to cover all distributions if you have them available.
     """

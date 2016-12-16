@@ -509,7 +509,7 @@ class ImageManager(DockerBaseClass):
         if self.container_limits:
             params['container_limits'] = self.container_limits
         if self.buildargs:
-            for key, value in self.buildargs.iteritems():
+            for key, value in self.buildargs.items():
                 if not isinstance(value, basestring):
                     self.buildargs[key] = str(value)
             params['buildargs'] = self.buildargs

@@ -42,11 +42,11 @@ options:
     choices: [ "us/las", "de/fra", "de/fkb" ]
   subscription_user:
     description:
-      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environement variable.
+      - The ProfitBricks username. Overrides the PB_SUBSCRIPTION_ID environment variable.
     required: false
   subscription_password:
     description:
-      - THe ProfitBricks password. Overrides the PB_PASSWORD environement variable.
+      - THe ProfitBricks password. Overrides the PB_PASSWORD environment variable.
     required: false
   wait:
     description:
