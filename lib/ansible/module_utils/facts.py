@@ -335,6 +335,10 @@ class Facts(object):
             if re.match(r' *[0-9]+ ', proc_1):
                 proc_1 = None
 
+        # The ps command above may return "COMMAND" if the user cannot read /proc, e.g. with grsecurity
+        if proc_1 == "COMMAND\n":
+            proc_1 = None
+
         if proc_1 is not None:
             proc_1 = os.path.basename(proc_1)
             proc_1 = to_native(proc_1)
