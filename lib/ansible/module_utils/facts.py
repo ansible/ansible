@@ -3591,6 +3591,8 @@ class SunOSVirtual(Virtual):
 
         else:
             smbios = self.module.get_bin_path('smbios')
+            if not smbios:
+                return
             rc, out, err = self.module.run_command(smbios)
             if rc == 0:
                 for line in out.splitlines():
