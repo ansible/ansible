@@ -3,6 +3,7 @@ __metaclass__ = type
 
 import json
 import os
+import subprocess
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
@@ -41,6 +42,13 @@ class CallbackModule(CallbackBase):
             self._display.warning('File ' + config_file + ' not found. SlackGithub callback has been disabled')
         with open(config_file) as config_file:
             self.config = json.load(config_file)
+        try:
+            cmd = ['git', 'config', '--get', 'user.name']
+            username = subprocess.check_output(cmd, universal_newlines=True).split('\0')
+            self.user = username[0].rstrip()
+        except:
+            self.user = 'Anonymous'
+
 
     def _log(self, text):
         self.log += text
@@ -64,7 +72,12 @@ class CallbackModule(CallbackBase):
 
         gist = json.loads(response.read())
         url = gist[u'html_url'].encode('ascii','ignore')
-        message = 'Playbook *' + self.playbook_name + '* has been played. '
+        hosts = '*'
+        for host in self.play.hosts:
+            hosts+= str(host) + ', '
+        hosts = hosts[:-2]
+        hosts+='*'
+        message = 'Playbook *' + self.playbook_name + '* has been played against ' + hosts + ' by *' + self.user + '*. '
         message+= '*<' + url + '#file-recap-md|Details>*'
         payload = {
             'channel': self.config['channel'],
@@ -92,6 +105,7 @@ class CallbackModule(CallbackBase):
         self._log('**Playbook**: ' + self.playbook_name + '\n\n')
 
     def v2_playbook_on_play_start(self, play):
+        self.play = play
         name = play.name or 'Not specified #' + play._uuid
         self._log('# Play: ' + name + '\n\n')
 
