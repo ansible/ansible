@@ -572,6 +572,7 @@ class PlayContext(Base):
             elif self.become_method == 'pmrun':
 
                 exe = self.become_exe or 'pmrun'
+                exe += ' su -c'
                 prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s' % (exe, command)
 
