@@ -40,6 +40,7 @@ $packageparams = Get-Attr -obj $params -name params -default $null
 $allowemptychecksums = Get-Attr -obj $params -name allow_empty_checksums -default "false" | ConvertTo-Bool
 $ignorechecksums = Get-Attr -obj $params -name ignore_checksums -default "false" | ConvertTo-Bool
 $ignoredependencies = Get-Attr -obj $params -name ignore_dependencies -default "false" | ConvertTo-Bool
+$executiontimeout = Get-Attr -obj $params -name execution_timeout -default $null
 
 # as of chocolatey 0.9.10, nonzero success exit codes can be returned
 # see https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
@@ -132,7 +133,9 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=8)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=9)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=10)]
+        [string]$executiontimeout
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -182,6 +185,11 @@ Function Choco-Upgrade
         $cmd += " -ignoredependencies"
     }
 
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
     $results = invoke-expression $cmd
 
     if ($LastExitCode -notin $successexitcodes)
@@ -224,7 +232,9 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=10)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=11)]
+        [string]$executiontimeout
     )
 
     if (Choco-IsInstalled $package)
@@ -234,7 +244,7 @@ Function Choco-Install
             Choco-Upgrade -package $package -version $version -source $source -force $force `
                 -installargs $installargs -packageparams $packageparams `
                 -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-                -ignoredependencies $ignoredependencies
+                -ignoredependencies $ignoredependencies -executiontimeout $executiontimeout
 
             return
         }
@@ -287,6 +297,11 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
     $results = invoke-expression $cmd
 
     if ($LastExitCode -notin $successexitcodes)
@@ -309,7 +324,10 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=2)]
         [string]$version,
         [Parameter(Mandatory=$false, Position=3)]
-        [bool]$force
+        [bool]$force,
+        [Parameter(Mandatory=$false, Position=4)]
+        [string]$executiontimeout
+
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -334,6 +352,11 @@ Function Choco-Uninstall
         $cmd += " -params '$packageparams'"
     }
 
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
     $results = invoke-expression $cmd
 
     if ($LastExitCode -notin $successexitcodes)
@@ -354,11 +377,13 @@ Try
         Choco-Install -package $package -version $version -source $source `
             -force $force -upgrade $upgrade -installargs $installargs `
             -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
-            -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies
+            -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
+            -executiontimeout $executiontimeout
     }
     else
     {
-        Choco-Uninstall -package $package -version $version -force $force
+        Choco-Uninstall -package $package -version $version -force $force `
+            -executiontimeout $executiontimeout
     }
 
     Exit-Json $result;
