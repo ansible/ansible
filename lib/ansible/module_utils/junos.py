@@ -179,6 +179,9 @@ class Netconf(object):
         if (overwrite or replace) and config_format == 'set':
             self.raise_exc('replace/overwrite cannot be True when config_format is `set`')
 
+        if replace:
+            merge = False
+
         self.lock_config()
 
         try:
