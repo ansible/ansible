@@ -259,9 +259,9 @@ DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_
 DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, value_type='boolean')
 
 # Become
-BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'doas': 'Permission denied', 'dzdo': '', 'ksu': 'Password incorrect'} #FIXME: deal with i18n
-BECOME_MISSING_STRINGS    = {'sudo': 'sorry, a password is required to run sudo', 'su': '', 'pbrun': '', 'pfexec': '', 'doas': 'Authorization required', 'dzdo': '', 'ksu': 'No password given'} #FIXME: deal with i18n
-BECOME_METHODS            = ['sudo','su','pbrun','pfexec','doas','dzdo','ksu']
+BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'pmrun': 'Request Rejected by', 'doas': 'Permission denied', 'dzdo': '', 'ksu': 'Password incorrect'} #FIXME: deal with i18n
+BECOME_MISSING_STRINGS    = {'sudo': 'sorry, a password is required to run sudo', 'su': '', 'pbrun': '', 'pfexec': '', 'pmrun': '', 'doas': 'Authorization required', 'dzdo': '', 'ksu': 'No password given'} #FIXME: deal with i18n
+BECOME_METHODS            = ['sudo','su','pbrun','pfexec','pmrun', 'doas','dzdo','ksu']
 BECOME_ALLOW_SAME_USER    = get_config(p, 'privilege_escalation', 'become_allow_same_user', 'ANSIBLE_BECOME_ALLOW_SAME_USER', False, value_type='boolean')
 DEFAULT_BECOME_METHOD     = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo' ).lower()
 DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',False, value_type='boolean')
