@@ -1,107 +1,110 @@
 Ansible Galaxy
 ++++++++++++++
 
-"Ansible Galaxy" can either refer to a website for sharing and downloading Ansible roles, or a command line tool for managing and creating roles.
+*Ansible Galaxy* refers to the `Galaxy <https://galaxy.ansible.com>`_  website where users can share roles, and to a command line tool for installing, 
+creating and managing roles.
 
 .. contents:: Topics
 
 The Website
 ```````````
 
-The website `Ansible Galaxy <https://galaxy.ansible.com>`_, is a free site for finding, downloading, and sharing community developed Ansible roles. Downloading roles from Galaxy is a great way to jumpstart your automation projects.
+`Galaxy <https://galaxy.ansible.com>`_, is a free site for finding, downloading, and sharing community developed roles. Downloading roles from Galaxy is 
+a great way to jumpstart your automation projects.
 
-Access the Galaxy web site using GitHub OAuth, and to install roles use the 'ansible-galaxy' command line tool included in Ansible 1.4.2 and later.
+You can also use the site to share roles that you create. By authenticating with the site using your GitHub account, you're able to *import* roles, making 
+them available to the Ansible community. Imported roles become available in the Galaxy search index and visible on the site, allowing users to 
+discover and download them.
 
-Read the "About" page on the Galaxy site for more information.
+Learn more by viewing `the About page <https://galaxy.ansible.com/intro>`_.
 
-The ansible-galaxy command line tool
-````````````````````````````````````
+The command line tool
+`````````````````````
 
-The ansible-galaxy command has many different sub-commands for managing roles both locally and at `galaxy.ansible.com <https://galaxy.ansible.com>`_.
+The ``ansible-galaxy`` command comes bundled with Ansible, and you can use it to install roles from Galaxy or directly from a git based SCM. You can 
+also use it to create a new role, remove roles, or perform tasks on the Galaxy website.
 
-.. note::
+The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. Since the `Galaxy project <https://github.com/ansible/galaxy>`_
+is an open source project, you may be running your own internal Galaxy server and wish to override the default server address. You can do this using the *--server* option
+or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* visit `Galaxy Settings <./intro_configuration.html#galaxy-settings>`_.
 
-    The search, login, import, delete, and setup commands in the Ansible 2.0 version of ansible-galaxy require access to the 
-    2.0 Beta release of the Galaxy web site available at `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_.
-
-    Use the ``--server`` option to access the beta site. For example::
-
-        $ ansible-galaxy search --server https://galaxy-qa.ansible.com mysql --author geerlingguy
-
-    Additionally, you can define a server in ansible.cfg::
-
-        [galaxy]
-        server=https://galaxy-qa.ansible.com
 
 Installing Roles
 ----------------
 
-The most obvious use of the ansible-galaxy command is downloading roles from `the Ansible Galaxy website <https://galaxy.ansible.com>`_::
+Use the ``ansible-galaxy`` command to download roles from the `Galaxy website <https://galaxy.ansible.com>`_
 
-   $ ansible-galaxy install username.rolename
+::
+
+    $ ansible-galaxy install username.role_name
 
 roles_path
 ==========
 
-You can specify a particular directory where you want the downloaded roles to be placed::
+Be aware that by default Ansible downloads roles to the path specified by the environment variable *ANSIBLE_ROLES_PATH*. This can be set to a series of
+directories (i.e. */etc/ansible/roles:~/.ansible/roles*), in which case the first writable path will be used. When Ansible is first installed it defaults
+to */etc/ansible/roles*, which requires *root* privileges.
 
-   $ ansible-galaxy install username.role -p ~/Code/ansible_roles/
-   
-This can be useful if you have a master folder that contains ansible galaxy roles shared across several projects. The default is the roles_path configured in your ansible.cfg file (/etc/ansible/roles if not configured).
+You can override this by setting the environment variable in your session, defining *roles_path* in an *ansible.cfg* file, or by using the *--roles-path* option.
+The following provides an example of using *--roles-path* to install the role into the current working directory:
 
-Installing Multiple Roles From A File
+::
+
+    $ ansible-galaxy install --roles-path . geerlingguy.apache
+
+.. seealso::
+
+   :doc:`intro_configuration`
+      All about configuration files 
+
+version
+=======
+
+You can install a specific version of a role from Galaxy by appending a comma and the value of a GitHub release tag. For example:
+
+::
+
+   $ ansible-galaxy install geerlingguy.apache,v1.0.0 
+
+It's also possible to point directly to the git repository and specify a branch name or commit hash as the version. For example, the following will
+install a specific commit:
+
+::
+
+   $ ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-apache.git,0b7cd353c0250e87a26e0499e59e7fd265cc2f25
+
+
+Installing multiple roles from a file
 =====================================
 
-To install multiple roles, the ansible-galaxy CLI can be fed a requirements file.  All versions of ansible allow the following syntax for installing roles from the Ansible Galaxy website::
+Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
+file extension must be either *.yml* or *.yaml*.
 
-   $ ansible-galaxy install -r requirements.txt
+Use the following command to install roles included in *requirements.yml*:
 
-Where the requirements.txt looks like::
-
-   username1.foo_role
-   username2.bar_role
-
-To request specific versions (tags) of a role, use this syntax in the roles file::
-
-   username1.foo_role,version
-   username2.bar_role,version
-
-Available versions will be listed on the Ansible Galaxy webpage for that role.
-
-Installing Multiple Roles From Multiple Files
-=============================================
-
-At a basic level, including requirements files allows you to break up bits of configuration policy into smaller files. Role includes pull in roles from other files.
 ::
-      ansible-galaxy install -r requirements.yml
- 
-Content of requirements.yml
+
+    $ ansible-galaxy install -r requirements.yml
+
+Again, the extension is important. If the *.yml* extension is left off, the ``ansible-galaxy`` CLI assumes the file is in an older, now deprecated,
+"basic" format.
+
+Each role in the file will have one or more of the following attributes:
+
+   src
+     The source of the role. Use the format *username.role_name*, if downloading from Galaxy; otherwise, provide a URL pointing
+     to a repository within a git based SCM. See the examples below. This is a required attribute. 
+   scm
+     Specify the SCM. As of this writing only *git* or *hg* are supported. See the examples below. Defaults to *git*. 
+   version:
+     The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to *master*.
+   name:
+     Download the role to a specific name. Defaults to the Galaxy name when downloading from Galaxy, otherwise it defaults
+     to the name of the repository. 
+
+Use the following example as a guide for specifying roles in *requirements.yml*:
+
 ::
-     # from github
-     - src: yatesr.timezone
-     
-     - include: webserver.yml
-
-
-Content of the webserver.yml file.
-::
-     # from github
-     - src: https://github.com/bennojoy/nginx
- 
-     # from github installing to a relative path
-     - src: https://github.com/bennojoy/nginx
-      path: vagrant/roles/
-
-Advanced Control over Role Requirements Files
-=============================================
-
-For more advanced control over where to download roles from, including support for remote repositories, Ansible 1.8 and later support a new YAML format for the role requirements file, which must end in a 'yml' extension.  It works like this::
-
-    ansible-galaxy install -r requirements.yml
-
-The extension is important. If the .yml extension is left off, the ansible-galaxy CLI will assume the file is in the "basic" format and will be confused.
-
-And here's an example showing some specific version downloads from multiple sources.  In one of the examples we also override the name of the role and download it as something different::
 
     # from galaxy
     - src: yatesr.timezone
@@ -126,53 +129,54 @@ And here's an example showing some specific version downloads from multiple sour
     - src: http://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
    
-   # from GitLab or other git-based scm   
+    # from GitLab or other git-based scm
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
-      version: 0.1.0
+      version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
-As you can see in the above, there are a large amount of controls available
-to customize where roles can be pulled from, and what to save roles as. 
+Dependencies
+============
 
-You can also pull down multiple roles from a single source (just make sure that you have a meta/main.yml file at the root level).
+Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependenices will automatically be installed.
+
+You specify role dependencies in the *meta/main.yml* file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in 
+the format *username.role_name*. The more complex format used in *requirements.yml* is also supported, allowing you to provide src, scm, version and name.
+
+Dependencies found in Galaxy can be specified as follows:
+
+:: 
+
+    dependencies:
+      - geerlingguy.apache 
+      - geerlingguy.ansible
+
+
+The complex form can also be used as follows: 
+
 ::
-     meta\main.yml
-     common-role1\tasks\main.yml
-     common-role2\tasks\main.yml
-    
-For example, if the above common roles are published to a git repo, you can pull them down using:
+
+    dependencies:
+      - src: geerlingguy.ansible
+      - src: git+https://github.com/geerlingguy/ansible-role-composer.git 
+        version: 775396299f2da1f519f0d8885022ca2d6ee80ee8
+        name: composer
+
+When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the *roles_path*. To understand how dependencies 
+are handled during play execution, see :doc:`playbooks_roles`.
+
+.. note::
+
+    At the time of this writing, the Galaxy website expects all role dependencies to exist in Galaxy, and therefore dependencies to be specified in the 
+    *username.role_name* format. If you import a role with a dependency where the *src* value is a URL, the import process will fail.
+
+Create roles
+------------
+
+Use the ``init`` command to initialize the base structure of a new role, saving time on creating the various directories and main.yml files a role requires
+
 ::
-     # multiple roles from the same repo
-     - src: git@gitlab.company.com:mygroup/ansible-common.git
-       name: common-roles
-       scm: git
-       version: master
 
-You could then use these common roles in your plays
-::
-     ---
-     - hosts: webservers
-       roles:
-         - common-roles/common-role1
-         - common-roles/common-role2
-
-Roles pulled from galaxy work as with other SCM sourced roles above. To download a role with dependencies, and automatically install those dependencies, the role must be uploaded to the Ansible Galaxy website.
-
-.. seealso::
-
-   :doc:`playbooks_roles`
-       All about ansible roles
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
-
-Building Role Scaffolding
--------------------------
-
-Use the init command to initialize the base structure of a new role, saving time on creating the various directories and main.yml files a role requires::
-
-   $ ansible-galaxy init rolename
+   $ ansible-galaxy init role_name
 
 The above will create the following directory structure in the current working directory:
   
@@ -194,16 +198,23 @@ The above will create the following directory structure in the current working d
    vars/
        main.yml
 
-.. note::
+Force
+=====
 
-    .travis.yml and tests/ are new in Ansible 2.0
+If a directory matching the name of the role already exists in the current working directory, the init command will result in an error. To ignore the error 
+use the *--force* option. Force will create the above subdirectories and files, replacing anything that matches.
 
-If a directory matching the name of the role already exists in the current working directory, the init command will result in an error. To ignore the error use the --force option. Force will create the above subdirectories and files, replacing anything that matches.
+Container Enabled
+=================
 
-Search for Roles
+If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
+with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
+the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
+
+Search for roles
 ----------------
 
-The search command provides for querying the Galaxy database, allowing for searching by tags, platforms, author and multiple keywords. For example:
+Search the Galaxy database by tags, platforms, author and multiple keywords. For example:
 
 ::
 
@@ -220,14 +231,11 @@ The search command will return a list of the first 1000 results matching your se
     geerlingguy.elasticsearch         Elasticsearch for Linux.
     geerlingguy.elasticsearch-curator Elasticsearch curator for Linux.
 
-.. note::
 
-   The format of results pictured here is new in Ansible 2.0.
-
-Get More Information About a Role
+Get more information about a role
 ---------------------------------
 
-Use the info command To view more detail about a specific role:
+Use the ``info`` command to view more detail about a specific role:
 
 ::
 
@@ -237,7 +245,7 @@ This returns everything found in Galaxy for the role:
 
 ::
 
-    Role: username.rolename
+    Role: username.role_name
         description: Installs and configures a thing, a distributed, highly available NoSQL thing.
         active: True
         commit: c01947b7bc89ebc0b8a2e298b87ab416aed9dd57
@@ -267,10 +275,10 @@ This returns everything found in Galaxy for the role:
         watchers_count: 1
 
 
-List Installed Roles
+List installed roles
 --------------------
 
-The list command shows the name and version of each role installed in roles_path.
+Use ``list`` to show the name and version of each role installed in the *roles_path*.
 
 ::
 
@@ -281,25 +289,30 @@ The list command shows the name and version of each role installed in roles_path
     - chrismeyersfsu.role-iptables, master
     - chrismeyersfsu.role-required_vars, master
 
-Remove an Installed Role
+Remove an installed role
 ------------------------
 
-The remove command will delete a role from roles_path:
+Use ``remove`` to delete a role from *roles_path*:
 
 ::
 
-    $ ansible-galaxy remove username.rolename
+    $ ansible-galaxy remove username.role_name
 
 Authenticate with Galaxy
 ------------------------
 
-To use the import, delete and setup commands authentication with Galaxy is required. The login command will authenticate the user,retrieve a token from Galaxy, and store it in the user's home directory.
+Using the ``import``, ``delete`` and ``setup`` commands to manage your roles on the Galaxy website requires authentication, and the ``login`` command
+can be used to do just that. Before you can use the ``login`` command, you must create an account on the Galaxy website. 
+
+The ``login`` command requires using your GitHub credentials. You can use your username and password, or you can create a `personal access token <https://help.github.com/articles/creating-an-access-token-for-command-line-use/>`_. If you choose to create a token, grant minimal access to the token, as it is used just to verify identify.
+
+The following shows authenticating with the Galaxy website using a GitHub username and password:
 
 ::
 
     $ ansible-galaxy login
 
-    We need your Github login to identify you.
+    We need your GitHub login to identify you.
     This information will not be sent to Galaxy, only to api.github.com.
     The password will not be displayed.
 
@@ -307,36 +320,35 @@ To use the import, delete and setup commands authentication with Galaxy is requi
 
     Github Username: dsmith
     Password for dsmith:
-    Succesfully logged into Galaxy as dsmith
+    Successfully logged into Galaxy as dsmith
 
-As depicted above, the login command prompts for a GitHub username and password. It does NOT send your password to Galaxy. It actually authenticates with GitHub and creates a personal access token. It then sends the personal access token to Galaxy, which in turn verifies that you are you and returns a Galaxy access token. After authentication completes the GitHub personal access token is destroyed. 
+When you choose to use your username and password, your password is not sent to Galaxy. It is used to authenticates with GitHub and create a personal access token. 
+It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
+destroyed. 
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the --github-token option to pass a personal access token that you create. Log into GitHub, go to Settings and click on Personal Access Token to create a token.
+If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the *--github-token* option to pass a personal access token 
+that you create.
 
-.. note::
 
-    The login command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
-    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
-    section of your ansible.cfg file.
-
-Import a Role
+Import a role
 -------------
 
-Roles can be imported using ansible-galaxy. The import command expects that the user previously authenticated with Galaxy using the login command.
+The ``import`` command requires that you first authenticate using the ``login`` command. Once authenticated you can import any GitHub repository that you own or have
+been granted access. 
 
-Import any GitHub repo you have access to:
+Use the following to import to role:
 
 ::
 
     $ ansible-galaxy import github_user github_repo
 
-By default the command will wait for the role to be imported by Galaxy, displaying the results as the import progresses:
+By default the command will wait for Galaxy to complete the import process, displaying the results as the import progresses:
 
 ::
 
     Successfully submitted import request 41
     Starting import 41: role_name=myrole repo=githubuser/ansible-role-repo ref=
-    Retrieving Github repo githubuser/ansible-role-repo
+    Retrieving GitHub repo githubuser/ansible-role-repo
     Accessing branch: master
     Parsing and validating meta/main.yml
     Parsing galaxy_tags
@@ -347,66 +359,69 @@ By default the command will wait for the role to be imported by Galaxy, displayi
     Import completed
     Status SUCCESS : warnings=0 errors=0
 
-Use the --branch option to import a specific branch. If not specified, the default branch for the repo will be used.
+Branch
+======
 
-If the --no-wait option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site under My Imports.
+Use the *--branch* option to import a specific branch. If not specified, the default branch for the repo will be used.
 
-.. note::
+Role name
+=========
 
-    The import command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
-    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
-    section of your ansible.cfg file.
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name
+option to override this and set the name.
 
-Delete a Role
+No wait
+=======
+
+If the *--no-wait* option is present, the command will not wait for results. Results of the most recent import for any of your roles is available on the Galaxy web site
+by visiting *My Imports*.
+
+Delete a role
 -------------
 
-Remove a role from the Galaxy web site using the delete command.  You can delete any role that you have access to in GitHub. The delete command expects that the user previously authenticated with Galaxy using the login command.
+The ``delete`` command requires that you first authenticate using the ``login`` command. Once authenticated you can remove a role from the Galaxy web site. You are only allowed
+to remove roles where you have access to the repository in GitHub.
+
+Use the following to delete a role:
 
 ::
 
     $ ansible-galaxy delete github_user github_repo
 
-This only removes the role from Galaxy. It does not impact the actual GitHub repo.
+This only removes the role from Galaxy. It does not remove or alter the actual GitHub repository.
 
-.. note::
 
-    The delete command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
-    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
-    section of your ansible.cfg file.
+Travis integrations
+-------------------
 
-Setup Travis Integrations
---------------------------
+You can create an integration or connection between a role in Galaxy and `Travis <http://travis-ci.org>`_. Once the connection is established, a build in Travis will 
+automatically trigger an import in Galaxy, updating the search index with the latest information about the role. 
 
-Using the setup command you can enable notifications from `travis <http://travis-ci.org>`_. The setup command expects that the user previously authenticated with Galaxy using the login command.
+You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will 
+also need an account in Travis, and your Travis token. Once you're ready, use the following command to create the integration: 
 
 ::
 
-    $ ansible-galaxy setup travis github_user github_repo xxxtravistokenxxx
+    $ ansible-galaxy setup travis github_user github_repo xxx-travis-token-xxx
 
-    Added integration for travis github_user/github_repo 
+The setup command requires your Travis token, however the token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described 
+in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The hash is stored in Galaxy and used to verify notifications received from Travis.
 
-The setup command requires your Travis token. The Travis token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The calculated hash is stored in Galaxy and used to verify notifications received from Travis.
+The setup command enables Galaxy to respond to notifications. To configure Travis to run a build on your repository and send a notification, follow the 
+`Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>`_.
 
-The setup command enables Galaxy to respond to notifications. Follow the `Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>`_ to enable the Travis build process for the role repository.
-
-When you create your .travis.yml file add the following to cause Travis to notify Galaxy when a build completes:
+To instruct Travis to notify Galaxy when a build completes, add the following to your .travis.yml file:
 
 ::
 
     notifications:
         webhooks: https://galaxy.ansible.com/api/v1/notifications/
 
-.. note::
 
-    The setup command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
-    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
-    section of your ansible.cfg file.
-
-
-List Travis Integrations
+List Travis integrations
 ========================
 
-Use the --list option to display your Travis integrations:
+Use the *--list* option to display your Travis integrations:
 
 ::
 
@@ -419,15 +434,23 @@ Use the --list option to display your Travis integrations:
     1          travis     github_user/github_repo
 
 
-Remove Travis Integrations
+Remove Travis integrations
 ==========================
 
-Use the --remove option to disable and remove a Travis integration:
+Use the *--remove* option to disable and remove a Travis integration:
 
 ::
 
     $ ansible-galaxy setup --remove ID
 
-Provide the ID of the integration you want disabled. Use the --list option to get the ID.
+Provide the ID of the integration to be disabled. You can find the ID by using the *--list* option.
 
 
+.. seealso::
+
+   :doc:`playbooks_roles`
+       All about ansible roles
+   `Mailing List <http://groups.google.com/group/ansible-project>`_
+       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel

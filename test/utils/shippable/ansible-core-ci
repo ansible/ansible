@@ -43,7 +43,7 @@ def main():
 
     parser.add_argument('--endpoint',
                         dest='endpoint',
-                        default='https://u30i4oezgk.execute-api.us-east-1.amazonaws.com',
+                        default='https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
                         help='api endpoint')
 
     parser.add_argument('--stage',
@@ -285,6 +285,7 @@ def make_inventory(inventory_template, connection, instance_id):
     inventory = template\
         .replace('@instance_id', instance_id)\
         .replace('@ansible_host', connection['hostname'])\
+        .replace('@ansible_port', str(connection.get('port', 22)))\
         .replace('@ansible_user', connection['username'])\
         .replace('@ansible_password', connection.get('password', ''))
 
@@ -331,11 +332,15 @@ class HttpRequest:
         return self.request('PUT', url, data, headers)
 
     def request(self, method, url, data=None, headers=None):
-        args = ['/usr/bin/curl', '-s', '-i', '-X', method]
+        args = ['/usr/bin/curl', '-s', '-S', '-i', '-X', method]
 
-        if headers is not None:
-            for header in headers:
-                args += ['-H', '%s: %s' % (header, headers[header])]
+        if headers is None:
+            headers = {}
+
+        headers['Expect'] = ''  # don't send expect continue header
+
+        for header in headers:
+            args += ['-H', '%s: %s' % (header, headers[header])]
 
         if data is not None:
             args += ['-d', data]
@@ -358,7 +363,10 @@ class HttpResponse:
         self.response = response
 
     def json(self):
-        return json.loads(self.response)
+        try:
+            return json.loads(self.response)
+        except ValueError:
+            raise ValueError('Cannot parse response as JSON:\n%s' % self.response)
 
 
 requests = HttpRequest()

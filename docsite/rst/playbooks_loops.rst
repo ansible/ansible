@@ -45,6 +45,8 @@ If you have a list of hashes, you can reference subkeys using things like::
 
 Also be aware that when combining `when` with `with_items` (or any other loop statement), the `when` statement is processed separately for each item. See :ref:`the_when_statement` for an example.
 
+Loops are actually a combination of things `with_` + `lookup()`, so any lookup plugin can be used as a source for a loop, 'items' is lookup.
+
 .. _nested_loops:
 
 Nested Loops
@@ -114,19 +116,19 @@ Assuming that ``first_example_file`` contained the text "hello" and ``second_exa
 
     TASK [debug msg={{ item }}] ******************************************************
     ok: [localhost] => (item=hello) => {
-        "item": "hello", 
+        "item": "hello",
         "msg": "hello"
     }
     ok: [localhost] => (item=world) => {
-        "item": "world", 
+        "item": "world",
         "msg": "world"
     }
 
 Looping over Fileglobs
 ``````````````````````
 
-``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
-be used like this::
+``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern. It calls
+`Python's glob library <https://docs.python.org/2/library/glob.html>`_, and can be used like this::
 
     ---
     - hosts: all
@@ -267,7 +269,7 @@ Random Choices
 ``````````````
 
 The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer (there are modules
-for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
+for those), it can somewhat be used as a poor man's load balancer in a MacGyver like situation::
 
     - debug: msg={{ item }}
       with_random_choice:
@@ -276,7 +278,7 @@ for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver l
          - "press the red button"
          - "do nothing"
 
-One of the provided strings will be selected at random.  
+One of the provided strings will be selected at random.
 
 At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
 
@@ -285,10 +287,10 @@ At a more basic level, they can be used to add chaos and excitement to otherwise
 Do-Until Loops
 ``````````````
 
-.. versionadded: 1.4
+.. versionadded:: 1.4
 
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
-   
+
     - action: shell /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
@@ -367,7 +369,7 @@ Looping Over A List With An Index
 
 .. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
 
-.. versionadded: 1.3
+.. versionadded:: 1.3
 
 If you want to loop over an array and also get the numeric index of where you are in the array as you go, you can also do that.
 It's uncommonly used::
@@ -380,7 +382,7 @@ It's uncommonly used::
 
 Using ini file with a loop
 ``````````````````````````
-.. versionadded: 2.0
+.. versionadded:: 2.0
 
 The ini plugin can use regexp to retrieve a set of keys. As a consequence, we can loop over this set. Here is the ini file we'll use::
 
@@ -400,25 +402,25 @@ Here is an example of using ``with_ini``::
 And here is the returned value::
 
     {
-          "changed": false, 
-          "msg": "All items completed", 
+          "changed": false,
+          "msg": "All items completed",
           "results": [
               {
                   "invocation": {
-                      "module_args": "msg=\"section1/value1\"", 
+                      "module_args": "msg=\"section1/value1\"",
                       "module_name": "debug"
-                  }, 
-                  "item": "section1/value1", 
-                  "msg": "section1/value1", 
+                  },
+                  "item": "section1/value1",
+                  "msg": "section1/value1",
                   "verbose_always": true
-              }, 
+              },
               {
                   "invocation": {
-                      "module_args": "msg=\"section1/value2\"", 
+                      "module_args": "msg=\"section1/value2\"",
                       "module_name": "debug"
-                  }, 
-                  "item": "section1/value2", 
-                  "msg": "section1/value2", 
+                  },
+                  "item": "section1/value2",
+                  "msg": "section1/value2",
                   "verbose_always": true
               }
           ]
@@ -445,7 +447,7 @@ a really crazy hypothetical datastructure::
 As you can see the formatting of packages in these lists is all over the place.  How can we install all of the packages in both lists?::
 
     - name: flattened loop demo
-      yum: name={{ item }} state=installed 
+      yum: name={{ item }} state=installed
       with_flattened:
          - "{{ packages_base }}"
          - "{{ packages_apps }}"
@@ -457,7 +459,7 @@ That's how!
 Using register with a loop
 ``````````````````````````
 
-When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
+When using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
 Here is an example of using ``register`` with ``with_items``::
 
@@ -530,7 +532,7 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
 
     # show all the hosts in the current play
     - debug: msg={{ item }}
-      with_items: play_hosts
+      with_items: "{{ play_hosts }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
@@ -549,7 +551,7 @@ More information on the patterns can be found on :doc:`intro_patterns`
 Loop Control
 ````````````
 
-.. versionadded: 2.1
+.. versionadded:: 2.1
 
 In 2.0 you are again able to use `with_` loops and task includes (but not playbook includes). This adds the ability to loop over the set of tasks in one shot.
 Ansible by default sets the loop variable `item` for each loop, which causes these nested loops to overwrite the value of `item` from the "outer" loops.
@@ -572,6 +574,38 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
         - c
 
 .. note:: If Ansible detects that the current loop is using a variable which has already been defined, it will raise an error to fail the task.
+
+.. versionadded:: 2.2
+
+When using complex data structures for looping the display might get a bit too "busy", this is where the C(label) directive comes to help::
+
+    - name: create servers
+      digital_ocean: name={{item.name}} state=present ....
+      with_items:
+        - name: server1
+          disks: 3gb
+          ram: 15Gb
+          network:
+            nic01: 100Gb
+            nic02: 10Gb
+            ...
+      loop_control:
+        label: "{{item.name}}"
+
+This will now display just the 'label' field instead of the whole structure per 'item', it defaults to '"{{item}}"' to display things as usual.
+
+.. versionadded:: 2.2
+
+Another option to loop control is C(pause), which allows you to control the time (in seconds) between execution of items in a task loop.::
+
+    # main.yml
+    - name: create servers, pause 3s before creating next
+      digital_ocean: name={{item}} state=present ....
+      with_items:
+        - server1
+        - server2
+      loop_control:
+        pause: 3
 
 
 .. _loops_and_includes_2.0:
@@ -606,7 +640,7 @@ for `item`::
 Writing Your Own Iterators
 ``````````````````````````
 
-While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read :doc:`developing_plugins` for some starter
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary data structures, you can read :doc:`developing_plugins` for some starter
 information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
 
 .. seealso::
@@ -625,5 +659,4 @@ information.  Each of the above features are implemented as plugins in ansible, 
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
 

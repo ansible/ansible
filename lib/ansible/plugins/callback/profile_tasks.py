@@ -28,6 +28,7 @@ import os
 import time
 
 from ansible.plugins.callback import CallbackBase
+from ansible.compat.six.moves import reduce
 
 # define start time
 t0 = tn = time.time()
@@ -123,7 +124,7 @@ class CallbackModule(CallbackBase):
         # Sort the tasks by the specified sort
         if self.sort_order != 'none':
             results = sorted(
-                self.stats.iteritems(),
+                self.stats.items(),
                 key=lambda x:x[1]['time'],
                 reverse=self.sort_order,
             )

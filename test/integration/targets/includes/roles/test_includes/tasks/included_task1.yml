@@ -1,0 +1,9 @@
+- set_fact:
+    ca: "{{ a }}"
+- debug: var=ca
+- set_fact:
+    cb: "{{b}}"
+- debug: var=cb
+- set_fact:
+    cc: "{{ c }}"
+- debug: var=cc

@@ -30,18 +30,24 @@ import itertools
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
+from ansible.module_utils.netcli import Cli, Command
+from ansible.module_utils.netcfg import Config
+from ansible.module_utils._text import to_native
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
     port=dict(type='int'),
+
     username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+
     provider=dict(type='dict'),
     transport=dict(choices=list()),
+
     timeout=dict(default=10, type='int')
 )
 
@@ -65,86 +71,6 @@ class ModuleStub(object):
         for key, value in argument_spec.items():
             self.params[key] = value.get('default')
         self.fail_json = fail_json
-
-class Command(object):
-
-    def __init__(self, command, output=None, prompt=None, response=None,
-                 is_reboot=False, delay=0):
-
-        self.command = command
-        self.output = output
-        self.prompt = prompt
-        self.response = response
-        self.is_reboot = is_reboot
-        self.delay = delay
-
-    def __str__(self):
-        return self.command
-
-class Cli(object):
-
-    def __init__(self, connection):
-        self.connection = connection
-        self.default_output = connection.default_output or 'text'
-        self.commands = list()
-
-    def __call__(self, commands, output=None):
-        commands = self.to_command(commands, output)
-        return self.connection.run_commands(commands)
-
-    def to_command(self, commands, output=None):
-        output = output or self.default_output
-        objects = list()
-        for cmd in to_list(commands):
-            if not isinstance(cmd, Command):
-                cmd = Command(cmd, output)
-            objects.append(cmd)
-        return objects
-
-    def add_commands(self, commands, output=None):
-        commands = self.to_command(commands, output)
-        self.commands.extend(commands)
-
-    def run_commands(self):
-        responses = self.connection.run_commands(self.commands)
-        for resp, cmd in itertools.izip(responses, self.commands):
-            cmd.response = resp
-        return responses
-
-class Config(object):
-
-    def __init__(self, connection):
-        self.connection = connection
-
-    def invoke(self, method, *args, **kwargs):
-        try:
-            return method(*args, **kwargs)
-        except AttributeError:
-            exc = get_exception()
-            raise NetworkError('undefined method "%s"' % method.__name__, exc=str(exc))
-        except NotImplementedError:
-            raise NetworkError('method not supported "%s"' % method.__name__)
-
-    def __call__(self, commands):
-        lines = to_list(commands)
-        return self.invoke(self.connection.configure, commands)
-
-    def load_config(self, commands, **kwargs):
-        commands = to_list(commands)
-        return self.invoke(self.connection.load_config, commands, **kwargs)
-
-    def get_config(self, **kwargs):
-        return self.invoke(self.connection.get_config, **kwargs)
-
-    def commit_config(self, **kwargs):
-        return self.invoke(self.connection.commit_config, **kwargs)
-
-    def abort_config(self, **kwargs):
-        return self.invoke(self.connection.abort_config, **kwargs)
-
-    def save_config(self):
-        return self.invoke(self.connection.save_config)
-
 
 class NetworkError(Exception):
 
@@ -180,7 +106,7 @@ class NetworkModule(AnsibleModule):
             self.fail_json(msg='Unknown transport or no default transport specified')
         except (TypeError, NetworkError):
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
         if connect_on_load:
             self.connect()
@@ -222,73 +148,20 @@ class NetworkModule(AnsibleModule):
                 self.connection.connect(self.params)
                 if self.params['authorize']:
                     self.connection.authorize(self.params)
+                self.log('connected to %s:%s using %s' % (self.params['host'],
+                         self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
     def disconnect(self):
         try:
             if self.connected:
                 self.connection.disconnect()
+            self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
-
-
-class NetCli(object):
-    """Basic paramiko-based ssh transport any NetworkModule can use."""
-
-    def __init__(self):
-        if not HAS_PARAMIKO:
-            raise NetworkError(
-                msg='paramiko is required but does not appear to be installed.  '
-                'It can be installed using  `pip install paramiko`'
-            )
-
-        self.shell = None
-        self._connected = False
-        self.default_output = 'text'
-
-    def connect(self, params, kickstart=True, **kwargs):
-        host = params['host']
-        port = params.get('port') or 22
-
-        username = params['username']
-        password = params.get('password')
-        key_file = params.get('ssh_keyfile')
-        timeout = params['timeout']
-
-        try:
-            self.shell = Shell(
-                kickstart=kickstart,
-                prompts_re=self.CLI_PROMPTS_RE,
-                errors_re=self.CLI_ERRORS_RE,
-            )
-            self.shell.open(
-                host, port=port, username=username, password=password,
-                key_filename=key_file, timeout=timeout,
-            )
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(
-                msg='failed to connect to %s:%s' % (host, port), exc=str(exc)
-            )
-
-    def disconnect(self, **kwargs):
-        self._connected = False
-        self.shell.close()
-
-    def authorize(self, params, **kwargs):
-        passwd = params['auth_pass']
-        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
-
-    def execute(self, commands, **kwargs):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            exc = get_exception()
-            raise NetworkError(exc.message, commands=commands)
-
+            self.fail_json(msg=to_native(exc))
 
 def register_transport(transport, default=False):
     def register(cls):
@@ -306,4 +179,3 @@ def get_module(*args, **kwargs):
     # until the modules are updated.  This function *will* be removed
     # before 2.2 final
     return NetworkModule(*args, **kwargs)
-

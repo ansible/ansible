@@ -16,7 +16,7 @@ Ansible easily supports all of these options via an external inventory system.  
 
 :doc:`tower` also provides a database to store inventory results that is both web and REST Accessible.  Tower syncs with all Ansible dynamic inventory sources you might be using, and also includes a graphical inventory editor. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
 
-For information about writing your own dynamic inventory source, see :doc:`developing_inventory`.
+For information about writing your own dynamic inventory source, see :doc:`dev_guide/developing_inventory`.
 
 
 .. _cobbler_example:
@@ -30,11 +30,11 @@ While primarily used to kickoff OS installations and manage DHCP and DNS, Cobble
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
 been referred to as a 'lightweight CMDB' by some admins.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
+To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
-Also a cobbler.ini file should be added to /etc/ansible so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
+Also a ``cobbler.ini`` file should be added to ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
 
 
     [cobbler]
@@ -58,7 +58,7 @@ Also a cobbler.ini file should be added to /etc/ansible so Ansible knows where t
 
 First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
-Let's explore what this does.  In cobbler, assume a scenario somewhat like the following::
+Let's explore what this does.  In Cobbler, assume a scenario somewhat like the following::
 
     cobbler profile add --name=webserver --distro=CentOS6-x86_64
     cobbler profile edit --name=webserver --mgmt-classes="webserver" --ksmeta="a=2 b=3"
@@ -78,12 +78,12 @@ Which could be executed just like this::
     ansible webserver -m template -a "src=/tmp/motd.j2 dest=/etc/motd"
 
 .. note::
-   The name 'webserver' came from cobbler, as did the variables for
+   The name 'webserver' came from Cobbler, as did the variables for
    the config file.  You can still pass in your own variables like
    normal in Ansible, but variables from the external inventory script
    will override any that have the same name.
 
-So, with the template above (motd.j2), this would result in the following data being written to /etc/motd for system 'foo'::
+So, with the template above (``motd.j2``), this would result in the following data being written to ``/etc/motd`` for system 'foo'::
 
     Welcome, I am templated with a value of a=2, b=3, and c=4
 
@@ -123,7 +123,7 @@ You can test the script by itself to make sure your config is correct::
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
 
-If you use boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
+If you use Boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
 
     [profile dev]
     aws_access_key_id = <dev access key>
@@ -133,10 +133,22 @@ If you use boto profiles to manage multiple AWS accounts, you can pass ``--profi
     aws_access_key_id = <prod access key>
     aws_secret_access_key = <prod secret key>
 
-You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, this option is not supported by ``ansible-playbook`` though.
-But you can use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
+You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, although this option is not supported by ``ansible-playbook``.
+You can also use the ``AWS_PROFILE`` variable - for example: ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
 
-Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
+Since each region requires its own API call, if you are only using a small set of regions, you can edit the``ec2.ini`` file and comment out the regions you are not using. 
+
+There are other config options in ``ec2.ini``, including cache control and destination variables. By default, the ``ec2.ini`` file is configured for **all Amazon cloud services**, but you can comment out any features that aren't applicable. For example, if you don't have ``RDS`` or ``elasticache``, you can set them to ``False`` ::
+
+    [ec2]
+    ...
+
+    # To exclude RDS instances from the inventory, uncomment and set to False.
+    rds = False
+
+    # To exclude ElastiCache instances from the inventory, uncomment and set to False.
+    elasticache = False
+    ...
 
 At their heart, inventory files are simply a mapping from some name to a destination address. The default ``ec2.ini`` settings are configured for running Ansible from outside EC2 (from your laptop for example) -- and this is not the most efficient way to manage EC2.
 
@@ -226,7 +238,7 @@ To see the complete list of variables available for an instance, run the script 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
 explicitly clear the cache, you can run the ec2.py script with the ``--refresh-cache`` parameter::
 
-    # ./ec2.py --refresh-cache
+    ./ec2.py --refresh-cache
 
 .. _openstack_example:
 
@@ -295,7 +307,7 @@ After a few moments you should see some JSON output with information about your 
 Refresh the cache
 +++++++++++++++++
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
 
     ./openstack.py --refresh --list
 
@@ -328,7 +340,7 @@ to include it in the project.
 Using Inventory Directories and Multiple Inventory Sources
 ``````````````````````````````````````````````````````````
 
-If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
+If the location given to ``-i`` in Ansible is a directory (or as so configured in ``ansible.cfg``), Ansible can use multiple inventory sources
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
 

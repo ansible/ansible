@@ -32,6 +32,25 @@ are great and you should use them every time you write playbooks.
 See the `ansible-examples <https://github.com/ansible/ansible-examples>`_ repository on GitHub for lots of examples of all of this
 put together.  You may wish to have this open in a separate tab as you dive in.
 
+Task versus Play includes
+`````````````````````````
+Tasks and plays both use the `include` keyword, but implement the keyword differently. The difference between them is determined by their positioning and content. If the include is inside a play it can only be a 'task' include and include a list of tasks; if it is at the top level, it can only include plays. For example::
+
+    # this is a 'play' include
+    - include: listofplays
+
+    - name: another play
+      hosts: all
+      tasks:
+        - debug: msg=hello
+
+        # this is a 'task' include
+        - include: stuff.yml
+
+A 'task' include can appear anywhere a task can, but a 'play' include cannot be inside other plays only alongside them at the same level.
+While 'task' includes can take other parameters and have the included tasks inherit them, 'play' includes are very limited and most directives do not work.
+
+
 Task Include Files And Encouraging Reuse
 ````````````````````````````````````````
 
@@ -88,7 +107,6 @@ You can reference them like this::
 (In addition to the explicitly passed-in parameters, all variables from
 the vars section are also available for use here as well.)
 
-Playbooks can include other playbooks too, but that's mentioned in a later section.
 
 .. note::
    As of 1.0, task include statements can be used at arbitrary depth.
@@ -143,6 +161,90 @@ inside another.
    play are going to get the same tasks.  ('*when*' provides some
    ability for hosts to conditionally skip tasks).
 
+
+.. _dynamic_static:
+
+Dynamic versus Static Includes
+```````````````````````````
+
+In Ansible 2.0 there were changes on how 'task' includes are processed. The 'play' includes are still 'static' or unchanged.
+
+In previous versions of Ansible, all includes acted as a pre-processor statement and were read during playbook parsing time.
+This created problems with things like inventory variables (like group and host vars, which are not available during the parsing time) were used in the included file name.
+
+After Ansible 2.0, 'task' includes can be 'dynamic', meaning they are not evaluated until the include task is reached during the play execution.
+This change allows the reintroduction of loops on include statements,
+such as the following::
+
+   - include: foo.yml param={{item}}
+     with_items:
+     - 1
+     - 2
+     - 3
+
+It is also possible to use variables from any source with a dynamic include::
+
+   - include: "{{inventory_hostname}}.yml"
+
+Starting in 2.1, Ansible attempts to detect when a 'task' include should be dynamic (read below for details on how detection works).
+
+.. note::
+   When an include statement loads different tasks for different hosts,
+   the ``linear`` strategy keeps the hosts in lock-step by alternating
+   which hosts are executing tasks while doing a ``noop`` for all other
+   hosts. For example, if you had hostA, hostB and hostC with the above
+   example, hostA would execute all of the tasks in hostA.yml while hostB
+   and hostC waited. It is generally better to do the above with the
+   ``free`` strategy, which does not force hosts to execute in lock-step.
+
+.. note::
+    In Ansible 2.0 task includes were always considered dynamic, but since this
+    created problems in existing playbooks we changed the default in 2.1.
+    Continue reading below for more details.
+
+Dynamic includes introduced some other limitations due to the fact that the included
+file is not read in until that task is reached during the execution of the play. When using dynamic includes,
+it is important to keep these limitations in mind:
+
+* You cannot use ``notify`` to trigger a handler name which comes from a dynamic include.
+* You cannot use ``--start-at-task`` to begin execution at a task inside a dynamic include.
+* Tags which only exist inside a dynamic include will not show up in --list-tags output.
+* Tasks which only exist inside a dynamic include will not show up in --list-tasks output.
+
+.. note::
+   In Ansible 1.9.x and earlier, an error would be raised if a tag name was
+   used with ``--tags`` or ``--skip-tags``. This error was disabled in Ansible
+   2.0 to prevent incorrect failures with tags which only existed inside of
+   dynamic includes.
+
+To work around these limitations, Ansible 2.1 introduces the ``static`` option for includes::
+
+   - include: foo.yml
+     static: <yes|no|true|false>
+
+By default, starting in Ansible 2.1, 'task' includes are automatically treated as static rather than
+dynamic when the include meets the following conditions:
+
+* The include does not use any loops
+* The included file name does not use any variables
+* The ``static`` option is not explicitly disabled (``static: no`` is not present)
+* The ansible.cfg options to force static includes (see below) are disabled
+
+Two options are available in the ansible.cfg configuration for static includes:
+
+* ``task_includes_static`` - forces all includes in tasks sections to be static.
+* ``handler_includes_static`` - forces all includes in handlers sections to be static.
+
+These options allow users to force playbooks to behave exactly as they did in 1.9.x and before.
+
+One example on how 'static' vs 'dynamic' behaviour can impact your tasks::
+
+   - include: "stuff.yml"
+     static: no
+     when: verto is defined
+
+If this task were 'static' the `when` would be inherited by the tasks included, but forcing it to be dynamic, the `when` is now applied to the include task itself.
+
 .. _roles:
 
 Roles
@@ -193,6 +295,7 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
+- If roles/x/defaults/main.yml exists, variables listed therein will be added to the play
 - If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
 - Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely
 

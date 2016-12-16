@@ -21,7 +21,11 @@ __metaclass__ = type
 
 from yaml.constructor import Constructor, ConstructorError
 from yaml.nodes import MappingNode
+
+from ansible.module_utils._text import to_bytes
+from ansible.parsing.vault import VaultLib
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.vars.unsafe_proxy import wrap_var
 
 try:
@@ -32,9 +36,12 @@ except ImportError:
 
 
 class AnsibleConstructor(Constructor):
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, vault_password=None):
+        self._vault_password = vault_password
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
+        self._vaults = {}
+        self._vaults['default'] = VaultLib(password=self._vault_password)
 
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
@@ -66,7 +73,8 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
+                display.warning(u'While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).'
+                u' Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
@@ -84,6 +92,20 @@ class AnsibleConstructor(Constructor):
         if unsafe:
             ret = wrap_var(ret)
 
+        return ret
+
+    def construct_vault_encrypted_unicode(self, node):
+        value = self.construct_scalar(node)
+        ciphertext_data = to_bytes(value)
+
+        if self._vault_password is None:
+            raise ConstructorError(None, None,
+                    "found vault but no vault password provided", node.start_mark)
+
+        # could pass in a key id here to choose the vault to associate with
+        vault = self._vaults['default']
+        ret = AnsibleVaultEncryptedUnicode(ciphertext_data)
+        ret.vault = vault
         return ret
 
     def construct_yaml_seq(self, node):
@@ -109,6 +131,7 @@ class AnsibleConstructor(Constructor):
 
         return (datasource, line, column)
 
+
 AnsibleConstructor.add_constructor(
     u'tag:yaml.org,2002:map',
     AnsibleConstructor.construct_yaml_map)
@@ -132,3 +155,7 @@ AnsibleConstructor.add_constructor(
 AnsibleConstructor.add_constructor(
     u'!unsafe',
     AnsibleConstructor.construct_yaml_unsafe)
+
+AnsibleConstructor.add_constructor(
+    u'!vault-encrypted',
+    AnsibleConstructor.construct_vault_encrypted_unicode)

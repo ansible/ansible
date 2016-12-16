@@ -69,7 +69,7 @@ Run commands in the background, killing the task after 'NUM' seconds.
 *--become-method=*'BECOME_METHOD'::
 
 Privilege escalation method to use (default=sudo),
-valid choices: [ sudo | su | pbrun | pfexec | runas | doas | dzdo ]
+valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu ]
 
 *--become-user=*'BECOME_USER'::
 
@@ -140,7 +140,7 @@ Use this file to authenticate the connection.
 
 Run operations with su (deprecated, use become).
 
-*-R* 'SU_USER', *--se-user=*'SUDO_USER'::
+*-R* 'SU_USER', *--su-user=*'SU_USER'::
 
 Run operations with su as this user (default=root) (deprecated, use become).
 

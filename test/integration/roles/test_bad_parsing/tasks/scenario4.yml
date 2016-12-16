@@ -1,5 +1,0 @@
-- name: test that we can't go all Little Bobby Droptables on a quoted var to add more
-  file: "name={{ bad_var }}"
-  failed_when: False
-  tags: scenario4
-

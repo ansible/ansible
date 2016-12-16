@@ -29,7 +29,7 @@
       - with_rules.token | length == 36
       - with_rules.name == 'With rule'
       - with_rules.rules | match('.*"foo".*')
-      - with_rules.rules | match('.*"private/foo".*')
+      - with_rules.rules | search(pattern='private/foo')
 
 - name: clear up
   consul_acl:

@@ -19,24 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import itertools
 import operator
 import uuid
 
+from copy import copy as shallowcopy
 from functools import partial
-from inspect import getmembers
-
-from ansible.compat.six import iteritems, string_types
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.compat.six import iteritems, string_types, with_metaclass
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.utils.boolean import boolean
+from ansible.parsing.dataloader import DataLoader
+from ansible.constants import mk_boolean as boolean
 from ansible.utils.vars import combine_vars, isidentifier
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -44,10 +42,112 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-BASE_ATTRIBUTES = {}
+
+def _generic_g(prop_name, self):
+    try:
+        return self._attributes[prop_name]
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
 
-class Base:
+def _generic_g_method(prop_name, self):
+    try:
+        if self._squashed:
+            return self._attributes[prop_name]
+        method = "_get_attr_%s" % prop_name
+        return getattr(self, method)()
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+
+def _generic_g_parent(prop_name, self):
+    try:
+        value = self._attributes[prop_name]
+        if value is None and not self._squashed and not self._finalized:
+            try:
+                value = self._get_parent_attribute(prop_name)
+            except AttributeError:
+                pass
+    except KeyError:
+        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    return value
+
+
+def _generic_s(prop_name, self, value):
+    self._attributes[prop_name] = value
+
+
+def _generic_d(prop_name, self):
+    del self._attributes[prop_name]
+
+
+class BaseMeta(type):
+
+    """
+    Metaclass for the Base object, which is used to construct the class
+    attributes based on the FieldAttributes available.
+    """
+
+    def __new__(cls, name, parents, dct):
+        def _create_attrs(src_dict, dst_dict):
+            '''
+            Helper method which creates the attributes based on those in the
+            source dictionary of attributes. This also populates the other
+            attributes used to keep track of these attributes and via the
+            getter/setter/deleter methods.
+            '''
+            keys = list(src_dict.keys())
+            for attr_name in keys:
+                value = src_dict[attr_name]
+                if isinstance(value, Attribute):
+                    if attr_name.startswith('_'):
+                        attr_name = attr_name[1:]
+
+                    # here we selectively assign the getter based on a few
+                    # things, such as whether we have a _get_attr_<name>
+                    # method, or if the attribute is marked as not inheriting
+                    # its value from a parent object
+                    method = "_get_attr_%s" % attr_name
+                    if method in src_dict or method in dst_dict:
+                        getter = partial(_generic_g_method, attr_name)
+                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
+                        getter = partial(_generic_g_parent, attr_name)
+                    else:
+                        getter = partial(_generic_g, attr_name)
+
+                    setter = partial(_generic_s, attr_name)
+                    deleter = partial(_generic_d, attr_name)
+
+                    dst_dict[attr_name] = property(getter, setter, deleter)
+                    dst_dict['_valid_attrs'][attr_name] = value
+                    dst_dict['_attributes'][attr_name] = value.default
+
+        def _process_parents(parents, dst_dict):
+            '''
+            Helper method which creates attributes from all parent objects
+            recursively on through grandparent objects
+            '''
+            for parent in parents:
+                if hasattr(parent, '__dict__'):
+                    _create_attrs(parent.__dict__, dst_dict)
+                    new_dst_dict = parent.__dict__.copy()
+                    new_dst_dict.update(dst_dict)
+                    _process_parents(parent.__bases__, new_dst_dict)
+
+        # create some additional class attributes
+        dct['_attributes'] = dict()
+        dct['_valid_attrs'] = dict()
+
+        # now create the attributes based on the FieldAttributes
+        # available, including from parent (and grandparent) objects
+        _create_attrs(dct, dct)
+        _process_parents(parents, dct)
+
+        return super(BaseMeta, cls).__new__(cls, name, parents, dct)
+
+
+class Base(with_metaclass(BaseMeta, object)):
 
     # connection/transport
     _connection          = FieldAttribute(isa='string')
@@ -55,7 +155,7 @@ class Base:
     _remote_user         = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', priority=100)
+    _vars                = FieldAttribute(isa='dict', priority=100, inherit=False)
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
@@ -80,120 +180,33 @@ class Base:
 
         # other internal params
         self._validated = False
+        self._squashed  = False
         self._finalized = False
 
         # every object gets a random uuid:
         self._uuid = uuid.uuid4()
 
-        # and initialize the base attributes
-        self._initialize_base_attributes()
-
-        self._cached_parent_attrs = dict()
+        # we create a copy of the attributes here due to the fact that
+        # it was intialized as a class param in the meta class, so we
+        # need a unique object here (all members contained within are
+        # unique already).
+        self._attributes = self._attributes.copy()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
-
-    # The following three functions are used to programatically define data
-    # descriptors (aka properties) for the Attributes of all of the playbook
-    # objects (tasks, blocks, plays, etc).
-    #
-    # The function signature is a little strange because of how we define
-    # them.  We use partial to give each method the name of the Attribute that
-    # it is for.  Since partial prefills the positional arguments at the
-    # beginning of the function we end up with the first positional argument
-    # being allocated to the name instead of to the class instance (self) as
-    # normal.  To deal with that we make the property name field the first
-    # positional argument and self the second arg.
-    #
-    # Because these methods are defined inside of the class, they get bound to
-    # the instance when the object is created.  After we run partial on them
-    # and put the result back into the class as a property, they get bound
-    # a second time.  This leads to self being  placed in the arguments twice.
-    # To work around that, we mark the functions as @staticmethod so that the
-    # first binding to the instance doesn't happen.
-
-    @staticmethod
-    def _generic_g(prop_name, self):
-        method = "_get_attr_%s" % prop_name
-        try:
-            value = getattr(self, method)()
-        except AttributeError:
-            try:
-                value = self._attributes[prop_name]
-                if value is None and not self._finalized:
-                    try:
-                        if prop_name in self._cached_parent_attrs:
-                            value = self._cached_parent_attrs[prop_name]
-                        else:
-                            value = self._get_parent_attribute(prop_name)
-                            # FIXME: temporarily disabling due to bugs
-                            #self._cached_parent_attrs[prop_name] = value
-                    except AttributeError:
-                        pass
-            except KeyError:
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
-
-        return value
-
-    @staticmethod
-    def _generic_s(prop_name, self, value):
-        self._attributes[prop_name] = value
-
-    @staticmethod
-    def _generic_d(prop_name, self):
-        del self._attributes[prop_name]
-
-    def _get_base_attributes(self):
-        '''
-        Returns the list of attributes for this class (or any subclass thereof).
-        If the attribute name starts with an underscore, it is removed
-        '''
-
-        # check cache before retrieving attributes
-        if self.__class__.__name__ in BASE_ATTRIBUTES:
-            return BASE_ATTRIBUTES[self.__class__.__name__]
-
-        # Cache init
-        base_attributes = dict()
-        for (name, value) in getmembers(self.__class__):
-            if isinstance(value, Attribute):
-                if name.startswith('_'):
-                    name = name[1:]
-                base_attributes[name] = value
-        BASE_ATTRIBUTES[self.__class__.__name__] = base_attributes
-        return base_attributes
-
     def dump_me(self, depth=0):
         if depth == 0:
             print("DUMPING OBJECT ------------------------------------------------------")
-        print("%s- %s (%s)" % (" " * depth, self.__class__.__name__, self))
+        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
-            print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
         if hasattr(self, '_play') and self._play:
             self._play.dump_me(depth+2)
-
-    def _initialize_base_attributes(self):
-        # each class knows attributes set upon it, see Task.py for example
-        self._attributes = dict()
-
-        for (name, value) in self._get_base_attributes().items():
-            getter = partial(self._generic_g, name)
-            setter = partial(self._generic_s, name)
-            deleter = partial(self._generic_d, name)
-
-            # Place the property into the class so that cls.name is the
-            # property functions.
-            setattr(Base, name, property(getter, setter, deleter))
-
-            # Place the value into the instance so that the property can
-            # process and hold that value.
-            setattr(self, name, value.default)
 
     def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
@@ -230,8 +243,7 @@ class Base:
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        base_attributes = self._get_base_attributes()
-        for name, attr in sorted(base_attributes.items(), key=operator.itemgetter(1)):
+        for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -264,7 +276,7 @@ class Base:
         not map to attributes for this object.
         '''
 
-        valid_attrs = frozenset(name for name in self._get_base_attributes())
+        valid_attrs = frozenset(self._valid_attrs.keys())
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
@@ -274,7 +286,7 @@ class Base:
 
         if not self._validated:
             # walk all fields in the object
-            for (name, attribute) in iteritems(self._get_base_attributes()):
+            for (name, attribute) in iteritems(self._valid_attrs):
 
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % name, None)
@@ -292,6 +304,17 @@ class Base:
 
         self._validated = True
 
+    def squash(self):
+        '''
+        Evaluates all attributes and sets them to the evaluated version,
+        so that all future accesses of attributes do not need to evaluate
+        parent attributes.
+        '''
+        if not self._squashed:
+            for name in self._valid_attrs.keys():
+                self._attributes[name] = getattr(self, name)
+            self._squashed = True
+
     def copy(self):
         '''
         Create a copy of this object and return it.
@@ -299,14 +322,8 @@ class Base:
 
         new_me = self.__class__()
 
-        for name in self._get_base_attributes():
-            attr_val = getattr(self, name)
-            if isinstance(attr_val, collections.Sequence):
-                setattr(new_me, name, attr_val[:])
-            elif isinstance(attr_val, collections.Mapping):
-                setattr(new_me, name, attr_val.copy())
-            else:
-                setattr(new_me, name, attr_val)
+        for name in self._valid_attrs.keys():
+            new_me._attributes[name] = shallowcopy(self._attributes[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -330,7 +347,7 @@ class Base:
         # save the omit value for later checking
         omit_value = templar._available_variables.get('omit')
 
-        for (name, attribute) in iteritems(self._get_base_attributes()):
+        for (name, attribute) in iteritems(self._valid_attrs):
 
             if getattr(self, name) is None:
                 if not attribute.required:
@@ -364,7 +381,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = to_unicode(value)
+                        value = to_text(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
@@ -383,8 +400,8 @@ class Base:
                         elif not isinstance(value, list):
                             if isinstance(value, string_types) and attribute.isa == 'barelist':
                                 display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. " \
-                                    "You should instead use the correct YAML syntax for lists. " \
+                                    "Using comma separated values for a list has been deprecated. "
+                                    "You should instead use the correct YAML syntax for lists. "
                                 )
                                 value = value.split(',')
                             else:
@@ -432,44 +449,6 @@ class Base:
 
         self._finalized = True
 
-    def serialize(self):
-        '''
-        Serializes the object derived from the base object into
-        a dictionary of values. This only serializes the field
-        attributes for the object, so this may need to be overridden
-        for any classes which wish to add additional items not stored
-        as field attributes.
-        '''
-
-        repr = dict()
-
-        for name in self._get_base_attributes():
-            repr[name] = getattr(self, name)
-
-        # serialize the uuid field
-        repr['uuid'] = getattr(self, '_uuid')
-
-        return repr
-
-    def deserialize(self, data):
-        '''
-        Given a dictionary of values, load up the field attributes for
-        this object. As with serialize(), if there are any non-field
-        attribute data members, this method will need to be overridden
-        and extended.
-        '''
-
-        assert isinstance(data, dict)
-
-        for (name, attribute) in iteritems(self._get_base_attributes()):
-            if name in data:
-                setattr(self, name, data[name])
-            else:
-                setattr(self, name, attribute.default)
-
-        # restore the UUID field
-        setattr(self, '_uuid', data.get('uuid'))
-
     def _load_vars(self, attr, ds):
         '''
         Vars in a play can be specified either as a dictionary directly, or
@@ -503,7 +482,7 @@ class Base:
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
-    def _extend_value(self, value, new_value):
+    def _extend_value(self, value, new_value, prepend=False):
         '''
         Will extend the value given with new_value (and will turn both
         into lists if they are not so already). The values are run through
@@ -515,12 +494,51 @@ class Base:
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        #return list(set(value + new_value))
-        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
+        if prepend:
+            combined = new_value + value
+        else:
+            combined = value + new_value
 
-    def __getstate__(self):
-        return self.serialize()
+        return [i for i,_ in itertools.groupby(combined) if i is not None]
 
-    def __setstate__(self, data):
-        self.__init__()
-        self.deserialize(data)
+    def serialize(self):
+        '''
+        Serializes the object derived from the base object into
+        a dictionary of values. This only serializes the field
+        attributes for the object, so this may need to be overridden
+        for any classes which wish to add additional items not stored
+        as field attributes.
+        '''
+
+        repr = dict()
+
+        for name in self._valid_attrs.keys():
+            repr[name] = getattr(self, name)
+
+        # serialize the uuid field
+        repr['uuid'] = self._uuid
+        repr['finalized'] = self._finalized
+        repr['squashed'] = self._squashed
+
+        return repr
+
+    def deserialize(self, data):
+        '''
+        Given a dictionary of values, load up the field attributes for
+        this object. As with serialize(), if there are any non-field
+        attribute data members, this method will need to be overridden
+        and extended.
+        '''
+
+        assert isinstance(data, dict)
+
+        for (name, attribute) in iteritems(self._valid_attrs):
+            if name in data:
+                setattr(self, name, data[name])
+            else:
+                setattr(self, name, attribute.default)
+
+        # restore the UUID field
+        setattr(self, '_uuid', data.get('uuid'))
+        self._finalized = data.get('finalized', False)
+        self._squashed = data.get('squashed', False)

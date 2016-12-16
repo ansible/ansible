@@ -19,6 +19,7 @@
 #
 
 from __future__ import print_function
+__metaclass__ = type
 
 import os
 import glob
@@ -34,10 +35,10 @@ from collections import defaultdict
 from jinja2 import Environment, FileSystemLoader
 from six import iteritems
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes
 from ansible.utils import module_docs
 from ansible.utils.vars import merge_hash
-from ansible.utils.unicode import to_bytes
-from ansible.errors import AnsibleError
 
 #####################################################################################
 # constants and paths
@@ -63,7 +64,6 @@ _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
 DEPRECATED = " (D)"
-NOTCORE    = " (E)"
 #####################################################################################
 
 def rst_ify(text):
@@ -142,8 +142,11 @@ def list_modules(module_dir, depth=0):
         if module_path.endswith('__init__.py'):
             continue
         category = categories
-        mod_path_only = os.path.dirname(module_path[len(module_dir) + 1:])
+        mod_path_only = module_path
         # Start at the second directory because we don't want the "vendor"
+
+        mod_path_only = os.path.dirname(module_path[len(module_dir):])
+
         # directories (core, extras)
         for new_cat in mod_path_only.split('/')[1:]:
             if new_cat not in category:
@@ -247,21 +250,20 @@ def process_module(module, options, env, template, outputname, module_map, alias
     print("rendering: %s" % module)
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples, returndocs = module_docs.get_docstring(fname, verbose=options.verbose)
+    doc, examples, returndocs, metadata = module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:
         sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
 
+    if metadata is None:
+        sys.stderr.write("*** ERROR: MODULE MISSING METADATA: %s, %s ***\n" % (fname, module))
+        sys.exit(1)
+
     if deprecated and 'deprecated' not in doc:
         sys.stderr.write("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
-
-    if "/core/" in fname:
-        doc['core'] = True
-    else:
-        doc['core'] = False
 
     if module in aliases:
         doc['aliases'] = aliases[module]
@@ -306,6 +308,8 @@ def process_module(module, options, env, template, outputname, module_map, alias
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
+    doc['metadata']         = metadata
+
     if returndocs:
         try:
             doc['returndocs']       = yaml.safe_load(returndocs)
@@ -326,15 +330,13 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
 #####################################################################################
 
-def print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases):
+def print_modules(module, category_file, deprecated, options, env, template, outputname, module_map, aliases):
     modstring = module
     if modstring.startswith('_'):
         modstring = module[1:]
     modname = modstring
     if module in deprecated:
         modstring = modstring + DEPRECATED
-    elif module not in core:
-        modstring = modstring + NOTCORE
 
     category_file.write("  %s - %s <%s_module>\n" % (to_bytes(modstring), to_bytes(rst_ify(module_map[module][1])), to_bytes(modname)))
 
@@ -370,22 +372,16 @@ def process_category(category, categories, options, env, template, outputname):
 
     modules = []
     deprecated = []
-    core = []
     for module in module_map.keys():
-
         if isinstance(module_map[module], dict):
             for mod in (m for m in module_map[module].keys() if m in module_info):
                 if mod.startswith("_"):
                     deprecated.append(mod)
-                elif '/core/' in module_info[mod][0]:
-                    core.append(mod)
         else:
             if module not in module_info:
                 continue
             if module.startswith("_"):
                 deprecated.append(module)
-            elif '/core/' in module_info[module][0]:
-                core.append(module)
         modules.append(module)
 
     modules.sort(key=lambda k: k[1:] if k.startswith('_') else k)
@@ -406,7 +402,7 @@ def process_category(category, categories, options, env, template, outputname):
             sections.append(module)
             continue
         else:
-            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_info, aliases)
+            print_modules(module, category_file, deprecated, options, env, template, outputname, module_info, aliases)
 
     sections.sort()
     for section in sections:
@@ -417,14 +413,12 @@ def process_category(category, categories, options, env, template, outputname):
         section_modules.sort(key=lambda k: k[1:] if k.startswith('_') else k)
         #for module in module_map[section]:
         for module in (m for m in section_modules if m in module_info):
-            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_info, aliases)
+            print_modules(module, category_file, deprecated, options, env, template, outputname, module_info, aliases)
 
     category_file.write("""\n\n
 .. note::
     - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.  The module documentation details page may explain more about this rationale.
-    - %s: This marks a module as 'extras', which means it ships with ansible but may be a newer module and possibly (but not necessarily) less actively maintained than 'core' modules.
-    - Tickets filed on modules are filed to different repos than those on the main open source project. Core module tickets should be filed at `ansible/ansible-modules-core on GitHub <http://github.com/ansible/ansible-modules-core>`_, extras tickets to `ansible/ansible-modules-extras on GitHub <http://github.com/ansible/ansible-modules-extras>`_
-""" % (DEPRECATED, NOTCORE))
+""" % DEPRECATED)
     category_file.close()
 
     # TODO: end a new category file

@@ -34,7 +34,17 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'default'
 
+    def __init__(self):
+
+        self._play = None
+        self._last_task_banner = None
+        super(CallbackModule, self).__init__()
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
+
+        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
+
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if 'exception' in result._result:
             if self._display.verbosity < 3:
@@ -60,9 +70,14 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
+        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
+
         self._clean_results(result._result, result._task.action)
+
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action == 'include':
+        self._clean_results(result._result, result._task.action)
+        if result._task.action in ('include', 'include_role'):
             return
         elif result._result.get('changed', False):
             if delegated_vars:
@@ -89,6 +104,9 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
         if C.DISPLAY_SKIPPED_HOSTS:
+            if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
             if result._task.loop and 'results' in result._result:
                 self._process_items(result)
             else:
@@ -98,6 +116,9 @@ class CallbackModule(CallbackBase):
                 self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
+        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
+
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
             self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_UNREACHABLE)
@@ -111,7 +132,11 @@ class CallbackModule(CallbackBase):
         self._display.banner("NO MORE HOSTS LEFT")
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        args = ''
+
+        if self._play.strategy != 'free':
+            self._print_task_banner(task)
+
+    def _print_task_banner(self, task):
         # args can be specified as no_log in several places: in the task or in
         # the argument spec.  We can check whether the task is no_log but the
         # argument spec can't be because that is only run on the target
@@ -120,14 +145,18 @@ class CallbackModule(CallbackBase):
         # So we give people a config option to affect display of the args so
         # that they can secure this if they feel that their stdout is insecure
         # (shoulder surfing, logging stdout straight to a file, etc).
+        args = ''
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
-            args = ', '.join(('%s=%s' % a for a in task.args.items()))
-            args = ' %s' % args
-        self._display.banner("TASK [%s%s]" % (task.get_name().strip(), args))
+            args = u', '.join(u'%s=%s' % a for a in task.args.items())
+            args = u' %s' % args
+
+        self._display.banner(u"TASK [%s%s]" % (task.get_name().strip(), args))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
-                self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
+                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
+
+        self._last_task_banner = task._uuid
 
     def v2_playbook_on_cleanup_task_start(self, task):
         self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())
@@ -138,9 +167,11 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
         if not name:
-            msg = "PLAY"
+            msg = u"PLAY"
         else:
-            msg = "PLAY [%s]" % name
+            msg = u"PLAY [%s]" % name
+
+        self._play = play
 
         self._display.banner(msg)
 
@@ -158,7 +189,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_item_on_ok(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        if result._task.action == 'include':
+        if result._task.action in ('include', 'include_role'):
             return
         elif result._result.get('changed', False):
             msg = 'changed'

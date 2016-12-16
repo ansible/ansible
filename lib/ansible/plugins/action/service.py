@@ -26,7 +26,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     UNUSED_PARAMS = {
-        'systemd': ['pattern', 'runlevels', 'sleep', 'arguments'],
+        'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
     }
 
     def run(self, tmp=None, task_vars=None):
@@ -40,7 +40,10 @@ class ActionModule(ActionBase):
 
         if module == 'auto':
             try:
-                module = self._templar.template('{{ansible_service_mgr}}')
+                if self._task.delegate_to: # if we delegate, we should use delegated host's facts
+                    module = self._templar.template("{{hostvars['%s']['ansible_service_mgr']}}" % self._task.delegate_to)
+                else:
+                    module = self._templar.template('{{ansible_service_mgr}}')
             except:
                 pass # could not get it from template!
 

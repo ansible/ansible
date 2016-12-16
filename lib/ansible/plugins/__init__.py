@@ -31,7 +31,8 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
+
 
 try:
     from __main__ import display
@@ -44,8 +45,10 @@ MODULE_CACHE = {}
 PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
 
+
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
+
 
 class PluginLoader:
 
@@ -72,11 +75,11 @@ class PluginLoader:
 
         self.config = config
 
-        if not class_name in MODULE_CACHE:
+        if class_name not in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
-        if not class_name in PATH_CACHE:
+        if class_name not in PATH_CACHE:
             PATH_CACHE[class_name] = None
-        if not class_name in PLUGIN_PATH_CACHE:
+        if class_name not in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
 
         self._module_cache      = MODULE_CACHE[class_name]
@@ -123,23 +126,26 @@ class PluginLoader:
             PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE[self.class_name],
         )
 
-    def print_paths(self):
+    def format_paths(self, paths):
         ''' Returns a string suitable for printing of the search path '''
 
         # Uses a list to get the order right
         ret = []
-        for i in self._get_paths():
+        for i in paths:
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
+
+    def print_paths(self):
+        return self.format_paths(self._get_paths())
 
     def _all_directories(self, dir):
         results = []
         results.append(dir)
         for root, subdirs, files in os.walk(dir, followlinks=True):
-           if '__init__.py' in files:
-               for x in subdirs:
-                   results.append(os.path.join(root,x))
+            if '__init__.py' in files:
+                for x in subdirs:
+                    results.append(os.path.join(root,x))
         return results
 
     def _get_package_paths(self):
@@ -202,7 +208,6 @@ class PluginLoader:
         self._paths = reordered_paths
         return reordered_paths
 
-
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
@@ -248,7 +253,7 @@ class PluginLoader:
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
-                display.warning("Error accessing plugin paths: %s" % to_unicode(e))
+                display.warning("Error accessing plugin paths: %s" % to_text(e))
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
@@ -315,13 +320,14 @@ class PluginLoader:
             return sys.modules[name]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            with open(path, 'r') as module_file:
+            with open(path, 'rb') as module_file:
                 module = imp.load_source(name, path, module_file)
         return module
 
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
+        found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         if name in self.aliases:
             name = self.aliases[name]
@@ -331,6 +337,7 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source('.'.join([self.package, name]), path)
+            found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
         if self.base_class:
@@ -345,16 +352,31 @@ class PluginLoader:
             if not issubclass(obj, plugin_class):
                 return None
 
+        self._display_plugin_load(self.class_name, name, self._searched_paths, path,
+                                  found_in_cache=found_in_cache, class_only=class_only)
         if not class_only:
             obj = obj(*args, **kwargs)
 
         return obj
 
+    def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
+        msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
+
+        if len(searched_paths) > 1:
+            msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
+
+        if found_in_cache or class_only:
+            msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
+
+        display.debug(msg)
+
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
 
+        path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
         all_matches = []
+        found_in_cache = True
 
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
@@ -364,13 +386,18 @@ class PluginLoader:
             if '__init__' in name:
                 continue
 
+            if path_only:
+                yield path
+                continue
+
             if path not in self._module_cache:
                 self._module_cache[path] = self._load_module_source(name, path)
+                found_in_cache = False
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
             except AttributeError as e:
-                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_unicode(e)))
+                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 continue
 
             if self.base_class:
@@ -379,12 +406,14 @@ class PluginLoader:
                 module = __import__(self.package, fromlist=[self.base_class])
                 # Check whether this obj has the required base class.
                 try:
-                   plugin_class = getattr(module, self.base_class)
+                    plugin_class = getattr(module, self.base_class)
                 except AttributeError:
-                   continue
+                    continue
                 if not issubclass(obj, plugin_class):
-                   continue
+                    continue
 
+            self._display_plugin_load(self.class_name, name, self._searched_paths, path,
+                                      found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 obj = obj(*args, **kwargs)
 
@@ -480,3 +509,11 @@ strategy_loader = PluginLoader(
     'strategy_plugins',
     required_base_class='StrategyBase',
 )
+
+terminal_loader = PluginLoader(
+    'TerminalModule',
+    'ansible.plugins.terminal',
+    'terminal_plugins',
+    'terminal_plugins'
+)
+

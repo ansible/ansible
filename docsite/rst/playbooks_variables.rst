@@ -480,6 +480,11 @@ And this data can be accessed in a ``template/playbook`` as::
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
 
+.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
+
+.. _ConfigParser: https://docs.python.org/2/library/configparser.html
+.. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
+
 If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
 can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
 Here is an example of what that might look like::
@@ -668,7 +673,18 @@ be useful for when you don't want to rely on the discovered hostname ``ansible_h
 reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
 period, without the rest of the domain.
 
-``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+``play_hosts`` has been deprecated in 2.2, it was the same as the new ``ansible_play_batch`` variable.
+
+.. versionadded:: 2.2
+``ansible_play_hosts`` is the full list of all hosts still active in the current play.
+
+.. versionadded:: 2.2
+``ansible_play_batch`` is available as a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
+
+.. versionadded:: 2.3
+``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool.
+
+These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 

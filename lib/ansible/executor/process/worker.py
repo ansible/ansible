@@ -19,16 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import queue
-
-import json
 import multiprocessing
 import os
-import signal
 import sys
-import time
 import traceback
-import zlib
 
 from jinja2.exceptions import TemplateNotFound
 
@@ -40,13 +34,10 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
-from ansible.playbook.handler import Handler
-from ansible.playbook.task import Task
-from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
 
 try:
     from __main__ import display
@@ -89,7 +80,7 @@ class WorkerProcess(multiprocessing.Process):
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
                     pass
-        except ValueError:
+        except (AttributeError, ValueError):
             # couldn't get stdin's fileno, so we just carry on
             pass
 
@@ -142,11 +133,11 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
+                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
                 except:
-                    display.debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
-                    display.debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
+                    display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 
         display.debug("WORKER PROCESS EXITING")
 

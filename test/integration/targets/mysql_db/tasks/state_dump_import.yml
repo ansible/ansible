@@ -1,0 +1,75 @@
+# test code for state dump and import for mysql_db module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- set_fact: db_file_name="{{tmp_dir}}/{{file}}"
+
+- name: state dump/import - create database
+  mysql_db: name={{ db_name }} state=present
+
+- name: state dump/import - create table employee
+  command: mysql {{ db_name }} '-e create table employee(id int, name varchar(100));'
+
+- name: state dump/import - insert data into table employee
+  command: mysql {{ db_name }} "-e insert into employee value(47,'Joe Smith');"
+
+- name: state dump/import - file name should not exist
+  file: name={{ db_file_name }} state=absent
+
+- name: test state=dump to backup the database of type {{ format_type }} (expect changed=true)
+  mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
+  register: result
+
+- name: assert output message backup the database
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.db =='{{ db_name }}'"
+
+- name: assert database was backup successfully
+  command: file {{ db_file_name }}
+  register: result
+
+- name: assert file format type
+  assert: { that: "'{{format_msg_type}}' in result.stdout" }
+
+- name: update database table employee
+  command: mysql {{ db_name }} "-e update employee set name='John Doe' where id=47;"
+
+- name: test state=import to restore the database of type {{ format_type }} (expect changed=true)
+  mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
+  register: result
+
+- name: assert output message restore the database
+  assert: { that: "result.changed == true" }
+
+- name: select data from table employee
+  command: mysql {{ db_name }} "-e select * from  employee;"
+  register: result
+
+- name: assert data in database is from the restore database
+  assert:
+    that:
+       - "'47' in result.stdout"
+       - "'Joe Smith' in result.stdout"
+
+- name: remove database name
+  mysql_db: name={{ db_name }} state=absent
+
+- name: remove file name
+  file: name={{ db_file_name }}  state=absent

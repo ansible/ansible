@@ -1,0 +1,88 @@
+# test code for privileges for mysql_user module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- name: create user with basic select privileges
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:SELECT state=present
+  when: current_append_privs ==  "yes"
+
+- include: assert_user.yml user_name={{user_name_2}} priv='SELECT'
+  when: current_append_privs ==  "yes"
+ 
+- name: create user with current privileges (expect changed=true)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:{{current_privilege}} append_privs={{current_append_privs}} state=present
+  register: result
+
+- name: assert output message for current privileges 
+  assert: { that: "result.changed == true" }
+
+- name: run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e SHOW GRANTS FOR '{{user_name_2}}'@'localhost';"
+  register: result
+
+- name: assert user has correct privileges 
+  assert: { that: "'GRANT {{current_privilege | replace(',', ', ')}} ON *.*' in result.stdout" }
+  when: current_append_privs ==  "no"
+
+- name: assert user has correct privileges 
+  assert: { that: "'GRANT SELECT, {{current_privilege | replace(',', ', ')}} ON *.*' in result.stdout" }
+  when: current_append_privs ==  "yes"
+
+- name: create database using user current privileges
+  mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+  ignore_errors: true 
+
+- name: run command to test that database was not created
+  command: mysql "-e show databases like '{{ db_name }}';"
+  register: result
+
+- name: assert database was not created
+  assert: { that: "'{{ db_name }}' not in result.stdout" }
+
+# ============================================================
+- name: Add privs to a specific table (expect changed)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed == true" }
+
+- name: Add privs to a specific table (expect ok)
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=jmainguy.jmainguy:ALL state=present
+  register: result
+
+- name: Assert that priv did not change
+  assert: { that: "result.changed == false" }
+
+# ============================================================
+- name: update user with all privileges 
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:ALL state=present
+
+- include: assert_user.yml user_name={{user_name_2}} priv='ALL PRIVILEGES'
+
+- name: create database using user
+  mysql_db: name={{ db_name }} state=present login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+
+- name: run command to test database was created using user new privileges
+  command: mysql "-e SHOW CREATE DATABASE {{ db_name }};" 
+
+- name: drop database using user
+  mysql_db: name={{ db_name }} state=absent login_user={{ user_name_2 }} login_password={{ user_password_2 }}
+
+- name: remove username
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} state=absent

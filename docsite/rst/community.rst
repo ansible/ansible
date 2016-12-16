@@ -23,7 +23,7 @@ and tricks. Anyone can join, and email delivery is optional if you just want to 
 
 Please be sure to share any relevant commands you ran, output, and detail, indicate the version of Ansible you are using when asking a question.
 
-Where needed, link to gists or github repos to show examples, rather than sending attachments to the list.
+Where needed, link to gists or GitHub repos to show examples, rather than sending attachments to the list.
 
 We recommend using Google search to see if a topic has been answered recently, but comments found in older threads may no longer apply, depending on the topic.
 
@@ -35,7 +35,7 @@ to get attention of core developers since it's asynchronous.
 I'd Like To Keep Up With Release Announcements
 ----------------------------------------------
 
-Release announcements are posted to ansible-project, though if you don't want to keep up with the very active list, you can join the `Ansible Announce Mailing List <http://groups.google.com/group/ansible-announce>`_
+Release announcements are posted to ansible-project, though if you don't want to keep up with the very active list, you can join the `Ansible Announce Mailing List <http://groups.google.com/group/ansible-announce>`_.
 
 This is a low-traffic read-only list, where we'll share release announcements and occasionally links to major Ansible Events around the world.
 
@@ -51,7 +51,7 @@ you can also share things with #ansible and may wish to `follow us <https://twit
 I'd Like To Help Ansible Move Faster
 ------------------------------------
 
-If you're a developer, one of the most valuable things you can do is look at the github issues list and help fix bugs.  We almost always prioritize bug fixing over
+If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over
 feature development, so clearing bugs out of the way is one of the best things you can do.
 
 If you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.  You can do this by checking out ansible, making a test
@@ -63,7 +63,7 @@ I'd Like To Report A Bug
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
 Bugs related to the core language should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
-signing up for a free github account.  Before reporting a bug, please use the bug/issue search
+signing up for a free GitHub account.  Before reporting a bug, please use the bug/issue search
 to see if the issue has already been reported.
 
 MODULE related bugs however should go to `ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
@@ -76,7 +76,7 @@ more quickly.
 Do not use the issue tracker for "how do I do this" type questions.  These are great candidates
 for IRC or the mailing list instead where things are likely to be more of a discussion.
 
-To be respectful of reviewers time and allow us to help everyone efficiently, please 
+To be respectful of reviewers' time and allow us to help everyone efficiently, please 
 provide minimal well-reduced and well-commented examples versus sharing your entire production
 playbook.  Include playbook snippets and output where possible.  
 
@@ -101,17 +101,17 @@ Ansible documentation is a community project too!
 
 If you would like to help with the 
 documentation, whether correcting a typo or improving a section, or maybe even 
-documenting a new feature, submit a github pull request to  the code that
+documenting a new feature, submit a GitHub pull request to  the code that
 lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
-Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on github, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
+Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on GitHub, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
 
 Aside from modules, the main docs are in restructured text
 format.  
 
 If you aren’t comfortable with restructured text, you can also open a ticket on 
-github about any errors you spot or sections you would like to see added. For more information
+GitHub about any errors you spot or sections you would like to see added. For more information
 on creating pull requests, please refer to the
 `github help guide <https://help.github.com/articles/using-pull-requests>`_.
 
@@ -132,7 +132,7 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps its source on github at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ for
+The Ansible project keeps its source on GitHub at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ for
 the core application, and two sub repos `github.com/ansible/ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_
 and `ansible/ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ for module related items.
 If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
@@ -147,23 +147,26 @@ Note that we do keep Ansible to a particular aesthetic, so if you are unclear ab
 is a good fit or not, having the discussion on the development list is often a lot easier than having
 to modify a pull request later.
 
+New module developers should read through `http://docs.ansible.com/ansible/dev_guide/developing_modules.html`_ for helpful pointers 
+and information about running adhoc tests `http://docs.ansible.com/ansible/dev_guide/developing_modules.html#testing-modules`_.
+
 When submitting patches, be sure to run the unit tests first ``make tests`` and always use, these are the same basic
-tests that will automatically run on Travis when creating the PR. There are more in depth tests in the ``tests/integration``
-directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are setup
+tests that will automatically run on Shippable when creating the PR. There are more in depth tests in the ``tests/integration``
+directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are set up
 with tags so you can run subsets, some of the tests require cloud credentials and will only run if they are provided.
-When adding new features of fixing bugs it would be nice to add new tests to avoid regressions. For more information about testing see `test/README.md <https://github.com/ansible/ansible/blob/devel/test/README.md>`_.
+When adding new features or fixing bugs it would be nice to add new tests to avoid regressions. For more information about testing see `test/README.md <https://github.com/ansible/ansible/blob/devel/test/README.md>`_.
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that
 contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
 branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
-If you make a mistake you do not need to close your PR, create a clean branch locally and then push to github
+If you make a mistake you do not need to close your PR, create a clean branch locally and then push to GitHub
 with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
 We’ll then review your contributions and engage with you about questions and  so on.
 
-As we have a very large and active community, so it may take awhile to get your contributions
+Because we have a very large and active community it may take awhile to get your contributions
 in!  See the notes about priorities in a later section for understanding our work queue.
 Be patient, your request might not get merged right away, we also try to keep the devel branch more
 or less usable so we like to examine Pull requests carefully, which takes time.
@@ -183,7 +186,7 @@ while code in modules must run under Python 2.4 or higher.  Please also use a 4-
 and no tabs, we do not enforce 80 column lines, we are fine with 120-140. We do not take 'style only'
 requests unless the code is nearly unreadable, we are "PEP8ish", but not strictly compliant.
 
-You can also contribute by testing and revising other requests, specially if it is one you are interested
+You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
 good place to start discussions (ansible-devel and IRC exist for this).
 
@@ -251,7 +254,7 @@ Tower Support Questions
 
 Ansible `Tower <http://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
 
-If you have a question about tower, email `support@ansible.com <mailto:support@ansible.com>`_ rather than using the IRC
+If you have a question about Tower, visit `support.ansible.com <https://support.ansible.com/>`_ rather than using the IRC
 channel or the general project mailing list.
 
 IRC Channel
@@ -267,7 +270,7 @@ Ansible has several IRC channels on Freenode (irc.freenode.net):
 Notes on Priority Flags
 -----------------------
 
-Ansible was one of the top 5 projects with the most OSS contributors on GitHub in 2013, and has over 800 contributors
+Ansible was one of the top 5 projects with the most OSS contributors on GitHub in 2013, and has over 1400 contributors
 to the project to date, not to mention a very large user community that has downloaded the application well over a million
 times.
 

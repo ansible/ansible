@@ -35,15 +35,8 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.module_utils._text import to_bytes, to_text
 
-try:
-    from __main__ import debug_lock
-except ImportError:
-    # for those not using a CLI, though ...
-    # this might not work well after fork
-    from multiprocessing import Lock
-    debug_lock = Lock()
 
 try:
     # Python 2
@@ -51,7 +44,6 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
-
 
 
 logger = None
@@ -66,7 +58,11 @@ if C.DEFAULT_LOG_PATH:
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
-
+b_COW_PATHS = (b"/usr/bin/cowsay",
+               b"/usr/games/cowsay",
+               b"/usr/local/bin/cowsay",  # BSD path for cowsay
+               b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
+              )
 class Display:
 
     def __init__(self, verbosity=0):
@@ -79,44 +75,34 @@ class Display:
         self._warns        = {}
         self._errors       = {}
 
-        self.cowsay = None
+        self.b_cowsay = None
         self.noncow = C.ANSIBLE_COW_SELECTION
 
         self.set_cowsay_info()
 
-        if self.cowsay:
+        if self.b_cowsay:
             try:
-                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
+                self.cows_available = [ to_bytes(c) for c in set(C.ANSIBLE_COW_WHITELIST).intersection(out.split())]
             except:
                 # could not execute cowsay for some reason
-                self.cowsay = False
+                self.b_cowsay = False
 
         self._set_column_width()
 
     def set_cowsay_info(self):
-
         if not C.ANSIBLE_NOCOWS:
-            if os.path.exists("/usr/bin/cowsay"):
-                self.cowsay = "/usr/bin/cowsay"
-            elif os.path.exists("/usr/games/cowsay"):
-                self.cowsay = "/usr/games/cowsay"
-            elif os.path.exists("/usr/local/bin/cowsay"):
-                # BSD path for cowsay
-                self.cowsay = "/usr/local/bin/cowsay"
-            elif os.path.exists("/opt/local/bin/cowsay"):
-                # MacPorts path for cowsay
-                self.cowsay = "/opt/local/bin/cowsay"
+            for b_cow_path in b_COW_PATHS:
+                if os.path.exists(b_cow_path):
+                    self.b_cowsay = b_cow_path
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
-        """ 
+        """
 
-        # FIXME: this needs to be implemented
-        #msg = utils.sanitize_output(msg)
         nocolor = msg
         if color:
             msg = stringc(msg, color)
@@ -132,7 +118,7 @@ class Display:
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+                msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
             if not stderr:
                 fileobj = sys.stdout
@@ -157,7 +143,7 @@ class Display:
                 # Convert back to text string on python3
                 # We first convert to a byte string so that we get rid of
                 # characters that are invalid in the user's locale
-                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+                msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
             if color == C.COLOR_ERROR:
                 logger.error(msg2)
@@ -184,13 +170,9 @@ class Display:
 
     def debug(self, msg):
         if C.DEFAULT_DEBUG:
-            debug_lock.acquire()
             self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
-            debug_lock.release()
 
     def verbose(self, msg, host=None, caplevel=2):
-        # FIXME: this needs to be implemented
-        #msg = utils.sanitize_output(msg)
         if self.verbosity > caplevel:
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE)
@@ -236,12 +218,11 @@ class Display:
         if C.SYSTEM_WARNINGS:
             self.warning(msg)
 
-    def banner(self, msg, color=None):
+    def banner(self, msg, color=None, cows=True):
         '''
-        Prints a header-looking line with stars taking up to 80 columns
-        of width (3 columns, minimum)
+        Prints a header-looking line with cowsay or stars wit hlength depending on terminal width (3 minimum)
         '''
-        if self.cowsay:
+        if self.b_cowsay and cows:
             try:
                 self.banner_cowsay(msg)
                 return
@@ -249,28 +230,28 @@ class Display:
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = (79 - len(msg))
-        if star_len < 0:
+        star_len = self.columns - len(msg)
+        if star_len <= 3:
             star_len = 3
-        stars = "*" * star_len
-        self.display("\n%s %s" % (msg, stars), color=color)
+        stars = u"*" * star_len
+        self.display(u"\n%s %s" % (msg, stars), color=color)
 
     def banner_cowsay(self, msg, color=None):
-        if ": [" in msg:
-            msg = msg.replace("[","")
-            if msg.endswith("]"):
+        if u": [" in msg:
+            msg = msg.replace(u"[", u"")
+            if msg.endswith(u"]"):
                 msg = msg[:-1]
-        runcmd = [self.cowsay,"-W", "60"]
+        runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == 'random':
+            if thecow == b'random':
                 thecow = random.choice(self.cows_available)
-            runcmd.append('-f')
+            runcmd.append(b'-f')
             runcmd.append(thecow)
-        runcmd.append(msg)
+        runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display("%s\n" % out, color=color)
+        self.display(u"%s\n" % to_text(out), color=color)
 
     def error(self, msg, wrap_text=True):
         if wrap_text:
@@ -289,7 +270,7 @@ class Display:
         if sys.version_info >= (3,):
             # Convert back into text on python3.  We do this double conversion
             # to get rid of characters that are illegal in the user's locale
-            prompt_string = to_unicode(prompt_string)
+            prompt_string = to_text(prompt_string)
 
         if private:
             return getpass.getpass(msg)
@@ -333,7 +314,7 @@ class Display:
             result = do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
-        result = to_unicode(result, errors='strict')
+        result = to_text(result, errors='surrogate_or_strict')
         return result
 
     @staticmethod
@@ -351,4 +332,4 @@ class Display:
             tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             tty_size = 0
-        self.columns = max(79, tty_size)
+        self.columns = max(79, tty_size - 1)

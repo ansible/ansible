@@ -405,4 +405,3 @@
        - 'result.changed'
        - 'result.elb.name == "{{tag_prefix}}"'
        - 'result.elb.status == "deleted"'
-

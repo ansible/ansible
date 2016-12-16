@@ -20,10 +20,10 @@ __metaclass__ = type
 
 import os
 
-from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_str
+from ansible.module_utils._text import to_native
+from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             src = self._find_needle('files', src)
         except AnsibleError as e:
             result['failed'] = True
-            result['msg'] = to_str(e)
+            result['msg'] = to_native(e)
             return result
 
         # create the remote tmp dir if needed, and put the source file there
@@ -63,7 +63,7 @@ class ActionModule(ActionBase):
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._transfer_file(src, tmp_src)
 
-        self._fixup_perms((tmp, tmp_src), remote_user)
+        self._fixup_perms2((tmp, tmp_src), remote_user)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

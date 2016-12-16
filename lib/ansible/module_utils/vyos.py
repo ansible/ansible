@@ -26,107 +26,15 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import itertools
 import re
+import os
 
 from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list, get_exception
-from ansible.module_utils.network import Command, NetCli
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-
-DEFAULT_COMMENT = 'configured by vyos_config'
-
-FILTERS = [
-    re.compile(r'set system login user \S+ authentication encrypted-password')
-]
-
-def argument_spec():
-    return dict(
-        running_config=dict(aliases=['config']),
-        comment=dict(default=DEFAULT_COMMENT),
-        save_config=dict(type='bool', aliases=['save'])
-    )
-vyos_argument_spec = argument_spec()
-
-def get_config(module):
-    contents = module.params['running_config']
-    if not contents:
-        contents = str(module.config.get_config()).split('\n')
-        module.params['config'] = contents
-    contents = '\n'.join(contents)
-    return NetworkConfig(contents=contents, device_os='junos')
-
-def diff_config(candidate, config):
-    updates = set()
-    config = [str(c).replace("'", '') for c in str(config).split('\n')]
-
-    for line in str(candidate).split('\n'):
-        item = str(line).replace("'", '')
-
-        if not item.startswith('set') and not item.startswith('delete'):
-            raise ValueError('line must start with either `set` or `delete`')
-
-        elif item.startswith('set') and item not in config:
-            updates.add(line)
-
-        elif item.startswith('delete'):
-            if not config:
-                updates.add(line)
-            else:
-                item = re.sub(r'delete', 'set', item)
-                for entry in config:
-                    if entry.startswith(item):
-                        updates.add(line)
-
-    return list(updates)
-
-def check_config(config, result):
-    result['filtered'] = list()
-    for regex in FILTERS:
-        for index, line in enumerate(list(config)):
-            if regex.search(line):
-                result['filtered'].append(line)
-                del config[index]
-
-def load_candidate(module, candidate):
-    config = get_config(module)
-
-    updates = diff_config(candidate, config)
-
-    comment = module.params['comment']
-    save = module.params['save_config']
-
-    result = dict(changed=False)
-
-    if updates:
-        check_config(updates, result)
-        diff = module.config.load_config(updates)
-        if diff:
-            result['diff'] = dict(prepared=diff)
-
-        result['changed'] = True
-
-        if not module.check_mode:
-            module.config.commit_config(comment=comment)
-            if save:
-                module.config.save_config()
-        else:
-            module.config.abort_config()
-
-        # exit from config mode
-        module.cli('exit')
-
-    result['updates'] = updates
-    return result
-
-def load_config(module, commands):
-    contents = '\n'.join(commands)
-    candidate = NetworkConfig(contents=contents, device_os='junos')
-    return load_candidate(module, candidate)
+from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
 
-class Cli(NetCli):
+class Cli(CliBase):
 
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
@@ -139,51 +47,66 @@ class Cli(NetCli):
         re.compile(r"\n\s+Set failed"),
     ]
 
+    TERMINAL_LENGTH = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
         self.shell.send('set terminal length 0')
-        self._connected = True
+        self.shell.send('set terminal length %s' % self.TERMINAL_LENGTH)
 
-    ### Cli methods ###
 
-    def run_commands(self, commands, **kwargs):
+    ### implementation of netcli.Cli ###
+
+    def run_commands(self, commands):
         commands = to_list(commands)
         return self.execute([str(c) for c in commands])
 
-    ### Config methods ###
+    ### implementation of netcfg.Config ###
 
-    def configure(self, commands, commit=True, **kwargs):
-        """Called by Config.__call__
-        """
-        cmds = ['configure']
-        cmds.extend(to_list(commands))
-        response = self.execute(cmds)
-        if commit:
-            self.commit_config()
-        return response
+    def configure(self, config):
+        commands = ['configure']
+        commands.extend(config)
+        commands.extend(['commit', 'exit'])
+        response = self.execute(commands)
+        return response[1:-2]
 
-    def load_config(self, commands):
-        self.configure(commands, commit=False)
-        diff = None
+    def load_config(self, config, commit=False, comment=None, save=False, **kwargs):
+        try:
+            config.insert(0, 'configure')
+            self.execute(config)
+        except NetworkError:
+            # discard any changes in case of failure
+            self.execute(['exit discard'])
+            raise
+
         if not self.execute('compare')[0].startswith('No changes'):
             diff = self.execute(['show'])[0]
+        else:
+            diff = None
+
+        if commit:
+            cmd = 'commit'
+            if comment:
+                cmd += ' comment "%s"' % comment
+            self.execute(cmd)
+
+        if save:
+            self.execute(['save'])
+
+        if not commit:
+            self.execute(['exit discard'])
+        else:
+            self.execute(['exit'])
+
         return diff
 
-    def get_config(self):
-        return self.execute(['show configuration commands'])[0]
-
-    def commit_config(self, confirm=0, comment=None):
-        if confirm > 0:
-            cmd = 'commit-confirm %s' % confirm
+    def get_config(self, output='text', **kwargs):
+        if output not in ['text', 'set']:
+            raise ValueError('invalid output format specified')
+        if output == 'set':
+            return self.execute(['show configuration commands'])[0]
         else:
-            cmd = 'commit'
-        if comment:
-            cmd += ' comment "%s"' % comment
-        self.execute([cmd])
+            return self.execute(['show configuration'])[0]
 
-    def abort_config(self):
-        self.execute(['discard'])
-
-    def save_config(self):
-        self.execute(['save'])
 Cli = register_transport('cli', default=True)(Cli)

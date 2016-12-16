@@ -50,8 +50,8 @@ class TestPlay(unittest.TestCase):
             gather_facts=False,
             connection='local',
             remote_user="root",
-            sudo=True,
-            sudo_user="testing",
+            become=True,
+            become_user="testing",
         ))
 
     def test_play_with_user_conflict(self):

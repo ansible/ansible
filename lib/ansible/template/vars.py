@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems
 from jinja2.utils import missing
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_native
+
 
 __all__ = ['AnsibleJ2Vars']
 
@@ -88,7 +89,7 @@ class AnsibleJ2Vars:
             try:
                 value = self._templar.template(variable)
             except Exception as e:
-                raise type(e)(to_unicode(variable) + ': ' + e.message)
+                raise type(e)(to_native(variable) + ': ' + e.message)
             return value
 
     def add_locals(self, locals):
@@ -99,4 +100,3 @@ class AnsibleJ2Vars:
         if locals is None:
             return self
         return AnsibleJ2Vars(self._templar, self._globals, locals=locals, *self._extras)
-

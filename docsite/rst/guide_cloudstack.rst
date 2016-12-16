@@ -7,7 +7,7 @@ Introduction
 ````````````
 The purpose of this section is to explain how to put Ansible modules together to use Ansible in a CloudStack context. You will find more usage examples in the details section of each module.
 
-Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode and are designed to use idempotence and have been created, tested and are maintained by the community.
+Ansible contains a number of extra modules for interacting with CloudStack based clouds. All modules support check mode, are designed to be idempotent, have been created and tested, and are maintained by the community.
 
 .. note:: Some of the modules will require domain admin or root admin privileges.
 
@@ -97,6 +97,43 @@ Or by looping over a regions list if you want to do the task in every region:
           - exmaple_cloud_one
           - exmaple_cloud_two
 
+Environment Variables
+`````````````````````
+.. versionadded:: 2.3
+
+Since Ansible 2.3 it is possible to use environment variables for domain (``CLOUDSTACK_DOMAIN``), account (``CLOUDSTACK_ACCOUNT``), project (``CLOUDSTACK_PROJECT``), VPC (``CLOUDSTACK_VPC``) and zone (``CLOUDSTACK_ZONE``). This simplifies the tasks by not repeating the arguments for every tasks.
+
+Below you see an example how it can be used in combination with Ansible's block feature:
+
+.. code-block:: yaml
+
+    - hosts: cloud-vm
+      tasks:
+        - block:
+            - name: ensure my ssh public key
+              local_action:
+                module: cs_sshkeypair
+                name: my-ssh-key
+                public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+            - name: ensure my ssh public key
+              local_action:
+                module: cs_instance:
+                  display_name: "{{ inventory_hostname_short }}"
+                  template: Linux Debian 7 64-bit 20GB Disk
+                  service_offering: "{{ cs_offering }}"
+                  ssh_key: my-ssh-key
+                  state: running
+
+          environment:
+            CLOUDSTACK_DOMAIN: root/customers
+            CLOUDSTACK_PROJECT: web-app
+            CLOUDSTACK_ZONE: sf-1
+
+.. Note:: You are still able overwrite the environment variables using the module arguments, e.g.``zone: sf-2``
+
+.. Note:: Unlike ``CLOUDSTACK_REGION`` these additional environment variables are ingored in the CLI ``cs``.
+
 Use Cases
 `````````
 The following should give you some ideas how to use the modules to provision VMs to the cloud. As always, there isn't only one way to do it. But as always: keep it simple for the beginning is always a good start.
@@ -115,19 +152,19 @@ This is how our inventory looks like:
     jumphost
 
     [webserver]
-    web-01.example.com  public_ip=1.2.3.4
-    web-02.example.com  public_ip=1.2.3.5
+    web-01.example.com  public_ip=198.51.100.20
+    web-02.example.com  public_ip=198.51.100.21
 
     [db-server]
     db-01.example.com
     db-02.example.com
 
     [jumphost]
-    jump.example.com  public_ip=1.2.3.6
+    jump.example.com  public_ip=198.51.100.22
 
 As you can see, the public IPs for our web servers and jumphost has been assigned as variable ``public_ip`` directly in the inventory.
 
-The configure the jumphost, web servers and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver and db-server. The cloud-vm is there for specifing the defaults of our cloud infrastructure.
+The configure the jumphost, web servers and database servers, we use ``group_vars``. The ``group_vars`` directory contains 4 files for configuration of the groups: cloud-vm, jumphost, webserver and db-server. The cloud-vm is there for specifying the defaults of our cloud infrastructure.
 
 .. code-block:: yaml
 
@@ -185,7 +222,7 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
             ip_address: "{{ public_ip }}"
             port: "{{ item.port }}"
             cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
-          with_items: cs_firewall
+          with_items: "{{ cs_firewall }}"
           when: public_ip is defined
 
         - name: ensure static NATs
@@ -194,7 +231,7 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
 
 In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connetion=local`` to execute the API calls locally from our workstation.
 
-In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an exisiting VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
+In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
 In the second task we ensure the ports are opened if we give a public IP to the VM.
 

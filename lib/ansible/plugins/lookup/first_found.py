@@ -122,9 +122,10 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 class LookupModule(LookupBase):
 
@@ -146,14 +147,14 @@ class LookupModule(LookupBase):
                     skip  = boolean(term.get('skip', False))
 
                     filelist = files
-                    if isinstance(files, basestring):
+                    if isinstance(files, string_types):
                         files = files.replace(',', ' ')
                         files = files.replace(';', ' ')
                         filelist = files.split(' ')
 
                     pathlist = paths
                     if paths:
-                        if isinstance(paths, basestring):
+                        if isinstance(paths, string_types):
                             paths = paths.replace(',', ' ')
                             paths = paths.replace(':', ' ')
                             paths = paths.replace(';', ' ')
@@ -180,11 +181,9 @@ class LookupModule(LookupBase):
              # get subdir if set by task executor, default to files otherwise
             subdir = getattr(self, '_subdir', 'files')
             path = None
-            try:
-                path = self.find_file_in_search_path(variables, subdir, fn)
+            path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
+            if path is not None:
                 return [path]
-            except AnsibleFileNotFound:
-                continue
         else:
             if skip:
                 return []

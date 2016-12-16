@@ -29,7 +29,7 @@ options:
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -56,7 +56,7 @@ options:
     version_added: "1.5"
   profile:
     description:
-      - uses a boto profile. Only works with boto >= 2.24.0
+      - Uses a boto profile. Only works with boto >= 2.24.0.
     required: false
     default: null
     aliases: []

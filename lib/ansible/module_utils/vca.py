@@ -103,6 +103,7 @@ class VcaAnsibleModule(AnsibleModule):
 
     def get_vm(self, vapp_name, vm_name):
         vapp = self.get_vapp(vapp_name)
+        children = vapp.me.get_Children()
         vms = [vm for vm in children.get_Vm() if vm.name == vm_name]
         try:
             return vms[0]
@@ -203,7 +204,7 @@ class VcaAnsibleModule(AnsibleModule):
 
 VCA_REQ_ARGS = ['instance_id', 'vdc_name']
 VCHS_REQ_ARGS = ['service_id']
-
+VCD_REQ_ARGS = []
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:

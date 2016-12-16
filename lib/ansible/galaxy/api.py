@@ -25,15 +25,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-import urllib
-
-from urllib2 import quote as urlquote, HTTPError
 
 import ansible.constants as C
+from ansible.compat.six import string_types
+from ansible.compat.six.moves.urllib.error import HTTPError
+from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.errors import AnsibleError
-from ansible.module_utils.urls import open_url
 from ansible.galaxy.token import GalaxyToken
-from ansible.utils.unicode import to_str
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 try:
     from __main__ import display
@@ -41,21 +41,23 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 def g_connect(method):
     ''' wrapper to lazily initialize connection info to galaxy '''
     def wrapped(self, *args, **kwargs):
         if not self.initialized:
             display.vvvv("Initial connection to galaxy_server: %s" % self._api_server)
             server_version = self._get_server_api_version()
-            if not server_version in self.SUPPORTED_VERSIONS:
+            if server_version not in self.SUPPORTED_VERSIONS:
                 raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
             self.baseurl = '%s/api/%s' % (self._api_server, server_version)
-            self.version = server_version # for future use
+            self.version = server_version  # for future use
             display.vvvv("Base API: %s" % self.baseurl)
             self.initialized = True
         return method(self, *args, **kwargs)
     return wrapped
+
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -77,7 +79,6 @@ class GalaxyAPI(object):
         if galaxy.options.api_server != C.GALAXY_SERVER:
             self._api_server = galaxy.options.api_server
 
-
     def __auth_header(self):
         token = self.token.get()
         if token is None:
@@ -90,7 +91,8 @@ class GalaxyAPI(object):
             headers = self.__auth_header()
         try:
             display.vvv(url)
-            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method)
+            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method,
+                            timeout=20)
             data = json.load(resp)
         except HTTPError as e:
             res = json.load(e)
@@ -112,16 +114,16 @@ class GalaxyAPI(object):
         """
         url = '%s/api/' % self._api_server
         try:
-            return_data =open_url(url, validate_certs=self._validate_certs)
+            return_data = open_url(url, validate_certs=self._validate_certs)
         except Exception as e:
-            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_str(e)))
+            raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
 
         try:
             data = json.load(return_data)
         except Exception as e:
-            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_str(e)))
+            raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
-        if not 'current_version' in data:
+        if 'current_version' not in data:
             raise AnsibleError("missing required 'current_version' from server response (%s)" % url)
 
         return data['current_version']
@@ -132,23 +134,27 @@ class GalaxyAPI(object):
         Retrieve an authentication token
         """
         url = '%s/tokens/' % self.baseurl
-        args = urllib.urlencode({"github_token": github_token})
+        args = urlencode({"github_token": github_token})
         resp = open_url(url, data=args, validate_certs=self._validate_certs, method="POST")
         data = json.load(resp)
         return data
 
     @g_connect
-    def create_import_task(self, github_user, github_repo, reference=None):
+    def create_import_task(self, github_user, github_repo, reference=None, role_name=None):
         """
         Post an import request
         """
         url = '%s/imports/' % self.baseurl
-        args = urllib.urlencode({
+        args = {
             "github_user": github_user,
             "github_repo": github_repo,
             "github_reference": reference if reference else ""
-        })
-        data = self.__call_galaxy(url, args=args)
+        }
+        if role_name:
+            args['alternate_role_name'] = role_name
+        elif github_repo.startswith('ansible-role'):
+            args['alternate_role_name'] = github_repo[len('ansible-role')+1:]
+        data = self.__call_galaxy(url, args=urlencode(args))
         if data.get('results', None):
             return data['results']
         return data
@@ -159,9 +165,9 @@ class GalaxyAPI(object):
         Check the status of an import task.
         """
         url = '%s/imports/' % self.baseurl
-        if not task_id is None:
+        if task_id is not None:
             url = "%s?id=%d" % (url,task_id)
-        elif not github_user is None and not github_repo is None:
+        elif github_user is not None and github_repo is not None:
             url = "%s?github_user=%s&github_repo=%s" % (url,github_user,github_repo)
         else:
             raise AnsibleError("Expected task_id or github_user and github_repo")
@@ -249,11 +255,11 @@ class GalaxyAPI(object):
         page_size = kwargs.get('page_size', None)
         author = kwargs.get('author', None)
 
-        if tags and isinstance(tags, basestring):
+        if tags and isinstance(tags, string_types):
             tags = tags.split(',')
             search_url += '&tags_autocomplete=' + '+'.join(tags)
 
-        if platforms and isinstance(platforms, basestring):
+        if platforms and isinstance(platforms, string_types):
             platforms = platforms.split(',')
             search_url += '&platforms_autocomplete=' + '+'.join(platforms)
 
@@ -269,7 +275,7 @@ class GalaxyAPI(object):
     @g_connect
     def add_secret(self, source, github_user, github_repo, secret):
         url = "%s/notification_secrets/" % self.baseurl
-        args = urllib.urlencode({
+        args = urlencode({
             "source": source,
             "github_user": github_user,
             "github_repo": github_repo,

@@ -1,0 +1,36 @@
+# Inventory file used by networking tests, see README.md for more information
+
+[all:vars]
+ansible_python_interpreter=python
+
+[eos]
+#veos-dut-01
+veos01
+
+
+[nxos]
+nxos01
+
+[iosxr]
+iosxr01
+
+[ios]
+ios01
+#csr01
+
+[junos]
+vsrx01
+
+[cumulus]
+clvx01
+
+[vyos]
+vyos-dut-01
+
+[ops]
+ops01
+
+[asa]
+asa01
+
+# vim: nospell filetype=dosini

@@ -23,7 +23,7 @@ def initialize():
 
 def list_groups(api):
     '''
-    This function returns a list of all host groups. This function requires
+    This function prints a list of all host groups. This function requires
     one argument, the FreeIPA/IPA API object.
     '''
 
@@ -34,10 +34,16 @@ def list_groups(api):
     result = api.Command.hostgroup_find()['result']
 
     for hostgroup in result:
-        inventory[hostgroup['cn'][0]] = { 'hosts': [host for host in  hostgroup['member_host']]}
+        # Get direct and indirect members (nested hostgroups) of hostgroup
+        members = []
+        if 'member_host' in hostgroup:
+            members = [host for host in hostgroup['member_host']]
+        if 'memberindirect_host' in hostgroup:
+            members += (host for host in  hostgroup['memberindirect_host'])
+        inventory[hostgroup['cn'][0]] = {'hosts': [host for host in members]}
 
-        for host in  hostgroup['member_host']:
-            hostvars[host] = {}
+        for member in members:
+            hostvars[member] = {}
 
     inventory['_meta'] = {'hostvars': hostvars}
     inv_string = json.dumps(inventory, indent=1, sort_keys=True)

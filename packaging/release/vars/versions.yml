@@ -1,11 +1,13 @@
 versions:
 - "2.2":
-    code_name: "TBD"
+    code_name: "The Battle of Evermore"
     releases:
-    - "0": "TBD"
+    - "0": "11-01-2016"
 - "2.1":
     code_name: "The Song Remains the Same"
     releases:
+    - "3": "11-04-2016"
+    - "2": "09-29-2016"
     - "1": "07-28-2016"
     - "0": "05-25-2016"
 - "2.0":
@@ -31,7 +33,7 @@ versions:
     - '3': "02-17-2015"
     - '2': "12-04-2014"
     - '1': "11-26-2014"
-    - '0': "?"
+    - '0': "11-25-2014"
 - "1.7":
     code_name: "Summer Nights"
     releases:

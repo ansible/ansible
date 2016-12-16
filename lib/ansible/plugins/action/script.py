@@ -19,14 +19,13 @@ __metaclass__ = type
 
 import os
 
-from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_str
+from ansible.module_utils._text import to_native
+from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
-
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
@@ -74,14 +73,14 @@ class ActionModule(ActionBase):
         try:
             source = self._loader.get_real_file(self._find_needle('files', source))
         except AnsibleError as e:
-            return dict(failed=True, msg=to_str(e))
+            return dict(failed=True, msg=to_native(e))
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._transfer_file(source, tmp_src)
 
         # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms((tmp, tmp_src), remote_user, execute=True)
+        self._fixup_perms2((tmp, tmp_src), remote_user, execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()

@@ -1,0 +1,7 @@
+---
+# defaults file for test_mysql_db
+db_name: 'data'
+db_user1: 'datauser1'
+db_user2: 'datauser2'
+
+tmp_dir: '/tmp'

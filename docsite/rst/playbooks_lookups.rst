@@ -67,7 +67,9 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
-.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
+.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string.
+
+Caution: Since this runs on the ansible host as the user running the playbook, and "become" does not apply, the target file must be readable by the playbook user, or, if it does not exist, the playbook user must have sufficient privileges to create it. (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).
 
 Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
 
@@ -237,6 +239,24 @@ You can specify regions or tables to fetch secrets from::
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
+      
+      
+If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
+
+    ---
+    - name: test
+      hosts: localhost
+      vars:
+        context:
+          app: my_app
+          environment: production
+      tasks:
+
+      - name: "Test credstash lookup plugin -- get the password with a context passed as a variable"
+        debug: msg="{{ lookup('credstash', 'some-password', context=context) }}"
+
+      - name: "Test credstash lookup plugin -- get the password with a context defined here"
+        debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
 
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
@@ -277,8 +297,8 @@ record type that should be queried. This can be done by either passing-in
 additional parameter of format ``qtype=TYPE`` to the ``dig`` lookup, or by
 appending ``/TYPE`` to the *FQDN* being queried. For example::
 
-  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com.', 'qtype=TXT') }}"
-  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com./TXT') }}"
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org.', 'qtype=TXT') }}"
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org./TXT') }}"
 
 If multiple values are associated with the requested record, the results will be
 returned as a comma-separated list. In such cases you may want to pass option
@@ -292,16 +312,16 @@ In case of reverse DNS lookups (``PTR`` records), you can also use a convenience
 syntax of format ``IP_ADDRESS/PTR``. The following three lines would produce the
 same output::
 
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8/PTR') }}"
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa./PTR') }}"
-  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa.', 'qtype=PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa.', 'qtype=PTR') }}"
 
 By default, the lookup will rely on system-wide configured DNS servers for
 performing the query. It is also possible to explicitly specify DNS servers to
 query using the ``@DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N`` notation. This
 needs to be passed-in as an additional parameter to the lookup. For example::
 
-  - debug: msg="Querying 8.8.8.8 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@8.8.8.8') }}"
+  - debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
 
 In some cases the DNS records may hold a more complex data structure, or it may
 be useful to obtain the results in a form of a dictionary for future

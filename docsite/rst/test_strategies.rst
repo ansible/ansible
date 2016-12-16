@@ -258,7 +258,7 @@ system.
    :doc:`playbooks`
        An introduction to playbooks
    :doc:`playbooks_delegation`
-       Delegation, useful for working with loud balancers, clouds, and locally executed steps.
+       Delegation, useful for working with load balancers, clouds, and locally executed steps.
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

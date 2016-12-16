@@ -41,17 +41,26 @@ General Rules
 =============
 Individuals with direct commit access to ansible/ansible (+core, + extras) are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement. 
 
-* Don’t commit directly.
-* Don't omit tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes.
-* Don't forget the docs! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of Core against which this documentation is compatible (to avoid confusion with stable versus devel docs, for backwards compatibility, etc.).
-* Don't merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
-* Consider backwards compatibility (don’t break existing playbooks).
-* Don't forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
-* Don't drag your community team members down. Always discuss the technical merits, but you should never address the person’s limitations (you can later go for beers and call them idiots, but not in IRC/Github/etc.).
-* Don't forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great.
-* Don't break playbooks. Always keep backwards compatibility in mind.
-* Don't forget to keep it simple. Complexity breeds all kinds of problems.
-* Don't forget to be active. Committers who have no activity on the project (through merges, triage, commits, etc.) will have their permissions suspended.
+* Don’t
+
+  - Commit directly.
+  - Merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
+  - Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
+  - Drag your community team members down. Always discuss the technical merits, but you should never address the person’s limitations (you can later go for beers and call them idiots, but not in IRC/Github/etc.).
+  - Forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great.
+  - Break playbooks. Always keep backwards compatibility in mind.
+  - Forget to keep it simple. Complexity breeds all kinds of problems.
+
+* Do
+
+  - Squash, avoid merges whenever possible, use github's squash commits or cherry pick if needed (bisect thanks you).
+  - Be active. Committers who have no activity on the project (through merges, triage, commits, etc.) will have their permissions suspended.
+  - Consider backwards compatibility (goes back to "don’t break existing playbooks").
+  - Write tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes.
+  - Discuss with other committers, specially when you are unsure of something.
+  - Document! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of Core against which this documentation is compatible (to avoid confusion with stable versus devel docs, for backwards compatibility, etc.).
+  - Consider scope, sometimes a fix can be generalized
+  - Keep it simple, then things are maintainable, debuggable and intelligible.
 
 Committers are expected to continue to follow the same community and contribution guidelines followed by the rest of the Ansible community. 
 

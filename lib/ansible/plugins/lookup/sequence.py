@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from re import compile as re_compile, IGNORECASE
 
+from ansible.compat.six.moves import xrange
 from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
@@ -99,8 +100,8 @@ class LookupModule(LookupBase):
                     "can't parse arg %s=%r as integer"
                         % (arg, arg_raw)
                 )
-            if 'format' in args:
-                self.format = args.pop("format")
+        if 'format' in args:
+            self.format = args.pop("format")
         if args:
             raise AnsibleError(
                 "unrecognized arguments to with_sequence: %r"
@@ -186,6 +187,8 @@ class LookupModule(LookupBase):
                 try:
                     if not self.parse_simple_args(term):
                         self.parse_kv_args(parse_kv(term))
+                except AnsibleError:
+                    raise
                 except Exception as e:
                     raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
 

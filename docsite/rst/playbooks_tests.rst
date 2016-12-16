@@ -67,6 +67,8 @@ be used.  The default is ``False``, but this setting as ``True`` uses more stric
 Group theory tests
 ------------------
 
+.. versionadded:: 2.1
+
 To see if a list includes or is included by another list, you can use 'issubset' and 'issuperset'::
 
     vars:
@@ -88,7 +90,7 @@ Testing paths
 The following tests can provide information about a path on the controller::
 
     - debug: msg="path is a directory"
-      when: mypath|isdir
+      when: mypath|is_dir
 
     - debug: msg="path is a file"
       when: mypath|is_file

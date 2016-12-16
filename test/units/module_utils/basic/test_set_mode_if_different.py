@@ -68,7 +68,7 @@ def _check_mode_changed_to_0660(self, mode):
     with patch('os.lstat', side_effect=[self.mock_stat1, self.mock_stat2, self.mock_stat2]) as m_lstat:
         with patch('os.lchmod', return_value=None, create=True) as m_lchmod:
             self.assertEqual(self.am.set_mode_if_different('/path/to/file', mode, False), True)
-            m_lchmod.assert_called_with('/path/to/file', 0o660)
+            m_lchmod.assert_called_with(b'/path/to/file', 0o660)
 
 def _check_mode_unchanged_when_already_0660(self, mode):
     # Note: This is for checking that all the different ways of specifying

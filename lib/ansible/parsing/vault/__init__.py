@@ -1,4 +1,6 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# (c) 2016, Adrian Likins <alikins@redhat.com>
+# (c) 2016, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,20 +27,13 @@ import tempfile
 import random
 from io import BytesIO
 from subprocess import call
-from ansible.errors import AnsibleError
 from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from hashlib import md5
 
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
-from hashlib import md5
 
 try:
     from Crypto.Hash import SHA256, HMAC
@@ -67,6 +62,17 @@ try:
 except ImportError:
     HAS_AES = False
 
+from ansible.compat.six import PY3, binary_type
+from ansible.compat.six.moves import zip
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # OpenSSL pbkdf2_hmac
 HAS_PBKDF2HMAC = False
 try:
@@ -77,20 +83,19 @@ try:
 except ImportError:
     pass
 except Exception as e:
-    display.warning("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'")
+    display.vvvv("Optional dependency 'cryptography' raised an exception, falling back to 'Crypto'.")
     import traceback
-    display.debug("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
-
-from ansible.compat.six import PY3
-from ansible.utils.unicode import to_unicode, to_bytes
+    display.vvvv("Traceback from import of cryptography was {0}".format(traceback.format_exc()))
 
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 
-CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
+
+CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform." \
+    " You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 b_HEADER = b'$ANSIBLE_VAULT'
 CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
-CIPHER_WRITE_WHITELIST=frozenset((u'AES256',))
+CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
@@ -100,6 +105,63 @@ def check_prereqs():
     if not HAS_AES or not HAS_COUNTER or not HAS_ANY_PBKDF2HMAC or not HAS_HASH:
         raise AnsibleError(CRYPTO_UPGRADE)
 
+
+class AnsibleVaultError(AnsibleError):
+    pass
+
+
+def is_encrypted(data):
+    """ Test if this is vault encrypted data blob
+
+    :arg data: a byte or text string to test whether it is recognized as vault
+        encrypted data
+    :returns: True if it is recognized.  Otherwise, False.
+    """
+    try:
+        # Make sure we have a byte string and that it only contains ascii
+        # bytes.
+        b_data = to_bytes(to_text(data, encoding='ascii', errors='strict', nonstring='strict'), encoding='ascii', errors='strict')
+    except (UnicodeError, TypeError):
+        # The vault format is pure ascii so if we failed to encode to bytes
+        # via ascii we know that this is not vault data.
+        # Similarly, if it's not a string, it's not vault data
+        return False
+
+    if b_data.startswith(b_HEADER):
+        return True
+    return False
+
+
+def is_encrypted_file(file_obj, start_pos=0, count=-1):
+    """Test if the contents of a file obj are a vault encrypted data blob.
+
+    :arg file_obj: A file object that will be read from.
+    :kwarg start_pos: A byte offset in the file to start reading the header
+        from.  Defaults to 0, the beginning of the file.
+    :kwarg count: Read up to this number of bytes from the file to determine
+        if it looks like encrypted vault data.  The default is -1, read to the
+        end of file.
+    :returns: True if the file looks like a vault file. Otherwise, False.
+    """
+    # read the header and reset the file stream to where it started
+    current_position = file_obj.tell()
+    try:
+        file_obj.seek(start_pos)
+        vaulttext = file_obj.read(count)
+        try:
+            b_vaulttext = to_bytes(to_text(vaulttext, encoding='ascii', errors='strict'), encoding='ascii', errors='strict')
+        except (UnicodeError, TypeError):
+            # At present, vault files contain only ascii characters.  The encoding is utf-8
+            # without BOM (for future expansion).  If the header does not
+            # decode as ascii then we know we do not have proper vault
+            # encrypted data.
+            return False
+    finally:
+        file_obj.seek(current_position)
+
+    return is_encrypted(b_vaulttext)
+
+
 class VaultLib:
 
     def __init__(self, password):
@@ -107,36 +169,41 @@ class VaultLib:
         self.cipher_name = None
         self.b_version = b'1.1'
 
-    def is_encrypted(self, data):
+    @staticmethod
+    def is_encrypted(data):
         """ Test if this is vault encrypted data
 
-        :arg data: a byte str or unicode string to test whether it is
+        :arg data: a byte or text string or a python3 to test for whether it is
             recognized as vault encrypted data
         :returns: True if it is recognized.  Otherwise, False.
         """
 
-        if hasattr(data, 'read'):
-            current_position = data.tell()
-            header_part = data.read(len(b_HEADER))
-            data.seek(current_position)
-            return self.is_encrypted(header_part)
+        # This could in the future, check to see if the data is a vault blob and
+        # is encrypted with a key associated with this vault
+        # instead of just checking the format.
+        display.deprecated(u'vault.VaultLib.is_encrypted is deprecated.  Use vault.is_encrypted instead', version='2.4')
+        return is_encrypted(data)
 
-        if to_bytes(data, errors='strict', encoding='utf-8').startswith(b_HEADER):
-            return True
-        return False
+    @staticmethod
+    def is_encrypted_file(file_obj):
+        display.deprecated(u'vault.VaultLib.is_encrypted_file is deprecated.  Use vault.is_encrypted_file instead', version='2.4')
+        return is_encrypted_file(file_obj)
 
-    def encrypt(self, data):
+    def encrypt(self, plaintext):
         """Vault encrypt a piece of data.
 
-        :arg data: a utf-8 byte str or unicode string to encrypt.
+        :arg plaintext: a text or byte string to encrypt.
         :returns: a utf-8 encoded byte str of encrypted data.  The string
             contains a header identifying this as vault encrypted data and
             formatted to newline terminated lines of 80 characters.  This is
             suitable for dumping as is to a vault file.
-        """
-        b_data = to_bytes(data, errors='strict', encoding='utf-8')
 
-        if self.is_encrypted(b_data):
+        If the string passed in is a text string, it will be encoded to UTF-8
+        before encryption.
+        """
+        b_plaintext = to_bytes(plaintext, errors='surrogate_or_strict')
+
+        if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
@@ -149,55 +216,59 @@ class VaultLib:
         this_cipher = Cipher()
 
         # encrypt data
-        b_enc_data = this_cipher.encrypt(b_data, self.b_password)
+        b_ciphertext = this_cipher.encrypt(b_plaintext, self.b_password)
 
         # format the data for output to the file
-        b_tmp_data = self._format_output(b_enc_data)
-        return b_tmp_data
+        b_vaulttext = self._format_output(b_ciphertext)
+        return b_vaulttext
 
-    def decrypt(self, data, filename=None):
+    def decrypt(self, vaulttext, filename=None):
         """Decrypt a piece of vault encrypted data.
 
-        :arg data: a string to decrypt.  Since vault encrypted data is an
+        :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
             ascii text format this can be either a byte str or unicode string.
+        :kwarg filename: a filename that the data came from.  This is only
+            used to make better error messages in case the data cannot be
+            decrypted.
         :returns: a byte string containing the decrypted data
         """
-        b_data = to_bytes(data, errors='strict', encoding='utf-8')
+        b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
         if self.b_password is None:
             raise AnsibleError("A vault password must be specified to decrypt data")
 
-        if not self.is_encrypted(b_data):
-            msg = "input is not encrypted"
+        if not is_encrypted(b_vaulttext):
+            msg = "input is not vault encrypted data"
             if filename:
-                msg += "%s is not encrypted" % filename
+                msg += "%s is not a vault encrypted file" % filename
             raise AnsibleError(msg)
 
         # clean out header
-        b_data = self._split_header(b_data)
+        b_vaulttext = self._split_header(b_vaulttext)
 
         # create the cipher object
         cipher_class_name = u'Vault{0}'.format(self.cipher_name)
+
         if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
             Cipher = globals()[cipher_class_name]
             this_cipher = Cipher()
         else:
             raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
-        # try to unencrypt data
-        b_data = this_cipher.decrypt(b_data, self.b_password)
-        if b_data is None:
+        # try to unencrypt vaulttext
+        b_plaintext = this_cipher.decrypt(b_vaulttext, self.b_password)
+        if b_plaintext is None:
             msg = "Decryption failed"
             if filename:
                 msg += " on %s" % filename
             raise AnsibleError(msg)
 
-        return b_data
+        return b_plaintext
 
-    def _format_output(self, b_data):
+    def _format_output(self, b_ciphertext):
         """ Add header and format to 80 columns
 
-            :arg b_data: the encrypted and hexlified data as a byte string
+            :arg b_vaulttext: the encrypted and hexlified data as a byte string
             :returns: a byte str that should be dumped into a file.  It's
                 formatted to 80 char columns and has the header prepended
         """
@@ -206,36 +277,36 @@ class VaultLib:
             raise AnsibleError("the cipher must be set before adding a header")
 
         header = b';'.join([b_HEADER, self.b_version,
-            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')])
-        tmpdata = [header]
-        tmpdata += [b_data[i:i+80] for i in range(0, len(b_data), 80)]
-        tmpdata += [b'']
-        tmpdata = b'\n'.join(tmpdata)
+                        to_bytes(self.cipher_name,'utf-8', errors='strict')])
+        b_vaulttext = [header]
+        b_vaulttext += [b_ciphertext[i:i + 80] for i in range(0, len(b_ciphertext), 80)]
+        b_vaulttext += [b'']
+        b_vaulttext = b'\n'.join(b_vaulttext)
 
-        return tmpdata
+        return b_vaulttext
 
-    def _split_header(self, b_data):
-        """Retrieve information about the Vault and  clean the data
+    def _split_header(self, b_vaulttext):
+        """Retrieve information about the Vault and clean the data
 
         When data is saved, it has a header prepended and is formatted into 80
         character lines.  This method extracts the information from the header
         and then removes the header and the inserted newlines.  The string returned
         is suitable for processing by the Cipher classes.
 
-        :arg b_data: byte str containing the data from a save file
+        :arg b_vaulttext: byte str containing the data from a save file
         :returns: a byte str suitable for passing to a Cipher class's
             decrypt() function.
         """
         # used by decrypt
 
-        tmpdata = b_data.split(b'\n')
-        tmpheader = tmpdata[0].strip().split(b';')
+        b_tmpdata = b_vaulttext.split(b'\n')
+        b_tmpheader = b_tmpdata[0].strip().split(b';')
 
-        self.b_version = tmpheader[1].strip()
-        self.cipher_name = to_unicode(tmpheader[2].strip())
-        clean_data = b''.join(tmpdata[1:])
+        self.b_version = b_tmpheader[1].strip()
+        self.cipher_name = to_text(b_tmpheader[2].strip())
+        b_ciphertext = b''.join(b_tmpdata[1:])
 
-        return clean_data
+        return b_ciphertext
 
 
 class VaultEditor:
@@ -243,6 +314,7 @@ class VaultEditor:
     def __init__(self, password):
         self.vault = VaultLib(password)
 
+    # TODO: mv shred file stuff to it's own class
     def _shred_file_custom(self, tmp_path):
         """"Destroy a file, when shred (core-utils) is not available
 
@@ -259,7 +331,7 @@ class VaultEditor:
 
         file_len = os.path.getsize(tmp_path)
 
-        if file_len > 0: # avoid work when file was empty
+        if file_len > 0:  # avoid work when file was empty
             max_chunk_len = min(1024*1024*2, file_len)
 
             passes = 3
@@ -274,9 +346,8 @@ class VaultEditor:
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
-                    assert(fh.tell() == file_len) # FIXME remove this assert once we have unittests to check its accuracy
+                    assert(fh.tell() == file_len)  # FIXME remove this assert once we have unittests to check its accuracy
                     os.fsync(fh)
-
 
     def _shred_file(self, tmp_path):
         """Securely destroy a decrypted file
@@ -298,7 +369,7 @@ class VaultEditor:
         try:
             r = call(['shred', tmp_path])
         except (OSError, ValueError):
-            # shred is not available on this system, or some other error occured.
+            # shred is not available on this system, or some other error occurred.
             # ValueError caught because OS X El Capitan is raising an
             # exception big enough to hit a limit in python2-2.7.11 and below.
             # Symptom is ValueError: insecure pickle when shred is not
@@ -327,16 +398,18 @@ class VaultEditor:
             self._shred_file(tmp_path)
             raise
 
-        tmpdata = self.read_data(tmp_path)
+        b_tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
-        if existing_data == tmpdata and not force_save:
+        if existing_data == b_tmpdata and not force_save:
             self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
-        enc_data = self.vault.encrypt(tmpdata)
-        self.write_data(enc_data, tmp_path)
+        # An existing vaultfile will always be UTF-8,
+        # so decode to unicode here
+        b_ciphertext = self.vault.encrypt(b_tmpdata)
+        self.write_data(b_ciphertext, tmp_path)
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
@@ -345,9 +418,11 @@ class VaultEditor:
 
         check_prereqs()
 
-        plaintext = self.read_data(filename)
-        ciphertext = self.vault.encrypt(plaintext)
-        self.write_data(ciphertext, output_file or filename)
+        # A file to be encrypted into a vaultfile could be any encoding
+        # so treat the contents as a byte string.
+        b_plaintext = self.read_data(filename)
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+        self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
 
@@ -411,6 +486,10 @@ class VaultEditor:
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
+        # This is more or less an assert, see #18247
+        if new_password is None:
+            raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
+
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
 
@@ -433,15 +512,20 @@ class VaultEditor:
 
         return data
 
+    # TODO: add docstrings for arg types since this code is picky about that
     def write_data(self, data, filename, shred=True):
         """write data to given path
-        
-        if shred==True, make sure that the original data is first shredded so 
-        that is cannot be recovered
+
+        :arg data: the encrypted and hexlified data as a utf-8 byte string
+        :arg filename: filename to save 'data' to.
+        :arg shred: if shred==True, make sure that the original data is first shredded so
+        that is cannot be recovered.
         """
-        bytes = to_bytes(data, errors='strict')
+        # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
+        b_file_data = to_bytes(data, errors='strict')
+
         if filename == '-':
-            sys.stdout.write(bytes)
+            sys.stdout.write(b_file_data)
         else:
             if os.path.isfile(filename):
                 if shred:
@@ -449,7 +533,7 @@ class VaultEditor:
                 else:
                     os.remove(filename)
             with open(filename, "wb") as fh:
-                fh.write(bytes)
+                fh.write(b_file_data)
 
     def shuffle_files(self, src, dest):
         prev = None
@@ -462,7 +546,7 @@ class VaultEditor:
 
         # reset permissions if needed
         if prev is not None:
-            #TODO: selinux, ACLs, xattr?
+            # TODO: selinux, ACLs, xattr?
             os.chmod(dest, prev.st_mode)
             os.chown(dest, prev.st_uid, prev.st_gid)
 
@@ -473,49 +557,6 @@ class VaultEditor:
 
         return editor
 
-class VaultFile(object):
-
-    def __init__(self, password, filename):
-        self.password = password
-
-        self.filename = filename
-        if not os.path.isfile(self.filename):
-            raise AnsibleError("%s does not exist" % self.filename)
-        try:
-            self.filehandle = open(filename, "rb")
-        except Exception as e:
-            raise AnsibleError("Could not open %s: %s" % (self.filename, str(e)))
-
-        _, self.tmpfile = tempfile.mkstemp()
-
-    ### TODO:
-    # __del__ can be problematic in python... For this use case, make
-    # VaultFile a context manager instead (implement __enter__ and __exit__)
-    def __del__(self):
-        self.filehandle.close()
-        os.unlink(self.tmplfile)
-
-    def is_encrypted(self):
-        peak = self.filehandle.readline()
-        if peak.startswith(b_HEADER):
-            return True
-        else:
-            return False
-
-    def get_decrypted(self):
-        check_prereqs()
-
-        if self.is_encrypted():
-            tmpdata = self.filehandle.read()
-            this_vault = VaultLib(self.password)
-            dec_data = this_vault.decrypt(tmpdata)
-            if dec_data is None:
-                raise AnsibleError("Failed to decrypt: %s" % self.filename)
-            else:
-                self.tmpfile.write(dec_data)
-                return self.tmpfile
-        else:
-            return self.filename
 
 ########################################
 #               CIPHERS                #
@@ -534,76 +575,84 @@ class VaultAES:
         if not HAS_AES:
             raise AnsibleError(CRYPTO_UPGRADE)
 
-    def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
+    def _aes_derive_key_and_iv(self, b_password, b_salt, key_length, iv_length):
 
         """ Create a key and an initialization vector """
 
-        d = d_i = b''
-        while len(d) < key_length + iv_length:
-            text = b''.join([d_i, password, salt])
-            d_i = to_bytes(md5(text).digest(), errors='strict')
-            d += d_i
+        b_d = b_di = b''
+        while len(b_d) < key_length + iv_length:
+            b_text = b''.join([b_di, b_password, b_salt])
+            b_di = to_bytes(md5(b_text).digest(), errors='strict')
+            b_d += b_di
 
-        key = d[:key_length]
-        iv = d[key_length:key_length+iv_length]
+        b_key = b_d[:key_length]
+        b_iv = b_d[key_length:key_length+iv_length]
 
-        return key, iv
+        return b_key, b_iv
 
-    def encrypt(self, data, password, key_length=32):
+    def encrypt(self, b_plaintext, b_password, key_length=32):
 
         """ Read plaintext data from in_file and write encrypted to out_file """
 
         raise AnsibleError("Encryption disabled for deprecated VaultAES class")
 
-    def decrypt(self, data, password, key_length=32):
+    def decrypt(self, b_vaulttext, b_password, key_length=32):
 
-        """ Read encrypted data from in_file and write decrypted to out_file """
+        """ Decrypt the given data and return it
+        :arg b_data: A byte string containing the encrypted data
+        :arg b_password: A byte string containing the encryption password
+        :arg key_length: Length of the key
+        :returns: A byte string containing the decrypted data
+        """
 
+        display.deprecated(u'The VaultAES format is insecure and has been'
+                ' deprecated since Ansible-1.5.  Use vault rekey FILENAME to'
+                ' switch to the newer VaultAES256 format', version='2.3')
         # http://stackoverflow.com/a/14989032
 
-        data = unhexlify(data)
+        b_ciphertext = unhexlify(b_vaulttext)
 
-        in_file = BytesIO(data)
+        in_file = BytesIO(b_ciphertext)
         in_file.seek(0)
         out_file = BytesIO()
 
         bs = AES.block_size
-        tmpsalt = in_file.read(bs)
-        salt = tmpsalt[len(b'Salted__'):]
-        key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        next_chunk = b''
+        b_tmpsalt = in_file.read(bs)
+        b_salt = b_tmpsalt[len(b'Salted__'):]
+        b_key, b_iv = self._aes_derive_key_and_iv(b_password, b_salt, key_length, bs)
+        cipher = AES.new(b_key, AES.MODE_CBC, b_iv)
+        b_next_chunk = b''
         finished = False
 
         while not finished:
-            chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * bs))
-            if len(next_chunk) == 0:
+            b_chunk, b_next_chunk = b_next_chunk, cipher.decrypt(in_file.read(1024 * bs))
+            if len(b_next_chunk) == 0:
                 if PY3:
-                    padding_length = chunk[-1]
+                    padding_length = b_chunk[-1]
                 else:
-                    padding_length = ord(chunk[-1])
+                    padding_length = ord(b_chunk[-1])
 
-                chunk = chunk[:-padding_length]
+                b_chunk = b_chunk[:-padding_length]
                 finished = True
 
-            out_file.write(chunk)
+            out_file.write(b_chunk)
             out_file.flush()
 
         # reset the stream pointer to the beginning
         out_file.seek(0)
-        out_data = out_file.read()
+        b_out_data = out_file.read()
         out_file.close()
 
         # split out sha and verify decryption
-        split_data = out_data.split(b"\n", 1)
-        this_sha = split_data[0]
-        this_data = split_data[1]
-        test_sha = to_bytes(sha256(this_data).hexdigest())
+        b_split_data = b_out_data.split(b"\n", 1)
+        b_this_sha = b_split_data[0]
+        b_plaintext = b_split_data[1]
+        b_test_sha = to_bytes(sha256(b_plaintext).hexdigest())
 
-        if this_sha != test_sha:
+        if b_this_sha != b_test_sha:
             raise AnsibleError("Decryption failed")
 
-        return this_data
+        return b_plaintext
 
 
 class VaultAES256:
@@ -621,18 +670,19 @@ class VaultAES256:
 
         check_prereqs()
 
-    def create_key(self, password, salt, keylength, ivlength):
+    @staticmethod
+    def _create_key(b_password, b_salt, keylength, ivlength):
         hash_function = SHA256
 
         # make two keys and one iv
         pbkdf2_prf = lambda p, s: HMAC.new(p, s, hash_function).digest()
 
-
-        derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength,
+        b_derivedkey = PBKDF2(b_password, b_salt, dkLen=(2 * keylength) + ivlength,
                             count=10000, prf=pbkdf2_prf)
-        return derivedkey
+        return b_derivedkey
 
-    def gen_key_initctr(self, password, salt):
+    @classmethod
+    def _gen_key_initctr(cls, b_password, b_salt):
         # 16 for AES 128, 32 for AES256
         keylength = 32
 
@@ -644,85 +694,80 @@ class VaultAES256:
             kdf = PBKDF2HMAC(
                 algorithm=c_SHA256(),
                 length=2 * keylength + ivlength,
-                salt=salt,
+                salt=b_salt,
                 iterations=10000,
                 backend=backend)
-            derivedkey = kdf.derive(password)
+            b_derivedkey = kdf.derive(b_password)
         else:
-            derivedkey = self.create_key(password, salt, keylength, ivlength)
+            b_derivedkey = cls._create_key(b_password, b_salt, keylength, ivlength)
 
-        key1 = derivedkey[:keylength]
-        key2 = derivedkey[keylength:(keylength * 2)]
-        iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
+        b_key1 = b_derivedkey[:keylength]
+        b_key2 = b_derivedkey[keylength:(keylength * 2)]
+        b_iv = b_derivedkey[(keylength * 2):(keylength * 2) + ivlength]
 
-        return key1, key2, hexlify(iv)
+        return b_key1, b_key2, hexlify(b_iv)
 
-
-    def encrypt(self, data, password):
-
-        salt = os.urandom(32)
-        key1, key2, iv = self.gen_key_initctr(password, salt)
+    def encrypt(self, b_plaintext, b_password):
+        b_salt = os.urandom(32)
+        b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
 
         # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
         bs = AES.block_size
-        padding_length = (bs - len(data) % bs) or bs
-        data += to_bytes(padding_length * chr(padding_length), encoding='ascii', errors='strict')
+        padding_length = (bs - len(b_plaintext) % bs) or bs
+        b_plaintext += to_bytes(padding_length * chr(padding_length), encoding='ascii', errors='strict')
 
         # COUNTER.new PARAMETERS
         # 1) nbits (integer) - Length of the counter, in bits.
-        # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
+        # 2) initial_value (integer) - initial value of the counter. "iv" from _gen_key_initctr
 
-        ctr = Counter.new(128, initial_value=int(iv, 16))
+        ctr = Counter.new(128, initial_value=int(b_iv, 16))
 
         # AES.new PARAMETERS
-        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen_key_initctr
+        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from _gen_key_initctr
         # 2) MODE_CTR, is the recommended mode
         # 3) counter=<CounterObject>
 
-        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+        cipher = AES.new(b_key1, AES.MODE_CTR, counter=ctr)
 
         # ENCRYPT PADDED DATA
-        cryptedData = cipher.encrypt(data)
+        b_ciphertext = cipher.encrypt(b_plaintext)
 
         # COMBINE SALT, DIGEST AND DATA
-        hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = b'\n'.join([hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData)])
-        message = hexlify(message)
-        return message
+        hmac = HMAC.new(b_key2, b_ciphertext, SHA256)
+        b_vaulttext = b'\n'.join([hexlify(b_salt), to_bytes(hmac.hexdigest()), hexlify(b_ciphertext)])
+        b_vaulttext = hexlify(b_vaulttext)
+        return b_vaulttext
 
-    def decrypt(self, data, password):
-
+    def decrypt(self, b_vaulttext, b_password):
         # SPLIT SALT, DIGEST, AND DATA
-        data = unhexlify(data)
-        salt, cryptedHmac, cryptedData = data.split(b"\n", 2)
-        salt = unhexlify(salt)
-        cryptedData = unhexlify(cryptedData)
-
-        key1, key2, iv = self.gen_key_initctr(password, salt)
+        b_vaulttext = unhexlify(b_vaulttext)
+        b_salt, b_cryptedHmac, b_ciphertext = b_vaulttext.split(b"\n", 2)
+        b_salt = unhexlify(b_salt)
+        b_ciphertext = unhexlify(b_ciphertext)
+        b_key1, b_key2, b_iv = self._gen_key_initctr(b_password, b_salt)
 
         # EXIT EARLY IF DIGEST DOESN'T MATCH
-        hmacDecrypt = HMAC.new(key2, cryptedData, SHA256)
-        if not self.is_equal(cryptedHmac, to_bytes(hmacDecrypt.hexdigest())):
+        hmacDecrypt = HMAC.new(b_key2, b_ciphertext, SHA256)
+        if not self._is_equal(b_cryptedHmac, to_bytes(hmacDecrypt.hexdigest())):
             return None
-
         # SET THE COUNTER AND THE CIPHER
-        ctr = Counter.new(128, initial_value=int(iv, 16))
-        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+        ctr = Counter.new(128, initial_value=int(b_iv, 16))
+        cipher = AES.new(b_key1, AES.MODE_CTR, counter=ctr)
 
         # DECRYPT PADDED DATA
-        decryptedData = cipher.decrypt(cryptedData)
+        b_plaintext = cipher.decrypt(b_ciphertext)
 
         # UNPAD DATA
-        try:
-            padding_length = ord(decryptedData[-1])
-        except TypeError:
-            padding_length = decryptedData[-1]
+        if PY3:
+            padding_length = b_plaintext[-1]
+        else:
+            padding_length = ord(b_plaintext[-1])
 
-        decryptedData = decryptedData[:-padding_length]
+        b_plaintext = b_plaintext[:-padding_length]
+        return b_plaintext
 
-        return decryptedData
-
-    def is_equal(self, a, b):
+    @staticmethod
+    def _is_equal(b_a, b_b):
         """
         Comparing 2 byte arrrays in constant time
         to avoid timing attacks.
@@ -730,22 +775,25 @@ class VaultAES256:
         It would be nice if there was a library for this but
         hey.
         """
+        if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
+            raise TypeError('_is_equal can only be used to compare two byte strings')
+
         # http://codahale.com/a-lesson-in-timing-attacks/
-        if len(a) != len(b):
+        if len(b_a) != len(b_b):
             return False
 
         result = 0
-        for x, y in zip(a, b):
+        for b_x, b_y in zip(b_a, b_b):
             if PY3:
-                result |= x ^ y
+                result |= b_x ^ b_y
             else:
-                result |= ord(x) ^ ord(y)
+                result |= ord(b_x) ^ ord(b_y)
         return result == 0
 
 
 # Keys could be made bytes later if the code that gets the data is more
 # naturally byte-oriented
 CIPHER_MAPPING = {
-        u'AES': VaultAES,
-        u'AES256': VaultAES256,
-    }
+    u'AES': VaultAES,
+    u'AES256': VaultAES256,
+}

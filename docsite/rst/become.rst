@@ -8,7 +8,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ``````
 Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing
-privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, and others.
+privilege escalation tools, which you probably already use or have configured, like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu` and others.
 
 
 .. note:: Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
@@ -20,7 +20,7 @@ privilege escalation tools, which you probably already use or have configured, l
 
 Directives
 -----------
-These can be set from play to task level, but are overriden by connection variables as they can be host specific.
+These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
     set to 'true'/'yes' to activate privilege escalation.
@@ -29,7 +29,10 @@ become_user
     set to user with desired privileges — the user you 'become', NOT the user you login as. Does NOT imply `become: yes`, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`
+
+become_flags
+    (at play or task level) permit to use specific flags for the tasks or role. One common use is to change user to nobody when the shell is set to no login. Added in Ansible 2.2.
 
 For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
 
@@ -45,6 +48,15 @@ To run a command as the ``apache`` user::
       command: somecommand
       become: true
       become_user: apache
+
+To do something as the ``nobody`` user when the shell is nologin::
+
+    - name: Run a command as nobody
+      command: somecommand
+      become: true
+      become_method: su
+      become_user: nobody
+      become_flags: '-s /bin/sh'
 
 Connection variables
 --------------------
@@ -77,7 +89,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b

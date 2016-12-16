@@ -27,13 +27,9 @@ import os
 import sys
 from io import BytesIO, StringIO
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
+from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
 
@@ -343,6 +339,51 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 supports_check_mode=True,
             )
 
+    def test_module_utils_basic_ansible_module_type_check(self):
+        from ansible.module_utils import basic
+
+        arg_spec = dict(
+            foo = dict(type='float'),
+            foo2 = dict(type='float'),
+            foo3 = dict(type='float'),
+            bar = dict(type='int'),
+            bar2 = dict(type='int'),
+        )
+
+        # should test ok
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={
+            "foo": 123.0, # float
+            "foo2": 123, # int
+            "foo3": "123", # string
+            "bar": 123, # int
+            "bar2": "123", # string
+        }))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            am = basic.AnsibleModule(
+                argument_spec = arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
+        # fail, because bar does not accept floating point numbers
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bar": 123.0}))
+
+        with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
+            self.assertRaises(
+                SystemExit,
+                basic.AnsibleModule,
+                argument_spec = arg_spec,
+                no_log=True,
+                check_invalid_arguments=False,
+                add_file_common_args=True,
+                supports_check_mode=True,
+            )
+
     def test_module_utils_basic_ansible_module_load_file_common_arguments(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
@@ -381,6 +422,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         final_params.update(dict(
             path = '/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
+            attributes=None,
         ))
 
         # with the proper params specified, the returned dictionary should represent
@@ -580,19 +622,9 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
                 self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
 
-    def test_module_utils_basic_ansible_module_to_filesystem_str(self):
-        from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
-
-        am = basic.AnsibleModule(
-            argument_spec = dict(),
-        )
-
-        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
-
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
 
         am = basic.AnsibleModule(
             argument_spec = dict(),
@@ -653,7 +685,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -670,7 +702,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
@@ -689,7 +721,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_owner_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', 0, -1)
+            m.assert_called_with(b'/path/to/file', 0, -1)
 
             def _mock_getpwnam(*args, **kwargs):
                 mock_pw = MagicMock()
@@ -699,7 +731,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             m.reset_mock()
             with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
                 self.assertEqual(am.set_owner_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', 0, -1)
+                m.assert_called_with(b'/path/to/file', 0, -1)
 
             with patch('pwd.getpwnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_owner_if_different, '/path/to/file', 'root', False)
@@ -728,7 +760,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
         with patch('os.lchown', return_value=None) as m:
             self.assertEqual(am.set_group_if_different('/path/to/file', 0, False), True)
-            m.assert_called_with('/path/to/file', -1, 0)
+            m.assert_called_with(b'/path/to/file', -1, 0)
 
             def _mock_getgrnam(*args, **kwargs):
                 mock_gr = MagicMock()
@@ -738,7 +770,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
             m.reset_mock()
             with patch('grp.getgrnam', side_effect=_mock_getgrnam):
                 self.assertEqual(am.set_group_if_different('/path/to/file', 'root', False), True)
-                m.assert_called_with('/path/to/file', -1, 0)
+                m.assert_called_with(b'/path/to/file', -1, 0)
 
             with patch('grp.getgrnam', side_effect=KeyError):
                 self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
@@ -752,7 +784,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
 
-    @patch('tempfile.NamedTemporaryFile')
+    @patch('tempfile.mkstemp')
     @patch('os.umask')
     @patch('shutil.copyfileobj')
     @patch('shutil.move')
@@ -766,8 +798,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
     @patch('os.chmod')
     @patch('os.stat')
     @patch('os.path.exists')
+    @patch('os.close')
     def test_module_utils_basic_ansible_module_atomic_move(
         self,
+        _os_close,
         _os_path_exists,
         _os_stat,
         _os_chmod,
@@ -781,7 +815,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         _shutil_move,
         _shutil_copyfileobj,
         _os_umask,
-        _tempfile_NamedTemporaryFile,
+        _tempfile_mkstemp,
         ):
 
         from ansible.module_utils import basic
@@ -813,8 +847,8 @@ class TestModuleUtilsBasic(ModuleTestCase):
         _os_chown.reset_mock()
         am.set_context_if_different.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
-        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call(b'/path/to/dest', basic.DEFAULT_PERM & ~18)])
 
         # same as above, except selinux_enabled
         _os_path_exists.side_effect = [False, False]
@@ -831,8 +865,8 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.set_context_if_different.reset_mock()
         am.selinux_default_context.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
-        self.assertEqual(_os_chmod.call_args_list, [call('/path/to/dest', basic.DEFAULT_PERM & ~18)])
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
+        self.assertEqual(_os_chmod.call_args_list, [call(b'/path/to/dest', basic.DEFAULT_PERM & ~18)])
         self.assertEqual(am.selinux_default_context.call_args_list, [call('/path/to/dest')])
         self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
 
@@ -855,7 +889,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         _os_chown.reset_mock()
         am.set_context_if_different.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
 
         # dest missing, selinux enabled
         _os_path_exists.side_effect = [True, True]
@@ -877,7 +911,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         am.set_context_if_different.reset_mock()
         am.selinux_default_context.reset_mock()
         am.atomic_move('/path/to/src', '/path/to/dest')
-        _os_rename.assert_called_with('/path/to/src', '/path/to/dest')
+        _os_rename.assert_called_with(b'/path/to/src', b'/path/to/dest')
         self.assertEqual(am.selinux_context.call_args_list, [call('/path/to/dest')])
         self.assertEqual(am.set_context_if_different.call_args_list, [call('/path/to/dest', mock_context, False)])
 
@@ -914,20 +948,21 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # next we test with EPERM so it continues to the alternate code for moving
-        # test with NamedTemporaryFile raising an error first
+        # test with mkstemp raising an error first
         _os_path_exists.side_effect = [False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
+        _os_close.return_value = None
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
         _os_umask.side_effect = [18, 0]
         _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-        _tempfile_NamedTemporaryFile.return_value = None
-        _tempfile_NamedTemporaryFile.side_effect = OSError()
+        _tempfile_mkstemp.return_value = None
+        _tempfile_mkstemp.side_effect = OSError()
         am.selinux_enabled.return_value = False
         self.assertRaises(SystemExit, am.atomic_move, '/path/to/src', '/path/to/dest')
 
         # then test with it creating a temp file
-        _os_path_exists.side_effect = [False, False]
+        _os_path_exists.side_effect = [False, False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
@@ -938,23 +973,20 @@ class TestModuleUtilsBasic(ModuleTestCase):
         mock_stat3 = MagicMock()
         _os_stat.return_value = [mock_stat1, mock_stat2, mock_stat3]
         _os_stat.side_effect = None
-        mock_tempfile = MagicMock()
-        mock_tempfile.name = '/path/to/tempfile'
-        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
-        _tempfile_NamedTemporaryFile.side_effect = None
+        _tempfile_mkstemp.return_value = (None, '/path/to/tempfile')
+        _tempfile_mkstemp.side_effect = None
         am.selinux_enabled.return_value = False
         # FIXME: we don't assert anything here yet
         am.atomic_move('/path/to/src', '/path/to/dest')
 
         # same as above, but with selinux enabled
-        _os_path_exists.side_effect = [False, False]
+        _os_path_exists.side_effect = [False, False, False]
         _os_getlogin.return_value = 'root'
         _os_getuid.return_value = 0
         _pwd_getpwuid.return_value = ('root', '', 0, 0, '', '', '')
         _os_umask.side_effect = [18, 0]
         _os_rename.side_effect = [OSError(errno.EPERM, 'failing with EPERM'), None]
-        mock_tempfile = MagicMock()
-        _tempfile_NamedTemporaryFile.return_value = mock_tempfile
+        _tempfile_mkstemp.return_value = (None, None)
         mock_context = MagicMock()
         am.selinux_default_context.return_value = mock_context
         am.selinux_enabled.return_value = True
@@ -997,5 +1029,5 @@ class TestModuleUtilsBasic(ModuleTestCase):
         self.assertEqual(am._symbolic_mode_to_octal(mock_stat, 'u=rwx'), 0o0700)
 
         # invalid modes
-        mock_stat.st_mode = 0o0400000
+        mock_stat.st_mode = 0o040000
         self.assertRaises(ValueError, am._symbolic_mode_to_octal, mock_stat, 'a=foo')

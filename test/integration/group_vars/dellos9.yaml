@@ -1,0 +1,8 @@
+---
+cli:
+  host: "{{ ansible_host }}"
+  username: "{{ dellos9_cli_user | default('admin') }}"
+  password: "{{ dellos9_cli_pass | default('admin') }}"
+  authorize: true
+  auth_pass: "{{ dellos9_cli_en_pass | default('calvin') }}"
+  transport: cli

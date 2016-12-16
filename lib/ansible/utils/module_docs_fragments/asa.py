@@ -31,41 +31,40 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
-        device.  The port value will default to the well known SSH port
-        of 22
+      - Specifies the port to use when building the connection to the remote
+        device.
     required: false
     default: 22
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+      - Configures the username to use to authenticate the connection to
+        the remote device.  This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+        value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
     required: false
   password:
     description:
       - Specifies the password to use to authenticate the connection to
-        the remote device.   The value of I(password) is used to authenticate
+        the remote device.   This value is used to authenticate
         the SSH session. If the value is not specified in the task, the
-        value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+        value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
   ssh_keyfile:
     description:
       - Specifies the SSH key to use to authenticate the connection to
-        the remote device.   The value of I(ssh_keyfile) is the path to the
+        the remote device.   This value is the path to the
         key used to authenticate the SSH session. If the value is not specified
-        in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE
+        in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
         will be used instead.
     required: false
   authorize:
     description:
-      - Instructs the module to enter priviledged mode on the remote device
+      - Instructs the module to enter privileged mode on the remote device
         before sending any commands.  If not specified, the device will
-        attempt to excecute all commands in non-priviledged mode. If the value
+        attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
-        ANSIBLE_NET_AUTHORIZE will be used instead.
+        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -74,34 +73,23 @@ options:
       - Specifies the password to use if required to enter privileged mode
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
-        environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
     required: false
     default: none
   timeout:
     description:
-      - Specifies idle timeout for the connection. Useful if the console
-        freezes before continuing. For example when saving configurations.
+      - Specifies idle timeout in seconds for the connection, in seconds. Useful
+        if the console freezes before continuing. For example when saving
+        configurations.
     required: false
     default: 10
   provider:
     description:
-      - Convience method that allows all M(ios) arguments to be passed as
+      - Convenience method that allows all I(asa) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false
     default: null
-  show_command:
-    description:
-      - Specifies which command will be used to get the current configuration.
-        By default the 'show running-config' command will be used, this command
-        masks some passwords. For example ike passwords for VPN. If you need to
-        match against masked passwords use 'more system:running-config'.
-        Note that the 'more system:running-config' only works in the system
-        context if you are running the ASA in multiple context mode.
-        before sending any commands.  If not specified, the device will
-    required: false
-    default: show running-config
-    choices: ['show running-config', 'more system:running-config']
   context:
     description:
       - Specifies which context to target if you are running in the ASA in

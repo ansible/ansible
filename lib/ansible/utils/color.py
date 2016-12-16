@@ -86,10 +86,10 @@ def colorize(lead, num, color):
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return u"%-37s" % stringc(host, 'red')
+            return u"%-37s" % stringc(host, C.COLOR_ERROR)
         elif stats['changed'] != 0:
-            return u"%-37s" % stringc(host, 'yellow')
+            return u"%-37s" % stringc(host, C.COLOR_CHANGED)
         else:
-            return u"%-37s" % stringc(host, 'green')
+            return u"%-37s" % stringc(host, C.COLOR_OK)
     return u"%-26s" % host
 

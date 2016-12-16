@@ -30,12 +30,16 @@ from ansible.playbook.taggable import Taggable
 
 class Block(Base, Become, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list', default=[])
-    _rescue = FieldAttribute(isa='list', default=[])
-    _always = FieldAttribute(isa='list', default=[])
-    _delegate_to = FieldAttribute(isa='list')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    # main block fields containing the task lists
+    _block            = FieldAttribute(isa='list', default=[], inherit=False)
+    _rescue           = FieldAttribute(isa='list', default=[], inherit=False)
+    _always           = FieldAttribute(isa='list', default=[], inherit=False)
+
+    # other fields
     _any_errors_fatal = FieldAttribute(isa='bool')
+    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_facts   = FieldAttribute(isa='bool', default=False)
+    _name             = FieldAttribute(isa='string', default='')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -55,6 +59,9 @@ class Block(Base, Become, Conditional, Taggable):
             self._parent = parent_block
 
         super(Block, self).__init__()
+
+    def __repr__(self):
+        return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
     def get_vars(self):
         '''
@@ -202,7 +209,7 @@ class Block(Base, Become, Conditional, Taggable):
         '''
 
         data = dict()
-        for attr in self._get_base_attributes():
+        for attr in self._valid_attrs:
             if attr not in ('block', 'rescue', 'always'):
                 data[attr] = getattr(self, attr)
 
@@ -229,7 +236,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         # we don't want the full set of attributes (the task lists), as that
         # would lead to a serialize/deserialize loop
-        for attr in self._get_base_attributes():
+        for attr in self._valid_attrs:
             if attr in data and attr not in ('block', 'rescue', 'always'):
                 setattr(self, attr, data.get(attr))
 
@@ -251,20 +258,9 @@ class Block(Base, Become, Conditional, Taggable):
                 p = TaskInclude()
             elif parent_type == 'HandlerTaskInclude':
                 p = HandlerTaskInclude()
-            p.deserialize(pb_data)
+            p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
-
-    def evaluate_conditional(self, templar, all_vars):
-        dep_chain = self.get_dep_chain()
-        if dep_chain:
-            for dep in dep_chain:
-                if not dep.evaluate_conditional(templar, all_vars):
-                    return False
-        if self._parent is not None:
-            if not self._parent.evaluate_conditional(templar, all_vars):
-                return False
-        return super(Block, self).evaluate_conditional(templar, all_vars)
 
     def set_loader(self, loader):
         self._loader = loader
@@ -278,7 +274,10 @@ class Block(Base, Become, Conditional, Taggable):
             for dep in dep_chain:
                 dep.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False):
+    def _get_attr_environment(self):
+        return self._get_parent_attribute('environment', extend=True)
+
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
@@ -288,57 +287,49 @@ class Block(Base, Become, Conditional, Taggable):
             value = self._attributes[attr]
 
             if self._parent and (value is None or extend):
-                parent_value = getattr(self._parent, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
-            if self._role and (value is None or extend) and hasattr(self._role, attr):
-                parent_value = getattr(self._role, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
+                try:
+                    parent_value = getattr(self._parent, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
+                except AttributeError:
+                    pass
+            if self._role and (value is None or extend):
+                try:
+                    parent_value = getattr(self._role, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
 
-                dep_chain = self.get_dep_chain()
-                if dep_chain and (value is None or extend):
-                    dep_chain.reverse()
-                    for dep in dep_chain:
-                        dep_value = getattr(dep, attr, None)
-                        if extend:
-                            value = self._extend_value(value, dep_value)
-                        else:
-                            value = dep_value
+                    dep_chain = self.get_dep_chain()
+                    if dep_chain and (value is None or extend):
+                        dep_chain.reverse()
+                        for dep in dep_chain:
+                            dep_value = getattr(dep, attr, None)
+                            if extend:
+                                value = self._extend_value(value, dep_value, prepend)
+                            else:
+                                value = dep_value
 
-                        if value is not None and not extend:
-                            break
-            if self._play and (value is None or extend) and hasattr(self._play, attr):
-                parent_value = getattr(self._play, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value)
-                else:
-                    value = parent_value
+                            if value is not None and not extend:
+                                break
+                except AttributeError:
+                    pass
+            if self._play and (value is None or extend):
+                try:
+                    parent_value = getattr(self._play, attr, None)
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
+                except AttributeError:
+                    pass
         except KeyError as e:
             pass
 
         return value
-
-    def _get_attr_environment(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        environment = self._attributes['environment']
-        parent_environment = self._get_parent_attribute('environment', extend=True)
-        if parent_environment is not None:
-            environment = self._extend_value(environment, parent_environment)
-
-        return environment
-
-    def _get_attr_any_errors_fatal(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('any_errors_fatal')
 
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
@@ -374,3 +365,19 @@ class Block(Base, Become, Conditional, Taggable):
             return self._parent.get_include_params()
         else:
             return dict()
+
+    def all_parents_static(self):
+        '''
+        Determine if all of the parents of this block were statically loaded
+        or not. Since Task/TaskInclude objects may be in the chain, they simply
+        call their parents all_parents_static() method. Only Block objects in
+        the chain check the statically_loaded value of the parent.
+        '''
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude) and not self._parent.statically_loaded:
+                return False
+            return self._parent.all_parents_static()
+
+        return True
+

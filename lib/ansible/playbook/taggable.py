@@ -37,7 +37,7 @@ class Taggable:
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
-        elif isinstance(ds, basestring):
+        elif isinstance(ds, string_types):
             value = ds.split(',')
             if isinstance(value, list):
                 return [ x.strip() for x in value ]

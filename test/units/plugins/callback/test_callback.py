@@ -19,64 +19,161 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import PY3
-from copy import deepcopy
+import types
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, mock_open
+from ansible.compat.tests.mock import patch, mock_open, MagicMock
+
 
 from ansible.plugins.callback import CallbackBase
-import ansible.plugins.callback as callish
 
-class TestCopyResultExclude(unittest.TestCase):
-    def setUp(self):
-        class DummyClass():
-            def __init__(self):
-                self.bar = [ 1, 2, 3 ]
-                self.a = {
-                    "b": 2,
-                    "c": 3,
-                }
-                self.b = {
-                    "c": 3,
-                    "d": 4,
-                }
-        self.foo = DummyClass()
-        self.cb = CallbackBase()
 
-    def tearDown(self):
-        pass
+class TestCallback(unittest.TestCase):
+    # FIXME: This doesn't really test anything...
+    def test_init(self):
+        CallbackBase()
 
-    def test_copy_logic(self):
-        res = self.cb._copy_result_exclude(self.foo, ())
-        self.assertEqual(self.foo.bar, res.bar)
-    
-    def test_copy_deep(self):
-        res = self.cb._copy_result_exclude(self.foo, ())
-        self.assertNotEqual(id(self.foo.bar), id(res.bar))
+    def test_display(self):
+        display_mock = MagicMock()
+        display_mock.verbosity = 0
+        cb = CallbackBase(display=display_mock)
+        self.assertIs(cb._display, display_mock)
 
-    def test_no_exclude(self):
-        res = self.cb._copy_result_exclude(self.foo, ())
-        self.assertEqual(self.foo.bar, res.bar)
-        self.assertEqual(self.foo.a, res.a)
-        self.assertEqual(self.foo.b, res.b)
-    
-    def test_exclude(self):
-        res = self.cb._copy_result_exclude(self.foo, ['bar', 'b'])
-        self.assertIsNone(res.bar)
-        self.assertIsNone(res.b)
-        self.assertEqual(self.foo.a, res.a)
+    def test_display_verbose(self):
+        display_mock = MagicMock()
+        display_mock.verbosity = 5
+        cb = CallbackBase(display=display_mock)
+        self.assertIs(cb._display, display_mock)
 
-    def test_result_unmodified(self):
-        bar_id = id(self.foo.bar)
-        a_id = id(self.foo.a)
-        res = self.cb._copy_result_exclude(self.foo, ['bar', 'a'])
+    # TODO: import callback module so we can patch callback.cli/callback.C
 
-        self.assertEqual(self.foo.bar, [ 1, 2, 3 ])
-        self.assertEqual(bar_id, id(self.foo.bar))
 
-        self.assertEqual(self.foo.a, dict(b=2, c=3))
-        self.assertEqual(a_id, id(self.foo.a))
+class TestCallbackResults(unittest.TestCase):
+    def test_get_item(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item'}
+        res = cb._get_item(results)
+        self.assertEquals(res, 'some_item')
 
-        self.assertRaises(AttributeError, self.cb._copy_result_exclude, self.foo, ['a', 'c', 'bar'])
+    def test_get_item_no_log(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item', '_ansible_no_log': True}
+        res = cb._get_item(results)
+        self.assertEquals(res, "(censored due to no_log)")
 
+        results = {'item': 'some_item', '_ansible_no_log': False}
+        res = cb._get_item(results)
+        self.assertEquals(res, "some_item")
+
+    def test_clean_results(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  'invocation': 'foo --bar whatever [some_json]',
+                  'changed': True}
+
+        self.assertTrue('changed' in result)
+        self.assertTrue('invocation' in result)
+        cb._clean_results(result, 'debug')
+        self.assertFalse('changed' in result)
+        self.assertFalse('invocation' in result)
+
+
+class TestCallbackDumpResults(unittest.TestCase):
+    def test_internal_keys(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  '_ansible_some_var': 'SENTINEL',
+                  'testing_ansible_out': 'should_be_left_in LEFTIN',
+                  'invocation': 'foo --bar whatever [some_json]',
+                  'some_dict_key': {'a_sub_dict_for_key': 'baz'},
+                  'bad_dict_key': {'_ansible_internal_blah': 'SENTINEL'},
+                  'changed': True}
+        json_out = cb._dump_results(result)
+        self.assertFalse('"_ansible_' in json_out)
+        self.assertFalse('SENTINEL' in json_out)
+        self.assertTrue('LEFTIN' in json_out)
+
+    def test_no_log(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  '_ansible_no_log': True,
+                  'some_secrets': 'SENTINEL'}
+        json_out = cb._dump_results(result)
+        self.assertFalse('SENTINEL' in json_out)
+        self.assertTrue('no_log' in json_out)
+        self.assertTrue('output has been hidden' in json_out)
+
+    def test_exception(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item LEFTIN',
+                  'exception': ['frame1', 'SENTINEL']}
+        json_out = cb._dump_results(result)
+        self.assertFalse('SENTINEL' in json_out)
+        self.assertFalse('exception' in json_out)
+        self.assertTrue('LEFTIN' in json_out)
+
+    def test_verbose(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item LEFTIN',
+                  '_ansible_verbose_always': 'chicane'}
+        json_out = cb._dump_results(result)
+        self.assertFalse('SENTINEL' in json_out)
+        self.assertTrue('LEFTIN' in json_out)
+
+    def test_diff(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item LEFTIN',
+                  'diff': ['remove stuff', 'added LEFTIN'],
+                  '_ansible_verbose_always': 'chicane'}
+        json_out = cb._dump_results(result)
+        self.assertFalse('SENTINEL' in json_out)
+        self.assertTrue('LEFTIN' in json_out)
+
+
+# TODO: triggr the 'except UnicodeError' around _get_diff
+#       that try except orig appeared in 61d01f549f2143fd9adfa4ffae42f09d24649c26
+#       in 2013 so maybe a < py2.6 issue
+class TestCallbackDiff(unittest.TestCase):
+    def test_difflist(self):
+        # TODO: split into smaller tests?
+        cb = CallbackBase()
+        difflist = [{'before': ['preface\nThe Before String\npostscript'],
+                     'after': ['preface\nThe After String\npostscript'],
+                     'before_header': 'just before',
+                     'after_header': 'just after'
+                     },
+                    {'before': ['preface\nThe Before String\npostscript'],
+                     'after': ['preface\nThe After String\npostscript'],
+                     },
+                    {'src_binary': 'chicane'},
+                    {'dst_binary': 'chicanery'},
+                    {'dst_larger': 1},
+                    {'src_larger': 2},
+                    {'prepared': 'what does prepared do?'},
+                    {'before_header': 'just before'},
+                    {'after_header': 'just after'}]
+
+        res = cb._get_diff(difflist)
+
+        self.assertIn('Before String', res)
+        self.assertIn('After String', res)
+        self.assertIn('just before', res)
+        self.assertIn('just after', res)
+
+
+class TestCallbackOnMethods(unittest.TestCase):
+    def _find_on_methods(self, callback):
+        cb_dir = dir(callback)
+        method_names = [x for x in cb_dir if '_on_' in x]
+        methods = [getattr(callback, mn) for mn in method_names]
+        return methods
+
+    def test_are_methods(self):
+        cb = CallbackBase()
+        for method in self._find_on_methods(cb):
+            self.assertIsInstance(method, types.MethodType)
+
+    def test_on_any(self):
+        cb = CallbackBase()
+        cb.v2_on_any('whatever', some_keyword='blippy')
+        cb.on_any('whatever', some_keyword='blippy')

@@ -30,6 +30,7 @@ import time
 
 from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
+from ansible.module_utils._text import to_native
 from ansible.plugins import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -100,7 +101,7 @@ class PullCLI(CLI):
         # for pull we don't wan't a default
         self.parser.set_defaults(inventory=None)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(PullCLI, self).parse()
 
         if not self.options.dest:
             hostname = socket.getfqdn()
@@ -219,9 +220,9 @@ class PullCLI(CLI):
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
         if self.options.skip_tags:
-            cmd += ' --skip-tags "%s"' % self.options.skip_tags
+            cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))
         if self.options.tags:
-            cmd += ' -t "%s"' % self.options.tags
+            cmd += ' -t "%s"' % to_native(u','.join(self.options.tags))
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
         else:

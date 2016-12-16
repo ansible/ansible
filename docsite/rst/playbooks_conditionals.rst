@@ -7,7 +7,7 @@ Conditionals
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), 
 or previous task result.  In some cases, the values of variables may depend on other variables.  
 Further, additional groups can be created to manage hosts based on
-whether the hosts match other criteria.   There are many options to control execution flow in Ansible.
+whether the hosts match other criteria.   There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
 
 Let's dig into what they are.
 
@@ -24,7 +24,7 @@ This is easy to do in Ansible with the `when` clause, which contains a raw Jinja
 It's actually pretty simple::
 
     tasks:
-      - name: "shutdown Debian flavored systems"
+      - name: "shut down Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
         # note that Ansible facts and vars like ansible_os_family can be used
@@ -33,10 +33,19 @@ It's actually pretty simple::
 You can also use parentheses to group conditions::
 
     tasks:
-      - name: "shutdown CentOS 6 and Debian 7 systems"
+      - name: "shut down CentOS 6 and Debian 7 systems"
         command: /sbin/shutdown -t now
         when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6") or
               (ansible_distribution == "Debian" and ansible_distribution_major_version == "7")
+
+Multiple conditions that all need to be true (a logical 'and') can also be specified as a list::
+
+    tasks:
+      - name: "shut down CentOS 6 systems"
+        command: /sbin/shutdown -t now
+        when:
+          - ansible_distribution == "CentOS"
+          - ansible_distribution_major_version == "6"
 
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
 and provided by Ansible.  Suppose we want to ignore the error of one statement and then
@@ -305,8 +314,6 @@ You may check the registered variable's string contents for emptiness::
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
-       Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_

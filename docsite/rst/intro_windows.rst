@@ -68,7 +68,7 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 .. code-block:: bash
 
-   pip install kerberos
+   pip install kerberos requests_kerberos
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
@@ -169,7 +169,7 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
-    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    # The following is necessary for Python 2.7.9+ (or any older Python that has backported SSLContext, eg, Python 2.7.5 on RHEL7) when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
@@ -246,7 +246,24 @@ What modules are available
 ``````````````````````````
 
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various
-Windows modules as listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
+Windows-only modules. These are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
+
+In addition, the following core modules work with Windows:
+    assemble
+    fetch
+    raw
+    script
+    slurp
+    template
+    add_host
+    assert
+    debug
+    fail
+    group_by
+    include_vars
+    meta
+    pause
+    set_fact
 
 Browse this index to see what is available.
 
@@ -347,7 +364,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
 
-Bear in mind that using C(raw) will allways report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using C(raw) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 

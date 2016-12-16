@@ -19,19 +19,18 @@ __metaclass__ = type
 
 import collections
 import os
-import sys
 import time
 from multiprocessing import Lock
 from itertools import chain
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.cache.base import BaseCacheModule
 
 try:
     import memcache
 except ImportError:
-    print('python-memcached is required for the memcached fact cache')
-    sys.exit(1)
+    raise AnsibleError("python-memcached is required for the memcached fact cache")
 
 
 class ProxyClientPool(object):
@@ -157,7 +156,7 @@ class CacheModule(BaseCacheModule):
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-        self._keys.remove_by_timerange(0, expiry_age)
+            self._keys.remove_by_timerange(0, expiry_age)
 
     def get(self, key):
         value = self._cache.get(self._make_key(key))

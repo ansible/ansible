@@ -1,33 +1,67 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import itertools
 import re
-import time
-import itertools
-import shlex
-import itertools
 
-from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.network import to_list
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import zip, zip_longest
 
 DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
 
+
+def to_list(val):
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
+
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self, commands, **kwargs):
+        lines = to_list(commands)
+        return self.connection.configure(lines, **kwargs)
+
+    def load_config(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.connection.load_config(commands, **kwargs)
+
+    def get_config(self, **kwargs):
+        return self.connection.get_config(**kwargs)
+
+    def save_config(self):
+        return self.connection.save_config()
 
 class ConfigLine(object):
 
@@ -39,8 +73,7 @@ class ConfigLine(object):
 
     @property
     def line(self):
-        line = ['set']
-        line.extend([p.text for p in self.parents])
+        line = [p.text for p in self.parents]
         line.append(self.text)
         return ' '.join(line)
 
@@ -48,8 +81,7 @@ class ConfigLine(object):
         return self.raw
 
     def __eq__(self, other):
-        if self.text == other.text:
-            return self.parents == other.parents
+        return self.line == other.line
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -62,7 +94,7 @@ def ignore_line(text, tokens=None):
 def get_next(iterable):
     item, next_item = itertools.tee(iterable, 2)
     next_item = itertools.islice(next_item, 1, None)
-    return itertools.izip_longest(item, next_item)
+    return zip_longest(item, next_item)
 
 def parse(lines, indent, comment_tokens=None):
     toplevel = re.compile(r'\S')
@@ -147,13 +179,19 @@ class NetworkConfig(object):
         return dumps(self.expand_line(self.items))
 
     def load(self, contents):
-        self._config = parse(contents, indent=self.indent)
+        # Going to start adding device profiles post 2.2
+        tokens = list(DEFAULT_COMMENT_TOKENS)
+        if self._device_os == 'sros':
+            tokens.append('echo')
+            self._config = parse(contents, indent=4, comment_tokens=tokens)
+        else:
+            self._config = parse(contents, indent=self.indent)
 
     def load_from_file(self, filename):
         self.load(open(filename).read())
 
     def get(self, path):
-        if isinstance(path, basestring):
+        if isinstance(path, string_types):
             path = [path]
         for item in self._config:
             if item.text == path[-1]:
@@ -237,40 +275,47 @@ class NetworkConfig(object):
 
         return items
 
-    def diff_line(self, other):
+    def diff_line(self, other, path=None):
         diff = list()
         for item in self.items:
-            if item not in other.items:
+            if item not in other:
                 diff.append(item)
         return diff
 
-    def diff_strict(self, other):
+    def diff_strict(self, other, path=None):
         diff = list()
         for index, item in enumerate(self.items):
             try:
-                if item != other.items[index]:
+                if item != other[index]:
                     diff.append(item)
             except IndexError:
                 diff.append(item)
         return diff
 
-    def diff_exact(self, other):
+    def diff_exact(self, other, path=None):
         diff = list()
-        if len(other.items) != len(self.items):
+        if len(other) != len(self.items):
             diff.extend(self.items)
         else:
-            for ours, theirs in itertools.izip(self.items, other.items):
+            for ours, theirs in zip(self.items, other):
                 if ours != theirs:
                     diff.extend(self.items)
                     break
         return diff
 
-
-    def difference(self, other, match='line', replace='line'):
+    def difference(self, other, path=None, match='line', replace='line'):
         try:
+            if path and match != 'line':
+                try:
+                    other = other.get_section_objects(path)
+                except ValueError:
+                    other = list()
+            else:
+                other = other.items
             func = getattr(self, 'diff_%s' % match)
-            updates = func(other)
+            updates = func(other, path=path)
         except AttributeError:
+            raise
             raise TypeError('invalid value for match keyword')
 
         if self._device_os == 'junos':
@@ -366,5 +411,3 @@ class NetworkConfig(object):
                     item.parents = ancestors
                     ancestors[-1].children.append(item)
                     self.items.append(item)
-
-

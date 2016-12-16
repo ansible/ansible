@@ -76,7 +76,7 @@ required. For a specific host, this script returns the following variables:
     "version": "latest"
   },
   "location": "westus",
-  "mac_address": "00-0D-3A-31-2C-EC",
+  "mac_address": "00-00-5E-00-53-FE",
   "name": "object-name",
   "network_interface": "interface-name",
   "network_interface_id": "/subscriptions/subscription-id/resourceGroups/galaxy-production/providers/Microsoft.Network/networkInterfaces/object-name1",
@@ -309,7 +309,7 @@ class AzureRM(object):
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
         if env_credentials['profile'] is not None:
@@ -328,7 +328,7 @@ class AzureRM(object):
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = getattr(params, attribute)
 
         # try module params
@@ -664,7 +664,7 @@ class AzureInventory(object):
         self._inventory['azure'].append(host_name)
 
         if self.group_by_tag and vars.get('tags'):
-            for key, value in vars['tags'].iteritems():
+            for key, value in vars['tags'].items():
                 safe_key = self._to_safe(key)
                 safe_value = safe_key + '_' + self._to_safe(value)
                 if not self._inventory.get(safe_key):
@@ -724,7 +724,7 @@ class AzureInventory(object):
 
     def _get_env_settings(self):
         env_settings = dict()
-        for attribute, env_variable in AZURE_CONFIG_SETTINGS.iteritems():
+        for attribute, env_variable in AZURE_CONFIG_SETTINGS.items():
             env_settings[attribute] = os.environ.get(env_variable, None)
         return env_settings
 
@@ -786,11 +786,11 @@ class AzureInventory(object):
 
 def main():
     if not HAS_AZURE:
-        sys.exit("The Azure python sdk is not installed (try 'pip install azure==2.0.0rc5') - {0}".format(HAS_AZURE_EXC))
+        sys.exit("The Azure python sdk is not installed (try 'pip install azure>=2.0.0rc5') - {0}".format(HAS_AZURE_EXC))
 
-    if LooseVersion(azure_compute_version) != LooseVersion(AZURE_MIN_VERSION):
+    if LooseVersion(azure_compute_version) < LooseVersion(AZURE_MIN_VERSION):
         sys.exit("Expecting azure.mgmt.compute.__version__ to be {0}. Found version {1} "
-                 "Do you have Azure == 2.0.0rc5 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
+                 "Do you have Azure >= 2.0.0rc5 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
 
     AzureInventory()
 

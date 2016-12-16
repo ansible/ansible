@@ -30,8 +30,9 @@ from ansible.compat.six import text_type, binary_type
 import ansible.constants as C
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.unicode import to_bytes, to_str
+
 
 try:
     from __main__ import display
@@ -89,7 +90,7 @@ class Connection(ConnectionBase):
         if self._play_context.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            become_output = ''
+            become_output = b''
             while not self.check_become_success(become_output) and not self.check_password_prompt(become_output):
 
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], self._play_context.timeout)
@@ -99,13 +100,13 @@ class Connection(ConnectionBase):
                     chunk = p.stderr.read()
                 else:
                     stdout, stderr = p.communicate()
-                    raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + become_output)
+                    raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
                 if not chunk:
                     stdout, stderr = p.communicate()
-                    raise AnsibleError('privilege output closed while waiting for password prompt:\n' + become_output)
+                    raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
                 become_output += chunk
             if not self.check_become_success(become_output):
-                p.stdin.write(self._play_context.become_pass + '\n')
+                p.stdin.write(to_bytes(self._play_context.become_pass, errors='surrogate_or_strict') + b'\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
@@ -122,14 +123,14 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
         try:
-            shutil.copyfile(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            shutil.copyfile(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except shutil.Error:
-            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_str(in_path), to_str(out_path)))
+            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
         except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_str(out_path), to_str(e)))
+            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from local to local -- for copatibility '''

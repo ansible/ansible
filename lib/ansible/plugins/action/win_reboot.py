@@ -19,16 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_unicode
-from ansible.errors import AnsibleUndefinedVariable
-
 import socket
 import time
-import traceback
 
 from datetime import datetime, timedelta
+
+from ansible.plugins.action import ActionBase
 
 try:
     from __main__ import display
@@ -36,8 +32,10 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class TimedOutException(Exception):
     pass
+
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
@@ -50,7 +48,7 @@ class ActionModule(ActionBase):
 
     def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
-        
+
         while datetime.utcnow() < max_end_time:
             try:
                 what()
@@ -82,7 +80,7 @@ class ActionModule(ActionBase):
         winrm_port = self._connection._winrm_port
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        
+
         # initiate reboot
         (rc, stdout, stderr) = self._connection.exec_command("shutdown /r /t %d" % pre_reboot_delay_sec)
 
@@ -92,7 +90,7 @@ class ActionModule(ActionBase):
             result['msg'] = "Shutdown command failed, error text was %s" % stderr
             return result
 
-        def raise_if_port_open(): 
+        def raise_if_port_open():
             try:
                 sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
                 sock.close()
@@ -137,4 +135,3 @@ class ActionModule(ActionBase):
             result['msg'] = toex.message
 
         return result
-

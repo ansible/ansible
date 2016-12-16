@@ -28,10 +28,14 @@
 
 import re
 
-from ansible.module_utils.network import Command, NetCli, NetworkError, get_module
+from ansible.module_utils.netcli import Command
+from ansible.module_utils.network import NetworkError, NetworkModule
 from ansible.module_utils.network import register_transport, to_list
+from ansible.module_utils.shell import CliBase
 
-class Cli(NetCli):
+
+class Cli(CliBase):
+
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
@@ -51,37 +55,58 @@ class Cli(NetCli):
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
 
-    ### implementation of network.Cli ###
+    ### Config methods ###
 
-    def configure(self, commands, **kwargs):
-        cmds = ['configure']
+    def configure(self, commands):
+        cmds = ['configure terminal']
+        if commands[-1] == 'end':
+            commands.pop()
         cmds.extend(to_list(commands))
-        cmds.append('end')
-
+        cmds.extend(['commit', 'end'])
         responses = self.execute(cmds)
-        return responses[1:-1]
+        return responses[1:]
 
-    def get_config(self, params, **kwargs):
-        return self.run_commands('show running-config')[0]
+    def get_config(self, flags=None):
+        cmd = 'show running-config'
+        if flags:
+            if isinstance(flags, list):
+                cmd += ' %s' % ' '.join(flags)
+            else:
+                cmd += ' %s' % flags
+        return self.execute([cmd])[0]
 
-    def load_config(self, commands, commit=False, **kwargs):
-        raise NotImplementedError
+    def load_config(self, config, commit=False, replace=False, comment=None):
+        commands = ['configure terminal']
+        commands.extend(config)
 
-    def replace_config(self, commands, **kwargs):
-        raise NotImplementedError
+        if commands[-1] == 'end':
+            commands.pop()
 
-    def commit_config(self, **kwargs):
-        command = 'commit'
-        self.run_commands([command])
+        try:
+            self.execute(commands)
+            diff = self.execute(['show commit changes diff'])
+            if commit:
+                if replace:
+                    prompt = re.compile(r'\[no\]:\s$')
+                    commit = 'commit replace'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    cmd = Command(commit, prompt=prompt, response='yes')
+                    self.execute([cmd, 'end'])
+                else:
+                    commit = 'commit'
+                    if comment:
+                        commit += ' comment %s' % comment
+                    self.execute([commit, 'end'])
+            else:
+                self.execute(['abort'])
+        except NetworkError:
+            self.execute(['abort'])
+            diff = None
+            raise
 
-    def abort_config(self, **kwargs):
-        command = 'abort'
-        self.run_commands([command])
+        return diff[0]
 
-    def run_commands(self, commands):
-        cmds = to_list(commands)
-        responses = self.execute(cmds)
-        return responses
 Cli = register_transport('cli', default=True)(Cli)
