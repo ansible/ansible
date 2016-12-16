@@ -148,11 +148,11 @@ def stack_sync(endpoint, header, client):
 
     stack_r = client.post(endpoint, data=json.dumps({ "cmd": "sync config"}),
                           headers=header)
-    rc = stack_r.status_code if stack_r.status_code != 200 else stack_r.status_code
-
+        
     stack_r = client.post(endpoint, data=json.dumps({"cmd": "sync host config"}),
                           headers=header)
-    rc = stack_r.status_code if stack_r.status_code != 200 else stack_r.status_code
+
+    rc = stack_r.status_code
 
     if rc == 200:
         rc = 0
