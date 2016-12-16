@@ -137,7 +137,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     delimit_me = False
     add_newline = False
 
-    for f in sorted(os.listdir(src_path)):
+    for f in sorted(os.listdir(u"%s" % src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = u"%s/%s" % (src_path, f)
