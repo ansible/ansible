@@ -109,8 +109,8 @@ options:
 author: Phil Schwartz (@schwartzmx), Trond Hindenes (@trondhindenes), Hans-Joachim Kliemeck (@h0nIg)
 '''
 
-EXAMPLES = '''
-- name: Restrict write,execute access to User Fed-Phil
+EXAMPLES = r'''
+- name: Restrict write and execute access to User Fed-Phil
   win_acl:
     user: Fed-Phil
     path: C:\Important\Executable.exe
