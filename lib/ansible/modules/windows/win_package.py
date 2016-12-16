@@ -77,7 +77,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Install the vVisual C thingy
+- name: Install the Visual C thingy
   win_package:
     name: Microsoft Visual C thingy
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
