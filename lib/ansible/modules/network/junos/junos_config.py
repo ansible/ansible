@@ -94,6 +94,19 @@ options:
         is set to False, this argument is silently ignored.
     required: false
     default: configured by junos_config
+  replace:
+    description:
+      - The C(replace) argument will instruct the remote device to
+        replace the current configuration hierarchy with the one specified
+        in the corresponding hierarchy of the source configuration loaded
+        from this module.
+      - Note this argument should be considered deprecated.  To achieve
+        the equivalent, set the I(update) argument to C(replace). This argument
+        will be removed in a future release. The C(replace) and C(update) argument
+        is mutually exclusive.
+    required: false
+    choices: ['yes', 'no']
+    default: false
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -250,6 +263,7 @@ def load_config(module, result):
     kwargs['confirm'] = module.params['confirm']
     kwargs[module.params['update']] = True
     kwargs['commit'] = not module.check_mode
+    kwargs['replace'] = module.params['replace']
 
     if module.params['src']:
         config_format = module.params['src_format'] or guess_format(str(candidate))
@@ -313,6 +327,7 @@ def main():
 
         # update operations
         update=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
+        replace=dict(default=False, type='bool'),
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
@@ -327,9 +342,13 @@ def main():
 
     mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
                           ('rollback', 'zeroize'), ('lines', 'src'),
-                          ('src', 'zeroize'), ('src', 'rollback')]
+                          ('src', 'zeroize'), ('src', 'rollback'),
+                          ('update', 'replace')]
 
-    required_if = [('replace', True, ['src'])]
+    required_if = [('replace', True, ['src']),
+                   ('update', 'merge', ['src']),
+                   ('update', 'overwrite', ['src']),
+                   ('update', 'replace', ['src'])]
 
     module = NetworkModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
