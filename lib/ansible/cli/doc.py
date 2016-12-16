@@ -24,11 +24,11 @@ import os
 import traceback
 import textwrap
 
-from ansible.compat.six import iteritems
+from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins import module_loader
+from ansible.plugins import module_loader, action_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
@@ -59,8 +59,11 @@ class DocCLI(CLI):
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
+        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_modules',
+                help='Show documentation for all modules')
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(DocCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
     def run(self):
@@ -80,6 +83,13 @@ class DocCLI(CLI):
             self.pager(self.get_module_list_text())
             return 0
 
+        # process all modules
+        if self.options.all_modules:
+            paths = module_loader._get_paths()
+            for path in paths:
+                self.find_modules(path)
+            self.args = sorted(set(self.module_list) - module_docs.BLACKLIST_MODULES)
+
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
@@ -98,13 +108,19 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
+                    doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    display.vvv(traceback.print_exc())
+                    display.vvv(traceback.format_exc())
                     display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
                     continue
 
                 if doc is not None:
+
+                    # is there corresponding action plugin?
+                    if module in action_loader:
+                        doc['action'] = True
+                    else:
+                        doc['action'] = False
 
                     all_keys = []
                     for (k,v) in iteritems(doc['options']):
@@ -117,6 +133,7 @@ class DocCLI(CLI):
                     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
                     doc['plainexamples']    = plainexamples
                     doc['returndocs']       = returndocs
+                    doc['metadata']         = metadata
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
@@ -127,33 +144,34 @@ class DocCLI(CLI):
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
-                display.vvv(traceback.print_exc())
+                display.vvv(traceback.format_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
-        self.pager(text)
+        if text:
+            self.pager(text)
         return 0
 
     def find_modules(self, path):
+        for module in os.listdir(path):
+            full_path = '/'.join([path, module])
 
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
+            if module.startswith('.'):
+                continue
+            elif os.path.isdir(full_path):
+                continue
+            elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                continue
+            elif module.startswith('__'):
+                continue
+            elif module in C.IGNORE_FILES:
+                continue
+            elif module.startswith('_'):
+                if os.path.islink(full_path):  # avoids aliases
                     continue
-                elif os.path.isdir(module):
-                    self.find_modules(module)
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-                elif module.startswith('__'):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
-                        continue
 
-                module = os.path.splitext(module)[0] # removes the extension
-                self.module_list.append(module)
+            module = os.path.splitext(module)[0]  # removes the extension
+            module = module.lstrip('_')  # remove underscore from deprecated modules
+            self.module_list.append(module)
 
     def get_module_list_text(self):
         columns = display.columns
@@ -177,7 +195,7 @@ class DocCLI(CLI):
                 continue
 
             try:
-                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename)
                 desc = self.tty_ify(doc.get('short_description', '?')).strip()
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
@@ -212,7 +230,7 @@ class DocCLI(CLI):
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
         pad = 31
-        subdent = ''.join([" " for a in xrange(pad)])
+        subdent = " " * pad
         limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
@@ -246,8 +264,21 @@ class DocCLI(CLI):
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
 
+        # FUTURE: move deprecation to metadata-only
+
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+
+        metadata = doc['metadata']
+
+        supported_by = metadata['supported_by']
+        text.append("Supported by: %s\n" % supported_by)
+
+        status = metadata['status']
+        text.append("Status: %s\n" % ", ".join(status))
+
+        if 'action' in doc and doc['action']:
+            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
@@ -266,21 +297,23 @@ class DocCLI(CLI):
             text.append("%s %s" % (opt_leadin, o))
 
             if isinstance(opt['description'], list):
-                desc = " ".join(opt['description'])
+                for entry in opt['description']:
+                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
-                desc = opt['description']
+                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
+            choices = ''
             if 'choices' in opt:
-                choices = ", ".join(str(i) for i in opt['choices'])
-                desc = desc + " (Choices: " + choices + ")"
+                choices = "(Choices: " + ", ".join(str(i) for i in opt['choices']) + ")"
+            default = ''
             if 'default' in opt or not required:
-                default = str(opt.get('default', '(null)'))
-                desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                default = "[Default: " +  str(opt.get('default', '(null)')) + "]"
+            text.append(textwrap.fill(CLI.tty_ify(choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("Notes:")
+            for note in doc['notes']:
+                text.append(textwrap.fill(CLI.tty_ify(note), limit-6, initial_indent="  * ", subsequent_indent=opt_indent))
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
@@ -301,13 +334,13 @@ class DocCLI(CLI):
 
         maintainers = set()
         if 'author' in doc:
-            if isinstance(doc['author'], basestring):
+            if isinstance(doc['author'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])
 
         if 'maintainers' in doc:
-            if isinstance(doc['maintainers'], basestring):
+            if isinstance(doc['maintainers'], string_types):
                 maintainers.add(doc['author'])
             else:
                 maintainers.update(doc['author'])

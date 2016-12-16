@@ -38,19 +38,17 @@ import sys
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError, AnsibleOptionsError
-
+from ansible.errors import AnsibleError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
+from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.vars import VariableManager
+from ansible.plugins import module_loader
 from ansible.utils import module_docs
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_unicode, to_str
-from ansible.plugins import module_loader
-
+from ansible.vars import VariableManager
 
 try:
     from __main__ import display
@@ -96,12 +94,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
             help="one-step-at-a-time: confirm each task before running")
 
         self.parser.set_defaults(cwd='*')
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        super(ConsoleCLI, self).parse()
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
-
-        return True
 
     def get_names(self):
         return dir(self)
@@ -152,11 +149,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     continue
                 elif module.startswith('_'):
                     fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
+                    if os.path.islink(fullpath):  # avoids aliases
                         continue
                     module = module.replace('_', '', 1)
 
-                module = os.path.splitext(module)[0] # removes the extension
+                module = os.path.splitext(module)[0]  # removes the extension
                 yield module
 
     def default(self, arg, forceshell=False):
@@ -192,11 +189,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
-            display.error(u"Unable to build command: %s" % to_unicode(e))
+            display.error(u"Unable to build command: %s" % to_text(e))
             return False
 
         try:
-            cb = 'minimal' #FIXME: make callbacks configurable
+            cb = 'minimal'  # FIXME: make callbacks configurable
             # now create a task queue manager to execute the play
             self._tqm = None
             try:
@@ -225,8 +222,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.error('User interrupted execution')
             return False
         except Exception as e:
-            display.error(to_unicode(e))
-            #FIXME: add traceback in very very verbose mode
+            display.error(to_text(e))
+            # FIXME: add traceback in very very verbose mode
             return False
 
     def emptyline(self):
@@ -301,7 +298,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_become(self, arg):
         """Toggle whether plays run with become"""
         if arg:
-            self.options.become_user = arg
+            self.options.become = C.mk_boolean(arg)
             display.v("become changed to %s" % self.options.become)
             self.set_prompt()
         else:
@@ -331,6 +328,22 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.v("become_method changed to %s" % self.options.become_method)
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
+
+    def do_check(self, arg):
+        """Toggle whether plays run with check mode"""
+        if arg:
+            self.options.check = C.mk_boolean(arg)
+            display.v("check mode changed to %s" % self.options.check)
+        else:
+            display.display("Please specify check mode value, e.g. `check yes`")
+
+    def do_diff(self, arg):
+        """Toggle whether plays run with diff"""
+        if arg:
+            self.options.diff = C.mk_boolean(arg)
+            display.v("diff mode changed to %s" % self.options.diff)
+        else:
+            display.display("Please specify a diff value , e.g. `diff yes`")
 
     def do_exit(self, args):
         """Exits from the console"""
@@ -363,7 +376,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             completions = [x.name for x in self.inventory.list_hosts(self.options.cwd)]
 
-        return [to_str(s)[offs:] for s in completions if to_str(s).startswith(to_str(mline))]
+        return [to_native(s)[offs:] for s in completions if to_native(s).startswith(to_native(mline))]
 
     def completedefault(self, text, line, begidx, endidx):
         if line.split()[0] in self.modules:
@@ -377,7 +390,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         in_path = module_loader.find_plugin(module_name)
         oc, a, _ = module_docs.get_docstring(in_path)
         return oc['options'].keys()
-
 
     def run(self):
 
@@ -393,7 +405,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             self.pattern = self.args[0]
         self.options.cwd = self.pattern
-
 
         # dynamically add modules as commands
         self.modules = self.list_modules()
@@ -419,13 +430,19 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.inventory = Inventory(loader=self.loader, variable_manager=self.variable_manager, host_list=self.options.inventory)
         self.variable_manager.set_inventory(self.inventory)
 
-        if len(self.inventory.list_hosts(self.pattern)) == 0:
+        no_hosts = False
+        if len(self.inventory.list_hosts()) == 0:
             # Empty inventory
+            no_hosts = True
             display.warning("provided hosts list is empty, only localhost is available")
 
         self.inventory.subset(self.options.subset)
+        hosts = self.inventory.list_hosts(self.pattern)
+        if len(hosts) == 0 and not no_hosts:
+            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+
         self.groups = self.inventory.list_groups()
-        self.hosts = [x.name for x in self.inventory.list_hosts(self.pattern)]
+        self.hosts = [x.name for x in hosts]
 
         # This hack is to work around readline issues on a mac:
         #  http://stackoverflow.com/a/7116997/541202
@@ -443,4 +460,3 @@ class ConsoleCLI(CLI, cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.set_prompt()
         self.cmdloop()
-

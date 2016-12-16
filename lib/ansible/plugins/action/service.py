@@ -25,6 +25,10 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
+    UNUSED_PARAMS = {
+        'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
+    }
+
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
         if task_vars is None:
@@ -36,7 +40,10 @@ class ActionModule(ActionBase):
 
         if module == 'auto':
             try:
-                module = self._templar.template('{{ansible_service_mgr}}')
+                if self._task.delegate_to: # if we delegate, we should use delegated host's facts
+                    module = self._templar.template("{{hostvars['%s']['ansible_service_mgr']}}" % self._task.delegate_to)
+                else:
+                    module = self._templar.template('{{ansible_service_mgr}}')
             except:
                 pass # could not get it from template!
 
@@ -54,6 +61,16 @@ class ActionModule(ActionBase):
             new_module_args = self._task.args.copy()
             if 'use' in new_module_args:
                 del new_module_args['use']
+
+            # for backwards compatibility
+            if 'state' in new_module_args and new_module_args['state'] == 'running':
+                new_module_args['state'] = 'started'
+
+            if module in self.UNUSED_PARAMS:
+                for unused in self.UNUSED_PARAMS[module]:
+                    if unused in new_module_args:
+                        del new_module_args[unused]
+                        self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
 
             self._display.vvvv("Running %s" % module)
             result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))

@@ -1,5 +1,0 @@
-num_retries: 2
-frag 1
-frag 2
-frag 3
-vars_file_var: "this is in a vars file"

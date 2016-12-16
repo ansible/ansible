@@ -1,6 +1,6 @@
 ansible-playbook(1)
 ===================
-:doctype:manpage
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -144,7 +144,7 @@ Run operations with su (deprecated, use become).
 
 *-R SU-USER*, *--su-user=*'SU_USER'::
 
-run operations with su as this user (default=root) (deprecated, use become).
+Run operations with su as this user (default=root) (deprecated, use become).
 
 *-s*, *--sudo*::
 

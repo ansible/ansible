@@ -1,0 +1,9 @@
+mydict:
+    mykey1: myval1
+    mykey2: myval2
+things1:
+    - 1
+    - 2
+things2:
+    - "{{ foo }}"
+    - "{{ foob | default('') }}"

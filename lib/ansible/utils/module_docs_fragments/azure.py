@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
@@ -66,7 +64,7 @@ options:
 
 requirements:
     - "python >= 2.7"
-    - "azure >= 2.0.0rc2"
+    - "azure == 2.0.0rc5"
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables or use a profile stored

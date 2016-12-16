@@ -19,13 +19,13 @@ __metaclass__ = type
 
 import os
 
-from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
-
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
@@ -70,18 +70,17 @@ class ActionModule(ActionBase):
         source = parts[0]
         args   = ' '.join(parts[1:])
 
-        if self._task._role is not None:
-            source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-        else:
-            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        try:
+            source = self._loader.get_real_file(self._find_needle('files', source))
+        except AnsibleError as e:
+            return dict(failed=True, msg=to_native(e))
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._transfer_file(source, tmp_src)
 
-        sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        self._fixup_perms(tmp, remote_user, execute=True, recursive=True)
+        self._fixup_perms2((tmp, tmp_src), remote_user, execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()

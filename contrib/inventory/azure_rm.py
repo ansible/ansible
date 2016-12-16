@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
@@ -76,7 +76,7 @@ required. For a specific host, this script returns the following variables:
     "version": "latest"
   },
   "location": "westus",
-  "mac_address": "00-0D-3A-31-2C-EC",
+  "mac_address": "00-00-5E-00-53-FE",
   "name": "object-name",
   "network_interface": "interface-name",
   "network_interface_id": "/subscriptions/subscription-id/resourceGroups/galaxy-production/providers/Microsoft.Network/networkInterfaces/object-name1",
@@ -130,6 +130,10 @@ Select hosts for specific tag key by assigning a comma separated list of tag key
 
 AZURE_TAGS=key1,key2,key3
 
+Select hosts for specific locations:
+
+AZURE_LOCATIONS=eastus,westus,eastus2
+
 Or, select hosts for specific tag key:value pairs by assigning a comma separated list key:value pairs to:
 
 AZURE_TAGS=key1:value1,key2:value2
@@ -138,11 +142,13 @@ If you don't need the powerstate, you can improve performance by turning off pow
 AZURE_INCLUDE_POWERSTATE=no
 
 azure_rm.ini
-----------------------
-As mentioned above you can control execution using environment variables or an .ini file. A sample
+------------
+As mentioned above, you can control execution using environment variables or a .ini file. A sample
 azure_rm.ini is included. The name of the .ini file is the basename of the inventory script (in this case
-'azure_rm') with a .ini extension. This provides you with the flexibility of copying and customizing this
-script and having matching .ini files. Go forth and customize your Azure inventory!
+'azure_rm') with a .ini extension. It also assumes the .ini file is alongside the script. To specify
+a different path for the .ini file, define the AZURE_INI_PATH environment variable:
+
+  export AZURE_INI_PATH=/path/to/custom.ini
 
 Powerstate:
 -----------
@@ -152,13 +158,13 @@ up. If the value is anything other than 'running', the machine is down, and will
 Examples:
 ---------
   Execute /bin/uname on all instances in the galaxy-qa resource group
-  $ ansible -i azure_rm_inventory.py galaxy-qa -m shell -a "/bin/uname -a"
+  $ ansible -i azure_rm.py galaxy-qa -m shell -a "/bin/uname -a"
 
   Use the inventory script to print instance specific information
-  $ contrib/inventory/azure_rm_inventory.py --host my_instance_host_name --pretty
+  $ contrib/inventory/azure_rm.py --host my_instance_host_name --pretty
 
   Use with a playbook
-  $ ansible-playbook -i contrib/inventory/azure_rm_inventory.py my_playbook.yml --limit galaxy-qa
+  $ ansible-playbook -i contrib/inventory/azure_rm.py my_playbook.yml --limit galaxy-qa
 
 
 Insecure Platform Warning
@@ -180,10 +186,12 @@ Version: 1.0.0
 
 import argparse
 import ConfigParser
-import json 
+import json
 import os
 import re
 import sys
+
+from distutils.version import LooseVersion
 
 from os.path import expanduser
 
@@ -195,12 +203,9 @@ try:
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
     from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
-    from azure.mgmt.network.network_management_client import NetworkManagementClient,\
-                                                             NetworkManagementClientConfiguration
-    from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient,\
-                                                                         ResourceManagementClientConfiguration
-    from azure.mgmt.compute.compute_management_client import ComputeManagementClient,\
-                                                             ComputeManagementClientConfiguration
+    from azure.mgmt.network.network_management_client import NetworkManagementClient
+    from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
+    from azure.mgmt.compute.compute_management_client import ComputeManagementClient
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -219,6 +224,7 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
 AZURE_CONFIG_SETTINGS = dict(
     resource_groups='AZURE_RESOURCE_GROUPS',
     tags='AZURE_TAGS',
+    locations='AZURE_LOCATIONS',
     include_powerstate='AZURE_INCLUDE_POWERSTATE',
     group_by_resource_group='AZURE_GROUP_BY_RESOURCE_GROUP',
     group_by_location='AZURE_GROUP_BY_LOCATION',
@@ -226,7 +232,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_tag='AZURE_GROUP_BY_TAG'
 )
 
-AZURE_MIN_VERSION = "2016-03-30"
+AZURE_MIN_VERSION = "0.30.0rc5"
 
 
 def azure_id_to_dict(id):
@@ -303,7 +309,7 @@ class AzureRM(object):
 
     def _get_env_credentials(self):
         env_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             env_credentials[attribute] = os.environ.get(env_variable, None)
 
         if env_credentials['profile'] is not None:
@@ -322,7 +328,7 @@ class AzureRM(object):
         self.log('Getting credentials')
 
         arg_credentials = dict()
-        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.iteritems():
+        for attribute, env_variable in AZURE_CREDENTIAL_ENV_MAPPING.items():
             arg_credentials[attribute] = getattr(params, attribute)
 
         # try module params
@@ -362,8 +368,7 @@ class AzureRM(object):
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
-            self._network_client = NetworkManagementClient(
-                NetworkManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            self._network_client = NetworkManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Network')
         return self._network_client
 
@@ -371,16 +376,14 @@ class AzureRM(object):
     def rm_client(self):
         self.log('Getting resource manager client')
         if not self._resource_client:
-            self._resource_client = ResourceManagementClient(
-                ResourceManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            self._resource_client = ResourceManagementClient(self.azure_credentials, self.subscription_id)
         return self._resource_client
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
-            self._compute_client = ComputeManagementClient(
-                ComputeManagementClientConfiguration(self.azure_credentials, self.subscription_id))
+            self._compute_client = ComputeManagementClient(self.azure_credentials, self.subscription_id)
             self._register('Microsoft.Compute')
         return self._compute_client
 
@@ -403,6 +406,7 @@ class AzureInventory(object):
 
         self.resource_groups = []
         self.tags = None
+        self.locations = None
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
@@ -424,6 +428,9 @@ class AzureInventory(object):
 
         if self._args.tags:
             self.tags = self._args.tags.split(',')
+
+        if self._args.locations:
+            self.locations = self._args.locations.split(',')
 
         if self._args.no_powerstate:
             self.include_powerstate = False
@@ -462,6 +469,8 @@ class AzureInventory(object):
                             help='Return inventory for comma separated list of resource group names')
         parser.add_argument('--tags', action='store',
                             help='Return inventory for comma separated list of tag key:value pairs')
+        parser.add_argument('--locations', action='store',
+                            help='Return inventory for comma separated list of locations')
         parser.add_argument('--no-powerstate', action='store_true', default=False,
                             help='Do not include the power state of each virtual host')
         return parser.parse_args()
@@ -487,7 +496,7 @@ class AzureInventory(object):
             except Exception as exc:
                 sys.exit("Error: fetching virtual machines - {0}".format(str(exc)))
 
-            if self._args.host or self.tags > 0:
+            if self._args.host or self.tags or self.locations:
                 selected_machines = self._selected_machines(virtual_machines)
                 self._load_machines(selected_machines)
             else:
@@ -524,7 +533,7 @@ class AzureInventory(object):
                 resource_group=resource_group,
                 mac_address=None,
                 plan=(machine.plan.name if machine.plan else None),
-                virtual_machine_size=machine.hardware_profile.vm_size.value,
+                virtual_machine_size=machine.hardware_profile.vm_size,
                 computer_name=machine.os_profile.computer_name,
                 provisioning_state=machine.provisioning_state,
             )
@@ -576,7 +585,7 @@ class AzureInventory(object):
                     host_vars['mac_address'] = network_interface.mac_address
                     for ip_config in network_interface.ip_configurations:
                         host_vars['private_ip'] = ip_config.private_ip_address
-                        host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method.value
+                        host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
                         if ip_config.public_ip_address:
                             public_ip_reference = self._parse_ref_id(ip_config.public_ip_address.id)
                             public_ip_address = self._network_client.public_ip_addresses.get(
@@ -585,7 +594,7 @@ class AzureInventory(object):
                             host_vars['ansible_host'] = public_ip_address.ip_address
                             host_vars['public_ip'] = public_ip_address.ip_address
                             host_vars['public_ip_name'] = public_ip_address.name
-                            host_vars['public_ip_alloc_method'] = public_ip_address.public_ip_allocation_method.value
+                            host_vars['public_ip_alloc_method'] = public_ip_address.public_ip_allocation_method
                             host_vars['public_ip_id'] = public_ip_address.id
                             if public_ip_address.dns_settings:
                                 host_vars['fqdn'] = public_ip_address.dns_settings.fqdn
@@ -598,6 +607,8 @@ class AzureInventory(object):
             if self._args.host and self._args.host == machine.name:
                 selected_machines.append(machine)
             if self.tags and self._tags_match(machine.tags, self.tags):
+                selected_machines.append(machine)
+            if self.locations and machine.location in self.locations:
                 selected_machines.append(machine)
         return selected_machines
 
@@ -653,7 +664,7 @@ class AzureInventory(object):
         self._inventory['azure'].append(host_name)
 
         if self.group_by_tag and vars.get('tags'):
-            for key, value in vars['tags'].iteritems():
+            for key, value in vars['tags'].items():
                 safe_key = self._to_safe(key)
                 safe_value = safe_key + '_' + self._to_safe(value)
                 if not self._inventory.get(safe_key):
@@ -676,17 +687,17 @@ class AzureInventory(object):
         file_settings = self._load_settings()
         if file_settings:
             for key in AZURE_CONFIG_SETTINGS:
-                if key in ('resource_groups', 'tags') and file_settings.get(key, None) is not None:
+                if key in ('resource_groups', 'tags', 'locations') and file_settings.get(key):
                     values = file_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
-                elif file_settings.get(key, None) is not None:
+                elif file_settings.get(key):
                     val = self._to_boolean(file_settings[key])
                     setattr(self, key, val)
         else:
             env_settings = self._get_env_settings()
             for key in AZURE_CONFIG_SETTINGS:
-                if key in('resource_groups', 'tags') and env_settings.get(key, None) is not None:
+                if key in('resource_groups', 'tags', 'locations') and env_settings.get(key):
                     values = env_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
@@ -713,13 +724,14 @@ class AzureInventory(object):
 
     def _get_env_settings(self):
         env_settings = dict()
-        for attribute, env_variable in AZURE_CONFIG_SETTINGS.iteritems():
+        for attribute, env_variable in AZURE_CONFIG_SETTINGS.items():
             env_settings[attribute] = os.environ.get(env_variable, None)
         return env_settings
 
     def _load_settings(self):
         basename = os.path.splitext(os.path.basename(__file__))[0]
-        path = basename + '.ini'
+        default_path = os.path.join(os.path.dirname(__file__), (basename + '.ini'))
+        path = os.path.expanduser(os.path.expandvars(os.environ.get('AZURE_INI_PATH', default_path)))
         config = None
         settings = None
         try:
@@ -774,11 +786,11 @@ class AzureInventory(object):
 
 def main():
     if not HAS_AZURE:
-        sys.exit("The Azure python sdk is not installed (try 'pip install azure') - {0}".format(HAS_AZURE_EXC))
+        sys.exit("The Azure python sdk is not installed (try 'pip install azure>=2.0.0rc5') - {0}".format(HAS_AZURE_EXC))
 
-    if azure_compute_version < AZURE_MIN_VERSION:
-        sys.exit("Expecting azure.mgmt.compute.__version__ to be >= {0}. Found version {1} "
-                 "Do you have Azure >= 2.0.0rc2 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
+    if LooseVersion(azure_compute_version) < LooseVersion(AZURE_MIN_VERSION):
+        sys.exit("Expecting azure.mgmt.compute.__version__ to be {0}. Found version {1} "
+                 "Do you have Azure >= 2.0.0rc5 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
 
     AzureInventory()
 

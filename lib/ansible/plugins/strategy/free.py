@@ -21,11 +21,14 @@ __metaclass__ = type
 
 import time
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
+from ansible.module_utils._text import to_text
+
 
 try:
     from __main__ import display
@@ -53,7 +56,7 @@ class StrategyModule(StrategyBase):
         # the last host to be given a task
         last_host = 0
 
-        result = True
+        result = self._tqm.RUN_OK
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
@@ -65,8 +68,7 @@ class StrategyModule(StrategyBase):
                 break
 
             work_to_do = False        # assume we have no more work to do
-            starting_host = last_host # save current position so we know when we've
-                                      # looped back around and need to break
+            starting_host = last_host # save current position so we know when we've looped back around and need to break
 
             # try and find an unblocked host with a task to run
             host_results = []
@@ -107,13 +109,22 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
+                        try:
+                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
+                            display.debug("done templating")
+                        except:
+                            # just ignore any errors during task name templating,
+                            # we don't care if it just shows the raw name
+                            display.debug("templating failed for some reason")
+                            pass
+
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
                             if action and getattr(action, 'BYPASS_HOST_LOOP', False):
-                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy " \
+                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
                                                    "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
                             else:
-                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be " \
+                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
                                                 "executed for every host in the inventory list.")
 
                         # check to see if this task should be skipped, due to it being a member of a
@@ -127,15 +138,17 @@ class StrategyModule(StrategyBase):
                                 continue
 
                         if task.action == 'meta':
-                            self._execute_meta(task, play_context, iterator)
+                            self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
-                                    display.warning("Using any_errors_fatal with the free strategy is not supported, as tasks are executed independently on each host")
+                                    display.warning("Using any_errors_fatal with the free strategy is not supported,"
+                                            " as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                                del task_vars
                     else:
                         display.debug("%s is blocked, skipping for now" % host_name)
 
@@ -162,7 +175,7 @@ class StrategyModule(StrategyBase):
                     variable_manager=self._variable_manager
                 )
             except AnsibleError as e:
-                return False
+                return self._tqm.RUN_ERROR
 
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
@@ -190,7 +203,7 @@ class StrategyModule(StrategyBase):
                 display.debug("done adding collected blocks to iterator")
 
             # pause briefly so we don't spin lock
-            time.sleep(0.001)
+            time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         # collect all the final results
         results = self._wait_on_pending_results(iterator)

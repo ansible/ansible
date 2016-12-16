@@ -24,10 +24,12 @@ __metaclass__ = type
 import os
 import sys
 import ast
-from ansible.parsing.yaml.loader import AnsibleLoader
 import traceback
 
 from collections import MutableMapping, MutableSet, MutableSequence
+
+from ansible.compat.six import string_types
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
 
 try:
@@ -39,8 +41,6 @@ except ImportError:
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = frozenset((
    'async_wrapper',
-   'accelerate',
-   'fireball',
 ))
 
 def get_docstring(filename, verbose=False):
@@ -58,6 +58,7 @@ def get_docstring(filename, verbose=False):
     doc = None
     plainexamples = None
     returndocs = None
+    metadata = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -72,11 +73,11 @@ def get_docstring(filename, verbose=False):
                         display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
-                    if 'DOCUMENTATION' in theid:
+                    if 'DOCUMENTATION' == theid:
                         doc = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                         fragments = doc.get('extends_documentation_fragment', [])
 
-                        if isinstance(fragments, basestring):
+                        if isinstance(fragments, string_types):
                             fragments = [ fragments ]
 
                         # Allow the module to specify a var other than DOCUMENTATION
@@ -95,18 +96,18 @@ def get_docstring(filename, verbose=False):
                             fragment_yaml = getattr(fragment_class, fragment_var, '{}')
                             fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
-                            if fragment.has_key('notes'):
+                            if 'notes' in fragment:
                                 notes = fragment.pop('notes')
                                 if notes:
-                                    if not doc.has_key('notes'):
+                                    if 'notes' not in doc:
                                         doc['notes'] = []
                                     doc['notes'].extend(notes)
 
-                            if 'options' not in fragment.keys():
+                            if 'options' not in fragment:
                                 raise Exception("missing options in fragment, possibly misformatted?")
 
                             for key, value in fragment.items():
-                                if not doc.has_key(key):
+                                if key not in doc:
                                     doc[key] = value
                                 else:
                                     if isinstance(doc[key], MutableMapping):
@@ -118,15 +119,34 @@ def get_docstring(filename, verbose=False):
                                     else:
                                         raise Exception("Attempt to extend a documentation fragement of unknown type")
 
-                    elif 'EXAMPLES' in theid:
+                    elif 'EXAMPLES' == theid:
                         plainexamples = child.value.s[1:]  # Skip first empty line
 
-                    elif 'RETURN' in theid:
+                    elif 'RETURN' == theid:
                         returndocs = child.value.s[1:]
+
+                    elif 'ANSIBLE_METADATA' == theid:
+                        metadata = child.value
+                        if type(metadata).__name__ == 'Dict':
+                            metadata = ast.literal_eval(child.value)
+                        else:
+                            display.warning("Non-dict metadata detected in %s, skipping" % filename)
+                            metadata = dict()
+
     except:
         display.error("unable to parse %s" % filename)
         if verbose == True:
             display.display("unable to parse %s" % filename)
             raise
-    return doc, plainexamples, returndocs
+
+    if not metadata:
+        metadata = dict()
+
+    # ensure metadata defaults
+    # FUTURE: extract this into its own class for use by runtime metadata
+    metadata['version'] = metadata.get('version', '1.0')
+    metadata['status'] = metadata.get('status', ['preview'])
+    metadata['supported_by'] = metadata.get('supported_by', 'community')
+
+    return doc, plainexamples, returndocs, metadata
 

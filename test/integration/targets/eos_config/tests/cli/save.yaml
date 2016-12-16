@@ -1,0 +1,35 @@
+---
+- debug: msg="START cli/save.yaml"
+
+- name: setup
+  eos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Ethernet5
+    match: none
+    provider: "{{ cli }}"
+
+
+- name: save config
+  eos_config:
+    save: true
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: save should always run
+  eos_config:
+    save: true
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- debug: msg="END cli/save.yaml"

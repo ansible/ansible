@@ -1,5 +1,0 @@
-- hosts: testhost
-  gather_facts: False
-  roles:
-    - test_setup
-

@@ -13,7 +13,7 @@
   consul:
     check_id: '{{item}}'
     state: absent
-  with_items: 
+  with_items:
     - node_level
     - node_level_http
 

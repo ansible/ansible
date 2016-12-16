@@ -24,12 +24,10 @@ import difflib
 import warnings
 from copy import deepcopy
 
-from ansible.compat.six import string_types
-
 from ansible import constants as C
-from ansible.vars import strip_internal_keys
+from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_unicode
+from ansible.vars import strip_internal_keys
 
 try:
     from __main__ import display as global_display
@@ -37,13 +35,14 @@ except ImportError:
     from ansible.utils.display import Display
     global_display = Display()
 
-__all__ = ["CallbackBase"]
-
 try:
     from __main__ import cli
 except ImportError:
-    # using API w/o cli 
+    # using API w/o cli
     cli = False
+
+__all__ = ["CallbackBase"]
+
 
 class CallbackBase:
 
@@ -68,28 +67,16 @@ class CallbackBase:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
-            self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
+            self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
-
-    def _copy_result_exclude(self, result, exclude):
-        values = []
-        for e in exclude:
-            values.append(getattr(result, e))
-            setattr(result, e, None)
-
-        result_copy = deepcopy(result)
-        for i,e in enumerate(exclude):
-            setattr(result, e, values[i])
-
-        return result_copy
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
-        if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
+        if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
@@ -102,6 +89,10 @@ class CallbackBase:
         # remove diff information from screen output
         if self._display.verbosity < 3 and 'diff' in result:
             del abridged_result['diff']
+
+        # remove exception from screen output
+        if 'exception' in abridged_result:
+            del abridged_result['exception']
 
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
@@ -142,8 +133,8 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True),
-                                                      to_unicode(diff['after']).splitlines(True),
+                        differ = difflib.unified_diff(to_text(diff['before']).splitlines(True),
+                                                      to_text(diff['after']).splitlines(True),
                                                       fromfile=before_header,
                                                       tofile=after_header,
                                                       fromfiledate='',
@@ -162,7 +153,7 @@ class CallbackBase:
                         if has_diff:
                             ret.append('\n')
                     if 'prepared' in diff:
-                        ret.append(to_unicode(diff['prepared']))
+                        ret.append(to_text(diff['prepared']))
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
         return u''.join(ret)
@@ -170,6 +161,8 @@ class CallbackBase:
     def _get_item(self, result):
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
+        elif result.get('_ansible_item_label', False):
+            item = result.get('_ansible_item_label')
         else:
             item = result.get('item', None)
 
@@ -309,7 +302,7 @@ class CallbackBase:
         self.playbook_on_no_hosts_remaining()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        self.playbook_on_task_start(task, is_conditional)
+        self.playbook_on_task_start(task.name, is_conditional)
 
     def v2_playbook_on_cleanup_task_start(self, task):
         pass #no v1 correspondance
@@ -356,4 +349,3 @@ class CallbackBase:
 
     def v2_runner_retry(self, result):
         pass
-

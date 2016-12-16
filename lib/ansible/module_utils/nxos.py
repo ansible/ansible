@@ -18,80 +18,96 @@
 #
 
 import re
+import time
+import collections
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, get_exception
-from ansible.module_utils.shell import Shell, ShellError, HAS_PARAMIKO
-from ansible.module_utils.netcfg import parse
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
+from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+add_argument('use_ssl', dict(default=False, type='bool'))
+add_argument('validate_certs', dict(default=True, type='bool'))
 
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(type='int'),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    transport=dict(default='cli', choices=['cli', 'nxapi']),
-    use_ssl=dict(default=False, type='bool'),
-    validate_certs=dict(default=True, type='bool'),
-    provider=dict(type='dict')
-)
+class NxapiConfigMixin(object):
 
-NXAPI_COMMAND_TYPES = ['cli_show', 'cli_show_ascii', 'cli_conf', 'bash']
+    def get_config(self, include_defaults=False, **kwargs):
+        cmd = 'show running-config'
+        if include_defaults:
+            cmd += ' all'
+        if isinstance(self, Nxapi):
+            return self.execute([cmd], output='text')[0]
+        else:
+            return self.execute([cmd])[0]
 
-NXAPI_ENCODINGS = ['json', 'xml']
+    def load_config(self, config):
+        checkpoint = 'ansible_%s' % int(time.time())
+        try:
+            self.execute(['checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['checkpoint %s' % checkpoint])
 
-CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
-]
+        try:
+            self.configure(config)
+        except NetworkError:
+            self.load_checkpoint(checkpoint)
+            raise
 
-CLI_ERRORS_RE = [
-    re.compile(r"% ?Error"),
-    re.compile(r"^% \w+", re.M),
-    re.compile(r"% ?Bad secret"),
-    re.compile(r"invalid input", re.I),
-    re.compile(r"(?:incomplete|ambiguous) command", re.I),
-    re.compile(r"connection timed out", re.I),
-    re.compile(r"[^\r\n]+ not found", re.I),
-    re.compile(r"'[^']' +returned error code: ?\d+"),
-    re.compile(r"syntax error"),
-    re.compile(r"unknown command")
-]
+        try:
+            self.execute(['no checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['no checkpoint %s' % checkpoint])
 
+    def save_config(self, **kwargs):
+        try:
+            self.execute(['copy running-config startup-config'], output='text')
+        except TypeError:
+            self.execute(['copy running-config startup-config'])
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+    def load_checkpoint(self, checkpoint):
+        try:
+            self.execute(['rollback running-config checkpoint %s' % checkpoint,
+                          'no checkpoint %s' % checkpoint], output='text')
+        except TypeError:
+            self.execute(['rollback running-config checkpoint %s' % checkpoint,
+                          'no checkpoint %s' % checkpoint])
 
 
-class Nxapi(object):
+class Nxapi(NxapiConfigMixin):
 
-    def __init__(self, module):
-        self.module = module
+    OUTPUT_TO_COMMAND_TYPE = {
+        'text': 'cli_show_ascii',
+        'json': 'cli_show',
+        'bash': 'bash',
+        'config': 'cli_conf'
+    }
 
-        # sets the module_utils/urls.py req parameters
-        self.module.params['url_username'] = module.params['username']
-        self.module.params['url_password'] = module.params['password']
-
+    def __init__(self):
         self.url = None
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
         self._nxapi_auth = None
+        self.default_output = 'json'
+        self._connected = False
 
-    def _get_body(self, commands, command_type, encoding, version='1.0', chunk='0', sid=None):
+    def _error(self, msg, **kwargs):
+        self._nxapi_auth = None
+        if 'url' not in kwargs:
+            kwargs['url'] = self.url
+        raise NetworkError(msg, **kwargs)
+
+    def _get_body(self, commands, output, version='1.0', chunk='0', sid=None):
         """Encodes a NXAPI JSON request message
         """
+        try:
+            command_type = self.OUTPUT_TO_COMMAND_TYPE[output]
+        except KeyError:
+            msg = 'invalid format, received %s, expected one of %s' % \
+                    (output, ','.join(self.OUTPUT_TO_COMMAND_TYPE.keys()))
+            self._error(msg=msg)
+
         if isinstance(commands, (list, set, tuple)):
             commands = ' ;'.join(commands)
-
-        if encoding not in NXAPI_ENCODINGS:
-            msg = 'invalid encoding, received %s, exceped one of %s' % \
-                    (encoding, ','.join(NXAPI_ENCODINGS))
-            self.module_fail_json(msg=msg)
 
         msg = {
             'version': version,
@@ -99,179 +115,198 @@ class Nxapi(object):
             'chunk': chunk,
             'sid': sid,
             'input': commands,
-            'output_format': encoding
+            'output_format': 'json'
         }
+
         return dict(ins_api=msg)
 
-    def connect(self):
-        host = self.module.params['host']
-        port = self.module.params['port']
+    def connect(self, params, **kwargs):
+        host = params['host']
+        port = params['port']
 
-        if self.module.params['use_ssl']:
+        # sets the module_utils/urls.py req parameters
+        self.url_args.params['url_username'] = params['username']
+        self.url_args.params['url_password'] = params['password']
+        self.url_args.params['validate_certs'] = params['validate_certs']
+        self.url_args.params['timeout'] = params['timeout']
+
+        if params['use_ssl']:
             proto = 'https'
-            if not port:
-                port = 443
+            port = port or 443
         else:
             proto = 'http'
-            if not port:
-                port = 80
+            port = port or 80
 
         self.url = '%s://%s:%s/ins' % (proto, host, port)
+        self._connected = True
 
-    def send(self, commands, command_type='cli_show_ascii', encoding='json'):
-        """Send commands to the device.
-        """
-        clist = to_list(commands)
+    def disconnect(self, **kwargs):
+        self.url = None
+        self._nxapi_auth = None
+        self._connected = False
 
-        if command_type not in NXAPI_COMMAND_TYPES:
-            msg = 'invalid command_type, received %s, exceped one of %s' % \
-                    (command_type, ','.join(NXAPI_COMMAND_TYPES))
-            self.module_fail_json(msg=msg)
+    ### Command methods ###
 
-        data = self._get_body(clist, command_type, encoding)
-        data = self.module.jsonify(data)
+    def execute(self, commands, output=None, **kwargs):
+        commands = collections.deque(commands)
+        output = output or self.default_output
+
+        # only 10 commands can be encoded in each request
+        # messages sent to the remote device
+        stack = list()
+        requests = list()
+
+        while commands:
+            stack.append(commands.popleft())
+            if len(stack) == 10:
+                body = self._get_body(stack, output)
+                data = self._jsonify(body)
+                requests.append(data)
+                stack = list()
+
+        if stack:
+            body = self._get_body(stack, output)
+            data = self._jsonify(body)
+            requests.append(data)
 
         headers = {'Content-Type': 'application/json'}
-        if self._nxapi_auth:
-            headers['Cookie'] = self._nxapi_auth
-
-        response, headers = fetch_url(self.module, self.url, data=data,
-                headers=headers, method='POST')
-
-        self._nxapi_auth = headers.get('set-cookie')
-
-        if headers['status'] != 200:
-            self.module.fail_json(**headers)
-
-        response = self.module.from_json(response.read())
         result = list()
+        timeout = self.url_args.params['timeout']
+        for req in requests:
+            if self._nxapi_auth:
+                headers['Cookie'] = self._nxapi_auth
 
-        output = response['ins_api']['outputs']['output']
-        for item in to_list(output):
-            if item['code'] != '200':
-                self.module.fail_json(**item)
-            else:
-                result.append(item['body'])
+            response, headers = fetch_url(
+                self.url_args, self.url, data=data, headers=headers, timeout=timeout, method='POST'
+            )
+            self._nxapi_auth = headers.get('set-cookie')
+
+            if headers['status'] != 200:
+                self._error(**headers)
+
+            try:
+                response = json.loads(response.read())
+            except ValueError:
+                raise NetworkError(msg='unable to load response from device')
+
+            output = response['ins_api']['outputs']['output']
+            for item in to_list(output):
+                if item['code'] != '200':
+                    self._error(output=output, **item)
+                else:
+                    result.append(item['body'])
 
         return result
 
+    def run_commands(self, commands, **kwargs):
+        output = None
+        cmds = list()
+        responses = list()
 
-class Cli(object):
+        for cmd in commands:
+            if output and output != cmd.output:
+                responses.extend(self.execute(cmds, output=output))
+                cmds = list()
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+            output = cmd.output
+            cmds.append(str(cmd))
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+        if cmds:
+            responses.extend(self.execute(cmds, output=output))
 
-        username = self.module.params['username']
-        password = self.module.params['password']
-        key_filename = self.module.params['ssh_keyfile']
-
-        try:
-            self.shell = Shell(kickstart=False, prompts_re=CLI_PROMPTS_RE, errors_re=CLI_ERRORS_RE)
-            self.shell.open(host, port=port, username=username, password=password, key_filename=key_filename)
-        except ShellError:
-            e = get_exception()
-            msg = 'failed to connect to %s:%s - %s' % (host, port, str(e))
-            self.module.fail_json(msg=msg)
-
-    def send(self, commands, encoding='text'):
-        try:
-            return self.shell.send(commands)
-        except ShellError:
-            e = get_exception()
-            self.module.fail_json(msg=e.message, commands=commands)
+        return responses
 
 
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._connected = False
-
-    @property
-    def connected(self):
-        return self._connected
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        super(NetworkModule, self)._load_params()
-        provider = self.params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS:
-                if self.params.get(key) is None and value is not None:
-                    self.params[key] = value
-
-    def connect(self):
-        cls = globals().get(str(self.params['transport']).capitalize())
-        try:
-            self.connection = cls(self)
-        except TypeError:
-            e = get_exception()
-            self.fail_json(msg=e.message)
-
-        self.connection.connect()
-
-        if self.params['transport'] == 'cli':
-            self.connection.send('terminal length 0')
-
-        self._connected = True
+    ### Config methods ###
 
     def configure(self, commands):
         commands = to_list(commands)
-        if self.params['transport'] == 'cli':
-            return self.configure_cli(commands)
-        else:
-            return self.execute(commands, command_type='cli_conf')
+        return self.execute(commands, output='config')
 
-    def configure_cli(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure')
+    def _jsonify(self, data):
+        for encoding in ("utf-8", "latin-1"):
+            try:
+                return json.dumps(data, encoding=encoding)
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
+                continue
+        self._error(msg='Invalid unicode encoding encountered')
+
+Nxapi = register_transport('nxapi')(Nxapi)
+
+
+class Cli(NxapiConfigMixin, CliBase):
+
+    CLI_PROMPTS_RE = [
+        re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
+        re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"% ?Error"),
+        re.compile(r"^% \w+", re.M),
+        re.compile(r"% ?Bad secret"),
+        re.compile(r"invalid input", re.I),
+        re.compile(r"(?:incomplete|ambiguous) command", re.I),
+        re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
+        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"syntax error"),
+        re.compile(r"unknown command")
+    ]
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    def connect(self, params, **kwargs):
+        super(Cli, self).connect(params, kickstart=False, **kwargs)
+        self.shell.send('terminal length 0')
+
+    ### Command methods ###
+
+    def run_commands(self, commands):
+        cmds = list(prepare_commands(commands))
+        responses = self.execute(cmds)
+        for index, cmd in enumerate(commands):
+            raw = cmd.args.get('raw') or False
+            if cmd.output == 'json' and not raw:
+                try:
+                    responses[index] = json.loads(responses[index])
+                except ValueError:
+                    raise NetworkError(
+                        msg='unable to load response from device',
+                        response=responses[index], command=str(cmd)
+                    )
+        return responses
+
+    ### Config methods ###
+
+    def configure(self, commands, **kwargs):
+        commands = prepare_config(commands)
         responses = self.execute(commands)
         responses.pop(0)
         return responses
 
-    def execute(self, commands, **kwargs):
-        if not self.connected:
-            self.connect()
-        return self.connection.send(commands, **kwargs)
-
-    def disconnect(self):
-        self.connection.close()
-        self._connected = False
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=2)
-
-    def get_config(self):
-        cmd = 'show running-config'
-        if self.params.get('include_defaults'):
-            cmd += ' all'
-        response = self.execute(cmd)
-        return response[0]
+Cli = register_transport('cli', default=True)(Cli)
 
 
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
+def prepare_config(commands):
+    prepared = ['config']
+    prepared.extend(to_list(commands))
+    prepared.append('end')
+    return prepared
 
-    module = NetworkModule(**kwargs)
 
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    return module
+def prepare_commands(commands):
+    jsonify = lambda x: '%s | json' % x
+    for cmd in to_list(commands):
+        if cmd.output == 'json':
+            cmd.command_string = jsonify(cmd)
+        if cmd.command.endswith('| json'):
+            cmd.output = 'json'
+        yield cmd

@@ -154,8 +154,12 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
     }
 }
 
-#Alias Get-attr-->Get-AnsibleParam for backwards compat.
-New-Alias -Name Get-attr -Value Get-AnsibleParam
+#Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
+If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
+{
+    New-Alias -Name Get-attr -Value Get-AnsibleParam
+}
+
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
@@ -224,4 +228,22 @@ Function Get-FileChecksum($path)
         $hash = "1";
     }
     return $hash
+}
+
+Function Get-PendingRebootStatus
+{
+    # Check if reboot is required, if so notify CA. The MSFT_ServerManagerTasks provider is missing on client SKUs
+    #Function returns true if computer has a pending reboot
+    $featureData = invoke-wmimethod -EA Ignore -Name GetServerFeature -namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
+    $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
+    $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| where {$_.PSChildName -eq "RebootPending"}
+    if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
+    {
+        return $True
+    }
+    else 
+    {
+        return $False
+    }
+
 }

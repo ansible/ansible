@@ -118,20 +118,19 @@ __metaclass__ = type
 #     - ../files/baz
 #    ignore_errors: true
 
-
 import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.compat.six import string_types
+from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        result = None
         anydict = False
         skip = False
 
@@ -148,14 +147,14 @@ class LookupModule(LookupBase):
                     skip  = boolean(term.get('skip', False))
 
                     filelist = files
-                    if isinstance(files, basestring):
+                    if isinstance(files, string_types):
                         files = files.replace(',', ' ')
                         files = files.replace(';', ' ')
                         filelist = files.split(' ')
 
                     pathlist = paths
                     if paths:
-                        if isinstance(paths, basestring):
+                        if isinstance(paths, string_types):
                             paths = paths.replace(',', ' ')
                             paths = paths.replace(':', ' ')
                             paths = paths.replace(';', ' ')
@@ -173,28 +172,18 @@ class LookupModule(LookupBase):
         else:
             total_search = self._flatten(terms)
 
-        roledir = variables.get('roledir')
         for fn in total_search:
             try:
                 fn = self._templar.template(fn)
-            except (AnsibleUndefinedVariable, UndefinedError) as e:
+            except (AnsibleUndefinedVariable, UndefinedError):
                 continue
 
-            if os.path.isabs(fn) and os.path.exists(fn):
-                return [fn]
-            else:
-                if roledir is not None:
-                    # check the templates and vars directories too,if they exist
-                    for subdir in ('templates', 'vars', 'files'):
-                        path = self._loader.path_dwim_relative(roledir, subdir, fn)
-                        if os.path.exists(path):
-                            return [path]
-
-                # if none of the above were found, just check the
-                # current filename against the current dir
-                path = self._loader.path_dwim(fn)
-                if os.path.exists(path):
-                    return [path]
+             # get subdir if set by task executor, default to files otherwise
+            subdir = getattr(self, '_subdir', 'files')
+            path = None
+            path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)
+            if path is not None:
+                return [path]
         else:
             if skip:
                 return []

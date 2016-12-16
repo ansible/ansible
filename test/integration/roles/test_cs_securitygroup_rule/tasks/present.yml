@@ -5,7 +5,7 @@
     end_port: 8888
     cidr: 1.2.3.4/32
   register: sg_rule
-- name: verify create http range rule 
+- name: verify create http range rule
   assert:
     that:
     - sg_rule|success

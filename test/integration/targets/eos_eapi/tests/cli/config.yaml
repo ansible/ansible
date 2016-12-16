@@ -1,0 +1,52 @@
+- debug: msg="START cli/config.yaml"
+
+
+#----
+- name: Setup
+  eos_config:
+    lines: no management api http-commands
+    match: none
+    provider: "{{ cli }}"
+  connection: local
+
+- name: Get running-config
+  eos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+- name: Set config
+  eos_eapi:
+    config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+- name: Ensure that this triggered a change
+  assert:
+    that:
+      - "config.changed == true"
+
+#---
+- name: Get running-config again
+  eos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+- name: Set config
+  eos_eapi:
+    config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: config
+  connection: local
+
+
+- name: Idempotency check
+  assert:
+    that:
+      - "config.changed == false"
+
+- debug: msg="END cli/config.yaml"

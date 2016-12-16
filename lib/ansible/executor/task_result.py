@@ -23,7 +23,7 @@ from ansible.parsing.dataloader import DataLoader
 
 class TaskResult:
     '''
-    This class is responsible for interpretting the resulting data
+    This class is responsible for interpreting the resulting data
     from an executed task, and provides helper methods for determining
     the result of a given task.
     '''
@@ -41,7 +41,7 @@ class TaskResult:
 
     def is_skipped(self):
         # loop results
-        if 'results' in self._result and self._task.loop:
+        if 'results' in self._result:
             results = self._result['results']
             # Loop tasks are only considered skipped if all items were skipped.
             # some squashed results (eg, yum) are not dicts and can't be skipped individually
@@ -62,11 +62,13 @@ class TaskResult:
         return self._check_key('unreachable')
 
     def _check_key(self, key):
-        if 'results' in self._result and self._task.loop:
+        '''get a specific key from the result or it's items'''
+
+        if isinstance(self._result, dict) and key in self._result:
+            return self._result.get(key, False)
+        else:
             flag = False
             for res in self._result.get('results', []):
                 if isinstance(res, dict):
                     flag |= res.get(key, False)
             return flag
-        else:
-            return self._result.get(key, False)

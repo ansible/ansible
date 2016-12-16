@@ -1,6 +1,0 @@
-some_structure:
-  - "this is a list element"
-  - 
-    this: "is a hash element in a list"
-    warp: 9
-    where: endor

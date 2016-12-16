@@ -187,6 +187,9 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
 
     rc, out, err = module.run_command(this_cmd)
+    # ssh-keyscan gives a 0 exit code and prints nothins on timeout
+    if rc != 0 or not out:
+        module.fail_json(msg='failed to get the hostkey for %s' % fqdn)
     module.append_to_file(user_host_file, out)
 
     return rc, out, err

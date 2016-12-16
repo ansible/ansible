@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import action_loader, lookup_loader
+from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
 
@@ -138,7 +139,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_host = MagicMock()
 
-        def _copy():
+        def _copy(exclude_parent=False, exclude_tasks=False):
             new_item = MagicMock()
             return new_item
 
@@ -216,26 +217,40 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertIsInstance(mock_task.args, MagicMock)
 
         mock_task.action = 'foo'
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertEqual(mock_task.args, {'name': '{{item}}'})
 
         mock_task.action = 'yum'
         mock_task.args={'name': 'static'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertEqual(mock_task.args, {'name': 'static'})
 
         mock_task.action = 'yum'
         mock_task.args={'name': '{{pkg_mgr}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertEqual(mock_task.args, {'name': '{{pkg_mgr}}'})
 
         mock_task.action = '{{unknown}}'
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
+        self.assertEqual(mock_task.args, {'name': '{{item}}'})
+
+        # Could do something like this to recover from bad deps in a package
+        job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
+        items = [ 'absent', 'latest' ]
+        mock_task.action = 'yum'
+        mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{ packages }}', 'state': '{{ item }}'})
 
         # Maybe should raise an error in this case.  The user would have to specify:
         # - yum: name="{{ packages[item] }}"
@@ -252,6 +267,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.args = {'name': '{{ packages[item] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
 
         #
         # Replaces
@@ -261,11 +277,13 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a','c']])
+        self.assertEqual(mock_task.args, {'name': ['a','c']})
 
         mock_task.action = '{{pkg_mgr}}'
         mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
+        self.assertEqual(mock_task.args, {'name': ['a','c']})
 
         # New loop_var
         mock_task.action = 'yum'
@@ -274,6 +292,7 @@ class TestTaskExecutor(unittest.TestCase):
         loop_var = 'a_loop_var_item'
         new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
+        self.assertEqual(mock_task.args, {'name': ['a','c']})
         loop_var = 'item'
 
         #
@@ -289,7 +308,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.args = {'name': '{{ item }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         #self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
+        #self.assertEqual(mock_task.args, {'name': ['a', 'b', 'foo', 'bar']})
         self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{ item }}'})
 
         # Retrieving from a dict
         items = ['a', 'b', 'foo']
@@ -297,7 +318,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.args = {'name': '{{ packages[item] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         #self.assertEqual(new_items, [['foo', 'baz']])
+        #self.assertEqual(mock_task.args, {'name': ['foo', 'baz']})
         self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
 
         # Another way to retrieve from a dict
         job_vars = dict(pkg_mgr='yum')
@@ -306,7 +329,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.args = {'name': '{{ item["package"] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         #self.assertEqual(new_items, [['foo', 'bar']])
+        #self.assertEqual(mock_task.args, {'name': ['foo', 'bar']})
         self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{ item["package"] }}'})
 
         items = [dict(name='a', state='present'),
                 dict(name='b', state='present'),
@@ -314,8 +339,10 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
         #self.assertEqual(new_items, [dict(name=['a', 'b', 'c'], state='present')])
+        #self.assertEqual(mock_task.args, {'name': ['a', 'b', 'c'], 'state': 'present'})
+        self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
 
         items = [dict(name='a', state='present'),
                 dict(name='b', state='present'),
@@ -323,17 +350,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, items)
         #self.assertEqual(new_items, [dict(name=['a', 'b'], state='present'),
         #        dict(name='c', state='absent')])
-
-        # Could do something like this to recover from bad deps in a package
-        job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
-        items = [ 'absent', 'latest' ]
-        mock_task.action = 'yum'
-        mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        #self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
         self.assertEqual(new_items, items)
+        self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
 
 
     def test_task_executor_execute(self):
@@ -355,6 +376,7 @@ class TestTaskExecutor(unittest.TestCase):
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async = 1
+        mock_task.poll = 0
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
@@ -388,11 +410,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
 
-        mock_task.changed_when = "1 == 1"
+        mock_task.changed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.changed_when = None
-        mock_task.failed_when = "1 == 1"
+        mock_task.failed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.failed_when = None

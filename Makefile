@@ -1,4 +1,3 @@
-#!/usr/bin/make
 # WARN: gmake syntax
 ########################################################
 # Makefile for Ansible
@@ -24,8 +23,8 @@ OS = $(shell uname -s)
 # directory of the target file ($@), kinda like `dirname`.
 MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1 docs/man/man1/ansible-galaxy.1 docs/man/man1/ansible-vault.1
 ifneq ($(shell which a2x 2>/dev/null),)
-ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
-ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
+ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
+ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
 else
 ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
@@ -67,7 +66,7 @@ ifeq ($(OFFICIAL),yes)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 0.git$(DATE)$(GITINFO)
+    DEB_RELEASE = 100.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
@@ -77,13 +76,19 @@ DEB_PPA ?= ppa
 # Choose the desired Ubuntu release: lucid precise saucy trusty
 DEB_DIST ?= unstable
 
+# pbuilder parameters
+PBUILDER_ARCH ?= amd64
+PBUILDER_CACHE_DIR = /var/cache/pbuilder
+PBUILDER_BIN ?= pbuilder
+PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_ARCH) --debbuildopts -b
+
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
-    RPMRELEASE = 0.git$(DATE)$(GITINFO)
+    RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
@@ -93,17 +98,20 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
-NOSETESTS3 ?= nosetests-3.4
+NOSETESTS3 ?= nosetests-3.5
 
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
 
 tests-py3:
-	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
+
+integration:
+	test/utils/shippable/integration.sh
 
 authors:
 	sh hacking/authors.sh
@@ -227,7 +235,23 @@ debian: sdist
         sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
-deb: debian
+deb: deb-src
+	@for DIST in $(DEB_DIST) ; do \
+	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
+	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
+	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
+	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+	@echo "#############################################"
+
+# Build package outside of pbuilder, with locally installed dependencies.
+# Install BuildRequires as noted in packaging/debian/control.
+local_deb: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
 	done
@@ -261,7 +285,9 @@ deb-src-upload: deb-src
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
-webdocs: $(MANPAGES)
+webdocs:
 	(cd docsite/; make docs)
 
 docs: $(MANPAGES)
+
+alldocs: docs webdocs

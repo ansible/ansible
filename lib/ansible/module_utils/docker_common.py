@@ -22,6 +22,7 @@ import json
 import sys
 import copy
 
+from distutils.version import LooseVersion
 from urlparse import urlparse
 from ansible.module_utils.basic import *
 
@@ -82,28 +83,6 @@ if not HAS_DOCKER_PY:
             pass
 
 
-def human_to_bytes(number):
-    if number is None:
-        return 0
-
-    if isinstance(number, int):
-        return number
-
-    if number[-1].isdigit():
-        return int(number)
-
-    if number[-1] == BYTE_SUFFIXES[0] and number[-2].isdigit():
-        return int(number[:-1])
-
-    i = 1
-    for each in BYTE_SUFFIXES[1:]:
-        if number[-len(each):] == BYTE_SUFFIXES[i]:
-            return int(number[:-len(each)]) * (1024 ** i)
-        i += 1
-
-    raise ValueError("Failed to convert %s. The suffix must be one of %s" % (number, ','.join(BYTE_SUFFIXES)))
-
-
 class DockerBaseClass(object):
 
     def __init__(self):
@@ -151,7 +130,7 @@ class AnsibleDockerClient(Client):
         if not HAS_DOCKER_PY:
             self.fail("Failed to import docker-py - %s. Try `pip install docker-py`" % HAS_DOCKER_ERROR)
 
-        if docker_version < MIN_DOCKER_VERSION:
+        if LooseVersion(docker_version) < LooseVersion(MIN_DOCKER_VERSION):
             self.fail("Error: docker-py version is %s. Minimum version required is %s." % (docker_version,
                                                                                            MIN_DOCKER_VERSION))
 
@@ -233,7 +212,7 @@ class AnsibleDockerClient(Client):
             tls_hostname=self._get_value('tls_hostname', params['tls_hostname'],
                                         'DOCKER_TLS_HOSTNAME', 'localhost'),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
-                                        DEFAULT_DOCKER_API_VERSION),
+                                        'auto'),
             cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
             cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
             key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
@@ -431,9 +410,10 @@ class AnsibleDockerClient(Client):
         images = response
         if tag: 
             lookup = "%s:%s" % (name, tag)
+            images = []
             for image in response:
-                self.log(image, pretty_print=True)
-                if image.get('RepoTags') and lookup in image.get('RepoTags'):
+                tags = image.get('RepoTags')
+                if tags and lookup in tags:
                     images = [image]
                     break
         return images
@@ -444,8 +424,7 @@ class AnsibleDockerClient(Client):
         '''
         self.log("Pulling image %s:%s" % (name, tag))
         try:
-            for line in self.pull(name, tag=tag, stream=True):
-                line = json.loads(line)
+            for line in self.pull(name, tag=tag, stream=True, decode=True):
                 self.log(line, pretty_print=True)
                 if line.get('error'):
                     if line.get('errorDetail'):

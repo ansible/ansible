@@ -1,0 +1,5 @@
+- name: enable nxapi on remote device
+  nxos_config:
+    lines:
+      - feature nxapi
+    provider: "{{ cli }}"

@@ -25,6 +25,7 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.vars import combine_vars
+from ansible.module_utils._text import to_native
 
 #FIXME: make into plugins
 from ansible.inventory.ini import InventoryParser as InventoryINIParser
@@ -44,14 +45,12 @@ def get_file_parser(hostsfile, groups, loader):
     parser = None
 
     try:
-        inv_file = open(hostsfile)
-        first_line = inv_file.readlines()[0]
-        inv_file.close()
-        if first_line.startswith('#!'):
-            shebang_present = True
+        with open(hostsfile, 'rb') as inv_file:
+            initial_chars = inv_file.read(2)
+            if initial_chars.startswith(b'#!'):
+                shebang_present = True
     except:
         pass
-
 
     #FIXME: make this 'plugin loop'
     # script
@@ -60,9 +59,10 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append(str(e))
+            myerr.append('Attempted to execute "%s" as inventory script: %s' % (hostsfile, to_native(e)))
     elif shebang_present:
-        myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
+
+        myerr.append("The inventory file \'%s\' looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
 
     # YAML/JSON
     if not processed and not shebang_present and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:
@@ -70,7 +70,7 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryYAMLParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append(str(e))
+            myerr.append('Attempted to read "%s" as YAML: %s' % (to_native(hostsfile), to_native(e)))
 
     # ini
     if not processed and not shebang_present:
@@ -78,10 +78,10 @@ def get_file_parser(hostsfile, groups, loader):
             parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            myerr.append(str(e))
+            myerr.append('Attempted to read "%s" as ini file: %s ' % (to_native(hostsfile), to_native(e)))
 
     if not processed and myerr:
-        raise AnsibleError( '\n'.join(myerr) )
+        raise AnsibleError('\n'.join(myerr))
 
     return parser
 
@@ -191,7 +191,6 @@ class InventoryDirectory(object):
                     # info
                     allgroup.child_groups.remove(group)
 
-
     def _add_group(self, group):
         """ Merge an existing group or add a new one;
             Track parent and child groups, and hosts of the new one """
@@ -225,7 +224,7 @@ class InventoryDirectory(object):
 
         # name
         if group.name != newgroup.name:
-            raise AnsibleError("Cannot merge group %s with %s" % (group.name, newgroup.name))
+            raise AnsibleError("Cannot merge inventory group %s with %s" % (group.name, newgroup.name))
 
         # depth
         group.depth = max([group.depth, newgroup.depth])
@@ -245,7 +244,6 @@ class InventoryDirectory(object):
                 for hostgroup in [g for g in host.groups]:
                     if hostgroup.name == group.name and hostgroup != self.groups[group.name]:
                         self.hosts[host.name].groups.remove(hostgroup)
-
 
         # group child membership relation
         for newchild in newgroup.child_groups:
@@ -298,4 +296,3 @@ class InventoryDirectory(object):
         for i in self.parsers:
             vars.update(i.get_host_variables(host))
         return vars
-

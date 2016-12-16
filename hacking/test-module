@@ -105,6 +105,10 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
+
+    # default selinux fs list is pass in as _ansible_selinux_special_fs arg
+    complex_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
+
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
         complex_args = utils_vars.combine_vars(complex_args, loader.load_from_file(args[1:]))
@@ -142,12 +146,12 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
         task_vars=task_vars
     )
 
-    if module_style == 'new' and 'ZIPLOADER_WRAPPER = True' in module_data:
-        module_style = 'ziploader'
+    if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in module_data:
+        module_style = 'ansiballz'
 
     modfile2_path = os.path.expanduser(destfile)
     print("* including generated source, if any, saving to: %s" % modfile2_path)
-    if module_style not in ('ziploader', 'old'):
+    if module_style not in ('ansiballz', 'old'):
         print("* this may offset any line numbers in tracebacks/debuggers!")
     modfile2 = open(modfile2_path, 'w')
     modfile2.write(module_data)
@@ -156,7 +160,7 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
 
     return (modfile2_path, modname, module_style)
 
-def ziploader_setup(modfile, modname):
+def ansiballz_setup(modfile, modname):
     os.system("chmod +x %s" % modfile)
 
     cmd = subprocess.Popen([modfile, 'explode'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -164,7 +168,7 @@ def ziploader_setup(modfile, modname):
     lines = out.splitlines()
     if len(lines) != 2 or 'Module expanded into' not in lines[0]:
         print("*" * 35)
-        print("INVALID OUTPUT FROM ZIPLOADER MODULE WRAPPER")
+        print("INVALID OUTPUT FROM ANSIBALLZ MODULE WRAPPER")
         print(out)
         sys.exit(1)
     debug_dir = lines[1].strip()
@@ -172,13 +176,13 @@ def ziploader_setup(modfile, modname):
     argsfile = os.path.join(debug_dir, 'args')
     modfile = os.path.join(debug_dir, 'ansible_module_%s.py' % modname)
 
-    print("* ziploader module detected; extracted module source to: %s" % debug_dir)
+    print("* ansiballz module detected; extracted module source to: %s" % debug_dir)
     return modfile, argsfile
 
 def runtest(modfile, argspath, modname, module_style):
     """Test run a module, piping it's output for reporting."""
-    if module_style == 'ziploader':
-        modfile, argspath = ziploader_setup(modfile, modname)
+    if module_style == 'ansiballz':
+        modfile, argspath = ansiballz_setup(modfile, modname)
 
     os.system("chmod +x %s" % modfile)
 
@@ -209,8 +213,8 @@ def runtest(modfile, argspath, modname, module_style):
 def rundebug(debugger, modfile, argspath, modname, module_style):
     """Run interactively with console debugger."""
 
-    if module_style == 'ziploader':
-        modfile, argspath = ziploader_setup(modfile, modname)
+    if module_style == 'ansiballz':
+        modfile, argspath = ansiballz_setup(modfile, modname)
 
     if argspath is not None:
         subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
@@ -223,7 +227,7 @@ def main():
     (modfile, modname, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check, options.filename)
 
     argspath = None
-    if module_style not in ('new', 'ziploader'):
+    if module_style not in ('new', 'ansiballz'):
         if module_style == 'non_native_want_json':
             argspath = write_argsfile(options.module_args, json=True)
         elif module_style == 'old':

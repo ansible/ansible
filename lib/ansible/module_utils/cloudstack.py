@@ -27,7 +27,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import time
+from ansible.module_utils.six import iteritems
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -68,6 +70,10 @@ class AnsibleCloudStack(object):
 
         self.result = {
             'changed': False,
+            'diff' : {
+                'before': dict(),
+                'after': dict()
+            }
         }
 
         # Common returns, will be merged with self.returns
@@ -93,10 +99,16 @@ class AnsibleCloudStack(object):
         # these keys will be compared case sensitive in self.has_changed()
         self.case_sensitive_keys = [
             'id',
+            'displaytext',
+            'displayname',
+            'description',
         ]
 
         self.module = module
         self._connect()
+
+        # Helper for VPCs
+        self._vpc_networks_ids = None
 
         self.domain = None
         self.account = None
@@ -106,10 +118,10 @@ class AnsibleCloudStack(object):
         self.vpc = None
         self.zone = None
         self.vm = None
+        self.vm_default_nic = None
         self.os_type = None
         self.hypervisor = None
         self.capabilities = None
-        self.tags = None
 
 
     def _connect(self):
@@ -145,7 +157,8 @@ class AnsibleCloudStack(object):
 
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
-        for key, value in want_dict.iteritems():
+        result = False
+        for key, value in want_dict.items():
 
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
@@ -156,15 +169,38 @@ class AnsibleCloudStack(object):
                 continue
 
             if key in current_dict:
-                if self.case_sensitive_keys and key in self.case_sensitive_keys:
-                    if str(value) != str(current_dict[key]):
-                        return True
-                # Test for diff in case insensitive way
-                elif str(value).lower() != str(current_dict[key]).lower():
-                    return True
+                if isinstance(value, (int, float, long, complex)):
+                    # ensure we compare the same type
+                    if isinstance(value, int):
+                        current_dict[key] = int(current_dict[key])
+                    elif isinstance(value, float):
+                        current_dict[key] = float(current_dict[key])
+                    elif isinstance(value, long):
+                        current_dict[key] = long(current_dict[key])
+                    elif isinstance(value, complex):
+                        current_dict[key] = complex(current_dict[key])
+
+                    if value != current_dict[key]:
+                        self.result['diff']['before'][key] = current_dict[key]
+                        self.result['diff']['after'][key] = value
+                        result = True
+                else:
+                    if self.case_sensitive_keys and key in self.case_sensitive_keys:
+                        if value != current_dict[key].encode('utf-8'):
+                            self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                            self.result['diff']['after'][key] = value
+                            result = True
+
+                    # Test for diff in case insensitive way
+                    elif value.lower() != current_dict[key].encode('utf-8').lower():
+                        self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
+                        self.result['diff']['after'][key] = value
+                        result = True
             else:
-                return True
-        return False
+                self.result['diff']['before'][key] = None
+                self.result['diff']['after'][key] = value
+                result = True
+        return result
 
 
     def _get_by_key(self, key=None, my_dict=None):
@@ -183,6 +219,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.vpc)
 
         vpc = self.module.params.get('vpc')
+        if not vpc:
+            vpc = os.environ.get('CLOUDSTACK_VPC')
         if not vpc:
             return None
 
@@ -203,6 +241,32 @@ class AnsibleCloudStack(object):
         self.module.fail_json(msg="VPC '%s' not found" % vpc)
 
 
+    def is_vm_in_vpc(self, vm):
+        for n in vm.get('nic'):
+            if n.get('isdefault', False):
+                return self.is_vpc_network(network_id=n['networkid'])
+        self.module.fail_json(msg="VM has no default nic")
+
+
+    def is_vpc_network(self, network_id):
+        """Returns True if network is in VPC."""
+        # This is an efficient way to query a lot of networks at a time
+        if self._vpc_networks_ids is None:
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'zoneid': self.get_zone(key='id'),
+            }
+            vpcs = self.cs.listVPCs(**args)
+            self._vpc_networks_ids = []
+            if vpcs:
+                for vpc in vpcs['vpc']:
+                    for n in vpc.get('network',[]):
+                        self._vpc_networks_ids.append(n['id'])
+        return network_id in self._vpc_networks_ids
+
+
     def get_network(self, key=None):
         """Return a network dictionary or the value of given key of."""
         if self.network:
@@ -213,16 +277,20 @@ class AnsibleCloudStack(object):
             return None
 
         args = {
-            'account': self.get_account('name'),
-            'domainid': self.get_domain('id'),
-            'projectid': self.get_project('id'),
-            'zoneid': self.get_zone('id'),
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id')
         }
         networks = self.cs.listNetworks(**args)
         if not networks:
             self.module.fail_json(msg="No networks available.")
 
         for n in networks['network']:
+            # ignore any VPC network if vpc param is not given
+            if 'vpcid' in n and not self.get_vpc(key='id'):
+                continue
             if network in [n['displaytext'], n['name'], n['id']]:
                 self.network = n
                 return self._get_by_key(key, self.network)
@@ -234,6 +302,8 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.project)
 
         project = self.module.params.get('project')
+        if not project:
+            project = os.environ.get('CLOUDSTACK_PROJECT')
         if not project:
             return None
         args = {}
@@ -256,11 +326,13 @@ class AnsibleCloudStack(object):
         if not ip_address:
             self.module.fail_json(msg="IP address param 'ip_address' is required")
 
-        args = {}
-        args['ipaddress'] = ip_address
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
+        args = {
+            'ipaddress': ip_address,
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'vpcid': self.get_vpc(key='id'),
+        }
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if not ip_addresses:
@@ -268,6 +340,32 @@ class AnsibleCloudStack(object):
 
         self.ip_address = ip_addresses['publicipaddress'][0]
         return self._get_by_key(key, self.ip_address)
+
+
+    def get_vm_guest_ip(self):
+        vm_guest_ip = self.module.params.get('vm_guest_ip')
+        default_nic = self.get_vm_default_nic()
+
+        if not vm_guest_ip:
+            return default_nic['ipaddress']
+
+        for secondary_ip in default_nic['secondaryip']:
+            if vm_guest_ip == secondary_ip['ipaddress']:
+                return vm_guest_ip
+        self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
+
+
+    def get_vm_default_nic(self):
+        if self.vm_default_nic:
+            return self.vm_default_nic
+
+        nics = self.cs.listNics(virtualmachineid=self.get_vm(key='id'))
+        if nics:
+            for n in nics['nic']:
+                if n['isdefault']:
+                    self.vm_default_nic = n
+                    return self.vm_default_nic
+        self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
 
     def get_vm(self, key=None):
@@ -278,14 +376,22 @@ class AnsibleCloudStack(object):
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
-        args = {}
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
-        args['projectid'] = self.get_project(key='id')
-        args['zoneid'] = self.get_zone(key='id')
+        vpc_id = self.get_vpc(key='id')
+
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'zoneid': self.get_zone(key='id'),
+            'vpcid': vpc_id,
+        }
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
+                # Due the limitation of the API, there is no easy way (yet) to get only those VMs
+                # not belonging to a VPC.
+                if not vpc_id and self.is_vm_in_vpc(vm=v):
+                    continue
                 if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
@@ -297,7 +403,12 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.zone)
 
         zone = self.module.params.get('zone')
+        if not zone:
+            zone = os.environ.get('CLOUDSTACK_ZONE')
         zones = self.cs.listZones()
+
+        if not zones:
+            self.module.fail_json(msg="No zones available. Please create a zone first")
 
         # use the first zone if no zone param given
         if not zone:
@@ -354,6 +465,8 @@ class AnsibleCloudStack(object):
 
         account = self.module.params.get('account')
         if not account:
+            account = os.environ.get('CLOUDSTACK_ACCOUNT')
+        if not account:
             return None
 
         domain = self.module.params.get('domain')
@@ -377,6 +490,8 @@ class AnsibleCloudStack(object):
 
         domain = self.module.params.get('domain')
         if not domain:
+            domain = os.environ.get('CLOUDSTACK_DOMAIN')
+        if not domain:
             return None
 
         args = {}
@@ -391,19 +506,9 @@ class AnsibleCloudStack(object):
 
 
     def get_tags(self, resource=None):
-        if not self.tags:
-            args = {}
-            args['projectid'] = self.get_project(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['resourceid'] = resource['id']
-            response = self.cs.listTags(**args)
-            self.tags = response.get('tag', [])
-
         existing_tags = []
-        if self.tags:
-            for tag in self.tags:
-                existing_tags.append({'key': tag['key'], 'value': tag['value']})
+        for tag in resource.get('tags',[]):
+            existing_tags.append({'key': tag['key'], 'value': tag['value']})
         return existing_tags
 
 
@@ -441,8 +546,7 @@ class AnsibleCloudStack(object):
             if tags is not None:
                 self._process_tags(resource, resource_type, self._tags_that_should_not_exist(resource, tags), operation="delete")
                 self._process_tags(resource, resource_type, self._tags_that_should_exist_or_be_updated(resource, tags))
-                self.tags = None
-                resource['tags'] = self.get_tags(resource)
+                resource['tags'] = tags
         return resource
 
 
@@ -477,12 +581,12 @@ class AnsibleCloudStack(object):
         if resource:
             returns = self.common_returns.copy()
             returns.update(self.returns)
-            for search_key, return_key in returns.iteritems():
+            for search_key, return_key in returns.items():
                 if search_key in resource:
                     self.result[return_key] = resource[search_key]
 
             # Bad bad API does not always return int when it should.
-            for search_key, return_key in self.returns_to_int.iteritems():
+            for search_key, return_key in self.returns_to_int.items():
                 if search_key in resource:
                     self.result[return_key] = int(resource[search_key])
 

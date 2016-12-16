@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.six import string_types
+from ansible import constants as C
 
 from ansible.errors import AnsibleParserError
 
@@ -65,6 +66,7 @@ class Play(Base, Taggable, Become):
     # Connection
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
+    _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
@@ -86,8 +88,8 @@ class Play(Base, Taggable, Become):
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial              = FieldAttribute(isa='string',  always_post_validate=True)
-    _strategy            = FieldAttribute(isa='string', default='linear', always_post_validate=True)
+    _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
 
     # =================================================================================
 
@@ -95,6 +97,7 @@ class Play(Base, Taggable, Become):
         super(Play, self).__init__()
 
         self._included_path = None
+        self._removed_hosts = []
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -110,7 +113,7 @@ class Play(Base, Taggable, Become):
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
-                 data['name'] = data['hosts']
+                data['name'] = data['hosts']
         p = Play()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
@@ -135,28 +138,6 @@ class Play(Base, Taggable, Become):
             del ds['user']
 
         return super(Play, self).preprocess_data(ds)
-
-    def _load_hosts(self, attr, ds):
-        '''
-        Loads the hosts from the given datastructure, which might be a list
-        or a simple string. We also switch integers in this list back to strings,
-        as the YAML parser will turn things that look like numbers into numbers.
-        '''
-
-        if isinstance(ds, (string_types, int)):
-            ds = [ ds ]
-
-        if not isinstance(ds, list):
-            raise AnsibleParserError("'hosts' must be specified as a list or a single pattern", obj=ds)
-
-        # YAML parsing of things that look like numbers may have
-        # resulted in integers showing up in the list, so convert
-        # them back to strings to prevent problems
-        for idx,item in enumerate(ds):
-            if isinstance(item, int):
-                ds[idx] = "%s" % item
-
-        return ds
 
     def _load_tasks(self, attr, ds):
         '''
@@ -223,7 +204,7 @@ class Play(Base, Taggable, Become):
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
                 display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
-                for vname, prompt in prompt_data.iteritems():
+                for vname, prompt in prompt_data.items():
                     vars_prompts.append(dict(
                         name      = vname,
                         prompt    = prompt,
@@ -265,7 +246,7 @@ class Play(Base, Taggable, Become):
 
         if len(self.roles) > 0:
             for r in self.roles:
-                block_list.extend(r.get_handler_blocks())
+                block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list
 

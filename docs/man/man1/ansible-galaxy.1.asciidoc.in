@@ -100,8 +100,9 @@ configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
 INIT
 ----
 
-The *init* command is used to create an empty role suitable for uploading
-to https://galaxy.ansible.com (or for roles in general).
+The *init* command is used to create a new role suitable for uploading
+to https://galaxy.ansible.com (or for roles in general). Creates a skeleton
+directory structure and default files.
 
 USAGE
 ~~~~~
@@ -124,10 +125,14 @@ working directory.
 
 Don't query the galaxy API when creating roles
 
+*--container-enabled*::
+
+Initialize the new role with files appropriate for a Container Enabled role.
+
 LIST
 ----
 
-The *list* sub-command is used to show what roles are currently instaled.
+The *list* sub-command is used to show what roles are currently installed.
 You can specify a role name, and if installed only that role will be shown.
 
 USAGE
@@ -277,6 +282,10 @@ Provide a specific branch to import. When a branch is not specified the
 branch found in meta/main.yml is used. If no branch is specified in
 meta/main.yml, the repo's default branch (usually master) is used.
 
+*--role-name*::
+
+Set the name of the role. Otherwise, the name is derived from the
+name of the GitHub repository.
 
 DELETE
 ------
@@ -334,7 +343,7 @@ Override the default server https://galaxy.ansible.com.
 
 --list::
 
-Show your configured integrations. Provids the ID of each integration
+Show your configured integrations. Provides the ID of each integration
 which can be used with the remove option.
 
 --remove::

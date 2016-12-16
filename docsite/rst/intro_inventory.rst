@@ -8,7 +8,8 @@ Inventory
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to being saved in
-the location /etc/ansible/hosts.
+the location ``/etc/ansible/hosts``. You can specify a different inventory file using the
+``-i <path>`` option on the command line.
 
 Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
@@ -19,7 +20,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI-like format and looks like this::
+The format for ``/etc/ansible/hosts`` is an INI-like format and looks like this::
 
     mail.example.com
 
@@ -32,15 +33,15 @@ The format for /etc/ansible/hosts is an INI-like format and looks like this::
     two.example.com
     three.example.com
 
-The things in brackets are group names, which are used in classifying systems
+The headings in brackets are group names, which are used in classifying systems
 and deciding what systems you are controlling at what times and for what purpose.
 
 It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
-If you do, note that variables will come from all of the groups they are a member of, and variable precedence is detailed in a later chapter.
+If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  Ports listed in your SSH config file won't be used with the paramiko
-connection but will be used with the openssh connection.
+after the hostname with a colon.  Ports listed in your SSH config file won't be used with the `paramiko`
+connection but will be used with the `openssh` connection.
 
 To make things explicit, it is suggested that you set them if things are not running on the default port::
 
@@ -48,9 +49,9 @@ To make things explicit, it is suggested that you set them if things are not run
 
 Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
-    jumper ansible_port=5555 ansible_host=192.168.1.50
+    jumper ansible_port=5555 ansible_host=192.0.2.50
 
-In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
+In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.0.2.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
 Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
@@ -186,7 +187,7 @@ available to them. This can be very useful to keep your variables organized when
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables. Note that this only works on Ansible 1.4 or later.
 
-Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in
+Tip: In Ansible 1.2 or later the ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
@@ -217,7 +218,7 @@ ansible_port
 ansible_user
     The default ssh user name to use.
 ansible_ssh_pass
-    The ssh password to use (this is insecure, we strongly recommend using :option:`--ask-pass` or SSH keys)
+    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -232,6 +233,10 @@ ansible_ssh_extra_args
     This setting is always appended to the default :command:`ssh` command line.
 ansible_ssh_pipelining
     Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`.
+.. versionadded:: 2.2
+ansible_ssh_executable
+    This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
+
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
 
@@ -242,7 +247,7 @@ ansible_become_method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
 ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 
 Remote host environment parameters:
 
@@ -279,9 +284,9 @@ Examples from a host file::
 Non-SSH connection types
 ++++++++++++++++++++++++
 
-As stated in the previous section, Ansible is executing playbooks over SSH but is not limited to.
-With the host specific parameter ``ansible_connection=<connector>`` the connection type can be changed.
-Following non SSH based connectors are available:
+As stated in the previous section, Ansible executes playbooks over SSH but it is not limited to this connection type.
+With the host specific parameter ``ansible_connection=<connector>``, the connection type can be changed.
+The following non-SSH based connectors are available:
 
 **local**
 
@@ -289,7 +294,7 @@ This connector can be used to deploy the playbook to the control machine itself.
 
 **docker**
 
-This connector deploys the playbook directly into Docker containers using the local Docker client. Following parameters are processed by this connector:
+This connector deploys the playbook directly into Docker containers using the local Docker client. The following parameters are processed by this connector:
 
 ansible_host
     The name of the Docker container to connect to.

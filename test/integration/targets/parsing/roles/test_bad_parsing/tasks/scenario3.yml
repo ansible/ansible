@@ -1,0 +1,4 @@
+- name: test that we can't do this for the shell module
+  shell: echo hi {{ chdir }}
+  failed_when: False
+  tags: scenario3

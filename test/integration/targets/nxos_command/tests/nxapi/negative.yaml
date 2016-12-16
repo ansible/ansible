@@ -1,0 +1,27 @@
+---
+- debug: msg="START nxapi/negative.yaml"
+
+- name: run 11 commands
+  nxos_command:
+    commands:
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+      - show version
+    provier: "{{ nxapi }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - result.failed
+
+
+- debug: msg="END nxapi/negative.yaml"

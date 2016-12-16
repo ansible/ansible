@@ -62,8 +62,7 @@ def get_config(env_var, config_var):
     if not result:
         result = get_from_rhc_config(config_var)
     if not result:
-        print("failed=True msg='missing %s'" % env_var)
-        sys.exit(1)
+        sys.exit("failed=True msg='missing %s'" % env_var)
     return result
 
 

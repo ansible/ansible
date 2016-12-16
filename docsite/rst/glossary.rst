@@ -67,10 +67,22 @@ when a term comes up on the mailing list.
         Ansible's conditionals are powered by the 'when' statement, which are
         discussed in the :doc:`playbook documentation <playbooks>`.
 
+    Declarative
+        An approach to achieving a task that uses a description of the
+        final state rather than a description of the sequence of steps
+        necessary to achieve that state. For a real world example, a
+        declarative specification of a task would be: "put me in California".
+        Depending on your current location, the sequence of steps to get you to
+        California may vary, and if you are already in California, nothing
+        at all needs to be done. Ansible's Resources are declarative; it
+        figures out the steps needed to achieve the final state. It also lets
+        you know whether or not any steps needed to be taken to get to the
+        final state.
+
     Diff Mode
         A ``--diff`` flag can be passed to Ansible to show what changed on
         modules that support it. You can combine it with ``--check`` to get a
-        good 'dry run'.  File diffs are normally iin unified diff format.
+        good 'dry run'.  File diffs are normally in unified diff format.
 
     Executor
         A core software component of Ansible that is the power behind
@@ -174,16 +186,9 @@ when a term comes up on the mailing list.
         data structures that can't be represented in the inventory file.
 
     Idempotency
-        The concept that change commands should only be applied when they need
-        to be applied, and that it is better to describe the desired state of
-        a system than the process of how to get to that state.  As an analogy,
-        the path from North Carolina in the United States to California
-        involves driving a very long way West but if I were instead in
-        Anchorage, Alaska, driving a long way west is no longer the right way
-        to get to California.  Ansible's Resources like you to say "put me in
-        California" and then decide how to get there.  If you were already in
-        California, nothing needs to happen, and it will let you know it
-        didn't need to change anything.
+        An operation is idempotent if the result of performing it once is
+        exactly the same as the result of performing it repeatedly without
+        any intervening actions.
 
     Includes
         The idea that :term:`playbook <playbooks>` files (which are nothing

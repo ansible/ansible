@@ -1,6 +1,5 @@
 ansible(1)
 =========
-:doctype:manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -42,7 +41,7 @@ The 'ARGUMENTS' to pass to the module.
 Use privilege escalation (specific one depends on become_method),
 this does not imply prompting for passwords.
 
-*K*, *--ask-become-pass*::
+*-K*, *--ask-become-pass*::
 
 Ask for privilege escalation password.
 
@@ -70,7 +69,7 @@ Run commands in the background, killing the task after 'NUM' seconds.
 *--become-method=*'BECOME_METHOD'::
 
 Privilege escalation method to use (default=sudo),
-valid choices: [ sudo | su | pbrun | pfexec | runas | doas | dzdo ]
+valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu ]
 
 *--become-user=*'BECOME_USER'::
 
@@ -104,7 +103,7 @@ Show help message and exit.
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
-Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
+Alternatively you can use a comma separated list of hosts or single host with trailing comma 'host,'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
@@ -141,7 +140,7 @@ Use this file to authenticate the connection.
 
 Run operations with su (deprecated, use become).
 
-*-R* 'SU_USER', *--se-user=*'SUDO_USER'::
+*-R* 'SU_USER', *--su-user=*'SU_USER'::
 
 Run operations with su as this user (default=root) (deprecated, use become).
 

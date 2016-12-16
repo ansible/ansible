@@ -1,4 +1,3 @@
-
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
@@ -30,9 +29,11 @@ from functools import wraps
 from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import shell_loader
-from ansible.utils.unicode import to_bytes, to_unicode
+
 
 try:
     from __main__ import display
@@ -112,7 +113,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
 
-    def set_host_overrides(self, host):
+    def set_host_overrides(self, host, hostvars=None):
         '''
         An optional method, which can be used to set connection plugin parameters
         from variables set on the host (or groups to which the host belongs)
@@ -137,9 +138,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             # exception, it merely mangles the output:
             # >>> shlex.split(u't e')
             # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
-            return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+            return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
         except AttributeError:
-            return [to_unicode(x.strip()) for x in shlex.split(argstring) if x.strip()]
+            # In Python3, shlex.split doesn't work on a byte string.
+            return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
     def transport(self):
@@ -239,27 +241,29 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, output):
-        for line in output.splitlines(True):
-            if self._play_context.success_key == line.rstrip():
+    def check_become_success(self, b_output):
+        b_success_key = to_bytes(self._play_context.success_key)
+        for b_line in b_output.splitlines(True):
+            if b_success_key == b_line.rstrip():
                 return True
         return False
 
-    def check_password_prompt(self, output):
+    def check_password_prompt(self, b_output):
         if self._play_context.prompt is None:
             return False
-        elif isinstance(self._play_context.prompt, basestring):
-            return output.startswith(self._play_context.prompt)
+        elif isinstance(self._play_context.prompt, string_types):
+            b_prompt = to_bytes(self._play_context.prompt)
+            return b_output.startswith(b_prompt)
         else:
-            return self._play_context.prompt(output)
+            return self._play_context.prompt(b_output)
 
-    def check_incorrect_password(self, output):
-        incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
-        return incorrect_password and incorrect_password in output
+    def check_incorrect_password(self, b_output):
+        b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
+        return b_incorrect_password and b_incorrect_password in b_output
 
-    def check_missing_password(self, output):
-        missing_password = gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method])
-        return missing_password and missing_password in output
+    def check_missing_password(self, b_output):
+        b_missing_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method]))
+        return b_missing_password and b_missing_password in b_output
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd

@@ -83,12 +83,12 @@ options:
     default: None
   cert:
     description:
-      - A path to a client certificate to use as part of the SSL transaction
+      - A path to a client certificate to use as part of the SSL transaction.
     required: false
     default: None
   key:
     description:
-      - A path to a client key to use as part of the SSL transaction
+      - A path to a client key to use as part of the SSL transaction.
     required: false
     default: None
   endpoint_type:

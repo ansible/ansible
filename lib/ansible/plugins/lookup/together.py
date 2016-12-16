@@ -17,8 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from itertools import izip_longest
-
+from ansible.compat.six.moves import zip_longest
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -46,5 +45,5 @@ class LookupModule(LookupBase):
         if len(my_list) == 0:
             raise AnsibleError("with_together requires at least one element in each list")
 
-        return [self._flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
+        return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]
 

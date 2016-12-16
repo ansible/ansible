@@ -1,27 +1,39 @@
 FROM opensuse:leap
 
-RUN zypper --gpg-auto-import-keys --non-interactive ref && \
-    zypper --gpg-auto-import-keys --non-interactive up
-
-#RUN yum -y update; yum clean all; yum -y swap fakesystemd systemd
-
-RUN zypper --non-interactive install --auto-agree-with-licenses \
+RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
+    zypper --non-interactive install --force systemd-sysvinit && \
+    zypper --non-interactive install --auto-agree-with-licenses --no-recommends \
     acl \
+    apache2 \
     asciidoc \
     bzip2 \
     curl \
     dbus-1-python \
     gcc \
     git \
-    glibc-locale \
     glibc-i18ndata \
-    iproute \
+    glibc-locale \
+    iproute2 \
     lsb-release \
     make \
-    mercurial \
     mariadb \
-    python-mysql \
+    mercurial \
     openssh \
+    postgresql-server \
+    python-coverage \
+    python-httplib2 \
+    python-jinja2 \
+    python-keyczar \
+    python-mock \
+    python-MySQL-python \
+    python-nose \
+    python-paramiko \
+    python-passlib \
+    python-pip \
+    python-psycopg2 \
+    python-PyYAML \
+    python-setuptools \
+    python-virtualenv \
     rpm-build \
     ruby \
     subversion \
@@ -30,17 +42,8 @@ RUN zypper --non-interactive install --auto-agree-with-licenses \
     unzip \
     which \
     zip \
-    python-PyYAML \
-    python-coverage \
-    python-httplib2 \
-    python-jinja2 \
-    python-keyczar \
-    python-mock \
-    python-nose \
-    python-paramiko \
-    python-pip \
-    python-setuptools \
-    python-virtualenv
+    && \
+    zypper clean
 
 # systemd path differs from rhel
 ENV LIBSYSTEMD=/usr/lib/systemd/system
@@ -55,7 +58,6 @@ rm -f ${LIBSYSTEMD}/basic.target.wants/*;
 # don't create systemd-session for ssh connections
 RUN sed -i /pam_systemd/d /etc/pam.d/common-session-pc
 
-#RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8
 RUN mkdir /etc/ansible/
 RUN /usr/bin/echo -e '[local]\nlocalhost ansible_connection=local' > /etc/ansible/hosts
 VOLUME /sys/fs/cgroup /run /tmp
@@ -67,5 +69,6 @@ RUN ssh-keygen -q -t rsa1 -N '' -f /etc/ssh/ssh_host_key && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
 # explicitly enable the service, opensuse default to disabled services
 RUN systemctl enable sshd.service
+RUN pip install junit-xml
 ENV container=docker
 CMD ["/sbin/init"]

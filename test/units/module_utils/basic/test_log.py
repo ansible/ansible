@@ -53,6 +53,7 @@ class TestAnsibleModuleSysLogSmokeTest(unittest.TestCase):
         self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
+        self.am._name = 'unittest'
 
         self.has_journal = ansible.module_utils.basic.has_journal
         if self.has_journal:
@@ -90,6 +91,7 @@ class TestAnsibleModuleJournaldSmokeTest(unittest.TestCase):
         self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
+        self.am._name = 'unittest'
 
     def tearDown(self):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
@@ -138,6 +140,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
         self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
+        self.am._name = 'unittest'
 
         self.has_journal = ansible.module_utils.basic.has_journal
         if self.has_journal:
@@ -199,6 +202,7 @@ class TestAnsibleModuleLogJournal(unittest.TestCase):
         self.am = ansible.module_utils.basic.AnsibleModule(
             argument_spec = dict(),
         )
+        self.am._name = 'unittest'
 
         self.has_journal = ansible.module_utils.basic.has_journal
         ansible.module_utils.basic.has_journal = True

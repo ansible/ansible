@@ -31,5 +31,5 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_indexed_items expects a list")
 
         items = self._flatten(terms)
-        return zip(range(len(items)), items)
+        return list(zip(range(len(items)), items))
 

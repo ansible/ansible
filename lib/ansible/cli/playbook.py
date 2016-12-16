@@ -75,10 +75,8 @@ class PlaybookCLI(CLI):
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
 
-        self.options, self.args = parser.parse_args(self.args[1:])
-
-
         self.parser = parser
+        super(PlaybookCLI, self).parse()
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("You must specify a playbook file to run")
@@ -97,6 +95,14 @@ class PlaybookCLI(CLI):
         vault_pass = None
         passwords = {}
 
+        # initial error check, to make sure all specified playbooks are accessible
+        # before we start running anything through the playbook executor
+        for playbook in self.args:
+            if not os.path.exists(playbook):
+                raise AnsibleError("the playbook: %s could not be found" % playbook)
+            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
         # don't deal with privilege escalation or passwords when we don't need to
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
@@ -110,16 +116,8 @@ class PlaybookCLI(CLI):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
             loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             loader.set_vault_password(vault_pass)
-
-        # initial error check, to make sure all specified playbooks are accessible
-        # before we start running anything through the playbook executor
-        for playbook in self.args:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -147,6 +145,10 @@ class PlaybookCLI(CLI):
         if len(inventory.list_hosts()) == 0 and no_hosts is False:
             # Invalid limit
             raise AnsibleError("Specified --limit does not match any hosts")
+
+        # flush fact cache if requested
+        if self.options.flush_cache:
+            self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
@@ -215,3 +217,8 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
+
+    def _flush_cache(self, inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)

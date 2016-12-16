@@ -7,6 +7,8 @@ Jinja2 filters
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
+Take into account that filters always execute on the Ansible controller, **not** on the task target, as they manipulate local data.
+
 In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
@@ -25,6 +27,11 @@ For human readable output, you can use::
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
 
+It's also possible to change the indentation of both (new in version 2.2)::
+
+    {{ some_variable | to_nice_json(indent=2) }}
+    {{ some_variable | to_nice_yaml(indent=8) }}
+
 Alternatively, you may be reading in some already formatted data::
 
     {{ some_variable | from_json }}
@@ -37,37 +44,6 @@ for example::
         register: result
 
       - set_fact: myvar="{{ result.stdout | from_json }}"
-
-.. _filters_used_with_conditionals:
-
-Filters Often Used With Conditionals
-------------------------------------
-
-The following tasks are illustrative of how filters can be used with conditionals::
-
-    tasks:
-
-      - shell: /usr/bin/foo
-        register: result
-        ignore_errors: True
-
-      - debug: msg="it failed"
-        when: result|failed
-
-      # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
-        when: result|changed
-
-      - debug: msg="it succeeded in Ansible >= 2.1"
-        when: result|succeeded
-
-      - debug: msg="it succeeded"
-        when: result|success
-
-      - debug: msg="it was skipped"
-        when: result|skipped
-
-.. note:: From 2.1 You can also use success, failure, change, skip so the grammer matches, for those that want to be strict about it.
 
 .. _forcing_variables_to_be_defined:
 
@@ -98,11 +74,10 @@ being raised.
 
 .. _omitting_undefined_variables:
 
-Omitting Undefined Variables and Parameters
--------------------------------------------
+Omitting Parameters
+-------------------
 
-As of Ansible 1.8, it is possible to use the default filter to omit variables and module parameters using the special
-`omit` variable::
+As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
       file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
@@ -165,30 +140,6 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
-.. _version_comparison_filters:
-
-Version Comparison Filters
---------------------------
-
-.. versionadded:: 1.6
-
-To compare a version number, such as checking if the ``ansible_distribution_version``
-version is greater than or equal to '12.04', you can use the ``version_compare`` filter.
-
-The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
-
-    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
-
-If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise it will return False.
-
-The ``version_compare`` filter accepts the following operators::
-
-    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
-
-This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
-be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
-
-    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
 .. _random_filter:
 
@@ -217,6 +168,10 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 100 |random(1, 10) }}    => 31
     {{ 100 |random(start=1, step=10) }}    => 51
 
+As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
+
+    {{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron
+
 
 Shuffle Filter
 --------------
@@ -240,10 +195,6 @@ Math
 .. versionadded:: 1.9
 
 
-To see if something is actually a number::
-
-    {{ myvar | isnan }}
-
 Get the logarithm (default is e)::
 
     {{ myvar | log }}
@@ -263,6 +214,71 @@ Square root, or the 5th::
     {{ myvar | root(5) }}
 
 Note that jinja2 already provides some like abs() and round().
+
+.. json_query_filter:
+
+JSON Query Filter
+-----------------
+
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+
+.. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
+
+Now, let's take the following data structure::
+
+    domain_definition:
+        domain:
+            cluster:
+                - name: "cluster1"
+                - name: "cluster2"
+            server:
+                - name: "server11"
+                  cluster: "cluster1"
+                  port: "8080"
+                - name: "server12"
+                  cluster: "cluster1"
+                  port: "8090"
+                - name: "server21"
+                  cluster: "cluster2"
+                  port: "9080"
+                - name: "server22"
+                  cluster: "cluster2"
+                  port: "9090"
+            library:
+                - name: "lib1"
+                  target: "cluster1"
+                - name: "lib2"
+                  target: "cluster2"
+
+To extract all clusters from this structure, you can use the following query::
+
+    - name: "Display all cluster names"
+      debug: var=item
+      with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+
+Same thing for all server names::
+
+    - name: "Display all server names"
+      debug: var=item
+      with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
+
+This example shows ports from cluster1::
+
+    - name: "Display all server names from cluster1"
+      debug: var=item
+      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      vars:
+        server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
+
+.. note:: You can use a variable to make the query more readable.
+
+In this example, we get a hash map with all ports and names of a cluster::
+
+    - name: "Display all server ports and names from cluster1"
+      debug: var=item
+      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      vars:
+        server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
 .. _ipaddr_filter:
 
@@ -464,7 +480,7 @@ Other Useful Filters
 
 To add quotes for shell usage::
 
-    - shell: echo {{ string_value | quote }} 
+    - shell: echo {{ string_value | quote }}
 
 To use one value on true and another on false (new in version 1.9)::
 
@@ -534,20 +550,6 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
-To match strings against a regex, use the "match" or "search" filter::
-
-    vars:
-      url: "http://example.com/users/foo/resources/bar"
-
-    tasks:
-        - shell: "msg='matched pattern 1'"
-          when: url | match("http://example.com/users/.*/resources/.*")
-
-        - debug: "msg='matched pattern 2'"
-          when: url | search("/users/.*/resources/.*")
-
-'match' will require a complete match in the string, while 'search' will require a match inside of the string.
-
 .. versionadded:: 1.6
 
 To replace text in a string with regex, use the "regex_replace" filter::
@@ -576,6 +578,23 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
+To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
+
+    # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
+    {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
+
+Debugging Filters
+-----------------
+
+.. versionadded:: 2.3
+
+Use the ``type`` filter to display the underlying Python type of a variable.
+This can be useful in debugging in situations where you may need to know the exact
+type of a variable::
+
+    {{ myvar | type }}
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
@@ -602,5 +621,3 @@ to be added to core so everyone can make use of them.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

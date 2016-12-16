@@ -28,7 +28,7 @@ Directory Layout
 The top level of the directory would contain files and directories like so::
 
     production                # inventory file for production servers
-    staging                   # inventory file for staging environment 
+    staging                   # inventory file for staging environment
 
     group_vars/
        group1                 # here we assign variables to particular groups
@@ -67,6 +67,47 @@ The top level of the directory would contain files and directories like so::
         fooapp/               # "" 
 
 .. note: If you find yourself having too many top level playbooks (for instance you have a playbook you wrote for a specific hotfix, etc), it may make sense to have a playbooks/ directory instead.  This can be a good idea as you get larger.  If you do this, configure your roles_path in ansible.cfg to find your roles location.
+
+.. _alternative_directory_layout:
+
+Alternative Directory Layout
+````````````````
+
+Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this::
+
+    inventories/
+       production/
+          hosts.yml           # inventory file for production servers
+          group_vars/
+             group1           # here we assign variables to particular groups
+             group2           # ""
+          host_vars/
+             hostname1        # if systems need specific variables, put them here
+             hostname2        # ""
+
+       staging/
+          hosts.yml           # inventory file for staging environment
+          group_vars/
+             group1           # here we assign variables to particular groups
+             group2           # ""
+          host_vars/
+             stagehost1       # if systems need specific variables, put them here
+             stagehost2       # ""
+
+    library/
+    filter_plugins/
+
+    site.yml
+    webservers.yml
+    dbservers.yml
+
+    roles/
+        common/
+        webtier/
+        monitoring/
+        fooapp/
+
+This layout gives you more flexibility for larger environments, as well as a total separation of inventory variables between different environments. The downside is that it is harder to maintain, because there are more files.
 
 .. _use_dynamic_inventory_with_clouds:
 
@@ -215,7 +256,7 @@ Below is an example tasks file that explains how a role works.  Our common role 
       tags: ntp
 
     - name: be sure ntpd is running and enabled
-      service: name=ntpd state=running enabled=yes
+      service: name=ntpd state=started enabled=yes
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end

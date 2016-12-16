@@ -24,6 +24,16 @@ Prior to 1.5 the order was::
 
 Ansible will process the above list and use the first file found. Settings in files are not merged.
 
+.. note:: Comments
+    The configuration file is one variant of an INI format.  Both the hash
+    sign ("#") and semicolon (";") are allowed as comment markers when the
+    comment starts the line.  However, if the comment is inline with regular
+    values, only the semicolon is allowed to introduce the comment.  For
+    instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
 .. _getting_the_latest_configuration:
 
 Getting the latest configuration
@@ -74,23 +84,69 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
+
+.. _allow_world_readable_tmpfiles:
+
+allow_world_readable_tmpfiles
+=============================
+
+.. versionadded:: 2.1
+This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task. 
+
+It is useful when becoming an unprivileged user::
+
+  allow_world_readable_tmpfiles=True
+
+
+
+
 .. _ansible_managed:
 
 ansible_managed
 ===============
 
-Ansible-managed is a string that can be inserted into files written by Ansible's config templating system, if you use
-a string like::
+The ``ansible_managed`` string can be inserted into files written by
+Ansible's config templating system::
 
    {{ ansible_managed }}
 
-The default configuration shows who modified a file and when::
+The default value indicates that Ansible is managing a file::
 
-    ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
+    ansible_managed = Ansible managed
 
-This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
+This string can be helpful to indicate that a file should not
+be directly edited because Ansible may overwrite the contents of the file.
 
-Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
+There are several special placeholder values that can be placed in the ``ansible_managed`` string.  These are not in the default ``ansible_managed`` string because they can cause Ansible to behave as though the
+entire template has changed when only the ansible_managed string has
+changed.  
+
+These placeholder values, along with the situations which can lead Ansible to
+report a template as changed when they are used, are listed below:
+
+* Standard directives that can be used with :func:~time.strftime:.
+  The time referred to is the modification time of the template file.  Many
+  revision control systems timestamp files according to when they are checked
+  out, not the last time the file was modified.  That means Ansible will think
+  the file has been modified anytime there is a fresh checkout.
+
+.. If intersphinx isn't turned on, manually make strftime link to
+   https://docs.python.org/2/library/time.html#time.strftime
+
+* ``{file}``: expands to the name of the full path to the template file.  If
+  Ansible is run with multiple checkouts of the same configuration repository
+  (for instance, in each sysadmin's home directory), then the path will differ
+  in each checkout causing Ansible to behave as though the file has been modified.  
+* ``{host}``: expands to the hostname of the machine :program:`ansible` is run
+  on.  If :program:`ansible` is invoked on multiple machines (for instance,
+  each sysadmin can checkout the configuration repository on their workstation
+  and run :program:`ansible` there), then the host will vary on each of these
+  machines.  This will cause Ansible to behave as though the file has been modified.
+* ``{uid}``: expands to the owner of the template file.  If Ansible is run
+  on checkouts of the configuration repository made by separate users (for
+  instance, if multiple system administrators are making checkouts of the
+  repository with their own accounts) then this will cause Ansible to behave as if
+  the file has been modified.
 
 .. _ask_pass:
 
@@ -99,7 +155,7 @@ ask_pass
 
 This controls whether an Ansible playbook should prompt for a password by default.  The default behavior is no::
 
-    ask_pass=True
+    ask_pass = True
 
 If using SSH keys for authentication, it's probably not needed to change this setting.
 
@@ -111,7 +167,7 @@ ask_sudo_pass
 Similar to ask_pass, this controls whether an Ansible playbook should prompt for a sudo password by default when
 sudoing.  The default behavior is also no::
 
-    ask_sudo_pass=True
+    ask_sudo_pass = True
 
 Users on platforms where sudo passwords are enabled should consider changing this setting.
 
@@ -122,7 +178,7 @@ ask_vault_pass
 
 This controls whether an Ansible playbook should prompt for the vault password by default.  The default behavior is no::
 
-    ask_vault_pass=True
+    ask_vault_pass = True
 
 .. _bin_ansible_callbacks:
 
@@ -135,7 +191,7 @@ Controls whether callback plugins are loaded when running /usr/bin/ansible.  Thi
 the command line, send notifications, and so on.  Callback plugins are always loaded for /usr/bin/ansible-playbook
 if present and cannot be disabled::
 
-    bin_ansible_callbacks=False
+    bin_ansible_callbacks = False
 
 Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 
@@ -149,20 +205,9 @@ Callbacks are pieces of code in ansible that get called on specific events, perm
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
-
-.. _stdout_callback:
-
-stdout_callback
-===============
-
-.. versionadded:: 2.0
-
-This setting allows you to override the default stdout callback for ansible-playbook::
-
-    stdout_callback = skippy
 
 .. _callback_whitelist:
 
@@ -184,12 +229,12 @@ command_warnings
 
 .. versionadded:: 1.8
 
-By default since Ansible 1.8, Ansible will warn when usage of the shell and
-command module appear to be simplified by using a default Ansible module
-instead.  This can include reminders to use the 'git' module instead of
-shell commands to execute 'git'.  Using modules when possible over arbitrary
-shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks::
+By default since Ansible 1.8, Ansible will issue a warning when the shell or 
+command module is used and the command appears to be similar to an existing 
+Ansible module. For example, this can include reminders to use the 'git' module
+instead of shell commands to execute 'git'.  Using modules when possible over 
+arbitrary shell commands can lead to more reliable and consistent playbook runs, 
+and also easier to maintain playbooks::
 
     command_warnings = False
 
@@ -248,7 +293,7 @@ This setting defaults to ``False`` because there is a chance that you have
 sensitive values in your parameters and do not want those to be printed to
 stdout::
 
-    display_args_to_stdout=False
+    display_args_to_stdout = False
 
 If you set this to ``True`` you should be sure that you have secured your
 environment's stdout (no one can shoulder surf your screen and you aren't
@@ -263,7 +308,7 @@ display_skipped_hosts
 
 If set to `False`, ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
 
-    display_skipped_hosts=True
+    display_skipped_hosts = True
 
 Note that Ansible will always show the task header for any task, regardless of whether or not the task is skipped.
 
@@ -275,7 +320,7 @@ error_on_undefined_vars
 On by default since Ansible 1.3, this causes ansible to fail steps that reference variable names that are likely
 typoed::
 
-    error_on_undefined_vars=True
+    error_on_undefined_vars = True
 
 If set to False, any '{{ template_expression }}' that contains undefined variables will be rendered in a template
 or ansible action line exactly as written.
@@ -323,7 +368,7 @@ force_handlers
 
 This option causes notified handlers to run on a host even if a failure occurs on that host::
 
-		force_handlers = True
+    force_handlers = True
 
 The default is False, meaning that handlers will not run if a failure has occurred on a host.
 This can also be set per play or on the command line. See :ref:`handlers_and_failure` for more details.
@@ -334,12 +379,12 @@ forks
 =====
 
 This is the default number of parallel processes to spawn when communicating with remote hosts.  Since Ansible 1.3,
-the fork number is automatically limited to the number of possible hosts, so this is really a limit of how much
+the fork number is automatically limited to the number of possible hosts at runtime, so this is really a limit of how much
 network and CPU load you think you can handle.  Many users may set this to 50, some set it to 500 or more.  If you
 have a large number of hosts, higher values will make actions across all of those hosts complete faster.  The default
 is very very conservative::
 
-    forks=5
+    forks = 5
 
 .. _gathering:
 
@@ -357,7 +402,7 @@ This option can be useful for those wishing to save fact gathering time. Both 's
 
 .. versionadded:: 2.1
 
-You can specify a subset of gathered facts using the following option::
+You can specify a subset of gathered facts, via the play's gather_facts directive, using the following option::
 
     gather_subset = all
 
@@ -391,7 +436,7 @@ Some users prefer that variables that are hashes (aka 'dictionaries' in Python t
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
-    hash_behaviour=replace
+    hash_behaviour = replace
 
 The valid values are either 'replace' (the default) or 'merge'.
 
@@ -415,7 +460,21 @@ host_key_checking
 As described in :doc:`intro_getting_started`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
 implications and wish to disable it, you may do so here by setting the value to False::
 
-    host_key_checking=True
+    host_key_checking = True
+
+.. _internal_poll_interval:
+
+internal_poll_interval
+======================
+
+.. versionadded:: 2.2
+
+This sets the interval (in seconds) of Ansible internal processes polling each other.
+Lower values improve performance with large playbooks at the expense of extra CPU load.
+Higher values are more suitable for Ansible usage in automation scenarios, when UI responsiveness is not required but CPU usage might be a concern.
+Default corresponds to the value hardcoded in Ansible ≤ 2.1::
+
+    internal_poll_interval=0.001
 
 .. _inventory_file:
 
@@ -457,6 +516,8 @@ Ansible knows how to look in multiple locations if you feed it a colon separated
 local_tmp
 =========
 
+.. versionadded:: 2.1
+
 When Ansible gets ready to send a module to a remote machine it usually has to
 add a few things to the module: Some boilerplate code, the module's
 parameters, and a few constants from the config file.  This combination of
@@ -495,18 +556,36 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _merge_multiple_cli_tags:
+
+merge_multiple_cli_tags
+=======================
+
+.. versionadded:: 2.3
+
+This allows changing how multiple --tags and --skip-tags arguments are handled
+on the command line.  In Ansible up to and including 2.3, specifying --tags
+more than once will only take the last value of --tags.  Setting this config
+value to True will mean that all of the --tags options will be merged
+together.  The same holds true for --skip-tags.
+
+.. note:: The default value for this in 2.3 is False.  In 2.4, the
+    default value will be True.  After 2.4, the option is going away.
+    Multiple --tags and multiple --skip-tags will always be merged together.
+
 .. _module_set_locale:
 
 module_set_locale
 =================
 
 This boolean value controls whether or not Ansible will prepend locale-specific environment variables (as specified
-via the :ref:`module_lang` configuration option). By default this is enabled, and results in the LANG and LC_MESSAGES
-being set when the module is executed on the given remote system.
+via the :ref:`module_lang` configuration option). If enabled, it results in the LANG, LC_MESSAGES, and LC_ALL
+being set when the module is executed on the given remote system.  By default this is disabled.
 
 .. note::
 
-    The module_set_locale option was added in Ansible 2.1.
+    The module_set_locale option was added in Ansible-2.1 and defaulted to
+    True.  The default was changed to False in Ansible-2.2
 
 .. _module_lang:
 
@@ -514,7 +593,8 @@ being set when the module is executed on the given remote system.
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
 
     module_lang = en_US.UTF-8
 
@@ -537,7 +617,7 @@ nocolor
 By default ansible will try to colorize output to give a better indication of failure and status information.
 If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 
-    nocolor=0
+    nocolor = 0
 
 .. _nocows:
 
@@ -548,7 +628,7 @@ By default ansible will take advantage of cowsay if installed to make /usr/bin/a
 Why?  We believe systems management should be a happy experience.  If you do not like the cows, you can disable them
 by setting 'nocows' to 1::
 
-    nocows=0
+    nocows = 0
 
 .. _pattern:
 
@@ -558,7 +638,7 @@ pattern
 This is the default group of hosts to talk to in a playbook if no "hosts:" stanza is supplied.  The default is to talk
 to all hosts.  You may wish to change this to protect yourself from surprises::
 
-    hosts=*
+    hosts = *
 
 Note that /usr/bin/ansible always requires a host pattern and does not use this setting, only /usr/bin/ansible-playbook.
 
@@ -571,7 +651,7 @@ For asynchronous tasks in Ansible (covered in :doc:`playbooks_async`), this is h
 tasks when an explicit poll interval is not supplied.  The default is a reasonably moderate 15 seconds which is a tradeoff
 between checking in frequently and providing a quick turnaround when something may have completed::
 
-    poll_interval=15
+    poll_interval = 15
 
 .. _private_key_file:
 
@@ -670,10 +750,21 @@ Instead of calling the module once for each item, the module is called once with
 
 The default value for this setting is only for certain package managers, but it can be used for any module::
 
-    squash_actions = apk,apt,dnf,package,pacman,pkgng,yum,zypper
+    squash_actions = apk,apt,dnf,homebrew,package,pacman,pkgng,yum,zypper
 
 Currently, this is only supported for modules that have a name parameter, and only when the item is the
 only thing being passed to the parameter.
+
+.. _stdout_callback:
+
+stdout_callback
+===============
+
+.. versionadded:: 2.0
+
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _cfg_strategy_plugins:
 
@@ -689,6 +780,15 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _cfg_strategy:
+
+strategy
+========
+
+Strategy allow to change the default strategy used by Ansible::
+
+    strategy = free
+
 .. _sudo_exe:
 
 sudo_exe
@@ -697,7 +797,7 @@ sudo_exe
 If using an alternative sudo implementation on remote machines, the path to sudo can be replaced here provided
 the sudo implementation is matching CLI flags with the standard sudo::
 
-   sudo_exe=sudo
+   sudo_exe = sudo
 
 .. _sudo_flags:
 
@@ -719,7 +819,7 @@ sudo_user
 This is the default user to sudo to if ``--sudo-user`` is not specified or 'sudo_user' is not specified in an Ansible
 playbook.  The default is the most logical: 'root'::
 
-   sudo_user=root
+   sudo_user = root
 
 .. _system_warnings:
 
@@ -797,16 +897,16 @@ become
 
 The equivalent of adding sudo: or su: to a play or task, set to true/yes to activate privilege escalation. The default behavior is no::
 
-    become=True
+    become = True
 
 .. _become_method:
 
 become_method
 =============
 
-Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``::
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``, ``ksu``::
 
-    become_method=su
+    become_method = su
 
 .. _become_user:
 
@@ -815,7 +915,7 @@ become_user
 
 The equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation. The default is 'root'::
 
-    become_user=root
+    become_user = root
 
 .. _become_ask_pass:
 
@@ -824,7 +924,7 @@ become_ask_pass
 
 Ask for privilege escalation password, the default is False::
 
-    become_ask_pass=True
+    become_ask_pass = True
 
 .. _become_allow_same_user:
 
@@ -844,7 +944,7 @@ Paramiko Specific Settings
 --------------------------
 
 Paramiko is the default SSH connection implementation on Enterprise Linux 6 or earlier, and is not used by default on other
-platforms.  Settings live under the [paramiko] header.
+platforms.  Settings live under the [paramiko_connection] header.
 
 .. _record_host_keys:
 
@@ -855,7 +955,7 @@ The default setting of yes will record newly discovered and approved (if host ke
 This setting may be inefficient for large numbers of hosts, and in those situations, using the ssh transport is definitely recommended
 instead.  Setting it to False will improve performance and is recommended when host key checking is disabled::
 
-    record_host_keys=True
+    record_host_keys = True
 
 .. _paramiko_proxy_command:
 
@@ -908,6 +1008,18 @@ Ansible 1.4 and later will instruct users to run with "-vvvv" in situations wher
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
 encountered on EC2. This setting is ignored if ``ssh_args`` is set.
 
+.. _control_path_dir:
+
+control_path_dir
+================
+
+.. versionadded:: 2.3
+
+This is the base directory of the ControlPath sockets.
+It is the ``%(directory)s`` part of the ``control_path`` option.
+This defaults to::
+    control_path_dir=$HOME/.ansible/cp
+
 .. _scp_if_ssh:
 
 scp_if_ssh
@@ -916,7 +1028,7 @@ scp_if_ssh
 Occasionally users may be managing a remote system that doesn't have SFTP enabled.  If set to True, we can
 cause scp to be used to transfer remote files instead::
 
-    scp_if_ssh=False
+    scp_if_ssh = False
 
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
@@ -936,7 +1048,20 @@ By default, this option is disabled to preserve compatibility with
 sudoers configurations that have requiretty (the default on many distros), but is highly
 recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
 
-    pipelining=False
+    pipelining = False
+
+.. _ssh_executable:
+
+ssh_executable
+==============
+
+.. versionadded:: 2.2
+
+This is the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in ``$PATH``. This config can also be overridden with ``ansible_ssh_executable`` inventory variable::
+
+  ssh_executable="/usr/local/bin/ssh"
+
+This option is usually not required, it might be useful when access to system ssh is restricted, or when using ssh wrappers to connect to remote hosts. 
 
 .. _accelerate_settings:
 
@@ -1052,4 +1177,6 @@ ignore_certs
 ============
 
 If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.
+ver with a self-signed certificate
 .

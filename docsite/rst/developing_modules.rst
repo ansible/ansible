@@ -17,7 +17,7 @@ by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 By default, everything that ships with Ansible is pulled from its source tree, but
 additional paths can be added.
 
-The directory i:file:`./library`, alongside your top level :term:`playbooks`, is also automatically
+The directory :file:`./library`, alongside your top level :term:`playbooks`, is also automatically
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
@@ -149,12 +149,11 @@ a lot shorter than this::
             if key == "time":
 
                 # now we'll affect the change.  Many modules
-                # will strive to be 'idempotent', meaning they
-                # will only make changes when the desired state
-                # expressed to the module does not match
-                # the current state.  Look at 'service'
-                # or 'yum' in the main git tree for an example
-                # of how that might look.
+                # will strive to be idempotent, generally
+                # by not performing any actions if the current
+                # state is the same as the desired state.
+                # See 'service' or 'yum' in the main git tree
+                # for an illustrative example.
 
                 rc = os.system("date -s \"%s\"" % value)
 
@@ -355,6 +354,12 @@ how the command module is implemented.
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
 will still be shown in Ansible, but the command will not succeed.
 
+Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+
+Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+
+Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
 
@@ -426,13 +431,13 @@ for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specified as ``M(module)``.
 
-Examples (which typically contain colons, quotes, etc.) are difficult
-to format with YAML, so these must be
-written in plain text in an ``EXAMPLES`` string within the module
-like this::
+Examples should be written in YAML format in plain text in an
+``EXAMPLES`` string within the module like this::
 
     EXAMPLES = '''
-    - action: modulename opt1=arg1 opt2=arg2
+    - modulename:
+        opt1: arg1
+        opt2: arg2
     '''
 
 The EXAMPLES section, just like the documentation section, is required in
@@ -448,17 +453,17 @@ the ``copy`` module::
         description: destination file/path
         returned: success
         type: string
-        sample: "/path/to/file.txt"
+        sample: /path/to/file.txt
     src:
         description: source file used for the copy on the target machine
         returned: changed
         type: string
-        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+        sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
         description: md5 checksum of the file after running copy
         returned: when supported
         type: string
-        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+        sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
 
@@ -522,7 +527,7 @@ your debugging session will start::
         "ping": "debugging_session"
     }
 
-Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILE` to ``1`` tells Ansible to keep the
+Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` tells Ansible to keep the
 remote module files instead of deleting them after the module finishes
 executing.  Giving Ansible the ``-vvv`` optin makes Ansible more verbose.
 That way it prints the file name of the temporary module file for you to see.
@@ -638,12 +643,13 @@ The following  checklist items are important guidelines for people who want to c
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
-    * Descriptions should always start with a Capital letter and end with a full stop. Consistency always helps.
+    * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * The `required` setting is only required when true, otherwise it is assumed to be false.
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
     * Documenting `default` is not needed for `required: true`.
     * Remove unnecessary doc like `aliases: []` or `choices: []`.
-    * The version is not a float number and value the current development version.
+    * Do not use Boolean values in a choice list . For example, in the list `choices: ['no', 'verify', 'always]`, 'no' will be interpreted as a Boolean value (you can check basic.py for BOOLEANS_* constants to see the full list of Boolean keywords). If your option actually is a boolean, just use `type=bool`; there is no need to populate 'choices'.
+    * For new modules or options in a module add version_added. The version should match the value of the current development version and is a string (not a float), so be sure to enclose it in quotes.
     * Verify that arguments in doc and module spec dict are identical.
     * For password / secret arguments no_log=True should be set.
     * Requirements should be documented, using the `requirements=[]` field.
@@ -714,7 +720,20 @@ The following  checklist items are important guidelines for people who want to c
   fields of a dictionary and return the dictionary.
 * When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
   rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
-
+* facts modules must return facts in the ansible_facts field of the result
+  dictionary. :ref:`module_provided_facts`
+* modules that are purely about fact gathering need to implement check_mode.
+  they should not cause any changes anyway so it should be as simple as adding
+  check_mode=True when instantiating AnsibleModule.  (The reason is that
+  playbooks which conditionalize based on fact information will only
+  conditionalize correctly in check_mode if the facts are returned in
+  check_mode).
+* Basic auth: module_utils.api has some helpers for doing basic auth with
+  module_utils.urls.fetch_url().  If you use those you may find you also want
+  to fallback on environment variables for default values.  If you do that,
+  be sure to use non-generic environment variables (like
+  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 `````````````````````````
@@ -759,7 +778,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

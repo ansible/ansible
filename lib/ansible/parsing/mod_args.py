@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError,AnsibleError
+from ansible.module_utils._text import to_text
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
@@ -29,7 +30,9 @@ from ansible.template import Templar
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
     'command',
+    'win_command',
     'shell',
+    'win_shell',
     'script',
     'include',
     'include_vars',
@@ -114,11 +117,6 @@ class ModuleArgsParser:
         to shell/command being treated special and nothing else
         '''
 
-        # don't handle non shell/command modules in this function
-        # TODO: in terms of the whole app, should 'raw' also fit here?
-        if action not in ['shell', 'command']:
-            return (action, args)
-
         # the shell module really is the command module with an additional
         # parameter
         if action == 'shell':
@@ -166,8 +164,9 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'shell', 'script', 'raw'):
+        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
+                arg = to_text(arg)
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
@@ -196,7 +195,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -222,7 +221,7 @@ class ModuleArgsParser:
         action = None
         args = None
 
-        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
+        actions_allowing_raw = ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
@@ -269,7 +268,8 @@ class ModuleArgsParser:
         if 'action' in self._task_ds:
             # an old school 'action' statement
             thing = self._task_ds['action']
-            action, args = self._normalize_parameters(thing, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+
 
         # local_action
         if 'local_action' in self._task_ds:
@@ -278,19 +278,20 @@ class ModuleArgsParser:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
-            action, args = self._normalize_parameters(thing, additional_args=additional_args)
+            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
         # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item == 'meta' or item == 'include':
+            if item in module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
                 action = item
                 thing = value
-                action, args = self._normalize_parameters(value, action=action, additional_args=additional_args)
+                action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
