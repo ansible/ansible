@@ -32,9 +32,19 @@ Function UserSearch
 
     $searchDomain = $false
     $searchDomainUPN = $false
+    $SearchAppPools = $false
     if ($accountName.Split("\").count -gt 1)
     {
-        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME)
+        if ($accountName.Split("\")[0] -eq $env:COMPUTERNAME)
+        {
+
+        }
+        elseif ($accountName.Split("\")[0] -eq "IIS APPPOOL")
+        {
+            $SearchAppPools = $true
+            $accountName = $accountName.split("\")[1]
+        }
+        else
         {
             $searchDomain = $true
             $accountName = $accountName.split("\")[1]
@@ -51,7 +61,7 @@ Function UserSearch
         $accountName = $env:COMPUTERNAME + "\" + $accountName
     }
 
-    if ($searchDomain -eq $false)
+    if (($searchDomain -eq $false) -and ($SearchAppPools -eq $false))
     {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
@@ -60,7 +70,20 @@ Function UserSearch
             return $localaccount.SID
         }
     }
-    Else
+    Elseif ($SearchAppPools -eq $true)
+    {
+        Import-Module WebAdministration
+        $testiispath = Test-path "IIS:"
+        if ($testiispath -eq $false)
+        {
+            return $null
+        }
+        else
+        {
+            $apppoolobj = Get-ItemProperty IIS:\AppPools\$accountName
+            return $apppoolobj.applicationPoolSid
+        }
+    }
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
@@ -91,7 +114,7 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-$path = Get-Attr $params "path" -failifempty $true 
+$path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
 $rights = Get-Attr $params "rights" -failifempty $true
 
@@ -120,7 +143,6 @@ ElseIf ($inherit -eq "") {
 }
  
 Try {
-    #Check to see if the path is a registry hive - if so use RegistryRights AccessControl Object
     If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
     $colRights = [System.Security.AccessControl.RegistryRights]$rights
     }
@@ -138,47 +160,43 @@ Try {
     }
  
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
-    
-    #Check to see if the path is a registry hive - if so use RegistryRights AccessControl Object
     If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
     $objACE = New-Object System.Security.AccessControl.RegistryAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
     Else {
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
-
     $objACL = Get-ACL $path
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
-
-    # Check to see if the path is a registry hive - if so use RegistryRights AccessControl Object
     If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
-      ForEach($rule in $objACL.Access){
+    ForEach($rule in $objACL.Access){
         $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
         If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
             $match = $true
             Break
         }
-      }
+    }
     }
     Else {
-      ForEach($rule in $objACL.Access){
+    ForEach($rule in $objACL.Access){
         $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
-        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
+        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
             $match = $true
             Break
-        }
-      }
+        } 
     }
-   If ($state -eq "present" -And $match -eq $false) {
+    }
+
+    If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
             Set-ACL $path $objACL
             Set-Attr $result "changed" $true;
         }
         Catch {
-            Fail-Json $result "an exception occured when adding the specified rule"
+            Fail-Json $result "an exception occurred when adding the specified rule"
         }
     }
     ElseIf ($state -eq "absent" -And $match -eq $true) {
@@ -188,7 +206,7 @@ Try {
             Set-Attr $result "changed" $true;
         }
         Catch {
-            Fail-Json $result "an exception occured when removing the specified rule"
+            Fail-Json $result "an exception occurred when removing the specified rule"
         }
     }
     Else {
@@ -203,7 +221,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
+    Fail-Json $result "an error occurred when attempting to $state $rights permission(s) on $path for $user"
 }
  
 Exit-Json $result
