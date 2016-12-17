@@ -19,13 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import distutils.spawn
 import os
 import subprocess
-from jail import Connection as jail
+from ansible.plugins.connection.jail import Connection as Jail
 
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 try:
     from __main__ import display
@@ -34,30 +32,24 @@ except ImportError:
     display = Display()
 
 
-class Connection(ConnectionBase):
+class Connection(Jail):
     ''' Local iocage based connections '''
 
     transport = 'iocage'
-    has_pipelining = jail.has_pipelining
-    become_methods = jail.become_methods
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self.ioc_jail = play_context.remote_addr
 
-        self.ioc_jail = self._play_context.remote_addr
-
-        if os.geteuid() != 0:
-            raise AnsibleError("iocage/jail connection requires running as root")
-
-        self.iocage_cmd = jail._search_executable('iocage')
+        self.iocage_cmd = Jail._search_executable('iocage')
 
         jail_uuid = self.get_jail_uuid()
 
-        play_context.remote_addr = 'ioc-{}'.format(jail_uuid)
+        kwargs[Jail.modified_jailname_key] = 'ioc-{}'.format(jail_uuid)
 
-        display.vvv(u"Jail {iocjail} has been translated to {rawjail}".format(iocjail = self.ioc_jail, rawjail = play_context.remote_addr))
-        
-        self.jail_connector = jail(play_context, new_stdin, *args, **kwargs)
+        display.vvv(u"Jail {iocjail} has been translated to {rawjail}".format(
+            iocjail=self.ioc_jail, rawjail=kwargs[Jail.modified_jailname_key]))
+
+        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
     def get_jail_uuid(self):
         p = subprocess.Popen([self.iocage_cmd, 'get', 'host_hostuuid', self.ioc_jail],
@@ -73,21 +65,4 @@ class Connection(ConnectionBase):
             raise AnsibleError(u"iocage returned an error: {}".format(stdout))
 
         return stdout.strip('\n')
-    
-    def _connect(self):
-        self.jail_connector.connect()
-        self._connected = self.jail_connector._connected
-
-    def exec_command(self, cmd, in_data=None, sudoable=True):
-        return self.jail_connector.exec_command(cmd, in_data, sudoable)
-
-    def put_file(self, in_path, out_path):
-        return self.jail_connector.put_file(in_path, out_path)
-
-    def fetch_file(self, in_path, out_path):
-        return self.jail_connector.fetch_file(in_path, out_path)
-
-    def close(self):
-        self.jail_connector.close()
-        self._connected = False
 
