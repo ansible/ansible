@@ -114,7 +114,7 @@ class ZPoolFacts(object):
 
                 self._pools[pool].update({property: value})
 
-            for k, v in self._pools.iteritems():
+            for k, v in iteritems(self._pools):
                 v.update({'name': k})
                 self.facts.append(v)
 
@@ -154,7 +154,7 @@ def main():
 
     module.exit_json(**result)
 
-
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
