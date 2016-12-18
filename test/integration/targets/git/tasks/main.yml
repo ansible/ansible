@@ -36,6 +36,7 @@
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
     git_version_supporting_depth: 1.9.1
+    git_version_supporting_ls_remote: 1.7.5
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
@@ -442,6 +443,7 @@
   assert:
     that: "repo_content.stat.exists"
 
+# Make sure 'changed' result is accurate in check mode.
 # See https://github.com/ansible/ansible-modules-core/pull/4243
 
 - name: clear checkout_dir
@@ -479,6 +481,7 @@
   assert:
     that:
       - checkout_new_url_check_mode|changed
+  when: git_version.stdout | version_compare("{{git_version_supporting_ls_remote}}", '>=')
 
 - name: clone repo with new url after check mode
   git: repo={{ repo_update_url_1 }} dest={{ checkout_dir }}
