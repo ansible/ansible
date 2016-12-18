@@ -443,8 +443,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None))
 
-        if 'failed' in mystat and mystat['failed']:
-            raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, mystat['msg']))
+        if mystat.get('failed'):
+            msg = mystat.get('module_stderr')
+            if not msg:
+              msg = mystat.get('module_stdout')
+            if not msg:
+              msg = mystat.get('msg')
+            raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, msg))
 
         if not mystat['stat']['exists']:
             # empty might be matched, 1 should never match, also backwards compatible
