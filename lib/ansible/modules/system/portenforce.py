@@ -125,6 +125,9 @@ def main():
     if platform.system() != 'Linux':
         module.fail_json(msg='This module requires Linux.')
 
+    if not module.params['whitelist_tcp'] and not module.params['whitelist_udp']:
+        module.fail_json(msg="You must supply either a 'whitelist_tcp' or 'whitelist_udp' argument.")
+
     def getPidSTime(pid):
         ps_cmd = module.get_bin_path('ps', True)
         p1 = Popen([ps_cmd, '-o', 'lstart', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
