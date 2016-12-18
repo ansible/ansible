@@ -158,7 +158,8 @@ def main():
             p['stime'] = getPidSTime(p['pid']) 
             kill_udp[i] = p
 
-    except EnvironmentError, err:
+    except EnvironmentError:
+        err = get_exception()
         module.fail_json(msg=str(err))
 
     # gather details of the pids to kill
