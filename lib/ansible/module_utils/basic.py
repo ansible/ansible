@@ -665,9 +665,7 @@ class AnsibleFallbackNotFound(Exception):
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-        required_if=None, module_documentation=None, module_metadata=None, module_return=None,
-                 module_examples=None):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False, required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -679,6 +677,7 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        self.introspect = False
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
@@ -768,10 +767,6 @@ class AnsibleModule(object):
         if not self.no_log:
             self._log_invocation()
 
-        self.module_documentation = module_documentation
-        self.module_metadata = module_metadata
-        self.module_return = module_return
-        self.module_examples = module_examples
         # finally, make sure we're in a sane working dir
         self._set_cwd()
 
@@ -814,10 +809,11 @@ class AnsibleModule(object):
         data['locale'] = locale.getlocale()
         data['used_defaults'] = self._used_defaults
         data['module_path'] = get_module_path()
-        data['module_documentation'] = self.module_documentation
-        data['module_metadata'] = self.module_metadata
-        data['module_return'] = self.module_return
-        data['module_examples'] = self.module_examples
+        import __main__
+        data['module_documentation'] = getattr(__main__, 'DOCUMENTATION', None)
+        data['module_metadata'] = getattr(__main__, 'ANSIBLE_METADATA', None)
+        data['module_return'] = getattr(__main__, 'RETURN', None)
+        data['module_examples'] = getattr(__main__, 'EXAMPLES', None)
         return data
 
 
