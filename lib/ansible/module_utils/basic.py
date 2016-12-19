@@ -666,7 +666,8 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
         required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-        required_if=None):
+        required_if=None, module_documentation=None, module_metadata=None, module_return=None,
+                 module_examples=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -691,7 +692,7 @@ class AnsibleModule(object):
         self._deprecations = []
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket', '_ansible_module_introspect']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -699,6 +700,7 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         self._load_params()
+        self._used_fallbacks = {}
         self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
@@ -736,6 +738,7 @@ class AnsibleModule(object):
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
 
+        self._used_defaults = {}
         self._set_defaults(pre=True)
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
@@ -765,6 +768,10 @@ class AnsibleModule(object):
         if not self.no_log:
             self._log_invocation()
 
+        self.module_documentation = module_documentation
+        self.module_metadata = module_metadata
+        self.module_return = module_return
+        self.module_examples = module_examples
         # finally, make sure we're in a sane working dir
         self._set_cwd()
 
@@ -785,6 +792,34 @@ class AnsibleModule(object):
             self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
+
+    def __getstate__(self):
+        data = {}
+        data['name'] = self._name
+        data['ansible_version'] = self.ansible_version
+        data['argument_spec'] = self.argument_spec
+        data['supports_check_mode'] = self.supports_check_mode
+        data['check_mode'] = self.check_mode
+        data['no_log'] = self.no_log
+        data['no_log_values'] = list(self.no_log_values)
+        data['cleanup_files'] = self.cleanup_files
+        data['debug'] = self._debug
+        data['diff'] = self._diff
+        data['verbosity'] = self._verbosity
+        data['run_command_environ_update'] = self.run_command_environ_update
+        data['aliases'] = self.aliases
+        data['legal_inputs'] = self._legal_inputs
+        data['params'] = self.params
+        data['used_fallbacks'] = self._used_fallbacks
+        data['locale'] = locale.getlocale()
+        data['used_defaults'] = self._used_defaults
+        data['module_path'] = get_module_path()
+        data['module_documentation'] = self.module_documentation
+        data['module_metadata'] = self.module_metadata
+        data['module_return'] = self.module_return
+        data['module_examples'] = self.module_examples
+        return data
+
 
     def load_file_common_arguments(self, params):
         '''
@@ -1429,6 +1464,10 @@ class AnsibleModule(object):
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)
+            elif k == '_ansible_module_introspect':
+                self.introspect = v
+
+
 
             #clean up internal params:
             if k.startswith('_ansible_'):
@@ -1730,10 +1769,12 @@ class AnsibleModule(object):
                 # this prevents setting defaults on required items
                 if default is not None and k not in self.params:
                     self.params[k] = default
+                    self._used_defaults[k] = default
             else:
                 # make sure things without a default still get set None
                 if k not in self.params:
                     self.params[k] = default
+                    self._used_defaults[k] = default
 
     def _set_fallbacks(self):
         for k,v in self.argument_spec.items():
@@ -1748,6 +1789,9 @@ class AnsibleModule(object):
                     else:
                         fallback_args = item
                 try:
+                    self._used_fallbacks[k] = {'fallback': fallback,
+                                               'fallback_args': fallback_args,
+                                               'fallback_kwargs': fallback_kwargs}
                     self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
                 except AnsibleFallbackNotFound:
                     continue
@@ -1971,6 +2015,7 @@ class AnsibleModule(object):
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
 
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
@@ -1986,7 +2031,11 @@ class AnsibleModule(object):
 
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
+        if self.introspect:
+            kwargs['introspect'] = self.__getstate__()
+        kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
