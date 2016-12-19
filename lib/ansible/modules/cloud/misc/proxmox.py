@@ -176,6 +176,7 @@ options:
     choices: ['present', 'started', 'absent', 'stopped', 'restarted']
     default: present
   pubkey:
+    version_added: "2.3"
     description:
       - Public key to add to /root/.ssh/authorized_keys
     default: null
