@@ -176,9 +176,9 @@ options:
     choices: ['present', 'started', 'absent', 'stopped', 'restarted']
     default: present
   pubkey:
-    version_added: "2.3"
     description:
-      - Public key to add to /root/.ssh/authorized_keys
+      - Public key to add to /root/.ssh/authorized_keys.
+    version_added: "2.3"
     default: null
     required: false
     type: string
@@ -348,7 +348,8 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
         kwargs.update(kwargs['mounts'])
         del kwargs['mounts']
       if 'pubkey' in kwargs:
-        kwargs['ssh-public-keys'] = kwargs['pubkey']
+        if float(proxmox.version.get()['version']) >= 4.2:
+          kwargs['ssh-public-keys'] = kwargs['pubkey']
         del kwargs['pubkey']
   else:
       kwargs['cpus']=cpus
