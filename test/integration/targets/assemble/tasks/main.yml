@@ -90,3 +90,32 @@
     that:
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
+
+- name: test assemble with src_files and reordered
+  assemble:
+    src: "./"
+    dest: "{{output_dir}}/assembled6"
+    src_files:
+      - 'fragment2'
+      - 'fragment1'
+  register: result
+
+- name: assert the fragments were assembled in correct order
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '552138093d792c8153b6fa45b9a6247d644ab12d'"
+
+- name: test assemble with src_files and reordered and no src
+  assemble:
+    dest: "{{output_dir}}/assembled7"
+    src_files:
+      - './fragment4'
+      - './fragment3'
+  register: result
+
+- name: assert the fragments were assembled in correct order
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '194105ee299c3b4985dc858837a3c6a8ac10a52c'"

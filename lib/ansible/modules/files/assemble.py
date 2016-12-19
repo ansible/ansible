@@ -33,14 +33,22 @@ description:
        C(conf.d) style structure where it is easy to build up the configuration
        from multiple sources. M(assemble) will take a directory of files that can be
        local or have already been transferred to the system, and concatenate them
-       together to produce a destination file. Files are assembled in string sorting order.
+       together to produce a destination file. Files are assembled in string sorting order,
+       or the order provided in src_files. 
        Puppet calls this idea I(fragments).
 version_added: "0.5"
 options:
   src:
     description:
       - An already existing directory full of source files.
-    required: true
+    required: flase
+    default: null
+    aliases: []
+  src_files:
+    description:
+      - A list of files sorted by user. 
+    version_added: "2.3"
+    required: flase
     default: null
     aliases: []
   dest:
@@ -114,6 +122,23 @@ EXAMPLES = '''
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: '/usr/sbin/sshd -t -f %s'
+
+# Example of src_files with multiple folders
+- assemble:
+    src_files:
+      - /var/config/sw01/route.cfg
+      - /var/config/sw01/aaa.cfg
+      - /var/standard/acl.cfg
+    dest: /var/finalconfig/sw01/run.cfg
+
+# Example of src_files in single folder
+- assemble:
+    src: /var/config/sw01
+    src_files:
+      - route.cfg
+      - aaa.cfg
+      - acl.cfg
+    dest: /var/finalconfig/sw01/run.cfg
 '''
 
 import codecs
@@ -130,17 +155,29 @@ from ansible.module_utils.six import b
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, src_files=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
+    sorted_files = []
 
-    for f in sorted(os.listdir(src_path)):
-        if compiled_regexp and not compiled_regexp.search(f):
+    if not src_files:
+        sorted_files = sorted(os.listdir(src_path))
+        sorted_files = [ src_path + '/' + s for s in sorted_files]
+    elif src_files and src_path:
+        for current_file in src_files:
+            sorted_files.append(str(src_path) + '/' + str(current_file))
+    else:
+        for current_file in src_files:
+            sorted_files.append(current_file)
+        
+
+    for fragment in sorted_files:
+        if compiled_regexp and not compiled_regexp.search(fragment) and not src_files:
             continue
-        fragment = u"%s/%s" % (src_path, f)
+        #fragment = u"%s/%s" % (src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         fragment_content = open(fragment, 'rb').read()
@@ -188,7 +225,8 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src = dict(required=True),
+            src = dict(required=False),
+            src_files = dict(required=False, type='list'),
             delimiter = dict(required=False),
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
@@ -203,7 +241,10 @@ def main():
     changed   = False
     path_hash   = None
     dest_hash   = None
-    src       = os.path.expanduser(module.params['src'])
+    src         = None
+    if module.params.get('src'):
+        src       = os.path.expanduser(module.params.get('src'))
+    src_files = module.params['src_files']
     dest      = os.path.expanduser(module.params['dest'])
     backup    = module.params['backup']
     delimiter = module.params['delimiter']
@@ -212,12 +253,16 @@ def main():
     ignore_hidden = module.params['ignore_hidden']
     validate = module.params.get('validate', None)
 
+    if not src and not src_files:
+        module.fail_json(msg="Source or Source Files must be defined")
+
     result = dict(src=src, dest=dest)
-    if not os.path.exists(src):
+    if src and not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
 
-    if not os.path.isdir(src):
+    if src and not os.path.isdir(src):
         module.fail_json(msg="Source (%s) is not a directory" % src)
+
 
     if regexp is not None:
         try:
@@ -229,7 +274,7 @@ def main():
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, src_files)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
