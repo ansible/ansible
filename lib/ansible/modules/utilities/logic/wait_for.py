@@ -97,6 +97,7 @@ options:
     description:
       - ignore time_wait socket states when waiting for connections to be drained
     required: false
+    version_added: "2.3"
   path:
     version_added: "1.4"
     required: false
