@@ -665,7 +665,8 @@ class AnsibleFallbackNotFound(Exception):
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False, required_if=None):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+        required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
