@@ -677,7 +677,10 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        # Should we include module introspection info
         self.introspect = False
+        # If true, only return the introspection info and dont change any state
+        self.introspect_only = False
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
@@ -691,7 +694,7 @@ class AnsibleModule(object):
         self._deprecations = []
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket', '_ansible_module_introspect']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket', '_ansible_module_introspect', '_ansible_module_introspect_only']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1462,6 +1465,8 @@ class AnsibleModule(object):
                 unsupported_parameters.add(k)
             elif k == '_ansible_module_introspect':
                 self.introspect = v
+            elif k == '_ansible_module_introspect_only':
+                self.introspect_only = v
 
 
 
