@@ -30,12 +30,19 @@ from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class Connection(_Connection):
     ''' CLI (shell) SSH connections on Paramiko '''
 
     transport = 'network_cli'
     has_pipelining = False
+    action_handler = 'network'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -97,6 +104,7 @@ class Connection(_Connection):
             self._terminal.on_authorize(passwd=auth_pass)
 
     def close(self):
+        display.vvv('closing connection', host=self._play_context.remote_addr)
         self.close_shell()
         super(Connection, self).close()
 

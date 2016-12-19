@@ -517,19 +517,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
-        '''
-        Transfer and run a module along with its arguments.
-        '''
-        if task_vars is None:
-            task_vars = dict()
-
-        # if a module name was not specified for this execution, use
-        # the action from the task
-        if module_name is None:
-            module_name = self._task.action
-        if module_args is None:
-            module_args = self._task.args
+    def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
         if self._play_context.check_mode:
@@ -538,9 +526,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = True
         else:
             module_args['_ansible_check_mode'] = False
-
-        # Get the connection user for permission checks
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
         # set no log in the module arguments, if required
         module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
@@ -565,6 +550,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
+
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
+        '''
+        Transfer and run a module along with its arguments.
+        '''
+        if task_vars is None:
+            task_vars = dict()
+
+        # if a module name was not specified for this execution, use
+        # the action from the task
+        if module_name is None:
+            module_name = self._task.action
+        if module_args is None:
+            module_args = self._task.args
+
+        # Get the connection user for permission checks
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+        self._update_module_args(module_name, module_args, task_vars)
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
@@ -716,6 +720,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+            if 'rc' in res:
+                data['rc'] = res['rc']
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
@@ -797,7 +803,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
 
-        if not('failed' in peek_result and peek_result['failed']) or peek_result.get('rc', 0) == 0:
+        if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
             if peek_result['state'] == 'absent':
                 diff['before'] = ''
