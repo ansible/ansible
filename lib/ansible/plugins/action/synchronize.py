@@ -359,14 +359,14 @@ class ActionModule(ActionBase):
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
         if self._remote_transport in [ 'docker' ]:
-            if not isinstance(self._task.args.get('rsync_opts'), list):
-                self._task.args['rsync_opts'] = self._task.args.get('rsync_opts', '').split(' ')
-            if '--blocking-io' not in self._task.args['rsync_opts']:
-                self._task.args['rsync_opts'].append('--blocking-io')
+            if not isinstance(_tmp_args.get('rsync_opts'), list):
+                _tmp_args['rsync_opts'] = self._task.args.get('rsync_opts', '').split(' ')
+            if '--blocking-io' not in _tmp_args['rsync_opts']:
+                _tmp_args['rsync_opts'].append('--blocking-io')
             if user is not None:
-                self._task.args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, user))
+                _tmp_args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, user))
             else:
-                self._task.args['rsync_opts'].append("--rsh='%s exec -i'" % self._docker_cmd)
+                _tmp_args['rsync_opts'].append("--rsh='%s exec -i'" % self._docker_cmd)
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
