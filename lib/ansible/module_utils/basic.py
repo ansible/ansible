@@ -727,7 +727,6 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
                 'str': self._check_type_str,
                 'list': self._check_type_list,
@@ -1355,6 +1354,7 @@ class AnsibleModule(object):
 
     def _check_arguments(self, check_invalid_arguments):
         self._syslog_facility = 'LOG_USER'
+        unsupported_parameters = set()
         for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
@@ -1385,12 +1385,16 @@ class AnsibleModule(object):
                 self._name = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
-                self.fail_json(msg="unsupported parameter for module: %s" % k)
+                unsupported_parameters.add(k)
 
             #clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
 
+        if unsupported_parameters:
+            self.fail_json(msg="Unsupported parameters for (%s) module: %s. Supported parameters include: %s" % (self._name,
+                                                                                                                 ','.join(sorted(list(unsupported_parameters))),
+                                                                                                                 ','.join(sorted(self.argument_spec.keys()))))
         if self.check_mode and not self.supports_check_mode:
                 self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
