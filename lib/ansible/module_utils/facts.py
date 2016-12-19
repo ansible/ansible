@@ -101,6 +101,19 @@ def timeout(seconds=None, error_message="Timer expired"):
 
         return wrapper
 
+    # If we were called as @timeout, then the first parameter will be the
+    # function we are to wrap instead of the number of seconds.  Detect this
+    # and correct it by setting seconds to our default value and return the
+    # inner decorator function manually wrapped around the function
+    if callable(seconds):
+        func = seconds
+        seconds = 10
+        return decorator(func)
+    else:
+        # If we were called as @timeout([...]) then python itself will take
+        # care of wrapping the inner decorator around the function
+        return decorator
+
     return decorator
 
 # --------------------------------------------------------------
