@@ -128,7 +128,7 @@ def get_session_token(connection, module):
     try:
         response = connection.get_session_token(**args)
         changed = True
-    except ClientError, e:
+    except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
