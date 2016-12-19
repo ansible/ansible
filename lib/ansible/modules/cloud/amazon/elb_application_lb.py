@@ -39,7 +39,7 @@ options:
     choices: [ 'yes', 'no' ]
   idle_timeout:
     description:
-      - The number of seconds to wait before an idle connection is closed
+      - The number of seconds to wait before an idle connection is closed.
     required: false
     default: 60
   listeners:
@@ -87,9 +87,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
-
-# Create an ELB
-
 
 # Create an ELB and attach a listener
 - name: elb_application_lb
@@ -360,7 +357,7 @@ def create_or_update_elb_listeners(connection, module, elb):
     listener_changed = False
     listeners = module.params.get("listeners")
     
-    # create a copy of orignanl list as we remove list elements for initial comparisons 
+    # create a copy of original list as we remove list elements for initial comparisons
     listeners_rules = deepcopy(listeners)
     listener_matches = False
 
@@ -420,8 +417,6 @@ def create_or_update_elb_listeners(connection, module, elb):
                         default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])
                         del default_action['TargetGroupName']
                     connection.create_listener(**listener)
-
-
 
             # Lookup the listeners again and this time we will retain the rules so we can comapre for changes:
             current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
@@ -486,7 +481,6 @@ def create_or_update_elb_listeners(connection, module, elb):
                                         action['TargetGroupArn'] = convert_tg_name_arn(connection, module, action['TargetGroupName'])
                                         del action['TargetGroupName']  
                                     connection.create_rule(**rule)
- 
 
         else:
             for listener in listeners:
@@ -516,7 +510,6 @@ def create_or_update_elb_listeners(connection, module, elb):
                                     action['TargetGroupArn'] = convert_tg_name_arn(connection, module, action['TargetGroupName'])
                                     del action['TargetGroupName']
                                 connection.create_rule(**rules)
-
 
     # listeners is none. If we have any current listeners we need to remove them
     else:
@@ -626,7 +619,6 @@ def create_or_update_elb(connection, connection_ec2, module):
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
     
     # Get the ELB again
-    
     elb = get_elb(connection, module)
     # Get the tags of the ELB
     elb_tags = connection.describe_tags(ResourceArns=[elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
