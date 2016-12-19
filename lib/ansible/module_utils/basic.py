@@ -694,8 +694,15 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
 
+        # Keep track of what defaults/fallbacks we used
+        self._used_defaults = {}
+        self._used_fallbacks = {}
+
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket', '_ansible_module_introspect', '_ansible_module_introspect_only']
+        self._public_legal_inputs = []
+        self._legal_aliases = []
+
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -703,7 +710,6 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         self._load_params()
-        self._used_fallbacks = {}
         self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
@@ -741,7 +747,6 @@ class AnsibleModule(object):
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
 
-        self._used_defaults = {}
         self._set_defaults(pre=True)
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
@@ -808,6 +813,7 @@ class AnsibleModule(object):
         data['run_command_environ_update'] = self.run_command_environ_update
         data['aliases'] = self.aliases
         data['legal_inputs'] = self._legal_inputs
+        data['supported_params'] = self._public_legal_inputs
         data['params'] = self.params
         data['used_fallbacks'] = self._used_fallbacks
         data['locale'] = locale.getlocale()
@@ -1409,6 +1415,7 @@ class AnsibleModule(object):
         aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
+            self._public_legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
             required = v.get('required', False)
@@ -1421,6 +1428,7 @@ class AnsibleModule(object):
                 raise Exception('internal error: aliases must be a list or tuple')
             for alias in aliases:
                 self._legal_inputs.append(alias)
+                self._public_legal_inputs.append(alias)
                 aliases_results[alias] = k
                 if alias in self.params:
                     self.params[k] = self.params[alias]
