@@ -171,6 +171,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
             sorted_files.append(str(src_path) + '/' + str(current_file))
     else:
         for current_file in src_files:
+            current_file = os.path.expanduser(current_file)
             sorted_files.append(current_file)
         
 

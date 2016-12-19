@@ -93,7 +93,7 @@
 
 - name: test assemble with src_files and reordered
   assemble:
-    src: "./"
+    src: "{{output_dir}}/src"
     dest: "{{output_dir}}/assembled6"
     src_files:
       - 'fragment2'
@@ -110,8 +110,8 @@
   assemble:
     dest: "{{output_dir}}/assembled7"
     src_files:
-      - './fragment4'
-      - './fragment3'
+      - '{{output_dir}}/src/fragment4'
+      - '{{output_dir}}/src/fragment3'
   register: result
 
 - name: assert the fragments were assembled in correct order
