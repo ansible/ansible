@@ -32,6 +32,7 @@ import ansible.module_utils.basic
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import remove_values
+from ansible.module_utils._text import to_bytes
 
 from ansible.errors import AnsibleModuleExit
 
@@ -39,7 +40,8 @@ _ANSIBLE_CONNECTION = None
 
 def _modify_module(task_args, connection):
     params = {'ANSIBLE_MODULE_ARGS': task_args}
-    ansible.module_utils.basic._ANSIBLE_ARGS = json.dumps(params)
+    params = json.dumps(params)
+    ansible.module_utils.basic._ANSIBLE_ARGS = to_bytes(params)
 
     global _ANSIBLE_CONNECTION
     _ANSIBLE_CONNECTION = connection
