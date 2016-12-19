@@ -517,7 +517,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
         if self._play_context.check_mode:
@@ -543,7 +543,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_version'] = __version__
 
         # give the module information about its name
-        module_args['_ansible_module_name'] = self._task.action
+        module_args['_ansible_module_name'] = module_name
 
         # set the syslog facility to be used in the module
         module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
@@ -568,7 +568,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Get the connection user for permission checks
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
-        self._update_module_args(module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars)
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
