@@ -109,10 +109,9 @@ def timeout(seconds=None, error_message="Timer expired"):
         func = seconds
         seconds = 10
         return decorator(func)
-    else:
-        # If we were called as @timeout([...]) then python itself will take
-        # care of wrapping the inner decorator around the function
-        return decorator
+
+    # If we were called as @timeout([...]) then python itself will take
+    # care of wrapping the inner decorator around the function
 
     return decorator
 
