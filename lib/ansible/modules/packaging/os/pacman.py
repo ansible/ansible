@@ -348,7 +348,7 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if pkg.endswith('.pkg.tar.xz'):
+            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)
