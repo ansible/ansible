@@ -253,7 +253,7 @@ class DocCLI(CLI):
 
         opt_indent="        "
         text = []
-        text.append("> %s\n" % doc['module'].upper())
+        text.append("> %s    (%s)\n" % (doc['module'].upper(), doc['filename']))
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
