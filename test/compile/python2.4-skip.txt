@@ -15,7 +15,7 @@
 /lib/ansible/modules/clustering/znode.py
 /lib/ansible/modules/database/influxdb/
 /lib/ansible/modules/database/mssql/
-/lib/ansible/modules/infrastructure/foreman/
+/lib/ansible/modules/remote_management/foreman/
 /lib/ansible/modules/monitoring/zabbix.*.py
 /lib/ansible/modules/network/f5/
 /lib/ansible/modules/network/nmcli.py
