@@ -38,9 +38,9 @@ class CallbackModule(CallbackBase):
         stdout = result.get('stdout','').replace('\n', '\\n')
         if 'stderr' in result and result['stderr']:
             stderr = result.get('stderr','').replace('\n', '\\n')
-            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, result.get('rc',0), stdout, stderr)
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, result.get('rc', -1), stdout, stderr)
         else:
-            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc',0), stdout)
+            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc', -1), stdout)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
@@ -51,7 +51,7 @@ class CallbackModule(CallbackBase):
             else:
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception'].replace('\n','')
 
-            if result._task.action in C.MODULE_NO_JSON:
+            if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
                 self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'FAILED'), color=C.COLOR_ERROR)
             else:
                 self._display.display(msg, color=C.COLOR_ERROR)
