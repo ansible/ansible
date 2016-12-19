@@ -190,6 +190,11 @@ def create(module):
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
 
     module.vca.block_until_completed(task)
+    
+    # Connect network to the Vapp/VM and return asigned IP
+    if (network_name != None):
+            vm_ip = connect_to_network(module, vdc_name, vapp_name, network_name, network_mode)
+            return vm_ip
 
 def delete(module):
     vdc_name = module.params['vdc_name']
@@ -229,6 +234,55 @@ def set_state(module):
         if not vapp.undeploy(action):
             module.fail('unable to undeploy vapp')
 
+def connect_to_network(module, vdc_name, vapp_name, network_name, network_mode):
+
+    nets = filter(lambda n: n.name == network_name, module.vca.get_networks(vdc_name))
+    assert len(nets) == 1
+    the_vdc = module.vca.get_vdc(vdc_name)
+    the_vapp = module.vca.get_vapp(the_vdc, vapp_name)
+    assert the_vapp
+    assert the_vapp.name == vapp_name
+
+    # Connect vApp
+    task = the_vapp.connect_to_network(nets[0].name, nets[0].href)
+    result = module.vca.block_until_completed(task)
+    assert result
+
+    # Connect VM
+    if(network_mode == 'pool'):
+        task = the_vapp.connect_vms(nets[0].name, connection_index=0, ip_allocation_mode='POOL')
+    else:
+        if(network_mode == 'dhcp'):
+            task = the_vapp.connect_vms(nets[0].name, connection_index=0, ip_allocation_mode='DHCP')
+
+    assert task
+    result = module.vca.block_until_completed(task)
+    assert result
+
+    #Update VApp info and get VM IP
+    the_vapp = module.vca.get_vapp(the_vdc, vapp_name)
+    assert the_vapp
+
+    #if (not the_vapp or not the_vapp.me or not the_vapp.me.Children):
+    #    continue
+    for vm in the_vapp.me.Children.Vm:
+        sections = vm.get_Section()
+        virtualHardwareSection = (
+            filter(lambda section:
+                   section.__class__.__name__ ==
+                   "VirtualHardwareSection_Type",
+                   sections)[0])
+        items = virtualHardwareSection.get_Item()
+        ips = []
+        _url = '{http://www.vmware.com/vcloud/v1.5}ipAddress'
+        for item in items:
+            if item.Connection:
+                for c in item.Connection:
+                    if c.anyAttributes_.get(
+                            _url):
+                        ips.append(c.anyAttributes_.get(
+                            _url))
+    return ips[0]
 
 def main():
 
@@ -264,8 +318,9 @@ def main():
     elif state != 'absent':
         if instance['state'] == 'absent':
             if not module.check_mode:
-                create(module)
+                vm_ip=create(module)
             result['changed'] = True
+            result['ansible_facts'] = dict(vm_ip=vm_ip)
 
         elif instance['state'] != state and state != 'present':
             if not module.check_mode:
