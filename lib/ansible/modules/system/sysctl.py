@@ -118,7 +118,7 @@ EXAMPLES = '''
 import os
 import tempfile
 import re
-from ansible.module_utils.basic import get_platform, AnsibleModule
+from ansible.module_utils.basic import get_platform, AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
 
 class SysctlModule(object):
 
