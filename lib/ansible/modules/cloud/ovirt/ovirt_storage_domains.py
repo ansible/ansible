@@ -33,6 +33,7 @@ from ansible.module_utils.ovirt import (
     BaseModule,
     check_sdk,
     create_connection,
+    equal,
     ovirt_full_argument_spec,
     search_by_name,
     wait,
@@ -69,9 +70,11 @@ options:
     data_center:
         description:
             - "Data center name where storage domain should be attached."
+            - "This parameter isn't idempotent, it's not possible to change data center of storage domain."
     domain_function:
         description:
             - "Function of the storage domain."
+            - "This parameter isn't idempotent, it's not possible to change domain function of storage domain."
         choices: ['data', 'iso', 'export']
         default: 'data'
         aliases:  ['type']
@@ -83,40 +86,48 @@ options:
             - "Dictionary with values for NFS storage type:"
             - "C(address) - Address of the NFS server. E.g.: myserver.mydomain.com"
             - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
+            - "C(version) - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
+            - "C(timeout) - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
+            - "C(retrans) - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
+            - "Note that these parameters are not idempotent."
     iscsi:
         description:
             - "Dictionary with values for iSCSI storage type:"
             - "C(address) - Address of the iSCSI storage server."
             - "C(port) - Port of the iSCSI storage server."
-            - "C(target) - iSCSI target."
+            - "C(target) - The target IQN for the storage device."
             - "C(lun_id) - LUN id."
-            - "C(username) - Username to be used to access storage server."
-            - "C(password) - Password of the user to be used to access storage server."
+            - "C(username) - A CHAP user name for logging into a target."
+            - "C(password) - A CHAP password for logging into a target."
+            - "Note that these parameters are not idempotent."
     posixfs:
         description:
             - "Dictionary with values for PosixFS storage type:"
             - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "C(vfs_type) - Virtual File System type."
             - "C(mount_options) - Option which will be passed when mounting storage."
+            - "Note that these parameters are not idempotent."
     glusterfs:
         description:
             - "Dictionary with values for GlusterFS storage type:"
             - "C(address) - Address of the NFS server. E.g.: myserver.mydomain.com"
             - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "C(mount_options) - Option which will be passed when mounting storage."
+            - "Note that these parameters are not idempotent."
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
             - "C(address) - Address of the fibre channel storage server."
             - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
+            - "Note that these parameters are not idempotent."
     destroy:
         description:
-            - "If I(True) storage domain metadata won't be cleaned, and user have to clean them manually."
+            - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
             - "This parameter is relevant only when C(state) is I(absent)."
     format:
         description:
-            - "If I(True) storage domain will be removed after removing it from oVirt."
+            - "If I(True) storage domain will be formatted after removing it from oVirt."
             - "This parameter is relevant only when C(state) is I(absent)."
 extends_documentation_fragment: ovirt
 '''
@@ -239,7 +250,12 @@ class StorageDomainModule(BaseModule):
                 vfs_type=storage.get('vfs_type'),
                 address=storage.get('address'),
                 path=storage.get('path'),
-            )
+                nfs_retrans=storage.get('retrans'),
+                nfs_timeo=storage.get('timeout'),
+                nfs_version=otypes.NfsVersion(
+                    storage.get('version')
+                ) if storage.get('version') else None,
+            ) if storage_type is not None else None
         )
 
     def _attached_sds_service(self):
@@ -324,6 +340,12 @@ class StorageDomainModule(BaseModule):
     def unattached_pre_action(self, storage_domain):
         self._service = self._attached_sds_service(storage_domain)
         self._maintenance(self._service, storage_domain)
+
+    def update_check(self, entity):
+        return (
+            equal(self._module.params['comment'], entity.comment) and
+            equal(self._module.params['description'], entity.description)
+        )
 
 
 def failed_state(sd):

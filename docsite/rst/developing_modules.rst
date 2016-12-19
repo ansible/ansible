@@ -778,7 +778,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

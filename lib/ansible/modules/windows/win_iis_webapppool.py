@@ -50,7 +50,7 @@ options:
     aliases: []
   attributes:
     description:
-      - Application Pool attributes from string where attributes are seperated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
+      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
     required: false
     default: null
     aliases: []
@@ -58,59 +58,40 @@ author: Henrik Wallström
 '''
 
 EXAMPLES = '''
-# This return information about an existing application pool
-$ansible -i inventory -m win_iis_webapppool -a "name='DefaultAppPool'" windows
-host | success >> {
-    "attributes": {},
-    "changed": false,
-    "info": {
-        "attributes": {
-            "CLRConfigFile": "",
-            "applicationPoolSid": "S-1-5-82-3006700770-424185619-1745488364-794895919-4004696415",
-            "autoStart": true,
-            "enable32BitAppOnWin64": false,
-            "enableConfigurationOverride": true,
-            "managedPipelineMode": 0,
-            "managedRuntimeLoader": "webengine4.dll",
-            "managedRuntimeVersion": "v4.0",
-            "name": "DefaultAppPool",
-            "passAnonymousToken": true,
-            "queueLength": 1000,
-            "startMode": 0,
-            "state": 1
-        },
-        "name": "DefaultAppPool",
-        "state": "Started"
-    }
-}
-
-# This creates a new application pool in 'Started' state
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=started" windows
-
-# This stoppes an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=stopped" windows
-
-# This restarts an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=restart" windows
-
-# This restarts an application pool
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' state=restart" windows
-
-# This change application pool attributes without touching state
-$  ansible -i inventory -m win_iis_webapppool -a "name='AppPool' attributes='managedRuntimeVersion:v4.0|autoStart:false'" windows
-
-# This creates an application pool and sets attributes
-$  ansible -i inventory -m win_iis_webapppool -a "name='AnotherAppPool' state=started attributes='managedRuntimeVersion:v4.0|autoStart:false'" windows
-
-
-# Playbook example
----
-
-- name: App Pool with .NET 4.0
+- name: Return information about an existing application pool
   win_iis_webapppool:
-    name: 'AppPool'
+    name: DefaultAppPool
+
+- name: Ensure AppPool is started
+  win_iis_webapppool:
+    name: AppPool
+    state: started
+
+- name: Ensure AppPool is stopped
+  win_iis_webapppool:
+    name: AppPool
+    state: stopped
+
+- name: Restart AppPool
+  win_iis_webapppool:
+    name: AppPool
+    state: restart
+
+- name: Change application pool attributes without touching state
+  win_iis_webapppool:
+    name: AppPool
+    attributes: managedRuntimeVersion:v4.0|autoStart:false
+
+- name: Create AnotherAppPool and start it using .NET 4.0 and disabling autostart
+  win_iis_webapppool:
+    name: AnotherAppPool
+    state: started
+    attributes: managedRuntimeVersion:v4.0|autoStart:false
+
+- name: Create AppPool and start it using .NET 4.0
+  win_iis_webapppool:
+    name: AppPool
     state: started
     attributes: managedRuntimeVersion:v4.0
   register: webapppool
-
 '''

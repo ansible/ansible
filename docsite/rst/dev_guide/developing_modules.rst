@@ -698,7 +698,8 @@ The following  checklist items are important guidelines for people who want to c
 
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes.
-* Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Import ``ansible.module_utils`` code in the same place as you import other libraries.  In older code, this was done at the bottom of the file but that's no longer needed.
+* Do not use wildcards for importing other python modules (ex: ``from ansible.module_utils.basic import *``).  This used to be required for code imported from ``ansible.module_utils`` but, from Ansible-2.1 onwards, it's just an outdated and bad practice.
 * The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
   import them into unittests in the future example::
@@ -763,7 +764,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

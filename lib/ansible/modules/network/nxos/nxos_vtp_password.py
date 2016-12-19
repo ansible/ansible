@@ -424,8 +424,8 @@ def main():
     args = dict(vtp_password=vtp_password)
 
     changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     commands = []
     if state == 'absent':

@@ -412,7 +412,7 @@ def main():
         }
 
     ping_command = 'ping {0}'.format(destination)
-    for command, arg in OPTIONS.iteritems():
+    for command, arg in OPTIONS.items():
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 

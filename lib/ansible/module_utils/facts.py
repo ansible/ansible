@@ -81,16 +81,16 @@ GATHER_TIMEOUT=None
 class TimeoutError(Exception):
     pass
 
-def timeout(seconds=10, error_message="Timer expired"):
+def timeout(seconds=None, error_message="Timer expired"):
+
+    if seconds is None:
+        seconds = globals().get('GATHER_TIMEOUT') or 10
 
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
-            if 'GATHER_TIMEOUT' in globals():
-                if GATHER_TIMEOUT:
-                    seconds = GATHER_TIMEOUT
             signal.signal(signal.SIGALRM, _handle_timeout)
             signal.alarm(seconds)
             try:
@@ -100,6 +100,18 @@ def timeout(seconds=10, error_message="Timer expired"):
             return result
 
         return wrapper
+
+    # If we were called as @timeout, then the first parameter will be the
+    # function we are to wrap instead of the number of seconds.  Detect this
+    # and correct it by setting seconds to our default value and return the
+    # inner decorator function manually wrapped around the function
+    if callable(seconds):
+        func = seconds
+        seconds = 10
+        return decorator(func)
+
+    # If we were called as @timeout([...]) then python itself will take
+    # care of wrapping the inner decorator around the function
 
     return decorator
 
@@ -334,6 +346,10 @@ class Facts(object):
             # probably didn't work the way we wanted, probably because it's busybox
             if re.match(r' *[0-9]+ ', proc_1):
                 proc_1 = None
+
+        # The ps command above may return "COMMAND" if the user cannot read /proc, e.g. with grsecurity
+        if proc_1 == "COMMAND\n":
+            proc_1 = None
 
         if proc_1 is not None:
             proc_1 = os.path.basename(proc_1)
@@ -600,7 +616,7 @@ class Distribution(object):
     """
     This subclass of Facts fills the distribution, distribution_version and distribution_release variables
 
-    To do so it checks the existance and content of typical files in /etc containing distribution information
+    To do so it checks the existence and content of typical files in /etc containing distribution information
 
     This is unit tested. Please extend the tests to cover all distributions if you have them available.
     """
@@ -1323,7 +1339,7 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    @timeout(10)
+    @timeout()
     def get_mount_facts(self):
         self.facts['mounts'] = []
 
@@ -1580,7 +1596,7 @@ class SunOSHardware(Hardware):
         self.facts['swap_allocated_mb'] = allocated // 1024
         self.facts['swap_reserved_mb'] = reserved // 1024
 
-    @timeout(10)
+    @timeout()
     def get_mount_facts(self):
         self.facts['mounts'] = []
         # For a detailed format description see mnttab(4)
@@ -1625,11 +1641,14 @@ class OpenBSDHardware(Hardware):
         self.get_memory_facts()
         self.get_processor_facts()
         self.get_device_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         self.get_dmi_facts()
         return self.facts
 
-    @timeout(10)
+    @timeout()
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -1772,7 +1791,7 @@ class FreeBSDHardware(Hardware):
             self.facts['swaptotal_mb'] = int(data[1]) // 1024
             self.facts['swapfree_mb'] = int(data[3]) // 1024
 
-    @timeout(10)
+    @timeout()
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -1903,7 +1922,7 @@ class NetBSDHardware(Hardware):
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = int(val) // 1024
 
-    @timeout(10)
+    @timeout()
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -2237,7 +2256,10 @@ class HurdHardware(LinuxHardware):
     def populate(self):
         self.get_uptime_facts()
         self.get_memory_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
 class Network(Facts):
@@ -3591,6 +3613,8 @@ class SunOSVirtual(Virtual):
 
         else:
             smbios = self.module.get_bin_path('smbios')
+            if not smbios:
+                return
             rc, out, err = self.module.run_command(smbios)
             if rc == 0:
                 for line in out.splitlines():

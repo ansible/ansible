@@ -43,7 +43,7 @@ options:
   remote_max_checkpoints:
     description:
       - The I(remote_max_checkpoints) argument configures the maximum
-        number of rollback files that can be transfered and saved to
+        number of rollback files that can be transferred and saved to
         a remote location.  Valid values for this argument are in the
         range of 1 to 50
     required: false
@@ -125,7 +125,7 @@ def sanitize_config(lines):
 
 def present(module, commands):
     setters = set()
-    for key, value in module.argument_spec.iteritems():
+    for key, value in module.argument_spec.items():
         if module.params[key] is not None:
             setter = value.get('setter') or 'set_%s' % key
             if setter not in setters:

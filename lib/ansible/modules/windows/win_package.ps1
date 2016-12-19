@@ -144,9 +144,9 @@ Function Get-RegistryValueIgnoreError
         }
     }
     catch
-    {        
+    {
         $exceptionText = ($_ | Out-String).Trim()
-        Write-Verbose "Exception occured in Get-RegistryValueIgnoreError: $exceptionText"        
+        Write-Verbose "Exception occurred in Get-RegistryValueIgnoreError: $exceptionText"
     }
     return $null
 }

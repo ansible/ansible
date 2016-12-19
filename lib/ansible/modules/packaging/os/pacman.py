@@ -216,7 +216,7 @@ def remove_packages(module, pacman_path, packages):
         args = "R"
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         installed, updated, unknown = query_package(module, pacman_path, package)
@@ -348,7 +348,7 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if pkg.endswith('.pkg.tar.xz'):
+            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

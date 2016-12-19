@@ -164,6 +164,7 @@ import re
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 from ansible.module_utils.shell import ShellError
+from ansible.module_utils.six import iteritems
 
 try:
     from ansible.module_utils.nxos import get_module
@@ -508,7 +509,7 @@ def main():
                 server_timeout=server_timeout, directed_request=directed_request)
 
     changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_aaa_server_info(server_type, module)
     end_state = existing
@@ -531,15 +532,15 @@ def main():
                 module.fail_json(
                     msg='server_timeout must be an integer between 1 and 60')
 
-        delta = dict(set(proposed.iteritems()).difference(
-                                                    existing.iteritems()))
+        delta = dict(set(proposed.items()).difference(
+                                                    existing.items()))
         if delta:
             command = config_aaa_server(delta, server_type)
             if command:
                 commands.append(command)
 
     elif state == 'default':
-        for key, value in proposed.iteritems():
+        for key, value in proposed.items():
             if key != 'server_type' and value != 'default':
                 module.fail_json(
                     msg='Parameters must be set to "default"'

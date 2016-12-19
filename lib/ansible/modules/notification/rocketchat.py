@@ -35,7 +35,7 @@ options:
   domain:
     description:
       - The domain for your environment without protocol. (i.e.
-        C(subdomain.domain.com or chat.domain.tld))
+        C(example.com) or C(chat.example.com))
     required: true
   token:
     description:
@@ -114,15 +114,14 @@ options:
 
 EXAMPLES = """
 - name: Send notification message via Rocket Chat
-  local_action:
-    module: rocketchat
+  rocketchat:
     token: thetoken/generatedby/rocketchat
     domain: chat.example.com
     msg: '{{ inventory_hostname }} completed'
+  delegate_to: localhost
 
 - name: Send notification message via Rocket Chat all options
-  local_action:
-    module: rocketchat
+  rocketchat:
     domain: chat.example.com
     token: thetoken/generatedby/rocketchat
     msg: '{{ inventory_hostname }} completed'
@@ -130,6 +129,7 @@ EXAMPLES = """
     username: 'Ansible on {{ inventory_hostname }}'
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
+  delegate_to: localhost
 
 - name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in rocketchat
   rocketchat:
@@ -139,6 +139,7 @@ EXAMPLES = """
     color: good
     username: ''
     icon_url: ''
+  delegate_to: localhost
 
 - name: Use the attachments API
   rocketchat:
@@ -155,6 +156,7 @@ EXAMPLES = """
           - title: System B
             value: 'load average: 5,16, 4,64, 2,43'
             short: True
+  delegate_to: localhost
 """
 
 RETURN = """

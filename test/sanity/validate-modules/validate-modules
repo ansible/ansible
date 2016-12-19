@@ -39,6 +39,7 @@ from module_args import get_argument_spec
 from schema import doc_schema, option_schema
 
 from utils import CaptureStd
+from voluptuous.humanize import humanize_error
 
 import yaml
 import yaml.reader
@@ -373,21 +374,24 @@ class ModuleValidator(Validator):
         try:
             doc_schema(doc)
         except Exception as e:
+            for error in e.errors:
+                error.data = doc
             errors.extend(e.errors)
 
         options = doc.get('options', {})
-        for key, option in (options or {}).iteritems():
+        for key, option in (options or {}).items():
             try:
                 option_schema(option)
             except Exception as e:
                 for error in e.errors:
                     error.path[:0] = ['options', key]
+                    error.data = option
                 errors.extend(e.errors)
 
         for error in errors:
             path = [str(p) for p in error.path]
             self.errors.append('DOCUMENTATION.%s: %s' %
-                               ('.'.join(path), error.error_message))
+                               ('.'.join(path), humanize_error(error.data, error)))
 
     def _validate_docs(self):
         doc_info = self._get_docs()
@@ -525,7 +529,7 @@ class ModuleValidator(Validator):
         should_be = '.'.join(ansible_version.split('.')[:2])
         strict_ansible_version = StrictVersion(should_be)
 
-        for option, details in options.iteritems():
+        for option, details in options.items():
             new = not bool(existing_options.get(option))
             if not new:
                 continue

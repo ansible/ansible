@@ -153,7 +153,7 @@ def main():
         if server:
             cloud.inspect_machine(server['uuid'], module.params['wait'])
             # TODO(TheJulia): diff properties, ?and ports? and determine
-            # if a change occured.  In theory, the node is always changed
+            # if a change occurred.  In theory, the node is always changed
             # if introspection is able to update the record.
             module.exit_json(changed=True,
                              ansible_facts=server['properties'])

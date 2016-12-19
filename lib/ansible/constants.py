@@ -72,7 +72,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
             and return it as a python list.
         :none: Sets the value to None
         :path: Expands any environment variables and tilde's in the value.
-        :tmp_path: Create a unique temporary directory inside of the dirctory
+        :tmp_path: Create a unique temporary directory inside of the directory
             specified by value and return its path.
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
             means colon separated strings.)  Split the value and then expand
@@ -373,8 +373,8 @@ COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LI
 DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, value_type='integer')
 
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
-MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
+MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS         = None

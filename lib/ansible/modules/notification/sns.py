@@ -87,19 +87,19 @@ requirements:
 
 EXAMPLES = """
 - name: Send default notification message via SNS
-  local_action:
-    module: sns
-    msg: "{{ inventory_hostname }} has completed the play."
-    subject: "Deploy complete!"
-    topic: "deploy"
+  sns:
+    msg: '{{ inventory_hostname }} has completed the play.'
+    subject: Deploy complete!
+    topic: deploy
+  delegate_to: localhost
 
 - name: Send notification messages via SNS with short message for SMS
-  local_action:
-    module: sns
-    msg: "{{ inventory_hostname }} has completed the play."
-    sms: "deployed!"
-    subject: "Deploy complete!"
-    topic: "deploy"
+  sns:
+    msg: '{{ inventory_hostname }} has completed the play.'
+    sms: deployed!
+    subject: Deploy complete!
+    topic: deploy
+  delegate_to: localhost
 """
 
 try:

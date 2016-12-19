@@ -14,6 +14,7 @@ Ansible Changes By Release
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* ansible-doc now displays path to module
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -1782,7 +1783,7 @@ New modules and plugins.
   * rax_clb *-- manages Rackspace cloud load balancers*
 - files
   * acl *-- set or get acls on a file*
-  * synchronize *-- a useful wraper around rsyncing trees of files*
+  * synchronize *-- a useful wrapper around rsyncing trees of files*
   * unarchive *-- pushes and extracts tarballs*
 - system
   * blacklist *-- add or remove modules from the kernel blacklist*

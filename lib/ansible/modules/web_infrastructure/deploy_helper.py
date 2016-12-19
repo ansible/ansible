@@ -289,8 +289,6 @@ from ansible.module_utils.pycompat24 import get_exception
 class DeployHelper(object):
 
     def __init__(self, module):
-        module.params['path'] = os.path.expanduser(module.params['path'])
-
         self.module    = module
         self.file_args = module.load_file_common_arguments(module.params)
 
@@ -462,11 +460,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            path                = dict(aliases=['dest'], required=True, type='str'),
+            path                = dict(aliases=['dest'], required=True, type='path'),
             release             = dict(required=False, type='str', default=None),
             releases_path       = dict(required=False, type='str', default='releases'),
-            shared_path         = dict(required=False, type='str', default='shared'),
-            current_path        = dict(required=False, type='str', default='current'),
+            shared_path         = dict(required=False, type='path', default='shared'),
+            current_path        = dict(required=False, type='path', default='current'),
             keep_releases       = dict(required=False, type='int', default=5),
             clean               = dict(required=False, type='bool', default=True),
             unfinished_filename = dict(required=False, type='str', default='DEPLOY_UNFINISHED'),

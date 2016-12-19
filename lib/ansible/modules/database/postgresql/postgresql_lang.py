@@ -237,7 +237,7 @@ def main():
         "port":"port",
         "db":"database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != "" )
     try:
         db_connection = psycopg2.connect(**kw)

@@ -911,7 +911,7 @@ class ElbManager(object):
             if not self.elb.health_check:
                 self.elb.health_check = HealthCheck()
 
-            for attr, desired_value in health_check_config.iteritems():
+            for attr, desired_value in health_check_config.items():
                 if getattr(self.elb.health_check, attr) != desired_value:
                     setattr(self.elb.health_check, attr, desired_value)
                     update_health_check = True
@@ -950,7 +950,7 @@ class ElbManager(object):
             }
 
             update_access_logs_config = False
-            for attr, desired_value in access_logs_config.iteritems():
+            for attr, desired_value in access_logs_config.items():
               if getattr(attributes.access_log, attr) != desired_value:
                     setattr(attributes.access_log, attr, desired_value)
                     update_access_logs_config = True

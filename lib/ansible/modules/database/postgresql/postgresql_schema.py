@@ -210,7 +210,7 @@ def main():
         "login_password":"password",
         "port":"port"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
+    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '' )
 
     # If a login_unix_socket is specified, incorporate it here.

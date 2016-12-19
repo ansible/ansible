@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import sys
+import time
 
 import lib.pytar
 import lib.thread
@@ -12,6 +13,7 @@ from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
     EnvironmentConfig,
     IntegrationConfig,
+    SubprocessError,
     ShellConfig,
     TestConfig,
     create_shell_command,
@@ -28,6 +30,7 @@ from lib.manage_ci import (
 from lib.util import (
     ApplicationError,
     run_command,
+    display,
 )
 
 BUFFER_SIZE = 256 * 256
@@ -70,10 +73,17 @@ def delegate_tox(args, exclude, require):
 
     options = {
         '--tox': args.tox_args,
+        '--tox-sitepackages': 0,
     }
 
     for version in versions:
-        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', ''), '--']
+        tox = ['tox', '-c', 'test/runner/tox.ini', '-e', 'py' + version.replace('.', '')]
+
+        if args.tox_sitepackages:
+            tox.append('--sitepackages')
+
+        tox.append('--')
+
         cmd = generate_command(args, os.path.abspath('test/runner/test.py'), options, exclude, require)
 
         if not args.python:
@@ -91,6 +101,11 @@ def delegate_docker(args, exclude, require):
     util_image = args.docker_util
     test_image = args.docker
     privileged = args.docker_privileged
+
+    if util_image:
+        docker_pull(args, util_image)
+
+    docker_pull(args, test_image)
 
     util_id = None
     test_id = None
@@ -186,6 +201,26 @@ def delegate_docker(args, exclude, require):
             run_command(args,
                         ['docker', 'rm', '-f', test_id],
                         capture=True)
+
+
+def docker_pull(args, image):
+    """
+    :type args: EnvironmentConfig
+    :type image: str
+    """
+    if not args.docker_pull:
+        display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
+        return
+
+    for _ in range(1, 10):
+        try:
+            run_command(args, ['docker', 'pull', image])
+            return
+        except SubprocessError:
+            display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
+            time.sleep(3)
+
+    raise ApplicationError('Failed to pull docker image "%s".' % image)
 
 
 def docker_put(args, container_id, src, dst):
