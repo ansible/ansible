@@ -119,7 +119,7 @@ And you want to print every user's name and phone number.  You can loop through 
 Nested Hashes
 `````````````
 
-.. versionadded:: 2.0
+.. versionadded:: 2.2
 
 Working with nested hashes is also possible. Suppose you have holidays, nested by year and then month and then day::
 
