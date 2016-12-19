@@ -44,6 +44,13 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- infinibox:
+  * infini_export
+  * infini_export_client
+  * infini_fs
+  * infini_host
+  * infini_pool
+  * infini_vol
 - openwrt_init
 - windows:
   * win_say
