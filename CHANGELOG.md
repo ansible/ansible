@@ -14,6 +14,7 @@ Ansible Changes By Release
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* ansible-doc now displays path to module
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
