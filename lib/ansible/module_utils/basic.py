@@ -1843,7 +1843,7 @@ class AnsibleModule(object):
                 bin_path = path
                 break
         if required and bin_path is None:
-            self.fail_json(msg='Failed to find required executable %s' % arg)
+            self.fail_json(msg='Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
         return bin_path
 
     def boolean(self, arg):
