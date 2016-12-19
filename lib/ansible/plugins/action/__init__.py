@@ -582,6 +582,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
+        # set module introspect
+        module_args['_ansible_module_introspect'] = C.DEFAULT_MODULE_INTROSPECT
+
         # let module know we are in diff mode
         module_args['_ansible_diff'] = self._play_context.diff
 
