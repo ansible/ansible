@@ -924,8 +924,8 @@ def detect_changes_local(args):
 
 def docker_qualify_image(name):
     """
-    :type name: str | None
-    :rtype: str | None
+    :type name: str
+    :rtype: str
     """
     if not name or any((c in name) for c in ('/', ':')):
         return name
@@ -1102,7 +1102,7 @@ class EnvironmentConfig(CommonConfig):
         self.remote = args.remote  # type: str
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else None)  # type: str | None
+        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
