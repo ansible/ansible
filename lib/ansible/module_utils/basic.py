@@ -302,27 +302,6 @@ class AnsibleModuleFatalError(AnsibleModuleExit):
 _SYS_EXCEPTHOOK = sys.excepthook
 
 
-# Note this is a module level excepthook. If
-# AnsibleModule had a excepthook method bound to
-# it it could include other info like path and params
-# (via self.add_path_info, self.params, etc).
-def except_hook(exc_type, exc_value, exc_traceback):
-    # TODO: log the exception
-    if isinstance(exc_value, AnsibleModuleExit):
-        print(repr(exc_value))
-        sys.exit(exc_value.return_code)
-    else:
-        # If we wanted to handle all other exceptions gracefully,
-        # we would do it here. Something like:
-        # exception = {'type': exc_type,
-        #              'value': exc_value,
-        #              'traceback': exc_traceback}
-        # print(json_dumps(exception))
-        # sys.exit(1)
-        _SYS_EXCEPTHOOK(exc_type, exc_value, exc_traceback)
-        sys.exit(1)
-
-
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
@@ -967,10 +946,41 @@ class AnsibleModule(object):
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
+    def _excepthook(self, exc_type, exc_value, exc_traceback):
+        # slightly weird construct, kind of an experiment
+        # advantage: can use try/except for exception matching
+        # disadvantage: kind of weird looking
+        try:
+            raise exc_value
+        except OSError as e:
+            raise AnsibleModuleExit(return_code=0,
+                                    msg='failed but we dont really care')
+        except AnsibleModuleExit as e:
+            print(repr(exc_value))
+            sys.exit(exc_value.return_code)
+        except exc_type:
+            result = self._format_fail_json(msg='An unhandled exception occurred: %s' % exc_value,
+                                            foo='Handled by AnsibleModule._excepthook',
+                                            module_name=self._name,
+                                            exception=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+                                            exc_type=str(exc_type),
+                                            exc_traceback=''.join(traceback.format_tb(exc_traceback)))
+            print(json_dumps(result))
+            sys.exit(1)
+
+        #    if isinstance(exc_value, ZeroDivisionError):
+        #    raise exc_value
+        #if isinstance(exc_value, AnsibleModuleExit):
+        #    print(repr(exc_value))
+        #    sys.exit(exc_value.return_code)
+        # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
+        #       certain exceptions
+
     def _set_excepthook(self):
         # NOTE: we will be exiting if we get an unhandled exception
         #       so shouldn't need to unset the excepthook
-        sys.excepthook = except_hook
+        #sys.excepthook = except_hook
+        sys.excepthook = self._excepthook
 
     def load_file_common_arguments(self, params):
         '''
@@ -2338,10 +2348,14 @@ class AnsibleModule(object):
         kwargs = self._return_formatted(kwargs)
         self.do_cleanup_files()
 
+        return kwargs
+
+    def exit_json(self, **kwargs):
+        kwargs = self._format_exit_json(kwargs)
         raise AnsibleModuleExit(return_code=0,
                                 exception_data=kwargs)
 
-    def fail_json(self, **kwargs):
+    def _format_fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
 
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
@@ -2355,6 +2369,10 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         kwargs = self._return_formatted(kwargs)
 
+        return kwargs
+
+    def fail_json(self, **kwargs):
+        kwargs = self._format_fail_json(kwargs)
         raise AnsibleModuleFatalError(return_code=1,
                                       exception_data=kwargs)
 
