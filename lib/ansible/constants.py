@@ -138,7 +138,7 @@ def _get_config(p, section, key, env_var, default):
 
 
 def load_config_file():
-    ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+    ''' Load Config File order(merging): /etc/ansible, HOME, CWD, ENV '''
 
     p = configparser.ConfigParser()
 
@@ -153,15 +153,16 @@ def load_config_file():
         path1 = None
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
+    final_path = ''
 
-    for path in [path0, path1, path2, path3]:
+    for path in [path3, path2, path1, path0]:
         if path is not None and os.path.exists(path):
             try:
+                final_path = path
                 p.read(path)
             except configparser.Error as e:
                 raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
-            return p, path
-    return None, ''
+    return p, final_path
 
 
 p, CONFIG_FILE = load_config_file()
