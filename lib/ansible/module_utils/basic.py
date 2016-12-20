@@ -797,7 +797,11 @@ class AnsibleModule(object):
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
-    def __getstate__(self):
+    def _module_introspect(self):
+        '''Gather info about the module and return a serializable dict containing it.
+
+        Used if a module is invoked with the _ansible_module_introspect parameter. The
+        data returned will be added to the json results under the top level 'introspect' key.'''
         data = {}
         data['name'] = self._name
         data['ansible_version'] = self.ansible_version
@@ -816,9 +820,18 @@ class AnsibleModule(object):
         data['supported_params'] = self._public_legal_inputs
         data['params'] = self.params
         data['used_fallbacks'] = self._used_fallbacks
-        data['locale'] = locale.getlocale()
         data['used_defaults'] = self._used_defaults
         data['module_path'] = get_module_path()
+        data['locale'] = locale.getlocale()
+
+        module_data = self._introspect_module()
+        data.update(module_data)
+
+        return data
+
+    def _introspect_module(self):
+        data = {}
+
         import __main__
         data['module_documentation'] = getattr(__main__, 'DOCUMENTATION', None)
         data['module_metadata'] = getattr(__main__, 'ANSIBLE_METADATA', None)
@@ -2044,7 +2057,7 @@ class AnsibleModule(object):
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
         if self.introspect:
-            kwargs['introspect'] = self.__getstate__()
+            kwargs['introspect'] = self._module_introspect()
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         self._return_formatted(kwargs)
