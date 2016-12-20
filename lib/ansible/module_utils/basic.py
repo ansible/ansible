@@ -169,6 +169,8 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
+import __main__ as module_main
+
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
 # Deprecated compat.  Only kept in case another module used these names  Using
@@ -832,11 +834,10 @@ class AnsibleModule(object):
     def _introspect_module_info(self):
         data = {}
 
-        import __main__
-        data['module_documentation'] = getattr(__main__, 'DOCUMENTATION', None)
-        data['module_metadata'] = getattr(__main__, 'ANSIBLE_METADATA', None)
-        data['module_return'] = getattr(__main__, 'RETURN', None)
-        data['module_examples'] = getattr(__main__, 'EXAMPLES', None)
+        data['module_documentation'] = getattr(module_main, 'DOCUMENTATION', None)
+        data['module_metadata'] = getattr(module_main, 'ANSIBLE_METADATA', None)
+        data['module_return'] = getattr(module_main, 'RETURN', None)
+        data['module_examples'] = getattr(module_main, 'EXAMPLES', None)
         return data
 
 
