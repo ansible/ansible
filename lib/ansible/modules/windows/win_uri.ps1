@@ -73,7 +73,7 @@ if ($body -ne $null) {
 
 if ($dest -ne $null) {
     $webrequest_opts.OutFile = $dest
-    Set-Attr $result.dest "dest" $dest
+    Set-Attr $result.win_uri "dest" $dest
 }
 
 try {
