@@ -2051,8 +2051,7 @@ class AnsibleModule(object):
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
-                        prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp( prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
@@ -2095,10 +2094,10 @@ class AnsibleModule(object):
                             if unsafe_writes:
                                 self._unsafe_writes(b_tmp_dest_name, b_dest, e)
                             else:
-                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e))
                     except (shutil.Error, OSError, IOError):
                         e = get_exception()
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
