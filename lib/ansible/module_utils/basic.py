@@ -824,12 +824,12 @@ class AnsibleModule(object):
         data['module_path'] = get_module_path()
         data['locale'] = locale.getlocale()
 
-        module_data = self._introspect_module()
-        data.update(module_data)
+        module_info = self._introspect_module_info()
+        data.update(module_info)
 
         return data
 
-    def _introspect_module(self):
+    def _introspect_module_info(self):
         data = {}
 
         import __main__
