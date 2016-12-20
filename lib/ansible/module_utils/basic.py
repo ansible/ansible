@@ -807,23 +807,38 @@ class AnsibleModule(object):
         data = {}
         data['name'] = self._name
         data['ansible_version'] = self.ansible_version
+
         data['argument_spec'] = self.argument_spec
         data['supports_check_mode'] = self.supports_check_mode
         data['check_mode'] = self.check_mode
+
+        data['supported_params'] = self._public_legal_inputs
+
+        # The effective params used by the module. Include params supplied by user as
+        # well as any required defaults.
+
+        # The valid module parameters as well as the _ansible_* parameters used interally by ansible
+        data['params'] = self.params
+
+        data['aliases'] = self.aliases
+        data['legal_inputs'] = self._legal_inputs
+
+        data['used_fallbacks'] = self._used_fallbacks
+
+        # A list of params that were not provided by the user and the default was used.
+        data['used_defaults'] = self._used_defaults
+
+        data['module_path'] = get_module_path()
+
         data['no_log'] = self.no_log
         data['no_log_values'] = list(self.no_log_values)
+
+        # module invocation options
         data['cleanup_files'] = self.cleanup_files
         data['debug'] = self._debug
         data['diff'] = self._diff
         data['verbosity'] = self._verbosity
         data['run_command_environ_update'] = self.run_command_environ_update
-        data['aliases'] = self.aliases
-        data['legal_inputs'] = self._legal_inputs
-        data['supported_params'] = self._public_legal_inputs
-        data['params'] = self.params
-        data['used_fallbacks'] = self._used_fallbacks
-        data['used_defaults'] = self._used_defaults
-        data['module_path'] = get_module_path()
         data['locale'] = locale.getlocale()
 
         module_info = self._introspect_module_info()
