@@ -26,9 +26,8 @@ author:
     - "Kenneth D. Evensen (@kevensen)"
 short_description: Edit GNOME Configurations
 description:
-  - Edit PAM service's type, control, module path and module arguments.
-    In order for a PAM rule to be modified, the type, control and
-    module_path must match an existing rule.  See man(5) pam.d for details.
+  - This module allows for the manipulation of GNOME 2 Configuration via
+    gconftool-2.  Please see the gconftool-2(1) man pages for more details.
 version_added: "2.3"
 options:
   key:
@@ -55,8 +54,8 @@ options:
     required: true
     choices:
     - get
-    - set
-    - unset
+    - present
+    - absent
     description:
     - The action to take upon the key/value.
   config_source:
@@ -175,7 +174,7 @@ def main():
                            value=dict(required=False, default=None,
                                       type='str'),
                            state=dict(required=True, default=None,
-                                      choices=['set', 'get', 'unset'],
+                                      choices=['present', 'get', 'absent'],
                                       type='str'),
                            direct=dict(required=False,
                                        default=False, type='bool'),
@@ -185,12 +184,20 @@ def main():
         supports_check_mode=True
     )
 
+    state_values = {"present": "set", "absent": "unset", "get": "get"}
+
     direct = False
     # Assign module values to dictionary values
     key = module.params['key']
     value_type = module.params['value_type']
-    value = module.params['value']
-    state = module.params['state']
+    if module.params['value'].lower() == "true":
+        value = "true"
+    elif module.params['value'] == "false":
+        value = "false"
+    else:
+        value = module.params['value']
+
+    state = state_values[module.params['state']]
     if module.params['direct'] in BOOLEANS_TRUE:
         direct = True
     config_source = module.params['config_source']
@@ -239,7 +246,9 @@ def main():
 
     facts = {}
     facts['gconftool2'] = {'changed': change, 'key': key,
-                           'value_type': value_type, 'value': new_value}
+                           'value_type': value_type, 'new_value': new_value,
+                           'previous_value': current_value,
+                           'playbook_value': module.params['value']}
 
     module.exit_json(changed=change, ansible_facts=facts)
 
