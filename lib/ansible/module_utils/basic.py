@@ -2116,26 +2116,26 @@ class AnsibleModule(object):
             self.set_context_if_different(dest, context, False)
 
     def _unsafe_writes(self, src, dest, exception):
-      # sadly there are some situations where we cannot ensure atomicity, but only if
-      # the user insists and we get the appropriate error we update the file unsafely
-      if exception.errno == errno.EBUSY:
-          #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
-          try:
-              try:
-                  out_dest = open(dest, 'wb')
-                  in_src = open(src, 'rb')
-                  shutil.copyfileobj(in_src, out_dest)
-              finally: # assuring closed files in 2.4 compatible way
-                  if out_dest:
-                      out_dest.close()
-                  if in_src:
-                      in_src.close()
-          except (shutil.Error, OSError, IOError):
-              e = get_exception()
-              self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
-      
-      else:
-          self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+        # sadly there are some situations where we cannot ensure atomicity, but only if
+        # the user insists and we get the appropriate error we update the file unsafely
+        if exception.errno == errno.EBUSY:
+            #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+            try:
+                try:
+                    out_dest = open(dest, 'wb')
+                    in_src = open(src, 'rb')
+                    shutil.copyfileobj(in_src, out_dest)
+                finally:  # assuring closed files in 2.4 compatible way
+                    if out_dest:
+                        out_dest.close()
+                    if in_src:
+                        in_src.close()
+            except (shutil.Error, OSError, IOError):
+                e = get_exception()
+                self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+
+        else:
+            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
