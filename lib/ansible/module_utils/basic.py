@@ -254,6 +254,75 @@ EXEC_PERM_BITS = 0o0111  # execute permission bits
 DEFAULT_PERM = 0o0666    # default file permission bits
 
 
+def json_dumps(data, default=None):
+    for encoding in ("utf-8", "latin-1"):
+        try:
+            return json.dumps(data, encoding=encoding, default=default)
+        # Old systems using old simplejson module does not support encoding keyword.
+        except TypeError:
+            try:
+                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+            except UnicodeDecodeError:
+                continue
+            return json.dumps(new_data, default=default)
+        except UnicodeDecodeError:
+            continue
+
+    # FIXME: raise a json decode error here? could be called from the
+    #        excepthook or an exception class but that should be okay
+
+
+class AnsibleModuleExit(Exception):
+    # exception_data here is a dict, basically kwargs from fail_json
+    # for the rarely used extra info (path, invocation, etc)
+    def __init__(self, return_code=None, exception_data=None):
+        self.return_code = return_code or 1
+        self.data = {}
+        exception_data = exception_data or {}
+
+        default_msg = '%s' % self.__class__.__name__
+        self.data['msg'] = exception_data.pop('msg', default_msg)
+        self.data['exc_type'] = self.__class__.__name__
+
+        self.data.update(exception_data)
+
+    # We json serialize self.data for the repr. Could let excepthook handle serializing
+    # the exception/exit and remove this.
+    def __repr__(self):
+        """Return the json repr of error ala jsonify."""
+        buf = '\n%s' % json_dumps(self.data)
+        return buf
+
+
+class AnsibleModuleFatalError(AnsibleModuleExit):
+    pass
+
+
+# The original excepthook
+_SYS_EXCEPTHOOK = sys.excepthook
+
+
+# Note this is a module level excepthook. If
+# AnsibleModule had a excepthook method bound to
+# it it could include other info like path and params
+# (via self.add_path_info, self.params, etc).
+def except_hook(exc_type, exc_value, exc_traceback):
+    # TODO: log the exception
+    if isinstance(exc_value, AnsibleModuleExit):
+        print(repr(exc_value))
+        sys.exit(exc_value.return_code)
+    else:
+        # If we wanted to handle all other exceptions gracefully,
+        # we would do it here. Something like:
+        # exception = {'type': exc_type,
+        #              'value': exc_value,
+        #              'traceback': exc_traceback}
+        # print(json_dumps(exception))
+        # sys.exit(1)
+        _SYS_EXCEPTHOOK(exc_type, exc_value, exc_traceback)
+        sys.exit(1)
+
+
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
@@ -819,6 +888,7 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
+        self._set_excepthook()
         self._load_params()
         self._set_fallbacks()
 
@@ -897,6 +967,11 @@ class AnsibleModule(object):
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
 
+    def _set_excepthook(self):
+        # NOTE: we will be exiting if we get an unhandled exception
+        #       so shouldn't need to unset the excepthook
+        sys.excepthook = except_hook
+
     def load_file_common_arguments(self, params):
         '''
         many modules deal with files, this encapsulates common
@@ -950,6 +1025,7 @@ class AnsibleModule(object):
     # by selinux.lgetfilecon().
 
     def selinux_mls_enabled(self):
+
         if not HAVE_SELINUX:
             return False
         if selinux.is_selinux_mls_enabled() == 1:
@@ -2253,14 +2329,17 @@ class AnsibleModule(object):
             kwargs['deprecations'] = self._deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
-        print('\n%s' % self.jsonify(kwargs))
+
+        return kwargs
 
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
+        kwargs = self._return_formatted(kwargs)
         self.do_cleanup_files()
-        self._return_formatted(kwargs)
-        sys.exit(0)
+
+        raise AnsibleModuleExit(return_code=0,
+                                exception_data=kwargs)
 
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
@@ -2274,8 +2353,10 @@ class AnsibleModule(object):
             kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
-        self._return_formatted(kwargs)
-        sys.exit(1)
+        kwargs = self._return_formatted(kwargs)
+
+        raise AnsibleModuleFatalError(return_code=1,
+                                      exception_data=kwargs)
 
     def fail_on_missing_params(self, required_params=None):
         ''' This is for checking for required params when we can not check via argspec because we
