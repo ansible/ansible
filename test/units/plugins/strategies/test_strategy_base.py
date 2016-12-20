@@ -250,15 +250,20 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task._role = None
+        mock_task._parent = None
         mock_task.ignore_errors = False
         mock_task._uuid = uuid.uuid4()
         mock_task.loop = None
+        mock_task.copy.return_value = mock_task
 
         mock_handler_task = MagicMock(Handler)
         mock_handler_task.name = 'test handler'
         mock_handler_task.action = 'foo'
+        mock_handler_task._parent = None
         mock_handler_task.get_name.return_value = "test handler"
         mock_handler_task.has_triggered.return_value = False
+        mock_handler_task._uuid = 'xxxxxxxxxxxxx'
+        mock_handler_task.copy.return_value = mock_handler_task
 
         mock_iterator = MagicMock()
         mock_iterator._play = mock_play
@@ -272,7 +277,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_handler_block.always = []
         mock_play.handlers = [mock_handler_block]
 
-        mock_tqm._notified_handlers = {mock_handler_task: []}
+        mock_tqm._notified_handlers = {mock_handler_task._uuid: []}
         mock_tqm._listening_handlers = {}
 
         mock_group = MagicMock()
@@ -298,6 +303,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_var_mgr = MagicMock()
         mock_var_mgr.set_host_variable.return_value = None
         mock_var_mgr.set_host_facts.return_value = None
+        mock_var_mgr.get_vars.return_value = dict()
 
         strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._inventory = mock_inventory
@@ -307,7 +313,7 @@ class TestStrategyBase(unittest.TestCase):
         def _has_dead_workers():
             return False            
 
-        strategy_base._tqm.has_dead_workers = _has_dead_workers
+        strategy_base._tqm.has_dead_workers.side_effect = _has_dead_workers
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
 
@@ -380,8 +386,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
-        self.assertIn(mock_handler_task, strategy_base._notified_handlers)
-        self.assertIn(mock_host, strategy_base._notified_handlers[mock_handler_task])
+        self.assertIn(mock_handler_task._uuid, strategy_base._notified_handlers)
+        self.assertIn(mock_host, strategy_base._notified_handlers[mock_handler_task._uuid])
 
         #queue_items.append(('set_host_var', mock_host, mock_task, None, 'foo', 'bar'))
         #results = strategy_base._process_pending_results(iterator=mock_iterator)
@@ -440,6 +446,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task._block = mock_block
         mock_task._role = None
+        mock_task._parent = None
 
         mock_iterator = MagicMock()
         mock_iterator.mark_host_failed.return_value = None
@@ -467,6 +474,8 @@ class TestStrategyBase(unittest.TestCase):
         mock_handler_task.has_triggered.return_value = False
         mock_handler_task.listen = None
         mock_handler_task._role = None
+        mock_handler_task._parent = None
+        mock_handler_task._uuid = 'xxxxxxxxxxxxxxxx'
 
         mock_handler = MagicMock()
         mock_handler.block = [mock_handler_task]
@@ -508,7 +517,7 @@ class TestStrategyBase(unittest.TestCase):
             strategy_base = StrategyBase(tqm=tqm)
 
             strategy_base._inventory = mock_inventory
-            strategy_base._notified_handlers = {mock_handler_task: [mock_host]}
+            strategy_base._notified_handlers = {mock_handler_task._uuid: [mock_host]}
 
             task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
             tqm._final_q.put(task_result)
