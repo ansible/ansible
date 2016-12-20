@@ -223,7 +223,7 @@ def remove_packages(module, pacman_path, packages):
         if not installed:
             continue
 
-        cmd = "%s -%s %s --noconfirm" % (pacman_path, args, package)
+        cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -260,7 +260,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
             to_install_repos.append(package)
 
     if to_install_repos:
-        cmd = "%s -S %s --noconfirm --needed" % (pacman_path, " ".join(to_install_repos))
+        cmd = "%s -S %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_repos))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -269,7 +269,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
         install_c += len(to_install_repos)
 
     if to_install_files:
-        cmd = "%s -U %s --noconfirm --needed" % (pacman_path, " ".join(to_install_files))
+        cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
