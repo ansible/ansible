@@ -27,7 +27,7 @@ description:
     the results read from the device.
 extends_documentation_fragment: cloudengine
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - JackyGao2016 (@CloudEngine-Ansible)
 notes:
     - The rpc parameter is always required.
 options:
