@@ -20,7 +20,7 @@ DOCUMENTATION = """
 ---
 module: ce_config
 version_added: "2.2"
-author: "JackyGao2016(@CloudEngine-Ansible)"
+author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Manage Huawei CloudEngine configuration sections
 description:
   - Huawei CloudEngine configurations use a simple block indent file syntax
