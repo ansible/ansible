@@ -249,7 +249,10 @@ image:
 from ansible.module_utils.docker_common import *
 
 try:
-    from docker.auth.auth import resolve_repository_name
+    if HAS_DOCKER_PY_2:
+        from docker.auth import resolve_repository_name
+    else:
+        from docker.auth.auth import resolve_repository_name
     from docker.utils.utils import parse_repository_tag
 except ImportError:
     # missing docker-py handled in docker_common
