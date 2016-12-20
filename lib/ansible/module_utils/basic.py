@@ -1665,7 +1665,8 @@ class AnsibleModule(object):
             try:
                 self.params[k] = type_checker(value)
             except (TypeError, ValueError):
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
+                e = get_exception()
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
@@ -1857,7 +1858,7 @@ class AnsibleModule(object):
         elif arg in BOOLEANS_FALSE:
             return False
         else:
-            self.fail_json(msg='Boolean %s not in either boolean list' % arg)
+            self.fail_json(msg='%s is not a valid boolean. Valid booleans include: %s' % (to_text(arg), ','.join(['%s' % x for x in BOOLEANS])))
 
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
