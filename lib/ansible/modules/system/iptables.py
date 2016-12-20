@@ -342,6 +342,9 @@ EXAMPLES = '''
     protocol: tcp
 '''
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 def append_param(rule, param, flag, is_list):
     if is_list:
         for item in param:
@@ -519,46 +522,39 @@ def main():
 
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
-        module.fail_json(
-            msg="Either chain or flush parameter must be specified.")
+        module.fail_json( msg="Either chain or flush parameter must be specified.")
 
     # Flush the table
-    if args['flush'] is True:
-        flush_table(iptables_path, module, module.params)
-        module.exit_json(**args)
+    if args['flush']:
+        args['changed'] = True
+        if not module.check_mode:
+            flush_table(iptables_path, module, module.params)
 
     # Set the policy
-    if module.params['policy']:
-        set_chain_policy(iptables_path, module, module.params)
-        module.exit_json(**args)
+    elif module.params['policy']:
+        args['changed'] = True
+        if not module.check_mode:
+            set_chain_policy(iptables_path, module, module.params)
 
-    insert = (module.params['action'] == 'insert')
-    rule_is_present = check_present(iptables_path, module, module.params)
-    should_be_present = (args['state'] == 'present')
-
-    # Check if target is up to date
-    args['changed'] = (rule_is_present != should_be_present)
-
-    # Check only; don't modify
-    if module.check_mode:
-        module.exit_json(changed=args['changed'])
-
-    # Target is already up to date
-    if args['changed'] is False:
-        module.exit_json(**args)
-
-    if should_be_present:
-        if insert:
-            insert_rule(iptables_path, module, module.params)
-        else:
-            append_rule(iptables_path, module, module.params)
+    # Chain
     else:
-        remove_rule(iptables_path, module, module.params)
+        insert = (module.params['action'] == 'insert')
+        rule_is_present = check_present(iptables_path, module, module.params)
+        should_be_present = (args['state'] == 'present')
+
+        # Check if target is up to date
+        args['changed'] = (rule_is_present != should_be_present)
+
+        if args['changed'] and not module.check_mode:
+            if should_be_present:
+                if insert:
+                    insert_rule(iptables_path, module, module.params)
+                else:
+                    append_rule(iptables_path, module, module.params)
+            else:
+                remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
