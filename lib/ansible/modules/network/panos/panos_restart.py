@@ -60,6 +60,10 @@ status:
     sample: "okey dokey"
 '''
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 from ansible.module_utils.basic import AnsibleModule
 import sys
 
