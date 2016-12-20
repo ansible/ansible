@@ -68,7 +68,7 @@ class LookupModule(LookupBase):
         stack = {} if stack is None else stack
         level = 0 if level is None else level
 
-        for key, val in terms.iteritems():
+        for key, val in terms.items():
             stack['key_%s' % level] = key
             if type(val) is dict:
                 LookupModule._flatten_nested_hash_to_list(terms=val, result=result, stack=stack.copy(), level=level+1)
