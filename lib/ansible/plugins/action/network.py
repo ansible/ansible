@@ -31,7 +31,8 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del result['invocation']['module_args']
 
-        self._update_module_args(self._task.args, task_vars)
+        module_name = self._task.action
+        self._update_module_args(module_name, self._task.args, task_vars)
 
         try:
             _modify_module(self._task.args, self._connection)
