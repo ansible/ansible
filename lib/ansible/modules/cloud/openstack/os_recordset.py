@@ -185,8 +185,16 @@ def main():
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        recordset = cloud.get_recordset(zone, name + '.' + zone)
+        recordset_type = module.params.get('recordset_type')
+        recordset_filter = { 'type': recordset_type  }
 
+        recordsets = cloud.search_recordsets(zone, name_or_id=name + '.' + zone, filters=recordset_filter)
+
+        if len(recordsets) == 1:
+            recordset = recordsets[0]
+        else:
+            # recordsets is filtered by type and should never be more than 1 return
+            recordset = None
 
         if state == 'present':
             recordset_type = module.params.get('recordset_type')
