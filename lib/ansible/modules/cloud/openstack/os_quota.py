@@ -414,7 +414,7 @@ def main():
         ]
 
         for dynamic_type in dynamic_types:
-            for k, v in module.params[dynamic_type].iteritems():
+            for k, v in module.params[dynamic_type].items():
                 module.params[k] = int(v)
 
         #Get current quota values
