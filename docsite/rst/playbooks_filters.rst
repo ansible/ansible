@@ -219,6 +219,7 @@ Note that jinja2 already provides some like abs() and round().
 
 JSON Query Filter
 -----------------
+.. versionadded:: 2.2
 
 Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
 
