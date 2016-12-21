@@ -136,7 +136,8 @@ def netconf_edit_config(m, xml, commit, retkwargs):
         datastore = 'running'
     m.lock(target=datastore)
     try:
-        m.discard_changes()
+        if ":candidate" in m.server_capabilities:
+            m.discard_changes()
         config_before = m.get_config(source=datastore)
         m.edit_config(target=datastore, config=xml)
         config_after = m.get_config(source=datastore)
