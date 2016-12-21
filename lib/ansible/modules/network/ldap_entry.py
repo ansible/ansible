@@ -184,7 +184,7 @@ class LdapEntry(object):
         """ Turn attribute's value to array. """
         attrs = {}
 
-        for name, value in self.module.params['attributes'].iteritems():
+        for name, value in self.module.params['attributes'].items():
             if name not in attrs:
                 attrs[name] = []
 
@@ -288,7 +288,7 @@ def main():
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
-        for key, val in module.params['params'].iteritems():
+        for key, val in module.params['params'].items():
             if key in module.argument_spec:
                 module.params[key] = val
             else:
