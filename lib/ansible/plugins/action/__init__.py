@@ -825,13 +825,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
             data['msg'] = "MODULE FAILURE"
-            data['module_stdout'] = res.get('stdout', u'')
-            if 'stderr' in res:
-                data['module_stderr'] = res['stderr']
+        data['module_stdout'] = res.get('stdout', u'')
+        if 'stderr' in res:
+            data['module_stderr'] = res['stderr']
+            # don't parse stderr for exceptions if task explicitly returned a non empty exception field
+            if not data.get('exception', None):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
-            if 'rc' in res:
-                data['rc'] = res['rc']
+        if 'rc' in res:
+            data['rc'] = res['rc']
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
