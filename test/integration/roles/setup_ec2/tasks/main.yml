@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: generate random string
-  command: '{{ ansible_python.executable }} -c "import string,random; print ''.join(random.choice(string.ascii_lowercase) for _ in range(8));"'
+  command: '{{ ansible_python.executable }} -c "import string,random; print str().join(random.choice(string.ascii_lowercase) for _ in range(8));"'
   register: random_string
   tags:
     - prepare
