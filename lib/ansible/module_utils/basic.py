@@ -282,7 +282,7 @@ class AnsibleModuleExit(Exception):
 
         default_msg = '%s' % self.__class__.__name__
         self.data['msg'] = exception_data.pop('msg', default_msg)
-        self.data['exc_type'] = self.__class__.__name__
+        self.data['exc_class'] = self.__class__.__name__
         self.data['rc'] = self.return_code
 
         self.data.update(exception_data)
@@ -953,20 +953,28 @@ class AnsibleModule(object):
         # disadvantage: kind of weird looking
         try:
             raise exc_value
-        except AnsibleModuleExit:
-            print(repr(exc_value))
-            sys.exit(exc_value.return_code)
-        # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
-        #       certain exceptions
+        except AnsibleModuleFatalError as e:
+            # Note: writing to stdout since we are returned a valid json object with error data in it
+            print(repr(e))
+            sys.exit(e.return_code)
+        except AnsibleModuleExit as e:
+            print(repr(e))
+            sys.exit(e.return_code)
         except exc_type:
+            exception = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             result = self._format_fail_json(msg='An unhandled exception occurred: %s' % exc_value,
                                             foo='Handled by AnsibleModule._excepthook',
                                             module_name=self._name,
-                                            exception=''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+                                            file=__file__,
+                                            exception=exception,
+                                            rc=1,
                                             exc_type=str(exc_type),
                                             exc_traceback=''.join(traceback.format_tb(exc_traceback)))
+            # Could also print info to stderr, but that confuses controller side if we also provide 'exception' field
             print(json_dumps(result))
             sys.exit(1)
+        # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
+        #       certain exceptions
 
         # Something busted in the above, fallback to builtin
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
