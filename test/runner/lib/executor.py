@@ -632,7 +632,10 @@ def command_sanity_code_smell(args, _):
         skip_tests = skip_fd.read().splitlines()
 
     tests = glob.glob('test/sanity/code-smell/*')
-    tests = sorted(p for p in tests if os.access(p, os.X_OK) and os.path.basename(p) not in skip_tests)
+    tests = sorted(p for p in tests
+                   if os.access(p, os.X_OK)
+                   and os.path.isfile(p)
+                   and os.path.basename(p) not in skip_tests)
 
     for test in tests:
         display.info('Code smell check using %s' % os.path.basename(test))
