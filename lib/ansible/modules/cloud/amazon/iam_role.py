@@ -20,7 +20,7 @@ module: iam_role
 short_description: Manage AWS IAM roles
 description:
   - Manage AWS IAM roles
-version_added: "2.2"
+version_added: "2.3"
 author: Rob White, @wimnat
 options:
   path:
@@ -144,7 +144,6 @@ def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
 
     # Get proper JSON strings for both docs
     current_policy_doc = json.dumps(current_policy_doc)
-    new_policy_doc = json.dumps(json.loads(new_policy_doc))
 
     if current_policy_doc == new_policy_doc:
         return True
@@ -321,7 +320,7 @@ def main():
         dict(
             name=dict(required=True, type='str'),
             path=dict(default="/", required=False, type='str'),
-            assume_role_policy_document=dict(required=False, type='str'),
+            assume_role_policy_document=dict(required=False, type='json'),
             managed_policy=dict(default=[], required=False, type='list'),
             state=dict(default=None, choices=['present', 'absent'], required=True)
         )
@@ -347,7 +346,7 @@ def main():
     else:
         destroy_role(connection, module)
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
