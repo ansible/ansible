@@ -197,7 +197,6 @@ def main():
             recordset = None
 
         if state == 'present':
-            recordset_type = module.params.get('recordset_type')
             records = module.params.get('records')
             description = module.params.get('description')
             ttl = module.params.get('ttl')
