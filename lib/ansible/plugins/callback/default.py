@@ -65,7 +65,7 @@ class CallbackModule(CallbackBase):
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
-        if result._task.ignore_errors:
+        if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_ok(self, result):
