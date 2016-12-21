@@ -967,12 +967,8 @@ class AnsibleModule(object):
             print(json_dumps(result))
             sys.exit(1)
 
-
-        #    if isinstance(exc_value, ZeroDivisionError):
-        #    raise exc_value
-        #if isinstance(exc_value, AnsibleModuleExit):
-        #    print(repr(exc_value))
-        #    sys.exit(exc_value.return_code)
+        # Something busted in the above, fallback to builtin
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
     def _set_excepthook(self):
         # NOTE: we will be exiting if we get an unhandled exception
