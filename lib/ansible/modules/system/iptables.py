@@ -444,6 +444,17 @@ def set_chain_policy(iptables_path, module, params):
     cmd.append(params['policy'])
     module.run_command(cmd, check_rc=True)
 
+def get_chain_policy(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-L', params)
+    rc, out, _ = module.run_command(cmd, check_rc=True)
+    chain_header = out.split("\n")[0]
+    result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
+    if result:
+        return result.group(1)
+    return None
+
+
+
 
 def main():
     module = AnsibleModule(
@@ -524,13 +535,25 @@ def main():
 
     # Flush the table
     if args['flush'] is True:
+        if module.check_mode:
+            module.exit_json(skipped=True)
         flush_table(iptables_path, module, module.params)
         module.exit_json(**args)
 
     # Set the policy
     if module.params['policy']:
-        set_chain_policy(iptables_path, module, module.params)
+        current_policy = get_chain_policy(iptables_path, module, module.params)
+        if not current_policy:
+            module.fail_json(msg='Can\'t detect current policy')
+
+        changed = current_policy != module.params['policy']
+        if module.check_mode:
+            module.exit_json(changed=changed)
+        if changed:    
+            set_chain_policy(iptables_path, module, module.params)
+        args['changed'] = changed
         module.exit_json(**args)
+
 
     insert = (module.params['action'] == 'insert')
     rule_is_present = check_present(iptables_path, module, module.params)
@@ -559,6 +582,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+import re
 
 if __name__ == '__main__':
     main()
