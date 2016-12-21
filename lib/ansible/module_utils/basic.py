@@ -952,12 +952,11 @@ class AnsibleModule(object):
         # disadvantage: kind of weird looking
         try:
             raise exc_value
-        except OSError as e:
-            raise AnsibleModuleExit(return_code=0,
-                                    msg='failed but we dont really care')
-        except AnsibleModuleExit as e:
+        except AnsibleModuleExit:
             print(repr(exc_value))
             sys.exit(exc_value.return_code)
+        # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
+        #       certain exceptions
         except exc_type:
             result = self._format_fail_json(msg='An unhandled exception occurred: %s' % exc_value,
                                             foo='Handled by AnsibleModule._excepthook',
@@ -968,13 +967,12 @@ class AnsibleModule(object):
             print(json_dumps(result))
             sys.exit(1)
 
+
         #    if isinstance(exc_value, ZeroDivisionError):
         #    raise exc_value
         #if isinstance(exc_value, AnsibleModuleExit):
         #    print(repr(exc_value))
         #    sys.exit(exc_value.return_code)
-        # TODO: An exception mapper would go here, if we want to provide more info about specific exceptions or ignore
-        #       certain exceptions
 
     def _set_excepthook(self):
         # NOTE: we will be exiting if we get an unhandled exception
