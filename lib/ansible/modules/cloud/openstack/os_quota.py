@@ -124,11 +124,11 @@ options:
         required: False
         default: None
         description: Number of routers to allow
-    secgroup_rules:
+    security_group_rule:
         required: False
         default: None
         description: Number of rules per security group to allow
-    secgroups:
+    security_group:
         required: False
         default: None
         description: Number of security groups to allow
@@ -216,8 +216,8 @@ EXAMPLES = '''
     per_volume_gigabytes: "{{ item.per_volume_gigabytes }}"
     properties: "{{ item.properties }}"
     ram: "{{ item.ram }}"
-    secgroup_rules: "{{ item.secgroup_rules }}"
-    secgroups: "{{ item.secgroups }}"
+    security_group_rule: "{{ item.security_group_rule }}"
+    security_group: "{{ item.security_group }}"
     server_group_members: "{{ item.server_group_members }}"
     server_groups: "{{ item.server_groups }}"
     snapshots: "{{ item.snapshots }}"
@@ -383,8 +383,8 @@ def main():
         ram=dict(required=False, type='int', default=None),
         rbac_policy=dict(required=False, type='int', default=None),
         router=dict(required=False, type='int', default=None),
-        secgroup_rules=dict(required=False, type='int', default=None),
-        secgroups=dict(required=False, type='int', default=None),
+        security_group_rule=dict(required=False, type='int', default=None),
+        security_group=dict(required=False, type='int', default=None),
         server_group_members=dict(required=False, type='int', default=None),
         server_groups=dict(required=False, type='int', default=None),
         snapshots=dict(required=False, type='int', default=None),
