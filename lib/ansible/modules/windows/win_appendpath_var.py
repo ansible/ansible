@@ -23,7 +23,7 @@
 
 DOCUMENTATION = '''
 ---
-module: win_appendpathvar
+module: win_appendpath_var
 version_added: "2.3"
 short_description: Append Path environment variables on windows hosts.
 description:
@@ -59,11 +59,11 @@ notes:
 
 EXAMPLES = '''
   # Set an path environment variable for all users
-  win_appendpathvar:
+  win_appendpath_var:
     pathvalue: 'C:\Program Files\Java\bin'
     level: machine
   # Expand an path environment variable for the current users
-  win_appendpathvar:
+  win_appendpath_var:
     pathvalue: '%JAVA_HOME%/bin'
     level: user
 '''
