@@ -120,6 +120,8 @@ options:
         manually.
       - It might take longer to verify that the correct version is installed.
         This is especially true if a specific version number is specified.
+      - Quote the version to prevent the value to be interpreted as float. For
+        example if C(1.20) would be unquoted, it would become C(1.2).
   with_dependencies:
     required: false
     choices: ['yes', 'no']
@@ -159,7 +161,7 @@ EXAMPLES = '''
 - name: Install specific version of the plugin
   jenkins_plugin:
     name: token-macro
-    version: 1.15
+    version: "1.15"
 
 - name: Pin the plugin
   jenkins_plugin:
@@ -212,7 +214,7 @@ EXAMPLES = '''
       token-macro:
         enabled: yes
       build-pipeline-plugin:
-        version: 1.4.9
+        version: "1.4.9"
         pinned: no
         enabled: yes
   tasks:
