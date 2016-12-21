@@ -276,13 +276,14 @@ class AnsibleModuleExit(Exception):
     # exception_data here is a dict, basically kwargs from fail_json
     # for the rarely used extra info (path, invocation, etc)
     def __init__(self, return_code=None, exception_data=None):
-        self.return_code = return_code or 1
+        self.return_code = return_code or 0
         self.data = {}
         exception_data = exception_data or {}
 
         default_msg = '%s' % self.__class__.__name__
         self.data['msg'] = exception_data.pop('msg', default_msg)
         self.data['exc_type'] = self.__class__.__name__
+        self.data['rc'] = self.return_code
 
         self.data.update(exception_data)
 
