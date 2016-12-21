@@ -18,16 +18,16 @@
 # Stacki inventory script
 # Configure stacki.yml with proper auth information and place in the following:
 #  - ../inventory/stacki.yml
-#  - /etc/stacki/stacki.yaml
+#  - /etc/stacki/stacki.yml
 #  - /etc/ansible/stacki.yml
-# The stacki.yaml file can contain entries for authentication information
+# The stacki.yml file can contain entries for authentication information
 # regarding the Stacki front-end node.
 #
-# use_hostnames uses hostname rather than interface ip to as connection
+# use_hostnames uses hostname rather than interface ip as connection
 #
 #
-"""
 
+"""
 Example Usage:
     List Stacki Nodes
     $ ./stack.py --list
@@ -41,11 +41,7 @@ stacki:
     stacki_password: abc12345678910
     stacki_endpoint: http://192.168.200.50/stack
 use_hostnames: false
-
-
 """
-
-
 
 import argparse
 import collections
@@ -61,8 +57,13 @@ try:
 except:
     import simplejson as json
 
+try:
+    import requests
+except:
+    sys.exit('requests>=2.4.3 is required for this inventory script')
+   
 
-CONFIG_FILES = ['/etc/stacki/stacki.yaml', '/etc/ansible/stacki.yml']
+CONFIG_FILES = ['/etc/stacki/stacki.yml', '/etc/ansible/stacki.yml']
 
 
 def stack_auth(params):
@@ -103,19 +104,14 @@ def stack_host_list(endpoint, header, client):
 
     stack_r = client.post(endpoint, data=json.dumps({ "cmd": "list host"}),
                           headers=header)
-    import ast
-
-    return json.loads(ast.literal_eval(stack_r.text))
+    return json.loads(stack_r.json())
 
 
 def stack_net_list(endpoint, header, client):
 
     stack_r = client.post(endpoint, data=json.dumps({ "cmd": "list host interface"}),
                           headers=header)
-    import ast
-
-    return json.loads(ast.literal_eval(stack_r.text))
-
+    return json.loads(stack_r.json())
 
 def format_meta(hostdata, intfdata, config):
     use_hostnames = config['use_hostnames']
@@ -123,10 +119,14 @@ def format_meta(hostdata, intfdata, config):
                 frontends=dict(hosts=list()),
                 backends=dict(hosts=list()),
                 _meta=dict(hostvars=dict()))
+
+    # Iterate through list of dicts of hosts and remove
+    # environment key as it causes conflicts
     for host in hostdata:
         del host['environment']
         meta['_meta']['hostvars'][host['host']] = host
         meta['_meta']['hostvars'][host['host']]['interfaces'] = list()
+
     for intf in intfdata:
         if intf['host'] in meta['_meta']['hostvars']:
             meta['_meta']['hostvars'][intf['host']]['interfaces'].append(intf)
