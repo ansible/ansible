@@ -164,7 +164,7 @@ class NetAppCDOTLicense(object):
             argument_spec=dict(
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
                 serial_number=dict(required=False, type='str', default=None),
                 remove_unused=dict(default=False, type='bool'),
                 remove_expired=dict(default=False, type='bool'),

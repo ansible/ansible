@@ -210,7 +210,7 @@ class NetAppCDOTVolume(object):
                 vserver=dict(required=True, type='str'),
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
             ),
             required_if=[
                 ('state', 'present', ['aggregate_name', 'size'])

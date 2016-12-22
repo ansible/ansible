@@ -145,7 +145,7 @@ class NetAppCDOTUserRole(object):
                 vserver=dict(required=True, type='str'),
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
             ),
 
             supports_check_mode=True
