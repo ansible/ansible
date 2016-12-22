@@ -205,7 +205,7 @@ def parse_args():
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
                                      action='append',
-                                     help='windows version')
+                                     help='windows version').completer = complete_windows
 
     units = subparsers.add_parser('units',
                                   parents=[test],
@@ -413,12 +413,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               nargs='?',
                               default=None,
                               const='ubuntu1604',
-                              help='run from a docker container')
+                              help='run from a docker container').completer = complete_docker
 
     environments.add_argument('--remote',
                               metavar='PLATFORM',
                               default=None,
-                              help='run from a remote instance')
+                              help='run from a remote instance').completer = complete_remote
 
     remote = parser.add_argument_group(title='remote arguments')
 
@@ -461,6 +461,46 @@ def complete_target(prefix, parsed_args, **_):
     :rtype: list[str]
     """
     return find_target_completion(parsed_args.targets, prefix)
+
+
+def complete_remote(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_docker(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_windows(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
 
 if __name__ == '__main__':
