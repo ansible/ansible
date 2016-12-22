@@ -1,5 +1,6 @@
 prune v2
-prune docsite
+prune docs/docsite
+prune docs/api
 prune ticket_stubs
 prune packaging
 prune test
@@ -10,7 +11,7 @@ include examples/ansible.cfg
 include lib/ansible/module_utils/powershell.ps1
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
-recursive-include docs *
+recursive-include docs/man *
 recursive-include packaging *
 include Makefile
 include VERSION

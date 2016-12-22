@@ -139,12 +139,6 @@ class PathMapper(object):
         if path.startswith('docs/'):
             return minimal
 
-        if path.startswith('docs-api/'):
-            return minimal
-
-        if path.startswith('docsite/'):
-            return minimal
-
         if path.startswith('examples/'):
             return minimal
 
