@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import itertools
 
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -233,7 +234,6 @@ class PlaybookExecutor:
 
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts)
-        all_hosts_len = len(all_hosts)
 
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
@@ -241,12 +241,30 @@ class PlaybookExecutor:
         if len(serial_batch_list) == 0:
             serial_batch_list = [-1]
 
+        # grouping support?
+        serial_group_by = play.serial_group_by
+        if serial_group_by:
+            group_by_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+            group_by_templar = Templar(loader=self._loader, variables=group_by_vars)
+
+            def group_by(host):
+                group_by_vars['host'] = host
+                group_by_templar.set_available_variables(group_by_vars)
+                value = group_by_templar.template(serial_group_by)
+                return value
+
+            grouped_hosts = [list(v) for k, v in itertools.groupby(all_hosts, group_by)]
+        else:
+            grouped_hosts = [all_hosts]
+
+        min_group_len = min(len(g) for g in grouped_hosts)
+
         cur_item = 0
         serialized_batches = []
 
-        while len(all_hosts) > 0:
+        while sum(map(len, grouped_hosts)) > 0:
             # get the serial value from current item in the list
-            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+            serial = pct_to_int(serial_batch_list[cur_item], min_group_len)
 
             # if the serial count was not specified or is invalid, default to
             # a list of all hosts, otherwise grab a chunk of the hosts equal
@@ -256,9 +274,10 @@ class PlaybookExecutor:
                 break
             else:
                 play_hosts = []
-                for x in range(serial):
-                    if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop(0))
+                for group in grouped_hosts:
+                    for x in range(serial):
+                        if len(group) > 0:
+                            play_hosts.append(group.pop(0))
 
                 serialized_batches.append(play_hosts)
 

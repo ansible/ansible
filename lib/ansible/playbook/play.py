@@ -89,6 +89,7 @@ class Play(Base, Taggable, Become):
     _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _serial_group_by     = FieldAttribute(isa='string', default=None, always_post_validate=False)
     _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
 
     # =================================================================================
