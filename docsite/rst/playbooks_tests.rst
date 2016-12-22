@@ -6,8 +6,7 @@ Jinja2 tests
 
 Tests in Jinja2 are a way of evaluating template expressions and returning True or False.
 Jinja2 ships with many of these. See `builtin tests`_ in the official Jinja2 template documentation.
-Tests are very similar to filters and are used mostly the same way, but they can also be used in list
-processing filters, like C(map()) and C(select()) to choose items in the list.
+Tests are very similar to filters and are used mostly the same way, but they can also be used in list processing filters, like C(map()) and C(select()) to choose items in the list.
 
 Like filters, tests always execute on the Ansible controller, **not** on the target of a task, as they test local data.
 
