@@ -1,13 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Ansible inventory script based on puppetdb.
 #
 # Author: Jan Collijs
 # Source: https://github.com/visibilityspots/ansible-puppet-inventory
-
-# If you want to use the api version 4 you have to install the pypuppetdb
-# library made by https://github.com/NeCTAR-RC/pypuppetdb from source untill
-# it got merged https://github.com/puppet-community/pypuppetdb/pull/34
 
 import sys
 import os
@@ -31,7 +27,7 @@ class PuppetDBInventory():
             else:
                 data = self.get_host_list()
 
-            print json.dumps(data)
+            print(json.dumps(data))
 
     ''' Getting the settings out of the puppetdb.ini file '''
     def read_settings(self):
