@@ -46,15 +46,19 @@ options:
   prim_intf_mac:
     description:
      - MAC Address for the primary PXE boot network interface.
-    required: True
+    required: False
   prim_intf_ip:
     description:
      - IP Address for the primary network interface.
-    required: True
+    required: False
   prim_intf:
     description:
      - Name of the primary network interface.
-    required: True
+    required: False
+  force_install:
+    description:
+     - Set value to True to force node into install state if it already exists in stacki.
+    requiored: False
 
 author: "Hugh Ma <Hugh.Ma@flextronics.com>"
 '''
