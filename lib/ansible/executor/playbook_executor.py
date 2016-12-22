@@ -253,17 +253,18 @@ class PlaybookExecutor:
                 value = group_by_templar.template(serial_group_by)
                 return value
 
-            grouped_hosts = [list(v) for k, v in itertools.groupby(all_hosts, group_by)]
+            grouped_hosts = [(len(lst), lst) for lst in (list(v) for _, v in itertools.groupby(all_hosts, group_by))]
         else:
-            grouped_hosts = [all_hosts]
+            grouped_hosts = [(len(all_hosts), all_hosts)]
 
-        min_group_len = min(len(g) for g in grouped_hosts)
+        min_group_len = min(len(g) for _, g in grouped_hosts)
 
         cur_item = 0
         serialized_batches = []
 
-        while sum(map(len, grouped_hosts)) > 0:
-            # get the serial value from current item in the list
+        while max(len(g) for _, g in grouped_hosts) > 0:
+            # try to get the serial value from current item in the list
+            #  this value is not really used; this call just checks the value is actually valid
             serial = pct_to_int(serial_batch_list[cur_item], min_group_len)
 
             # if the serial count was not specified or is invalid, default to
@@ -274,7 +275,9 @@ class PlaybookExecutor:
                 break
             else:
                 play_hosts = []
-                for group in grouped_hosts:
+                for group_size, group in grouped_hosts:
+                    # get the serial value from current item in the list, for real!
+                    serial = pct_to_int(serial_batch_list[cur_item], group_size)
                     for x in range(serial):
                         if len(group) > 0:
                             play_hosts.append(group.pop(0))
