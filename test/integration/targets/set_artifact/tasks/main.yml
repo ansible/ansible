@@ -1,0 +1,118 @@
+# (c) 2016, Chris Meyers <cmeyers@ansible.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+---
+- name: Init artifact structure
+  set_artifact:
+    data:
+      a: 7
+  register: result_init
+
+- name: Verify module returns artifact_data
+  assert:
+    that:
+      - result_init.artifact_data is defined
+      - result_init.artifact_data.a == 7
+      - result_init.artifact_data|length == 1
+  run_once: true
+
+- name: Set same artifacts, changed should be False
+  set_artifact:
+    data:
+      a: 7
+  register: result_unchanged
+
+- name: Set new key value pair that didn't exist before, should invoke a merge
+  set_artifact:
+    data:
+      b: 8
+  register: result_merge
+
+- name: Ensure set_artifacts does not set facts on hosts other than the first
+  assert:
+    that:
+      - artifact_data is undefined
+  when: "inventory_hostname != ansible_play_hosts[0]"
+
+- name: Verify first-host artifact_data fact set
+  assert:
+    that:
+      - artifact_data is defined
+      - artifact_data.a == 7
+      - artifact_data.b == 8
+      - artifact_data|length == 2
+  run_once: true
+
+- name: Verify change status
+  assert:
+    that:
+      - result_init|changed
+      - not result_unchanged|changed
+      - result_merge|changed
+  run_once: true
+
+- name: Set artifacts with variables names that aren't valid to set_fact but are valid when using -e @vars.yml
+  set_artifact:
+    data:
+      _a: 1
+      _b: 2
+      $c: 3
+      3: 4
+  register: result_var_names
+
+- name: Verify that variables starting with _ or number are created
+  assert:
+    that:
+      - artifact_data._a == 1
+      - artifact_data._b == 2
+      - artifact_data['$c'] == 3
+      - artifact_data.3 == 4
+
+- name: set_artifact with destination file
+  set_artifact:
+    data:
+      a: 1
+      b: 2
+      c: [ "a", 1, "b" ]
+      d:
+        - "a"
+        - 1
+        - b:
+            foo: "bar"
+      _e: "hello world"
+      7: 8
+      boolean_no_quotes: true
+      boolean_str: "true"
+    dest: "{{output_dir}}/artifact.yml"
+
+- name: Verify the contents of artifact output
+  shell: cmp {{role_path}}/files/expected_artifact.yml {{output_dir}}/artifact.yml
+
+- name: set_artifact with INVALID destination file
+  set_artifact:
+    data:
+        hello: "world"
+    dest: "/this_path_does_not_exist/artifact.yml"
+  ignore_errors: yes
+  register: result_dest_fail
+
+- name: Verify invalid destination error
+  assert:
+    that:
+      - result_dest_fail.failed == true
+      - "'No such file or directory' in result_dest_fail.msg"
+

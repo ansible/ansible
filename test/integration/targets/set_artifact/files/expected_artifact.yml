@@ -1,0 +1,19 @@
+3: 4
+7: 8
+$c: 3
+_a: 1
+_b: 2
+_e: hello world
+a: 1
+b: 2
+boolean_no_quotes: true
+boolean_str: 'true'
+c:
+- a
+- 1
+- b
+d:
+- a
+- 1
+-   b:
+        foo: bar

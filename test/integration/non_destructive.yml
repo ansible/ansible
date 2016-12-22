@@ -34,3 +34,4 @@
     - { role: loops, tags: test_loops }
     - { role: mount, tags: [test_mount, needs_root, needs_privileged]}
     - { role: include_vars, tags: test_include_vars }
+    - { role: set_artifact, tags: test_set_artifact }
