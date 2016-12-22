@@ -56,7 +56,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
-        if(self.modified_jailname_key in kwargs):
+        if self.modified_jailname_key in kwargs :
             self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:

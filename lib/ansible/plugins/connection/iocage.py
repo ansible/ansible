@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import subprocess
 from ansible.plugins.connection.jail import Connection as Jail
 
@@ -47,7 +46,8 @@ class Connection(Jail):
         kwargs[Jail.modified_jailname_key] = 'ioc-{}'.format(jail_uuid)
 
         display.vvv(u"Jail {iocjail} has been translated to {rawjail}".format(
-            iocjail=self.ioc_jail, rawjail=kwargs[Jail.modified_jailname_key]))
+            iocjail=self.ioc_jail, rawjail=kwargs[Jail.modified_jailname_key]),
+            host=kwargs[Jail.modified_jailname_key])
 
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
