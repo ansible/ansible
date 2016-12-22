@@ -22,6 +22,8 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock
 
+from collections import Counter
+
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -72,6 +74,33 @@ class TestPlaybookExecutor(unittest.TestCase):
               tasks:
               - debug: var=inventory_hostname
             ''',
+
+            'grouped_serial_useless.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: 1
+              # each host is its own group/slice, which effectively disables serialization!
+              # seless, but proper behaviour
+              serial_group_by: "{{host}}"
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
+            'grouped_serial_int.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: 1
+              serial_group_by: "{{host.testgroup}}"
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
+            'grouped_serial_pct.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: 20%
+              serial_group_by: "{{host.testgroup}}"
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
         })
 
         mock_inventory = MagicMock()
@@ -85,7 +114,8 @@ class TestPlaybookExecutor(unittest.TestCase):
         templar = Templar(loader=fake_loader)
 
         pbe = PlaybookExecutor(
-            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],
+            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml',
+                       'grouped_serial_useless.yml', 'grouped_serial_int.yml', 'grouped_serial_pct.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
@@ -136,3 +166,59 @@ class TestPlaybookExecutor(unittest.TestCase):
         play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9','host10']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9'],['host10']])
+
+        # grouping feature, useless implementation detail (see comment in test playbook)
+        mock_var_manager.get_vars.return_value = dict()
+        playbook = Playbook.load(pbe._playbooks[5], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
+        self.assertItemsEqual(map(Counter, pbe._get_serialized_batches(play)),
+                              [Counter(['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9'])])
+
+        # real test of grouping feature: these test case cannot use simple strings as hosts
+        # instead, playbooks are tested against several variants of inventory
+        playbook_grouping_int = 'grouped_serial_int.yml'
+        playbook_grouping_pct = 'grouped_serial_pct.yml'
+
+        grouping_hosts = [
+            {'name': 'host' + str(i), 'testgroup': 'even' if (i % 2) == 0 else 'odd'}
+            for i in range(10)
+        ]
+        gh_even = [h for h in grouping_hosts if h['testgroup'] == 'even']
+        gh_odd = [h for h in grouping_hosts if h['testgroup'] == 'odd']
+        # in the basic cases, one even and one odd host are processed together; this is just like pythonic zip
+        #  (except that we require list, not tuples)
+        grouping_host_zip_pairs = map(list, zip(gh_even, gh_odd))
+
+        # simple case: with serial=1, it's just like python's zip
+        #  and 20% is the same as 1, because both slices have size==5
+        for playbook in playbook_grouping_int, playbook_grouping_pct:
+            playbook = Playbook.load(playbook, variable_manager=mock_var_manager, loader=fake_loader)
+            play = playbook.get_plays()[0]
+            play.post_validate(templar)
+            mock_inventory.get_hosts.return_value = list(grouping_hosts)
+            self.assertEqual(pbe._get_serialized_batches(play), grouping_host_zip_pairs)
+        # more complicated case: add some more even hosts, but no odd ones
+        gh_even_extra = [{'name': 'extra_host' + str(i), 'testgroup': 'even'} for i in range(10, 20, 2)]
+        grouping_hosts.extend(gh_even_extra)
+        # with these hosts, serial=1 first processes zip, then the even ones (one by one)
+        playbook = Playbook.load(playbook_grouping_int, variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = list(grouping_hosts)
+        self.assertEqual(pbe._get_serialized_batches(play),
+                         grouping_host_zip_pairs + [[host] for host in gh_even_extra])
+        # and even more complicated case: 20% of even hosts are now 2 --> first five batches are of size 3!
+        playbook = Playbook.load(playbook_grouping_pct, variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = list(grouping_hosts)
+        self.assertEqual(pbe._get_serialized_batches(play), [
+            # these might be generated, but... this is probably better for demonstration
+            [gh_even[0], gh_even[1], gh_odd[0]],
+            [gh_even[2], gh_even[3], gh_odd[1]],
+            [gh_even[4], gh_even_extra[0], gh_odd[2]],
+            [gh_even_extra[1], gh_even_extra[2], gh_odd[3]],
+            [gh_even_extra[3], gh_even_extra[4], gh_odd[4]],
+        ])

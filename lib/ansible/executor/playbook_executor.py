@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import itertools
+import collections
 
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -253,7 +253,11 @@ class PlaybookExecutor:
                 value = group_by_templar.template(serial_group_by)
                 return value
 
-            grouped_hosts = [(len(lst), lst) for lst in (list(v) for _, v in itertools.groupby(all_hosts, group_by))]
+            grouped_dict = collections.defaultdict(list)
+            for host in all_hosts:
+                grouped_dict[group_by(host)].append(host)
+
+            grouped_hosts = [(len(lst), lst) for lst in grouped_dict.values()]
         else:
             grouped_hosts = [(len(all_hosts), all_hosts)]
 
