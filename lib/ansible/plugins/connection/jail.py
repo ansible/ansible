@@ -41,6 +41,8 @@ except ImportError:
 class Connection(ConnectionBase):
     ''' Local BSD Jail based connections '''
 
+    modified_jailname_key = 'conn_jail_name'
+
     transport = 'jail'
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
@@ -54,6 +56,8 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
+        if self.modified_jailname_key in kwargs :
+            self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:
             raise AnsibleError("jail connection requires running as root")
