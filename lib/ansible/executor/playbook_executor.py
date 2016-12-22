@@ -271,7 +271,7 @@ class PlaybookExecutor:
             # a list of all hosts, otherwise grab a chunk of the hosts equal
             # to the current serial item size
             if serial <= 0:
-                serialized_batches.append(all_hosts)
+                serialized_batches.append([host for _, group in grouped_hosts for host in group])
                 break
             else:
                 play_hosts = []
