@@ -47,7 +47,7 @@ else
 GITINFO = ""
 endif
 
-ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
