@@ -132,8 +132,6 @@ class SolidFireConnection(object):
         self.mvip = p['mvip']
         self.svip = p['svip']
 
-        # create connection to solidfire cluster
-        # self.sfe = ElementFactory.create(self.hostname, self.username, self.password)
         self.sfe = None
 
     def establish_connection(self):

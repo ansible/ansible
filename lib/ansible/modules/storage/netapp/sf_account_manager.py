@@ -102,7 +102,7 @@ EXAMPLES = """
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
        action: create
-       name: AnsibleUser
+       name: TenantA
 
     - name: Modify Account
      sf_account_manager:

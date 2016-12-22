@@ -75,6 +75,7 @@ options:
 
     qos:
         required: false
+        type: QoS object
         description: Initial quality of service settings for this volume.
 
     attributes:
@@ -112,12 +113,6 @@ options:
         - locked: No reads or writes are allowed.
         - replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked.
         - If unspecified, the access settings of the clone will be the same as the source.
-
-    set_create_time:
-        required: false
-        type: String
-        description:
-        - Identify the time at which the volume was created.
 
 '''
 
@@ -237,8 +232,7 @@ class SolidFireVolume(object):
 
                 access=dict(required=False, type='str', choices=['readOnly', 'readWrite',
                                                                  'locked', 'replicationTarget']),
-                set_create_time=dict(required=False, type='str'),
-
+                
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
                 password=dict(required=True, type='str'),
@@ -268,8 +262,7 @@ class SolidFireVolume(object):
         else:
             self.size = None
         self.access = p['access']
-        self.set_create_time = p['set_create_time']
-
+        
         self.hostname = p['hostname']
         self.username = p['username']
         self.password = p['password']
@@ -310,7 +303,7 @@ class SolidFireVolume(object):
 
         try:
             self.sfe.modify_volume(self.volume_id, account_id=self.account_id,
-                                   access=self.access, set_create_time=self.set_create_time,
+                                   access=self.access,
                                    qos=self.qos, total_size=self.size,
                                    attributes=self.attributes)
 
