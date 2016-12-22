@@ -163,6 +163,12 @@ class PlaybookCLI(CLI):
 
                 display.display('\nplaybook: %s' % p['playbook'])
                 for idx, play in enumerate(p['plays']):
+                    if play._included_path is not None:
+                        loader.set_basedir(play._included_path)
+                    else:
+                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
+                        loader.set_basedir(pb_dir)
+
                     msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
                     mytags = set(play.tags)
                     msg += '\tTAGS: [%s]' % (','.join(mytags))
