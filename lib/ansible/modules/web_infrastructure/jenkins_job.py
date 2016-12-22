@@ -188,6 +188,11 @@ class JenkinsJob:
             }
         }
 
+        # This kind of jobs do not have a property that makes them enabled/disabled
+        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder"]
+
+        self.EXCL_STATE = "excluded state"
+
     def get_jenkins_connection(self):
         try:
             if (self.user and self.password):
@@ -202,9 +207,17 @@ class JenkinsJob:
             e = get_exception()
             self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
 
+    def job_class_excluded(self, response):
+        return response['_class'] in self.job_classes_exceptions
+
     def get_job_status(self):
         try:
-            return self.server.get_job_info(self.name)['color'].encode('utf-8')
+            response = self.server.get_job_info(self.name)
+            if self.job_class_excluded(response):
+                return self.EXCL_STATE
+            else:
+                return response['color'].encode('utf-8')
+
         except Exception:
             e = get_exception()
             self.module.fail_json(msg='Unable to fetch job information, %s' % str(e))
@@ -272,7 +285,7 @@ class JenkinsJob:
                     self.server.reconfig_job(self.name, self.get_config())
 
             # Handle job disable/enable
-            elif self.has_state_changed(status):
+            elif (status != self.EXCL_STATE and self.has_state_changed(status)):
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     self.switch_state()
