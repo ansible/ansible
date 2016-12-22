@@ -28,7 +28,6 @@ author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create or destroy qtrees
-    - auth_basic
 
 options:
 
@@ -124,21 +123,22 @@ TODO:
     Add async delete
 """
 
-import sys
-import json
 import logging
-from itertools import ifilter
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
-import socket
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-from netapp_lib.api.zapi import zapi
-from netapp_lib.api.zapi import errors as zapi_errors
+HAS_NETAPP_LIB = False
+try:
+    from netapp_lib.api.zapi import zapi
+    from netapp_lib.api.zapi import errors as zapi_errors
+    HAS_NETAPP_LIB = True
+except:
+    HAS_NETAPP_LIB = False
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -179,17 +179,19 @@ class NetAppCDOTQTree(object):
         self.username = p['username']
         self.password = p['password']
 
-        # set up zapi
-        self.server = zapi.NaServer(self.hostname)
-        self.server.set_username(self.username)
-        self.server.set_password(self.password)
-        self.server.set_vserver(self.vserver)
-        # Todo : Remove hardcoded values.
-        self.server.set_api_version(major=1,
-                                    minor=21)
-        self.server.set_port(80)
-        self.server.set_server_type('FILER')
-        self.server.set_transport_type('HTTP')
+        if HAS_NETAPP_LIB is False:
+            self.module.fail_json("Unable to import NetApp-Lib")
+        else:
+            # set up zapi
+            self.server = zapi.NaServer(self.hostname)
+            self.server.set_username(self.username)
+            self.server.set_password(self.password)
+            # Todo : Remove hardcoded values.
+            self.server.set_api_version(major=1,
+                                        minor=21)
+            self.server.set_port(80)
+            self.server.set_server_type('FILER')
+            self.server.set_transport_type('HTTP')
 
     def get_qtree(self):
         """
@@ -230,9 +232,10 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error provisioning qtree %s. Error code: %s',
-                             self.name, str(e.code))
+                             self.name, str(e))
             raise
 
     def delete_qtree(self):
@@ -259,9 +262,10 @@ class NetAppCDOTQTree(object):
         try:
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error renaming qtree %s. Error code: %s',
-                             self.name, str(e.code))
+                             self.name, str(e))
             raise
 
     def apply(self):
@@ -317,8 +321,10 @@ def main():
 
     try:
         v.apply()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-main()
+if __name__ == '__main__':                                                      
+    main() 

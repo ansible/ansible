@@ -107,22 +107,22 @@ msg:
 
 """
 
-import sys
-import json
 import logging
-from itertools import ifilter
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
-import socket
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-from netapp_lib.api.zapi import zapi
-from netapp_lib.api.zapi import errors as zapi_errors
+HAS_NETAPP_LIB = False
+try:
+    from netapp_lib.api.zapi import zapi
+    from netapp_lib.api.zapi import errors as zapi_errors
+    HAS_NETAPP_LIB = True
+except:
+    HAS_NETAPP_LIB = False
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -162,16 +162,19 @@ class NetAppCDOTAggregate(object):
         self.username = p['username']
         self.password = p['password']
 
-        # set up zapi
-        self.server = zapi.NaServer(self.hostname)
-        self.server.set_username(self.username)
-        self.server.set_password(self.password)
-        # Todo : Remove hardcoded values.
-        self.server.set_api_version(major=1,
-                                    minor=21)
-        self.server.set_port(80)
-        self.server.set_server_type('FILER')
-        self.server.set_transport_type('HTTP')
+        if HAS_NETAPP_LIB is False:
+            self.module.fail_json("Unable to import NetApp-Lib")
+        else:
+            # set up zapi
+            self.server = zapi.NaServer(self.hostname)
+            self.server.set_username(self.username)
+            self.server.set_password(self.password)
+            # Todo : Remove hardcoded values.
+            self.server.set_api_version(major=1,
+                                        minor=21)
+            self.server.set_port(80)
+            self.server.set_server_type('FILER')
+            self.server.set_transport_type('HTTP')
 
     def get_aggr(self):
         """

@@ -28,7 +28,6 @@ author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Add or remove licenses on NetApp cDOT
-    - auth_basic
 
 options:
 
@@ -134,21 +133,22 @@ msg:
 
 """
 
-import sys
-import json
 import logging
-from itertools import ifilter
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
-import socket
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-from netapp_lib.api.zapi import zapi
-from netapp_lib.api.zapi import errors as zapi_errors
+HAS_NETAPP_LIB = False
+try:
+    from netapp_lib.api.zapi import zapi
+    from netapp_lib.api.zapi import errors as zapi_errors
+    HAS_NETAPP_LIB = True
+except:
+    HAS_NETAPP_LIB = False
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -184,16 +184,19 @@ class NetAppCDOTLicense(object):
         self.remove_expired = p['remove_expired']
         self.licenses = p['licenses']
 
-        # set up zapi
-        self.server = zapi.NaServer(self.hostname)
-        self.server.set_username(self.username)
-        self.server.set_password(self.password)
-        # Todo : Remove hardcoded values.
-        self.server.set_api_version(major=1,
-                                    minor=21)
-        self.server.set_port(80)
-        self.server.set_server_type('FILER')
-        self.server.set_transport_type('HTTP')
+        if HAS_NETAPP_LIB is False:
+            self.module.fail_json("Unable to import NetApp-Lib")
+        else:
+            # set up zapi
+            self.server = zapi.NaServer(self.hostname)
+            self.server.set_username(self.username)
+            self.server.set_password(self.password)
+            # Todo : Remove hardcoded values.
+            self.server.set_api_version(major=1,
+                                        minor=21)
+            self.server.set_port(80)
+            self.server.set_server_type('FILER')
+            self.server.set_transport_type('HTTP')
 
     def get_licensing_status(self):
         """
@@ -207,9 +210,10 @@ class NetAppCDOTLicense(object):
         try:
             result = self.server.invoke_successfully(license_status,
                                                      enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error checking license status: %s',
-                             zapi.NaApiError.message)
+                             str(e))
             raise
 
         return_dictionary = {}
@@ -239,9 +243,10 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(license_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error removing license : %s',
-                             zapi.NaApiError.message)
+                             str(e))
             raise
 
     def remove_unused_licenses(self):
@@ -252,9 +257,10 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(remove_unused,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error removing unused licenses : %s',
-                             zapi.NaApiError.message)
+                             str(e))
             raise
 
     def remove_expired_licenses(self):
@@ -265,9 +271,10 @@ class NetAppCDOTLicense(object):
         try:
             self.server.invoke_successfully(remove_expired,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error removing expired licenses : %s',
-                             zapi.NaApiError.message)
+                             str(e))
             raise
 
     def update_licenses(self):
@@ -306,9 +313,10 @@ class NetAppCDOTLicense(object):
             try:
                 self.server.invoke_successfully(license_add,
                                                 enable_tunneling=False)
-            except zapi.NaApiError, e:
+            except zapi.NaApiError:
+                e = get_exception()
                 logger.exception('Error adding licenses : %s',
-                                 zapi.NaApiError.message)
+                                 str(e))
                 raise
 
     def apply(self):
@@ -329,8 +337,10 @@ def main():
 
     try:
         v.apply()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-main()
+if __name__ == '__main__':                                                      
+    main() 
