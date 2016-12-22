@@ -114,7 +114,7 @@ does not cause handlers to fire::
 
       # this will never report 'changed' status
       - shell: wall 'beep'
-        changed_when: False
+        changed_when: false
 
 Aborting the play
 `````````````````
