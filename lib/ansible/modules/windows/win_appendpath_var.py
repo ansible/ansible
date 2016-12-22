@@ -47,7 +47,7 @@ options:
       - machine
       - process
       - user
-author: "SyedShabir, RajeshKumar Palani"
+author: "SyedShabir, RajeshKumarPalani"
 notes: 
    - This module does not broadcast change events.  
      This means that the minority of windows applications which can have 
