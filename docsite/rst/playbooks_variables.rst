@@ -676,12 +676,15 @@ period, without the rest of the domain.
 ``play_hosts`` has been deprecated in 2.2, it was the same as the new ``ansible_play_batch`` variable.
 
 .. versionadded:: 2.2
+
 ``ansible_play_hosts`` is the full list of all hosts still active in the current play.
 
 .. versionadded:: 2.2
+
 ``ansible_play_batch`` is available as a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
 
 .. versionadded:: 2.3
+
 ``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool.
 
 These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.

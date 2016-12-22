@@ -2,7 +2,7 @@ Developer Information
 =====================
 
 Ansible Developer Guide
-`````````````
+```````````````````````
 
 Welcome to the Ansible Developer Guide!
 

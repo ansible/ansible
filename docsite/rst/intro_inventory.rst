@@ -233,7 +233,9 @@ ansible_ssh_extra_args
     This setting is always appended to the default :command:`ssh` command line.
 ansible_ssh_pipelining
     Determines whether or not to use SSH pipelining. This can override the ``pipelining`` setting in :file:`ansible.cfg`.
+
 .. versionadded:: 2.2
+
 ansible_ssh_executable
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
