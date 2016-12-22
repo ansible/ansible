@@ -46,7 +46,7 @@ options:
             - What state should the virtualmachine be in?
             - if state is set to present and VM exists, ensure the VM configuration if conform to task arguments
         required: True
-        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted']
+        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
    name:
         description:
             - Name of the newly deployed guest
@@ -700,6 +700,12 @@ class PyVmomiHelper(object):
                     else:
                         result = {'changed': False, 'failed': True,
                                   'msg': "Cannot restart VM in the current state %s" % current_state}
+                elif expected_state == 'suspended':
+                    if current_state in ('poweredon', 'poweringon'):
+                        task = vm.Suspend()
+                    else:
+                        result = {'changed': False, 'failed': True,
+                                  'msg': 'Cannot suspend VM in the current state %s' % current_state}
 
             except Exception:
                 result = {'changed': False, 'failed': True,
@@ -1594,6 +1600,7 @@ def main():
                     'present',
                     'absent',
                     'restarted',
+                    'suspended',
                     'gatherfacts',
                 ],
                 default='present'),
@@ -1655,14 +1662,13 @@ def main():
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted']:
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended']:
             # set powerstate
-            if module.params['state'] in ['poweredon', 'poweredoff', 'restarted']:
-                tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
-                if tmp_result['changed']:
-                    result["changed"] = True
-                if not tmp_result["failed"]:
-                    result["failed"] = False
+            tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
+            if tmp_result['changed']:
+                result["changed"] = True
+            if not tmp_result["failed"]:
+                result["failed"] = False
         elif module.params['state'] == 'gatherfacts':
             # Run for facts only
             try:
@@ -1677,7 +1683,7 @@ def main():
             assert False
     # VM doesn't exist
     else:
-        if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted']:
+        if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             # Create it ...
             result = pyv.deploy_vm()
         elif module.params['state'] == 'gatherfacts':
