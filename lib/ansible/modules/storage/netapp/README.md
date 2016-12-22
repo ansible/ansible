@@ -464,7 +464,7 @@ Note: This has been tested with Ansible (2.1.0.0)
 
 ### Installation
 
-Install solidfire-sdk-python
+Install netapp-lib
 
 ```sh
 $ pip install netapp-lib
