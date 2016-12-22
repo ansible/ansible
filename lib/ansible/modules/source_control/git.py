@@ -993,7 +993,7 @@ def main():
 
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
-            result.update(changed=(result['before'] != remote_head), after=remote_head)
+            result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
                 diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
