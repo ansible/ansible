@@ -72,7 +72,7 @@ out:
     description: The output of the current state of the cluster. It return a
                  list of the nodes state.
     type: string
-    sample: "out": [["  overcloud-controller-0", " Online"]]}
+    sample: 'out: [["  overcloud-controller-0", " Online"]]}'
 rc:
     description: exit code of the module
     type: bool
