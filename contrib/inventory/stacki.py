@@ -44,12 +44,9 @@ use_hostnames: false
 """
 
 import argparse
-import collections
 import os
 import sys
-import requests
 import yaml
-import time
 from distutils.version import StrictVersion
 
 try:
@@ -60,7 +57,7 @@ except:
 try:
     import requests
 except:
-    sys.exit('requests>=2.4.3 is required for this inventory script')
+    sys.exit('requests package is required for this inventory script')
    
 
 CONFIG_FILES = ['/etc/stacki/stacki.yml', '/etc/ansible/stacki.yml']
@@ -127,6 +124,8 @@ def format_meta(hostdata, intfdata, config):
         meta['_meta']['hostvars'][host['host']] = host
         meta['_meta']['hostvars'][host['host']]['interfaces'] = list()
 
+    # @bbyhuy to improve readability in next iteration
+
     for intf in intfdata:
         if intf['host'] in meta['_meta']['hostvars']:
             meta['_meta']['hostvars'][intf['host']]['interfaces'].append(intf)
@@ -151,7 +150,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Stacki Inventory Module')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', action='store_true',
-                       help='List active servers')
+                       help='List active hosts')
     group.add_argument('--host', help='List details about the specific host')
 
     return parser.parse_args()
@@ -159,6 +158,11 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+
+    if StrictVersion(requests.__version__) < StrictVersion("2.4.3"):
+        sys.exit('requests>=2.4.3 is required for this inventory script')
+
     try:
         config_files = CONFIG_FILES
         config_files.append(os.path.dirname(os.path.realpath(__file__)) + '/stacki.yml')
