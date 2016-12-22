@@ -421,14 +421,12 @@ class StrategyBase:
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item:
-                        print("GOT A NOTIFY")
                         if task_result.is_changed():
                             # The shared dictionary for notified handlers is a proxy, which
                             # does not detect when sub-objects within the proxy are modified.
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for handler_name in result_item['_ansible_notify']:
-                                print("TRYING TO SEND NOTIFICATION TO HANDLER: %s" % handler_name)
                                 found = False
                                 # Find the handler using the above helper.  First we look up the
                                 # dependency chain of the current task (if it's from a role), otherwise
