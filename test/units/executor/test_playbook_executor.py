@@ -200,7 +200,7 @@ class TestPlaybookExecutor(unittest.TestCase):
             mock_inventory.get_hosts.return_value = list(grouping_hosts)
             self.assertEqual(pbe._get_serialized_batches(play), grouping_host_zip_pairs)
         # more complicated case: add some more even hosts, but no odd ones
-        gh_even_extra = [{'name': 'extra_host' + str(i), 'testgroup': 'even'} for i in range(10, 20, 2)]
+        gh_even_extra = [{'name': 'extra_host' + str(i), 'testgroup': 'even'} for i in range(10, 22, 2)]
         grouping_hosts.extend(gh_even_extra)
         # with these hosts, serial=1 first processes zip, then the even ones (one by one)
         playbook = Playbook.load(playbook_grouping_int, variable_manager=mock_var_manager, loader=fake_loader)
@@ -221,4 +221,5 @@ class TestPlaybookExecutor(unittest.TestCase):
             [gh_even[4], gh_even_extra[0], gh_odd[2]],
             [gh_even_extra[1], gh_even_extra[2], gh_odd[3]],
             [gh_even_extra[3], gh_even_extra[4], gh_odd[4]],
+            [gh_even_extra[5]]
         ])
