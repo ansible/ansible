@@ -2198,14 +2198,13 @@ class AnsibleModule(object):
             stderr=subprocess.PIPE,
         )
 
-        if cwd and os.path.isdir(cwd):
-            kwargs['cwd'] = cwd
-
         # store the pwd
         prev_dir = os.getcwd()
 
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
+            cwd = os.path.abspath(os.path.expanduser(cwd))
+            kwargs['cwd'] = cwd
             try:
                 os.chdir(cwd)
             except (OSError, IOError):
@@ -2217,7 +2216,6 @@ class AnsibleModule(object):
             old_umask = os.umask(umask)
 
         try:
-
             if self._debug:
                 self.log('Executing: ' + clean_args)
             cmd = subprocess.Popen(args, **kwargs)
