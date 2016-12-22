@@ -156,7 +156,8 @@ Example from Ansible playbook
         nic:
             - type: vmxnet3
               network: VM Network
-              network_type: standard
+            - type: e1000
+              network_vlan: 1000
         hardware:
             memory_mb: 512
             num_cpus: 1
