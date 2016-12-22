@@ -286,7 +286,7 @@ deb-src-upload: deb-src
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 webdocs:
-	(cd docsite/; make docs)
+	(cd docs/docsite/; make docs)
 
 docs: $(MANPAGES)
 
