@@ -26,6 +26,8 @@ from ansible.errors import AnsibleError
 from argparse import ArgumentParser
 import six
 
+from ansible.compat.tests.mock import patch
+
 MOCK_ENTRIES = [{'username': 'user',
                  'name': 'Mock Entry',
                  'password': 't0pS3cret passphrase entry!',
@@ -36,13 +38,8 @@ MOCK_ENTRIES = [{'username': 'user',
 
 class MockLPass(LPass):
 
-    def __init__(self, path=None, args=None):
-        super(MockLPass, self).__init__(path)
-        self._additional_args = args if args else []
-
-    def _build_args(self, command, args=None):
-        args = super(MockLPass, self)._build_args(command, args)
-        return args + self._additional_args
+    _mock_logged_out = False
+    _mock_disconnected = False
 
     def _lookup_mock_entry(self, key):
         for entry in MOCK_ENTRIES:
@@ -52,8 +49,6 @@ class MockLPass(LPass):
     def _run(self, args, stdin=None, expected_rc=0):
         # Mock behavior of lpass executable
         base_options = ArgumentParser(add_help=False)
-        base_options.add_argument('--logged-out', default=False, action='store_true')
-        base_options.add_argument('--disconnected', default=False, action='store_true')
         base_options.add_argument('--color', default="auto", choices=['auto', 'always', 'never'])
 
         p = ArgumentParser()
@@ -79,7 +74,7 @@ class MockLPass(LPass):
             return mock_exit(error='Error: Mock only supports --color=never', rc=1)
 
         if args.subparser_name == 'logout':
-            if args.logged_out:
+            if self._mock_logged_out:
                 return mock_exit(error='Error: Not currently logged in', rc=1)
 
             logged_in_error = 'Are you sure you would like to log out? [Y/n]'
@@ -91,11 +86,11 @@ class MockLPass(LPass):
                 return mock_exit(error='Error: aborted response', rc=1)
 
         if args.subparser_name == 'show':
-            if args.logged_out:
+            if self._mock_logged_out:
                 return mock_exit(error='Error: Could not find decryption key.' +
                                  ' Perhaps you need to login with `lpass login`.', rc=1)
 
-            if args.disconnected:
+            if self._mock_disconnected:
                 return mock_exit(error='Error: Couldn\'t resolve host name.', rc=1)
 
             mock_entry = self._lookup_mock_entry(args.selector)
@@ -116,6 +111,16 @@ class MockLPass(LPass):
                 return mock_exit(output=mock_entry.get('notes', ''))
 
         raise LPassException('We should never get here')
+
+
+class DisconnectedMockLPass(MockLPass):
+    
+    _mock_disconnected = True
+
+
+class LoggedOutMockLPass(MockLPass):
+    
+    _mock_logged_out = True
 
 
 class TestLPass(unittest.TestCase):
@@ -139,11 +144,12 @@ class TestLPass(unittest.TestCase):
         self.assertTrue(lp.logged_in)
 
     def test_lastpass_logged_in_false(self):
-        lp = MockLPass(args=['--logged-out'])
+        lp = LoggedOutMockLPass()
         self.assertFalse(lp.logged_in)
 
     def test_lastpass_show_disconnected(self):
-        lp = MockLPass(args=['--disconnected'])
+        lp = DisconnectedMockLPass()
+
         with self.assertRaises(LPassException):
             lp.get_field('0123456789', 'username')
 
@@ -157,32 +163,30 @@ class TestLPass(unittest.TestCase):
 
 class TestLastpassPlugin(unittest.TestCase):
 
+    @patch('ansible.plugins.lookup.lastpass.LPass', new=MockLPass)
     def test_lastpass_plugin_normal(self):
         lookup_plugin = LookupModule()
-        mock = MockLPass()
 
         for entry in MOCK_ENTRIES:
             entry_id = entry.get('id')
             for k, v in six.iteritems(entry):
                 self.assertEqual(v.strip(),
-                                 lookup_plugin.run([entry_id],
-                                                   __mock_lpass_obj=mock,
-                                                   field=k)[0])
+                                 lookup_plugin.run([entry_id], field=k)[0])
 
+    @patch('ansible.plugins.lookup.lastpass.LPass', LoggedOutMockLPass)
     def test_lastpass_plugin_logged_out(self):
         lookup_plugin = LookupModule()
-        mock = MockLPass(args=['--logged-out'])
 
         entry = MOCK_ENTRIES[0]
         entry_id = entry.get('id')
         with self.assertRaises(AnsibleError):
-            lookup_plugin.run([entry_id], __mock_lpass_obj=mock, field='password')
+            lookup_plugin.run([entry_id], field='password')
 
+    @patch('ansible.plugins.lookup.lastpass.LPass', DisconnectedMockLPass)
     def test_lastpass_plugin_disconnected(self):
         lookup_plugin = LookupModule()
-        mock = MockLPass(args=['--disconnected'])
 
         entry = MOCK_ENTRIES[0]
         entry_id = entry.get('id')
         with self.assertRaises(AnsibleError):
-            lookup_plugin.run([entry_id], __mock_lpass_obj=mock, field='password')
+            lookup_plugin.run([entry_id], field='password')

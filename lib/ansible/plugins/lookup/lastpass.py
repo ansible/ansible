@@ -67,7 +67,7 @@ class LPass(object):
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-        lp = kwargs.get('__mock_lpass_obj', LPass())
+        lp = LPass()
 
         if not lp.logged_in:
             raise AnsibleError("Not logged into lastpass: please run 'lpass login' first")
