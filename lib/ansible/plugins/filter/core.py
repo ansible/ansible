@@ -45,7 +45,7 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types, integer_types
 from ansible.compat.six.moves import reduce
 from ansible.compat.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
@@ -204,7 +204,7 @@ def rand(environment, end, start=None, step=None, seed=None):
         r = SystemRandom()
     else:
         r = Random(seed)
-    if isinstance(end, (int, long)):
+    if isinstance(end, integer_types):
         if not start:
             start = 0
         if not step:
