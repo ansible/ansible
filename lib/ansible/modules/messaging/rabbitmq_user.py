@@ -102,10 +102,10 @@ options:
     choices: [ "yes", "no" ]
   state:
     description:
-      - Specify if user is to be added or removed
+      - Specify if user is to be added, removed or append permissions
     required: false
     default: present
-    choices: [present, absent]
+    choices: [present, absent, append]
 '''
 
 EXAMPLES = '''
@@ -131,15 +131,30 @@ EXAMPLES = '''
         read_priv: .*
         write_priv: .*
     state: present
+
+# Add user to server and assign full access control on /one and /two vhosts.
+- rabbitmq_user:
+    user: joe
+    password: changeme
+    permissions:
+      - vhost: "{{ item }}"
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+    state: present
+  with_items:
+    - one
+    - two
 '''
 
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
-                 node, bulk_permissions=False):
+                 node, bulk_permissions=False, append_permissions=False):
         self.module = module
         self.username = username
         self.password = password
         self.node = node
+
         if not tags:
             self.tags = list()
         else:
@@ -151,6 +166,8 @@ class RabbitMqUser(object):
         self._tags = None
         self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+
+        self.append_permissions = append_permissions
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
@@ -214,7 +231,7 @@ class RabbitMqUser(object):
 
     def set_permissions(self):
         for permission in self._permissions:
-            if permission not in self.permissions:
+            if permission not in self.permissions and not self.append_permissions:
                 cmd = ['clear_permissions', '-p']
                 cmd.append(permission['vhost'])
                 cmd.append(self.username)
@@ -246,7 +263,7 @@ def main():
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent', 'append']),
         node=dict(default=None)
     )
     module = AnsibleModule(
@@ -265,6 +282,10 @@ def main():
     force = module.params['force']
     state = module.params['state']
     node = module.params['node']
+    append_permissions = False
+
+    if state == 'append':
+        append_permissions = True
 
     bulk_permissions = True
     if permissions == []:
@@ -277,8 +298,9 @@ def main():
         permissions.append(perm)
         bulk_permissions = False
 
+
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
-                                 node, bulk_permissions=bulk_permissions)
+                                 node, bulk_permissions=bulk_permissions, append_permissions=append_permissions)
 
     changed = False
     if rabbitmq_user.get():
