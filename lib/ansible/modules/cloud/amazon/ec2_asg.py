@@ -248,6 +248,7 @@ import traceback
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
+from ansible.module_utils.six import iteritems
 
 #log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
@@ -541,7 +542,7 @@ def create_autoscaling_group(connection, module):
 
     asg_tags = []
     for tag in set_tags:
-        for k,v in tag.iteritems():
+        for k,v in iteritems(tag):
             if k !='propagate_at_launch':
                 asg_tags.append(dict(Key=k,
                                      Value=v,
