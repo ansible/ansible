@@ -58,7 +58,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_disks
-short_description: "Module to manage Virtual Machine and floating disks in oVirt."
+short_description: "Module to manage Virtual Machine and floating disks in oVirt"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
