@@ -356,7 +356,8 @@ class Templar:
                 # changes sizes due to the templating, which can happen with hostvars
                 for k in variable.keys():
                     if k not in static_vars:
-                        d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        new_k = self.template(k, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        d[new_k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
                     else:
                         d[k] = variable[k]
                 return d
