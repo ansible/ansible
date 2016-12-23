@@ -192,7 +192,10 @@ def main():
 
         if len(recordsets) == 1:
             recordset = recordsets[0]
-            recordset_id = recordset['id']
+            try:
+                recordset_id = recordset['id']
+            except KeyError as e:
+                module.fail_json(msg=str(e))
         else:
             # recordsets is filtered by type and should never be more than 1 return
             recordset = None
