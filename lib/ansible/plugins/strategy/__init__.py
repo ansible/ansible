@@ -437,7 +437,7 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if original_host._uuid not in self._notified_handlers[target_handler._uuid]:
+                                    if original_host not in self._notified_handlers[target_handler._uuid]:
                                         self._notified_handlers[target_handler._uuid].append(original_host)
                                         # FIXME: should this be a callback?
                                         display.vv("NOTIFIED HANDLER %s" % (handler_name,))
