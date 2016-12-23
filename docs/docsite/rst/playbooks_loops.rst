@@ -124,6 +124,7 @@ Nested Hashes
 Working with nested hashes is also possible. Suppose you have holidays, nested by year and then month and then day::
 
     ---
+    current_month: "January"
     holidays_by_year_month_day:
       2016:
         January:
@@ -137,10 +138,10 @@ Working with nested hashes is also possible. Suppose you have holidays, nested b
 
 You can print every holiday in a given month using ``with_nested_dict`` like this::
 
-    - debug:
-        msg:              "Remember {{value}} on {{key_1}} {{'%02d'|format(key_2)}}, {{key_0}}"
-      when:               key_1 == current_month
-      with_nested_dict:   holidays_by_year_month_day
+    - name: Print holidays for this month
+      debug: msg="Remember {{ item.value }} on {{ item.nested[1] }} {{ '%02d' | format(item.nested[2]) }}, {{ item.nested[0] }}"
+      when: item.nested[1] == current_month
+      with_nested_dict: "{{ holidays_by_year_month_day }}"
 
 This lookup flattens nested hashes, with each flattened key denoted by its nesting level. The above would be the equivalent of::
 

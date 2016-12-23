@@ -41,41 +41,49 @@ For example, a collection of holidays nested by year, month, and day:
         ...
     }
 
-Would be flattened into an array of shallow dicts, with each original key denoted by its nesting level:
+Would be flattened into an array of dicts, each with a value and list of keys (ordered by their nesting level from shallow to deep):
 
     [
-        { 'key_0': '2016', 'key_1': 'January',  'key_2': '1',  'value': 'New Years Day' },
-        { 'key_0': '2016', 'key_1': 'January',  'key_2': '19', 'value': 'Martin Luther King Day' },
-        { 'key_0': '2016', 'key_1': 'February', 'key_2': '14', 'value': 'Valentines Day' },
-        { 'key_0': '2016', 'key_1': 'February', 'key_2': '16', 'value': 'Presidents Day' },
+        { 'nested': ['2016', 'January',  '1'],  'value': 'New Years Day' },
+        { 'nested': ['2016', 'January',  '19'], 'value': 'Martin Luther King Day' },
+        { 'nested': ['2016', 'February', '14'], 'value': 'Valentines Day' },
+        { 'nested': ['2016', 'February', '16'], 'value': 'Presidents Day' },
         ...
     ]
 
 The nested keys and value of each are then exposed to an iterative task:
 
-    - name:               "Remind us what holidays are this month"
+    - name: Print holidays for this month
       debug:
-        msg:              "Remember {{value}} on {{key_1}} {{'%02d'|format(key_2)}} in the year {{key_0}}"
-      when:               key_1 == current_month
-      with_nested_dict:   holidays_by_year_month_day
+        msg: "Remember {{ item.value }} on {{ item.nested[1] }} {{ '%02d' | format(item.nested[2]|int) }}, {{ item.nested[0] }}"
+      when: item.nested[1] == "January"
+      with_nested_dict: "{{ holidays_by_year_month_day }}"
 
 """
 class LookupModule(LookupBase):
 
     @staticmethod
-    def _flatten_nested_hash_to_list(terms, result=None, stack=None, level=None):
+    def _flatten_nested_hash_to_list(terms, result=None, stack=None):
         result = [] if result is None else result
-        stack = {} if stack is None else stack
-        level = 0 if level is None else level
+        stack = { 'nested':[] } if stack is None else stack
 
         for key, val in terms.items():
-            stack['key_%s' % level] = key
+            working = LookupModule._stack_copy(stack)
+
+            working['nested'].append(key)
             if type(val) is dict:
-                LookupModule._flatten_nested_hash_to_list(terms=val, result=result, stack=stack.copy(), level=level+1)
+                LookupModule._flatten_nested_hash_to_list(terms=val, result=result, stack=LookupModule._stack_copy(working))
             else:
-                stack['value'] = val
-                result.append(stack.copy())
+                working['value'] = val
+                result.append(working)
+
         return result
+
+    @staticmethod
+    def _stack_copy(stack):
+        copied = stack.copy()
+        copied['nested'] = list(stack['nested'])
+        return copied
 
     def run(self, terms, variables=None, **kwargs):
         if not isinstance(terms, dict):
