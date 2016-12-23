@@ -29,7 +29,6 @@
 #    test-module -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 #    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
-import base64
 import optparse
 import os
 import subprocess
@@ -49,6 +48,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 def parse():
     """parse command line
 
@@ -61,7 +61,7 @@ def parse():
         help="REQUIRED: full path of module source to execute")
     parser.add_option('-a', '--args', dest='module_args', default="",
         help="module argument string")
-    parser.add_option('-D', '--debugger', dest='debugger', 
+    parser.add_option('-D', '--debugger', dest='debugger',
         help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
         help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
@@ -79,6 +79,7 @@ def parse():
         sys.exit(1)
     else:
         return options, args
+
 
 def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
@@ -110,14 +111,14 @@ def get_interpreters(interpreter):
 def boilerplate_module(modfile, args, interpreters, check, destfile):
     """ simulate what ansible does with new style modules """
 
-    #module_fh = open(modfile)
-    #module_data = module_fh.read()
-    #module_fh.close()
+    # module_fh = open(modfile)
+    # module_data = module_fh.read()
+    # module_fh.close()
 
-    #replacer = module_common.ModuleReplacer()
+    # replacer = module_common.ModuleReplacer()
     loader = DataLoader()
 
-    #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
+    # included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
 
@@ -227,6 +228,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
     print("PARSED OUTPUT")
     print(jsonify(results,format=True))
 
+
 def rundebug(debugger, modfile, argspath, modname, module_style):
     """Run interactively with console debugger."""
 
@@ -237,6 +239,7 @@ def rundebug(debugger, modfile, argspath, modname, module_style):
         subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
     else:
         subprocess.call("%s %s" % (debugger, modfile), shell=True)
+
 
 def main():
 
@@ -264,4 +267,3 @@ if __name__ == "__main__":
         main()
     finally:
         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
-
