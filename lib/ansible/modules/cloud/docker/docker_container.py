@@ -608,7 +608,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-ansible_docker_container:
+docker_container:
     description:
       - Facts representing the current state of the container. Matches the docker inspection output.
       - Note that facts are not part of registered vars but accessible directly.
@@ -1669,7 +1669,7 @@ class ContainerManager(DockerBaseClass):
             self.results['diff'] = self.diff
 
         if self.facts:
-            self.results['ansible_facts'] = {'ansible_docker_container': self.facts}
+            self.results['ansible_facts'] = {'docker_container': self.facts}
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
