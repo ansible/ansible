@@ -192,6 +192,7 @@ def main():
 
         if len(recordsets) == 1:
             recordset = recordsets[0]
+            recordset_id = recordset['id']
         else:
             # recordsets is filtered by type and should never be more than 1 return
             recordset = None
@@ -222,10 +223,11 @@ def main():
                                                zone, pre_update_recordset)
                 if changed:
                     zone = cloud.update_recordset(
-                        zone, name + '.' + zone,
+                        zone, recordset_id,
                         records=records,
                         description=description,
                         ttl=ttl)
+
             module.exit_json(changed=changed, recordset=recordset)
 
         elif state == 'absent':
@@ -238,7 +240,7 @@ def main():
             if recordset is None:
                 changed=False
             else:
-                cloud.delete_recordset(zone, name + '.' + zone)
+                cloud.delete_recordset(zone, recordset_id)
                 changed=True
             module.exit_json(changed=changed)
 
