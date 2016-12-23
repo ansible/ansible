@@ -424,6 +424,8 @@ class Ec2Inventory(object):
         # IAM role to assume for connection
         if config.has_option('ec2', 'iam_role'):
             self.iam_role = config.get('ec2', 'iam_role')
+        else:
+            self.iam_role = None
 
         # Configure which groups should be created.
         group_by_options = [
