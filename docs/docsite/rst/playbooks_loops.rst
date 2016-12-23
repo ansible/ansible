@@ -143,28 +143,32 @@ You can print every holiday in a given month using ``with_nested_dict`` like thi
       when: item.nested[1] == current_month
       with_nested_dict: "{{ holidays_by_year_month_day }}"
 
-This lookup flattens nested hashes, with each flattened key denoted by its nesting level. The above would be the equivalent of::
+This lookup flattens nested hashes, each with a list of keys ordered by their nesting level. The above would be the equivalent of::
 
     ---
     -
-      key_0: 2016
-      key_1: January
-      key_2: 1
+      nested:
+        - 2016
+        - January
+        - 1
       value: New Years Day
     -
-      key_0: 2016
-      key_1: January
-      key_2: 19
+      nested:
+        - 2016
+        - January
+        - 19
       value: Martin Luther King Day
     -
-      key_0: 2016
-      key_1: February
-      key_2: 14
+      nested:
+        - 2016
+        - February
+        - 14
       value: Valentines Day
     -
-      key_0: 2016
-      key_1: February
-      key_2: 16
+      nested:
+        - 2016
+        - February
+        - 16
       value: Presidents Day
     #...
 
