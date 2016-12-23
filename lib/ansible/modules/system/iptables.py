@@ -23,6 +23,11 @@ BINS = dict(
     ipv6='ip6tables',
 )
 
+ICMP_TYPE_OPTIONS = dict(
+    ipv4='--icmp-type',
+    ipv6='--icmpv6-type',
+)
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -406,7 +411,7 @@ def construct_rule(params):
     append_param(
         rule,
         params['icmp_type'],
-        '--icmp-type' if params['ip_version'] == 'ipv4' else '--icmpv6-type',
+        ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
     return rule
 
