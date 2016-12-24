@@ -246,11 +246,13 @@ taken out of the rotation for the entire playbook.  If things fail, simply corre
 The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
-Modules are 'idempotent', meaning if you run them
-again, they will make only the changes they must in order to bring the
-system to the desired state.  This makes it very safe to rerun
-the same playbook multiple times.  They won't change things
-unless they have to change things.
+Modules should be idempotent, that is, running a module multiple times
+in a sequence should have the same effect as running it just once. One
+way to achieve idempotency is to have a module check whether its desired
+final state has already been achieved, and if that state has been achieved,
+to exit without performing any actions. If all the modules a playbook uses
+are idempotent, then the playbook itself is likely to be idempotent, so
+re-running the playbook should be safe.
 
 The **command** and **shell** modules will typically rerun the same command again,
 which is totally ok if the command is something like
@@ -259,7 +261,7 @@ be used to make these modules also idempotent.
 
 Every task should have a ``name``, which is included in the output from
 running the playbook.   This is human readable output, and so it is 
-useful to have provide good descriptions of each task step.  If the name
+useful to provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
@@ -340,7 +342,7 @@ The old form continues to work in newer versions without any plan of deprecation
 Handlers: Running Operations On Change
 ``````````````````````````````````````
 
-As we've mentioned, modules are written to be 'idempotent' and can relay when
+As we've mentioned, modules should be idempotent and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 

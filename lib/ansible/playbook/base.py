@@ -33,7 +33,7 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 from ansible.utils.vars import combine_vars, isidentifier
 
 try:
@@ -111,7 +111,7 @@ class BaseMeta(type):
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
                         getter = partial(_generic_g_method, attr_name)
-                    elif '_get_parent_attribute' in dst_dict and value.inherit:
+                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
                         getter = partial(_generic_g_parent, attr_name)
                     else:
                         getter = partial(_generic_g, attr_name)
@@ -197,8 +197,8 @@ class Base(with_metaclass(BaseMeta, object)):
 
     def dump_me(self, depth=0):
         if depth == 0:
-            display.debug("DUMPING OBJECT ------------------------------------------------------")
-        display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
+            print("DUMPING OBJECT ------------------------------------------------------")
+        print("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
@@ -482,7 +482,7 @@ class Base(with_metaclass(BaseMeta, object)):
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
-    def _extend_value(self, value, new_value):
+    def _extend_value(self, value, new_value, prepend=False):
         '''
         Will extend the value given with new_value (and will turn both
         into lists if they are not so already). The values are run through
@@ -494,7 +494,12 @@ class Base(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
+        if prepend:
+            combined = new_value + value
+        else:
+            combined = value + new_value
+
+        return [i for i,_ in itertools.groupby(combined) if i is not None]
 
     def serialize(self):
         '''

@@ -27,4 +27,23 @@
       - result.stdout is defined
       - result.stdout | length == 2
 
+- name: Get output for multiple commands that call less explicitly
+  vyos_command:
+    commands:
+        # NOTE: We only test show commands that will output <ANSIBLE_VYOS_TERMINAL_LENGTH
+        # Otherwise you will get ": "timeout trying to send command: show log authorization"
+      - show hardware cpu detail
+      - show hardware mem
+      - show license
+      - show log
+      - show system boot-messages
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout_lines is defined
+      - result.stdout_lines[2] | length >= 20
+
 - debug: msg="END cli/output.yaml"

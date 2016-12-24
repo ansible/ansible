@@ -301,6 +301,7 @@ class DataLoader():
                 result = test_path
         else:
             search = []
+            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
             for path in paths:
                 upath = unfrackpath(path)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
@@ -315,18 +316,20 @@ class DataLoader():
                         search.append(os.path.join(b_mydir, b_source))
                     else:
                         # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] == b_dirname:
-                            search.append(os.path.join(b_upath, b_source))
-                        else:
+                        if b_source.split(b'/')[0] != b_dirname:
                             search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b'tasks', b_source))
+                        search.append(os.path.join(b_upath, b_source))
+
                 elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
-                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                    if b_source.split(b'/')[0] != dirname:
+                        search.append(os.path.join(b_upath, b_dirname, b_source))
                     search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+            # don't add dirname if user already is using it in source
+            if b_source.split(b'/')[0] != dirname:
+                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
             search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
@@ -337,33 +340,6 @@ class DataLoader():
                     break
 
         return result
-
-    def read_vault_password_file(self, vault_password_file):
-        """
-        Read a vault password from a file or if executable, execute the script and
-        retrieve password from STDOUT
-        """
-
-        this_path = os.path.realpath(to_bytes(os.path.expanduser(vault_password_file), errors='surrogate_or_strict'))
-        if not os.path.exists(to_bytes(this_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
-
-        if self.is_executable(this_path):
-            try:
-                # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s)."
-                        " If this is not a script, remove the executable bit from the file." % (' '.join(this_path), to_native(e)))
-            stdout, stderr = p.communicate()
-            self.set_vault_password(stdout.strip('\r\n'))
-        else:
-            try:
-                f = open(this_path, "rb")
-                self.set_vault_password(f.read().strip())
-                f.close()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''

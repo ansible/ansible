@@ -66,4 +66,3 @@
     that:
       - "'failed' in result and not result.failed"
       - "'failed_when_result' in result and not result.failed_when_result"
-

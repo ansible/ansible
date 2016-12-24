@@ -109,4 +109,3 @@
   assert:
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
-

@@ -268,12 +268,12 @@ class Task(Base, Conditional, Taggable, Become):
             else:
                 env = []
                 for env_item in value:
-                    if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                    if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables:
                         env[env_item] = templar.template(env_item, convert_bare=False)
         elif isinstance(value, dict):
             env = dict()
             for env_item in value:
-                if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables:
                     env[env_item] = templar.template(value[env_item], convert_bare=False)
 
         # at this point it should be a simple string
@@ -376,12 +376,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).deserialize(data)
 
-    def evaluate_conditional(self, templar, all_vars):
-        if self._parent is not None:
-            if not self._parent.evaluate_conditional(templar, all_vars):
-                return False
-        return super(Task, self).evaluate_conditional(templar, all_vars)
-
     def set_loader(self, loader):
         '''
         Sets the loader on this object and recursively on parent, child objects.
@@ -394,7 +388,7 @@ class Task(Base, Conditional, Taggable, Become):
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False):
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
@@ -405,7 +399,7 @@ class Task(Base, Conditional, Taggable, Become):
             if self._parent and (value is None or extend):
                 parent_value = getattr(self._parent, attr, None)
                 if extend:
-                    value = self._extend_value(value, parent_value)
+                    value = self._extend_value(value, parent_value, prepend)
                 else:
                     value = parent_value
         except KeyError:
@@ -433,7 +427,7 @@ class Task(Base, Conditional, Taggable, Become):
         path_stack = []
 
         dep_chain = self.get_dep_chain()
-        # inside role: add the dependency chain from current to dependant
+        # inside role: add the dependency chain from current to dependent
         if dep_chain:
             path_stack.extend(reversed([x._role_path for x in dep_chain]))
 

@@ -26,5 +26,3 @@
     lines:
       - no feature nxapi
     provider: "{{ cli }}"
-
-

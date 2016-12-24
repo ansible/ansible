@@ -6,7 +6,7 @@
  - Docs Pull Request
 
 ##### COMPONENT NAME
-<!--- Name of the plugin/module/task -->
+<!--- Name of the module/plugin/module/task -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from “ansible --version” between quotes below -->

@@ -22,15 +22,13 @@ __metaclass__ = type
 import fnmatch
 
 from ansible.compat.six import iteritems
-
 from ansible import constants as C
-
 from ansible.errors import AnsibleError
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.role_include import IncludeRole
 
-from ansible.utils.boolean import boolean
+boolean = C.mk_boolean
 
 __all__ = ['PlayIterator']
 
@@ -57,6 +55,7 @@ class HostState:
         self.tasks_child_state  = None
         self.rescue_child_state = None
         self.always_child_state = None
+        self.did_rescue         = False
         self.did_start_at_task  = False
 
     def __repr__(self):
@@ -81,7 +80,7 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did start at task? %s" % (
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
@@ -93,6 +92,7 @@ class HostState:
             self.tasks_child_state,
             self.rescue_child_state,
             self.always_child_state,
+            self.did_rescue,
             self.did_start_at_task,
         )
 
@@ -123,6 +123,7 @@ class HostState:
         new_state.run_state = self.run_state
         new_state.fail_state = self.fail_state
         new_state.pending_setup = self.pending_setup
+        new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
         if self.cur_dep_chain is not None:
             new_state.cur_dep_chain = self.cur_dep_chain[:]
@@ -412,6 +413,7 @@ class PlayIterator:
                         if len(block.rescue) > 0:
                             state.fail_state = self.FAILED_NONE
                         state.run_state = self.ITERATING_ALWAYS
+                        state.did_rescue = True
                     else:
                         task = block.rescue[state.cur_rescue_task]
                         if isinstance(task, Block) or state.rescue_child_state is not None:
@@ -434,6 +436,7 @@ class PlayIterator:
                     else:
                         if task is None or state.always_child_state.run_state == self.ITERATING_COMPLETE:
                             state.always_child_state = None
+                            continue
                 else:
                     if state.cur_always_task >= len(block.always):
                         if state.fail_state != self.FAILED_NONE:
@@ -447,6 +450,7 @@ class PlayIterator:
                             state.tasks_child_state = None
                             state.rescue_child_state = None
                             state.always_child_state = None
+                            state.did_rescue = False
                     else:
                         task = block.always[state.cur_always_task]
                         if isinstance(task, Block) or state.always_child_state is not None:
@@ -521,7 +525,7 @@ class PlayIterator:
             elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
                 return False
             else:
-                return True
+                return not state.did_rescue
         elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
             cur_block = self._blocks[state.cur_block]
             if len(cur_block.rescue) > 0 and state.fail_state & self.FAILED_RESCUE == 0:

@@ -111,6 +111,7 @@ class Netconf(object):
         try:
             self.device = Device(host, **kwargs)
             self.device.open()
+            self.device.timeout = params['timeout']
         except ConnectError:
             exc = get_exception()
             self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
@@ -174,23 +175,12 @@ class Netconf(object):
             return ele
 
     def load_config(self, config, commit=False, replace=False, confirm=None,
-                    comment=None, config_format='text', overwrite=False):
-
-        if all([replace, overwrite]):
-            self.raise_exc('setting both replace and overwrite to True is invalid')
+                    comment=None, config_format='text', overwrite=False, merge=False):
+        if (overwrite or replace) and config_format == 'set':
+            self.raise_exc('replace/overwrite cannot be True when config_format is `set`')
 
         if replace:
             merge = False
-            overwrite = False
-        elif overwrite:
-            merge = True
-            overwrite = False
-        else:
-            merge = True
-            overwrite = False
-
-        if overwrite and config_format == 'set':
-            self.raise_exc('replace cannot be True when config_format is `set`')
 
         self.lock_config()
 

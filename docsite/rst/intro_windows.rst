@@ -364,7 +364,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
 
-Bear in mind that using C(raw) will allways report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using C(raw) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 

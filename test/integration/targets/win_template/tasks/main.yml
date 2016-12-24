@@ -21,22 +21,22 @@
   win_template: src=foo.j2 dest={{win_output_dir}}/foo.templated
   register: template_result
 
-- assert: 
-    that: 
-        - "'changed' in template_result" 
-#        - "'dest' in template_result" 
-#        - "'group' in template_result" 
-#        - "'gid' in template_result" 
-#        - "'checksum' in template_result" 
-#        - "'owner' in template_result" 
-#        - "'size' in template_result" 
-#        - "'src' in template_result" 
-#        - "'state' in template_result" 
-#        - "'uid' in template_result" 
+- assert:
+    that:
+        - "'changed' in template_result"
+#        - "'dest' in template_result"
+#        - "'group' in template_result"
+#        - "'gid' in template_result"
+#        - "'checksum' in template_result"
+#        - "'owner' in template_result"
+#        - "'size' in template_result"
+#        - "'src' in template_result"
+#        - "'state' in template_result"
+#        - "'uid' in template_result"
 
 - name: verify that the file was marked as changed
-  assert: 
-    that: 
+  assert:
+    that:
       - "template_result.changed == true"
 
 - name: fill in a basic template again
@@ -46,9 +46,9 @@
   register: template_result2
 
 - name: verify that the template was not changed
-  assert: 
-    that: 
-      - "not template_result2|changed" 
+  assert:
+    that:
+      - "not template_result2|changed"
 
 # VERIFY CONTENTS
 
@@ -56,17 +56,17 @@
   win_copy: src=foo.txt dest={{win_output_dir}}\\foo.txt
 
 - name: compare templated file to known good
-  raw: fc.exe {{win_output_dir}}\\foo.templated {{win_output_dir}}\\foo.txt 
+  raw: fc.exe {{win_output_dir}}\\foo.templated {{win_output_dir}}\\foo.txt
   register: diff_result
 
 - debug: var=diff_result
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-#        - 'diff_result.stdout == ""' 
+  assert:
+    that:
+#        - 'diff_result.stdout == ""'
         - 'diff_result.stdout_lines[1] == "FC: no differences encountered"'
-        - "diff_result.rc == 0" 
+        - "diff_result.rc == 0"
 
 # VERIFY MODE
 # can't set file mode on windows so commenting this test out

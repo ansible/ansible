@@ -167,4 +167,3 @@
     that:
       - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
   when: ansible_fips|bool != True
-

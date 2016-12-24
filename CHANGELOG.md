@@ -9,6 +9,12 @@ Ansible Changes By Release
 * The version and release facts for OpenBSD hosts were reversed.  This has been
   changed so that version has the numeric portion and release has the name of
   the release.
+* removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
+  any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+* Blocks can now have a `name` field, to aid in playbook readability.
+* default strategy is now configurable via ansible.cfg or environment variable.
+* Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* ansible-doc now displays path to module
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -29,9 +35,30 @@ Ansible Changes By Release
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
+- free_ipa:
+  * ipa_group
+  * ipa_hbacrule
+  * ipa_hostgroup
+  * ipa_host
+  * ipa_role
+  * ipa_sudocmdgroup
+  * ipa_sudocmd
+  * ipa_sudorule
+  * ipa_user
+- infinibox:
+  * infini_export
+  * infini_export_client
+  * infini_fs
+  * infini_host
+  * infini_pool
+  * infini_vol
 - openwrt_init
 - windows:
   * win_say
+
+####New Callbacks:
+
+* dense: minimal stdout output with fallback to default when verbose
 
 ## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
 
@@ -1763,7 +1790,7 @@ New modules and plugins.
   * rax_clb *-- manages Rackspace cloud load balancers*
 - files
   * acl *-- set or get acls on a file*
-  * synchronize *-- a useful wraper around rsyncing trees of files*
+  * synchronize *-- a useful wrapper around rsyncing trees of files*
   * unarchive *-- pushes and extracts tarballs*
 - system
   * blacklist *-- add or remove modules from the kernel blacklist*

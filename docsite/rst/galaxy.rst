@@ -77,7 +77,7 @@ install a specific commit:
 Installing multiple roles from a file
 =====================================
 
-Beginning with Asible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
+Beginning with Ansible 1.8 it is possible to install multiple roles by including the roles in a *requirements.yml* file. The format of the file is YAML, and the 
 file extension must be either *.yml* or *.yaml*.
 
 Use the following command to install roles included in *requirements.yml*:
@@ -132,7 +132,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from GitLab or other git-based scm
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
-      version: 0.1.0
+      version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
 Dependencies
 ============
@@ -209,7 +209,7 @@ Container Enabled
 
 If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
-the role using [Ansible Container](https://github.com/ansible/ansible-container), and the meta directory includes a *container.yml* file.
+the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
 Search for roles
 ----------------
@@ -367,8 +367,7 @@ Use the *--branch* option to import a specific branch. If not specified, the def
 Role name
 =========
 
-By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name
-option to override this and set the name.
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name* option to override this and set the name.
 
 No wait
 =======

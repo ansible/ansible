@@ -47,14 +47,11 @@ class TestVariableManager(unittest.TestCase):
 
         v = VariableManager()
         vars = v.get_vars(loader=fake_loader, use_cache=False)
-        if 'omit' in vars:
-            del vars['omit']
-        if 'vars' in vars:
-            del vars['vars']
-        if 'ansible_version' in vars:
-            del vars['ansible_version']
-        if 'ansible_check_mode' in vars:
-            del vars['ansible_check_mode']
+
+        #FIXME: not sure why we remove all and only test playbook_dir
+        for remove in ['omit', 'vars', 'ansible_version', 'ansible_check_mode', 'ansible_playbook_python']:
+            if remove in vars:
+                del vars[remove]
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 

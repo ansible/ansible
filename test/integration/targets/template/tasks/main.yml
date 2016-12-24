@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: get default group
+  shell: id -gn
+  register: group
+
 - name: fill in a basic template
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
@@ -73,13 +77,13 @@
 # VERIFY dest as a directory does not break file attributes
 # Note: expanduser is needed to go down the particular codepath that was broken before
 - name: setup directory for test
-  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ ansible_env.GROUP | default('root') }}
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ group.stdout }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
   register: file_result
 
 - name: check that the file has the correct attributes
@@ -102,8 +106,8 @@
       - "dir_attrs.stat.pw_name == 'nobody'"
       - "dir_attrs.stat.mode == '0755'"
 
-- name: Check that template to a dirctory where the directory does not end with a / is allowed
-  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ ansible_env.GROUP | default('root') }}
+- name: Check that template to a directory where the directory does not end with a / is allowed
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ group.stdout }}
 
 - name: make a symlink to the templated file
   file:

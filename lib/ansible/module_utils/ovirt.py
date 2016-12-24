@@ -51,7 +51,7 @@ def check_sdk(module):
         )
 
 
-def get_dict_of_struct(struct):
+def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=None):
     """
     Convert SDK Struct type into dictionary.
     """
@@ -64,18 +64,32 @@ def get_dict_of_struct(struct):
     res = {}
     if struct is not None:
         for key, value in struct.__dict__.items():
+            nested = False
             key = remove_underscore(key)
             if value is None:
                 continue
+
             elif isinstance(value, sdk.Struct):
                 res[key] = get_dict_of_struct(value)
             elif isinstance(value, Enum) or isinstance(value, datetime):
                 res[key] = str(value)
-            elif isinstance(value, list):
+            elif isinstance(value, list) or isinstance(value, sdk.List):
+                if isinstance(value, sdk.List) and fetch_nested and value.href:
+                    value = connection.follow_link(value)
+                    nested = True
+
                 res[key] = []
                 for i in value:
                     if isinstance(i, sdk.Struct):
-                        res[key].append(get_dict_of_struct(i))
+                        if not nested:
+                            res[key].append(get_dict_of_struct(i))
+                        else:
+                            nested_obj = dict(
+                                (attr, getattr(i, attr))
+                                for attr in attributes if getattr(i, attr, None)
+                            )
+                            nested_obj['id'] = getattr(i, 'id', None),
+                            res[key].append(nested_obj)
                     elif isinstance(i, Enum):
                         res[key].append(str(i))
                     else:
@@ -265,6 +279,23 @@ def wait(
             time.sleep(float(poll_interval))
 
 
+def ovirt_facts_full_argument_spec(**kwargs):
+    """
+    Extend parameters of facts module with parameters which are common to all
+    oVirt facts modules.
+
+    :param kwargs: kwargs to be extended
+    :return: extended dictionary with common parameters
+    """
+    spec = dict(
+        auth=dict(required=True, type='dict'),
+        fetch_nested=dict(default=False, type='bool'),
+        nested_attributes=dict(type='list'),
+    )
+    spec.update(kwargs)
+    return spec
+
+
 def ovirt_full_argument_spec(**kwargs):
     """
     Extend parameters of module with parameters which are common to all oVirt modules.
@@ -277,6 +308,8 @@ def ovirt_full_argument_spec(**kwargs):
         timeout=dict(default=180, type='int'),
         wait=dict(default=True, type='bool'),
         poll_interval=dict(default=3, type='int'),
+        fetch_nested=dict(default=False, type='bool'),
+        nested_attributes=dict(type='list'),
     )
     spec.update(kwargs)
     return spec
@@ -326,6 +359,12 @@ class BaseModule(object):
         :return: Specific instance of sdk.Struct.
         """
         pass
+
+    def param(self, name, default=None):
+        """
+        Return a module parameter specified by it's name.
+        """
+        return self._module.params.get(name, default)
 
     def update_check(self, entity):
         """
@@ -421,7 +460,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def pre_remove(self, entity):
@@ -473,7 +517,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def action(
@@ -543,7 +592,12 @@ class BaseModule(object):
         return {
             'changed': self.changed,
             'id': entity.id,
-            type(entity).__name__.lower(): get_dict_of_struct(entity),
+            type(entity).__name__.lower(): get_dict_of_struct(
+                struct=entity,
+                connection=self._connection,
+                fetch_nested=self._module.params.get('fetch_nested'),
+                attributes=self._module.params.get('nested_attributes'),
+            ),
         }
 
     def search_entity(self, search_params=None):

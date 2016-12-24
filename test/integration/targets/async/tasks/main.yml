@@ -57,7 +57,7 @@
         - "'finished' not in async_result or async_result.finished == 0"
 
 - name: test skipped task handling
-  command: /bin/true 
+  command: /bin/true
   async: 15
   poll: 0
   when: False

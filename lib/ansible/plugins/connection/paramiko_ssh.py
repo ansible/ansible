@@ -89,7 +89,10 @@ class MyAddPolicy(object):
 
     def missing_host_key(self, client, hostname, key):
 
-        if C.HOST_KEY_CHECKING:
+        if all((C.HOST_KEY_CHECKING, not C.PARAMIKO_HOST_KEY_AUTO_ADD)):
+
+            if C.USE_PERSISTENT_CONNECTIONS:
+                raise AnsibleConnectionFailure('rejected %s host key for host %s: %s' % (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
             self.connection.connection_lock()
 
@@ -145,9 +148,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', ''),
-            getattr(self._play_context, 'ssh_common_args', ''),
-            getattr(self._play_context, 'ssh_args', ''),
+            getattr(self._play_context, 'ssh_extra_args', '') or '',
+            getattr(self._play_context, 'ssh_common_args', '') or '',
+            getattr(self._play_context, 'ssh_args', '') or '',
         ]
         if ssh_args is not None:
             args = self._split_ssh_args(' '.join(ssh_args))
@@ -227,7 +230,7 @@ class Connection(ConnectionBase):
                 self._play_context.remote_addr,
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
-                look_for_keys=True,
+                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
@@ -418,8 +421,9 @@ class Connection(ConnectionBase):
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
 
-        if self.sftp is not None:
-            self.sftp.close()
+        if hasattr(self, 'sftp'):
+            if self.sftp is not None:
+                self.sftp.close()
 
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 

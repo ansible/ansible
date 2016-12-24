@@ -43,7 +43,7 @@
       - "'before' in hg_result"
       - "'after' in hg_result"
       - "not hg_result.before"
-      - "hg_result.changed"      
+      - "hg_result.changed"
 
 - name: repeated checkout
   hg: repo={{ repo }} dest={{ checkout_dir }}
@@ -72,7 +72,3 @@
   assert:
     that:
       - "not hg_result2.changed"
-
-
-
-

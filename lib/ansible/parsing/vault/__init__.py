@@ -369,7 +369,7 @@ class VaultEditor:
         try:
             r = call(['shred', tmp_path])
         except (OSError, ValueError):
-            # shred is not available on this system, or some other error occured.
+            # shred is not available on this system, or some other error occurred.
             # ValueError caught because OS X El Capitan is raising an
             # exception big enough to hit a limit in python2-2.7.11 and below.
             # Symptom is ValueError: insecure pickle when shred is not
@@ -398,18 +398,18 @@ class VaultEditor:
             self._shred_file(tmp_path)
             raise
 
-        tmpdata = self.read_data(tmp_path)
+        b_tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
-        if existing_data == tmpdata and not force_save:
+        if existing_data == b_tmpdata and not force_save:
             self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
         # An existing vaultfile will always be UTF-8,
         # so decode to unicode here
-        enc_data = self.vault.encrypt(tmpdata.decode())
-        self.write_data(enc_data, tmp_path)
+        b_ciphertext = self.vault.encrypt(b_tmpdata)
+        self.write_data(b_ciphertext, tmp_path)
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
@@ -420,9 +420,9 @@ class VaultEditor:
 
         # A file to be encrypted into a vaultfile could be any encoding
         # so treat the contents as a byte string.
-        plaintext = self.read_data(filename)
-        ciphertext = self.vault.encrypt(plaintext)
-        self.write_data(ciphertext, output_file or filename)
+        b_plaintext = self.read_data(filename)
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+        self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
 

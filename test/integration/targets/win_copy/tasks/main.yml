@@ -57,7 +57,7 @@
 - name: initiate a basic copy
 #- name: initiate a basic copy, and also test the mode
 #  win_copy: src=foo.txt dest={{output_file}} mode=0444
-  win_copy: src=foo.txt dest={{output_file}} 
+  win_copy: src=foo.txt dest={{output_file}}
   register: copy_result
 
 - debug: var=copy_result
@@ -76,8 +76,8 @@
 #      - "file_result_check.mode == '0444'"
 
 - name: assert basic copy worked
-  assert: 
-    that: 
+  assert:
+    that:
       - "'changed' in copy_result"
 #      - "'dest' in copy_result"
 #      - "'group' in copy_result"
@@ -95,8 +95,8 @@
       - "copy_result.changed == true"
 
 - name: verify that the file checksum is correct
-  assert: 
-    that: 
+  assert:
+    that:
       - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
 
 - name: check the stat results of the file
@@ -106,7 +106,7 @@
 - debug: var=stat_results
 
 - name: assert the stat results are correct
-  assert: 
+  assert:
     that:
       - "stat_results.stat.exists == true"
 #      - "stat_results.stat.isblk == false"
@@ -120,8 +120,8 @@
   register: copy_result2
 
 - name: assert that the file was not changed
-  assert: 
-    that: 
+  assert:
+    that:
       - "not copy_result2|changed"
 
 # content system not available in win_copy right now
@@ -130,8 +130,8 @@
 #  register: copy_result3
 #
 #- name: assert that the file has changed
-#  assert: 
-#     that: 
+#  assert:
+#     that:
 #       - "copy_result3|changed"
 #       - "'content' not in copy_result3"
 
@@ -155,7 +155,7 @@
   register: stat_bar
 
 - name: check that a file in a deeper directory was transferred
-  win_stat: path={{win_output_dir}}/sub/subdir/subdir2/baz.txt 
+  win_stat: path={{win_output_dir}}/sub/subdir/subdir2/baz.txt
   register: stat_bar2
 
 - name: check that a file in a directory whose parent contains a directory alone was transferred
@@ -191,9 +191,9 @@
 
 # content param not available in win_copy
 #- name: overwrite the file again using the content system, also passing along file params
-#  win_copy: content="modified" dest={{output_file}} 
+#  win_copy: content="modified" dest={{output_file}}
 #  register: copy_result4
-  
+
 #- name: assert invalid copy input location fails
 #  win_copy: src=invalid_file_location_does_not_exist dest={{win_output_dir}}/file.txt
 #  ignore_errors: True
@@ -292,5 +292,3 @@
 
 - name: clean up foo.txt
   win_file: path={{win_output_dir}}/foo.txt state=absent
-
-

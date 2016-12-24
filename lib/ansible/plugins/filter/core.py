@@ -25,14 +25,13 @@ import itertools
 import json
 import os.path
 import ntpath
-import pipes
 import glob
 import re
 import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle
 from datetime import datetime
 import uuid
 
@@ -46,8 +45,9 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types, integer_types
 from ansible.compat.six.moves import reduce
+from ansible.compat.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -123,7 +123,7 @@ def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
@@ -199,9 +199,12 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
-    if isinstance(end, (int, long)):
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
+    if isinstance(end, integer_types):
         if not start:
             start = 0
         if not step:

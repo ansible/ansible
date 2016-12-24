@@ -5,10 +5,10 @@ BASESTRING_USERS=$(grep -r basestring . \
     --exclude-dir .tox \
     | grep isinstance \
     | grep -v \
+    -e test/results/ \
     -e lib/ansible/compat/six/_six.py \
     -e lib/ansible/module_utils/six.py \
-    -e lib/ansible/modules/core/ \
-    -e lib/ansible/modules/extras/ \
+    -e lib/ansible/modules/ \
     -e '^[^:]*:#'
     )
 

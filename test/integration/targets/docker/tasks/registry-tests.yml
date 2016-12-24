@@ -103,12 +103,12 @@
 - name: Setup nginx with a user/password
   copy:
     src: docker-registry.htpasswd
-    dest:  /etc/nginx/docker-registry.htpasswd
+    dest: /etc/nginx/docker-registry.htpasswd
 
 - name: Setup nginx with a config file
   copy:
     src: nginx-docker-registry.conf
-    dest:  /etc/nginx/conf.d/nginx-docker-registry.conf
+    dest: /etc/nginx/conf.d/nginx-docker-registry.conf
 
 - name: Setup nginx docker cert
   copy:
@@ -186,4 +186,3 @@
     line: "127.0.0.1  dockertest.ansible.com"
     dest: /etc/hosts
     state: absent
-

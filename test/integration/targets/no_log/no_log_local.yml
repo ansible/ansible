@@ -63,4 +63,3 @@
       - name: args should be logged when task-level no_log overrides play-level
         shell: echo "LOG_ME_OVERRIDE"
         no_log: false
-

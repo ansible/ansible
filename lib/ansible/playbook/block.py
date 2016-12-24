@@ -30,12 +30,16 @@ from ansible.playbook.taggable import Taggable
 
 class Block(Base, Become, Conditional, Taggable):
 
-    _block  = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
-    _always = FieldAttribute(isa='list', default=[], inherit=False)
-    _delegate_to = FieldAttribute(isa='list')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    # main block fields containing the task lists
+    _block            = FieldAttribute(isa='list', default=[], inherit=False)
+    _rescue           = FieldAttribute(isa='list', default=[], inherit=False)
+    _always           = FieldAttribute(isa='list', default=[], inherit=False)
+
+    # other fields
     _any_errors_fatal = FieldAttribute(isa='bool')
+    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_facts   = FieldAttribute(isa='bool', default=False)
+    _name             = FieldAttribute(isa='string', default='')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -55,6 +59,9 @@ class Block(Base, Become, Conditional, Taggable):
             self._parent = parent_block
 
         super(Block, self).__init__()
+
+    def __repr__(self):
+        return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
     def get_vars(self):
         '''
@@ -255,17 +262,6 @@ class Block(Base, Become, Conditional, Taggable):
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
 
-    def evaluate_conditional(self, templar, all_vars):
-        dep_chain = self.get_dep_chain()
-        if dep_chain:
-            for dep in dep_chain:
-                if not dep.evaluate_conditional(templar, all_vars):
-                    return False
-        if self._parent is not None:
-            if not self._parent.evaluate_conditional(templar, all_vars):
-                return False
-        return super(Block, self).evaluate_conditional(templar, all_vars)
-
     def set_loader(self, loader):
         self._loader = loader
         if self._parent:
@@ -281,7 +277,7 @@ class Block(Base, Become, Conditional, Taggable):
     def _get_attr_environment(self):
         return self._get_parent_attribute('environment', extend=True)
 
-    def _get_parent_attribute(self, attr, extend=False):
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
@@ -294,7 +290,7 @@ class Block(Base, Become, Conditional, Taggable):
                 try:
                     parent_value = getattr(self._parent, attr, None)
                     if extend:
-                        value = self._extend_value(value, parent_value)
+                        value = self._extend_value(value, parent_value, prepend)
                     else:
                         value = parent_value
                 except AttributeError:
@@ -303,7 +299,7 @@ class Block(Base, Become, Conditional, Taggable):
                 try:
                     parent_value = getattr(self._role, attr, None)
                     if extend:
-                        value = self._extend_value(value, parent_value)
+                        value = self._extend_value(value, parent_value, prepend)
                     else:
                         value = parent_value
 
@@ -313,7 +309,7 @@ class Block(Base, Become, Conditional, Taggable):
                         for dep in dep_chain:
                             dep_value = getattr(dep, attr, None)
                             if extend:
-                                value = self._extend_value(value, dep_value)
+                                value = self._extend_value(value, dep_value, prepend)
                             else:
                                 value = dep_value
 
@@ -325,7 +321,7 @@ class Block(Base, Become, Conditional, Taggable):
                 try:
                     parent_value = getattr(self._play, attr, None)
                     if extend:
-                        value = self._extend_value(value, parent_value)
+                        value = self._extend_value(value, parent_value, prepend)
                     else:
                         value = parent_value
                 except AttributeError:

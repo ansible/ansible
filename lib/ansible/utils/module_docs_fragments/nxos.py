@@ -39,7 +39,7 @@ options:
   username:
     description:
       - Configures the username to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+        the remote device.  This value is used to authenticate
         either the CLI login or the nxapi authentication depending on which
         transport is used. If the value is not specified in the task, the
         value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
@@ -52,6 +52,15 @@ options:
         value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
+  timeout:
+    description:
+      - Specifies the timeout in seconds for communicating with the network device
+        for either connecting or sending commands.  If the timeout is
+        exceeded before the operation is completed, the module will error.
+        NX-API can be slow to return on long-running commands (sh mac, sh bgp, etc).
+    require: false
+    default: 10
+    version_added: 2.3
   ssh_keyfile:
     description:
       - Specifies the SSH key to use to authenticate the connection to
@@ -73,13 +82,6 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-  timeout:
-    description:
-      - Specifies idle timeout in seconds.  NX-API can be slow to 
-        return on long-running commands (sh mac, sh bgp, etc).
-    required: false
-    default: 10
-    version_added: 2.3
   provider:
     description:
       - Convenience method that allows all I(nxos) arguments to be passed as

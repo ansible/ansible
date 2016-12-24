@@ -204,7 +204,7 @@ class VcaAnsibleModule(AnsibleModule):
 
 VCA_REQ_ARGS = ['instance_id', 'vdc_name']
 VCHS_REQ_ARGS = ['service_id']
-
+VCD_REQ_ARGS = []
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:

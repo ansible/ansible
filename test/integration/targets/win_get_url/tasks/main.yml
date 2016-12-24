@@ -36,7 +36,7 @@
   register: win_get_url_result
 
 - name: check that url was downloaded
-  assert: 
+  assert:
     that:
       - "not win_get_url_result|failed"
       - "win_get_url_result|changed"
@@ -50,7 +50,7 @@
   register: win_get_url_result_again
 
 - name: check that url was downloaded again
-  assert: 
+  assert:
     that:
       - "not win_get_url_result_again|failed"
       - "win_get_url_result_again|changed"
@@ -63,7 +63,7 @@
   register: win_get_url_result_noforce
 
 - name: check that url was not downloaded again
-  assert: 
+  assert:
     that:
       - "not win_get_url_result_noforce|failed"
       - "not win_get_url_result_noforce|changed"
@@ -76,7 +76,7 @@
   ignore_errors: true
 
 - name: check that the download failed for an invalid url
-  assert: 
+  assert:
     that:
       - "win_get_url_result_invalid_link|failed"
 
@@ -88,7 +88,7 @@
   ignore_errors: true
 
 - name: check that the download failed for an invalid path
-  assert: 
+  assert:
     that:
       - "win_get_url_result_invalid_path|failed"
 
@@ -100,6 +100,6 @@
   ignore_errors: true
 
 - name: check that the download failed if dest is a directory
-  assert: 
+  assert:
     that:
       - "win_get_url_result_dir_path|failed"

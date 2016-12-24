@@ -19,14 +19,14 @@
 # ============================================================
 # Assert output variable name/value match mysql variable name/value
 #
-- name: assert output message changed value 
+- name: assert output message changed value
   assert: { that: "output.changed == {{changed}}" }
 
 - set_fact:
      key_name: "{{var_name}}"
      key_value: "{{output.msg[0][0]}}"
 
-- name: run mysql command to show variable 
+- name: run mysql command to show variable
   command: mysql "-e show variables like '{{var_name}}';"
   register: result
 

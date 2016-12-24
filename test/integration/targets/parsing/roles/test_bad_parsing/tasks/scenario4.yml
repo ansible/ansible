@@ -2,4 +2,3 @@
   file: "name={{ bad_var }}"
   failed_when: False
   tags: scenario4
-

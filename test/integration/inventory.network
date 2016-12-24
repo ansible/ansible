@@ -4,7 +4,9 @@
 ansible_python_interpreter=python
 
 [eos]
+#veos-dut-01
 veos01
+
 
 [nxos]
 nxos01
@@ -23,7 +25,7 @@ vsrx01
 clvx01
 
 [vyos]
-vyos01
+vyos-dut-01
 
 [ops]
 ops01

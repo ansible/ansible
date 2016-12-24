@@ -22,7 +22,6 @@ __metaclass__ = type
 import errno
 import fcntl
 import os
-import pipes
 import pty
 import select
 import subprocess
@@ -30,14 +29,15 @@ import time
 
 from ansible import constants as C
 from ansible.compat.six import PY3, text_type, binary_type
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.path import unfrackpath, makedirs_safe
 
+boolean = C.mk_boolean
 
 try:
     from __main__ import display
@@ -324,7 +324,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
-        display_cmd = list(map(pipes.quote, map(to_text, cmd)))
+        display_cmd = list(map(shlex_quote, map(to_text, cmd)))
         display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
@@ -626,9 +626,12 @@ class Connection(ConnectionBase):
         for method in methods:
             if method == 'sftp':
                 cmd = self._build_command('sftp', to_bytes(host))
-                in_data = u"{0} {1} {2}\n".format(sftp_action, pipes.quote(in_path), pipes.quote(out_path))
+                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
             elif method == 'scp':
-                cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, pipes.quote(out_path)))
+                if sftp_action == 'get':
+                    cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
+                else:
+                    cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
 
             in_data = to_bytes(in_data, nonstring='passthru')

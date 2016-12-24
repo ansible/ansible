@@ -22,19 +22,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pipes
 import pwd
 import random
 import re
 import string
 
 from ansible.compat.six import iteritems, string_types
+from ansible.compat.six.moves import shlex_quote
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.utils.boolean import boolean
+
+boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 
@@ -60,6 +61,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
    pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
    shell            = ('ansible_shell_type',),
+   network_os       = ('ansible_network_os',),
    become           = ('ansible_become',),
    become_method    = ('ansible_become_method',),
    become_user      = ('ansible_become_user',),
@@ -164,6 +166,7 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _network_os       = FieldAttribute(isa='string')
     _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args  = FieldAttribute(isa='string')
     _sftp_extra_args  = FieldAttribute(isa='string')
@@ -467,7 +470,7 @@ class PlayContext(Base):
             becomecmd   = None
             randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
-            success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+            success_cmd = shlex_quote('echo %s; %s' % (success_key, cmd))
 
             if executable:
                 command = '%s -c %s' % (executable, success_cmd)
@@ -496,7 +499,7 @@ class PlayContext(Base):
                 # done for older versions of sudo that do not support the option.
                 #
                 # Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with pipes.quote()
+                # directly doesn't work, so we shellquote it with shlex_quote()
                 # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
@@ -518,7 +521,7 @@ class PlayContext(Base):
                     return bool(b_SU_PROMPT_LOCALIZATIONS_RE.match(b_data))
                 prompt = detect_su_prompt
 
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote(command))
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, shlex_quote(command))
 
             elif self.become_method == 'pbrun':
 
@@ -554,7 +557,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                #FIXME: make shell independant
+                #FIXME: make shell independent
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
             elif self.become_method == 'dzdo':
@@ -562,7 +565,7 @@ class PlayContext(Base):
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, pipes.quote(prompt), self.become_user, command)
+                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 

@@ -20,12 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pipes
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.play_context import PlayContext
@@ -53,7 +53,7 @@ class TestPlayContext(unittest.TestCase):
     def test_play_context(self):
         (options, args) = self._parser.parse_args(['-vv', '--check'])
         play_context = PlayContext(options=options)
-        self.assertEqual(play_context.connection, 'smart')
+        self.assertEqual(play_context.connection, C.DEFAULT_TRANSPORT)
         self.assertEqual(play_context.remote_addr, None)
         self.assertEqual(play_context.remote_user, None)
         self.assertEqual(play_context.password, '')
@@ -181,7 +181,7 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_pass = 'testpass'
         play_context.become_method = 'dzdo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, pipes.quote(play_context.prompt), play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, shlex_quote(play_context.prompt), play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
 class TestTaskAndVariableOverrride(unittest.TestCase):
 

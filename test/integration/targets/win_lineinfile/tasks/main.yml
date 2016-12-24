@@ -30,7 +30,7 @@
   register: result
 
 - name: check win_stat file result
-  assert: 
+  assert:
     that:
       - "result.stat.exists"
       - "not result.stat.isdir"
@@ -638,4 +638,3 @@
   assert:
     that:
     - "result.stat.checksum == '66a72e71f42c4775f4326da95cfe82c8830e5022'"
-

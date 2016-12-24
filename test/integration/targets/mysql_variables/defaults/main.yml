@@ -2,4 +2,3 @@
 # defaults file for test_mysql_variables
 user: 'user1'
 password: 'password1'
-

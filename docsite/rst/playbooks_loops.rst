@@ -532,7 +532,7 @@ One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` varia
 
     # show all the hosts in the current play
     - debug: msg={{ item }}
-      with_items: play_hosts
+      with_items: "{{ play_hosts }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
