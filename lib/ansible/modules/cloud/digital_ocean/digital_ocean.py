@@ -65,7 +65,7 @@ options:
      - This is the slug of the region you would like your server to be created in.
   ssh_key_ids:
     description:
-     - Optional, array of of SSH key (numeric) ID that you would like to be added to the server.
+     - Optional, array of SSH key (numeric) ID that you would like to be added to the server.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
