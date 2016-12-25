@@ -237,12 +237,6 @@ import tempfile
 import platform
 import pipes
 
-try:
-    import selinux
-    HAS_SELINUX = True
-except ImportError:
-    HAS_SELINUX = False
-
 CRONCMD = "/usr/bin/crontab"
 
 class CronTabError(Exception):
@@ -345,8 +339,8 @@ class CronTab(object):
                 self.module.fail_json(msg=err)
 
         # set SELinux permissions
-        if HAS_SELINUX:
-            selinux.selinux_lsetfilecon_default(self.cron_file)
+        if self.module.selinux_enabled() and self.cron_file:
+            self.module.set_default_selinux_context(self.cron_file, False)
 
     def do_comment(self, name):
         return "%s%s" % (self.ansible, name)
