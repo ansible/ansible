@@ -145,6 +145,7 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/usr/pkg/bin/pkgin',   'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
+                 { 'path' : '/opt/tools/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
                  { 'path' : '/usr/local/bin/brew',  'name' : 'homebrew' },
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
@@ -2247,7 +2248,7 @@ class Darwin(Hardware):
 class HurdHardware(LinuxHardware):
     """
     GNU Hurd specific subclass of Hardware. Define memory and mount facts
-    based on procfs compatibility translator mimicking the interface of 
+    based on procfs compatibility translator mimicking the interface of
     the Linux kernel.
     """
 
@@ -3016,7 +3017,7 @@ class NetBSDNetwork(GenericBsdIfconfigNetwork):
     """
     platform = 'NetBSD'
 
-    def parse_media_line(self, words, current_if, ips): 
+    def parse_media_line(self, words, current_if, ips):
         # example of line:
         # $ ifconfig
         # ne0: flags=8863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST> mtu 1500
