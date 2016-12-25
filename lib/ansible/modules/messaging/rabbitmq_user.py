@@ -141,7 +141,7 @@ EXAMPLES = '''
         configure_priv: .*
         read_priv: .*
         write_priv: .*
-    state: present
+    state: append
   with_items:
     - one
     - two
