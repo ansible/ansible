@@ -72,10 +72,40 @@
     that:
       - "absent2.changed"
 
+# Test version constraints
+
+- name: install package with version constraint
+  pip: name={{ pip_test_package }} version="<=4.2.0" state=present
+  register: version
+
+- name: assert package installed correctly
+  assert:
+    that:
+      - "version.changed"
+
+- name: ensure package is installed
+  pip: name={{ pip_test_package }} version="<=4.2.0" state=present
+  register: version2
+
+- name: assert no changes ocurred
+  assert:
+    that:
+      - "version2.changed == False"
+
+- name: run with check_mode
+  pip: name={{ pip_test_package }} version="<=4.2.0" state=present
+  check_mode: yes
+  register: version3
+
+- name: assert not changes ocurred
+  assert:
+    that:
+      - "version3.changed == False"
+
 # put the test package back
 
 - name: now put it back in case someone wanted it (like us!)
-  pip: name={{ pip_test_package }} state=present
+  pip: name={{ pip_test_package }} version="4.2.0" state=present
 
 
 # Test virtualenv installations

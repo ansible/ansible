@@ -247,7 +247,10 @@ def _get_full_name(name, version=None):
     if version is None:
         resp = name
     else:
-        resp = name + '==' + version
+        # prepend '==' if no constraint has been specified
+        if version and version[0].isdigit():
+            version = '==' + version
+        resp = name + version
     return resp
 
 
