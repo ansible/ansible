@@ -1618,9 +1618,10 @@ class AnsibleModule(object):
         # string into a dict/list so transform it back into json here
         if isinstance(value, (text_type, binary_type)):
             return value.strip()
-        else:
-            if isinstance(value, (list, tuple, dict)):
-                return json.dumps(value)
+        elif isinstance(value, (bool, list, tuple, dict)):
+            return json.dumps(value)
+        elif value is None:
+            return json.dumps(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
