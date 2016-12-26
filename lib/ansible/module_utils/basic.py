@@ -1618,7 +1618,7 @@ class AnsibleModule(object):
         # string into a dict/list so transform it back into json here
         if isinstance(value, (text_type, binary_type)):
             return value.strip()
-        elif isinstance(value, (bool, list, tuple, dict)):
+        elif isinstance(value, (bool, float, integer_types, list, tuple, dict)):
             return json.dumps(value)
         elif value is None:
             return json.dumps(value)
