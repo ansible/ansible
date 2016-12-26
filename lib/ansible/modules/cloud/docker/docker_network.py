@@ -165,9 +165,9 @@ from ansible.module_utils.docker_common import *
 try:
     from docker import utils
     if HAS_DOCKER_PY_2:
-      from docker.types import Ulimit, IPAMPool, IPAMConfig
+        from docker.types import Ulimit, IPAMPool, IPAMConfig
     else:
-      from docker.utils.types import Ulimit
+        from docker.utils.types import Ulimit
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
