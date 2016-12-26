@@ -18,7 +18,3 @@ include MANIFEST.in
 include CHANGELOG.md
 include contrib/README.md
 recursive-include contrib/inventory *
-exclude lib/ansible/modules/core/.git*
-exclude lib/ansible/modules/extras/.git*
-prune lib/ansible/modules/core/.git
-prune lib/ansible/modules/extras/.git

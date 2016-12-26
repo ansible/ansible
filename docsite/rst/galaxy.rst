@@ -367,8 +367,7 @@ Use the *--branch* option to import a specific branch. If not specified, the def
 Role name
 =========
 
-By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name
-option to override this and set the name.
+By default the name given to the role will be derived from the GitHub repository name. However, you can use the *--role-name* option to override this and set the name.
 
 No wait
 =======
