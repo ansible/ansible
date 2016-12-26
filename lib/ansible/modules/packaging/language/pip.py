@@ -101,9 +101,9 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag for versioning URLs.
+      - Pass the editable flag.
     required: false
-    default: yes
+    default: false
     version_added: "2.0"
   chdir:
     description:
@@ -158,10 +158,9 @@ EXAMPLES = '''
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
-# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+).
 - pip:
     name: git+http://myrepo/app/MyApp
-    editable: false
 
 # Install (MyApp) from local tarball
 - pip:
@@ -399,7 +398,7 @@ def main():
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
             extra_args=dict(),
-            editable=dict(default=True, type='bool'),
+            editable=dict(default=False, type='bool'),
             chdir=dict(type='path'),
             executable=dict(),
             umask=dict(),
@@ -498,7 +497,7 @@ def main():
                     has_vcs = True
                     break
 
-        if has_vcs and module.params['editable']:
+        if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
