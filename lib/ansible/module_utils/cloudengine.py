@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #
 # This file is part of Ansible
 #
@@ -72,10 +71,11 @@ class CeConfigMixin(object):
                           'commit label %s' % checkpoint])
 
         try:
-            self.configure(config)
-        except NetworkError:
-            self.load_checkpoint(checkpoint)
-            raise
+            try:
+                self.configure(config)
+            except NetworkError:
+                self.load_checkpoint(checkpoint)
+                raise
         finally:
             # get commit id and clear it
             responses = self.execute(
