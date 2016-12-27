@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = """
 ---
-module: ce_command
+module: ce_command_test
 version_added: "2.3"
 author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Run arbitrary command on HUAWEI CloudEngine devices
