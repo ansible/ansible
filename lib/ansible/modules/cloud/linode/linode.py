@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.1'}
+
 DOCUMENTATION = '''
 ---
 module: linode
@@ -118,12 +122,6 @@ options:
   backupweeklyday:
     description:
     - Integer value for what day of the week to store weekly backups.
-    default: null
-    type: integer
-    version_added: "2.2"
-  backupweeklyday:
-    description:
-    - Integer value for time of the day to run backup.
     default: null
     type: integer
     version_added: "2.2"
