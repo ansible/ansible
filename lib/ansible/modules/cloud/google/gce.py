@@ -155,7 +155,7 @@ options:
   external_ip:
     version_added: "1.9"
     description:
-      - type of external ip, ephemeral by default; alternatively, a list of fixed gce ips or ip names can be given (if there is not enough specified ip, 'ephemeral' will be used). Specify 'none' if no external ip is desired.
+      - type of external ip, ephemeral by default; alternatively, a fixed gce ip or ip name can be given. Specify 'none' if no external ip is desired.
     required: false
     default: "ephemeral"
   disk_auto_delete:
@@ -389,18 +389,14 @@ def create_instances(module, gce, instance_names, number):
 
     if external_ip == "none":
         instance_external_ip = None
-    elif not isinstance(external_ip, basestring):
+    elif external_ip != "ephemeral":
         try:
-            if len(external_ip) != 0:
-                instance_external_ip = external_ip.pop(0)
-                # check if instance_external_ip is an ip or a name
-                try:
-                    socket.inet_aton(instance_external_ip)
-                    instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
-                except socket.error:
-                    instance_external_ip = gce.ex_get_address(instance_external_ip)
-            else:
-                instance_external_ip = 'ephemeral'
+            # check if instance_external_ip is an ip or a name
+            try:
+                socket.inet_aton(instance_external_ip)
+                instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
+            except socket.error:
+                instance_external_ip = gce.ex_get_address(instance_external_ip)
         except GoogleBaseError as e:
             module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
     else:
