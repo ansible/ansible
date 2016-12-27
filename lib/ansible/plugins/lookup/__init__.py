@@ -45,6 +45,12 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         else:
             return self._loader.get_basedir()
 
+    def get_search_path(self, variables):
+        if 'ansible_search_path' in variables:
+            return variables['ansible_search_path']
+        else:
+            return self.get_basedir(variables)
+
     @staticmethod
     def _flatten(terms):
         ret = []
@@ -107,10 +113,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         Return a file (needle) in the task's expected search path.
         '''
 
-        if 'ansible_search_path' in myvars:
-            paths = myvars['ansible_search_path']
-        else:
-            paths = self.get_basedir(myvars)
+        paths = self.get_search_path(myvars)
 
         result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
         if result is None and not ignore_missing:
