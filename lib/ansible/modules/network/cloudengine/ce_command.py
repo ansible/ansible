@@ -19,7 +19,7 @@
 DOCUMENTATION = """
 ---
 module: ce_command
-version_added: "2.2"
+version_added: "2.3"
 author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Run arbitrary command on HUAWEI CloudEngine devices
 description:
