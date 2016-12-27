@@ -16,10 +16,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = """
 ---
-module: ce_command
-version_added: "2.2"
+
+module: ce_command_test
+version_added: "2.3"
 author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Run arbitrary command on HUAWEI CloudEngine devices
 description:
