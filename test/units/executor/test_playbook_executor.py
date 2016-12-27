@@ -22,7 +22,6 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock
 
-from collections import Counter
 
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
@@ -173,8 +172,8 @@ class TestPlaybookExecutor(unittest.TestCase):
         play = playbook.get_plays()[0]
         play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
-        self.assertItemsEqual(map(Counter, pbe._get_serialized_batches(play)),
-                              [Counter(['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9'])])
+        self.assertEqual(map(set, pbe._get_serialized_batches(play)),
+                              [set(['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9'])])
 
         # real test of grouping feature: these test case cannot use simple strings as hosts
         # instead, playbooks are tested against several variants of inventory
