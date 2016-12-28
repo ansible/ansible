@@ -467,7 +467,7 @@ class LinuxService(Service):
             self.upstart_version = LooseVersion('0.0.0')
             try:
                 version_re = re.compile(r'\(upstart (.*)\)')
-                rc,stdout,stderr = self.module.run_command('initctl version')
+                rc,stdout,stderr = self.module.run_command('%s version' % location['initctl'])
                 if rc == 0:
                     res = version_re.search(stdout)
                     if res:
