@@ -35,6 +35,7 @@ options:
   access_token:
     description:
      - Bigmon access token.
+    required: false
 
 notes:
   - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
