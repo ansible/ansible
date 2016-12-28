@@ -70,3 +70,11 @@ integrations:
       on_failure: always
       on_start: never
       on_pull_request: always
+    - integrationName: slack
+      type: slack
+      recipients:
+      - "#shippable"
+      on_success: change
+      on_failure: always
+      on_start: never
+      on_pull_request: never    
