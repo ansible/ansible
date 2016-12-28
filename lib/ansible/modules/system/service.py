@@ -475,9 +475,7 @@ class LinuxService(Service):
             except:
                 pass  # we'll use the default of 0.0.0
 
-            if location.get('start', False):
-                # upstart -- rather than being managed by one command, start/stop/restart are actual commands
-                self.svc_cmd = ''
+            self.svc_cmd = location['initctl']
 
         elif location.get('rc-service', False):
             # service is managed by OpenRC
