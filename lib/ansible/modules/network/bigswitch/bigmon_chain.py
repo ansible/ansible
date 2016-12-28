@@ -36,6 +36,13 @@ options:
     description:
      - The controller IP address.
     required: true
+  validate_certs:
+    description:
+      - If C(false), SSL certificates will not be validated. This should only be used
+        on personally controlled devices using self-signed certificates.
+    required: false
+    default: true
+    choices: [true, false]
   access_token:
     description:
      - Bigmon access token.
