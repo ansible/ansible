@@ -45,10 +45,10 @@ options:
      - Fingerprint of the key which you want to remove.
   key:
     description:
-     - Public Key string ({type} {base64 encoded key} {description})
+     - Public Key string ({type} {base64 encoded key} {description}).
   key_file:
     description:
-     - File with the public key
+     - File with the public key.
 
 requirements:
   - "python >= 2.6"

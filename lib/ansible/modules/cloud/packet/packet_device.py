@@ -39,7 +39,7 @@ options:
 
   count:
     description:
-      - The number of devices to create. Count number can he included in hostname via the %d string formatter.
+      - The number of devices to create. Count number can be included in hostname via the %d string formatter.
 
   count_offset:
     description:
@@ -51,7 +51,7 @@ options:
 
   facility:
     description:
-      - Facility slug for device creation. As of 2016, it should be one of [ewr1, sjc1. ams1].
+      - Facility slug for device creation. As of 2016, it should be one of [ewr1, sjc1, ams1, nrt1].
 
   features:
     description:
@@ -140,7 +140,7 @@ EXAMPLES = '''
       plan: baremetal_0
       facility: sjc1
 
-- name: Create 3 coreos devices with userdata, wait till they get IPs and then wait for SSH
+- name: Create 3 coreos devices with userdata, wait until they get IPs and then wait for SSH
   hosts: localhost
   tasks:
   - name: create 3 devices and register their facts
@@ -322,10 +322,10 @@ def is_valid_uuid(myuuid):
 
 
 def listify_string_name_or_id(s):
-    if ',' is s:
-        return [i.strip() for i in s.split(',')]
+    if ',' in s:
+        return [i for i in s.split(',')]
     else:
-        return [s.strip()]
+        return [s]
 
 
 def get_hostname_list(module):
@@ -430,7 +430,6 @@ def wait_for_ips(module, packet_conn, created_devices):
                                             packet_conn)
         if all_have_public_ip(refreshed):
             return refreshed
-            break
         time.sleep(5)
     
     raise Exception("Waiting for IP assignment timed out. Hostnames: %s"
