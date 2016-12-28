@@ -899,8 +899,13 @@ class LinuxService(Service):
         arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV and OpenRC take the form <cmd> <name> <action>
-                svc_cmd = "%s %s" % (self.svc_cmd, self.name)
+                if self.svc_cmd.endswith("initctl"):
+                    # initctl commands take the form <cmd> <action> <name>
+                    svc_cmd = self.svc_cmd
+                    arguments = "%s %s" % (self.name, arguments)
+                else:
+                    # SysV and OpenRC take the form <cmd> <name> <action>
+                    svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
