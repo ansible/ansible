@@ -20,13 +20,13 @@ DOCUMENTATION = '''
 module: redhat_repository
 short_description: Manage repositories with RHSM using the C(subscription-manager) command
 description:
-    - List, enable and disable repositories with the Red Hat Subscription Management entitlement platform using the C(subscription-manager) command
-version_added: 2.3
+    - Manage repositories with the Red Hat Subscription Management entitlement platform using the C(subscription-manager) command
 author: "Jerome Fenal (@jfenal)"
 notes:
     - In order to be able to enable repositories, a system will
       need first to be subscribed to RHSM. Use the
       C(redhat_subscription) Ansible module for that matter.
+version_added: "2.3"
 requirements:
     - subscription-manager
 options:
@@ -35,7 +35,7 @@ options:
             - I(RepoIDs) of repositories to enable or disable
               When specifying multiple repos, separate them with a ",".
               To specify all repositories, use "*".
-        required: True
+        required: False
         default: null
     state:
         description:
@@ -43,7 +43,6 @@ options:
         required: False
         choices: [ "enabled", "disabled" ]
         default: "enabled"
-        required: False
     list:
         description:
             - List either all repositories, or only enabled or disabled
