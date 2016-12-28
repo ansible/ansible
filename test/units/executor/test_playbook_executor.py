@@ -172,7 +172,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         play = playbook.get_plays()[0]
         play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
-        self.assertEqual(map(set, pbe._get_serialized_batches(play)),
+        self.assertEqual([set(b) for b in pbe._get_serialized_batches(play)],
                               [set(['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9'])])
 
         # real test of grouping feature: these test case cannot use simple strings as hosts
@@ -188,7 +188,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         gh_odd = [h for h in grouping_hosts if h['testgroup'] == 'odd']
         # in the basic cases, one even and one odd host are processed together; this is just like pythonic zip
         #  (except that we require list, not tuples)
-        grouping_host_zip_pairs = map(list, zip(gh_even, gh_odd))
+        grouping_host_zip_pairs = [list(b) for b in zip(gh_even, gh_odd)]
 
         # simple case: with serial=1, it's just like python's zip
         #  and 20% is the same as 1, because both slices have size==5
