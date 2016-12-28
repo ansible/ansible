@@ -32,6 +32,10 @@ options:
      - Whether the service chain should be present or absent.
     default: present
     choices: ['present', 'absent']
+  controller:
+    description:
+     - The controller IP address.
+    required: true
   access_token:
     description:
      - Bigmon access token.
