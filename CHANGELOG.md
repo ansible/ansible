@@ -14,6 +14,7 @@ Ansible Changes By Release
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* ansible-doc now displays path to module
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -44,6 +45,13 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- infinibox:
+  * infini_export
+  * infini_export_client
+  * infini_fs
+  * infini_host
+  * infini_pool
+  * infini_vol
 - openwrt_init
 - windows:
   * win_say

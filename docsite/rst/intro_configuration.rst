@@ -91,7 +91,8 @@ allow_world_readable_tmpfiles
 =============================
 
 .. versionadded:: 2.1
-This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task. 
+
+This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
 
 It is useful when becoming an unprivileged user::
 
@@ -1018,6 +1019,7 @@ control_path_dir
 This is the base directory of the ControlPath sockets.
 It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
+
     control_path_dir=$HOME/.ansible/cp
 
 .. _scp_if_ssh:

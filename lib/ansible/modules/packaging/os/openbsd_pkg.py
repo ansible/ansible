@@ -68,6 +68,23 @@ options:
           - When used in combination with the 'build' option, allows overriding
             the default ports source directory.
         version_added: "2.1"
+    clean:
+        required: false
+        choices: [ yes, no ]
+        default: no
+        description:
+          - When updating or removing packages, delete the extra configuration
+            file(s) in the old packages which are annotated with @extra in
+            the packaging-list.
+        version_added: "2.3"
+    quick:
+        required: false
+        choices: [ yes, no ]
+        default: no
+        description:
+          - Replace or delete packages quickly; do not bother with checksums
+            before removing normal files.
+        version_added: "2.3"
 '''
 
 EXAMPLES = '''
@@ -111,6 +128,12 @@ EXAMPLES = '''
 - openbsd_pkg:
     name: *
     state: latest
+
+# Purge a package and it's configuration files
+- openbsd_pkg: name=mpd clean=yes state=absent
+
+# Quickly remove a package without checking checksums
+- openbsd_pkg: name=qt5 quick=yes state=absent
 '''
 
 # Function used for executing commands.
@@ -229,14 +252,19 @@ def package_present(name, installed_state, pkg_spec, module):
 
 # Function used to make sure a package is the latest available version.
 def package_latest(name, installed_state, pkg_spec, module):
-
     if module.params['build'] is True:
         module.fail_json(msg="the combination of build=%s and state=latest is not supported" % module.params['build'])
 
+    upgrade_cmd = 'pkg_add -um'
+
     if module.check_mode:
-        upgrade_cmd = 'pkg_add -umn'
-    else:
-        upgrade_cmd = 'pkg_add -um'
+        upgrade_cmd += 'n'
+
+    if module.params['clean']:
+        upgrade_cmd += 'c'
+
+    if module.params['quick']:
+        upgrade_cmd += 'q'
 
     pre_upgrade_name = ''
 
@@ -282,13 +310,18 @@ def package_latest(name, installed_state, pkg_spec, module):
 
 # Function used to make sure a package is not installed.
 def package_absent(name, installed_state, module):
+    remove_cmd = 'pkg_delete -I'
+
     if module.check_mode:
-        remove_cmd = 'pkg_delete -In'
-    else:
-        remove_cmd = 'pkg_delete -I'
+        remove_cmd += 'n'
+
+    if module.params['clean']:
+        remove_cmd += 'c'
+
+    if module.params['quick']:
+        remove_cmd += 'q'
 
     if installed_state is True:
-
         # Attempt to remove the package.
         rc, stdout, stderr = execute_command("%s %s" % (remove_cmd, name), module)
 
@@ -479,6 +512,8 @@ def main():
             state = dict(required=True, choices=['absent', 'installed', 'latest', 'present', 'removed']),
             build = dict(default='no', type='bool'),
             ports_dir = dict(default='/usr/ports'),
+            quick = dict(default='no', type='bool'),
+            clean = dict(default='no', type='bool')
         ),
         supports_check_mode = True
     )

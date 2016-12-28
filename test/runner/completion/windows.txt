@@ -1,0 +1,7 @@
+2008-SP2
+2008-R2_SP1
+2012-RTM
+2012-R2_RTM
+2016-English-Full-Base
+2016-English-Full-Containers
+2016-English-Nano-Base

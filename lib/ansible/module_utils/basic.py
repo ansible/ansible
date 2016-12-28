@@ -727,7 +727,6 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
-
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
                 'str': self._check_type_str,
                 'list': self._check_type_list,
@@ -1355,6 +1354,7 @@ class AnsibleModule(object):
 
     def _check_arguments(self, check_invalid_arguments):
         self._syslog_facility = 'LOG_USER'
+        unsupported_parameters = set()
         for (k,v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
@@ -1385,12 +1385,16 @@ class AnsibleModule(object):
                 self._name = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
-                self.fail_json(msg="unsupported parameter for module: %s" % k)
+                unsupported_parameters.add(k)
 
             #clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
 
+        if unsupported_parameters:
+            self.fail_json(msg="Unsupported parameters for (%s) module: %s. Supported parameters include: %s" % (self._name,
+                                                                                                                 ','.join(sorted(list(unsupported_parameters))),
+                                                                                                                 ','.join(sorted(self.argument_spec.keys()))))
         if self.check_mode and not self.supports_check_mode:
                 self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
@@ -1839,7 +1843,7 @@ class AnsibleModule(object):
                 bin_path = path
                 break
         if required and bin_path is None:
-            self.fail_json(msg='Failed to find required executable %s' % arg)
+            self.fail_json(msg='Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
         return bin_path
 
     def boolean(self, arg):
@@ -2003,8 +2007,22 @@ class AnsibleModule(object):
         if os.path.exists(b_dest):
             try:
                 dest_stat = os.stat(b_dest)
+
+                # copy mode and ownership
                 os.chmod(b_src, dest_stat.st_mode & PERM_BITS)
                 os.chown(b_src, dest_stat.st_uid, dest_stat.st_gid)
+
+                # try to copy flags if possible
+                if hasattr(os, 'chflags') and hasattr(dest_stat, 'st_flags'):
+                    try:
+                        os.chflags(b_src, dest_stat.st_flags)
+                    except OSError:
+                        e = get_exception()
+                        for err in 'EOPNOTSUPP', 'ENOTSUP':
+                            if hasattr(errno, err) and e.errno == getattr(errno, err):
+                                break
+                        else:
+                            raise
             except OSError:
                 e = get_exception()
                 if e.errno != errno.EPERM:
@@ -2047,8 +2065,7 @@ class AnsibleModule(object):
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(
-                        prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp( prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
@@ -2088,13 +2105,13 @@ class AnsibleModule(object):
                             os.rename(b_tmp_dest_name, b_dest)
                         except (shutil.Error, OSError, IOError):
                             e = get_exception()
-                            if unsafe_writes:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest, e)
+                            if unsafe_writes and e.errno == errno.EBUSY:
+                                self._unsafe_writes(b_tmp_dest_name, b_dest)
                             else:
-                                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e))
                     except (shutil.Error, OSError, IOError):
                         e = get_exception()
-                        self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e))
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
@@ -2111,27 +2128,23 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def _unsafe_writes(self, src, dest, exception):
-      # sadly there are some situations where we cannot ensure atomicity, but only if
-      # the user insists and we get the appropriate error we update the file unsafely
-      if exception.errno == errno.EBUSY:
-          #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
-          try:
-              try:
-                  out_dest = open(dest, 'wb')
-                  in_src = open(src, 'rb')
-                  shutil.copyfileobj(in_src, out_dest)
-              finally: # assuring closed files in 2.4 compatible way
-                  if out_dest:
-                      out_dest.close()
-                  if in_src:
-                      in_src.close()
-          except (shutil.Error, OSError, IOError):
-              e = get_exception()
-              self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
-      
-      else:
-          self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, exception))
+    def _unsafe_writes(self, src, dest):
+        # sadly there are some situations where we cannot ensure atomicity, but only if
+        # the user insists and we get the appropriate error we update the file unsafely
+        try:
+            try:
+                out_dest = open(dest, 'wb')
+                in_src = open(src, 'rb')
+                shutil.copyfileobj(in_src, out_dest)
+            finally:  # assuring closed files in 2.4 compatible way
+                if out_dest:
+                    out_dest.close()
+                if in_src:
+                    in_src.close()
+        except (shutil.Error, OSError, IOError):
+            e = get_exception()
+            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
@@ -2298,14 +2311,13 @@ class AnsibleModule(object):
             stderr=subprocess.PIPE,
         )
 
-        if cwd and os.path.isdir(cwd):
-            kwargs['cwd'] = cwd
-
         # store the pwd
         prev_dir = os.getcwd()
 
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
+            cwd = os.path.abspath(os.path.expanduser(cwd))
+            kwargs['cwd'] = cwd
             try:
                 os.chdir(cwd)
             except (OSError, IOError):
@@ -2317,7 +2329,6 @@ class AnsibleModule(object):
             old_umask = os.umask(umask)
 
         try:
-
             if self._debug:
                 self.log('Executing: ' + clean_args)
             cmd = subprocess.Popen(args, **kwargs)

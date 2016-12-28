@@ -443,8 +443,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None))
 
-        if 'failed' in mystat and mystat['failed']:
-            raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, mystat['msg']))
+        if mystat.get('failed'):
+            msg = mystat.get('module_stderr')
+            if not msg:
+              msg = mystat.get('module_stdout')
+            if not msg:
+              msg = mystat.get('msg')
+            raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, msg))
 
         if not mystat['stat']['exists']:
             # empty might be matched, 1 should never match, also backwards compatible
@@ -517,7 +522,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_args, task_vars):
+    def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
         if self._play_context.check_mode:
@@ -543,7 +548,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_version'] = __version__
 
         # give the module information about its name
-        module_args['_ansible_module_name'] = self._task.action
+        module_args['_ansible_module_name'] = module_name
 
         # set the syslog facility to be used in the module
         module_args['_ansible_syslog_facility'] = task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY)
@@ -568,7 +573,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # Get the connection user for permission checks
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
-        self._update_module_args(module_args, task_vars)
+        self._update_module_args(module_name, module_args, task_vars)
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
@@ -720,6 +725,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['module_stderr'] = res['stderr']
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
+            if 'rc' in res:
+                data['rc'] = res['rc']
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
@@ -801,7 +808,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
 
-        if not('failed' in peek_result and peek_result['failed']) or peek_result.get('rc', 0) == 0:
+        if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
             if peek_result['state'] == 'absent':
                 diff['before'] = ''

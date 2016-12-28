@@ -15,7 +15,7 @@
 /lib/ansible/modules/clustering/znode.py
 /lib/ansible/modules/database/influxdb/
 /lib/ansible/modules/database/mssql/
-/lib/ansible/modules/infrastructure/foreman/
+/lib/ansible/modules/remote_management/foreman/
 /lib/ansible/modules/monitoring/zabbix.*.py
 /lib/ansible/modules/network/f5/
 /lib/ansible/modules/network/nmcli.py
@@ -24,6 +24,7 @@
 /lib/ansible/modules/packaging/os/dnf.py
 /lib/ansible/modules/packaging/os/layman.py
 /lib/ansible/modules/remote_management/ipmi/
+/lib/ansible/modules/storage/infinidat/
 /lib/ansible/modules/univention/
 /lib/ansible/modules/web_infrastructure/letsencrypt.py
 /lib/ansible/module_utils/a10.py
@@ -34,6 +35,7 @@
 /lib/ansible/module_utils/gcdns.py
 /lib/ansible/module_utils/gce.py
 /lib/ansible/module_utils/gcp.py
+/lib/ansible/module_utils/infinibox.py
 /lib/ansible/module_utils/lxd.py
 /lib/ansible/module_utils/openstack.py
 /lib/ansible/module_utils/rax.py

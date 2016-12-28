@@ -215,6 +215,7 @@ EXAMPLES = '''
     path: ./sinatra
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
+    push: yes
 
 - name: Archive image
   docker_image:
