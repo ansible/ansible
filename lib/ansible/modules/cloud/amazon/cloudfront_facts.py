@@ -37,7 +37,7 @@ options:
         description:
           - The id of the invalidation to get information about. Used with invalidation.
         required: false
-    rigin_access_identity_id:
+    origin_access_identity_id:
         description:
           - The id of the cloudfront origin access identity to get information about.
         required: false
