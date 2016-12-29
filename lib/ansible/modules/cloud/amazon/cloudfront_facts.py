@@ -533,6 +533,7 @@ class CloudFrontServiceManager:
            return result
         return result + self.paginated_response(func, result_key, next_token)
 
+<<<<<<< 0b1d3017bba14aae2ae52ad03d42e16ad5686660
 def to_dict(items, key, value):
     ''' Transforms a list of items to a Key/Value dictionary '''
     if items:
@@ -541,6 +542,8 @@ def to_dict(items, key, value):
         return dict()
 >>>>>>> initial commit of cloudfront_facts.py
 
+=======
+>>>>>>> modification as per review from @georgepsarakis
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -785,7 +788,7 @@ def main():
         facts['list_invalidations'] = service_mgr.list_invalidations(distribution_id)
 
     result['changed'] = False
-    module.exit_json(msg="Retreived cloudfront facts.", ansible_facts=result)
+    module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
 
 # import module snippets
 from ansible.module_utils.basic import *
