@@ -45,6 +45,7 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- icinga2_feature
 - infinibox:
   * infini_export
   * infini_export_client
