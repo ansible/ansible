@@ -87,9 +87,9 @@ options:
    guest_id:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
+            - "This field is required when creating a VM"
             - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
         required: False
-        default: 'otherGuest64'
         version_added: "2.3"
    disk:
         description:
@@ -785,13 +785,17 @@ class PyVmomiHelper(object):
         else:
             return {'changed': True, 'failed': False}
 
-    def configure_guestid(self, vm_obj):
+    def configure_guestid(self, vm_obj, vm_creation=False):
+        # guest_id is only mandatory on VM creation
+        if vm_creation and self.params['guest_id'] is None:
+            self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
+
         if vm_obj is None or self.configspec.guestId != vm_obj.summary.guest.guestId:
             self.change_detected = True
 
         self.configspec.guestId = self.params['guest_id']
 
-    def configure_cpu_and_memory(self, vm_obj):
+    def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
         if 'hardware' in self.params:
             if 'num_cpus' in self.params['hardware']:
@@ -799,7 +803,7 @@ class PyVmomiHelper(object):
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
             # num_cpu is mandatory for VM creation
-            elif not self.should_deploy_from_template():
+            elif vm_creation and not self.should_deploy_from_template():
                 self.module.fail_json(msg="hardware.num_cpus attribute is mandatory for VM creation")
 
             if 'memory_mb' in self.params['hardware']:
@@ -807,7 +811,7 @@ class PyVmomiHelper(object):
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
-            elif not self.should_deploy_from_template():
+            elif vm_creation and not self.should_deploy_from_template():
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
 
     def get_vm_network_interfaces(self, vm=None):
@@ -1189,8 +1193,8 @@ class PyVmomiHelper(object):
 
         self.configspec = vim.vm.ConfigSpec(cpuHotAddEnabled=True, memoryHotAddEnabled=True)
         self.configspec.deviceChange = []
-        self.configure_guestid(vm_obj=vm_obj)
-        self.configure_cpu_and_memory(vm_obj=vm_obj)
+        self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
+        self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
 
@@ -1613,9 +1617,8 @@ def main():
             snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm', aliases=['folder']),
-            guest_id=dict(required=False, type='str', default='otherGuest64'),
+            guest_id=dict(required=False, type='str', default=None),
             disk=dict(required=False, type='list', default=[]),
-            nic=dict(required=False, type='list'),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
             datacenter=dict(required=False, type='str', default=None),
