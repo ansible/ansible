@@ -266,7 +266,7 @@ EXAMPLES = '''
 - rds:
     command: facts
     instance_name: new-database
-    register: new_database_facts
+  register: new_database_facts
 
 # Rename an instance and wait for the change to take effect
 - rds:
