@@ -36,7 +36,7 @@ options:
     invalidation_id:
         description:
           - The id of the invalidation to get information about. Used with invalidation
-       	required: false
+        required: false
     cloud_front_origin_access_identity_id:
         description:
           - The id of the cloudfront origin access identity to get information about
@@ -67,8 +67,8 @@ options:
     distribution:
         description:
             - Get information about a distribution. Requires distribution_id or domain_name_alias to be specified.
-	required: false
-	default: false
+        required: false
+        default: false
     distribution_config:
         description:
             - Get the configuration information about a distribution. Requires distribution_id or domain_name_alias to be specified.
