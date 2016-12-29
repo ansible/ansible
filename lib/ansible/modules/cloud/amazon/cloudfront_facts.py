@@ -36,7 +36,7 @@ options:
     invalidation_id:
         description:
           - The id of the invalidation to get information about. Used with invalidation
-          required: false
+       	required: false
     cloud_front_origin_access_identity_id:
         description:
           - The id of the cloudfront origin access identity to get information about
@@ -44,11 +44,11 @@ options:
     web_acl_id:
         description:
           - Used with list_distributions_by_web_acl_id
-          required: false
+        required: false
     domain_name_alias:
         description:
           - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required
-          required: false
+        required: false
     all_lists:
         description:
             - Get all cloudfront lists that do not require parameters
@@ -67,6 +67,8 @@ options:
     distribution:
         description:
             - Get information about a distribution. Requires distribution_id or domain_name_alias to be specified.
+	required: false
+	default: false
     distribution_config:
         description:
             - Get the configuration information about a distribution. Requires distribution_id or domain_name_alias to be specified.
