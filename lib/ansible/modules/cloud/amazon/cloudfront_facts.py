@@ -153,10 +153,10 @@ EXAMPLES = '''
 
 # Get all information about lists not requiring parameters (ie. list_origin_access_identities, list_distributions, list_streaming_distributions)
 - cloudfront_facts:
-    cloud_front_origin_access_identity: true
-    cloud_front_origin_access_identity_id: my-cloudfront-origin-access-identity-id
+    origin_access_identity: true
+    origin_access_identity_id: my-cloudfront-origin-access-identity-id
 
-# Get all information about lists not requiring parameters (ie. list_cloud_front_origin_access_identities, list_distributions, list_streaming_distributions)
+# Get all information about lists not requiring parameters (ie. list_origin_access_identities, list_distributions, list_streaming_distributions)
 - cloudfront_facts:
     all_lists: true
 '''
