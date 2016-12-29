@@ -139,7 +139,7 @@ options:
         version_added: "2.3"
    networks:
         description:
-          - Network to use should include VM network name, ip and gateway
+          - Network to use should include VM network name or VLAN, ip and gateway
           - "You can add 'mac' optional field to customize mac address"
         required: False
         version_added: "2.3"
@@ -833,18 +833,30 @@ class PyVmomiHelper(object):
         network_devices = list()
         for network in self.params['networks']:
             if network:
-                if 'ip' not in self.params['networks'][network]:
-                    self.module.fail_json(msg="ip attribute is missing for network %s" % network)
+                if 'ip' in self.params['networks'][network]:
+                    ip = self.params['networks'][network]['ip']
+                    if ip not in IPNetwork(network):
+                        self.module.fail_json(msg="ip '%s' not in network %s" % (ip, network))
 
-                ip = self.params['networks'][network]['ip']
-                if ip not in IPNetwork(network):
-                    self.module.fail_json(msg="ip '%s' not in network %s" % (ip, network))
+                    ipnet = IPNetwork(network)
+                    self.params['networks'][network]['subnet_mask'] = str(ipnet.netmask)
 
-                ipnet = IPNetwork(network)
-                self.params['networks'][network]['subnet_mask'] = str(ipnet.netmask)
-
-                if self.cache.get_network(self.params['networks'][network]['network']) is None:
-                    self.module.fail_json(msg="Network %s doesn't exists" % network)
+                if 'network' in self.params['networks'][network]:
+                    if get_obj(self.content, [vim.Network], self.params['networks'][network]['network']) is None:
+                        self.module.fail_json(msg="Network %s doesn't exists" % network)
+                elif 'vlan' in self.params['networks'][network]:
+                    network_name = None
+                    dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                    for dvp in dvps:
+                        if dvp.config.defaultPortConfig.vlan.vlanId == self.params['networks'][network]['vlan']:
+                            network_name = dvp.config.name
+                            break
+                    if network_name:
+                        self.params['networks'][network]['network'] = network_name
+                    else:
+                        self.module.fail_json(msg="VLAN %s doesn't exists" % self.params['networks'][network]['vlan'])
+                else:
+                    self.module.fail_json(msg="You need to define a network or a vlan")
 
                 network_devices.append(self.params['networks'][network])
 
@@ -908,19 +920,20 @@ class PyVmomiHelper(object):
                 self.change_detected = True
 
             if vm_obj is None or self.should_deploy_from_template():
-                guest_map = vim.vm.customization.AdapterMapping()
-                guest_map.adapter = vim.vm.customization.IPSettings()
-                guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                guest_map.adapter.ip.ipAddress = str(network_devices[key]['ip'])
-                guest_map.adapter.subnetMask = str(network_devices[key]['subnet_mask'])
+                if 'ip' in self.params['networks'][network]:
+                    guest_map = vim.vm.customization.AdapterMapping()
+                    guest_map.adapter = vim.vm.customization.IPSettings()
+                    guest_map.adapter.ip = vim.vm.customization.FixedIp()
+                    guest_map.adapter.ip.ipAddress = str(network_devices[key]['ip'])
+                    guest_map.adapter.subnetMask = str(network_devices[key]['subnet_mask'])
 
-                if 'gateway' in network_devices[key]:
-                    guest_map.adapter.gateway = network_devices[key]['gateway']
+                    if 'gateway' in network_devices[key]:
+                        guest_map.adapter.gateway = network_devices[key]['gateway']
 
-                if self.params.get('domain'):
-                    guest_map.adapter.dnsDomain = self.params['domain']
+                    if self.params.get('domain'):
+                        guest_map.adapter.dnsDomain = self.params['domain']
 
-                adaptermaps.append(guest_map)
+                    adaptermaps.append(guest_map)
 
         if vm_obj is None or self.should_deploy_from_template():
             # DNS settings
@@ -1065,7 +1078,7 @@ class PyVmomiHelper(object):
     def select_datastore(self, vm_obj=None):
         datastore = None
         datastore_name = None
-        if self.params['disk']:
+        if len(self.params['disk']) != 0:
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
                 datastores = get_all_objs(self.content, [vim.Datastore])
@@ -1103,7 +1116,7 @@ class PyVmomiHelper(object):
 
     def obj_has_parent(self, obj, parent):
         assert obj is not None and parent is not None
-        current_parent = obj.parent
+        current_parent = obj
 
         while True:
             if current_parent.name == parent.name:
@@ -1163,6 +1176,8 @@ class PyVmomiHelper(object):
 
         # find matching folders
         if self.params['folder'].startswith('/'):
+            if not self.params['folder'].startswith('/vm'):
+                self.params['folder'] = '/vm' + self.params['folder']
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
         else:
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
