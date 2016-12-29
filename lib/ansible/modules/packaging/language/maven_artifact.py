@@ -116,14 +116,12 @@ EXAMPLES = '''
     group_id: junit
     artifact_id: junit
     dest: /tmp/junit-latest.jar
-
 # Download JUnit 4.11 from Maven Central
 - maven_artifact:
     group_id: junit
     artifact_id: junit
     version: 4.11
     dest: /tmp/junit-4.11.jar
-
 # Download an artifact from a private repository requiring authentication
 - maven_artifact:
     group_id: com.company
@@ -132,7 +130,6 @@ EXAMPLES = '''
     username: user
     password: pass
     dest: /tmp/library-name-latest.jar
-
 # Download a WAR File to the Tomcat webapps directory to be deployed
 - maven_artifact:
     group_id: com.company
@@ -140,14 +137,12 @@ EXAMPLES = '''
     extension: war
     repository_url: https://repo.company.com/maven
     dest: /var/lib/tomcat7/webapps/web-app.war
-
 # Passing a directory as destination, the filename will contain the artifact_id, version and classifier
 - maven_artifact:
     version: latest
     artifact_id: spring-core
     group_id: org.springframework
     dest: /tmp/
-
 # Copy a WAR file from the local maven repository to the Tomcat webapps directory to be deployed
 - maven_artifact:
     group_id: com.company
@@ -380,4 +375,4 @@ def main():
                      url_repository=repo, ignore_checksum=ignore_checksum, changed=True)
 
 if __name__ == '__main__':
-    main()
+	main()
