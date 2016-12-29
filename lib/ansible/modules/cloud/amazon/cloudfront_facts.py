@@ -35,33 +35,33 @@ options:
         required: false
     invalidation_id:
         description:
-          - The id of the invalidation to get information about. Used with invalidation
+          - The id of the invalidation to get information about. Used with invalidation.
         required: false
     rigin_access_identity_id:
         description:
-          - The id of the cloudfront origin access identity to get information about
+          - The id of the cloudfront origin access identity to get information about.
         required: false
     web_acl_id:
         description:
-          - Used with list_distributions_by_web_acl_id
+          - Used with list_distributions_by_web_acl_id.
         required: false
     domain_name_alias:
         description:
-          - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required
+          - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
         required: false
     all_lists:
         description:
-            - Get all cloudfront lists that do not require parameters
+            - Get all cloudfront lists that do not require parameters.
         required: false
         default: false
     origin_access_identity:
         description:
-            - Get information about an origin access identity
+            - Get information about an origin access identity. Requires origin_access_identity_id to be specified.
         required: false
         default: false
     origin_access_identity_config:
         description:
-            - Get the configuration information about an origin access identity
+            - Get the configuration information about an origin access identity. Requires origin_access_identity_id to be specified.
         required: false
         default: false
     distribution:
@@ -111,7 +111,7 @@ options:
         default: false
     list_streaming_distributions:
         description:
-            - Get a list of streaming distributions
+            - Get a list of streaming distributions.
         required: false
         default: false
 
@@ -128,7 +128,7 @@ EXAMPLES = '''
     distribution: true
     distribution_id: my-cloudfront-distribution-id
 
-# Get information about a distribution using the CNAME of the cloudfront distribution
+# Get information about a distribution using the CNAME of the cloudfront distribution.
 - cloudfront_facts:
     distribution: true
     domain_name_alias: www.my-website.com
@@ -137,13 +137,13 @@ EXAMPLES = '''
 - debug:
     msg: '{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}'
 
-# Get all information about an invalidation for a distribution
+# Get all information about an invalidation for a distribution.
 - cloudfront_facts:
     invalidation: true
     distribution_id: my-cloudfront-distribution-id
     invalidation_id: my-cloudfront-invalidation-id
 
-# Get all information about a cloudfront origin access identity
+# Get all information about a cloudfront origin access identity.
 - cloudfront_facts:
     origin_access_identity: true
     origin_access_identity_id: my-cloudfront-origin-access-identity-id
@@ -383,7 +383,7 @@ def main():
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
-        module.fail_json(msg='Error distribution_id or domain_name have not been specified.')
+        module.fail_json(msg='Error distribution_id or domain_name_alias have not been specified.')
     if (invalidation and invalidation_id is None):
         module.fail_json(msg='Error invalidation_id has not been specified.')
     if (origin_access_identity or origin_access_identity_config) and origin_access_identity_id is None:
