@@ -192,6 +192,8 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.ec2 import get_aws_connection_info
+from ansible.module_utils.ec2 import ec2_argument_spec
+from ansible.module_utils.ec2 import boto3_conn 
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
 import json
@@ -439,10 +441,6 @@ def main():
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
