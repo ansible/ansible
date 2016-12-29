@@ -37,7 +37,7 @@ options:
         description:
           - The id of the invalidation to get information about. Used with invalidation
         required: false
-    cloud_front_origin_access_identity_id:
+    rigin_access_identity_id:
         description:
           - The id of the cloudfront origin access identity to get information about
         required: false
@@ -54,12 +54,12 @@ options:
             - Get all cloudfront lists that do not require parameters
         required: false
         default: false
-    cloud_front_origin_access_identity:
+    origin_access_identity:
         description:
             - Get information about an origin access identity
         required: false
         default: false
-    cloud_front_origin_access_identity_config:
+    origin_access_identity_config:
         description:
             - Get the configuration information about an origin access identity
         required: false
@@ -89,9 +89,9 @@ options:
             - Get the configuration information about a specified RTMP distribution. Requires distribution_id or domain_name_alias to be specified.
         required: false
         default: false
-    list_cloud_front_origin_access_identities:
+    list_origin_access_identities:
         description:
-            - Get a list of cloudfront origin access identities. Requires cloud_front_origin_access_identity_id to be set.
+            - Get a list of cloudfront origin access identities. Requires origin_access_identity_id to be set.
         required: false
         default: false
     list_distributions:
@@ -145,25 +145,25 @@ EXAMPLES = '''
 
 # Get all information about a cloudfront origin access identity
 - cloudfront_facts:
-    cloud_front_origin_access_identity: true
-    cloud_front_origin_access_identity_id: my-cloudfront-origin-access-identity-id
+    origin_access_identity: true
+    origin_access_identity_id: my-cloudfront-origin-access-identity-id
 
-# Get all information about lists not requiring parameters (ie. list_cloud_front_origin_access_identities, list_distributions, list_streaming_distributions)
+# Get all information about lists not requiring parameters (ie. list_origin_access_identities, list_distributions, list_streaming_distributions)
 - cloudfront_facts:
     all_lists: true
 '''
 
 RETURN = '''
-cloud_front_origin_access_identity:
-    description: Describes the origin access identity information. Requires cloud_front_origin_access_identity_id to be set.
-    returned: only if cloud_front_origin_access_identity is true
+origin_access_identity:
+    description: Describes the origin access identity information. Requires origin_access_identity_id to be set.
+    returned: only if origin_access_identity is true
     type: dict
-cloud_front_origin_access_identity_configuration:
-    description: Describes the origin access identity information configuration information. Requires cloud_front_origin_access_identity_id to be set.
-    returned: only if cloud_front_origin_access_identity_configuration is true
+origin_access_identity_configuration:
+    description: Describes the origin access identity information configuration information. Requires origin_access_identity_id to be set.
+    returned: only if origin_access_identity_configuration is true
     type: dict
 distribution:
-    description: Facts about a cloudfront distribution. Requires distribution_id or domain_name_alias to be specified. Requires cloud_front_origin_access_identity_id to be set.
+    description: Facts about a cloudfront distribution. Requires distribution_id or domain_name_alias to be specified. Requires origin_access_identity_id to be set.
     returned: only if distribution is true
     type: dict
 distribution_config:
@@ -229,14 +229,14 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e), exception=traceback.format_exec(e))
 
-    def get_cloud_front_origin_access_identity(self, origin_access_identity_id):
+    def get_origin_access_identity(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
             return self.paginated_response(func, 'CloudFrontOriginAccessIdentity')
         except Exception as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e), exception=traceback.format_exc(e))
 
-    def get_cloud_front_origin_access_identity_config(self, origin_access_identity_id):
+    def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
             return self.paginated_response(func, 'CloudFrontOriginAccessIdentityConfig')
@@ -264,7 +264,7 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e), exception=traceback.format_exc(e))
 
-    def list_cloud_front_origin_access_identities(self):
+    def list_origin_access_identities(self):
         try:
             func = partial(self.client.list_cloud_front_origin_access_identities)
             return self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')
@@ -332,17 +332,17 @@ def main():
     argument_spec.update(dict(
         distribution_id=dict(required=False, type='str'),
         invalidation_id=dict(required=False, type='str'),
-        cloud_front_origin_access_identity_id=dict(required=False, type='str'),
+        origin_access_identity_id=dict(required=False, type='str'),
         domain_name_alias=dict(required=False, type='str'),
         all_lists=dict(required=False, default=False, type='bool'),
         distribution=dict(required=False, default=False, type='bool'),
         distribution_config=dict(required=False, default=False, type='bool'),
-        cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
-        cloud_front_origin_access_identity_config=dict(required=False, default=False, type='bool'),
+        origin_access_identity=dict(required=False, default=False, type='bool'),
+        origin_access_identity_config=dict(required=False, default=False, type='bool'),
         invalidation=dict(required=False, default=False, type='bool'),
         streaming_distribution=dict(required=False, default=False, type='bool'),
         streaming_distribution_config=dict(required=False, default=False, type='bool'),
-        list_cloud_front_origin_access_identities=dict(required=False, default=False, type='bool'),
+        list_origin_access_identities=dict(required=False, default=False, type='bool'),
         list_distributions=dict(required=False, default=False, type='bool'),
         list_distributions_by_web_acl=dict(required=False, default=False, type='bool'),
         list_invalidations=dict(required=False, default=False, type='bool'),
@@ -358,7 +358,7 @@ def main():
 
     distribution_id = module.params.get('distribution_id')
     invalidation_id = module.params.get('invalidation_id')
-    cloud_front_origin_access_identity_id = module.params.get('cloud_front_origin_access_identity_id')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
     web_acl_id = module.params.get('web_acl_id')
     domain_name_alias = module.params.get('domain_name_alias')
 
@@ -366,13 +366,13 @@ def main():
 
     distribution = module.params.get('distribution')
     distribution_config = module.params.get('distribution_config')
-    cloud_front_origin_access_identity = module.params.get('cloudfront_origin_access_identity')
-    cloud_front_origin_access_identity_config = module.params.get('cloudfront_origin_access_identity_config')
+    origin_access_identity = module.params.get('origin_access_identity')
+    origin_access_identity_config = module.params.get('origin_access_identity_config')
     invalidation = module.params.get('invalidation')
     streaming_distribution = module.params.get('streaming_distribution')
     streaming_distribution_config = module.params.get('streaming_distribution_config')
 
-    list_cloud_front_origin_access_identities = module.params.get('list_cloud_front_origin_access_identities')
+    list_origin_access_identities = module.params.get('list_origin_access_identities')
     list_distributions = module.params.get('list_distributions')
     list_distributions_by_web_acl_id = module.params.get('list_distributions_by_web_acl_id');
     list_invalidations = module.params.get('list_invalidations')
@@ -386,8 +386,8 @@ def main():
         module.fail_json(msg='Error distribution_id or domain_name have not been specified.')
     if (invalidation and invalidation_id is None):
         module.fail_json(msg='Error invalidation_id has not been specified.')
-    if (cloud_front_origin_access_identity or cloud_front_origin_access_identity_config) and cloud_front_origin_access_identity_id is None:
-        module.fail_json(msg='Error cloud_front_origin_access_identity_id has not been specified.')
+    if (origin_access_identity or origin_access_identity_config) and origin_access_identity_id is None:
+        module.fail_json(msg='Error origin_access_identity_id has not been specified.')
     if list_distributions_by_web_acl_id and web_acl_id is None:
         module.fail_json(msg='Error web_acl_id has not been specified.')
 
@@ -401,9 +401,9 @@ def main():
     if distribution_id:
         result = { 'ansible_facts': { 'cloudfront': { distribution_id:{} } } }
         facts = result['ansible_facts']['cloudfront'][distribution_id]
-    elif cloud_front_origin_access_identity_id:
-        result = { 'ansible_facts': { 'cloudfront': { cloud_front_origin_access_identity_id:{} } } }
-        facts = result['ansible_facts']['cloudfront'][cloud_front_origin_access_identity_id]
+    elif origin_access_identity_id:
+        result = { 'ansible_facts': { 'cloudfront': { origin_access_identity_id:{} } } }
+        facts = result['ansible_facts']['cloudfront'][origin_access_identity_id]
     elif web_acl_id:
         result = { 'ansible_facts': { 'cloudfront': { web_acl_id:{} } } }
         facts = result['ansible_facts']['cloudfront'][web_acl_id]
@@ -416,10 +416,10 @@ def main():
         facts['distribution'] = service_mgr.get_distribution(distribution_id)
     if distribution_config:
         facts['distribution_config'] = service_mgr.get_distribution_config(distribution_id)
-    if cloud_front_origin_access_identity:
-        facts['cloud_front_origin_access_identity'] = service_mgr.get_cloud_front_origin_access_identity(cloud_front_origin_access_identity_id)
-    if cloud_front_origin_access_identity_config:
-        facts['cloud_front_origin_access_identity_config'] = service_mgr.get_cloud_front_origin_access_identity_config(cloud_front_origin_access_identity_id)
+    if origin_access_identity:
+        facts['origin_access_identity'] = service_mgr.get_origin_access_identity(origin_access_identity_id)
+    if origin_access_identity_config:
+        facts['origin_access_identity_config'] = service_mgr.get_origin_access_identity_config(origin_access_identity_id)
     if invalidation:
         facts['invalidation'] = service_mgr.get_invalidation(distribution_id, invalidation_id)
     if streaming_distribution:
@@ -428,8 +428,8 @@ def main():
         facts['streaming_distribution_config'] = service_mgr.get_streaming_distribution_config(distribution_id)
 
     # call list based on options
-    if all_lists or list_cloud_front_origin_access_identities:
-        facts['list_cloud_front_origin_access_identities'] = service_mgr.list_cloud_front_origin_access_identities()
+    if all_lists or list_origin_access_identities:
+        facts['list_origin_access_identities'] = service_mgr.list_origin_access_identities()
     if all_lists or list_distributions:
         facts['list_distributions'] = service_mgr.list_distributions()
     if all_lists or list_streaming_distributions:
