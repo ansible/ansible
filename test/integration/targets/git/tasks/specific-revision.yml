@@ -1,0 +1,138 @@
+---
+
+# Test that a specific revision can be checked out
+
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: clone to specific revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
+
+- name: check HEAD after clone to revision
+  command: git rev-parse HEAD 
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "df4612ba925fbc1b3c51cbb006f51a0443bd2ce9"'
+
+- name: update to specific revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: 4e739a34719654db7b04896966e2354e1256ea5d
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.changed'
+
+- name: check HEAD after update to revision
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "4e739a34719654db7b04896966e2354e1256ea5d"'
+
+# Test a revision not available under refs/heads/ or refs/tags/
+
+- name: attempt to get unavailable revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+  ignore_errors: true
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.failed'
+
+# Same as the previous test, but this time we specify which ref
+# contains the SHA1
+- name: update to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+# try out combination of refspec and depth
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: update to revision by specifying the refspec with depth=1
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+    depth: 1
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+- name: try to access other commit
+  shell: git checkout 0ce1096
+  register: checkout_shallow
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: make sure the old commit was not fetched
+  assert:
+    that:
+      - checkout_shallow.rc == 1
+      - checkout_shallow|failed
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: clone to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b
+    refspec: refs/pull/7/merge
+
+- name: check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
