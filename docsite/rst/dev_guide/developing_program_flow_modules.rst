@@ -143,7 +143,7 @@ Binary modules take their arguments and will return data to Ansible in the same
 way as :ref:`want JSON modules <flow_want_json_modules>`.
 
 .. seealso:: One example of a `binary module
-    <https://github.com/ansible/ansible/blob/devel/test/integration/library/helloworld.go>`_
+    <https://github.com/ansible/ansible/blob/devel/test/integration/targets/binary_modules/library/helloworld.go>`_
     written in go.
 
 .. _flow_old_style_modules:
