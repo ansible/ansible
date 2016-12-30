@@ -719,7 +719,7 @@ def control_state(vm, vms_service, module):
         vm.status == otypes.VmStatus.UNKNOWN
     ):
         # Invalid states:
-        module.fail_json("Not possible to control VM, if it's in '{}' status".format(vm.status))
+        module.fail_json(msg="Not possible to control VM, if it's in '{}' status".format(vm.status))
     elif vm.status == otypes.VmStatus.POWERING_DOWN:
         if (force and state == 'stopped') or state == 'absent':
             vm_service.stop()
