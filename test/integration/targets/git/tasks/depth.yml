@@ -145,4 +145,3 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
-

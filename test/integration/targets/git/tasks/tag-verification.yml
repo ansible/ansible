@@ -55,4 +55,3 @@
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
-

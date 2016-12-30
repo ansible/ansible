@@ -116,4 +116,3 @@
     repo: '{{ checkout_dir}}/repo'
     version: 'new-branch'
     dest: '{{ checkout_dir }}/checkout'
-
