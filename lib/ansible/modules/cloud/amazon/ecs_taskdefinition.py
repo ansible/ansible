@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: ecs_taskdefinition
 short_description: register a task definition in ecs
 description:
-    - Creates or terminates task definitions
+    - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
 requirements: [ json, boto, botocore, boto3 ]
@@ -74,7 +74,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: "Create task definition"
+- name: Create task definition
   ecs_taskdefinition:
     containers:
     - name: simple-app
