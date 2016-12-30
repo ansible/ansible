@@ -111,7 +111,7 @@
 - name: make sure the old commit was not fetched
   assert:
     that:
-      - checkout_shallow.rc == 1
+      - 'checkout_shallow.rc != 0'
       - checkout_shallow|failed
   when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 

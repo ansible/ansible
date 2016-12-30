@@ -1,7 +1,14 @@
 ---
 
 - name: clean out the output_dir
-  shell: rm -rf {{ output_dir }}/*
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: create clean output_dir
+  file:
+    path: "{{ output_dir }}"
+    state: directory
 
 - name: verify that git is installed so this test can continue
   shell: which git

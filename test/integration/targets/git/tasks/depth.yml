@@ -20,7 +20,7 @@
 
 - name: make sure the old commit was not fetched
   assert:
-    that: checkout_early.rc == 1
+    that: 'checkout_early.rc != 0'
   when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 # tests https://github.com/ansible/ansible/issues/14954
@@ -44,7 +44,7 @@
 
 - name: again make sure the old commit was not fetched
   assert:
-    that: checkout_early.rc == 1
+    that: 'checkout_early.rc != 0'
   when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
 
 # make sure we are still able to fetch other versions
