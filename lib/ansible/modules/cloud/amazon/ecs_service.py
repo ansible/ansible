@@ -50,16 +50,15 @@ options:
         required: false
     task_definition:
         description:
-          - The task definition the service will run
+          - The task definition the service will run. This parameter is required when state=present
         required: false
     load_balancers:
         description:
           - The list of ELBs defined for this service
         required: false
-
     desired_count:
         description:
-          - The count of how many instances of the service
+          - The count of how many instances of the service. This parameter is required when state=present
         required: false
     client_token:
         description:
@@ -298,23 +297,30 @@ class EcsServiceManager:
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'deleting'] ),
-        name=dict(required=True, type='str' ),
-        cluster=dict(required=False, type='str' ),
-        task_definition=dict(required=False, type='str' ),
-        load_balancers=dict(required=False, type='list' ),
-        desired_count=dict(required=False, type='int' ),
-        client_token=dict(required=False, type='str' ),
-        role=dict(required=False, type='str' ),
+        state=dict(required=True, choices=['present', 'absent', 'deleting']),
+        name=dict(required=True, type='str'),
+        cluster=dict(required=False, type='str'),
+        task_definition=dict(required=False, type='str'),
+        load_balancers=dict(required=False, default=[], type='list'),
+        desired_count=dict(required=False, type='int'),
+        client_token=dict(required=False, default='', type='str'),
+        role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True,
+                           required_if=[
+                               ('state', 'present', ['task_definition', 'desired_count'])
+                           ],
+                           required_together=[['load_balancers', 'role']]
+                           )
 
     if not HAS_BOTO:
       module.fail_json(msg='boto is required.')
@@ -322,19 +328,13 @@ def main():
     if not HAS_BOTO3:
       module.fail_json(msg='boto3 is required.')
 
-    if module.params['state'] == 'present':
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
-            module.fail_json(msg="To use create a service, a task_definition must be specified")
-        if not 'desired_count' in module.params and module.params['desired_count'] is None:
-            module.fail_json(msg="To use create a service, a desired_count must be specified")
-
     service_mgr = EcsServiceManager(module)
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
     except Exception as e:
         module.fail_json(msg="Exception describing service '"+module.params['name']+"' in cluster '"+module.params['cluster']+"': "+str(e))
 
-    results = dict(changed=False )
+    results = dict(changed=False)
     if module.params['state'] == 'present':
 
         matching = False
@@ -348,18 +348,9 @@ def main():
 
         if not matching:
             if not module.check_mode:
-                if module.params['load_balancers'] is None:
-                    loadBalancers = []
-                else:
-                    loadBalancers = module.params['load_balancers']
-                if module.params['role'] is None:
-                    role = ''
-                else:
-                    role = module.params['role']
-                if module.params['client_token'] is None:
-                    clientToken = ''
-                else:
-                    clientToken = module.params['client_token']
+                loadBalancers = module.params['load_balancers']
+                role = module.params['role']
+                clientToken = module.params['client_token']
 
                 if update:
                     # update required
