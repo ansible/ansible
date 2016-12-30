@@ -144,7 +144,8 @@ def notice(msg):
     if debug:
         syslog.syslog(syslog.LOG_NOTICE, msg)
 
-syslog.openlog('ansible-%s' % os.path.basename(__file__))
+if debug:
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
 
 class RhsmRepository(object):
     '''
