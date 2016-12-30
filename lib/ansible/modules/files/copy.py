@@ -41,10 +41,10 @@ options:
         Otherwise, if it does not end with "/", the directory itself with all contents
         is copied. This behavior is similar to Rsync.
   content:
-    version_added: "1.1"
     description:
       - When used instead of 'src', sets the contents of a file directly to the specified value.
         For anything advanced or with formatting also look at the template module.
+    version_added: "1.1"
   dest:
     description:
       - Remote absolute path where the file should be copied to. If C(src) is a directory,
