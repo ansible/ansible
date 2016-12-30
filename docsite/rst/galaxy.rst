@@ -159,7 +159,7 @@ The complex form can also be used as follows:
       - src: geerlingguy.ansible
       - src: git+https://github.com/geerlingguy/ansible-role-composer.git 
         version: 775396299f2da1f519f0d8885022ca2d6ee80ee8
-        name: composer
+        role: composer
 
 When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the *roles_path*. To understand how dependencies 
 are handled during play execution, see :doc:`playbooks_roles`.
