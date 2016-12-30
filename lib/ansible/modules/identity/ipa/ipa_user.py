@@ -61,14 +61,71 @@ options:
     default: "present"
     choices: ["present", "absent", "enabled", "disabled"]
   telephonenumber:
-    description:
-    - List of telephone numbers assigned to the user.
-    - If an empty list is passed all assigned telephone numbers will be deleted.
-    - If None is passed telephone numbers will not be checked or changed.
+    description: List of telephone numbers assigned to the user.
+    required: false
+  mobile:
+    description: List of mobile telephone numbers assigned to the user.
+    required: false
+  pager:
+    description: List of pager numbers assigned to the user.
+    required: false
+  facsimiletelephonenumber:
+    description: List of fax numbers assigned to the user.
     required: false
   title:
-    description: Title
+    description: Job Title
     required: false
+  initials:
+    description: initials
+    required: false
+  random:
+    description:
+    - Generate a random password if the user is created.
+    - If the user is modified this parameter is ignored.
+    - To enforce a new random password for a user set the new_random flag.
+    required: false
+    default: false
+  new_random:
+    description:
+    - This parameter is ignored if the user is created.
+    - If the user is modified and this flag is true, a new random password is generated each time Ansible runs.
+    - Normally you don't want to set this true, since this resets the password when Ansible runs.
+    required: false
+    default: false
+  street:
+    description: Street address
+    required: false
+  l:
+    description: City
+    required: false
+  st:
+    description: State/Province
+    required: false
+  postalcode:
+    description: ZIP
+    required: false
+  ou:
+    description: Org. Unit
+    required: false
+  manager:
+    description: Manager
+    required: false
+  carlicense:
+    description: Car License
+    required: false
+  homedirectory:
+    description: Home directory
+    required: false
+  uidnumber:
+    description: User ID Number (system will assign one if not provided)
+    required: false
+  gidnumber:
+    description: Group ID Number
+    required: false
+  noprivate:
+    description: Don't create user private group
+    required: false
+    default: false
   uid:
     description: uid of the user
     required: true
@@ -131,6 +188,17 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
+
+# Ensure Alice and Bob are present, and get a random password assigned.
+# The generated password will be added to a file located on the host running Ansible.
+- ipa_user: "{{ item|combine({'random':true, 'ipa_host':'ipa.example.com', 'ipa_pass':'admin'}) }}"
+  register: ipa_user_result
+  with_items:
+  - { 'name':'alice' }
+  - { 'name':'bob' }
+- local_action: lineinfile create=yes dest=./random_passwd.txt line="{{ item.user.uid[0] }}, {{ item.user.randompassword }}" regexp="{{ item.user.uid[0] }}"
+  when: item.user.uid is defined and item.user.randompassword is defined
+  with_items: "{{ ipa_user_result.results|default([]) }}"
 '''
 
 RETURN = '''
@@ -175,6 +243,7 @@ class UserIPAClient(IPAClient):
 def ensure(module, client):
     state = module.params['state']
     name = module.params['name']
+    new_random = module.params['new_random']
 
     # Fetch the user from FreeIPA if already existing
     ipa_user = client.user_find(name=name)
@@ -184,9 +253,12 @@ def ensure(module, client):
 
         # Create a reduced copy of module.params containing only parameters forwarded to FreeIPA
         module_user = {}
-        skipped_keys = ANSIBLE_INT_IPA_KEYS + ['name', 'uid', 'sshpubkey']
+        skipped_keys = ANSIBLE_INT_IPA_KEYS + ['name', 'uid', 'sshpubkey', 'new_random']
         if ipa_user:  # Remove user_add specific fields if user_mod will be called
-            skipped_keys.extend(['noprivate', 'random'])
+            skipped_keys = skipped_keys + ['noprivate']
+            # Do not generate a new random password until explicitly requested by new_random parameter
+            if not new_random:
+                skipped_keys = skipped_keys + ['random']
 
         if state == 'disabled':
             module_user['nsaccountlock'] = True
@@ -220,16 +292,33 @@ def main():
         argument_spec=dict(
             displayname=dict(type='str', required=False),
             givenname=dict(type='str', required=False),
+            initials=dict(type='str', required=False),
             loginshell=dict(type='str', required=False),
             mail=dict(type='list', required=False),
             sn=dict(type='str', required=False),
             uid=dict(type='str', required=True, aliases=['name']),
             password=dict(type='str', required=False, no_log=True),
+            random=dict(type='bool', required=False, default=False),
+            new_random=dict(type='bool', required=False, default=False),
+            uidnumber=dict(type='int', required=False),
+            gidnumber=dict(type='int', required=False),
             sshpubkey=dict(type='list', required=False),
             state=dict(type='str', required=False, default='present',
                        choices=['present', 'absent', 'enabled', 'disabled']),
+            street=dict(type='str', required=False),
+            l=dict(type='str', required=False),
+            st=dict(type='str', required=False),
+            postalcode=dict(type='str', required=False),
             telephonenumber=dict(type='list', required=False),
+            mobile=dict(type='list', required=False),
+            pager=dict(type='list', required=False),
+            facsimiletelephonenumber=dict(type='list', required=False),
+            ou=dict(type='str', required=False),
             title=dict(type='str', required=False),
+            manager=dict(type='str', required=False),
+            carlicense=dict(type='list', required=False),
+            homedirectory=dict(type='str', required=False),
+            noprivate=dict(type='bool', required=False, default=False),
             ipa_prot=dict(type='str', required=False, default='https', choices=['http', 'https']),
             ipa_host=dict(type='str', required=False, default='ipa.example.com'),
             ipa_port=dict(type='int', required=False, default=443),
