@@ -357,7 +357,7 @@ def main():
     if hypervisor:
         filter['hypervisor'] = hypervisor
     if is_public:
-        filter['is_public'] = is_public
+        filter['is_public'] = 'true'
     if name:
         filter['name'] = name
     if platform:
