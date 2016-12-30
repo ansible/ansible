@@ -643,7 +643,7 @@ def main():
             ip_forward = dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
-            disk_size = dict(),
+            disk_size = dict(type='int', default=10),
             preemptible = dict(type='bool', default=None),
         ),
         mutually_exclusive=[('instance_names', 'name')]
