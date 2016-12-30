@@ -327,6 +327,7 @@ def camel_dict_to_snake_dict(camel_dict):
 
         return all_cap_re.sub(r'\1_\2', s1).lower()
 
+
     def value_is_list(camel_list):
 
         checked_list = []
@@ -339,6 +340,7 @@ def camel_dict_to_snake_dict(camel_dict):
                 checked_list.append(item)
 
         return checked_list
+
 
     snake_dict = {}
     for k, v in camel_dict.items():
@@ -461,6 +463,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             return sg['GroupName']
         else:
             return sg.name
+
 
     def get_sg_id(sg, boto3):
 
