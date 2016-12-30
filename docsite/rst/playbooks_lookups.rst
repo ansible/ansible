@@ -372,7 +372,7 @@ TXT          strings
 
 MongoDB Lookup
 ``````````````
-.. versionadded:: 2.1
+.. versionadded:: 2.3
 
 .. warning:: This lookup depends on the `pymongo 2.4+ <http://www.mongodb.org/>`_
              library.
