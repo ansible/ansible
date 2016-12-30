@@ -5,9 +5,9 @@
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
-- name: Clone example git repo with depth=1
+- name: Clone example git repo with depth 1
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
 
@@ -26,7 +26,7 @@
 # tests https://github.com/ansible/ansible/issues/14954
 - name: fetch repo again with depth=1
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
   register: checkout2
@@ -50,7 +50,7 @@
 # make sure we are still able to fetch other versions
 - name: Clone same repo with older version
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: earlytag
@@ -70,14 +70,14 @@
 
 - name: clone repo with both version and depth specified
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: master
 
 - name: run a second time (now fetch, not clone)
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: master
@@ -93,14 +93,14 @@
 
 - name: clone repo with both version and depth specified
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: master
 
 - name: switch to older branch with depth=1 (uses fetch)
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: earlybranch
@@ -118,7 +118,7 @@
 
 - name: checkout old repo
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
 
@@ -129,7 +129,7 @@
 
 - name: fetch updated repo
   git:
-    repo: '{{ repo_dir }}/shallow'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
     dest: '{{ checkout_dir }}'
     depth: 1
   register: git_fetch

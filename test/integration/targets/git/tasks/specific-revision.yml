@@ -14,7 +14,7 @@
     version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
 
 - name: check HEAD after clone to revision
-  command: git rev-parse HEAD 
+  command: git rev-parse HEAD
   args:
     chdir: "{{ checkout_dir }}"
   register: git_result
