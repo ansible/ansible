@@ -74,9 +74,9 @@ options:
       missing from the existing rule.  Furthermore, if the module argument
       takes a value denoted by '=', the value will be changed to that specified
       in module_arguments.
-  insert:
+  state:
     required: false
-    default: none
+    default: updated
     choices:
     - updated
     - before
@@ -133,7 +133,8 @@ EXAMPLES = """
     type: auth
     control: required
     module_path: pam_faillock.so
-    new_type: auth new_control=sufficient
+    new_type: auth
+    new_control=sufficient
     new_module_path: pam_faillock.so
     state: after
 
@@ -263,7 +264,6 @@ class PamdService(object):
         self.fname = self.path + "/" + self.name
         self.preamble = []
         self.rules = []
-
         try:
             for line in open(self.fname, 'r'):
                 if line.startswith('#') and not line.isspace():
@@ -380,11 +380,14 @@ def remove_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_absent'}
     changed = False
     change_count = 0
+    if isinstance(module_args, str):
+        module_args = module_args.split(' ')
+
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
                 old_rule.rule_control == rule.rule_control and
                 old_rule.rule_module_path == rule.rule_module_path):
-            for arg_to_remove in module_args.split():
+            for arg_to_remove in module_args:
                 for arg in rule.rule_module_args:
                     if arg == arg_to_remove:
                         rule.rule_module_args.remove(arg)
@@ -401,11 +404,14 @@ def add_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_present'}
     changed = False
     change_count = 0
+    if isinstance(module_args, str):
+        module_args = module_args.split(' ')
+
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
                 old_rule.rule_control == rule.rule_control and
                 old_rule.rule_module_path == rule.rule_module_path):
-            for arg_to_add in module_args.split(' '):
+            for arg_to_add in module_args:
                 if "=" in arg_to_add:
                     pre_string = arg_to_add[:arg_to_add.index('=')+1]
                     indicies = [i for i, arg
@@ -450,22 +456,22 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
+            name=dict(required=True, type='str'),
             type=dict(required=True,
                       choices=['account', 'auth',
                                'password', 'session']),
-            control=dict(required=True),
-            module_path=dict(required=True),
+            control=dict(required=True, type='str'),
+            module_path=dict(required=True, type='str'),
             new_type=dict(required=False,
                           choices=['account', 'auth',
                                    'password', 'session']),
-            new_control=dict(required=False),
-            new_module_path=dict(required=False),
-            module_arguments=dict(required=False),
+            new_control=dict(required=False, type='str'),
+            new_module_path=dict(required=False, type='str'),
+            module_arguments=dict(required=False, type='list'),
             state=dict(required=False, default="updated",
                        choices=['before', 'after', 'updated',
                                 'args_absent', 'args_present']),
-            path=dict(required=False, default='/etc/pam.d')
+            path=dict(required=False, default='/etc/pam.d', type='str')
         ),
         supports_check_mode=True
     )
