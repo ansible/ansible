@@ -39,6 +39,8 @@ options:
             - I(RepoIDs) of repositories to enable or disable
               When specifying multiple repos, separate them with a ",".
               To specify all repositories, use "*".
+              In incremental mode, other repos won't be touched.
+              In idempotent mode (default), other repos would be disabled or enabled depending on their actual state.
         required: False
         default: null
     state:
@@ -53,7 +55,6 @@ options:
         required: False
         default: all
         choices: [ "all", "enabled", "disabled" ]
-
     mode:
         description:
             - Use either the idempotent or the incremental mode
