@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
 from __future__ import unicode_literals
+from ansible.module_utils.six import string_types
 import datetime
 
 __metaclass__ = type
@@ -65,7 +66,9 @@ class LookupModule(LookupBase):
     def convert_mongo_result_to_valid_json(self, result):
         if result is None:
             return result
-        if isinstance(result, (basestring, int, long, float, bool)):
+        if isinstance(result, (int, long, float, bool)):
+            return result
+        if isinstance(result, string_types):
             return result
         elif isinstance(result, list):
             new_list = []
