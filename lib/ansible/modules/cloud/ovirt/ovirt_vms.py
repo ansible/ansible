@@ -48,7 +48,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt."
+short_description: "Module to manage Virtual Machines in oVirt"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
