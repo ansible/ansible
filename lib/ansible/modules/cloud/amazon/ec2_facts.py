@@ -70,6 +70,7 @@ class Ec2Metadata(object):
                    'ap-southeast-1',
                    'ap-southeast-2',
                    'ap-south-1',
+                   'ca-central-1',
                    'eu-central-1',
                    'eu-west-1',
                    'sa-east-1',
