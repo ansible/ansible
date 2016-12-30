@@ -24,6 +24,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: icinga2_feature
@@ -54,10 +58,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: If module has done a change
-    returned: success
-    type: string
+#
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -131,6 +132,7 @@ def main():
         supports_check_mode=True
     )
 
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     Icinga2FeatureHelper(module).manage()
 
 if __name__ == '__main__':
