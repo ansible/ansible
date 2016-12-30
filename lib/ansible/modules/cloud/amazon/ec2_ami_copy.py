@@ -29,25 +29,25 @@ version_added: "2.0"
 options:
   source_region:
     description:
-      - the source region that AMI should be copied from
+      - The source region the AMI should be copied from.
     required: true
   source_image_id:
     description:
-      - the id of the image in source region that should be copied
+      - The ID of the AMI in source region that should be copied.
     required: true
   name:
     description:
-      - The name of the new image to copy
+      - The name of the new AMI to copy.
     required: false
     default: null
   description:
     description:
-      - An optional human-readable string describing the contents and purpose of the new AMI.
+      - A human-readable string describing the contents and purpose of the new AMI.
     required: false
     default: null
   encrypted:
     description:
-      - Whether or not to encrypt the target image
+      - Whether or not the destination snapshots of the copied AMI should be encrypted.
     required: false
     default: null
     version_added: "2.2"
@@ -59,18 +59,18 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - wait for the copied AMI to be in state 'available' before returning.
+      - Wait for the copied AMI to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds.
     required: false
     default: 1200
   tags:
     description:
-      - a hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
 
