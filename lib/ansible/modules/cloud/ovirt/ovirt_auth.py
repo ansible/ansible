@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_auth
-short_description: "Module to manage authentication to oVirt."
+short_description: "Module to manage authentication to oVirt"
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.2"
 description:

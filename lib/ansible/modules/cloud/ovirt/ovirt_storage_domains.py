@@ -110,7 +110,7 @@ options:
     glusterfs:
         description:
             - "Dictionary with values for GlusterFS storage type:"
-            - "C(address) - Address of the NFS server. E.g.: myserver.mydomain.com"
+            - "C(address) - Address of the Gluster server. E.g.: myserver.mydomain.com"
             - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
@@ -187,7 +187,7 @@ id:
     returned: On success if storage domain is found.
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
-storage domain:
+storage_domain:
     description: "Dictionary of all the storage domain attributes. Storage domain attributes can be found on your oVirt instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_domain."
     returned: On success if storage domain is found.

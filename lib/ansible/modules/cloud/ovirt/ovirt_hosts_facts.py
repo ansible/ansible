@@ -26,7 +26,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
 )
 
 
