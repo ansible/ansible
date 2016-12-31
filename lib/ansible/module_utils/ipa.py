@@ -39,6 +39,9 @@ from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
 
 
+
+ANSIBLE_INT_IPA_KEYS = ['state', 'ipa_prot', 'ipa_host', 'ipa_port', 'ipa_user', 'ipa_pass', 'validate_certs']
+
 class IPAClient(object):
     def __init__(self, module, host, port, protocol):
         self.host = host
