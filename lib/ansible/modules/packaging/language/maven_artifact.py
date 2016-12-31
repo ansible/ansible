@@ -141,12 +141,20 @@ EXAMPLES = '''
     repository_url: https://repo.company.com/maven
     dest: /var/lib/tomcat7/webapps/web-app.war
 
-# Passing a directory as destination, the artifact name will contain the artifact_id, version and classifier
+# Passing a directory as destination, the filename will contain the artifact_id, version and classifier
 - maven_artifact:
     version: latest
     artifact_id: spring-core
     group_id: org.springframework
     dest: /tmp/
+
+# Copy a WAR file from the local maven repository to the Tomcat webapps directory to be deployed
+- maven_artifact:
+    group_id: com.company
+    artifact_id: web-app
+    extension: war
+    repository_url: file://home/jenkins/.m2/repository
+    dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
 import lxml.etree as etree
