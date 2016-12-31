@@ -302,7 +302,7 @@ def main():
             new_random=dict(type='bool', required=False, default=False),
             uidnumber=dict(type='int', required=False),
             gidnumber=dict(type='int', required=False),
-            sshpubkey=dict(type='list', required=False),
+            ipasshpubkey=dict(type='list', required=False, aliases=['sshpubkey']),
             state=dict(type='str', required=False, default='present',
                        choices=['present', 'absent', 'enabled', 'disabled']),
             street=dict(type='str', required=False),
