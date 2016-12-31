@@ -257,7 +257,10 @@ class PlaybookExecutor:
             for host in all_hosts:
                 grouped_dict[group_by(host)].append(host)
 
-            grouped_hosts = [(len(lst), lst) for lst in grouped_dict.values()]
+            # sort the groups to ensure consistent and predictable ordering
+            grouped_keys = list(grouped_dict.keys())
+            grouped_keys.sort()
+            grouped_hosts = [(len(lst), lst) for lst in (grouped_dict[gr] for gr in grouped_keys)]
         else:
             grouped_hosts = [(len(all_hosts), all_hosts)]
 
