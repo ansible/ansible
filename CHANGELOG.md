@@ -53,6 +53,7 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
+- omapi_host
 - openwrt_init
 - windows:
   * win_say
