@@ -105,7 +105,11 @@ class IPAClient(object):
         resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
         err = resp.get('error')
         if err is not None:
-            self._fail('repsonse %s' % method, err)
+            if 'name' in err and err.get('name') == u'EmptyModlist':
+                return {'ipa_changed': False}
+            else:
+                # self._fail('repsonse comp=%s, %s "%s", %s"' % (str(changed), method, str(resp), str(err)), err)
+                self._fail('repsonse %s' % method, err)
 
         if 'result' in resp:
             result = resp.get('result')
