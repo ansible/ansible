@@ -201,7 +201,7 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get('module_setup', False):
+            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get(host.name).get('module_setup', False):
                 host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
