@@ -232,7 +232,7 @@ class TaskQueueManager:
         num_hosts = len(self._inventory.get_hosts(new_play.hosts, ignore_restrictions=True))
 
         max_serial = 0
-        if new_play.serial:
+        if new_play.serial and not new_play.serial_group_by:
             # the play has not been post_validated here, so we may need
             # to convert the scalar value to a list at this point
             serial_items = new_play.serial
