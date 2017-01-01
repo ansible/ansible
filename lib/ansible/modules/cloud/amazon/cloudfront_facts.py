@@ -312,20 +312,21 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error getting distribution id from domain name = " + str(e), exception=traceback.format_exc(e))
 
-    def paginated_response(self, func, result_key, next_token=None):
+    def paginated_response(self, func, result_key):
         '''
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
         args=dict()
-        if next_token:
-            args['NextToken'] = next_token
-        response = func(**args)
-        result = response.get(result_key)
-        next_token = response.get('NextToken')
-        if not next_token:
-           return result
-        return result + self.paginated_response(func, result_key, next_token)
+        results = dict()
+        loop = True
+        while loop:
+            response = func(**args)
+            result = response.get(result_key)
+            results.update(result)
+            args['NextToken'] = response.get('NextToken')
+            loop = args['NextToken'] is not None
+        return results
 
 def main():
     argument_spec = ec2_argument_spec()
