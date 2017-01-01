@@ -317,7 +317,7 @@ class CloudFrontServiceManager:
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
-        args=dict()
+        args = dict() 
         results = dict()
         loop = True
         while loop:
@@ -381,6 +381,12 @@ def main():
 
     require_distribution_id = (distribution or distribution_config or invalidation or
             streaming_distribution or streaming_distribution_config or list_invalidations)
+
+    # set default to list_distributions if no option specified
+    list_distributions = not (distribution or distribution_config or origin_access_identity or 
+            origin_access_identity_config or invalidation or streaming_distribution or 
+            streaming_distribution_config or list_origin_access_identities or list_distributions or 
+            list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions)
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
