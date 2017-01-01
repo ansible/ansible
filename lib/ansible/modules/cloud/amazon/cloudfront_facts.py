@@ -436,7 +436,7 @@ def main():
         result = { 'cloudfront': {} }
         facts = result['cloudfront']
 
-    # call details based on options
+    # get details based on options
     if distribution:
         distribution_details = service_mgr.get_distribution(distribution_id)
         facts[distribution_id]['distribution'] = distribution_details
@@ -458,7 +458,7 @@ def main():
     if streaming_distribution_config:
         facts['streaming_distribution_config'] = service_mgr.get_streaming_distribution_config(distribution_id)
 
-    # call list based on options
+    # get list based on options
     if all_lists or list_origin_access_identities:
         facts['list_origin_access_identities'] = service_mgr.list_origin_access_identities()
     if all_lists or list_distributions:
