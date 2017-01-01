@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Peter Sprygada <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -19,10 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action import ActionBase
-from ansible.plugins.action.net_template import ActionModule as NetActionModule
+from ansible.plugins.action.net_template import ActionModule as _ActionModule
 
-class ActionModule(NetActionModule, ActionBase):
+class ActionModule(_ActionModule):
     pass
-
-
