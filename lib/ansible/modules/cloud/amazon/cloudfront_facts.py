@@ -26,7 +26,7 @@ description:
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
-version_added: "2.2"
+version_added: "2.3"
 author: Willem van Ketwich (@wilvk)
 options:
     distribution_id:
