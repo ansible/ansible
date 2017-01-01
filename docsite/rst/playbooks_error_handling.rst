@@ -131,6 +131,20 @@ The ``any_errors_fatal`` play option will mark all hosts as failed if any fails,
 for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
 
 
+Error Codes
+```````````
+
+The Checksum function used by the template module and probably others returns
+the following error codes:
+
+    1: File not found
+    2: File not readable
+    3: Path is a directory not a file
+
+Example Message:
+    msg: failed to checksum remote file. Checksum error code: 3
+
+
 .. seealso::
 
    :doc:`playbooks`
