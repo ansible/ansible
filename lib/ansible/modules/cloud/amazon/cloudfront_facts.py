@@ -312,6 +312,19 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error getting distribution id from domain name = " + str(e), exception=traceback.format_exc(e))
 
+    def get_aliases_from_distribution_id(self, distribution_id):
+        aliases = []
+        try:
+            distributions = self.list_distributions()
+            for dist in distributions['Items']:
+                if dist['Id'] == distribution_id:
+                    for alias in dist['Aliases']['Items']:
+                        aliases.append(alias)
+                    break
+            return aliases
+        except Exception as e:
+            self.module.fail_json(msg="Error getting list of aliases from distribution_id = " + str(e), exception=traceback.format_exc(e))
+
     def paginated_response(self, func, result_key):
         '''
         Returns expanded response for paginated operations.
@@ -379,6 +392,8 @@ def main():
     list_invalidations = module.params.get('list_invalidations')
     list_streaming_distributions = module.params.get('list_streaming_distributions')
 
+    aliases = []
+
     require_distribution_id = (distribution or distribution_config or invalidation or
             streaming_distribution or streaming_distribution_config or list_invalidations)
 
@@ -406,13 +421,16 @@ def main():
 
     # set appropriate cloudfront id
     if distribution_id:
-        result = { 'cloudfront': { distribution_id:{} } }
-        facts = result['cloudfront'][distribution_id]
+        result = { 'cloudfront': { distribution_id: {} } }
+        aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
+        for alias in aliases:
+            result['cloudfront'].update( { alias: {} } )
+        facts = result['cloudfront']
     elif origin_access_identity_id:
-        result = { 'cloudfront': { origin_access_identity_id:{} } }
+        result = { 'cloudfront': { origin_access_identity_id: {} } }
         facts = result['cloudfront'][origin_access_identity_id]
     elif web_acl_id:
-        result = { 'cloudfront': { web_acl_id:{} } }
+        result = { 'cloudfront': { web_acl_id: {} } }
         facts = result['cloudfront'][web_acl_id]
     else:
         result = { 'cloudfront': {} }
@@ -420,9 +438,15 @@ def main():
 
     # call details based on options
     if distribution:
-        facts['distribution'] = service_mgr.get_distribution(distribution_id)
+        distribution_details = service_mgr.get_distribution(distribution_id)
+        facts[distribution_id]['distribution'] = distribution_details
+        for alias in aliases:
+            facts[alias]['distribution'] = distribution_details
     if distribution_config:
-        facts['distribution_config'] = service_mgr.get_distribution_config(distribution_id)
+        distribution_config_details = service_mgr.get_distribution_config(distribution_id)
+        facts[distribution_id]['distribution_config'] = distribution_config_details
+        for alias in aliases:
+            facts[alias]['distribution_config'] = distribution_config_details
     if origin_access_identity:
         facts['origin_access_identity'] = service_mgr.get_origin_access_identity(origin_access_identity_id)
     if origin_access_identity_config:
