@@ -404,19 +404,19 @@ def main():
         if not distribution_id:
             module.fail_json(msg='Error unable to source a distribution id from domain_name_alias')
 
-    # set appropriate ansible_facts id
+    # set appropriate cloudfront id
     if distribution_id:
-        result = { 'ansible_facts': { 'cloudfront': { distribution_id:{} } } }
-        facts = result['ansible_facts']['cloudfront'][distribution_id]
+        result = { 'cloudfront': { distribution_id:{} } }
+        facts = result['cloudfront'][distribution_id]
     elif origin_access_identity_id:
-        result = { 'ansible_facts': { 'cloudfront': { origin_access_identity_id:{} } } }
-        facts = result['ansible_facts']['cloudfront'][origin_access_identity_id]
+        result = { 'cloudfront': { origin_access_identity_id:{} } }
+        facts = result['cloudfront'][origin_access_identity_id]
     elif web_acl_id:
-        result = { 'ansible_facts': { 'cloudfront': { web_acl_id:{} } } }
-        facts = result['ansible_facts']['cloudfront'][web_acl_id]
+        result = { 'cloudfront': { web_acl_id:{} } }
+        facts = result['cloudfront'][web_acl_id]
     else:
-        result = { 'ansible_facts': { 'cloudfront': {} } }
-        facts = result['ansible_facts']['cloudfront']
+        result = { 'cloudfront': {} }
+        facts = result['cloudfront']
 
     # call details based on options
     if distribution:
