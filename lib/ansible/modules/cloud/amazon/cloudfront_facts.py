@@ -467,6 +467,7 @@ def main():
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
             result['cloudfront']['invalidations'].update( { alias: {} } )
+        facts = result['cloudfront']
     elif origin_access_identity_id:
         result = { 'cloudfront': { origin_access_identity_id: {} } }
         facts = result['cloudfront'][origin_access_identity_id]
