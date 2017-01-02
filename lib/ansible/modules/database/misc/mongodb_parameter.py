@@ -219,7 +219,7 @@ def main():
     db = client.admin
 
     try:
-        after_value = db.command("setParameter", **{param: int(value)})
+        after_value = db.command("setParameter", **{param: value})
     except OperationFailure:
         e = get_exception()
         module.fail_json(msg="unable to change parameter: %s" % str(e))
