@@ -78,7 +78,8 @@ By passing the argument ``api_region`` with the CloudStack modules, the region w
 .. code-block:: yaml
 
     - name: ensure my ssh public key exists on Exoscale
-      local_action: cs_sshkeypair
+      local_action:
+        module: cs_sshkeypair
         name: my-ssh-key
         public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
         api_region: exoscale
@@ -88,7 +89,8 @@ Or by looping over a regions list if you want to do the task in every region:
 .. code-block:: yaml
 
     - name: ensure my ssh public key exists in all CloudStack regions
-      local_action: cs_sshkeypair
+      local_action:
+        module: cs_sshkeypair
         name: my-ssh-key
         public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
         api_region: "{{ item }}"
@@ -208,28 +210,32 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
     ---
     - name: provision our VMs
       hosts: cloud-vm
-      connection: local
       tasks:
         - name: ensure VMs are created and running
-          cs_instance:
+          local_action:
+            module: cs_instance
             name: "{{ inventory_hostname_short }}"
             template: Linux Debian 7 64-bit 20GB Disk
             service_offering: "{{ cs_offering }}"
             state: running
 
+        - name: ensure static NATs
+          local_action:
+            module: cs_staticnat
+            vm: "{{ inventory_hostname_short }}"
+            ip_address: "{{ public_ip }}"
+          when: public_ip is defined
+
         - name: ensure firewall ports opened
-          cs_firewall:
+          local_action:
+            module: cs_firewall
             ip_address: "{{ public_ip }}"
             port: "{{ item.port }}"
             cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
           with_items: "{{ cs_firewall }}"
           when: public_ip is defined
 
-        - name: ensure static NATs
-          cs_staticnat: vm="{{ inventory_hostname_short }}" ip_address="{{ public_ip }}"
-          when: public_ip is defined
-
-In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connetion=local`` to execute the API calls locally from our workstation.
+In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``local_action`` to execute the API calls locally from our workstation.
 
 In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
@@ -283,59 +289,68 @@ The playbook looks like the following:
     ---
     - name: cloud base setup
       hosts: localhost
-      connection: local
       tasks:
-      - name: upload ssh public key
-        cs_sshkeypair:
-          name: defaultkey
-          public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        - name: upload ssh public key
+          local_action:
+            module: cs_sshkeypair
+            name: defaultkey
+            public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
-      - name: ensure security groups exist
-        cs_securitygroup:
-          name: "{{ item }}"
-        with_items:
-          - default
-          - web
+        - name: ensure security groups exist
+          local_action:
+            module: cs_securitygroup
+            name: "{{ item }}"
+          with_items:
+            - default
+            - web
 
-      - name: add inbound SSH to security group default
-        cs_securitygroup_rule:
-          security_group: default
-          start_port: "{{ item }}"
-          end_port: "{{ item }}"
-        with_items:
-          - 22
+        - name: add inbound SSH to security group default
+          local_action:
+            module: cs_securitygroup_rule
+            security_group: default
+            start_port: "{{ item }}"
+            end_port: "{{ item }}"
+          with_items:
+            - 22
 
-      - name: add inbound TCP rules to security group web
-        cs_securitygroup_rule:
-          security_group: web
-          start_port: "{{ item }}"
-          end_port: "{{ item }}"
-        with_items:
-          - 80
-          - 443
+        - name: add inbound TCP rules to security group web
+          local_action:
+            module: cs_securitygroup_rule
+            security_group: web
+            start_port: "{{ item }}"
+            end_port: "{{ item }}"
+          with_items:
+            - 80
+            - 443
 
     - name: install VMs in the cloud
       hosts: cloud-vm
-      connection: local
       tasks:
-      - name: create and run VMs on CloudStack
-        cs_instance:
-          name: "{{ inventory_hostname_short }}"
-          template: Linux Debian 7 64-bit 20GB Disk
-          service_offering: "{{ cs_offering }}"
-          security_groups: "{{ cs_securitygroups }}"
-          ssh_key: defaultkey
-          state: Running
-        register: vm
+        - name: create and run VMs on CloudStack
+          local_action:
+            module: cs_instance
+            name: "{{ inventory_hostname_short }}"
+            template: Linux Debian 7 64-bit 20GB Disk
+            service_offering: "{{ cs_offering }}"
+            security_groups: "{{ cs_securitygroups }}"
+            ssh_key: defaultkey
+            state: running
+          register: vm
 
-      - name: show VM IP
-        debug: msg="VM {{ inventory_hostname }} {{ vm.default_ip }}"
+        - name: show VM IP
+          debug:
+            msg: "VM {{ inventory_hostname }} {{ vm.default_ip }}"
 
-      - name: assing IP to the inventory
-        set_fact: ansible_ssh_host={{ vm.default_ip }}
+        - name: assing IP to the inventory
+          set_fact:
+            ansible_ssh_host: "{{ vm.default_ip }}"
 
-      - name: waiting for SSH to come up
-        wait_for: port=22 host={{ vm.default_ip }} delay=5
+        - name: waiting for SSH to come up
+          local_action:
+            module: wait_for
+            port: 22
+            host: "{{ vm.default_ip }}"
+            delay: 5
 
 In the first play we setup the security groups, in the second play the VMs will created be assigned to these groups. Further you see, that we assign the public IP returned from the modules to the host inventory. This is needed as we do not know the IPs we will get in advance. In a next step you would configure the DNS servers with these IPs for accassing the VMs with their DNS name.
 
