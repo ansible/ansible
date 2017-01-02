@@ -398,10 +398,9 @@ def main():
             streaming_distribution or streaming_distribution_config or list_invalidations)
 
     # set default to list_distributions if no option specified
-    if not list_distributions:
-        list_distributions = not (distribution or distribution_config or origin_access_identity or 
-            origin_access_identity_config or invalidation or streaming_distribution or 
-            streaming_distribution_config or list_origin_access_identities or
+    list_distributions = list_distributions or not (distribution or distribution_config or 
+            origin_access_identity or origin_access_identity_config or invalidation or 
+            streaming_distribution or streaming_distribution_config or list_origin_access_identities or
             list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions)
 
     # validations
