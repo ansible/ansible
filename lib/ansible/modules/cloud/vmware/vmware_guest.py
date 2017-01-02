@@ -71,11 +71,14 @@ options:
         required: False
    disk:
         description:
-            - A list of disks to add
+            - A list of disks to add.
+            - Attributes such as operation ('add' to add a new disk or undefined to edit first disk), type (thin or undefined), size_[tb|gb|mb|kb] (integer)
         required: False
    nic:
         description:
-            - A list of nics to add
+            - A list of nics to add.
+            - Attributes such as network (network name define in vcenter), network_vlan (vlan_id), type (e1000, vmxnet2, default=vmxnet3)
+              If network_vlan is defined network is ignored
         required: False
    wait_for_ip_address:
         description:
@@ -149,10 +152,12 @@ Example from Ansible playbook
             - size_gb: 10
               type: thin
               datastore: g73_datastore
+              operation: add
         nic:
             - type: vmxnet3
               network: VM Network
-              network_type: standard
+            - type: e1000
+              network_vlan: 1000
         hardware:
             memory_mb: 512
             num_cpus: 1
@@ -404,8 +409,8 @@ class PyVmomiHelper(object):
         if not self.datacenter:
             self.get_datacenter()
         self.folders = self._build_folder_tree(self.datacenter.vmFolder)
-        self.folder_map = self._build_folder_map(self.folders)
-        return (self.folders, self.folder_map)
+        self.foldermap = self._build_folder_map(self.folders)
+        return (self.folders, self.foldermap)
 
     def compile_folder_path_for_object(self, vobj):
         ''' make a /vm/foo/bar/baz like folder path for an object '''
@@ -455,7 +460,7 @@ class PyVmomiHelper(object):
                 # need to look for matching absolute path
                 if not self.folders:
                     self.getfolders()
-                paths = self.folder_map['paths'].keys()
+                paths = self.foldermap['paths'].keys()
                 paths = [x for x in paths if x.endswith(self.params['folder'])]
                 if len(paths) > 1:
                     self.module.fail_json(msg='%s matches more than one folder. Please use the absolute path starting with /vm/' % self.params['folder'])
@@ -643,7 +648,6 @@ class PyVmomiHelper(object):
         #   - multiple datacenters
         #   - resource pools
         #   - multiple templates by the same name
-        #   - multiple disks
         #   - changing the esx host is ignored?
         #   - static IPs
 
@@ -663,6 +667,8 @@ class PyVmomiHelper(object):
 
         # find matching folders
         if self.params['folder'].startswith('/'):
+            if not self.params['folder'].startswith('/vm'):
+                self.params['folder'] = '/vm' + self.params['folder']
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
         else:
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
@@ -729,70 +735,159 @@ class PyVmomiHelper(object):
 
         clonespec_kwargs = {}
         clonespec_kwargs['location'] = relospec
-
-        # create disk spec if not default
-        if self.params['disk']:
-            # grab the template's first disk and modify it for this customization
-            disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
-            diskspec = vim.vm.device.VirtualDeviceSpec()
-            # set the operation to edit so that it knows to keep other settings
-            diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-            diskspec.device = disks[0]
-
-            # get the first disk attributes
-            pspec = self.params.get('disk')[0]
-
-            # is it thin?
-            if pspec.get('type', '').lower() == 'thin':
-                diskspec.device.backing.thinProvisioned = True
-
-            # which datastore?
-            if pspec.get('datastore'):
-                # This is already handled by the relocation spec,
-                # but it needs to eventually be handled for all the
-                # other disks defined
-                pass
-
-            # what size is it?
-            if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
-                # size_tb, size_gb, size_mb, size_kb, size_b ...?
-                if 'size' in pspec:
-                    expected = ''.join(c for c in pspec['size'] if c.isdigit())
-                    unit = pspec['size'].replace(expected, '').lower()
-                    expected = int(expected)
-                else:
-                    param = [x for x in pspec.keys() if x.startswith('size_')][0]
-                    unit = param.split('_')[-1].lower()
-                    expected = [x[1] for x in pspec.items() if x[0].startswith('size_')][0]
-                    expected = int(expected)
-
-                kb = None
-                if unit == 'tb':
-                    kb = expected * 1024 * 1024 * 1024
-                elif unit == 'gb':
-                    kb = expected * 1024 * 1024
-                elif unit ==' mb':
-                    kb = expected * 1024
-                elif unit == 'kb':
-                    kb = expected
-                else:
-                    self.module.fail_json(msg='%s is not a supported unit for disk size' % unit)
-                diskspec.device.capacityInKB = kb
-
-            # tell the configspec that the disk device needs to change
-            configspec = vim.vm.ConfigSpec(deviceChange=[diskspec])
-            clonespec_kwargs['config'] = configspec
+        clonespec_kwargs['config'] = vim.vm.ConfigSpec()
+        devices = []
 
         # set cpu/memory/etc
         if 'hardware' in self.params:
-            if not 'config' in clonespec_kwargs:
-                clonespec_kwargs['config'] = vim.vm.ConfigSpec()
             if 'num_cpus' in self.params['hardware']:
                 clonespec_kwargs['config'].numCPUs = \
                     int(self.params['hardware']['num_cpus'])
             if 'memory_mb' in self.params['hardware']:
                 clonespec_kwargs['config'].memoryMB = \
                     int(self.params['hardware']['memory_mb'])
+
+        # create disk spec if not default
+        if self.params['disk']:
+            # get all disks on a VM, set unit_number to the next available
+            for dev in template.config.hardware.device:
+                if hasattr(dev.backing, 'fileName'):
+                    unit_number = int(dev.unitNumber) + 1
+                    # unit_number 7 reserved for scsi controller
+                    if unit_number == 7:
+                        unit_number += 1
+                    if unit_number >= 16:
+                        self.module.fail_json(msg="We don't support this many disks")
+                if isinstance(dev, vim.vm.device.VirtualSCSIController):
+                    controller = dev
+
+            for pspec in self.params.get('disk'):
+                diskspec = vim.vm.device.VirtualDeviceSpec()
+
+                # add a new to disk?
+                if 'operation' in pspec and pspec['operation'].lower() == 'add':
+                    # set the operation to add a new disk
+                    diskspec.fileOperation = "create"
+                    diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                    diskspec.device = vim.vm.device.VirtualDisk()
+                    diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+                    diskspec.device.backing.diskMode = 'persistent'
+                    diskspec.device.unitNumber = unit_number
+                    diskspec.device.controllerKey = controller.key
+                    unit_number+=1
+                else:
+                    # grab the template's first disk and modify it for this customization
+                    disks = [x for x in template.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)]
+
+                    # set the operation to edit so that it knows to keep other settings
+                    diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                    diskspec.device = disks[0]
+
+                # is it thin?
+                if 'type' in pspec:
+                    if pspec['type'].lower() == 'thin':
+                        diskspec.device.backing.thinProvisioned = True
+
+                # which datastore?
+                if 'datastore' in pspec:
+                    # This is already handled by the relocation spec,
+                    # but it needs to eventually be handled for all the
+                    # other disks defined
+                    pass
+
+                # what size is it?
+                if [x for x in pspec.keys() if x.startswith('size_') or x == 'size']:
+                    # size_tb, size_gb, size_mb, size_kb, size_b ...?
+                    if 'size' in pspec:
+                        expected = ''.join(c for c in pspec['size'] if c.isdigit())
+                        unit = pspec['size'].replace(expected, '').lower()
+                        expected = int(expected)
+                    else:
+                        param = [x for x in pspec.keys() if x.startswith('size_')][0]
+                        unit = param.split('_')[-1].lower()
+                        expected = [x[1] for x in pspec.items() if x[0].startswith('size_')][0]
+                        expected = int(expected)
+
+                    kb = None
+                    if unit == 'tb':
+                        kb = expected * 1024 * 1024 * 1024
+                    elif unit == 'gb':
+                        kb = expected * 1024 * 1024
+                    elif unit ==' mb':
+                        kb = expected * 1024
+                    elif unit == 'kb':
+                        kb = expected
+                    else:
+                        self.module.fail_json(msg='%s is not a supported unit for disk size' % unit)
+                    diskspec.device.capacityInKB = kb
+
+                devices.append(diskspec)
+
+        # set nics
+        if self.params['nic']:
+            key = 0
+
+            try:
+                for device in template.config.hardware.device:
+                    if hasattr(device, 'addressType'):
+                        nic = vim.vm.device.VirtualDeviceSpec()
+                        nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                        nic.device = device
+                        devices.append(nic)
+            except:
+                pass
+
+            for device in self.params.get('nic'):
+                # FIXME: Do network_vlan compatible with vSwitch
+                network_name = None
+                if 'network_vlan' in device:
+                    dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                    for dvp in dvps:
+                        if dvp.config.defaultPortConfig.vlan.vlanId == device['network_vlan']:
+                            network_name = dvp.config.name
+                    if not network_name:
+                        self.module.fail_json(msg="network_vlan not found")
+                elif 'network' in device:
+                    network_name = device['network']
+                else:
+                    self.module.fail_json(msg="nic need a network or a network_vlan")
+
+                network = get_obj(self.content, [vim.Network], network_name)
+
+                nic = vim.vm.device.VirtualDeviceSpec()
+                nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                nic.device = vim.vm.device.VirtualVmxnet3()
+                nic.device.wakeOnLanEnabled = True
+                nic.device.addressType = 'assigned'
+
+                if 'type' in device:
+                    if device['type'].lower() == "e1000":
+                        nic.device = vim.vm.device.VirtualE1000()
+                    elif device['type'].lower() == "vmxnet2":
+                        nic.device = vim.vm.device.VirtualVmxnet2()
+
+                if hasattr(get_obj(self.content, [vim.Network], network_name), 'portKeys'):
+                    # VDS switch
+                    pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
+                    dvs_port_connection = vim.dvs.PortConnection()
+                    dvs_port_connection.portgroupKey= pg_obj.key
+                    dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                    nic.device.backing.port = dvs_port_connection
+
+                else:
+                    # vSwitch
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                    nic.device.backing.network = get_obj(self.content, [vim.Network], network_name)
+                    nic.device.backing.deviceName = network_name
+
+                nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                nic.device.connectable.startConnected = True
+                nic.device.connectable.allowGuestControl = True
+                nic.device.connectable.connected = True
+                nic.device.connectable.allowGuestControl = True
+
+                devices.append(nic)
 
         # lets try and assign a static ip address
         if self.params['customize'] is True:
@@ -811,60 +906,8 @@ class PyVmomiHelper(object):
                                 ip_settings.append(self.params['networks'][network])
 
             key = 0
-            network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
-            datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-            # get the folder where VMs are kept for this datacenter
-            destfolder = datacenter.vmFolder
 
-            cluster = get_obj(self.content, [vim.ClusterComputeResource],self.params['cluster'])
-
-            devices = []
             adaptermaps = []
-
-            try:
-                for device in template.config.hardware.device:
-                    if hasattr(device, 'addressType'):
-                        nic = vim.vm.device.VirtualDeviceSpec()
-                        nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
-                        nic.device = device
-                        devices.append(nic)
-            except:
-                pass
-
-                # single device support
-            nic = vim.vm.device.VirtualDeviceSpec()
-            nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-            nic.device = vim.vm.device.VirtualVmxnet3()
-            nic.device.wakeOnLanEnabled = True
-            nic.device.addressType = 'assigned'
-            nic.device.deviceInfo = vim.Description()
-            nic.device.deviceInfo.label = 'Network Adapter %s' % (key + 1)
-            nic.device.deviceInfo.summary = ip_settings[key]['network']
-            
-            if hasattr(get_obj(self.content, [vim.Network], ip_settings[key]['network']), 'portKeys'):
-            # VDS switch
-                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], ip_settings[key]['network'])
-                dvs_port_connection = vim.dvs.PortConnection()
-                dvs_port_connection.portgroupKey= pg_obj.key
-                dvs_port_connection.switchUuid= pg_obj.config.distributedVirtualSwitch.uuid
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = dvs_port_connection 
-
-            else: 
-            # vSwitch
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                nic.device.backing.network = get_obj(self.content, [vim.Network], ip_settings[key]['network'])
-                nic.device.backing.deviceName = ip_settings[key]['network']
-
-            nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-            nic.device.connectable.startConnected = True
-            nic.device.connectable.allowGuestControl = True
-            nic.device.connectable.connected = True
-            nic.device.connectable.allowGuestControl = True
-            devices.append(nic)
-            
-            # Update the spec with the added NIC
-            clonespec_kwargs['config'].deviceChange = devices
 
             guest_map = vim.vm.customization.AdapterMapping()
             guest_map.adapter = vim.vm.customization.IPSettings()
@@ -902,6 +945,10 @@ class PyVmomiHelper(object):
             clonespec_kwargs['customization'].globalIPSettings = globalip
             clonespec_kwargs['customization'].identity = ident
 
+        # Update the spec with the added devices (Nics or disks)
+        if devices:
+            clonespec_kwargs['config'].deviceChange = devices
+
         clonespec = vim.vm.CloneSpec(**clonespec_kwargs)
         task = template.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
         self.wait_for_task(task)
@@ -919,6 +966,8 @@ class PyVmomiHelper(object):
                 annotation_spec.annotation = str(self.params['annotation'])
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
+            if self.params['state'] == "poweredon":
+                self.set_powerstate(vm, 'poweredon', force=False)
             if wait_for_ip:
                 self.set_powerstate(vm, 'poweredon', force=False)
                 self.wait_for_vm_ip(vm)
