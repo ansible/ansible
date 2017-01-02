@@ -280,14 +280,14 @@ class CloudFrontServiceManager:
 
     def list_distributions_by_web_acl(self, web_acl_id):
         try:
-            func = partial(self.client.list_distributions, web_acl_id)
+            func = partial(self.client.list_distributions, WebAclId=web_acl_id)
             return self.paginated_response(func, 'DistributionList')
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions by web acl id = " + str(e), exception=traceback.format_exc(e))
 
-    def list_invalidations(self):
+    def list_invalidations(self, distribution_id):
         try:
-            func = partial(self.client.list_invalidations)
+            func = partial(self.client.list_invalidations, DistributionId=distribution_id)
             return self.paginated_response(func, 'InvalidationList')
         except Exception as e:
             self.module.fail_json(msg="Error listing invalidations = " + str(e), exception=traceback.format_exc(e))
@@ -398,9 +398,10 @@ def main():
             streaming_distribution or streaming_distribution_config or list_invalidations)
 
     # set default to list_distributions if no option specified
-    list_distributions = not (distribution or distribution_config or origin_access_identity or 
+    if not list_distributions:
+        list_distributions = not (distribution or distribution_config or origin_access_identity or 
             origin_access_identity_config or invalidation or streaming_distribution or 
-            streaming_distribution_config or list_origin_access_identities or list_distributions or 
+            streaming_distribution_config or list_origin_access_identities or
             list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions)
 
     # validations
@@ -466,7 +467,7 @@ def main():
     if all_lists or list_streaming_distributions:
         facts['list_streaming_distributions'] = service_mgr.list_streaming_distributions()
     if list_distributions_by_web_acl_id:
-        facts['list_distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl()
+        facts['list_distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl(web_acl_id)
     if list_invalidations:
         facts['list_invalidations'] = service_mgr.list_invalidations(distribution_id)
 
