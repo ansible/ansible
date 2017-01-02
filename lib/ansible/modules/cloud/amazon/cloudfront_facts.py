@@ -524,6 +524,8 @@ def main():
         facts['streaming_distributions'] = service_mgr.list_streaming_distributions()
     if list_distributions_by_web_acl_id:
         facts['distributions_by_web_acl_id'] = service_mgr.list_distributions_by_web_acl_id(web_acl_id)
+    if list_invalidations:
+        facts['list_invalidations'] = service_mgr.list_invalidations(distribution_id)
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
