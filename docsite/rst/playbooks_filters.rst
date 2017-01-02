@@ -185,6 +185,10 @@ To get a random list from an existing  list::
     {{ ['a','b','c']|shuffle }} => ['c','a','b']
     {{ ['a','b','c']|shuffle }} => ['b','c','a']
 
+As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
+
+    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }} => ['b','a','c']
+
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
 
 
