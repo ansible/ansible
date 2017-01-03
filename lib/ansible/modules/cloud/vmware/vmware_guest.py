@@ -638,8 +638,10 @@ class PyVmomiHelper(object):
                     if not isinstance(vobj.parent, vim.Folder):
                         continue
                     if self.compile_folder_path_for_object(vobj) == searchpath:
-                        self.current_vm_obj = vobj
-                        return vobj
+                        # Match by name
+                        if vobj.config.name == name:
+                            self.current_vm_obj = vobj
+                            return vobj
 
             if name_match:
                 if name_match == 'first':
