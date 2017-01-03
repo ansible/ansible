@@ -404,7 +404,7 @@ This is a boolean that turns on more verbose logging.  If a module uses
 :py:meth:`AnsibleModule.debug` rather than :py:meth:`AnsibleModule.log` then
 the messages are only logged if this is True.  This also turns on logging of
 external commands that the module executes.  This can be changed via
-the``debug`` setting in :file:`ansible.cfg` or the environment variable
+the ``debug`` setting in :file:`ansible.cfg` or the environment variable
 :envvar:`ANSIBLE_DEBUG`.  If, for some reason, a module must access this, it
 should do so by instantiating an :class:`AnsibleModule` and accessing
 :attr:`AnsibleModule._debug`.

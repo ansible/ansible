@@ -130,7 +130,7 @@ Below you see an example how it can be used in combination with Ansible's block 
             CLOUDSTACK_PROJECT: web-app
             CLOUDSTACK_ZONE: sf-1
 
-.. Note:: You are still able overwrite the environment variables using the module arguments, e.g.``zone: sf-2``
+.. Note:: You are still able overwrite the environment variables using the module arguments, e.g. ``zone: sf-2``
 
 .. Note:: Unlike ``CLOUDSTACK_REGION`` these additional environment variables are ingored in the CLI ``cs``.
 
