@@ -220,6 +220,6 @@ def main():
         module.exit_json(changed=True,
                  out=cluster_state)
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
