@@ -1,12 +1,31 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2016, Raphaël Biancone <raphb.bis@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+#
+
 DOCUMENTATION = '''
 ---
 module: icinga2_host
 short_description: Add, delete or modify an host in Icinga2.
 description:
     - Add, delete or modify an host in Icinga2 using the API.
+version_added: "2.2"
 author: "Raphaël BIANCONE, @tux-00"
 notes:
     - You need to enable the Icinga2 API feature to use this module.
@@ -59,12 +78,12 @@ options:
         default: null
     groups:
         description:
-            - A list of host groups this host belongs to. Example : groups="linux-servers,test-servers"
+            - A list of host groups this host belongs to.
         required: false
         default: null
     vars:
         description:
-            - A dictionary containing custom attributes that are specific to this host. Example: vars='{"disk":"/", "os":"Windows"}'
+            - A dictionary containing custom attributes that are specific to this host.
         required: false
         default: null
     check_command:
@@ -185,6 +204,28 @@ options:
         required: false
         default: null
 '''
+
+EXAMPLES = '''
+- name: Create a new host or update an existing host's info
+  icinga2_host:
+    state=present
+    name=docker-mysql
+    display_name="Docker MySQL"
+    auto_update=yes
+    address=192.168.0.100
+    api_user=root
+    api_password=pass
+    check_command=hostalive
+    vars='{"disk":"/", "os":"Linux"}'
+    groups="linux-servers"
+
+- name: Delete an host
+  icinga2_host:
+    state=absent
+    name=docker-mysql
+    address=192.168.138.16
+'''
+
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import open_url
