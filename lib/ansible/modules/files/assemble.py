@@ -41,14 +41,14 @@ options:
   src:
     description:
       - An already existing directory full of source files.
-    required: flase
+    required: false
     default: null
     aliases: []
   src_files:
     description:
       - A list of files sorted by user. 
     version_added: "2.3"
-    required: flase
+    required: false
     default: null
     aliases: []
   dest:
