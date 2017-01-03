@@ -390,14 +390,20 @@ def parsekey(module, raw_key, rank=None):
 
     return (key, key_type, options, comment, rank)
 
-def readkeys(module, filename):
+def readfile(filename):
 
     if not os.path.isfile(filename):
-        return {}
+        return ''
 
-    keys = {}
     f = open(filename)
-    for rank_index, line in enumerate(f.readlines()):
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+def parsekeys(module, lines):
+    keys = {}
+    for rank_index, line in enumerate(lines.splitlines(True)):
         key_data = parsekey(module, line, rank=rank_index)
         if key_data:
             # use key as identifier
@@ -406,51 +412,54 @@ def readkeys(module, filename):
             # for an invalid line, just set the line
             # dict key to the line so it will be re-output later
             keys[line] = (line, 'skipped', None, None, rank_index)
-    f.close()
     return keys
 
-def writekeys(module, filename, keys):
+def writefile(module, filename, content):
 
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
 
-    # FIXME: only the f.writelines() needs to be in try clause
     try:
-        new_keys = keys.values()
-        # order the new_keys by their original ordering, via the rank item in the tuple
-        ordered_new_keys = sorted(new_keys, key=itemgetter(4))
-
-        for key in ordered_new_keys:
-            try:
-                (keyhash, key_type, options, comment, rank) = key
-
-                option_str = ""
-                if options:
-                    option_strings = []
-                    for option_key, value in options.items():
-                        if value is None:
-                            option_strings.append("%s" % option_key)
-                        else:
-                            option_strings.append("%s=%s" % (option_key, value))
-                    option_str = ",".join(option_strings)
-                    option_str += " "
-
-                # comment line or invalid line, just leave it
-                if not key_type:
-                    key_line = key
-
-                if key_type == 'skipped':
-                    key_line = key[0]
-                else:
-                    key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
-            except:
-                key_line = key
-            f.writelines(key_line)
+        f.write(content)
     except IOError:
         e = get_exception()
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
+
+def serialize(keys):
+    lines = []
+    new_keys = keys.values()
+    # order the new_keys by their original ordering, via the rank item in the tuple
+    ordered_new_keys = sorted(new_keys, key=itemgetter(4))
+
+    for key in ordered_new_keys:
+        try:
+            (keyhash, key_type, options, comment, rank) = key
+
+            option_str = ""
+            if options:
+                option_strings = []
+                for option_key, value in options.items():
+                    if value is None:
+                        option_strings.append("%s" % option_key)
+                    else:
+                        option_strings.append("%s=%s" % (option_key, value))
+                option_str = ",".join(option_strings)
+                option_str += " "
+
+            # comment line or invalid line, just leave it
+            if not key_type:
+                key_line = key
+
+            if key_type == 'skipped':
+                key_line = key[0]
+            else:
+                key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
+        except:
+            key_line = key
+        lines.append(key_line)
+    return ''.join(lines)
 
 def enforce_state(module, params):
     """
@@ -483,7 +492,9 @@ def enforce_state(module, params):
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
-    existing_keys = readkeys(module, params["keyfile"])
+    existing_content = readfile(params["keyfile"])
+    existing_keys = parsekeys(module, existing_content)
+
     # Add a place holder for keys that should exist in the state=present and
     # exclusive=true case
     keys_to_exist = []
@@ -551,10 +562,19 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
+        filename = keyfile(module, user, do_write, path, manage_dir)
+        new_content = serialize(existing_keys)
+        diff = {
+            'before_header': params['keyfile'],
+            'after_header': filename,
+            'before': existing_content,
+            'after': new_content,
+        }
         if module.check_mode:
-            module.exit_json(changed=True)
-        writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
+            module.exit_json(changed=True, diff=diff)
+        writefile(module, filename, new_content)
         params['changed'] = True
+        params['diff'] = diff
     else:
         if module.check_mode:
             module.exit_json(changed=False)
