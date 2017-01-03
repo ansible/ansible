@@ -16,7 +16,7 @@
   ops_command:
     commands:
       - show version
-      - show interfaces
+      - show interface
     provider: "{{ cli }}"
   register: result
 
