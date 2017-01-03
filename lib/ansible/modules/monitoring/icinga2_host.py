@@ -66,6 +66,16 @@ options:
             - Icinga2 API feature password.
         required: true
         default: null
+    api_ip:
+        description:
+            - Icinga2 API server IP address.
+        required: false
+        default: 127.0.0.1
+    api_port:
+        description:
+            - Icinga2 API listening port.
+        required: false
+        default: 5665
     address:
         description:
             - The host's address. Available as command runtime macro $address$ if set.
@@ -238,7 +248,7 @@ def host_add(name):
     data = build_json_data()
 
     try:
-        res = json.load(open_url(url="https://localhost:5665/v1/objects/hosts/%s" % name,
+        res = json.load(open_url(url="https://%s:%s/v1/objects/hosts/%s" % (api_ip, api_port, name),
                                  force=True,
                                  data=data,
                                  headers={"Accept": "application/json"},
@@ -264,7 +274,7 @@ def host_add(name):
 
 def host_del(name):
     try:
-        res = json.load(open_url(url="https://localhost:5665/v1/objects/hosts/%s?cascade=1" % name,
+        res = json.load(open_url(url="https://%s:%s/v1/objects/hosts/%s?cascade=1" % (api_ip, api_port, name),
                                  force=True,
                                  headers={"Accept": "application/json"},
                                  method="DELETE",
@@ -293,7 +303,7 @@ def host_modify(name):
     data = build_json_data()
 
     try:
-        res = json.load(open_url(url="https://localhost:5665/v1/objects/hosts/%s" % name,
+        res = json.load(open_url(url="https://%s:%s/v1/objects/hosts/%s" % (api_ip, api_port, name),
                                  force=True,
                                  data=data,
                                  headers={"Accept": "application/json"},
@@ -321,7 +331,7 @@ def host_modify(name):
 
 def check_host_exists(name):
     try:
-        res = json.load(open_url(url="https://localhost:5665/v1/objects/hosts/%s" % name,
+        res = json.load(open_url(url="https://%s:%s/v1/objects/hosts/%s" % (api_ip, api_port, name),
                                  force=True,
                                  headers={"Accept": "application/json"},
                                  method="GET",
@@ -371,6 +381,8 @@ def main():
             display_name=dict(),
             api_user=dict(required=True),
             api_password=dict(required=True),
+            api_ip=dict(default='127.0.0.1'),
+            api_port=dict(default='5665', type='int'),
             address=dict(),
             address6=dict(),
             groups=dict(type='list'),
