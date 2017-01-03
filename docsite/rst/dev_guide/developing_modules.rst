@@ -638,6 +638,14 @@ The following  checklist items are important guidelines for people who want to c
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
+* Modules must have a metadata section.  For the vast majority of new modules,
+  the metadata should look exactly like this::
+
+    ANSIBLE_METADATA = {'status': ['preview'],
+                        'supported_by': 'community',
+                        'version': '1.0'}
+
+  The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
