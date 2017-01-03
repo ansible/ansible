@@ -77,6 +77,12 @@ options:
         choices : [secure, standalone]
         description:
             - Set bridge fail-mode. The default value (None) is a No-op.
+    set:
+        version_added: 2.3
+        required: false
+        default: None
+        description:
+            - Set a single property on a bridge.
 '''
 
 EXAMPLES = '''
@@ -102,6 +108,28 @@ EXAMPLES = '''
       bridge-id: br-int
 '''
 
+def truncate_before(value, srch):
+    """ Return content of str before the srch parameters. """
+
+    before_index = value.find(srch)
+    if (before_index >= 0):
+        return value[:before_index]
+    else:
+        return value
+
+def _set_to_get(set_cmd, module):
+    """ Convert set command to get command and set value.
+    return tuple (get command, set value)
+    """
+
+    ##
+    # If set has option: then we want to truncate just before that.
+    set_cmd = truncate_before(set_cmd, " option:")
+    get_cmd = set_cmd.split(" ")
+    (key, value) = get_cmd[-1].split("=")
+    module.log("get commands %s " % key)
+    return (["--", "get"] + get_cmd[:-1] + [key], value)
+
 
 class OVSBridge(object):
     """ Interface to ovs-vsctl. """
@@ -113,6 +141,7 @@ class OVSBridge(object):
         self.state = module.params['state']
         self.timeout = module.params['timeout']
         self.fail_mode = module.params['fail_mode']
+        self.set_opt = module.params.get('set', None)
 
         if self.parent:
             if self.vlan is None:
@@ -134,13 +163,43 @@ class OVSBridge(object):
             return False
         self.module.fail_json(msg=err)
 
+    def set(self, set_opt):
+        """ Set attributes on a bridge. """
+        self.module.log("set called %s" % set_opt)
+        if (not set_opt):
+            return False
+
+        (get_cmd, set_value) = _set_to_get(set_opt, self.module)
+        (rtc, out, err) = self._vsctl(get_cmd, False)
+        if rtc != 0:
+            ##
+            # ovs-vsctl -t 5 -- get Interface port external_ids:key
+            # returns failure if key does not exist.
+            out = None
+        else:
+            out = out.strip("\n")
+            out = out.strip('"')
+
+        if (out == set_value):
+            return False
+
+        (rtc, out, err) = self._vsctl(["--", "set"] + set_opt.split(" "))
+        if rtc != 0:
+            self.module.fail_json(msg=err)
+
+        return True
+
     def add(self):
         '''Create the bridge'''
+        cmd = ['add-br', self.bridge]
         if self.parent and self.vlan: # Add fake bridge
-            rtc, _, err = self._vsctl(['add-br', self.bridge, self.parent, self.vlan])
-        else:
-            rtc, _, err = self._vsctl(['add-br', self.bridge])
+            cmd += [self.parent, self.vlan]
 
+        if self.set and self.set_opt:
+            cmd += ["--", "set"]
+            cmd += self.set_opt.split(" ")
+
+        rtc, _, err = self._vsctl(cmd)
         if rtc != 0:
             self.module.fail_json(msg=err)
         if self.fail_mode:
@@ -205,6 +264,12 @@ class OVSBridge(object):
                 if not self.exists():
                     self.add()
                     changed = True
+
+                ##
+                # If the -- set changed check here and make changes
+                # but this only makes sense when state=present.
+                if (not changed):
+                    changed = self.set(self.set_opt) or changed
 
                 current_fail_mode = self.get_fail_mode()
                 if self.fail_mode and (self.fail_mode != current_fail_mode):
@@ -295,6 +360,7 @@ def main():
             'timeout': {'default': 5, 'type': 'int'},
             'external_ids': {'default': None, 'type': 'dict'},
             'fail_mode': {'default': None},
+            'set': {'required': False, 'default': None}
         },
         supports_check_mode=True,
     )
