@@ -27,7 +27,7 @@ version_added: historical
 options:
   free_form:
     description:
-      - the raw module takes a free form command to run
+      - the raw module takes a free form command to run. There is no parameter actually named 'free form'; see the examples!
     required: true
   executable:
     description:
