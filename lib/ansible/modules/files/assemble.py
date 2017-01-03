@@ -178,7 +178,6 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     for fragment in sorted_files:
         if compiled_regexp and not compiled_regexp.search(os.path.basename(fragment)) and not src_files:
             continue
-        #fragment = u"%s/%s" % (src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         fragment_content = open(fragment, 'rb').read()
