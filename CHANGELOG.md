@@ -55,6 +55,9 @@ Ansible Changes By Release
   * infini_vol
 - omapi_host
 - openwrt_init
+- packet:
+  * packet_device
+  * packet_sshkey
 - windows:
   * win_say
 
