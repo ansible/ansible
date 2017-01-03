@@ -1,4 +1,4 @@
-FROM opensuse:leap
+FROM opensuse:42.1
 
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install --force systemd-sysvinit && \
