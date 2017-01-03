@@ -232,6 +232,20 @@ options:
             - "C(nic_name) - Set name to network interface of Virtual Machine."
             - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
         version_added: "2.3"
+    kernel_path:
+        description:
+            - "Path to a kernel image used to boot the virtual machine."
+            - "Kernel image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    initrd_path:
+        description:
+            - "Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option."
+            - "Ramdisk image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    kernel_params:
+        description:
+            - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -784,6 +798,9 @@ def main():
         host=dict(default=None),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
+        kernel_path=dict(default=None),
+        initrd_path=dict(default=None),
+        kernel_params=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -841,6 +858,11 @@ def main():
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
                     initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    os=otypes.OperatingSystem(
+                        cmdline=module.params.get('kernel_params'),
+                        initrd=module.params.get('initrd_path'),
+                        kernel=module.params.get('kernel_path'),
+                    ),
                 ),
             )
 
