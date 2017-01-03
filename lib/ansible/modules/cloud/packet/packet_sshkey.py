@@ -33,7 +33,7 @@ options:
     choices: ['present', 'absent']
   auth_token:
     description:
-     - Packet api token. You can also supply it in env var PACKET_API_TOKEN.
+     - Packet api token. You can also supply it in env var c(PACKET_API_TOKEN).
   label:
      description:
      - Label for the key. If you keep it empty, it will be read from key string.
@@ -57,7 +57,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# All the examples assume that you have your Packet API token in env var PACKET_API_TOKEN.
+# All the examples assume that you have your Packet API token in env var c(PACKET_API_TOKEN).
 # You can also pass the api token in module param auth_token.
 
 - name: create sshkey from string
@@ -104,6 +104,7 @@ sshkeys:
 import os
 import uuid
 
+from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
 
@@ -214,7 +215,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
             except Exception as e:
                 _msg = ("while trying to remove sshkey %s, id %s %s, "
                         "got error: %s" %
-                       (k.label, k.id, target_state, e.message))
+                       (k.label, k.id, target_state, e))
                 raise Exception(_msg)
 
     return {
@@ -227,11 +228,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state = dict(choices=['present', 'absent'], default='present'),
-            auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR)),
+            auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR),
+                            no_log=True),
             label=dict(type='str', aliases=['name'], default=None),
             id=dict(type='str', default=None),
             fingerprint=dict(type='str', default=None),
-            key=dict(type='str', default=None),
+            key=dict(type='str', default=None, no_log=True),
             key_file=dict(type='path', default=None),
         ),
         mutually_exclusive=[
@@ -266,9 +268,6 @@ def main():
             module.fail_json(msg='failed to set sshkey state: %s' % str(e))
     else:
         module.fail_json(msg='%s is not a valid state for this module' % state)
-
-
-from ansible.module_utils.basic import * # noqa: F403
 
 
 if __name__ == '__main__':

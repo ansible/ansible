@@ -35,7 +35,7 @@ author: Tomas Karasek <tom.to.the.k@gmail.com>, Matt Baldwin <baldwin@stackpoint
 options:
   auth_token:
     description:
-      - Packet api token. You can also supply it in env var PACKET_API_TOKEN.
+      - Packet api token. You can also supply it in env var c(PACKET_API_TOKEN).
 
   count:
     description:
@@ -59,7 +59,6 @@ options:
 
   hostnames:
     description:
-      - Alias of I(name)
       - A hostname of a device, or a list of hostnames. 
       - If given string or one-item list, you can use the C("%d") Python string format to expand numbers from count.
       - If only one hostname, it might be expanded to list if count>1. 
@@ -68,7 +67,6 @@ options:
   lock:
     description:
       - Whether to lock a created device.
-    type: bool
     default: false
 
   operating_system:
@@ -114,7 +112,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# All the examples assume that you have your Packet api token in env var PACKET_API_TOKEN.
+# All the examples assume that you have your Packet api token in env var c(PACKET_API_TOKEN).
 # You can also pass it to the auth_token parameter of the module instead.
 
 # Creating devices
@@ -212,6 +210,7 @@ import time
 import uuid
 import re
 
+from ansible.module_utils.basic import AnsibleModule
 
 HAS_PACKET_SDK = True
 
@@ -488,7 +487,7 @@ def act_on_devices(target_state, module, packet_conn):
                 except Exception as e:
                     _msg = ("while trying to make device %s, id %s %s, from state %s, "
                             "with api call by %s got error: %s" %
-                           (d.hostname, d.id, target_state, d.state, api_operation, e.message))
+                           (d.hostname, d.id, target_state, d.state, api_operation, e))
                     raise Exception(_msg)
             else:
                 _msg = ("I don't know how to process existing device %s from state %s "
@@ -515,7 +514,8 @@ def act_on_devices(target_state, module, packet_conn):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR)),
+            auth_token=dict(default=os.environ.get(PACKET_API_TOKEN_ENV_VAR),
+                            no_log=True),
             count=dict(type='int', default=1),
             count_offset=dict(type='int', default=1),
             device_ids=dict(type='list'),
@@ -561,7 +561,6 @@ def main():
         module.fail_json(msg='failed to set machine state %s, error: %s' % (state,str(e)))
 
 
-from ansible.module_utils.basic import * # noqa: F403
 
 if __name__ == '__main__':
     main()
