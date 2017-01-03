@@ -21,8 +21,8 @@ matrix:
 
     - env: TEST=linux/centos6/1
     - env: TEST=linux/centos7/1
-    - env: TEST=linux/fedora-rawhide/1
-    - env: TEST=linux/fedora23/1
+    - env: TEST=linux/fedora24/1
+    - env: TEST=linux/fedora25/1
     - env: TEST=linux/opensuseleap/1
     - env: TEST=linux/ubuntu1204/1
     - env: TEST=linux/ubuntu1404/1
@@ -31,8 +31,8 @@ matrix:
 
     - env: TEST=linux/centos6/2
     - env: TEST=linux/centos7/2
-    - env: TEST=linux/fedora-rawhide/2
-    - env: TEST=linux/fedora23/2
+    - env: TEST=linux/fedora24/2
+    - env: TEST=linux/fedora25/2
     - env: TEST=linux/opensuseleap/2
     - env: TEST=linux/ubuntu1204/2
     - env: TEST=linux/ubuntu1404/2
@@ -41,8 +41,8 @@ matrix:
 
     - env: TEST=linux/centos6/3
     - env: TEST=linux/centos7/3
-    - env: TEST=linux/fedora-rawhide/3
-    - env: TEST=linux/fedora23/3
+    - env: TEST=linux/fedora24/3
+    - env: TEST=linux/fedora25/3
     - env: TEST=linux/opensuseleap/3
     - env: TEST=linux/ubuntu1204/3
     - env: TEST=linux/ubuntu1404/3
