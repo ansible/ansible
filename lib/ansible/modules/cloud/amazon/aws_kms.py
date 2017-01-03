@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: kms
 short_description: Perform various KMS management tasks.
 description:
-     - Adds and removes roles/users from a KMS key. Not designed for encrypting/decrypting. Just management.
+     - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
 version_added: "2.3"
 options:
   mode:
@@ -45,6 +45,10 @@ options:
   role_name:
     description:
     - Role to allow/deny access. One of C(role_name) or C(role_arn) are required.
+    required: false
+  role_arn:
+    description:
+    - ARN of role to allow/deny access. One of C(role_name) or C(role_arn) are required.
     required: false
   grant_types:
     description:
@@ -192,14 +196,14 @@ def assert_policy_shape(policy):
     if policy['Version'] != "2012-10-17":
         errors.append('Unknown version/date ({}) of policy. Things are probably different than we assumed they were.'.format(policy['Version']))
 
-    haz = {}
+    found_statement_type = {}
     for statement in policy['Statement']:
         for label,sidlabel in statement_label.items():
             if statement['Sid'] == sidlabel:
-                haz[label] = True
+                found_statement_type[label] = True
 
     for statementtype in statement_label.keys():
-        if not haz.get(statementtype):
+        if not found_statement_type.get(statementtype):
             errors.append('Policy is missing {}.'.format(statementtype))
 
     if len(errors):
@@ -236,7 +240,7 @@ def main():
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
 
 
     if mode == 'grant' or mode == 'deny':
@@ -262,7 +266,7 @@ def main():
 
         except Exception as err:
             error_msg = boto_exception(err)
-            module.fail_json(msg=error_msg, traceback=traceback.format_exc().splitlines())
+            module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
 
     module.exit_json(**result)
 
