@@ -43,11 +43,12 @@ description:
     same pattern would never match any replacements made.
 version_added: "1.6"
 options:
-  dest:
+  path:
     required: true
-    aliases: [ name, destfile ]
+    aliases: [ dest, destfile, name ]
     description:
       - The file to modify.
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   regexp:
     required: true
     description:
@@ -80,30 +81,38 @@ options:
     version_added: "1.9"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+notes:
+  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
 
 EXAMPLES = r"""
+# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - replace:
-    dest: /etc/hosts
+    path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
     backup: yes
 
 - replace:
-    dest: /home/jdoe/.ssh/known_hosts
+    path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
     owner: jdoe
     group: jdoe
     mode: 0644
 
 - replace:
-    dest: /etc/apache/ports
+    path: /etc/apache/ports
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
 """
 
-def write_changes(module,contents,dest):
+import os
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
+def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
@@ -121,7 +130,7 @@ def write_changes(module,contents,dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc,err))
     if valid:
-        module.atomic_move(tmpfile, dest, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
 def check_file_attrs(module, changed, message):
 
@@ -138,7 +147,7 @@ def check_file_attrs(module, changed, message):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, aliases=['name', 'destfile']),
+            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
             regexp=dict(required=True),
             replace=dict(default='', type='str'),
             backup=dict(default=False, type='bool'),
@@ -149,16 +158,16 @@ def main():
     )
 
     params = module.params
-    dest = os.path.expanduser(params['dest'])
+    path = os.path.expanduser(params['path'])
     res_args = dict()
 
-    if os.path.isdir(dest):
-        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    if os.path.isdir(path):
+        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
-    if not os.path.exists(dest):
-        module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+    if not os.path.exists(path):
+        module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
-        f = open(dest, 'rb')
+        f = open(path, 'rb')
         contents = to_text(f.read(), errors='surrogate_or_strict')
         f.close()
 
@@ -170,9 +179,9 @@ def main():
         changed = True
         if module._diff:
             res_args['diff'] = {
-                'before_header': dest,
+                'before_header': path,
                 'before': contents,
-                'after_header': dest,
+                'after_header': path,
                 'after': result[0],
             }
     else:
@@ -180,17 +189,14 @@ def main():
         changed = False
 
     if changed and not module.check_mode:
-        if params['backup'] and os.path.exists(dest):
-            res_args['backup_file'] = module.backup_local(dest)
-        if params['follow'] and os.path.islink(dest):
-            dest = os.path.realpath(dest)
-        write_changes(module, result[0], dest)
+        if params['backup'] and os.path.exists(path):
+            res_args['backup_file'] = module.backup_local(path)
+        if params['follow'] and os.path.islink(path):
+            path = os.path.realpath(path)
+        write_changes(module, result[0], path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

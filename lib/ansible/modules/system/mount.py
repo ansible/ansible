@@ -20,16 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_platform
-from ansible.module_utils.ismount import ismount
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import iteritems
-import os
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -45,13 +35,15 @@ author:
   - Seth Vidal
 version_added: "0.6"
 options:
-  name:
+  path:
     description:
-      - Path to the mount point (e.g. C(/mnt/files))
+      - Path to the mount point (e.g. C(/mnt/files)).
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     required: true
+    aliases: [ name ]
   src:
     description:
-      - Device to be mounted on I(name). Required when I(state) set to
+      - Device to be mounted on I(path). Required when I(state) set to
         C(present) or C(mounted).
     required: false
     default: null
@@ -109,12 +101,15 @@ options:
     required: false
     default: yes
     choices: ["yes", "no"]
+notes:
+  - As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
 '''
 
 EXAMPLES = '''
+# Before 2.3, option 'name' was used instead of 'path'
 - name: Mount DVD read-only
   mount:
-    name: /mnt/dvd
+    path: /mnt/dvd
     src: /dev/sr0
     fstype: iso9660
     opts: ro
@@ -122,23 +117,31 @@ EXAMPLES = '''
 
 - name: Mount up device by label
   mount:
-    name: /srv/disk
+    path: /srv/disk
     src: LABEL=SOME_LABEL
     fstype: ext4
     state: present
 
 - name: Mount up device by UUID
   mount:
-    name: /home
+    path: /home
     src: UUID=b3e48f45-f933-4c8e-a700-22a159ec9077
     fstype: xfs
     opts: noatime
     state: present
 '''
 
+import os
 
-def write_fstab(lines, dest):
-    fs_w = open(dest, 'w')
+# import module snippets
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.ismount import ismount
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import iteritems
+
+def write_fstab(lines, path):
+    fs_w = open(path, 'w')
 
     for l in lines:
         fs_w.write(l)
@@ -352,11 +355,11 @@ def mount(module, args):
         return rc, out+err
 
 
-def umount(module, dest):
+def umount(module, path):
     """Unmount a path."""
 
     umount_bin = module.get_bin_path('umount', required=True)
-    cmd = [umount_bin, dest]
+    cmd = [umount_bin, path]
 
     rc, out, err = module.run_command(cmd)
 
@@ -584,7 +587,7 @@ def main():
             dump=dict(),
             fstab=dict(default=None),
             fstype=dict(),
-            name=dict(required=True, type='path'),
+            path=dict(required=True, aliases=['name'], type='path'),
             opts=dict(),
             passno=dict(type='str'),
             src=dict(type='path'),
@@ -608,7 +611,7 @@ def main():
     # explicitly specified it in mount() and remount()
     if get_platform().lower() == 'sunos':
         args = dict(
-            name=module.params['name'],
+            name=module.params['path'],
             opts='-',
             passno='-',
             fstab=module.params['fstab'],
@@ -618,7 +621,7 @@ def main():
             args['fstab'] = '/etc/vfstab'
     else:
         args = dict(
-            name=module.params['name'],
+            name=module.params['path'],
             opts='defaults',
             dump='0',
             passno='0',
@@ -667,7 +670,7 @@ def main():
     #   changed in fstab then remount it.
 
     state = module.params['state']
-    name = module.params['name']
+    name = module.params['path']
 
     if state == 'absent':
         name, changed = unset_mount(module, args)
@@ -734,7 +737,6 @@ def main():
         module.fail_json(msg='Unexpected position reached')
 
     module.exit_json(changed=changed, **args)
-
 
 if __name__ == '__main__':
     main()

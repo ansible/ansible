@@ -36,15 +36,13 @@ version_added: '2.0'
 description:
   - This module will insert/update/remove a block of multi-line text
     surrounded by customizable marker lines.
-notes:
-  - This module supports check mode.
-  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
 options:
-  dest:
-    aliases: [ name, destfile ]
+  path:
+    aliases: [ dest, destfile, name ]
     required: true
     description:
       - The file to modify.
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   state:
     required: false
     choices: [ present, absent ]
@@ -104,12 +102,17 @@ options:
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
     version_added: "2.1"
+notes:
+  - This module supports check mode.
+  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
 
 EXAMPLES = r"""
+# Before 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: insert/update "Match User" configuration block in /etc/ssh/sshd_config
   blockinfile:
-    dest: /etc/ssh/sshd_config
+    path: /etc/ssh/sshd_config
     block: |
       Match User ansible-agent
       PasswordAuthentication no
@@ -117,7 +120,7 @@ EXAMPLES = r"""
 - name: insert/update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
   blockinfile:
-    dest: /etc/network/interfaces
+    path: /etc/network/interfaces
     block: |
       iface eth0 inet static
           address 192.0.2.23
@@ -125,7 +128,7 @@ EXAMPLES = r"""
 
 - name: insert/update HTML surrounded by custom markers after <body> line
   blockinfile:
-    dest: /var/www/html/index.html
+    path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
     content: |
@@ -134,13 +137,13 @@ EXAMPLES = r"""
 
 - name: remove HTML as well as surrounding markers
   blockinfile:
-    dest: /var/www/html/index.html
+    path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     content: ""
 
 - name: Add mappings to /etc/hosts
   blockinfile:
-    dest: /etc/hosts
+    path: /etc/hosts
     block: |
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
@@ -157,7 +160,7 @@ from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
-def write_changes(module, contents, dest):
+def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
@@ -175,7 +178,7 @@ def write_changes(module, contents, dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc, err))
     if valid:
-        module.atomic_move(tmpfile, dest, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message):
@@ -194,7 +197,7 @@ def check_file_attrs(module, changed, message):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, aliases=['name', 'destfile'], type='path'),
+            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
             state=dict(default='present', choices=['absent', 'present']),
             marker=dict(default='# {mark} ANSIBLE MANAGED BLOCK', type='str'),
             block=dict(default='', type='str', aliases=['content']),
@@ -210,23 +213,23 @@ def main():
     )
 
     params = module.params
-    dest = params['dest']
+    path = params['path']
     if module.boolean(params.get('follow', None)):
-        dest = os.path.realpath(dest)
+        path = os.path.realpath(path)
 
-    if os.path.isdir(dest):
+    if os.path.isdir(path):
         module.fail_json(rc=256,
-                         msg='Destination %s is a directory !' % dest)
+                         msg='Path %s is a directory !' % path)
 
-    path_exists = os.path.exists(dest)
+    path_exists = os.path.exists(path)
     if not path_exists:
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
-                             msg='Destination %s does not exist !' % dest)
+                             msg='Path %s does not exist !' % path)
         original = None
         lines = []
     else:
-        f = open(dest, 'rb')
+        f = open(path, 'rb')
         original = f.read()
         f.close()
         lines = original.splitlines()
@@ -238,7 +241,7 @@ def main():
     present = params['state'] == 'present'
 
     if not present and not path_exists:
-        module.exit_json(changed=False, msg="File not present")
+        module.exit_json(changed=False, msg="File %s not present" % path)
 
     if insertbefore is None and insertafter is None:
         insertafter = 'EOF'
@@ -310,8 +313,8 @@ def main():
 
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
-            module.backup_local(dest)
-        write_changes(module, result, dest)
+            module.backup_local(path)
+        write_changes(module, result, path)
 
     if module.check_mode and not path_exists:
         module.exit_json(changed=changed, msg=msg)
