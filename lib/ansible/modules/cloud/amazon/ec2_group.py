@@ -319,17 +319,9 @@ def main():
     # Ensure requested group is present
     elif state == 'present':
         if group:
-            '''existing group found'''
-            # check the group parameters are correct
-            group_in_use = False
-            rs = ec2.get_all_instances()
-            for r in rs:
-                for i in r.instances:
-                    group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
-
+            '''existing group'''
             if group.description != description:
-                if group_in_use:
-                    module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
+                module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
