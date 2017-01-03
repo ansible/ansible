@@ -283,7 +283,13 @@ def main():
     # find the group if present
     group = None
     groups = {}
-    for curGroup in ec2.get_all_security_groups():
+
+    try:
+        security_groups = ec2.get_all_security_groups()
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+    for curGroup in security_groups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
