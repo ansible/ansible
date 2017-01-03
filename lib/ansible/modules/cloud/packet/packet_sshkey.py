@@ -33,7 +33,7 @@ options:
     choices: ['present', 'absent']
   auth_token:
     description:
-     - Packet api token. You can also supply it in env var c(PACKET_API_TOKEN).
+     - Packet api token. You can also supply it in env var C(PACKET_API_TOKEN).
   label:
      description:
      - Label for the key. If you keep it empty, it will be read from key string.
@@ -57,7 +57,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# All the examples assume that you have your Packet API token in env var c(PACKET_API_TOKEN).
+# All the examples assume that you have your Packet API token in env var PACKET_API_TOKEN.
 # You can also pass the api token in module param auth_token.
 
 - name: create sshkey from string

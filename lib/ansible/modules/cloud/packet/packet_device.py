@@ -35,7 +35,7 @@ author: Tomas Karasek <tom.to.the.k@gmail.com>, Matt Baldwin <baldwin@stackpoint
 options:
   auth_token:
     description:
-      - Packet api token. You can also supply it in env var c(PACKET_API_TOKEN).
+      - Packet api token. You can also supply it in env var C(PACKET_API_TOKEN).
 
   count:
     description:
@@ -112,7 +112,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# All the examples assume that you have your Packet api token in env var c(PACKET_API_TOKEN).
+# All the examples assume that you have your Packet api token in env var PACKET_API_TOKEN.
 # You can also pass it to the auth_token parameter of the module instead.
 
 # Creating devices
