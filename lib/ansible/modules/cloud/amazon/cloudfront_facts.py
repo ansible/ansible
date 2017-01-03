@@ -218,49 +218,49 @@ class CloudFrontServiceManager:
     def get_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_distribution,Id=distribution_id)
-            return self.paginated_response(func, 'Distribution')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e), exception=traceback.format_exc(e))
 
     def get_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_distribution_config,Id=distribution_id)
-            return self.paginated_response(func, 'DistributionConfig')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e), exception=traceback.format_exec(e))
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
-            return self.paginated_response(func, 'CloudFrontOriginAccessIdentity')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e), exception=traceback.format_exc(e))
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
-            return self.paginated_response(func, 'CloudFrontOriginAccessIdentityConfig')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e), exception=traceback.format_exc(e))
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
             func = partial(self.client.get_invalidation,DistributionId=distribution_id,Id=invalidation_id)
-            return self.paginated_response(func, 'Invalidation')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing invalidation - " + str(e), exception=traceback.format_exc(e))
 
     def get_streaming_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution,Id=distribution_id)
-            return self.paginated_response(func, 'StreamingDistribution')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e), exception=traceback.format_exc(e))
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution_config,Id=distribution_id)
-            return self.paginated_response(func, 'StreamingDistributionConfig')
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e), exception=traceback.format_exc(e))
 
@@ -325,7 +325,7 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error getting list of aliases from distribution_id = " + str(e), exception=traceback.format_exc(e))
 
-    def paginated_response(self, func, result_key):
+    def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
@@ -335,7 +335,11 @@ class CloudFrontServiceManager:
         loop = True
         while loop:
             response = func(**args)
-            result = response.get(result_key)
+            if result_key == "":
+                result = response
+                result.pop('ResponseMetadata', None)
+            else:
+                result = response.get(result_key)
             results.update(result)
             args['NextToken'] = response.get('NextToken')
             loop = args['NextToken'] is not None
@@ -425,6 +429,8 @@ def main():
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
             result['cloudfront'].update( { alias: {} } )
+        if invalidation_id:
+            result['cloudfront'].update( { invalidation_id: {} } )
         facts = result['cloudfront']
     elif origin_access_identity_id:
         result = { 'cloudfront': { origin_access_identity_id: {} } }
@@ -439,24 +445,34 @@ def main():
     # get details based on options
     if distribution:
         distribution_details = service_mgr.get_distribution(distribution_id)
-        facts[distribution_id]['distribution'] = distribution_details
+        facts[distribution_id] = distribution_details
         for alias in aliases:
-            facts[alias]['distribution'] = distribution_details
+            facts[alias] = distribution_details
     if distribution_config:
         distribution_config_details = service_mgr.get_distribution_config(distribution_id)
-        facts[distribution_id]['distribution_config'] = distribution_config_details
+        facts[distribution_id] = distribution_config_details
         for alias in aliases:
-            facts[alias]['distribution_config'] = distribution_config_details
+            facts[alias] = distribution_config_details
     if origin_access_identity:
-        facts['origin_access_identity'] = service_mgr.get_origin_access_identity(origin_access_identity_id)
+        facts[origin_access_identity_id] = service_mgr.get_origin_access_identity(origin_access_identity_id)
     if origin_access_identity_config:
-        facts['origin_access_identity_config'] = service_mgr.get_origin_access_identity_config(origin_access_identity_id)
+        facts[origin_access_identity_id] = service_mgr.get_origin_access_identity_config(origin_access_identity_id)
     if invalidation:
-        facts['invalidation'] = service_mgr.get_invalidation(distribution_id, invalidation_id)
+        invalidation = service_mgr.get_invalidation(distribution_id, invalidation_id)
+        facts[invalidation_id] = invalidation
+        facts[distribution_id] = invalidation
+        for alias in aliases:
+            facts[alias] = invalidation
     if streaming_distribution:
-        facts['streaming_distribution'] = service_mgr.get_streaming_distribution(distribution_id)
+        streaming_distribution_details = service_mgr.get_streaming_distribution(distribution_id)
+        facts[distribution_id] = streaming_distribution_details
+        for alias in aliases:
+            facts[alias] = streaming_distribution_details
     if streaming_distribution_config:
-        facts['streaming_distribution_config'] = service_mgr.get_streaming_distribution_config(distribution_id)
+        streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
+        facts[distribution_id] = streaming_distribution_config_details
+        for alias in aliases:
+            facts[alias] = streaming_distribution_config_details
 
     # get list based on options
     if all_lists or list_origin_access_identities:
