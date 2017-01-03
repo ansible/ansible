@@ -205,7 +205,8 @@ def host_add(name):
                                  validate_certs=False,
                                  url_username=module.params['api_user'],
                                  url_password=module.params['api_password']))
-    except urllib2.URLError, e:
+    except urllib2.URLError:
+        e = get_exception()
         try:
             # Try to load json API result
             msg = json.load(e)
@@ -214,8 +215,8 @@ def host_add(name):
             module.fail_json(msg=msg, changed=False)
 
         module.exit_json(msg=msg, changed=False)
-    except Exception, e:
-        module.fail_json(msg=msg, changed=False)
+    except Exception:
+        module.fail_json(msg=get_exception(), changed=False)
 
     module.exit_json(msg=res, changed=True)
 
@@ -229,7 +230,8 @@ def host_del(name):
                                  validate_certs=False,
                                  url_username=module.params['api_user'],
                                  url_password=module.params['api_password']))
-    except urllib2.URLError, e:
+    except urllib2.URLError:
+        e = get_exception()
         try:
             # Try to load json API result
             msg = json.load(e)
@@ -238,7 +240,8 @@ def host_del(name):
             module.fail_json(msg=msg, changed=False)
 
         module.exit_json(msg=msg, changed=False)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         msg = "Unexpected error when trying to delete '%s': %s" % (e.reason, name)
         module.fail_json(msg=msg, changed=False)
 
@@ -257,7 +260,8 @@ def host_modify(name):
                                  validate_certs=False,
                                  url_username=module.params['api_user'],
                                  url_password=module.params['api_password']))
-    except urllib2.URLError, e:
+    except urllib2.URLError:
+        e = get_exception()
         try:
             # Try to load json API result
             msg = json.load(e)
@@ -266,7 +270,8 @@ def host_modify(name):
             module.fail_json(msg=msg, changed=False)
 
         module.exit_json(msg=msg, changed=False)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         msg = "Unexpected error when trying to modify '%s': %s" % (e.reason, name)
         module.fail_json(msg=msg, changed=False)
 
@@ -283,7 +288,8 @@ def check_host_exists(name):
                                  url_username=module.params['api_user'],
                                  url_password=module.params['api_password']))
 
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError:
+        e = get_exception()
         try:
             msg = json.load(e)
         except (AttributeError, ValueError):
@@ -295,7 +301,8 @@ def check_host_exists(name):
         else:
             return True
 
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         msg = "Unexpected error when trying to check host existence: %s" % e.reason
         module.fail_json(msg=msg, changed=False)
 
