@@ -89,7 +89,7 @@ changes_needed:
   type: dict
   returned: always
   sample: { "role": "add", "role grant": "add" }
-have_invalid_entries:
+had_invalid_entries:
   description: there are invalid (non-ARN) entries in the KMS entry. These don't count as a change, but will be removed if any changes are being made.
   type: boolean
   returned: always
@@ -160,7 +160,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
 
     changes_needed = {}
     assert_policy_shape(policy)
-    have_invalid_entries = False
+    had_invalid_entries = False
     for statement in policy['Statement']:
         for granttype in ['role', 'role grant', 'admin']:
             # do we want this grant type? Are we on its statement?
@@ -170,11 +170,13 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
-                    if clean_invalid_entries and len(list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))):
+                    invalid_entries = list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))
+                    if clean_invalid_entries and len(list(invalid_entries)):
                         # we have bad/invalid entries. These are roles that were deleted.
                         # prune the list.
-                        statement['Principal']['AWS'] = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
-                        have_invalid_entries = True
+                        valid_entries = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
+                        statement['Principal']['AWS'] = valid_entries
+                        had_invalid_entries = True
 
 
                     if not role_arn in statement['Principal']['AWS']: # needs to be added.
@@ -205,7 +207,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
         ret['changed'] = True
 
     ret['changes_needed'] = changes_needed
-    ret['have_invalid_entries'] = have_invalid_entries
+    ret['had_invalid_entries'] = had_invalid_entries
     if dry_run:
         # true if changes > 0
         ret['changed'] = (not len(changes_needed) == 0)
@@ -266,30 +268,29 @@ def main():
         module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
 
 
-    if mode == 'grant' or mode == 'deny':
-        try:
-            if module.params['key_alias'] and not module.params['key_arn']:
-                module.params['key_arn'] = get_arn_from_kms_alias(kms, module.params['key_alias'])
-            if not module.params['key_arn']:
-                module.fail_json(msg='KMS ARN is required to {}'.format(mode))
+    try:
+        if module.params['key_alias'] and not module.params['key_arn']:
+            module.params['key_arn'] = get_arn_from_kms_alias(kms, module.params['key_alias'])
+        if not module.params['key_arn']:
+            module.fail_json(msg='key_arn or key_alias is required to {}'.format(mode))
 
-            if module.params['role_name'] and not module.params['role_arn']:
-                module.params['role_arn'] = get_arn_from_role_name(iam, module.params['role_name'])
-            if not module.params['role_arn']:
-                module.fail_json(msg='IAM ARN is required to {}'.format(module.params['mode']))
+        if module.params['role_name'] and not module.params['role_arn']:
+            module.params['role_arn'] = get_arn_from_role_name(iam, module.params['role_name'])
+        if not module.params['role_arn']:
+            module.fail_json(msg='role_arn or role_name is required to {}'.format(module.params['mode']))
 
-            # check the grant types for 'grant' only.
-            if mode == 'grant':
-                for g in module.params['grant_types']:
-                    if not g in statement_label:
-                        module.fail_json(msg='{} is an unknown grant type.'.format(g))
+        # check the grant types for 'grant' only.
+        if mode == 'grant':
+            for g in module.params['grant_types']:
+                if not g in statement_label:
+                    module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-            ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
-            result.update(ret)
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        result.update(ret)
 
-        except Exception as err:
-            error_msg = boto_exception(err)
-            module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
+    except Exception as err:
+        error_msg = boto_exception(err)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
 
     module.exit_json(**result)
 
