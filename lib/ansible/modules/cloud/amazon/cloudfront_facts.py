@@ -202,7 +202,7 @@ except ImportError:
 
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn 
+from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
 import json
