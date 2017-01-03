@@ -45,6 +45,9 @@ Ansible Changes By Release
   * ipa_sudorule
   * ipa_user
 - openwrt_init
+- packet:
+  * packet_device
+  * packet_sshkey
 - windows:
   * win_say
 
