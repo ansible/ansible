@@ -327,6 +327,16 @@ instance:
     sample: None
 """
 
+import os
+import time
+from netaddr import IPNetwork, IPAddress
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.vmware import get_all_objs, connect_to_api
+
 try:
     import json
 except ImportError:
@@ -340,13 +350,6 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
-
-import os
-import time
-from netaddr import IPNetwork, IPAddress
-
-from ansible.module_utils.urls import fetch_url
-
 
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
@@ -1714,10 +1717,6 @@ def main():
         module.fail_json(**result)
     else:
         module.exit_json(**result)
-
-
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
