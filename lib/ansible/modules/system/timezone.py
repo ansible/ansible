@@ -229,6 +229,7 @@ class Timezone(object):
         tzfile = '/usr/share/zoneinfo/%s' % tz
         if not os.path.isfile(tzfile):
             self.abort('given timezone "%s" is not available' % tz)
+        return tzfile
 
 
 class SystemdTimezone(Timezone):
@@ -307,7 +308,7 @@ class NosystemdTimezone(Timezone):
         super(NosystemdTimezone, self).__init__(module)
         # Validate given timezone
         if 'name' in self.value:
-            self._verify_timezone()
+            tzfile = self._verify_timezone()
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
