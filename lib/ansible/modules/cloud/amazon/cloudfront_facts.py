@@ -193,7 +193,7 @@ except ImportError:
 
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn 
+from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
 import json
@@ -330,7 +330,7 @@ class CloudFrontServiceManager:
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
-        args = dict() 
+        args = dict()
         results = dict()
         loop = True
         while loop:
@@ -402,8 +402,8 @@ def main():
             streaming_distribution or streaming_distribution_config or list_invalidations)
 
     # set default to list_distributions if no option specified
-    list_distributions = list_distributions or not (distribution or distribution_config or 
-            origin_access_identity or origin_access_identity_config or invalidation or 
+    list_distributions = list_distributions or not (distribution or distribution_config or
+            origin_access_identity or origin_access_identity_config or invalidation or
             streaming_distribution or streaming_distribution_config or list_origin_access_identities or
             list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions)
 
@@ -445,34 +445,34 @@ def main():
     # get details based on options
     if distribution:
         distribution_details = service_mgr.get_distribution(distribution_id)
-        facts[distribution_id] = distribution_details
+        facts[distribution_id].update(distribution_details)
         for alias in aliases:
-            facts[alias] = distribution_details
+            facts[alias].update(distribution_details)
     if distribution_config:
         distribution_config_details = service_mgr.get_distribution_config(distribution_id)
-        facts[distribution_id] = distribution_config_details
+        facts[distribution_id].update(distribution_config_details)
         for alias in aliases:
-            facts[alias] = distribution_config_details
+            facts[alias].update(distribution_config_details)
     if origin_access_identity:
-        facts[origin_access_identity_id] = service_mgr.get_origin_access_identity(origin_access_identity_id)
+        facts[origin_access_identity_id].update(service_mgr.get_origin_access_identity(origin_access_identity_id))
     if origin_access_identity_config:
-        facts[origin_access_identity_id] = service_mgr.get_origin_access_identity_config(origin_access_identity_id)
+        facts[origin_access_identity_id].update(service_mgr.get_origin_access_identity_config(origin_access_identity_id))
     if invalidation:
         invalidation = service_mgr.get_invalidation(distribution_id, invalidation_id)
-        facts[invalidation_id] = invalidation
-        facts[distribution_id] = invalidation
+        facts[invalidation_id].update(invalidation)
+        facts[distribution_id].update(invalidation)
         for alias in aliases:
-            facts[alias] = invalidation
+            facts[alias].update(invalidation)
     if streaming_distribution:
         streaming_distribution_details = service_mgr.get_streaming_distribution(distribution_id)
-        facts[distribution_id] = streaming_distribution_details
+        facts[distribution_id].update(streaming_distribution_details)
         for alias in aliases:
-            facts[alias] = streaming_distribution_details
+            facts[alias].update(streaming_distribution_details)
     if streaming_distribution_config:
         streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
         facts[distribution_id] = streaming_distribution_config_details
         for alias in aliases:
-            facts[alias] = streaming_distribution_config_details
+            facts[alias].update(streaming_distribution_config_details)
 
     # get list based on options
     if all_lists or list_origin_access_identities:
