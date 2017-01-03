@@ -2075,7 +2075,7 @@ class AnsibleModule(object):
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=sys.exc_info())
+                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc(e))
 
                 b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
