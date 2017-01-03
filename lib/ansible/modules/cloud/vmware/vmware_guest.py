@@ -158,6 +158,14 @@ options:
           - A key, value pair of snapshot operation types and their additional required parameters.
         required: False
         version_added: "2.3"
+   unique_names:
+        description:
+        - Speed up vmware_guest lookup if VM names are unique on your vCenter setup.
+        - Uses I(name_match) to select the first or last match in case more than one is found.
+          The order is arbitrary.
+        required: False
+        default: False
+        version_added: "2.3"
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -585,8 +593,24 @@ class PyVmomiHelper(object):
         vm = None
         searchpath = None
 
+        # Fast UUID-based search
         if uuid:
             vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
+
+        # Fast name-based search (first or last match)
+        elif self.params['unique_names']:
+            entity_stack = self.content.rootFolder.childEntity
+            while entity_stack:
+                entity = entity_stack.pop()
+                if entity.name == name:
+                    vm = entity
+                    if name_match == 'first':
+                        break
+                elif hasattr(entity, 'childEntity'):
+                    entity_stack.extend(entity.childEntity)
+                elif isinstance(entity, vim.Datacenter):
+                    entity_stack.append(entity.vmFolder)
+
         elif folder:
             if self.params['folder'].endswith('/'):
                 self.params['folder'] = self.params['folder'][0:-1]
@@ -659,7 +683,7 @@ class PyVmomiHelper(object):
                     if len(matches) > 1:
                         self.module.fail_json(
                             msg='more than 1 vm exists by the name %s. Please specify a uuid, or a folder, '
-                                'or a datacenter or name_match' % name)
+                                'or a datacenter or enable unique_names with name_match' % name)
                     if matches:
                         vm = matches[0]
         if cache and vm:
@@ -1644,7 +1668,8 @@ def main():
             dns_servers=dict(required=False, type='list', default=None),
             domain=dict(required=False, type='str', default=None),
             networks=dict(required=False, type='dict', default={}),
-            resource_pool=dict(required=False, type='str', default=None)
+            resource_pool=dict(required=False, type='str', default=None),
+            unique_names=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
