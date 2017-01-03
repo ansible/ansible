@@ -32,7 +32,7 @@ description:
 options:
   free_form:
     description:
-      - path to the local script file followed by optional arguments.
+      - path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
     required: true
     default: null
     aliases: []
