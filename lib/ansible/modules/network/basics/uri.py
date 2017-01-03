@@ -161,9 +161,9 @@ options:
     description:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
-        the key is included, I(client_cert_key) is not required
+        the key is included, I(client_key) is not required
     version_added: 2.3
-  client_cert_key:
+  client_key:
     required: false
     default: null
     description:

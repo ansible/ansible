@@ -306,8 +306,8 @@
 - name: Test client cert auth, with certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
-    client_cert: /Users/matt/tmp/client.key.crt
-    client_cert_key: /Users/matt/tmp/client.key
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
     return_content: true
   register: result
   failed_when: result.content != "ansible.http.tests:SUCCESS"

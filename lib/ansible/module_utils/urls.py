@@ -397,18 +397,30 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
 
 class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
-    def __init__(self, client_cert, client_cert_key, *args, **kwargs):
+    '''Handles client authentication via cert/key
+
+    This is a fairly lightweight extension on HTTPSHandler, and can be used
+    in place of HTTPSHandler
+    '''
+
+    def __init__(self, client_cert, client_key, *args, **kwargs):
         urllib_request.HTTPSHandler.__init__(self, *args, **kwargs)
         self.client_cert = client_cert
-        self.client_cert_key = client_cert_key
+        self.client_key = client_key
 
     def https_open(self, req):
-        kwargs = {
+        return self.do_open(self._build_https_connection, req)
+
+    def _build_https_connection(self, host, **kwargs):
+        kwargs.update({
             'cert_file': self.client_cert,
-            'key_file': self.client_cert_key,
-            'context': self._context,
-        }
-        return self.do_open(httplib.HTTPSConnection, req, **kwargs)
+            'key_file': self.client_key,
+        })
+        try:
+            kwargs['context'] = self._context
+        except AttributeError:
+            pass
+        return httplib.HTTPSConnection(host, **kwargs)
 
 
 def generic_urlparse(parts):
@@ -794,7 +806,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_cert_key=None):
+             client_cert=None, client_key=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -875,14 +887,14 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.check_hostname = False
         if client_cert:
             handlers.append(HTTPSClientAuthHandler(client_cert,
-                                                   client_cert_key,
+                                                   client_key,
                                                    context=context))
         else:
             handlers.append(urllib_request.HTTPSHandler(context=context))
     else:
         if client_cert:
             handlers.append(HTTPSClientAuthHandler(client_cert,
-                                                   client_cert_key))
+                                                   client_key))
 
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
@@ -960,7 +972,7 @@ def url_argument_spec():
         url_password=dict(required=False),
         force_basic_auth=dict(required=False, type='bool', default='no'),
         client_cert=dict(required=False, type='path', default=None),
-        client_cert_key=dict(required=False, type='path', default=None),
+        client_key=dict(required=False, type='path', default=None),
     )
 
 
@@ -1010,7 +1022,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
 
     client_cert = module.params.get('client_cert')
-    client_cert_key = module.params.get('client_cert_key')
+    client_key = module.params.get('client_key')
 
     r = None
     info = dict(url=url)
@@ -1020,7 +1032,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_cert_key=client_cert_key)
+                     client_key=client_key)
         info.update(r.info())
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
     except NoSSLError:
