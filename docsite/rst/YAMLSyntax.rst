@@ -134,7 +134,7 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 
-The same applies for strings that start or contain any YAML special characters `` [] {} : > | `` .
+The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
 
 Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
 In these cases just use quotes::
