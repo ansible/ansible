@@ -30,12 +30,13 @@ description:
   - This is primarily useful when you want to change a single line in a file only.
 version_added: "2.0"
 options:
-  dest:
+  path:
     required: true
-    aliases: [ name, destfile ]
+    aliases: [ dest, destfile, name ]
     description:
       - The path of the file to modify.
       - Note that the Windows path delimiter C(\) must be escaped as C(\\) when the line is double quoted.
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   regexp:
     required: false
     description:
@@ -101,46 +102,49 @@ options:
       - "Specifies the line separator style to use for the modified file. This defaults to the windows line separator (C(\r\n)). Note that the indicated line separator will be used for file output regardless of the original line separator that appears in the input file."
     choices: [ "windows", "unix" ]
     default: "windows"
+notes:
+  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
 
 EXAMPLES = r"""
+# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - win_lineinfile:
-    dest: C:\temp\example.conf
+    path: C:\temp\example.conf
     regexp: '^name='
     line: 'name=JohnDoe'
 
 - win_lineinfile:
-    dest: C:\temp\example.conf
+    path: C:\temp\example.conf
     regexp: '^name='
     state: absent
 
 - win_lineinfile:
-    dest: C:\temp\example.conf
+    path: C:\temp\example.conf
     regexp: '^127\.0\.0\.1'
     line: '127.0.0.1 localhost'
 
 - win_lineinfile:
-    dest: C:\temp\httpd.conf
+    path: C:\temp\httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
 - win_lineinfile:
-    dest: C:\temp\services
+    path: C:\temp\services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
 # Create file if it doesn't exist with a specific encoding
 - win_lineinfile:
-    dest: C:\temp\utf16.txt
+    path: C:\temp\utf16.txt
     create: yes
     encoding: utf-16
     line: This is a utf-16 encoded file
 
 # Add a line to a file and ensure the resulting file uses unix line separators
 - win_lineinfile:
-    dest: C:\temp\testfile.txt
+    path: C:\temp\testfile.txt
     line: Line added to file
     newline: unix
 """
