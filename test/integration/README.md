@@ -130,9 +130,10 @@ Most container images are for testing with Python 2:
 
   - centos6
   - centos7
-  - fedora-rawhide
-  - fedora23
-  - opensuseleap
+  - fedora24
+  - fedora25
+  - opensuse42.1
+  - opensuse42.2
   - ubuntu1204 (requires `PRIVILEGED=true`)
   - ubuntu1404 (requires `PRIVILEGED=true`)
   - ubuntu1604
