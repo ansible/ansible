@@ -54,6 +54,12 @@ options:
     description:
     - List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(mode=grant).
     required: false
+  clean_invalid_entries:
+    description:
+    - If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
+    - Only cleans if changes are being made.
+    type: bool
+    default: true
 
 author: tedder
 extends_documentation_fragment:
@@ -83,6 +89,10 @@ changes_needed:
   type: dict
   returned: always
   sample: { "role": "add", "role grant": "add" }
+have_invalid_entries:
+  description: there are invalid (non-ARN) entries in the KMS entry. These don't count as a change, but will be removed if any changes are being made.
+  type: boolean
+  returned: always
 '''
 
 # these mappings are used to go from simple labels to the actual 'Sid' values returned
@@ -143,13 +153,14 @@ def get_arn_from_role_name(iam, rolename):
         return ret['Role']['Arn']
     raise Exception('could not find arn for name {}.'.format(rolename))
 
-def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True):
+def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clean_invalid_entries=True):
     ret = {}
     keyret = kms.get_key_policy(KeyId=keyarn, PolicyName='default')
     policy = json.loads(keyret['Policy'])
 
     changes_needed = {}
     assert_policy_shape(policy)
+    have_invalid_entries = False
     for statement in policy['Statement']:
         for granttype in ['role', 'role grant', 'admin']:
             # do we want this grant type? Are we on its statement?
@@ -159,6 +170,13 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True):
                 # we're granting and we recognize this statement ID.
 
                 if granttype in granttypes:
+                    if clean_invalid_entries and len(list(filter(lambda x: not x.startswith('arn:aws:iam::'), statement['Principal']['AWS']))):
+                        # we have bad/invalid entries. These are roles that were deleted.
+                        # prune the list.
+                        statement['Principal']['AWS'] = filter(lambda x: x.startswith('arn:aws:iam::'), statement['Principal']['AWS'])
+                        have_invalid_entries = True
+
+
                     if not role_arn in statement['Principal']['AWS']: # needs to be added.
                         changes_needed[granttype] = 'add'
                         if not dry_run:
@@ -175,15 +193,19 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True):
                 if not dry_run:
                     statement['Principal']['AWS'].remove(role_arn)
 
-    if len(changes_needed) and not dry_run:
-        #policy_json_string = json.dumps({'Policy': policy})
-        policy_json_string = json.dumps(policy)
-        kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
+    try:
+        if len(changes_needed) and not dry_run:
+            #policy_json_string = json.dumps({'Policy': policy})
+            policy_json_string = json.dumps(policy)
+            kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
+    except:
+        raise Exception("{}: // {}".format("e", policy_json_string))
 
         # returns nothing, so we have to just assume it didn't throw
         ret['changed'] = True
 
     ret['changes_needed'] = changes_needed
+    ret['have_invalid_entries'] = have_invalid_entries
     if dry_run:
         # true if changes > 0
         ret['changed'] = (not len(changes_needed) == 0)
@@ -219,6 +241,7 @@ def main():
             role_name = dict(required=False, type='str'),
             role_arn = dict(required=False, type='str'),
             grant_types = dict(required=False, type='list'),
+            clean_invalid_entries = dict(type='bool', default=True),
         )
     )
 
@@ -261,7 +284,7 @@ def main():
                     if not g in statement_label:
                         module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-            ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode)
+            ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
             result.update(ret)
 
         except Exception as err:
