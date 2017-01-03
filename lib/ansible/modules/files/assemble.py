@@ -192,6 +192,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
                 # un-escape anything like newlines
                 delimiter = codecs.escape_decode(delimiter)[0]
                 tmp.write(delimiter)
+
                 # always make sure there's a newline after the
                 # delimiter, so lines don't run together
                 if delimiter[-1] != b('\n'):
