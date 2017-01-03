@@ -2045,7 +2045,7 @@ class AnsibleModule(object):
         # if the original login_name doesn't match the currently
         # logged-in user, or if the SUDO_USER environment variable
         # is set, then this user has switched their credentials
-        switched_user = login_name and login_name != pwd.getpwuid(os.getuid())[0] or os.environ.get('SUDO_USER')
+        switched_user = login_name and login_name != pwd.getpwuid(os.geteuid())[0] or os.environ.get('SUDO_USER')
 
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
@@ -2084,7 +2084,7 @@ class AnsibleModule(object):
                         # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
                         os.close(tmp_dest_fd)
                         # leaves tmp file behind when sudo and not root
-                        if switched_user and os.getuid() != 0:
+                        if switched_user and os.geteuid() != 0:
                             # cleanup will happen by 'rm' of tempdir
                             # copy2 will preserve some metadata
                             shutil.copy2(b_src, b_tmp_dest_name)
@@ -2122,7 +2122,7 @@ class AnsibleModule(object):
             os.umask(umask)
             os.chmod(b_dest, DEFAULT_PERM & ~umask)
             if switched_user:
-                os.chown(b_dest, os.getuid(), os.getgid())
+                os.chown(b_dest, os.geteuid(), os.getegid())
 
         if self.selinux_enabled():
             # rename might not preserve context
