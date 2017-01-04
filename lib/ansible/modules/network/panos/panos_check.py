@@ -96,7 +96,7 @@ except ImportError:
     HAS_LIB = False
 
 
-def check_jobs(jobs):
+def check_jobs(jobs, module):
     job_check = False
     for j in jobs:
         status = j.find('.//status')
