@@ -30,47 +30,47 @@ author: "Nick Ball (@nickball)"
 options:
   state:
     description:
-     - Indicate desired state of the target.
+      - Indicate desired state of the target.
     default: present
     choices: ['present', 'absent', 'running', 'restarted', 'stopped']
   name:
     description:
-     - String, this is the name of the instance
-     required: true
-     default : null
+      - Name of the instance
+    required: true
+    default : null
   zone:
     description:
-     - String, AWS availability zone in which to launch the instance. Required when state='present'
+      - AWS availability zone in which to launch the instance. Required when state='present'
     required: false
     default: null
   blueprint_id:
     description:
-     - String, the ID for the instance blueprint image. Required when state='present'
+      - ID of the instance blueprint image. Required when state='present'
     required: false
     default: null
   bundle_id:
     description:
-     - String, the bundle of specification info for the instance. Required when state='present'
+      - Bundle of specification info for the instance. Required when state='present'
     required: false
     default: null
   user_data:
     description:
-     - String, launch script that can configure the instance with additional data
+      - Launch script that can configure the instance with additional data
     required: false
     default: null
   key_pair_name:
     description:
-     - String, name of the key pair to use with the instance
+      - Name of the key pair to use with the instance
     required: false
     default: null
   wait:
     description:
-     - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
+      - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
     default: "yes"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-     - How long before wait gives up, in seconds.
+      - How long before wait gives up, in seconds.
     default: 300
 
 requirements:
