@@ -28,7 +28,7 @@ from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.plugins.loaders import module_loader, ActionLoader
+from ansible.plugins.loaders import ModuleLoader, ActionLoader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
@@ -46,6 +46,7 @@ class DocCLI(CLI):
 
         super(DocCLI, self).__init__(args)
         self.module_list = []
+        self._module_loader = ModuleLoader()
 
     def parse(self):
 
@@ -72,11 +73,11 @@ class DocCLI(CLI):
 
         if self.options.module_path is not None:
             for i in self.options.module_path.split(os.pathsep):
-                module_loader.add_directory(i)
+                self._module_loader.add_directory(i)
 
         # list modules
         if self.options.list_dir:
-            paths = module_loader._get_paths()
+            paths = self._module_loader._get_paths()
             for path in paths:
                 self.find_modules(path)
 
@@ -85,7 +86,7 @@ class DocCLI(CLI):
 
         # process all modules
         if self.options.all_modules:
-            paths = module_loader._get_paths()
+            paths = self._module_loader._get_paths()
             for path in paths:
                 self.find_modules(path)
             self.args = sorted(set(self.module_list) - module_docs.BLACKLIST_MODULES)
@@ -99,9 +100,9 @@ class DocCLI(CLI):
 
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = module_loader.find_plugin(module, mod_type='.py')
+                filename = self._module_loader.find_plugin(module, mod_type='.py')
                 if filename is None:
-                    display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                    display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(self._module_loader)))
                     continue
 
                 if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
@@ -186,7 +187,7 @@ class DocCLI(CLI):
                 continue
 
             # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = module_loader.find_plugin(module, mod_type='.py')
+            filename = self._module_loader.find_plugin(module, mod_type='.py')
 
             if filename is None:
                 continue

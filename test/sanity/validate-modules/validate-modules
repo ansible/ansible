@@ -31,7 +31,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.plugins.loaders import module_loader
+from ansible.plugins.loaders import ModuleLoader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
 from module_args import get_argument_spec
@@ -156,6 +156,8 @@ class ModuleValidator(Validator):
         except:
             self.ast = None
 
+        self.module_loader = ModuleLoader()
+
     @property
     def object_name(self):
         return self.basename
@@ -186,9 +188,9 @@ class ModuleValidator(Validator):
     def _is_new_module(self):
         if self.name.startswith("_") and not os.path.islink(self.name):
             # This is a deprecated module, so look up the *old* name
-            return not module_loader.has_plugin(self.name[1:])
+            return not self.module_loader.has_plugin(self.name[1:])
         else:
-            return not module_loader.has_plugin(self.name)
+            return not self.module_loader.has_plugin(self.name)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
@@ -502,7 +504,7 @@ class ModuleValidator(Validator):
 
         with CaptureStd():
             try:
-                existing = module_loader.find_plugin(self.name, mod_type='.py')
+                existing = self.module_loader.find_plugin(self.name, mod_type='.py')
                 existing_doc, _, _, _ = get_docstring(existing, verbose=True)
                 existing_options = existing_doc.get('options', {})
             except AssertionError:

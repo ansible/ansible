@@ -31,7 +31,7 @@ from ansible.executor.stats import AggregateStats
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loaders import CallbackLoader, StrategyLoader, module_loader
+from ansible.plugins.loaders import CallbackLoader, StrategyLoader, ModuleLoader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -84,6 +84,7 @@ class TaskQueueManager:
 
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
+        module_loader = ModuleLoader()
         if options.module_path is not None:
             for path in options.module_path.split(os.pathsep):
                 module_loader.add_directory(path)

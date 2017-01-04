@@ -72,12 +72,18 @@ class ShellLoader(loader.PluginLoader):
     subdir = 'shell_plugins'
 
 
-module_loader = loader.PluginLoader(
-    '',
-    'ansible.modules',
-    C.DEFAULT_MODULE_PATH,
-    'library',
-)
+class ModuleLoader(loader.PluginLoader):
+    class_name = ''
+    package = 'ansible.modules'
+    config = C.DEFAULT_MODULE_PATH
+    subdir = 'library'
+
+#module_loader = loader.PluginLoader(
+#    '',
+#    'ansible.modules',
+#    C.DEFAULT_MODULE_PATH,
+#    'library',
+#)
 
 
 class LookupLoader(loader.PluginLoader):
