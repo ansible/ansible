@@ -62,7 +62,7 @@ class SharedPluginLoaderObj:
     the forked processes over the queue easier
     '''
     def __init__(self):
-        self.action_loader = action_loader
+        self.action_loader = ActionLoader()
         self.connection_loader = connection_loader
         self.filter_loader = filter_loader
         self.test_loader   = test_loader
