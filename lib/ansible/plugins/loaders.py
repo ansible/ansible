@@ -91,12 +91,12 @@ class LookupLoader(loader.PluginLoader):
     required_base_class = 'LookupBase'
 
 
-vars_loader = loader.PluginLoader(
-    'VarsModule',
-    'ansible.plugins.vars',
-    C.DEFAULT_VARS_PLUGIN_PATH,
-    'vars_plugins',
-)
+class VarsLoader(loader.PluginLoader):
+    class_name = 'VarsModule'
+    package = 'ansible.plugins.vars'
+    config = C.DEFAULT_VARS_PLUGIN_PATH
+    subdir = 'vars_plugins'
+
 
 filter_loader = loader.PluginLoader(
     'FilterModule',

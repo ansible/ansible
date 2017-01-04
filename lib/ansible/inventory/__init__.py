@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import fnmatch
 import os
-import subprocess
 import sys
 import re
 import itertools
@@ -36,7 +35,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loaders import vars_loader
+from ansible.plugins.loaders import VarsLoader
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import unfrackpath
 
@@ -121,6 +120,8 @@ class Inventory(object):
         all.add_child_group(ungrouped)
 
         self.groups = dict(all=all, ungrouped=ungrouped)
+
+        vars_loader = VarsLoader()
 
         if host_list is None:
             pass
