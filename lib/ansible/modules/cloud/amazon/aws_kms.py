@@ -197,7 +197,6 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
 
     try:
         if len(changes_needed) and not dry_run:
-            #policy_json_string = json.dumps({'Policy': policy})
             policy_json_string = json.dumps(policy)
             kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
     except:
