@@ -49,14 +49,24 @@ class PluginLoader:
     play basedirs, configured paths, and the python path.
     The first match is used.
     '''
+    class_name = None
+    package = None
+    default_config = None
+    required_base_class = None
+    subdir = None
+    aliases = None
 
-    def __init__(self, class_name, package, config, subdir, aliases={}, required_base_class=None):
-        self.class_name         = class_name
-        self.base_class         = required_base_class
-        self.package            = package
-        self.subdir             = subdir
-        self.aliases            = aliases
+    def __init__(self, class_name=None, package=None, config=None,
+                 subdir=None, aliases=None, required_base_class=None):
+        # FIXME: get rid of this once we have classes for each loader, possibly add a
+        # classmethod constuctor if we need it
+        self.class_name = class_name or self.class_name
+        self.package = package or self.package
+        self.base_class = required_base_class or self.required_base_class
+        self.subdir = subdir or self.subdir
+        self.aliases = aliases or self.aliases or {}
 
+        self.config = self.default_config
         if config and not isinstance(config, list):
             config = [config]
         elif not config:
