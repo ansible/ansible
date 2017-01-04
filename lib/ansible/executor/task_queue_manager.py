@@ -31,7 +31,7 @@ from ansible.executor.stats import AggregateStats
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loaders import CallbackLoader, strategy_loader, module_loader
+from ansible.plugins.loaders import CallbackLoader, StrategyLoader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -251,6 +251,7 @@ class TaskQueueManager:
         # initialize the shared dictionary containing the notified handlers
         self._initialize_notified_handlers(new_play)
 
+        strategy_loader = StrategyLoader()
         # load the specified strategy (or the default linear one)
         strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:

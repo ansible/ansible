@@ -116,13 +116,12 @@ class FragmentLoader(loader.PluginLoader):
     subdir = ''
 
 
-strategy_loader = loader.PluginLoader(
-    'StrategyModule',
-    'ansible.plugins.strategy',
-    C.DEFAULT_STRATEGY_PLUGIN_PATH,
-    'strategy_plugins',
-    required_base_class='StrategyBase',
-)
+class StrategyLoader(loader.PluginLoader):
+    class_name = 'StrategyModule'
+    package = 'ansible.plugins.strategy'
+    config = C.DEFAULT_STRATEGY_PLUGIN_PATH
+    subdir = 'strategy_plugins'
+    required_base_class = 'StrategyBase'
 
 
 class TerminalLoader(loader.PluginLoader):
