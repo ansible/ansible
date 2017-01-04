@@ -55,8 +55,9 @@ import os.path
 from subprocess import Popen, PIPE, call
 import re
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 LOCALE_NORMALIZATION = {
     ".utf8": ".UTF-8",
@@ -99,6 +100,7 @@ def is_available(name, ubuntuMode):
 def is_present(name):
     """Checks if the given locale is currently installed."""
     output = Popen(["locale", "-a"], stdout=PIPE).communicate()[0]
+    output = to_native(output)
     return any(fix_case(name) == fix_case(line) for line in output.splitlines())
 
 def fix_case(name):
