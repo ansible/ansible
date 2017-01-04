@@ -531,7 +531,7 @@ def main():
     # First, we check to see if the bucket exists, we get "bucket" returned.
     bucketrtn = bucket_check(module, s3, bucket)
     if mode not in ('create', 'put', 'delete') and not bucketrtn:
-        module.fail_json(msg="Source bucket cannot be found from new condition", failed=True)
+        module.fail_json(msg="Source bucket cannot be found.", failed=True)
 
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
