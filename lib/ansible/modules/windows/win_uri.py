@@ -57,6 +57,11 @@ options:
   body:
     description:
       - The body of the HTTP request/response to the web service.
+  dest:
+    version_added: "2.3"
+    description:
+      - Output the response body to a file.
+    default: None
   headers:
     description:
       - 'Key Value pairs for headers. Example "Host: www.somesite.com"'
