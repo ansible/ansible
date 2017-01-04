@@ -285,37 +285,60 @@ class PlayIterator:
             res = [s.run_state, depth, s.cur_block, -1]
             if s.run_state == self.ITERATING_TASKS:
                 if s.tasks_child_state:
-                    res = _get_cur_task(s.tasks_child_state, depth=depth+1)
+                    res[-1] = [s.cur_regular_task, _get_cur_task(s.tasks_child_state, depth=depth+1)]
                 else:
                     res[-1] = s.cur_regular_task
             elif s.run_state == self.ITERATING_RESCUE:
                 if s.rescue_child_state:
-                    res = _get_cur_task(s.rescue_child_state, depth=depth+1)
+                    res[-1] = [s.cur_rescue_task, _get_cur_task(s.rescue_child_state, depth=depth+1)]
                 else:
                     res[-1] = s.cur_rescue_task
             elif s.run_state == self.ITERATING_ALWAYS:
                 if s.always_child_state:
-                    res = _get_cur_task(s.always_child_state, depth=depth+1)
+                    res[-1] = [s.cur_always_task, _get_cur_task(s.always_child_state, depth=depth+1)]
                 else:
                     res[-1] = s.cur_always_task
             return res
 
+        def _do_task_cmp(a, b):
+            '''
+            Does the heavy lifting for _role_task_cmp() of comparing task state objects
+            returned by _get_cur_task() above.
+            '''
+            res = cmp(a[0], b[0])
+            if res == 0:
+                res = cmp(a[1], b[1])
+                if res == 0:
+                    res = cmp(a[2], b[2])
+                    if res == 0:
+                        # if there were child states, the last value in the list may be
+                        # a list itself representing the current task position plus a new
+                        # list representing the child state. So here we normalize that so
+                        # we can call this method recursively when all else is equal.
+                        if isinstance(a[3], list):
+                            a_i, a_il = a[3]
+                        else:
+                            a_i = a[3]
+                            a_il = [-1, -1, -1, -1]
+                        if isinstance(b[3], list):
+                            b_i, b_il = b[3]
+                        else:
+                            b_i = b[3]
+                            b_il = [-1, -1, -1, -1]
+
+                        res = cmp(a_i, b_i)
+                        if res == 0:
+                            res = _do_task_cmp(a_il, b_il)
+            return res
+
         def _role_task_cmp(s):
             '''
-            tt is a tuple made of the regular/rescue/always task number
-            from the current state of the host.
+            Compares the given state against the stored state from the previous role task.
             '''
             if not s.cur_role_task:
                 return 1
             cur_task = _get_cur_task(s)
-            res = cmp(cur_task[0], s.cur_role_task[0])
-            if res == 0:
-                res = cmp(cur_task[1], s.cur_role_task[1])
-                if res == 0:
-                    res = cmp(cur_task[2], s.cur_role_task[2])
-                    if res == 0:
-                        res = cmp(cur_task[3], s.cur_role_task[3])
-            return res
+            return _do_task_cmp(cur_task, s.cur_role_task)
 
         if task and task._role:
             # if we had a current role, mark that role as completed
