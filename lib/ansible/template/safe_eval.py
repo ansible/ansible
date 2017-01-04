@@ -24,7 +24,7 @@ from ansible.compat.six import string_types
 from ansible.compat.six.moves import builtins
 
 from ansible import constants as C
-from ansible.plugins.loaders import filter_loader, test_loader
+from ansible.plugins.loaders import FilterLoader, test_loader
 
 
 def safe_eval(expr, locals={}, include_exceptions=False):
@@ -93,6 +93,10 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         )
 
     filter_list = []
+    # TODO/FIXME: It seems like it would be better for callers of
+    #             template.safe_eval.safe_eval (aka, template.Templar) to create a FilterLoader and
+    #             the filter_list and pass it in (ditto test_loader/test_list)
+    filter_loader = FilterLoader()
     for filter in filter_loader.all():
         filter_list.extend(filter.filters().keys())
 

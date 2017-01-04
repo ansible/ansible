@@ -96,12 +96,12 @@ class VarsLoader(loader.PluginLoader):
     subdir = 'vars_plugins'
 
 
-filter_loader = loader.PluginLoader(
-    'FilterModule',
-    'ansible.plugins.filter',
-    C.DEFAULT_FILTER_PLUGIN_PATH,
-    'filter_plugins',
-)
+class FilterLoader(loader.PluginLoader):
+    class_name = 'FilterModule'
+    package = 'ansible.plugins.filter'
+    config = C.DEFAULT_FILTER_PLUGIN_PATH
+    subdir = 'filter_plugins'
+
 
 test_loader = loader.PluginLoader(
     'TestModule',
