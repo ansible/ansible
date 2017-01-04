@@ -22,9 +22,9 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: lightsail
-short_description: Create/delete a virtual machine instance in AWS Lightsail
+short_description: Create or delete a virtual machine instance in AWS Lightsail
 description:
-     - Create/delete instances in AWS Lightsail and optionally wait for it to be 'running'.
+     - Creates or instances in AWS Lightsail and optionally wait for it to be 'running'.
 version_added: "2.3"
 author: "Nick Ball (@nickball)"
 options:
@@ -82,9 +82,7 @@ extends_documentation_fragment: aws
 
 
 EXAMPLES = '''
-# Create a new Lightsail instance
-# Will return the instance details
-
+# Create a new Lightsail instance, register the instance details
 - lightsail:
     state: present
     name: myinstance
@@ -104,7 +102,6 @@ EXAMPLES = '''
     msg: "IP is {{ my_instance.instance.publicIpAddress }}"
 
 # Delete an instance if present
-
 - lightsail:
     state: absent
     region: us-east-1
@@ -132,7 +129,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 
 def create_instance(module, client, instance_name):
-    """  
+    """
     Create an instance
 
     module: Ansible module object
@@ -165,15 +162,15 @@ def create_instance(module, client, instance_name):
     if inst is None:
         try:
             resp = client.create_instances(
-                    instanceNames=[
-                        instance_name
-                    ],
-                    availabilityZone = zone,
-                    blueprintId = blueprint_id,
-                    bundleId = bundle_id,
-                    userData = user_data,
-                    keyPairName = key_pair_name,
-                    )
+                instanceNames=[
+                    instance_name
+                ],
+                availabilityZone=zone,
+                blueprintId=blueprint_id,
+                bundleId=bundle_id,
+                userData=user_data,
+                keyPairName=key_pair_name,
+                )
             resp = resp['operations'][0]
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg='Unable to create instance {0}, error: {1}'.format(instance_name, e))
@@ -184,7 +181,7 @@ def create_instance(module, client, instance_name):
     return (changed, inst)
 
 def delete_instance(module, client, instance_name):
-    """  
+    """
     Terminates an instance
 
     module: Ansible module object
@@ -205,7 +202,7 @@ def delete_instance(module, client, instance_name):
     wait_max = time.time() + wait_timeout
 
     changed = False
-    
+
     inst = None
     try:
         inst = find_instance_info(client, instance_name)
@@ -234,12 +231,12 @@ def delete_instance(module, client, instance_name):
 
     # Timed out
     if wait and not changed and wait_max <= time.time():
-        module.fail_json(msg = "wait for instance delete timeout at %s" % time.asctime())
+        module.fail_json(msg="wait for instance delete timeout at %s" % time.asctime())
 
     return (changed, inst)
 
 def restart_instance(module, client, instance_name):
-    """  
+    """
     Reboot an existing instance
 
     module: Ansible module object
@@ -259,14 +256,14 @@ def restart_instance(module, client, instance_name):
     wait_max = time.time() + wait_timeout
 
     changed = False
-    
+
     inst = None
     try:
         inst = find_instance_info(client, instance_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
-    
+
     # Wait for instance to exit transition state before state change
     if wait:
         while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
@@ -284,11 +281,11 @@ def restart_instance(module, client, instance_name):
             if e.response['Error']['Code'] != 'NotFoundException':
                 module.fail_json(msg='Unable to reboot instance {0}, error: {1}'.format(instance_name, e))
         changed = True
-    
+
     return (changed, inst)
 
 def startstop_instance(module, client, instance_name, state):
-    """  
+    """
     Starts or stops an existing instance
 
     module: Ansible module object
@@ -308,7 +305,7 @@ def startstop_instance(module, client, instance_name, state):
     wait_max = time.time() + wait_timeout
 
     changed = False
-    
+
     inst = None
     try:
         inst = find_instance_info(client, instance_name)
@@ -365,7 +362,7 @@ def core(module):
     elif state == 'present':
         (changed, instance_dict) = create_instance(module, client, name)
 
-    module.exit_json(changed=changed, instance = instance_dict)
+    module.exit_json(changed=changed, instance=instance_dict)
 
 def find_instance_info(client, instance_name):
     inst = None
@@ -385,10 +382,9 @@ def main():
         bundle_id=dict(type='str'),
         key_pair_name=dict(type='str'),
         user_data=dict(type='str'),
-        wait = dict(type='bool', default=True),
-        wait_timeout = dict(default=300),
-        )
-    )
+        wait=dict(type='bool', default=True),
+        wait_timeout=dict(default=300),
+    ))
 
     module = AnsibleModule(argument_spec=argument_spec)
 
