@@ -41,13 +41,11 @@ class ActionLoader(loader.PluginLoader):
     required_base_class = 'ActionBase'
 
 
-# TODO: cache_loader is a little weird
-cache_loader = loader.PluginLoader(
-    'CacheModule',
-    'ansible.plugins.cache',
-    C.DEFAULT_CACHE_PLUGIN_PATH,
-    'cache_plugins',
-)
+class CacheLoader(loader.PluginLoader):
+    class_name = 'CacheModule'
+    package = 'ansible.plugins.cache'
+    config = C.DEFAULT_CACHE_PLUGIN_PATH
+    subdir = 'cache_plugins'
 
 
 class CallbackLoader(loader.PluginLoader):
