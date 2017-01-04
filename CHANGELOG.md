@@ -53,6 +53,8 @@ Ansible Changes By Release
   * infini_pool
   * infini_vol
 - openwrt_init
+- smartos:
+  * imgadm
 - windows:
   * win_say
 
