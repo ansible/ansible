@@ -204,6 +204,6 @@ class Cli(CliBase):
         return self.configure(commands)
 
     def save_config(self):
-        self.execute(['copy running-config startup-config'])
+        self.execute(['write memory'])
 
 Cli = register_transport('cli', default=True)(Cli)
