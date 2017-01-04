@@ -312,3 +312,14 @@
   register: result
   failed_when: result.content != "ansible.http.tests:SUCCESS"
   when: has_httptester
+
+- name: Test client cert auth, with no validation
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: no
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
