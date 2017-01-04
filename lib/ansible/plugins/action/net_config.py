@@ -36,8 +36,8 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
+    def run(self, tmp=None, task_vars=None, path=None):
+        result = super(ActionModule, self).run(tmp, task_vars, path)
         result['changed'] = False
 
         if self._task.args.get('src'):
@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
             # User requested backup and no error occurred in module.
             # NOTE: If there is a parameter error, _backup key may not be in results.
             filepath = self._write_backup(task_vars['inventory_hostname'],
-                                          result['__backup__'])
+                                          result['__backup__'], path)
             result['backup_path'] = filepath
 
         # strip out any keys that have two leading and two trailing
@@ -72,10 +72,13 @@ class ActionModule(ActionBase):
             cwd = self._task._role._role_path
         return cwd
 
-    def _write_backup(self, host, contents):
-        backup_path = self._get_working_path() + '/backup'
+    def _write_backup(self, host, contents, path=None):
+        if path is None:
+            backup_path = os.path.join(self._get_working_path(), 'backup')
+        else:
+            backup_path = os.path.abspath(path)
         if not os.path.exists(backup_path):
-            os.mkdir(backup_path)
+            os.makedirs(backup_path)
         for fn in glob.glob('%s/%s*' % (backup_path, host)):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
