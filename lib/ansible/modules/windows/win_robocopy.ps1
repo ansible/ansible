@@ -85,7 +85,9 @@ if ($flags -eq $null) {
     }
 }
 Else {
-    $robocopy_opts += $flags
+    ForEach ($f in $flags.split(" ")) {
+        $robocopy_opts += $f
+    }
 }
 
 Set-Attr $result.win_robocopy "purge" $purge
