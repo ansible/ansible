@@ -810,11 +810,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
-            if peek_result['state'] == 'absent':
+            if peek_result.get('state') == 'absent':
                 diff['before'] = ''
-            elif peek_result['appears_binary']:
+            elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1
-            elif C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
+            elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
                 display.debug("Slurping the file %s" % source)
