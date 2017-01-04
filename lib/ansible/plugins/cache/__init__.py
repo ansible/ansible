@@ -21,7 +21,7 @@ from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins import cache_loader
+from ansible.plugins.loaders import cache_loader
 
 try:
     from __main__ import display

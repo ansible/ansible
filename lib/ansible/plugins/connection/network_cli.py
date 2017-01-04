@@ -26,7 +26,7 @@ import datetime
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
-from ansible.plugins import terminal_loader
+from ansible.plugins.loaders import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 

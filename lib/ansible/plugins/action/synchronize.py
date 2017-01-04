@@ -21,7 +21,7 @@ import os.path
 
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
+from ansible.plugins.loaders import connection_loader
 from ansible import constants as C
 
 boolean = C.mk_boolean
