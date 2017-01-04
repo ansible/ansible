@@ -477,6 +477,13 @@ class StrategyBase:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
 
+                    # PV
+                    elif 'add_extra_var' in result_item:
+                        # this task added a new 'extra var' variable
+                        var = result_item['add_extra_var']
+                        if var[0] not in self._variable_manager._extra_vars:
+                            self._variable_manager._extra_vars[var[0]] = var[1]
+
                     elif 'ansible_facts' in result_item:
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
