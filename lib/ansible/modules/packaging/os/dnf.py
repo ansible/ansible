@@ -199,10 +199,7 @@ def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/')
     conf.assumeyes = True
 
     # Set installroot
-    if installroot and installroot != '/':
-        conf.installroot = installroot
-    else:
-        conf.installroot = '/'
+    conf.installroot = installroot
 
     # Change the configuration file path if provided
     if conf_file:
@@ -465,7 +462,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
-            installroot=dict(default=None, type='path'),
+            installroot=dict(default='/', type='path'),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
