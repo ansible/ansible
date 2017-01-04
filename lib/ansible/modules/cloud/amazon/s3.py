@@ -252,6 +252,7 @@ EXAMPLES = '''
 '''
 
 import os
+import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
 
@@ -295,11 +296,9 @@ def bucket_check(module, s3, bucket):
     try:
         result = s3.lookup(bucket)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
-    if result:
-        return True
-    else:
-        return False
+        module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s: %s" % (bucket, str(e)),
+                exception=traceback.format_exc())
+    return bool(result)
 
 def create_bucket(module, s3, bucket, location=None):
     if location is None:
@@ -309,7 +308,8 @@ def create_bucket(module, s3, bucket, location=None):
         for acl in module.params.get('permission'):
             bucket.set_acl(acl)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg="Failed while creating bucket %s: %s" % (bucket, str(e)),
+                exception=traceback.format_exc())
     if bucket:
         return True
 
@@ -317,7 +317,9 @@ def get_bucket(module, s3, bucket):
     try:
         return s3.lookup(bucket)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg= str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
+        module.fail_json(msg="Failed while getting bucket %s: %s" % (bucket, str(e)),
+                exception=traceback.format_exc())
 
 def list_keys(module, bucket_object, prefix, marker, max_keys):
     all_keys = bucket_object.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
