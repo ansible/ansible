@@ -223,7 +223,7 @@ def main():
                 if not password:
                     msg = ("update_password is %s but a password value is "
                           "missing") % update_password
-                    self.fail_json(msg=msg)
+                    module.fail_json(msg=msg)
             default_project_id = None
             if default_project:
                 default_project_id = _get_default_project_id(cloud, default_project)
