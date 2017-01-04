@@ -40,15 +40,8 @@ class ActionLoader(loader.PluginLoader):
     subdir = 'action_plugins'
     required_base_class = 'ActionBase'
 
-#action_loader = loader.PluginLoader(
-#    'ActionModule',
-#    'ansible.plugins.action',
-#    C.DEFAULT_ACTION_PLUGIN_PATH,
-#    'action_plugins',
-#    required_base_class='ActionBase',
-#)
 
-
+# TODO: cache_loader is a little weird
 cache_loader = loader.PluginLoader(
     'CacheModule',
     'ansible.plugins.cache',
@@ -56,12 +49,13 @@ cache_loader = loader.PluginLoader(
     'cache_plugins',
 )
 
-callback_loader = loader.PluginLoader(
-    'CallbackModule',
-    'ansible.plugins.callback',
-    C.DEFAULT_CALLBACK_PLUGIN_PATH,
-    'callback_plugins',
-)
+
+class CallbackLoader(loader.PluginLoader):
+    class_name = 'CallbackModule'
+    package = 'ansible.plugins.callback'
+    default_config = C.DEFAULT_CALLBACK_PLUGIN_PATH
+    subdir = 'callback_plugins'
+
 
 connection_loader = loader.PluginLoader(
     'Connection',

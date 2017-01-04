@@ -31,7 +31,7 @@ from ansible.executor.stats import AggregateStats
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loaders import callback_loader, strategy_loader, module_loader
+from ansible.plugins.loaders import CallbackLoader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -77,6 +77,7 @@ class TaskQueueManager:
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree         = run_tree
 
+        self._callback_loader = None
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done    = False
@@ -159,6 +160,9 @@ class TaskQueueManager:
         if self._callbacks_loaded:
             return
 
+        if not self._callback_loader:
+            self._callback_loader = CallbackLoader()
+
         stdout_callback_loaded = False
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
@@ -166,15 +170,15 @@ class TaskQueueManager:
         if isinstance(self._stdout_callback, CallbackBase):
             stdout_callback_loaded = True
         elif isinstance(self._stdout_callback, string_types):
-            if self._stdout_callback not in callback_loader:
+            if self._stdout_callback not in self._callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
-                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                self._stdout_callback = self._callback_loader.get(self._stdout_callback)
                 stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        for callback_plugin in callback_loader.all(class_only=True):
+        for callback_plugin in self._callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
                 # we only allow one callback of type 'stdout' to be loaded, so check
                 # the name of the current plugin and type to see if we need to skip
