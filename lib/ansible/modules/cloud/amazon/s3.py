@@ -461,8 +461,7 @@ def main():
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')
     expiry = int(module.params['expiry'])
-    if module.params.get('dest'):
-        dest = module.params.get('dest')
+    dest = os.path.expanduser(module.params.get('dest', ''))
     headers = module.params.get('headers')
     marker = module.params.get('marker')
     max_keys = module.params.get('max_keys')
