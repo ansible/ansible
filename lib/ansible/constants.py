@@ -123,18 +123,19 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
 
 def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
+    value = default
     if env_var is not None:
-        value = os.environ.get(env_var, None)
-        if value is not None:
-            return value
+        env_value = os.environ.get(env_var, None)
+        if env_value is not None:
+            value = env_value
+
     if p is not None:
         try:
-            # TODO: Once we branch Ansible-2.2, change to the following in devel
-            #return to_text(p.get(section, key, raw=True), errors='surrogate_or_strict')
-            return p.get(section, key, raw=True)
+            value = p.get(section, key, raw=True)
         except:
-            return default
-    return default
+            pass
+
+    return to_text(value, errors='surrogate_or_strict')
 
 
 def load_config_file():
