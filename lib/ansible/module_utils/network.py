@@ -43,6 +43,7 @@ NET_TRANSPORT_ARGS = dict(
     ssh_keyfile=dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    term_length=dict(default=True, type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
     provider=dict(type='dict'),
