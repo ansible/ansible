@@ -403,8 +403,8 @@ class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
     in place of HTTPSHandler
     '''
 
-    def __init__(self, client_cert, client_key, *args, **kwargs):
-        urllib_request.HTTPSHandler.__init__(self, *args, **kwargs)
+    def __init__(self, client_cert=None, client_key=None, **kwargs):
+        urllib_request.HTTPSHandler.__init__(self, **kwargs)
         self.client_cert = client_cert
         self.client_key = client_key
 
@@ -885,16 +885,12 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.options |= ssl.OP_NO_SSLv3
         context.verify_mode = ssl.CERT_NONE
         context.check_hostname = False
-        if client_cert:
-            handlers.append(HTTPSClientAuthHandler(client_cert,
-                                                   client_key,
-                                                   context=context))
-        else:
-            handlers.append(urllib_request.HTTPSHandler(context=context))
-    else:
-        if client_cert:
-            handlers.append(HTTPSClientAuthHandler(client_cert,
-                                                   client_key))
+        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                               client_key=client_key,
+                                               context=context))
+    elif client_cert:
+        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                               client_key=client_key))
 
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
