@@ -168,11 +168,7 @@ EXAMPLES = '''
 
 # wait 300 seconds for port 22 to become open and contain "OpenSSH", don't assume the inventory_hostname is resolvable
 # and don't start checking for 10 seconds
-- local_action: wait_for
-    port: 22
-    host: "{{ ansible_ssh_host | default(inventory_hostname) }}"
-    search_regex: OpenSSH
-    delay: 10
+- local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
 '''
 
 class TCPConnectionInfo(object):

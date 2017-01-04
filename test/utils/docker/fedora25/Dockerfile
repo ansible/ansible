@@ -1,4 +1,4 @@
-FROM fedora:23
+FROM fedora:25
 
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*; \
@@ -18,6 +18,7 @@ RUN dnf clean all && \
     file \
     findutils \
     git \
+    glibc-locale-source \
     iproute \
     make \
     mariadb-server \
@@ -49,11 +50,6 @@ RUN dnf clean all && \
     yum \
     zip \
     && \
-    dnf clean all
-
-RUN dnf -y --setopt=install_weak_deps=false reinstall glibc-common && \
-    localedef --quiet -f ISO-8859-1 -i pt_BR pt_BR && \
-    localedef --quiet -f ISO-8859-1 -i es_MX es_MX && \
     dnf clean all
 
 RUN localedef --quiet -c -i en_US -f UTF-8 en_US.UTF-8

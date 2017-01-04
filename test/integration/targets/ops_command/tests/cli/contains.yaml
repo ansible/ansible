@@ -5,10 +5,10 @@
   ops_command:
     commands:
       - show version
-      - show interface GigabitEthernet0/0
+      - show interface eth1
     wait_for:
-      - "result[0] contains 15.6"
-      - "result[1] contains GigabitEthernet0/0"
+      - "result[0] contains OpenSwitch"
+      - "result[1] contains 'Interface eth1'"
     provider: "{{ cli }}"
   register: result
 

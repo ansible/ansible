@@ -1,8 +1,9 @@
 centos6
 centos7
-fedora-rawhide
-fedora23
-opensuseleap
+fedora24
+fedora25
+opensuse42.1
+opensuse42.2
 ubuntu1204
 ubuntu1404
 ubuntu1604

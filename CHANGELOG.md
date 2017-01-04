@@ -45,6 +45,7 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- icinga2_feature
 - infinibox:
   * infini_export
   * infini_export_client
@@ -52,7 +53,11 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
+- omapi_host
 - openwrt_init
+- packet:
+  * packet_device
+  * packet_sshkey
 - smartos:
   * imgadm
 - windows:

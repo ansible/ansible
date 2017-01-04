@@ -1,0 +1,11 @@
+---
+- name: notify inexistent handler
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: test notify an inexistent handler
+      command: uptime
+      notify:
+        - notify_inexistent_handler
+      register: result
