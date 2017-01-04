@@ -93,7 +93,6 @@ options:
     required: false
     version_added: "2.3"
     default: "/"
-    aliases: []
 
 notes: []
 # informational: requirements for nodes
@@ -186,7 +185,7 @@ def _ensure_dnf(module):
                     " Please install `{0}` package.".format(package))
 
 
-def _configure_base(module, base, conf_file, disable_gpg_check, installroot):
+def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/'):
     """Configure the dnf Base object."""
     conf = base.conf
 
