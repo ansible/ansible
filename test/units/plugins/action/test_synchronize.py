@@ -181,8 +181,7 @@ class SynchronizeTester(object):
 class FakePluginLoader(object):
     mocked = True
 
-    @staticmethod
-    def get(transport, play_context, new_stdin):
+    def get(self, transport, play_context, new_stdin):
         conn = ConnectionMock()
         conn.transport = transport
         conn._play_context = play_context
@@ -198,47 +197,47 @@ class TestSynchronizeAction(unittest.TestCase):
     #print(basedir)
 
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic(self):
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic_become(self):
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_become'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic_become_cli(self):
         # --become on the cli sets _play_context.become
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_become_cli'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic_vagrant(self):
         # simple vagrant example
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic_vagrant_sudo(self):
         # vagrant plus sudo
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant_sudo'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_basic_vagrant_become_cli(self):
         # vagrant plus sudo
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'basic_vagrant_become_cli'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_delegate_remote(self):
         # delegate to other remote host
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'delegate_remote'))
 
-    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    @patch('ansible.plugins.action.synchronize.ConnectionLoader', FakePluginLoader)
     def test_delegate_remote_su(self):
         # delegate to other remote host with su enabled
         x = SynchronizeTester()

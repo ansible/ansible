@@ -39,7 +39,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.plugins.loaders import ActionLoader, connection_loader, FilterLoader, LookupLoader, module_loader, TestLoader
+from ansible.plugins.loaders import ActionLoader, ConnectionLoader, FilterLoader, LookupLoader, module_loader, TestLoader
 from ansible.template import Templar
 from ansible.vars import combine_vars, strip_internal_keys
 from ansible.module_utils._text import to_text
@@ -64,7 +64,7 @@ class SharedPluginLoaderObj:
     '''
     def __init__(self):
         self.action_loader = ActionLoader()
-        self.connection_loader = connection_loader
+        self.connection_loader = ConnectionLoader()
         self.filter_loader = FilterLoader()
         self.test_loader = TestLoader()
         self.lookup_loader = LookupLoader()

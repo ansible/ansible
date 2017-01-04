@@ -55,14 +55,13 @@ class CallbackLoader(loader.PluginLoader):
     subdir = 'callback_plugins'
 
 
-connection_loader = loader.PluginLoader(
-    'Connection',
-    'ansible.plugins.connection',
-    C.DEFAULT_CONNECTION_PLUGIN_PATH,
-    'connection_plugins',
-    aliases={'paramiko': 'paramiko_ssh'},
-    required_base_class='ConnectionBase',
-)
+class ConnectionLoader(loader.PluginLoader):
+    class_name = 'Connection'
+    package = 'ansible.plugins.connection'
+    config = C.DEFAULT_CONNECTION_PLUGIN_PATH
+    subdir = 'connection_plugins'
+    aliases = {'paramiko': 'paramiko_ssh'}
+    required_base_class = 'ConnectionBase'
 
 
 class ShellLoader(loader.PluginLoader):
