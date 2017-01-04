@@ -116,7 +116,9 @@ EXAMPLES = '''
 '''
 
 import datetime
-from ansible.module_utils.basic import *
+import re
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
 # exceptions --------------------------------------------------------------- {{{
@@ -380,6 +382,7 @@ def main():
             value=dict(
                 default=None,
                 required=False,
+                type='raw'
             ),
             state=dict(
                 default="present",
