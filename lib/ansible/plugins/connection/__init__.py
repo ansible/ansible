@@ -32,7 +32,7 @@ from ansible import constants as C
 from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins.loaders import shell_loader
+from ansible.plugins.loaders import ShellLoader
 
 
 try:
@@ -82,6 +82,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         self.success_key = None
         self.prompt = None
         self._connected = False
+
+        shell_loader = ShellLoader()
 
         # load the shell plugin for this action/connection
         if play_context.shell:

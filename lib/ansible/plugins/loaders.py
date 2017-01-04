@@ -66,12 +66,14 @@ connection_loader = loader.PluginLoader(
     required_base_class='ConnectionBase',
 )
 
-shell_loader = loader.PluginLoader(
-    'ShellModule',
-    'ansible.plugins.shell',
-    'shell_plugins',
-    'shell_plugins',
-)
+
+class ShellLoader(loader.PluginLoader):
+    class_name = 'ShellModule'
+    package = 'ansible.plugins.shell'
+    # FIXME: why is config just shell_plugins?
+    config = 'shell_plugins'
+    subdir = 'shell_plugins'
+
 
 module_loader = loader.PluginLoader(
     '',
