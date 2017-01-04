@@ -37,133 +37,129 @@ description:
 options:
     name:
         description:
-            - Name for the project
+            - Name of the OpenStack Project to manage.
         required: true
     state:
         description:
-            - Should the quota be set or returned to the system defaults
+            - A value of present sets the quota and a value of absent resets the quota to system defaults.
         required: False
         default: present
     backup_gigabytes:
         required: False
         default: None
-        description: Maximum size of backups
+        description: Maximum size of backups in GB's.
     backups:
         required: False
         default: None
-        description: Max number of backups allows
+        description: Maximum number of backups allowed.
     cores:
         required: False
         default: None
-        description: Max number of CPU's per project
+        description: Maximum number of CPU's per project.
     fixed_ips:
         required: False
         default: None
-        description: Number of fixed IP's to allow
+        description: Number of fixed IP's to allow.
     floating_ips:
         required: False
         default: None
-        description: Number of floating IP's to allow
+        description: Number of floating IP's to allow.
     gigabytes:
         required: False
         default: None
-        description: Max volume storage for project
+        description: Maximum volume storage allowed for project.
     gigabytes_lvm:
         required: False
         default: None
-        description: Max size of individual lvm volumes
+        description: Maximum size in GB's of individual lvm volumes.
     injected_file_size:
         required: False
         default: None
-        description: Max file size
+        description: Maximum file size in bytes.
     injected_files:
         required: False
         default: None
-        description: Number of injected files to allow
+        description: Number of injected files to allow.
     injected_path_size:
         required: False
         default: None
-        description: Max file size
+        description: Maximum path size.
     instances:
         required: False
         default: None
-        description: Maximum number of instances
+        description: Maximum number of instances allowed.
     key_pairs:
         required: False
         default: None
-        description: Number of key pairs to allow
+        description: Number of key pairs to allow.
     network:
         required: False
         default: None
-        description: Number of networks to allow
+        description: Number of networks to allow.
     per_volume_gigabytes:
         required: False
         default: None
-        description: Max size of individual volumes
+        description: Maximum size in GB's of individual volumes.
     port:
         required: False
         default: None
-        description: Number of Network ports to allow, should be greater than instances.
-    project:
-        required: False
-        default: None
-        description: Project name
+        description: Number of Network ports to allow, this needs to be greater than the instances limit.
     properties:
         required: False
         default: None
-        description: Number of properties to allow
+        description: Number of properties to allow.
     ram:
         required: False
         default: None
-        description: Maximum amount of ram
+        description: Maximum amount of ram in MB to allow.
     rbac_policy:
         required: False
         default: None
-        description: Number of polcies to allow
+        description: Number of polcies to allow.
     router:
         required: False
         default: None
-        description: Number of routers to allow
+        description: Number of routers to allow.
     security_group_rule:
         required: False
         default: None
-        description: Number of rules per security group to allow
+        description: Number of rules per security group to allow.
     security_group:
         required: False
         default: None
-        description: Number of security groups to allow
+        description: Number of security groups to allow.
     server_group_members:
         required: False
         default: None
-        description: Number of server group members to allow
+        description: Number of server group members to allow.
     server_groups:
         required: False
         default: None
-        description: Number of server groups to allow
+        description: Number of server groups to allow.
     snapshots:
         required: False
         default: None
-        description: Number of snapshots to allow
+        description: Number of snapshots to allow.
     snapshots_lvm:
         required: False
         default: None
-        description: Number of LVM snapshots to allow
+        description: Number of LVM snapshots to allow.
     subnet:
         required: False
         default: None
-        description: Number of subnets to allow
+        description: Number of subnets to allow.
     subnetpool:
         required: False
         default: None
-        description: Number of subnet pools to allow
+        description: Number of subnet pools to allow.
     volumes:
         required: False
         default: None
-        description: Number of volumes to allow
+        description: Number of volumes to allow.
     volumes_lvm:
         required: False
         default: None
-        description: Number of LVM volumes to allow
+        description: Number of LVM volumes to allow.
 
 
 requirements:
@@ -480,8 +476,8 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec
 if __name__ == '__main__':
     main()
