@@ -34,30 +34,30 @@ requirements:
 options:
     ip_address:
         description:
-            - IP address (or hostname) of PAN-OS device
+            - IP address (or hostname) of PAN-OS device.
         required: true
     password:
         description:
-            - password for authentication
+            - Password for device authentication.
         required: true
     username:
         description:
-            - username for authentication
+            - Username for device authentication.
         required: false
         default: "admin"
     category:
         description:
-            - category of file
+            - Category of file uploaded. The default is software.
         required: false
         default: software
     file:
         description:
-            - file to import
+            - Location of the file to import into device.
         required: false
         default: None
     url:
         description:
-            - url to file to import
+            - URL of the file that will be imported to device.
         required: false
         default: None
 '''
