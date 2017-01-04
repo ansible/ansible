@@ -528,14 +528,13 @@ def main():
     if s3 is None: # this should never happen
         module.fail_json(msg ='Unknown error, failed to create s3 connection, no information from boto.')
 
+    # First, we check to see if the bucket exists, we get "bucket" returned.
+    bucketrtn = bucket_check(module, s3, bucket)
+    if mode not in ('create', 'put', 'delete') and not bucketrtn:
+        module.fail_json(msg="Source bucket cannot be found from new condition", failed=True)
+
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
-
-        # First, we check to see if the bucket exists, we get "bucket" returned.
-        bucketrtn = bucket_check(module, s3, bucket)
-        if bucketrtn is False:
-            module.fail_json(msg="Source bucket cannot be found", failed=True)
-
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj, version=version)
         if keyrtn is False:
@@ -568,7 +567,7 @@ def main():
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
 
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
-        if sum_matches is True and overwrite == 'never':
+        if sum_matches and overwrite == 'never':
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
@@ -579,16 +578,15 @@ def main():
 
         # Lets check the src path.
         pathrtn = path_check(src)
-        if pathrtn is False:
+        if not pathrtn:
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
 
         # Lets check to see if bucket exists to get ground truth.
-        bucketrtn = bucket_check(module, s3, bucket)
-        if bucketrtn is True:
+        if bucketrtn:
             keyrtn = key_check(module, s3, bucket, obj)
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
-        if bucketrtn is True and keyrtn is True:
+        if bucketrtn and keyrtn:
             md5_remote = keysum(module, s3, bucket, obj)
             md5_local = module.md5(src)
 
@@ -606,12 +604,12 @@ def main():
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
-        if bucketrtn is False and pathrtn is True:
+        if pathrtn and not bucketrtn:
             create_bucket(module, s3, bucket, location)
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
         # If bucket exists but key doesn't, just upload.
-        if bucketrtn is True and pathrtn is True and keyrtn is False:
+        if bucketrtn and pathrtn and not keyrtn:
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
     # Delete an object from a bucket, not the entire bucket
@@ -619,13 +617,9 @@ def main():
         if obj is None:
             module.fail_json(msg="object parameter is required", failed=True)
         if bucket:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is True:
-                deletertn = delete_key(module, s3, bucket, obj)
-                if deletertn is True:
-                    module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
-            else:
-                module.fail_json(msg="Bucket does not exist.", changed=False)
+            deletertn = delete_key(module, s3, bucket, obj)
+            if deletertn is True:
+                module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
 
@@ -633,13 +627,9 @@ def main():
     # Delete an entire bucket, including all objects in the bucket
     if mode == 'delete':
         if bucket:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is True:
-                deletertn = delete_bucket(module, s3, bucket)
-                if deletertn is True:
-                    module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
-            else:
-                module.fail_json(msg="Bucket does not exist.", changed=False)
+            deletertn = delete_bucket(module, s3, bucket)
+            if deletertn is True:
+                module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
 
@@ -657,56 +647,45 @@ def main():
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
         if bucket and not obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is True:
+            if bucketrtn:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
                 module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, s3, bucket, location))
         if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
             if obj.endswith('/'):
                 dirobj = obj
             else:
                 dirobj = obj + "/"
-            if bucketrtn is True:
+            if bucketrtn:
                 keyrtn = key_check(module, s3, bucket, dirobj)
                 if keyrtn is True:
                     module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
                 else:
                     create_dirkey(module, s3, bucket, dirobj)
-            if bucketrtn is False:
+            if bucketrtn:
                 created = create_bucket(module, s3, bucket, location)
                 create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':
-        if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is False:
-                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
-            else:
-                keyrtn = key_check(module, s3, bucket, obj)
-                if keyrtn is True:
-                    get_download_url(module, s3, bucket, obj, expiry)
-                else:
-                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
-        else:
+        if not bucket and not obj:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
+
+        keyrtn = key_check(module, s3, bucket, obj)
+        if keyrtn:
+            get_download_url(module, s3, bucket, obj, expiry)
+        else:
+            module.fail_json(msg="Key %s does not exist." % obj, failed=True)
 
     if mode == 'getstr':
         if bucket and obj:
-            bucketrtn = bucket_check(module, s3, bucket)
-            if bucketrtn is False:
-                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
+            keyrtn = key_check(module, s3, bucket, obj, version=version)
+            if keyrtn:
+                download_s3str(module, s3, bucket, obj, version=version)
+            elif version is not None:
+                module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version), failed=True)
             else:
-                keyrtn = key_check(module, s3, bucket, obj, version=version)
-                if keyrtn is True:
-                    download_s3str(module, s3, bucket, obj, version=version)
-                else:
-                    if version is not None:
-                        module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version), failed=True)
-                    else:
-                        module.fail_json(msg="Key %s does not exist."%obj, failed=True)
+                module.fail_json(msg="Key %s does not exist." % obj, failed=True)
 
     module.exit_json(failed=False)
 
