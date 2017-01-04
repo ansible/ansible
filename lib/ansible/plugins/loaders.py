@@ -103,12 +103,12 @@ class FilterLoader(loader.PluginLoader):
     subdir = 'filter_plugins'
 
 
-test_loader = loader.PluginLoader(
-    'TestModule',
-    'ansible.plugins.test',
-    C.DEFAULT_TEST_PLUGIN_PATH,
-    'test_plugins'
-)
+class TestLoader(loader.PluginLoader):
+    class_name = 'TestModule'
+    package = 'ansible.plugins.test'
+    config = C.DEFAULT_TEST_PLUGIN_PATH
+    subdir = 'test_plugins'
+
 
 fragment_loader = loader.PluginLoader(
     'ModuleDocFragment',

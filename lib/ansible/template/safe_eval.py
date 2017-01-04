@@ -24,7 +24,7 @@ from ansible.compat.six import string_types
 from ansible.compat.six.moves import builtins
 
 from ansible import constants as C
-from ansible.plugins.loaders import FilterLoader, test_loader
+from ansible.plugins.loaders import FilterLoader, TestLoader
 
 
 def safe_eval(expr, locals={}, include_exceptions=False):
@@ -101,6 +101,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         filter_list.extend(filter.filters().keys())
 
     test_list = []
+    test_loader = TestLoader()
     for test in test_loader.all():
         test_list.extend(test.tests().keys())
 
