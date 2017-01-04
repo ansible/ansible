@@ -35,9 +35,6 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-# Global so that all instances of a ansible.plugins.loader.PluginLoader will share the caches
-PATH_CACHE = {}
-
 
 class PluginLoader:
     '''
@@ -72,12 +69,9 @@ class PluginLoader:
 
         self.config = config
 
-        if class_name not in PATH_CACHE:
-            PATH_CACHE[class_name] = None
         self._plugin_path_cache = defaultdict(dict)
-
         self._module_cache = {}
-        self._paths             = PATH_CACHE[class_name]
+        self._path_cache = None
 
         self._extra_dirs = []
         self._searched_paths = set()
@@ -94,7 +88,7 @@ class PluginLoader:
         aliases    = data.get('aliases')
         base_class = data.get('base_class')
 
-        PATH_CACHE[class_name] = data.get('PATH_CACHE')
+        self._path_cache = data.get('path_cache')
         self._plugin_path_cache = data.get('plugin_path_cache')
 
         self.__init__(class_name, package, config, subdir, aliases, base_class)
@@ -119,8 +113,8 @@ class PluginLoader:
             # added to the cache and key look fails. Using default and defaulting to None
             # for now. May need instances of lookup loader shared more. or possibly less global
             # caches
-            PATH_CACHE        = PATH_CACHE.get(self.class_name, None),
-            plugin_path_cache = self._plugin_path_cache,
+            path_cache=self._path_cache,
+            plugin_path_cache=self._plugin_path_cache,
         )
 
     def format_paths(self, paths):
@@ -161,8 +155,8 @@ class PluginLoader:
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
 
-        if self._paths is not None:
-            return self._paths
+        if self._path_cache is not None:
+            return self._path_cache
 
         ret = self._extra_dirs[:]
 
@@ -202,7 +196,7 @@ class PluginLoader:
         reordered_paths.extend(win_dirs)
 
         # cache and return the result
-        self._paths = reordered_paths
+        self._path_cache = reordered_paths
         return reordered_paths
 
     def add_directory(self, directory, with_subdir=False):
@@ -216,7 +210,7 @@ class PluginLoader:
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
-                self._paths = None
+                self._path_cache = None
 
     def find_plugin(self, name, mod_type=''):
         ''' Find a plugin named name '''
@@ -240,7 +234,7 @@ class PluginLoader:
             # Cache miss.  Now let's find the plugin
             pass
 
-        # TODO: Instead of using the self._paths cache (PATH_CACHE) and
+        # TODO: Instead of using the self._path_cache (PATH_CACHE) and
         #       self._searched_paths we could use an iterator.  Before enabling that
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.  Currently, it

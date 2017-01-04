@@ -66,7 +66,7 @@ class TestErrors(unittest.TestCase):
 
     def test_plugins__get_paths(self):
         pl = loader.PluginLoader('test', '', 'test', 'test_plugin')
-        pl._paths = ['/path/one', '/path/two']
+        pl._path_cache = ['/path/one', '/path/two']
         self.assertEqual(pl._get_paths(), ['/path/one', '/path/two'])
 
         # NOT YET WORKING
