@@ -147,9 +147,11 @@ options:
         version_added: "2.3"
    networks:
         description:
-          - Network to use should include VM network name or VLAN, ip and gateway
-          - Add an optional field C(mac) to customize mac address
-          - Add an optional field C(domain) to configure a different dns domain on windows network interfaces
+          - Network to use should include a C(name) or C(vlan) entry
+          - Add an optional C(ip) and either a C(network) or a C(netmask) entry for network configuration
+          - Add an optional C(gateway) entry to configure a gateway
+          - Add an optional C(mac) entry to customize mac address
+          - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
         required: False
         version_added: "2.3"
    snapshot_op:
@@ -251,15 +253,15 @@ EXAMPLES = '''
       name: testvm-2
       template: template_windows
       networks:
-        '192.168.1.0/24':
-          network: VM Network
-          gateway: 192.168.1.1
-          ip: 192.168.1.100
-          mac: 'aa:bb:dd:aa:00:14'
-          domain: my_domain
-          dns_servers:
-          - 192.168.1.1
-          - 192.168.1.2
+      - name: VM Network
+        ip: 192.168.1.100
+        network: 192.168.1.0/24
+        gateway: 192.168.1.1
+        mac: 'aa:bb:dd:aa:00:14'
+        domain: my_domain
+        dns_servers:
+        - 192.168.1.1
+        - 192.168.1.2
       customization:
         autologon: True
         dns_servers:
@@ -689,7 +691,7 @@ class PyVmomiHelper(object):
                         matches.append(thisvm)
                     if len(matches) > 1:
                         self.module.fail_json(
-                            msg='more than 1 vm exists by the name %s. Please specify a uuid, or a folder, '
+                            msg='More than 1 vm exists by the name %s. Please specify a uuid, or a folder, '
                                 'or a datacenter or name_match' % name)
                     if matches:
                         vm = matches[0]
@@ -882,34 +884,44 @@ class PyVmomiHelper(object):
             return
 
         network_devices = list()
-        for network in self.params['networks']:
-            if network:
-                if 'ip' in self.params['networks'][network]:
-                    ip = self.params['networks'][network]['ip']
-                    if ip not in IPNetwork(network):
-                        self.module.fail_json(msg="ip '%s' not in network %s" % (ip, network))
+        for network in self.params.get('networks'):
+            if 'ip' in network:
 
-                    ipnet = IPNetwork(network)
-                    self.params['networks'][network]['subnet_mask'] = str(ipnet.netmask)
+                if 'netmask' in network:
+                    pass
 
-                if 'network' in self.params['networks'][network]:
-                    if get_obj(self.content, [vim.Network], self.params['networks'][network]['network']) is None:
-                        self.module.fail_json(msg="Network %s doesn't exists" % network)
-                elif 'vlan' in self.params['networks'][network]:
-                    network_name = None
-                    dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
-                    for dvp in dvps:
-                        if dvp.config.defaultPortConfig.vlan.vlanId == self.params['networks'][network]['vlan']:
-                            network_name = dvp.config.name
-                            break
-                    if network_name:
-                        self.params['networks'][network]['network'] = network_name
-                    else:
-                        self.module.fail_json(msg="VLAN %(vlan)s doesn't exists" % self.params['networks'][network])
+                # TODO: What if netmask and network are provided but conflict ?
+                elif 'network' in network:
+                    ip = IPAddress(network['ip'])
+                    ipnet = IPNetwork(network['network'])
+
+                    if ip not in ipnet:
+                        self.module.fail_json(msg="IP '%(ip)s' not in network '%(network)s'" % network)
+
+                    network['netmask'] = str(ipnet.netmask)
+
                 else:
-                    self.module.fail_json(msg="You need to define a network or a vlan")
+                    self.module.fail_json(msg="No 'network' or 'netmask' entry defined in networks section")
 
-                network_devices.append(self.params['networks'][network])
+            if 'name' in network:
+                if get_obj(self.content, [vim.Network], network['name']) is None:
+                    self.module.fail_json(msg="Network '%(name)s' does not exists" % network)
+
+            elif 'vlan' in network:
+                dvps = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+                for dvp in dvps:
+                    if hasattr(dvp.config.defaultPortConfig, 'vlan') and dvp.config.defaultPortConfig.vlan.vlanId == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+                    if dvp.config.name == network['vlan']:
+                        network['name'] = dvp.config.name
+                        break
+                else:
+                    self.module.fail_json(msg="VLAN '%(vlan)s' does not exist" % network)
+            else:
+                self.module.fail_json(msg="You need to define a network name or a vlan")
+
+            network_devices.append(network)
 
         # List current device for Clone or Idempotency
         current_net_devices = self.get_vm_network_interfaces(vm=vm_obj)
@@ -939,9 +951,9 @@ class PyVmomiHelper(object):
                 nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
                 nic_change_detected = True
 
-            if hasattr(self.cache.get_network(network_devices[key]['network']), 'portKeys'):
+            if hasattr(self.cache.get_network(network_devices[key]['name']), 'portKeys'):
                 # VDS switch
-                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['network'])
+                pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
                 dvs_port_connection = vim.dvs.PortConnection()
                 dvs_port_connection.portgroupKey = pg_obj.key
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
@@ -953,13 +965,13 @@ class PyVmomiHelper(object):
                     nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
                     nic_change_detected = True
 
-                net_obj = self.cache.get_network(network_devices[key]['network'])
+                net_obj = self.cache.get_network(network_devices[key]['name'])
                 if nic.device.backing.network != net_obj:
                     nic.device.backing.network = net_obj
                     nic_change_detected = True
 
-                if nic.device.backing.deviceName != network_devices[key]['network']:
-                    nic.device.backing.deviceName = network_devices[key]['network']
+                if nic.device.backing.deviceName != network_devices[key]['name']:
+                    nic.device.backing.deviceName = network_devices[key]['name']
                     nic_change_detected = True
 
             if nic_change_detected:
@@ -994,20 +1006,20 @@ class PyVmomiHelper(object):
                     guest_map = vim.vm.customization.AdapterMapping()
                     guest_map.adapter = vim.vm.customization.IPSettings()
                     guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                    guest_map.adapter.ip.ipAddress = str(self.params['networks'][network]['ip'])
-                    guest_map.adapter.subnetMask = str(self.params['networks'][network]['subnet_mask'])
+                    guest_map.adapter.ip.ipAddress = str(network['ip'])
+                    guest_map.adapter.subnetMask = str(network['netmask'])
 
-                    if 'gateway' in self.params['networks'][network]:
-                        guest_map.adapter.gateway = self.params['networks'][network]['gateway']
+                    if 'gateway' in network:
+                        guest_map.adapter.gateway = network['gateway']
 
                     # On Windows, DNS domain and DNS servers can be set by network interface
                     # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
-                    if 'domain' in self.params['networks'][network]:
-                        guest_map.adapter.dnsDomain = self.params['networks'][network]['domain']
+                    if 'domain' in network:
+                        guest_map.adapter.dnsDomain = network['domain']
                     elif self.params['customization'].get('domain'):
                         guest_map.adapter.dnsDomain = self.params['customization']['domain']
-                    if 'dns_servers' in self.params['networks'][network]:
-                        guest_map.adapter.dnsServerList = self.params['networks'][network]['dns_servers']
+                    if 'dns_servers' in network:
+                        guest_map.adapter.dnsServerList = network['dns_servers']
                     elif self.params['customization'].get('dns_servers'):
                         guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
 
@@ -1791,7 +1803,7 @@ def main():
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=True),
-            networks=dict(required=False, type='dict', default={}),
+            networks=dict(required=False, type='list', default=[]),
             resource_pool=dict(required=False, type='str', default=None),
             customization=dict(required=False, type='dict', no_log=True, default={}),
         ),
