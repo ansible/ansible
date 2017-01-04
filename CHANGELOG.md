@@ -130,6 +130,8 @@ Ansible Changes By Release
   * packet_device
   * packet_sshkey
 - runit
+- panos:
+  * panos_import
 - smartos:
   * imgadm
   * vmadm
