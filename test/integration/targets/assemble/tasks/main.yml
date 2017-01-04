@@ -91,7 +91,6 @@
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
 
-
 - name: test assemble with src_files and reordered
   assemble:
     src: "{{output_dir}}/src"
@@ -106,7 +105,6 @@
     that:
     - "result.state == 'file'"
     - "result.checksum == '847b7a99700590b671ddfc22fed082be2dcea909'"
-
 
 - name: test assemble with src_files and reordered using diff order
   assemble:
@@ -181,4 +179,3 @@
     - "result.state == 'file'"
     - "result.changed == False"
     - "result.checksum == '194105ee299c3b4985dc858837a3c6a8ac10a52c'"
-
