@@ -66,7 +66,7 @@ Here's an example of using the URI module to make sure a web service returns::
 
    tasks:
 
-     - action: uri url=http://www.example.com return_content=yes
+     - uri: url=http://www.example.com return_content=yes
        register: webpage
 
      - fail: msg='service is not happy'
