@@ -251,6 +251,7 @@ Example from Ansible playbook
         password: vmware
         name: testvm_2
         esxi_hostname: 192.168.1.117
+        state: gatherfacts
       register: facts
 
 ### Snapshot Operations
@@ -487,7 +488,7 @@ class PyVmomiHelper(object):
         self.cache = PyVmomiCache(self.content)
 
     def should_deploy_from_template(self):
-        return 'template' in self.params and self.params['template'] is not None
+        return self.params.get('template') is not None
 
     def _build_folder_tree(self, folder):
 
@@ -543,6 +544,8 @@ class PyVmomiHelper(object):
                     self._build_folder_map(x, inpath=thispath)
             elif k == 'virtualmachines':
                 for x in v:
+                    # Apparently x.config can be None on corrupted VMs
+                    if x.config is None: continue
                     self.foldermap['uuids'][x.config.uuid] = x.config.name
                     self.foldermap['paths'][thispath].append(x.config.uuid)
 
@@ -593,11 +596,9 @@ class PyVmomiHelper(object):
 
             # Build the absolute folder path to pass into the search method
             if self.params['folder'].startswith('/vm'):
-                searchpath = '%s' % self.params['datacenter']
-                searchpath += self.params['folder']
+                searchpath = '%(datacenter)s%(folder)s' % self.params
             elif self.params['folder'].startswith('/'):
-                searchpath = '%s' % self.params['datacenter']
-                searchpath += '/vm' + self.params['folder']
+                searchpath = '%(datacenter)s/vm%(folder)s' % self.params
             else:
                 # need to look for matching absolute path
                 if not self.folders:
@@ -606,8 +607,7 @@ class PyVmomiHelper(object):
                 paths = [x for x in paths if x.endswith(self.params['folder'])]
                 if len(paths) > 1:
                     self.module.fail_json(
-                        msg='%s matches more than one folder. Please use the absolute path starting with /vm/' %
-                            self.params['folder'])
+                        msg='%(folder)s matches more than one folder. Please use the absolute path starting with /vm/' % self.params)
                 elif paths:
                     searchpath = paths[0]
 
@@ -786,14 +786,17 @@ class PyVmomiHelper(object):
             return {'changed': True, 'failed': False}
 
     def configure_guestid(self, vm_obj, vm_creation=False):
+        # guest_id is not required when using templates
+        if self.should_deploy_from_template() and self.params.get('guest_id') is None:
+            return
+
         # guest_id is only mandatory on VM creation
         if vm_creation and self.params['guest_id'] is None:
             self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
 
         if vm_obj is None or self.configspec.guestId != vm_obj.summary.guest.guestId:
             self.change_detected = True
-
-        self.configspec.guestId = self.params['guest_id']
+            self.configspec.guestId = self.params['guest_id']
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
@@ -854,7 +857,7 @@ class PyVmomiHelper(object):
                     if network_name:
                         self.params['networks'][network]['network'] = network_name
                     else:
-                        self.module.fail_json(msg="VLAN %s doesn't exists" % self.params['networks'][network]['vlan'])
+                        self.module.fail_json(msg="VLAN %(vlan)s doesn't exists" % self.params['networks'][network])
                 else:
                     self.module.fail_json(msg="You need to define a network or a vlan")
 
@@ -871,9 +874,7 @@ class PyVmomiHelper(object):
 
         for key in range(0, len(network_devices)):
             # Default device type is vmxnet3, VMWare best practice
-            device_type = network_devices[key]['device_type'] \
-                if 'device_type' in network_devices[key] else 'vmxnet3'
-
+            device_type = network_devices[key].get('device_type', 'vmxnet3')
             nic = self.device_helper.create_nic(device_type,
                                                 'Network Adapter %s' % (key + 1),
                                                 network_devices[key])
@@ -920,7 +921,7 @@ class PyVmomiHelper(object):
                 self.change_detected = True
 
             if vm_obj is None or self.should_deploy_from_template():
-                if 'ip' in self.params['networks'][network]:
+                if 'ip' in network_devices[key]:
                     guest_map = vim.vm.customization.AdapterMapping()
                     guest_map.adapter = vim.vm.customization.IPSettings()
                     guest_map.adapter.ip = vim.vm.customization.FixedIp()
@@ -993,7 +994,7 @@ class PyVmomiHelper(object):
 
         # No size found but disk, fail
         self.module.fail_json(
-            msg="no size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
+            msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
     def configure_disks(self, vm_obj):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
@@ -1064,14 +1065,14 @@ class PyVmomiHelper(object):
         if self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
             if not cluster:
-                self.module.fail_json(msg="Failed to find a cluster named %s" % self.params['cluster'])
+                self.module.fail_json(msg="Failed to find a cluster named %(cluster)s" % self.params)
             hostsystems = [x for x in cluster.host]
             # TODO: add a policy to select host
             hostsystem = hostsystems[0]
         else:
             hostsystem = self.cache.get_esx_host(self.params['esxi_hostname'])
             if not hostsystem:
-                self.module.fail_json(msg="Failed to find a host named %s" % self.params['esxi_hostname'])
+                self.module.fail_json(msg="Failed to find a host named %(esxi_hostname)s" % self.params)
 
         return hostsystem
 
@@ -1172,7 +1173,7 @@ class PyVmomiHelper(object):
         datacenters = get_all_objs(self.content, [vim.Datacenter])
         datacenter = get_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if not datacenter:
-            self.module.fail_json(msg='No datacenter named %s was found' % self.params['datacenter'])
+            self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
         # find matching folders
         if self.params['folder'].startswith('/'):
@@ -1184,7 +1185,7 @@ class PyVmomiHelper(object):
 
         # throw error if more than one match or no matches
         if len(folders) == 0:
-            self.module.fail_json(msg='no folder matched the path: %s' % self.params['folder'])
+            self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         elif len(folders) > 1:
             self.module.fail_json(
                 msg='too many folders matched "%s", please give the full path starting with /vm/' % self.params[
@@ -1198,7 +1199,7 @@ class PyVmomiHelper(object):
             # FIXME: need to search for this in the same way as guests to ensure accuracy
             vm_obj = get_obj(self.content, [vim.VirtualMachine], self.params['template'])
             if not vm_obj:
-                self.module.fail_json(msg="Could not find a template named %s" % self.params['template'])
+                self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
             vm_obj = None
 
@@ -1631,7 +1632,7 @@ def main():
             name_match=dict(required=False, type='str', default='first'),
             snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm', aliases=['folder']),
+            folder=dict(required=False, type='str', default='/vm'),
             guest_id=dict(required=False, type='str', default=None),
             disk=dict(required=False, type='list', default=[]),
             hardware=dict(required=False, type='dict', default={}),
