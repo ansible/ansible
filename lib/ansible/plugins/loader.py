@@ -36,9 +36,7 @@ except ImportError:
     display = Display()
 
 # Global so that all instances of a ansible.plugins.loader.PluginLoader will share the caches
-MODULE_CACHE = {}
 PATH_CACHE = {}
-PLUGIN_PATH_CACHE = {}
 
 
 class PluginLoader:
@@ -74,13 +72,11 @@ class PluginLoader:
 
         self.config = config
 
-        if class_name not in MODULE_CACHE:
-            MODULE_CACHE[class_name] = {}
         if class_name not in PATH_CACHE:
             PATH_CACHE[class_name] = None
         self._plugin_path_cache = defaultdict(dict)
 
-        self._module_cache      = MODULE_CACHE[class_name]
+        self._module_cache = {}
         self._paths             = PATH_CACHE[class_name]
 
         self._extra_dirs = []
