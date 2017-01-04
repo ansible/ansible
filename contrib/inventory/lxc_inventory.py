@@ -40,16 +40,15 @@ def build_dict():
     containers, including the ones not in any group, are included in the
     "all" group."""
     # Enumerate all containers, and list the groups they are in. Also,
-    # implicitly add every container to the 'all' group.
+    # add a "None" group for those containers that aren't in any group.
     containers = dict([(c,
-                        ['all'] +
-                        (lxc.Container(c).get_config_item('lxc.group') or []))
+                        (lxc.Container(c).get_config_item('lxc.group') or [None]))
                        for c in lxc.list_containers()])
 
     # Extract the groups, flatten the list, and remove duplicates
     groups = set(sum([g for g in containers.values()], []))
 
-    # Create a dictionary for each group (including the 'all' group
+    # Create a dictionary for each group
     return dict([(g, {'hosts': [k for k, v in containers.items() if g in v],
                       'vars': {'ansible_connection':'lxc'}}) for g in groups])
 
