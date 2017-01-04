@@ -18,7 +18,7 @@ class CallbackModule(CallbackBase):
     make sure you have in ansible.cfg:
         callback_plugins   = <path_to_callback_plugins_folder>
     and put the plugin in <path_to_callback_plugins_folder>
-    
+
     This plugin makes use of the following environment variables:
         SYSLOG_SERVER   (optional): defaults to localhost
         SYSLOG_PORT     (optional): defaults to 514
@@ -38,7 +38,7 @@ class CallbackModule(CallbackBase):
 
         self.handler = logging.handlers.SysLogHandler(
             address = (os.getenv('SYSLOG_SERVER','localhost'),
-                       os.getenv('SYSLOG_PORT',514)), 
+                       os.getenv('SYSLOG_PORT',514)),
             facility= os.getenv('SYSLOG_FACILITY',logging.handlers.SysLogHandler.LOG_USER)
         )
         self.logger.addHandler(self.handler)

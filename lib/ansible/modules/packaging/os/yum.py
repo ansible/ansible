@@ -390,12 +390,12 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
-            
+
         return [ po_to_nevra(p) for p in pkgs ]
 
     else:
         myrepoq = list(repoq)
-                 
+
         r_cmd = ['--disablerepo', ','.join(dis_repos)]
         myrepoq.extend(r_cmd)
 
@@ -434,7 +434,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
             if not pkgs:
                 e,m,u = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
-            updates = my.doPackageLists(pkgnarrow='updates').updates 
+            updates = my.doPackageLists(pkgnarrow='updates').updates
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
@@ -442,7 +442,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         for pkg in pkgs:
             if pkg in updates:
                 retpkgs.append(pkg)
-            
+
         return set([ po_to_nevra(p) for p in retpkgs ])
 
     else:
@@ -455,12 +455,12 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
-        
+
         if rc == 0:
             return set([ p for p in out.split('\n') if p.strip() ])
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
-            
+
     return set()
 
 def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None, dis_repos=None, installroot='/'):
@@ -524,9 +524,9 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
     return set()
 
 def transaction_exists(pkglist):
-    """ 
-    checks the package list to see if any packages are 
-    involved in an incomplete transaction 
+    """
+    checks the package list to see if any packages are
+    involved in an incomplete transaction
     """
 
     conflicts = []
@@ -725,7 +725,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     found = True
                     res['results'].append('package providing %s is already installed' % (spec))
-                    
+
             if found:
                 continue
 
@@ -824,7 +824,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         res['results'].append(out)
         res['msg'] = err
 
-        # compile the results into one batch. If anything is changed 
+        # compile the results into one batch. If anything is changed
         # then mark changed
         # at the end - if we've end up failed then fail out of the rest
         # of the process

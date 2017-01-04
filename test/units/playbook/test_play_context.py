@@ -186,7 +186,7 @@ class TestPlayContext(unittest.TestCase):
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
     inventory_vars = (
-            ('preferred_names',
+        ('preferred_names',
                 dict(ansible_connection='local',
                     ansible_user='ansibull',
                     ansible_become_user='ansibull',
@@ -198,11 +198,11 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-            ('alternate_names',
+        ('alternate_names',
                 dict(ansible_become_password='ansibullwuzhere',),
                 dict(become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_names',
+        ('deprecated_names',
                 dict(ansible_ssh_user='ansibull',
                     ansible_sudo_user='ansibull',
                     ansible_sudo_pass='ansibullwuzhere',),
@@ -211,7 +211,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_user='ansibull',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_names2',
+        ('deprecated_names2',
                 dict(ansible_ssh_user='ansibull',
                     ansible_su_user='ansibull',
                     ansible_su_pass='ansibullwuzhere',),
@@ -220,17 +220,17 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_user='ansibull',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_alt_names',
+        ('deprecated_alt_names',
                 dict(ansible_sudo_password='ansibullwuzhere',),
                 dict(become_method='sudo',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_alt_names2',
+        ('deprecated_alt_names2',
                 dict(ansible_su_password='ansibullwuzhere',),
                 dict(become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_and_preferred_names',
+        ('deprecated_and_preferred_names',
                 dict(ansible_user='ansibull',
                     ansible_ssh_user='badbull',
                     ansible_become_user='ansibull',
@@ -245,7 +245,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-        )
+    )
 
     def setUp(self):
         parser = CLI.base_parser(

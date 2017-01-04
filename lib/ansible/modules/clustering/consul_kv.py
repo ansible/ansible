@@ -234,7 +234,7 @@ def remove_value(module):
     index, existing = consul_api.kv.get(
         key, recurse=module.params.get('recurse'))
 
-    changed = existing != None
+    changed = existing is not None
     if changed and not module.check_mode:
         consul_api.kv.delete(key, module.params.get('recurse'))
 
@@ -282,7 +282,7 @@ def main():
         execute(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-                            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), str(e)))
     except Exception as e:
         module.fail_json(msg=str(e))
 

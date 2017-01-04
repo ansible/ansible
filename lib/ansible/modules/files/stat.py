@@ -423,7 +423,7 @@ def format_output(module, path, st):
             ('st_rsize', 'real_size'),
             ('st_creator', 'creator'),
             ('st_type', 'file_type'),
-        ]:
+    ]:
         if hasattr(st, other[0]):
             output[other[1]] = getattr(st, other[0])
 

@@ -60,7 +60,7 @@ options:
     default: false
   multi_key:
     description:
-      - When enabled, the daemon will open a local socket file which can be used by future daemon executions to 
+      - When enabled, the daemon will open a local socket file which can be used by future daemon executions to
         upload a new key to the already running daemon, so that multiple users can connect using different keys.
         This access still requires an ssh connection as the uid for which the daemon is currently running.
     required: false
@@ -110,13 +110,13 @@ from threading import Thread, Lock
 # we must import this here at the top so we can use get_module_path()
 from ansible.module_utils.basic import *
 
-# the chunk size to read and send, assuming mtu 1500 and 
+# the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (100 bytes)
-# 4 * (975/3) + 100 = 1400 
+# 4 * (975/3) + 100 = 1400
 # which leaves room for the TCP/IP header
 CHUNK_SIZE=10240
 
-# FIXME: this all should be moved to module_common, as it's 
+# FIXME: this all should be moved to module_common, as it's
 #        pretty much a copy from the callbacks/util code
 DEBUG_LEVEL=0
 def log(msg, cap=0):
@@ -148,7 +148,7 @@ SOCKET_FILE = os.path.join(get_module_path(), '.ansible-accelerate', ".local.soc
 
 def get_pid_location(module):
     """
-    Try to find a pid directory in the common locations, falling 
+    Try to find a pid directory in the common locations, falling
     back to the user's home directory if no others exist
     """
     for dir in ['/var/run', '/var/lib/run', '/run', os.path.expanduser("~/")]:

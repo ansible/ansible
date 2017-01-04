@@ -506,11 +506,11 @@ PARAM_TO_COMMAND_KEYMAP = {
     'vrf': 'vrf'
 }
 DAMPENING_PARAMS = [
-        'dampening_half_time',
-        'dampening_suppress_time',
-        'dampening_reuse_time',
-        'dampening_max_suppress_time'
-        ]
+    'dampening_half_time',
+    'dampening_suppress_time',
+    'dampening_reuse_time',
+    'dampening_max_suppress_time'
+    ]
 
 
 def invoke(name, *args, **kwargs):
@@ -543,11 +543,11 @@ def get_custom_list_value(config, arg, module):
                 copy_attributes = False
                 inject_map_command = ('inject-map {0} exist-map {1} '
                                       'copy-attributes'.format(
-                                      inject_group['inject_map'],
-                                      inject_group['exist_map']))
+                                          inject_group['inject_map'],
+                                          inject_group['exist_map']))
 
                 REGEX = re.compile(r'\s+{0}\s*$'.format(
-                                                inject_map_command), re.M)
+                    inject_map_command), re.M)
                 try:
                     if REGEX.search(config):
                         copy_attributes = True
@@ -574,7 +574,7 @@ def get_custom_list_value(config, arg, module):
 
     elif arg == 'redistribute':
         RED_REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
-                                PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+            PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         for line in splitted_config:
             value =  []
             redistribute_group = {}
@@ -585,7 +585,7 @@ def get_custom_list_value(config, arg, module):
                         value.pop(1)
                     elif len(value) == 4:
                         value = ['{0} {1}'.format(
-                                        value[0], value[1]), value[3]]
+                            value[0], value[1]), value[3]]
                     value_list.append(value)
     return value_list
 
@@ -611,8 +611,8 @@ def get_custom_string_value(config, arg, module):
 
     elif arg.startswith('dampening'):
         REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
-                                PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        if arg == 'dampen_igp_metric' or  arg == 'dampening_routemap':
+            PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+        if arg == 'dampen_igp_metric' or arg == 'dampening_routemap':
             value = ''
             if PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value')
@@ -774,10 +774,10 @@ def default_existing(existing_value, key, value):
         for network in existing_value:
             if len(network) == 2:
                 commands.append('no network {0} route-map {1}'.format(
-                        network[0], network[1]))
+                    network[0], network[1]))
             elif len(network) == 1:
                 commands.append('no network {0}'.format(
-                        network[0]))
+                    network[0]))
 
     elif key == 'inject-map':
         for maps in existing_value:
@@ -787,7 +787,7 @@ def default_existing(existing_value, key, value):
             elif len(maps) == 3:
                 commands.append('no inject-map {0} exist-map {1} '
                                 'copy-attributes'.format(
-                                maps[0], maps[1]))
+                                    maps[0], maps[1]))
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -818,7 +818,7 @@ def get_inject_map_command(existing, key, value):
         if maps not in existing_maps:
             if len(maps) == 2:
                 command = ('inject-map {0} exist-map {1}'.format(
-                            maps[0], maps[1]))
+                    maps[0], maps[1]))
             elif len(maps) == 3:
                 command = ('inject-map {0} exist-map {1} '
                            'copy-attributes'.format(maps[0],
@@ -835,7 +835,7 @@ def get_redistribute_command(existing, key, value):
             for each_rule in existing_rule:
                 if rule[0] in each_rule:
                     command = 'no {0} {1} route-map {2}'.format(
-                                    key, each_rule[0], each_rule[1])
+                        key, each_rule[0], each_rule[1])
                     commands.append(command)
         else:
             command = '{0} {1} route-map {2}'.format(key, rule[0], rule[1])
@@ -877,7 +877,7 @@ def state_present(module, existing, proposed, candidate):
     for key, value in proposed_commands.items():
         if key == 'address-family':
             addr_family_command = "address-family {0} {1}".format(
-                            module.params['afi'], module.params['safi'])
+                module.params['afi'], module.params['safi'])
             if addr_family_command not in commands:
                 commands.append(addr_family_command)
 
@@ -949,48 +949,48 @@ def state_absent(module, existing, proposed, candidate):
         parents.append('vrf {0}'.format(module.params['vrf']))
 
     commands.append('no address-family {0} {1}'.format(
-                            module.params['afi'], module.params['safi']))
+        module.params['afi'], module.params['safi']))
     candidate.add(commands, parents=parents)
 
 
 def main():
     argument_spec = dict(
-            asn=dict(required=True, type='str'),
-            vrf=dict(required=False, type='str', default='default'),
-            safi=dict(required=True, type='str', choices=['unicast','multicast', 'evpn']),
-            afi=dict(required=True, type='str', choices=['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']),
-            additional_paths_install=dict(required=False, type='bool'),
-            additional_paths_receive=dict(required=False, type='bool'),
-            additional_paths_selection=dict(required=False, type='str'),
-            additional_paths_send=dict(required=False, type='bool'),
-            advertise_l2vpn_evpn=dict(required=False, type='bool'),
-            client_to_client=dict(required=False, type='bool'),
-            dampen_igp_metric=dict(required=False, type='str'),
-            dampening_state=dict(required=False, type='bool'),
-            dampening_half_time=dict(required=False, type='str'),
-            dampening_max_suppress_time=dict(required=False, type='str'),
-            dampening_reuse_time=dict(required=False, type='str'),
-            dampening_routemap=dict(required=False, type='str'),
-            dampening_suppress_time=dict(required=False, type='str'),
-            default_information_originate=dict(required=False, type='bool'),
-            default_metric=dict(required=False, type='str'),
-            distance_ebgp=dict(required=False, type='str'),
-            distance_ibgp=dict(required=False, type='str'),
-            distance_local=dict(required=False, type='str'),
-            inject_map=dict(required=False, type='list'),
-            maximum_paths=dict(required=False, type='str'),
-            maximum_paths_ibgp=dict(required=False, type='str'),
-            networks=dict(required=False, type='list'),
-            next_hop_route_map=dict(required=False, type='str'),
-            redistribute=dict(required=False, type='list'),
-            suppress_inactive=dict(required=False, type='bool'),
-            table_map=dict(required=False, type='str'),
-            table_map_filter=dict(required=False, type='bool'),
-            state=dict(choices=['present', 'absent'], default='present',
+        asn=dict(required=True, type='str'),
+        vrf=dict(required=False, type='str', default='default'),
+        safi=dict(required=True, type='str', choices=['unicast','multicast', 'evpn']),
+        afi=dict(required=True, type='str', choices=['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']),
+        additional_paths_install=dict(required=False, type='bool'),
+        additional_paths_receive=dict(required=False, type='bool'),
+        additional_paths_selection=dict(required=False, type='str'),
+        additional_paths_send=dict(required=False, type='bool'),
+        advertise_l2vpn_evpn=dict(required=False, type='bool'),
+        client_to_client=dict(required=False, type='bool'),
+        dampen_igp_metric=dict(required=False, type='str'),
+        dampening_state=dict(required=False, type='bool'),
+        dampening_half_time=dict(required=False, type='str'),
+        dampening_max_suppress_time=dict(required=False, type='str'),
+        dampening_reuse_time=dict(required=False, type='str'),
+        dampening_routemap=dict(required=False, type='str'),
+        dampening_suppress_time=dict(required=False, type='str'),
+        default_information_originate=dict(required=False, type='bool'),
+        default_metric=dict(required=False, type='str'),
+        distance_ebgp=dict(required=False, type='str'),
+        distance_ibgp=dict(required=False, type='str'),
+        distance_local=dict(required=False, type='str'),
+        inject_map=dict(required=False, type='list'),
+        maximum_paths=dict(required=False, type='str'),
+        maximum_paths_ibgp=dict(required=False, type='str'),
+        networks=dict(required=False, type='list'),
+        next_hop_route_map=dict(required=False, type='str'),
+        redistribute=dict(required=False, type='list'),
+        suppress_inactive=dict(required=False, type='bool'),
+        table_map=dict(required=False, type='str'),
+        table_map_filter=dict(required=False, type='bool'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_together=[DAMPENING_PARAMS,
@@ -1017,38 +1017,38 @@ def main():
                              ' table_map_filter filter.')
 
     args =  [
-            "additional_paths_install",
-            "additional_paths_receive",
-            "additional_paths_selection",
-            "additional_paths_send",
-            "advertise_l2vpn_evpn",
-            "afi",
-            "asn",
-            "client_to_client",
-            "dampen_igp_metric",
-            "dampening_half_time",
-            "dampening_max_suppress_time",
-            "dampening_reuse_time",
-            "dampening_suppress_time",
-            "dampening_routemap",
-            "dampening_state",
-            "default_information_originate",
-            "default_metric",
-            "distance_ebgp",
-            "distance_ibgp",
-            "distance_local",
-            "inject_map",
-            "maximum_paths",
-            "maximum_paths_ibgp",
-            "networks",
-            "next_hop_route_map",
-            "redistribute",
-            "safi",
-            "suppress_inactive",
-            "table_map",
-            "table_map_filter",
-            "vrf"
-        ]
+        "additional_paths_install",
+        "additional_paths_receive",
+        "additional_paths_selection",
+        "additional_paths_send",
+        "advertise_l2vpn_evpn",
+        "afi",
+        "asn",
+        "client_to_client",
+        "dampen_igp_metric",
+        "dampening_half_time",
+        "dampening_max_suppress_time",
+        "dampening_reuse_time",
+        "dampening_suppress_time",
+        "dampening_routemap",
+        "dampening_state",
+        "default_information_originate",
+        "default_metric",
+        "distance_ebgp",
+        "distance_ibgp",
+        "distance_local",
+        "inject_map",
+        "maximum_paths",
+        "maximum_paths_ibgp",
+        "networks",
+        "next_hop_route_map",
+        "redistribute",
+        "safi",
+        "suppress_inactive",
+        "table_map",
+        "table_map_filter",
+        "vrf"
+    ]
 
     existing = invoke('get_existing', module, args)
 

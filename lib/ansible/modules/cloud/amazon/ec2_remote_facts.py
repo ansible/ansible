@@ -127,9 +127,9 @@ def get_instance_info(instance):
                     'requester_id': instance.requester_id,
                     'monitoring_state': instance.monitoring_state,
                     'placement': {
-                                  'tenancy': instance._placement.tenancy,
-                                  'zone': instance._placement.zone
-                                 },
+                        'tenancy': instance._placement.tenancy,
+                        'zone': instance._placement.zone
+                        },
                     'ami_launch_index': instance.ami_launch_index,
                     'launch_time': instance.launch_time,
                     'hypervisor': instance.hypervisor,

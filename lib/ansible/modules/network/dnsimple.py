@@ -276,8 +276,10 @@ def main():
                     # check if we need to update
                     if rr['ttl'] != ttl or rr['prio'] != priority:
                         data = {}
-                        if ttl:      data['ttl']  = ttl
-                        if priority: data['prio'] = priority
+                        if ttl:
+                            data['ttl']  = ttl
+                        if priority:
+                            data['prio'] = priority
                         if module.check_mode:
                             module.exit_json(changed=True)
                         else:
@@ -291,8 +293,10 @@ def main():
                         'record_type': record_type,
                         'content':     value,
                     }
-                    if ttl:      data['ttl']  = ttl
-                    if priority: data['prio'] = priority
+                    if ttl:
+                        data['ttl']  = ttl
+                    if priority:
+                        data['prio'] = priority
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:

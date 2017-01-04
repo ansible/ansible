@@ -81,16 +81,16 @@ EXAMPLES = """
     name: "alarms"
     state: present
     display_name: "alarm SNS topic"
-    delivery_policy: 
+    delivery_policy:
       http:
-        defaultHealthyRetryPolicy: 
+        defaultHealthyRetryPolicy:
             minDelayTarget: 2
             maxDelayTarget: 4
             numRetries: 3
             numMaxDelayRetries: 5
             backoffFunction: "<linear|arithmetic|geometric|exponential>"
         disableSubscriptionOverrides: True
-        defaultThrottlePolicy: 
+        defaultThrottlePolicy:
             maxReceivesPerSecond: 10
     subscriptions:
       - endpoint: "my_email_address@example.com"

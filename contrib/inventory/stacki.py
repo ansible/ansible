@@ -58,7 +58,7 @@ try:
     import requests
 except:
     sys.exit('requests package is required for this inventory script')
-   
+
 
 CONFIG_FILES = ['/etc/stacki/stacki.yml', '/etc/ansible/stacki.yml']
 

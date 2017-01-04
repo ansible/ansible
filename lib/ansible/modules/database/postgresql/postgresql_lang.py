@@ -26,17 +26,17 @@ DOCUMENTATION = '''
 module: postgresql_lang
 short_description: Adds, removes or changes procedural languages with a PostgreSQL database.
 description:
-   - Adds, removes or changes procedural languages with a PostgreSQL database. 
+   - Adds, removes or changes procedural languages with a PostgreSQL database.
    - This module allows you to add a language, remote a language or change the trust
-     relationship with a PostgreSQL database. The module can be used on the machine 
+     relationship with a PostgreSQL database. The module can be used on the machine
      where executed or on a remote host.
    - When removing a language from a database, it is possible that dependencies prevent
-     the database from being removed. In that case, you can specify casade to 
-     automatically drop objects that depend on the language (such as functions in the 
-     language). In case the language can't be deleted because it is required by the 
+     the database from being removed. In that case, you can specify casade to
+     automatically drop objects that depend on the language (such as functions in the
+     language). In case the language can't be deleted because it is required by the
      database system, you can specify fail_on_drop=no to ignore the error.
    - Be carefull when marking a language as trusted since this could be a potential
-     security breach. Untrusted languages allow only users with the PostgreSQL superuser 
+     security breach. Untrusted languages allow only users with the PostgreSQL superuser
      privilege to use this language to create new functions.
 version_added: "1.7"
 options:
@@ -53,13 +53,13 @@ options:
     choices: [ "yes", "no" ]
   db:
     description:
-      - name of database where the language will be added, removed or changed 
+      - name of database where the language will be added, removed or changed
     required: false
     default: null
   force_trust:
     description:
       - marks the language as trusted, even if it's marked as untrusted in pg_pltemplate.
-      - use with care! 
+      - use with care!
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -72,8 +72,8 @@ options:
     choices: [ "yes", "no" ]
   cascade:
     description:
-      - when dropping a language, also delete object that depend on this language. 
-      - only used when C(state=absent). 
+      - when dropping a language, also delete object that depend on this language.
+      - only used when C(state=absent).
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -118,7 +118,7 @@ author: "Jens Depuydt (@jensdepuydt)"
 
 EXAMPLES = '''
 # Add language pltclu to database testdb if it doesn't exist:
-- postgresql_lang db=testdb lang=pltclu state=present 
+- postgresql_lang db=testdb lang=pltclu state=present
 
 # Add language pltclu to database testdb if it doesn't exist and mark it as trusted:
 # Marks the language as trusted if it exists but isn't trusted yet
@@ -253,21 +253,21 @@ def main():
         if lang_exists(cursor, lang):
             lang_trusted = lang_istrusted(cursor, lang)
             if (lang_trusted and not trust) or (not lang_trusted and trust):
-                if  module.check_mode:
+                if module.check_mode:
                     changed = True
                 else:
                     changed = lang_altertrust(cursor, lang, trust)
         else:
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
             else:
                 changed = lang_add(cursor, lang, trust)
                 if force_trust:
                     changed = lang_altertrust(cursor, lang, trust)
-                
+
     else:
         if lang_exists(cursor, lang):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['lang_dropped'] = True
             else:

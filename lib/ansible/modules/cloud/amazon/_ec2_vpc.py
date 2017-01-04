@@ -189,7 +189,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
         A VPC object that matches either an ID or CIDR and one or more tag values
     """
 
-    if vpc_id == None and cidr == None:
+    if vpc_id is None and cidr is None:
         module.fail_json(
             msg='You must specify either a vpc_id or a cidr block + list of unique tags, aborting'
         )
@@ -565,7 +565,7 @@ def create_vpc(module, vpc_conn):
                     old_rt = vpc_conn.get_all_route_tables(
                         filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
                     )
-                    old_rt = [ x for x in old_rt if x.id != None ]
+                    old_rt = [ x for x in old_rt if x.id is not None ]
                     if len(old_rt) == 1:
                         old_rt = old_rt[0]
                         association_id = None
@@ -698,19 +698,19 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            cidr_block = dict(),
-            instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
-            dns_support = dict(type='bool', default=True),
-            dns_hostnames = dict(type='bool', default=True),
-            subnets = dict(type='list'),
-            vpc_id = dict(),
-            internet_gateway = dict(type='bool', default=False),
-            resource_tags = dict(type='dict', required=True),
-            route_tables = dict(type='list'),
-            state = dict(choices=['present', 'absent'], default='present'),
-        )
+        cidr_block = dict(),
+        instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=300),
+        dns_support = dict(type='bool', default=True),
+        dns_hostnames = dict(type='bool', default=True),
+        subnets = dict(type='list'),
+        vpc_id = dict(),
+        internet_gateway = dict(type='bool', default=False),
+        resource_tags = dict(type='dict', required=True),
+        route_tables = dict(type='list'),
+        state = dict(choices=['present', 'absent'], default='present'),
+    )
     )
 
     module = AnsibleModule(

@@ -508,7 +508,7 @@ def parse_unstructured_data(body, interface_name, module):
                 interface['prefix'] = prefix
 
         interface_list_table = splitted_body[
-                            first_reference_point:last_reference_point]
+            first_reference_point:last_reference_point]
 
         for each_line in interface_list_table:
             address = each_line.strip().split(' ')[0]
@@ -551,10 +551,10 @@ def get_ip_interface(interface_name, version, module):
     # and manually parse it.
     if module.params['transport'] == 'nxapi' and version == 'v6':
         interface, address_list = parse_unstructured_data(
-                                        body, interface_name, module)
+            body, interface_name, module)
     else:
         interface, address_list = parse_structured_data(
-                                        body, interface_name, version, module)
+            body, interface_name, version, module)
 
     return interface, address_list
 
@@ -629,16 +629,16 @@ def validate_params(addr, interface, mask, version, state, intf_type, module):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True),
-            addr=dict(required=False),
-            version=dict(required=False, choices=['v4', 'v6'],
+        interface=dict(required=True),
+        addr=dict(required=False),
+        version=dict(required=False, choices=['v4', 'v6'],
                          default='v4'),
-            mask=dict(type='str', required=False),
-            state=dict(required=False, default='present',
+        mask=dict(type='str', required=False),
+        state=dict(required=False, default='present',
                        choices=['present', 'absent']),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

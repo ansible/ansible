@@ -109,7 +109,7 @@ def print_host(host):
 
 def get_args(args_list):
     parser = argparse.ArgumentParser(
-            description='ansible inventory script parsing .ssh/config')
+        description='ansible inventory script parsing .ssh/config')
     mutex_group = parser.add_mutually_exclusive_group(required=True)
     help_list = 'list all hosts from .ssh/config inventory'
     mutex_group.add_argument('--list', action='store_true', help=help_list)

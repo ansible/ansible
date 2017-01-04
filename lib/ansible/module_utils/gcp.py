@@ -77,7 +77,7 @@ def _get_gcp_ansible_credentials(module):
 def _get_gcp_environ_var(var_name, default_value):
     """Wrapper around os.environ.get call."""
     return os.environ.get(
-            var_name, default_value)
+        var_name, default_value)
 
 def _get_gcp_environment_credentials(service_account_email, credentials_file, project_id):
     """Helper to look in environment variables for credentials."""
@@ -209,7 +209,7 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
             'project_id': project_id}
 
 def _validate_credentials_file(module, credentials_file, require_valid_json=True, check_libcloud=False):
-    """ 
+    """
     Check for valid credentials file.
 
     Optionally check for JSON format and if libcloud supports JSON.
@@ -276,7 +276,7 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
 
 
 def get_google_cloud_credentials(module, scopes=[]):
-    """ 
+    """
     Get credentials object for use with Google Cloud client.
 
     To connect via libcloud, don't use this function, use gcp_connect instead.  For
@@ -297,7 +297,7 @@ def get_google_cloud_credentials(module, scopes=[]):
     :param scopes: list of scopes
     :type module: ``list`` of URIs
 
-    :returns: A tuple containing (google authorized) credentials object and 
+    :returns: A tuple containing (google authorized) credentials object and
               params dict {'service_account_email': '...', 'credentials_file': '...', 'project_id': ...}
     :rtype: ``tuple``
     """
@@ -315,7 +315,7 @@ def get_google_cloud_credentials(module, scopes=[]):
                 credentials = credentials.with_scopes(scopes)
         else:
             credentials = google.auth.default(
-                    scopes=scopes)[0]
+                scopes=scopes)[0]
 
         return (credentials, conn_params)
     except Exception as e:
@@ -326,7 +326,7 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     """
     Authentication for use with google-python-api-client.
 
-    Function calls get_google_cloud_credentials, which attempts to assemble the credentials 
+    Function calls get_google_cloud_credentials, which attempts to assemble the credentials
     from various locations.  Next it attempts to authenticate with Google.
 
     This function returns an httplib2 (compatible) object that can be provided to the Google Python API client.

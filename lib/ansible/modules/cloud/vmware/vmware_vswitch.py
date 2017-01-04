@@ -93,7 +93,7 @@ def find_vswitch_by_name(host, vswitch_name):
 
 
 class VMwareHostVirtualSwitch(object):
-    
+
     def __init__(self, module):
         self.host_system = None
         self.content = None
@@ -132,7 +132,7 @@ class VMwareHostVirtualSwitch(object):
 
     # Source from
     # https://github.com/rreubenur/pyvmomi-community-samples/blob/patch-1/samples/create_vswitch.py
-    
+
     def state_create_vswitch(self):
         vss_spec = vim.host.VirtualSwitch.Specification()
         vss_spec.numPorts = self.number_of_ports
@@ -146,7 +146,7 @@ class VMwareHostVirtualSwitch(object):
 
     def state_destroy_vswitch(self):
         config = vim.host.NetworkConfig()
-    
+
         for portgroup in self.host_system.configManager.networkSystem.networkInfo.portgroup:
             if portgroup.spec.vswitchName == self.vss.name:
                 portgroup_config = vim.host.PortGroup.Config()
@@ -158,7 +158,7 @@ class VMwareHostVirtualSwitch(object):
                 portgroup_config.spec.vswitchName = portgroup.spec.vswitchName
                 portgroup_config.spec.policy = vim.host.NetworkPolicy()
                 config.portgroup.append(portgroup_config)
-    
+
         self.host_system.configManager.networkSystem.UpdateNetworkConfig(config, "modify")
         self.host_system.configManager.networkSystem.RemoveVirtualSwitch(self.vss.name)
         self.module.exit_json(changed=True)
@@ -170,15 +170,15 @@ class VMwareHostVirtualSwitch(object):
         host = get_all_objs(self.content, [vim.HostSystem])
         if not host:
             self.module.fail_json(msg="Unable to find host")
-    
+
         self.host_system = host.keys()[0]
         self.vss = find_vswitch_by_name(self.host_system, self.switch_name)
-    
+
         if self.vss is None:
             return 'absent'
         else:
             return 'present'
-    
+
 
 def main():
     argument_spec = vmware_argument_spec()

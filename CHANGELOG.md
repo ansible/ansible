@@ -47,6 +47,8 @@ Ansible Changes By Release
   * aws_kms
   * ecs_ecr
   * ec2_vpc_vgw_facts
+- bigswitch:
+  * bigmon_policy
 - cloudscale_server
 - cloudstack
   * cs_host
@@ -126,11 +128,16 @@ Ansible Changes By Release
 - packet:
   * packet_device
   * packet_sshkey
+- runit
 - smartos:
   * imgadm
   * vmadm
+- tower:
+  * tower_organization
 - web_infrastructure
   * jenkins_script
+- panos:
+  * panos_cert_gen_ssh
 - windows:
   * win_say
   * win_shortcut

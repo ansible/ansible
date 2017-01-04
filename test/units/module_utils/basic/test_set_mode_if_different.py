@@ -79,15 +79,15 @@ def _check_mode_unchanged_when_already_0660(self, mode):
 
 
 SYNONYMS_0660 = (
-        [[0o660]],
-        [['0o660']],
-        [['660']],
-        )
+    [[0o660]],
+    [['0o660']],
+    [['660']],
+    )
 
 @add_method(_check_no_mode_given_returns_previous_changes,
         [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
+    [dict(previous_changes=False)],
+    )
 @add_method(_check_mode_changed_to_0660,
         *SYNONYMS_0660
         )
@@ -131,8 +131,8 @@ def _check_knows_to_change_to_0660_in_check_mode(self, mode):
 
 @add_method(_check_no_mode_given_returns_previous_changes,
         [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
+    [dict(previous_changes=False)],
+    )
 @add_method(_check_knows_to_change_to_0660_in_check_mode,
         *SYNONYMS_0660
         )

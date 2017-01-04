@@ -75,7 +75,7 @@ notes:
        The M(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
-author: 
+author:
     - Ansible Core Team
     - Michael DeHaan
 '''
@@ -136,13 +136,13 @@ def main():
     # hence don't copy this one if you are looking to build others!
     module = AnsibleModule(
         argument_spec=dict(
-          _raw_params = dict(),
-          _uses_shell = dict(type='bool', default=False),
-          chdir = dict(type='path'),
-          executable = dict(),
-          creates = dict(type='path'),
-          removes = dict(type='path'),
-          warn = dict(type='bool', default=True),
+            _raw_params = dict(),
+            _uses_shell = dict(type='bool', default=False),
+            chdir = dict(type='path'),
+            executable = dict(),
+            creates = dict(type='path'),
+            removes = dict(type='path'),
+            warn = dict(type='bool', default=True),
         )
     )
 

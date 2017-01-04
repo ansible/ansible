@@ -470,23 +470,23 @@ def get_volume_info(volume, state):
     attachment = volume.attach_data
 
     volume_info = {
-                    'create_time': volume.create_time,
-                    'encrypted': volume.encrypted,
-                    'id': volume.id,
-                    'iops': volume.iops,
-                    'size': volume.size,
-                    'snapshot_id': volume.snapshot_id,
-                    'status': volume.status,
-                    'type': volume.type,
-                    'zone': volume.zone,
-                    'attachment_set': {
-                        'attach_time': attachment.attach_time,
-                        'device': attachment.device,
-                        'instance_id': attachment.instance_id,
-                        'status': attachment.status
-                    },
-                    'tags': volume.tags
-                }
+        'create_time': volume.create_time,
+        'encrypted': volume.encrypted,
+        'id': volume.id,
+        'iops': volume.iops,
+        'size': volume.size,
+        'snapshot_id': volume.snapshot_id,
+        'status': volume.status,
+        'type': volume.type,
+        'zone': volume.zone,
+        'attachment_set': {
+            'attach_time': attachment.attach_time,
+            'device': attachment.device,
+            'instance_id': attachment.instance_id,
+            'status': attachment.status
+            },
+        'tags': volume.tags
+        }
     if hasattr(attachment, 'deleteOnTermination'):
         volume_info['attachment_set']['deleteOnTermination'] = attachment.deleteOnTermination
 
@@ -496,20 +496,20 @@ def get_volume_info(volume, state):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance = dict(),
-            id = dict(),
-            name = dict(),
-            volume_size = dict(),
-            volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
-            iops = dict(),
-            encrypted = dict(type='bool', default=False),
-            kms_key_id = dict(),
-            device_name = dict(),
-            delete_on_termination = dict(type='bool', default=False),
-            zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
-            snapshot = dict(),
-            state = dict(choices=['absent', 'present', 'list'], default='present')
-        )
+        instance = dict(),
+        id = dict(),
+        name = dict(),
+        volume_size = dict(),
+        volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
+        iops = dict(),
+        encrypted = dict(type='bool', default=False),
+        kms_key_id = dict(),
+        device_name = dict(),
+        delete_on_termination = dict(type='bool', default=False),
+        zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
+        snapshot = dict(),
+        state = dict(choices=['absent', 'present', 'list'], default='present')
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

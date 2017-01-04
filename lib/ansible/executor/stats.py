@@ -59,7 +59,7 @@ class AggregateStats:
 
         if host is None:
             host = '_run'
-        if host not in  self.custom:
+        if host not in self.custom:
             self.custom[host] = {which: what}
         else:
             self.custom[host][which] = what

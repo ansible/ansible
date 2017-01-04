@@ -105,7 +105,8 @@ uuid_match = re.compile(
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -172,7 +173,7 @@ def detach_volume(module, profitbricks):
     """
     Detaches a volume.
 
-    This will remove a volume from the server. 
+    This will remove a volume from the server.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.

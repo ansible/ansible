@@ -295,7 +295,7 @@ class HAProxy(object):
         """
         Wait for a service to reach the specified status. Try RETRIES times
         with INTERVAL seconds of sleep in between. If the service has not reached
-        the expected status in that time, the module will fail. If the service was 
+        the expected status in that time, the module will fail. If the service was
         not found, the module will fail.
         """
         for i in range(1, self.wait_retries):

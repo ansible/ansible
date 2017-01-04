@@ -378,7 +378,7 @@ def get_existing(module, args):
 
         if 'member vni {0} associate-vrf'.format(module.params['vni']) in temp_config:
             parents.append('member vni {0} associate-vrf'.format(
-                                                    module.params['vni']))
+                module.params['vni']))
             config = netcfg.get_section(parents)
         elif "member vni {0}".format(module.params['vni']) in temp_config:
             parents.append('member vni {0}'.format(module.params['vni']))
@@ -473,7 +473,7 @@ def state_present(module, existing, proposed, candidate):
 def state_absent(module, existing, proposed, candidate):
     if existing['assoc_vrf']:
         commands = ['no member vni {0} associate-vrf'.format(
-                                                module.params['vni'])]
+            module.params['vni'])]
     else:
         commands = ['no member vni {0}'.format(module.params['vni'])]
     parents = ['interface {0}'.format(module.params['interface'])]
@@ -482,19 +482,19 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            vni=dict(required=True, type='str'),
-            assoc_vrf=dict(required=False, type='bool'),
-            multicast_group=dict(required=False, type='str'),
-            peer_list=dict(required=False, type='list'),
-            suppress_arp=dict(required=False, type='bool'),
-            ingress_replication=dict(required=False, type='str',
+        interface=dict(required=True, type='str'),
+        vni=dict(required=True, type='str'),
+        assoc_vrf=dict(required=False, type='bool'),
+        multicast_group=dict(required=False, type='str'),
+        peer_list=dict(required=False, type='list'),
+        suppress_arp=dict(required=False, type='bool'),
+        ingress_replication=dict(required=False, type='str',
                                      choices=['bgp', 'static', 'default']),
-            state=dict(choices=['present', 'absent'], default='present',
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -521,14 +521,14 @@ def main():
 
     state = module.params['state']
     args =  [
-            'assoc_vrf',
-            'interface',
-            'vni',
-            'ingress_replication',
-            'multicast_group',
-            'peer_list',
-            'suppress_arp'
-        ]
+        'assoc_vrf',
+        'interface',
+        'vni',
+        'ingress_replication',
+        'multicast_group',
+        'peer_list',
+        'suppress_arp'
+    ]
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing
@@ -557,7 +557,7 @@ def main():
                 existing['vni'] != module.params['vni']):
                 module.fail_json(msg="ERROR: VNI delete failed: Could not find"
                                      " vni node for {0}".format(
-                                     module.params['vni']),
+                                         module.params['vni']),
                                      existing_vni=existing['vni'])
         else:
             candidate = CustomNetworkConfig(indent=3)

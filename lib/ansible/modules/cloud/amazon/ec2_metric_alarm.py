@@ -261,7 +261,7 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-           )
+            )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)

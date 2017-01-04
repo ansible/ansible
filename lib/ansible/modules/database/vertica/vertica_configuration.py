@@ -116,7 +116,7 @@ def get_configuration_facts(cursor, parameter_name=''):
                 'current_value': row.current_value,
                 'default_value': row.default_value}
     return facts
-    
+
 def check(configuration_facts, parameter_name, current_value):
     parameter_key = parameter_name.lower()
     if current_value and current_value.lower() != configuration_facts[parameter_key]['current_value'].lower():

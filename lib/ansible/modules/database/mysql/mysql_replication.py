@@ -34,7 +34,7 @@ short_description: Manage MySQL replication
 description:
     - Manages MySQL server replication, slave, master status get and change master host.
 version_added: "1.3"
-author: "Balazs Pocze (@banyek)" 
+author: "Balazs Pocze (@banyek)"
 options:
     mode:
         description:
@@ -199,7 +199,7 @@ def changemaster(cursor, chm, chm_params):
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
+        argument_spec = dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),

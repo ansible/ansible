@@ -249,7 +249,7 @@ def request(url, user, passwd, data=None, method=None):
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    response, info = fetch_url(module, url, data=data, method=method, 
+    response, info = fetch_url(module, url, data=data, method=method,
                                headers={'Content-Type':'application/json',
                                         'Authorization':"Basic %s" % auth})
 
@@ -288,7 +288,7 @@ def create(restbase, user, passwd, params):
 
     url = restbase + '/issue/'
 
-    ret = post(url, user, passwd, data) 
+    ret = post(url, user, passwd, data)
 
     return ret
 
@@ -310,16 +310,16 @@ def edit(restbase, user, passwd, params):
         'fields': params['fields']
         }
 
-    url = restbase + '/issue/' + params['issue']    
+    url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, data) 
+    ret = put(url, user, passwd, data)
 
     return ret
 
 
 def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
-    ret = get(url, user, passwd) 
+    ret = get(url, user, passwd)
     return ret
 
 
@@ -417,7 +417,7 @@ def main():
 
     # Dispatch
     try:
-        
+
         # Lookup the corresponding method for this operation. This is
         # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]

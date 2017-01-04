@@ -30,7 +30,7 @@ short_description: Makes an OSX computer to speak.
 description:
    - makes an OS computer speak!  Amuse your friends, annoy your coworkers!
 notes:
-   - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout. 
+   - If you like this module, you may also be interested in the osx_say callback in the plugins/ directory of the source checkout.
 options:
   msg:
     description:
@@ -41,7 +41,7 @@ options:
       What voice to use
     required: false
 requirements: [ say ]
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan (@mpdehaan)"
 '''
@@ -53,7 +53,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-DEFAULT_VOICE='Trinoids'
+DEFAULT_VOICE='Alex'
 
 def say(module, msg, voice):
     module.run_command(["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
@@ -76,7 +76,7 @@ def main():
 
     say(module, msg, voice)
 
-    module.exit_json(msg=msg, changed=False) 
+    module.exit_json(msg=msg, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *

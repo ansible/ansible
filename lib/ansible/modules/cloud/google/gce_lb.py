@@ -86,7 +86,7 @@ options:
     description:
       - the protocol used for the load-balancer packet forwarding, tcp or udp
     required: false
-    default: "tcp" 
+    default: "tcp"
     choices: ['tcp', 'udp']
   region:
     description:
@@ -151,7 +151,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 
 EXAMPLES = '''
 # Simple example of creating a new LB, adding members, and a health check
-- local_action: 
+- local_action:
     module: gce_lb
     name: testlb
     region: us-central1
@@ -225,7 +225,7 @@ def main():
     try:
         gcelb = get_driver_lb(Provider_lb.GCE)(gce_driver=gce)
         gcelb.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 

@@ -285,8 +285,8 @@ def load_mongocnf():
     try:
         config.readfp(open(mongocnf))
         creds = dict(
-          user=config.get('client', 'user'),
-          password=config.get('client', 'pass')
+            user=config.get('client', 'user'),
+            password=config.get('client', 'pass')
         )
     except (ConfigParser.NoOptionError, IOError):
         return False
@@ -296,21 +296,21 @@ def load_mongocnf():
 
 
 def check_if_roles_changed(uinfo, roles, db_name):
-# We must be aware of users which can read the oplog on a replicaset
-# Such users must have access to the local DB, but since this DB does not store users credentials
-# and is not synchronized among replica sets, the user must be stored on the admin db
-# Therefore their structure is the following :
-# {
-#     "_id" : "admin.oplog_reader",
-#     "user" : "oplog_reader",
-#     "db" : "admin",                    # <-- admin DB
-#     "roles" : [
-#         {
-#             "role" : "read",
-#             "db" : "local"             # <-- local DB
-#         }
-#     ]
-# }
+    # We must be aware of users which can read the oplog on a replicaset
+    # Such users must have access to the local DB, but since this DB does not store users credentials
+    # and is not synchronized among replica sets, the user must be stored on the admin db
+    # Therefore their structure is the following :
+    # {
+    #     "_id" : "admin.oplog_reader",
+    #     "user" : "oplog_reader",
+    #     "db" : "admin",                    # <-- admin DB
+    #     "roles" : [
+    #         {
+    #             "role" : "read",
+    #             "db" : "local"             # <-- local DB
+    #         }
+    #     ]
+    # }
 
     def make_sure_roles_are_a_list_of_dict(roles, db_name):
         output = list()

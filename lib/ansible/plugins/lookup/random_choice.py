@@ -28,7 +28,7 @@ from ansible.plugins.lookup import LookupBase
 #        - debug: msg=$item
 #          with_random_choice:
 #             - one
-#             - two 
+#             - two
 #             - three
 
 class LookupModule(LookupBase):

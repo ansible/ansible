@@ -473,21 +473,21 @@ def create_autoscaling_group(connection, module):
         if len(launch_configs) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = AutoScalingGroup(
-                 group_name=group_name,
-                 load_balancers=load_balancers,
-                 availability_zones=availability_zones,
-                 launch_config=launch_configs[0],
-                 min_size=min_size,
-                 max_size=max_size,
-                 placement_group=placement_group,
-                 desired_capacity=desired_capacity,
-                 vpc_zone_identifier=vpc_zone_identifier,
-                 connection=connection,
-                 tags=asg_tags,
-                 health_check_period=health_check_period,
-                 health_check_type=health_check_type,
-                 default_cooldown=default_cooldown,
-                 termination_policies=termination_policies)
+            group_name=group_name,
+            load_balancers=load_balancers,
+            availability_zones=availability_zones,
+            launch_config=launch_configs[0],
+            min_size=min_size,
+            max_size=max_size,
+            placement_group=placement_group,
+            desired_capacity=desired_capacity,
+            vpc_zone_identifier=vpc_zone_identifier,
+            connection=connection,
+            tags=asg_tags,
+            health_check_period=health_check_period,
+            health_check_type=health_check_type,
+            default_cooldown=default_cooldown,
+            termination_policies=termination_policies)
 
         try:
             connection.create_auto_scaling_group(ag)
@@ -644,7 +644,7 @@ def replace(connection, module):
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
-        
+
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
         min_size = as_group.min_size
@@ -674,7 +674,7 @@ def replace(connection, module):
     if not old_instances:
         changed = False
         return(changed, props)
-      
+
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
@@ -827,7 +827,7 @@ def wait_for_term_inst(connection, module, term_instances):
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
             log.debug("Instance {0} has state of {1},{2}".format(i,lifecycle,health ))
-            if  lifecycle == 'Terminating' or health == 'Unhealthy':
+            if lifecycle == 'Terminating' or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 

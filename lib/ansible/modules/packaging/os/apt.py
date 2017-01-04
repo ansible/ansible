@@ -239,14 +239,14 @@ from ansible.module_utils.urls import fetch_url
 
 # APT related constants
 APT_ENV_VARS = dict(
-        DEBIAN_FRONTEND = 'noninteractive',
-        DEBIAN_PRIORITY = 'critical',
-        # We screenscrape apt-get and aptitude output for information so we need
-        # to make sure we use the C locale when running commands
-        LANG = 'C',
-        LC_ALL = 'C',
-        LC_MESSAGES = 'C',
-        LC_CTYPE = 'C',
+    DEBIAN_FRONTEND = 'noninteractive',
+    DEBIAN_PRIORITY = 'critical',
+    # We screenscrape apt-get and aptitude output for information so we need
+    # to make sure we use the C locale when running commands
+    LANG = 'C',
+    LC_ALL = 'C',
+    LC_MESSAGES = 'C',
+    LC_CTYPE = 'C',
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -776,13 +776,13 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))    
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))
             # try again
             cache = apt.Cache()
         else:
             module.fail_json(msg=str(e))
     return cache
- 
+
 
 def main():
     module = AnsibleModule(

@@ -173,9 +173,9 @@ def copy_image(module, ec2):
             ec2.get_waiter('image_available').wait(ImageIds=[image_id])
         if module.params.get('tags'):
             ec2.create_tags(
-                    Resources=[image_id],
-                    Tags=[{'Key' : k, 'Value': v} for k,v in module.params.get('tags').items()]
-                    )
+                Resources=[image_id],
+                Tags=[{'Key' : k, 'Value': v} for k,v in module.params.get('tags').items()]
+                )
 
         module.exit_json(changed=True, image_id=image_id)
     except WaiterError as we:

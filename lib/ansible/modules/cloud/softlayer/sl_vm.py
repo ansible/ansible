@@ -206,7 +206,7 @@ EXAMPLES = '''
       - hostname: instance-3
         domain: anydomain.com
         datacenter: dal09
-        tags: 
+        tags:
           - ansible-module-test
           - ansible-module-test-slaves
         hourly: True
@@ -260,9 +260,9 @@ except ImportError:
 def create_virtual_instance(module):
 
   instances = vsManager.list_instances(
-    hostname = module.params.get('hostname'),
-    domain = module.params.get('domain'),
-    datacenter = module.params.get('datacenter')
+      hostname = module.params.get('hostname'),
+      domain = module.params.get('domain'),
+      datacenter = module.params.get('datacenter')
   )
 
   if instances:
@@ -270,9 +270,9 @@ def create_virtual_instance(module):
 
 
   # Check if OS or Image Template is provided (Can't be both, defaults to OS)
-  if (module.params.get('os_code') != None and module.params.get('os_code') != ''):
+  if (module.params.get('os_code') is not None and module.params.get('os_code') != ''):
     module.params['image_id'] = ''
-  elif (module.params.get('image_id') != None and module.params.get('image_id') != ''):
+  elif (module.params.get('image_id') is not None and module.params.get('image_id') != ''):
     module.params['os_code'] = ''
     module.params['disks'] = [] # Blank out disks since it will use the template
   else:
@@ -283,26 +283,26 @@ def create_virtual_instance(module):
     tags = ','.join(map(str, module.params.get('tags')))
 
   instance = vsManager.create_instance(
-    hostname = module.params.get('hostname'),
-    domain = module.params.get('domain'),
-    cpus = module.params.get('cpus'),
-    memory = module.params.get('memory'),
-    hourly = module.params.get('hourly'),
-    datacenter = module.params.get('datacenter'),
-    os_code = module.params.get('os_code'),
-    image_id = module.params.get('image_id'),
-    local_disk = module.params.get('local_disk'),
-    disks = module.params.get('disks'),
-    ssh_keys = module.params.get('ssh_keys'),
-    nic_speed = module.params.get('nic_speed'),
-    private = module.params.get('private'),
-    public_vlan = module.params.get('public_vlan'),
-    private_vlan = module.params.get('private_vlan'),
-    dedicated = module.params.get('dedicated'),
-    post_uri = module.params.get('post_uri'),
-    tags = tags)
+      hostname = module.params.get('hostname'),
+      domain = module.params.get('domain'),
+      cpus = module.params.get('cpus'),
+      memory = module.params.get('memory'),
+      hourly = module.params.get('hourly'),
+      datacenter = module.params.get('datacenter'),
+      os_code = module.params.get('os_code'),
+      image_id = module.params.get('image_id'),
+      local_disk = module.params.get('local_disk'),
+      disks = module.params.get('disks'),
+      ssh_keys = module.params.get('ssh_keys'),
+      nic_speed = module.params.get('nic_speed'),
+      private = module.params.get('private'),
+      public_vlan = module.params.get('public_vlan'),
+      private_vlan = module.params.get('private_vlan'),
+      dedicated = module.params.get('dedicated'),
+      post_uri = module.params.get('post_uri'),
+      tags = tags)
 
-  if instance != None and instance['id'] > 0:
+  if instance is not None and instance['id'] > 0:
     return True, instance
   else:
     return False, None
@@ -325,7 +325,7 @@ def wait_for_instance(module,id):
 
 def cancel_instance(module):
   canceled = True
-  if module.params.get('instance_id') == None and (module.params.get('tags') or module.params.get('hostname') or module.params.get('domain')):
+  if module.params.get('instance_id') is None and (module.params.get('tags') or module.params.get('hostname') or module.params.get('domain')):
     tags = module.params.get('tags')
     if isinstance(tags, basestring):
       tags = [module.params.get('tags')]
@@ -349,30 +349,30 @@ def cancel_instance(module):
 def main():
 
   module = AnsibleModule(
-    argument_spec=dict(
-      instance_id=dict(),
-      hostname=dict(),
-      domain=dict(),
-      datacenter=dict(choices=DATACENTERS),
-      tags=dict(),
-      hourly=dict(type='bool', default=True),
-      private=dict(type='bool', default=False),
-      dedicated=dict(type='bool', default=False),
-      local_disk=dict(type='bool', default=True),
-      cpus=dict(type='int', choices=CPU_SIZES),
-      memory=dict(type='int', choices=MEMORY_SIZES),
-      disks=dict(type='list', default=[25]),
-      os_code=dict(),
-      image_id=dict(),
-      nic_speed=dict(type='int', choices=NIC_SPEEDS),
-      public_vlan=dict(),
-      private_vlan=dict(),
-      ssh_keys=dict(type='list', default=[]),
-      post_uri=dict(),
-      state=dict(default='present', choices=STATES),
-      wait=dict(type='bool', default=True),
-      wait_time=dict(type='int', default=600)
-    )
+      argument_spec=dict(
+          instance_id=dict(),
+          hostname=dict(),
+          domain=dict(),
+          datacenter=dict(choices=DATACENTERS),
+          tags=dict(),
+          hourly=dict(type='bool', default=True),
+          private=dict(type='bool', default=False),
+          dedicated=dict(type='bool', default=False),
+          local_disk=dict(type='bool', default=True),
+          cpus=dict(type='int', choices=CPU_SIZES),
+          memory=dict(type='int', choices=MEMORY_SIZES),
+          disks=dict(type='list', default=[25]),
+          os_code=dict(),
+          image_id=dict(),
+          nic_speed=dict(type='int', choices=NIC_SPEEDS),
+          public_vlan=dict(),
+          private_vlan=dict(),
+          ssh_keys=dict(type='list', default=[]),
+          post_uri=dict(),
+          state=dict(default='present', choices=STATES),
+          wait=dict(type='bool', default=True),
+          wait_time=dict(type='int', default=600)
+          )
   )
 
   if not HAS_SL:

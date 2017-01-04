@@ -70,13 +70,13 @@ notes:
 
 EXAMPLES = '''
 # Sends a push notification to a device
-- pushbullet: 
+- pushbullet:
     api_key: "ABC123abc123ABC123abc123ABC123ab"
     device: "Chrome"
     title: "You may see this on Google Chrome"
 
 # Sends a link to a device
-- pushbullet: 
+- pushbullet:
     api_key: ABC123abc123ABC123abc123ABC123ab
     device: Chrome
     push_type: link
@@ -84,13 +84,13 @@ EXAMPLES = '''
     body: http://docs.ansible.com/
 
 # Sends a push notification to a channel
-- pushbullet: 
+- pushbullet:
     api_key: ABC123abc123ABC123abc123ABC123ab
     channel: my-awesome-channel
     title: Broadcasting a message to the #my-awesome-channel folks
 
 # Sends a push notification with title and body to a channel
-- pushbullet: 
+- pushbullet:
     api_key: ABC123abc123ABC123abc123ABC123ab
     channel: my-awesome-channel
     title: ALERT! Signup service is down
@@ -137,7 +137,7 @@ def main():
     if not pushbullet_found:
         module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")
 
-    # Init pushbullet 
+    # Init pushbullet
     try:
         pb = PushBullet(api_key)
         target = None

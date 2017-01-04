@@ -123,7 +123,7 @@ from ansible.module_utils.basic import get_platform, get_exception, AnsibleModul
 class SysctlModule(object):
 
     def __init__(self, module):
-        self.module = module 
+        self.module = module
         self.args = self.module.params
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
@@ -176,11 +176,11 @@ class SysctlModule(object):
             self.write_file = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:            
+        if self.args['sysctl_set']:
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
-                self.changed = True 
+                self.changed = True
                 self.set_proc = True
 
         # Do the work
@@ -229,14 +229,14 @@ class SysctlModule(object):
     #   SYSCTL COMMAND MANAGEMENT
     # ==============================================================
 
-    # Use the sysctl command to find the current value 
+    # Use the sysctl command to find the current value
     def get_token_curr_value(self, token):
         if self.platform == 'openbsd':
             # openbsd doesn't support -e, just drop it
             thiscmd = "%s -n %s" % (self.sysctl_cmd, token)
         else:
             thiscmd = "%s -e -n %s" % (self.sysctl_cmd, token)
-        rc,out,err = self.module.run_command(thiscmd)    
+        rc,out,err = self.module.run_command(thiscmd)
         if rc != 0:
             return None
         else:
@@ -279,10 +279,10 @@ class SysctlModule(object):
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
             if self.args['ignoreerrors']:
                 sysctl_args.insert(1, '-e')
-            
+
             rc,out,err = self.module.run_command(sysctl_args)
 
-        if rc != 0:            
+        if rc != 0:
             self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
 
     # ==============================================================
@@ -292,7 +292,7 @@ class SysctlModule(object):
     # Get the token value from the sysctl file
     def read_sysctl_file(self):
 
-        lines = []            
+        lines = []
         if os.path.isfile(self.sysctl_file):
             try:
                 f = open(self.sysctl_file, "r")
@@ -308,7 +308,7 @@ class SysctlModule(object):
 
             # don't split empty lines or comments
             if not line or line.startswith("#"):
-                continue 
+                continue
 
             k, v = line.split('=',1)
             k = k.strip()
@@ -323,7 +323,7 @@ class SysctlModule(object):
             if not line.strip() or line.strip().startswith("#"):
                 self.fixed_lines.append(line)
                 continue
-            tmpline = line.strip()            
+            tmpline = line.strip()
             k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
@@ -332,14 +332,14 @@ class SysctlModule(object):
                 if k == self.args['name']:
                     if self.args['state'] == "present":
                         new_line = "%s=%s\n" % (k, self.args['value'])
-                        self.fixed_lines.append(new_line)                    
+                        self.fixed_lines.append(new_line)
                 else:
                     new_line = "%s=%s\n" % (k, v)
-                    self.fixed_lines.append(new_line)                    
+                    self.fixed_lines.append(new_line)
 
         if self.args['name'] not in checked and self.args['state'] == "present":
             new_line = "%s=%s\n" % (self.args['name'], self.args['value'])
-            self.fixed_lines.append(new_line)                    
+            self.fixed_lines.append(new_line)
 
     # Completely rewrite the sysctl file
     def write_sysctl(self):
@@ -356,7 +356,7 @@ class SysctlModule(object):
         f.close()
 
         # replace the real one
-        self.module.atomic_move(tmp_path, self.sysctl_file) 
+        self.module.atomic_move(tmp_path, self.sysctl_file)
 
 
 # ==============================================================

@@ -39,7 +39,7 @@ options:
       - present
       - absent
     default: present
-author: 
+author:
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace

@@ -156,7 +156,7 @@ options:
   custom:
     version_added: "2.1"
     description:
-      - A hash/dictionary of custom parameters for mixing to the configuration. 
+      - A hash/dictionary of custom parameters for mixing to the configuration.
       - You can't rewrite others module parameters using this
     required: false
     default: {}

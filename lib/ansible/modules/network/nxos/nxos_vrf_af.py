@@ -367,16 +367,16 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            vrf=dict(required=True, type='str'),
-            safi=dict(required=True, type='str', choices=['unicast','multicast']),
-            afi=dict(required=True, type='str', choices=['ipv4','ipv6']),
-            route_target_both_auto_evpn=dict(required=False, type='bool'),
-            m_facts=dict(required=False, default=False, type='bool'),
-            state=dict(choices=['present', 'absent'], default='present',
+        vrf=dict(required=True, type='str'),
+        safi=dict(required=True, type='str', choices=['unicast','multicast']),
+        afi=dict(required=True, type='str', choices=['ipv4','ipv6']),
+        route_target_both_auto_evpn=dict(required=False, type='bool'),
+        m_facts=dict(required=False, default=False, type='bool'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -384,11 +384,11 @@ def main():
     state = module.params['state']
 
     args =  [
-            'vrf',
-            'safi',
-            'afi',
-            'route_target_both_auto_evpn'
-        ]
+        'vrf',
+        'safi',
+        'afi',
+        'route_target_both_auto_evpn'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

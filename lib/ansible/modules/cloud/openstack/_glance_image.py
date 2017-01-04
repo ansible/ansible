@@ -157,7 +157,7 @@ def _get_ksclient(module, kwargs):
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:
         module.fail_json(msg="Error authenticating to the keystone: %s " % e.message)
-    return client 
+    return client
 
 
 def _get_endpoint(module, client, endpoint_type):
@@ -173,7 +173,7 @@ def _get_glance_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint =_get_endpoint(module, _ksclient, kwargs.get('endpoint_type'))
     kwargs = {
-            'token': token,
+        'token': token,
     }
     try:
         client = glanceclient.Client('1', endpoint, **kwargs)
@@ -186,7 +186,7 @@ def _glance_image_present(module, params, client):
     try:
         for image in client.images.list():
             if image.name == params['name']:
-                return image.id 
+                return image.id
         return None
     except Exception as e:
         module.fail_json(msg="Error in fetching image list: %s" % e.message)
@@ -194,12 +194,12 @@ def _glance_image_present(module, params, client):
 
 def _glance_image_create(module, params, client):
     kwargs = {
-                'name':             params.get('name'),
-                'disk_format':      params.get('disk_format'),
-                'container_format': params.get('container_format'),
-                'owner':            params.get('owner'),
-                'is_public':        params.get('is_public'),
-                'copy_from':        params.get('copy_from'),
+        'name':             params.get('name'),
+        'disk_format':      params.get('disk_format'),
+        'container_format': params.get('container_format'),
+        'owner':            params.get('owner'),
+        'is_public':        params.get('is_public'),
+        'copy_from':        params.get('copy_from'),
     }
     try:
         timeout = float(params.get('timeout'))

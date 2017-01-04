@@ -52,7 +52,7 @@ options:
     default: 300
     version_added: "2.1"
 requirements: [ ]
-author: "Darryl Stoflet (@dstoflet)" 
+author: "Darryl Stoflet (@dstoflet)"
 '''
 
 EXAMPLES = '''
