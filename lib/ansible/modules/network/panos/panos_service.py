@@ -180,7 +180,9 @@ def main():
                               source_port)
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
-    except PanXapiError as x:
+    except PanXapiError:
+        import sys
+        x = sys.exc_info()[1]
         module.fail_json(msg=x.message)
 
     module.exit_json(changed=changed, msg="okey dokey")
