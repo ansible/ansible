@@ -1052,16 +1052,16 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
     pipelining = False
 
-.. _ssh_executable:
+.. _ansible_ssh_executable:
 
-ssh_executable
+ansible_ssh_executable
 ==============
 
 .. versionadded:: 2.2
 
 This is the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in ``$PATH``. This config can also be overridden with ``ansible_ssh_executable`` inventory variable::
 
-  ssh_executable="/usr/local/bin/ssh"
+  ansible_ssh_executable="/usr/local/bin/ssh"
 
 This option is usually not required, it might be useful when access to system ssh is restricted, or when using ssh wrappers to connect to remote hosts. 
 
