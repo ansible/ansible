@@ -135,7 +135,7 @@ def _get_config(p, section, key, env_var, default):
         except:
             pass
 
-    return to_text(value, errors='surrogate_or_strict')
+    return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
 
 def load_config_file():
