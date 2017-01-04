@@ -756,7 +756,6 @@ class TaskExecutor:
         '''
         Returns the correct action plugin to handle the requestion task action
         '''
-
         if self._task.action in self._shared_loader_obj.action_loader:
             if self._task.async != 0:
                 raise AnsibleError("async mode is not supported with the %s module" % self._task.action)

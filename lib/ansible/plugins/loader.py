@@ -78,12 +78,10 @@ class PluginLoader:
             MODULE_CACHE[class_name] = {}
         if class_name not in PATH_CACHE:
             PATH_CACHE[class_name] = None
-        if class_name not in PLUGIN_PATH_CACHE:
-            PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
+        self._plugin_path_cache = defaultdict(dict)
 
         self._module_cache      = MODULE_CACHE[class_name]
         self._paths             = PATH_CACHE[class_name]
-        self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._extra_dirs = []
         self._searched_paths = set()
@@ -101,7 +99,7 @@ class PluginLoader:
         base_class = data.get('base_class')
 
         PATH_CACHE[class_name] = data.get('PATH_CACHE')
-        PLUGIN_PATH_CACHE[class_name] = data.get('PLUGIN_PATH_CACHE')
+        self._plugin_path_cache = data.get('plugin_path_cache')
 
         self.__init__(class_name, package, config, subdir, aliases, base_class)
         self._extra_dirs = data.get('_extra_dirs', [])
@@ -126,7 +124,7 @@ class PluginLoader:
             # for now. May need instances of lookup loader shared more. or possibly less global
             # caches
             PATH_CACHE        = PATH_CACHE.get(self.class_name, None),
-            PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE.get(self.class_name, None),
+            plugin_path_cache = self._plugin_path_cache,
         )
 
     def format_paths(self, paths):
@@ -330,6 +328,7 @@ class PluginLoader:
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
+        # print('get name=%s self=%sbeing created with args=%s kwargs=%s' % (name, self, repr(args), repr(kwargs)))
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         if name in self.aliases:
@@ -343,6 +342,7 @@ class PluginLoader:
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
+
         if self.base_class:
             # The import path is hardcoded and should be the right place,
             # so we are not expecting an ImportError.
