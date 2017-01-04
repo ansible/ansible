@@ -171,9 +171,7 @@ def main():
         required_one_of=[['list_all', 'name']],
         supports_check_mode=True,
     )
-    git_path = module.get_bin_path('git')
-    if not git_path:
-        module.fail_json(msg="Could not find git. Please ensure it is installed.")
+    git_path = module.get_bin_path('git', True)
 
     params = module.params
     # We check error message for a pattern, so we need to make sure the messages appear in the form we're expecting.
