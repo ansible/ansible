@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loaders import ActionLoader, lookup_loader
+from ansible.plugins.loaders import ActionLoader, LookupLoader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
@@ -112,7 +112,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
-        mock_shared_loader.lookup_loader = lookup_loader
+        mock_shared_loader.lookup_loader = LookupLoader()
 
         new_stdin = None
         job_vars = dict()

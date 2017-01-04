@@ -121,8 +121,12 @@ class PluginLoader:
             aliases           = self.aliases,
             _extra_dirs       = self._extra_dirs,
             _searched_paths   = self._searched_paths,
-            PATH_CACHE        = PATH_CACHE[self.class_name],
-            PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE[self.class_name],
+            # FIXME: strategy tests call getstate before path_cache has the LookupModule
+            # added to the cache and key look fails. Using default and defaulting to None
+            # for now. May need instances of lookup loader shared more. or possibly less global
+            # caches
+            PATH_CACHE        = PATH_CACHE.get(self.class_name, None),
+            PLUGIN_PATH_CACHE = PLUGIN_PATH_CACHE.get(self.class_name, None),
         )
 
     def format_paths(self, paths):

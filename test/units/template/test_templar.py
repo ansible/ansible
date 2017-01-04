@@ -24,7 +24,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
 from ansible.errors import *
-from ansible.plugins.loaders import filter_loader, lookup_loader, module_loader
+from ansible.plugins.loaders import filter_loader, module_loader
 from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 

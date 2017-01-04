@@ -36,7 +36,7 @@ from jinja2.runtime import StrictUndefined
 from ansible import constants as C
 from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
-from ansible.plugins.loaders import filter_loader, lookup_loader, test_loader
+from ansible.plugins.loaders import filter_loader, LookupLoader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
@@ -151,7 +151,7 @@ class Templar:
         else:
             self._filter_loader = filter_loader
             self._test_loader   = test_loader
-            self._lookup_loader = lookup_loader
+            self._lookup_loader = LookupLoader()
 
         # flags to determine whether certain failures during templating
         # should result in fatal errors being raised

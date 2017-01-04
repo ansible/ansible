@@ -82,13 +82,14 @@ module_loader = loader.PluginLoader(
     'library',
 )
 
-lookup_loader = loader.PluginLoader(
-    'LookupModule',
-    'ansible.plugins.lookup',
-    C.DEFAULT_LOOKUP_PLUGIN_PATH,
-    'lookup_plugins',
-    required_base_class='LookupBase',
-)
+
+class LookupLoader(loader.PluginLoader):
+    class_name = 'LookupModule'
+    package = 'ansible.plugins.lookup'
+    config = C.DEFAULT_LOOKUP_PLUGIN_PATH
+    subdir = 'lookup_plugins'
+    required_base_class = 'LookupBase'
+
 
 vars_loader = loader.PluginLoader(
     'VarsModule',
