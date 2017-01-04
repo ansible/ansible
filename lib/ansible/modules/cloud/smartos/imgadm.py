@@ -244,6 +244,8 @@ def main():
             type=dict(default='imgapi', choices=['imgapi', 'docker', 'dsapi']),
             uuid=dict(default=None)
         ),
+        # This module relies largely on imgadm(1M) to enforce idempotency, which does not
+        # provide a "noop" (or equivalent) mode to do a dry-run.
         supports_check_mode=False,
     )
 
