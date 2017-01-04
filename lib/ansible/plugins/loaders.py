@@ -110,12 +110,12 @@ class TestLoader(loader.PluginLoader):
     subdir = 'test_plugins'
 
 
-fragment_loader = loader.PluginLoader(
-    'ModuleDocFragment',
-    'ansible.utils.module_docs_fragments',
-    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
-    '',
-)
+class FragmentLoader(loader.PluginLoader):
+    class_name = 'ModuleDocFragment'
+    package = 'ansible.utils.module_docs_fragments'
+    config = os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    subdir = ''
+
 
 strategy_loader = loader.PluginLoader(
     'StrategyModule',
