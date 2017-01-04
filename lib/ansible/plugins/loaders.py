@@ -125,9 +125,9 @@ strategy_loader = loader.PluginLoader(
     required_base_class='StrategyBase',
 )
 
-terminal_loader = loader.PluginLoader(
-    'TerminalModule',
-    'ansible.plugins.terminal',
-    'terminal_plugins',
-    'terminal_plugins'
-)
+
+class TerminalLoader(loader.PluginLoader):
+    class_name = 'TerminalModule'
+    package = 'ansible.plugins.terminal'
+    config = 'terminal_plugins'
+    subdir = 'terminal_plugins'

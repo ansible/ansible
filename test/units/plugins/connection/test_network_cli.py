@@ -35,9 +35,9 @@ from ansible.plugins.connection import network_cli
 
 class TestConnectionClass(unittest.TestCase):
 
-    @patch("ansible.plugins.connection.network_cli.terminal_loader")
+    @patch("ansible.plugins.connection.network_cli.TerminalLoader")
     @patch("ansible.plugins.connection.network_cli._Connection._connect")
-    def test_network_cli__connect(self, mocked_super, mocked_terminal_loader):
+    def test_network_cli__connect(self, mocked_super, mocked_terminal_loader_class):
         pc = PlayContext()
         new_stdin = StringIO()
 
@@ -45,6 +45,7 @@ class TestConnectionClass(unittest.TestCase):
         conn.ssh = None
 
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
+        mocked_terminal_loader = mocked_terminal_loader_class.return_value
         mocked_terminal_loader.all.assert_called_with(class_only=True)
 
         mocked_terminal_loader.reset_mock()
