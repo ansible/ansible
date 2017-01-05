@@ -31,7 +31,7 @@ from distutils.version import LooseVersion
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
-    from rpmUtils.miscutils import splitFilename
+    from rpmUtils.miscutils import splitFilename, compareEVR
     transaction_helpers = True
 except:
     transaction_helpers = False
@@ -46,11 +46,16 @@ module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
+     - Installs, upgrades, downgrades, removes and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
+      - Package name, or package specifier with version, like C(name-1.0).
+        A previous version may be specified C(name-0.9) to downgrade a package.
+        When using state=latest, this can be '*' which means run C(yum -y update).
+        You can also pass a url or a local path to a rpm file (using state=present).
+        To operate on several packages this can accept a comma separated list
+        of packages or (as of 2.0) a list of packages.
     required: true
     default: null
     aliases: [ 'pkg' ]
@@ -349,12 +354,12 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
-            
+
         return [ po_to_nevra(p) for p in pkgs ]
 
     else:
         myrepoq = list(repoq)
-                 
+
         r_cmd = ['--disablerepo', ','.join(dis_repos)]
         myrepoq.extend(r_cmd)
 
@@ -393,7 +398,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
             if not pkgs:
                 e,m,u = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
-            updates = my.doPackageLists(pkgnarrow='updates').updates 
+            updates = my.doPackageLists(pkgnarrow='updates').updates
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
@@ -401,7 +406,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         for pkg in pkgs:
             if pkg in updates:
                 retpkgs.append(pkg)
-            
+
         return set([ po_to_nevra(p) for p in retpkgs ])
 
     else:
@@ -414,12 +419,12 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
-        
+
         if rc == 0:
             return set([ p for p in out.split('\n') if p.strip() ])
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
-            
+
     return set()
 
 def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None, dis_repos=None):
@@ -483,9 +488,9 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
     return set()
 
 def transaction_exists(pkglist):
-    """ 
-    checks the package list to see if any packages are 
-    involved in an incomplete transaction 
+    """
+    checks the package list to see if any packages are
+    involved in an incomplete transaction
     """
 
     conflicts = []
@@ -536,6 +541,20 @@ def local_nvra(module, path):
                             header[rpm.RPMTAG_VERSION],
                             header[rpm.RPMTAG_RELEASE],
                             header[rpm.RPMTAG_ARCH])
+
+def local_name(module, path):
+    """return package name of a local rpm passed in"""
+
+    ts = rpm.TransactionSet()
+    ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES)
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        header = ts.hdrFromFdno(fd)
+    finally:
+        os.close(fd)
+
+    return header[rpm.RPMTAG_NAME]
+
 
 def pkg_to_dict(pkgstr):
 
@@ -590,9 +609,56 @@ def list_stuff(module, repoquerybin, conf_file, stuff):
     else:
         return [ pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf) + is_available(module, repoq, stuff, conf_file, qf=qf)) if p.strip() ]
 
+def exec_install(module, items, action, pkgs, res, yum_basecmd, tempdir):
+    cmd = yum_basecmd + [action] + pkgs
+
+    if module.check_mode:
+        # Remove rpms downloaded for EL5 via url
+        try:
+            shutil.rmtree(tempdir)
+        except Exception:
+            e = get_exception()
+            module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
+
+        module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
+
+    changed = True
+
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    rc, out, err = module.run_command(cmd, environ_update=lang_env)
+
+    if (rc == 1):
+        for spec in items:
+            # Fail on invalid urls:
+            if ('://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
+                err = 'Package at %s could not be installed' % spec
+                module.fail_json(changed=False,msg=err,rc=1)
+    if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
+        # avoid failing in the 'Nothing To Do' case
+        # this may happen with an URL spec.
+        # for an already installed group,
+        # we get rc = 0 and 'Nothing to do' in out, not in err.
+        rc = 0
+        err = ''
+        out = 'Nothing to do'
+        changed = False
+
+    res['rc'] = rc
+    res['results'].append(out)
+    res['msg'] += err
+
+    # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
+    # look for each pkg in rpmdb
+    # look for each pkg via obsoletes
+
+    # Record change
+    res['changed'] = changed
+    return res
+
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     pkgs = []
+    downgrade_pkgs = []
     res = {}
     res['results'] = []
     res['msg'] = ''
@@ -602,7 +668,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     for spec in items:
         pkg = None
-
+        downgrade_candidate = False
         # check if pkgspec is installed (if possible for idempotence)
         # localpkg
         if spec.endswith('.rpm') and '://' not in spec:
@@ -682,17 +748,42 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos):
                     found = True
                     res['results'].append('package providing %s is already installed' % (spec))
-                    
+
             if found:
                 continue
 
-            # if not - then pass in the spec as what to install
+            # Downgrade - The yum install command will only install or upgrade to a spec version, it will
+            # not install an older version of an RPM even if specified by the install spec. So we need to
+            # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
+            for package in pkglist:
+                # Get the NEVRA of the requested package using pkglist instead of spec because pkglist
+                #  contains consistently-formatted package names returned by yum, rather than user input
+                #  that is often not parsed correctly by splitFilename().
+                (name, ver, rel, epoch, arch) = splitFilename(package)
+
+                # Check if any version of the requested package is installed
+                inst_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                if inst_pkgs:
+                    (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(inst_pkgs[0])
+                    compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
+                    if compare > 0:
+                        downgrade_candidate = True
+                    else:
+                        downgrade_candidate = False
+                        break
+
+            # If package needs to be installed/upgraded/downgraded, then pass in the spec
             # we could get here if nothing provides it but that's not
             # the error we're catching here
             pkg = spec
 
-        pkgs.append(pkg)
+        if downgrade_candidate:
+            downgrade_pkgs.append(pkg)
+        else:
+            pkgs.append(pkg)
 
+    if downgrade_pkgs:
+        res = exec_install(module, items, 'downgrade', downgrade_pkgs, res, yum_basecmd, tempdir)
     if pkgs:
         cmd = yum_basecmd + ['install'] + pkgs
 
@@ -781,7 +872,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         res['results'].append(out)
         res['msg'] = err
 
-        # compile the results into one batch. If anything is changed 
+        # compile the results into one batch. If anything is changed
         # then mark changed
         # at the end - if we've end up failed then fail out of the rest
         # of the process
