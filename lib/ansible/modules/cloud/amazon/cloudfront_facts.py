@@ -267,43 +267,47 @@ class CloudFrontServiceManager:
     def list_origin_access_identities(self):
         try:
             func = partial(self.client.list_cloud_front_origin_access_identities)
-            return self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')
+            return self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')['Items']
         except Exception as e:
             self.module.fail_json(msg="Error listing cloud front origin access identities = " + str(e), exception=traceback.format_exc(e))
 
-    def list_distributions(self):
+    def list_distributions(self, keyed=True):
         try:
             func = partial(self.client.list_distributions)
-            return self.paginated_response(func, 'DistributionList')
+            distribution_list = self.paginated_response(func, 'DistributionList')['Items']
+            if not keyed:
+                return distribution_list
+            return self.keyed_list_helper(distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions = " + str(e), exception=traceback.format_exc(e))
 
     def list_distributions_by_web_acl(self, web_acl_id):
         try:
             func = partial(self.client.list_distributions, WebAclId=web_acl_id)
-            return self.paginated_response(func, 'DistributionList')
+            return self.paginated_response(func, 'DistributionList')['Items']
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions by web acl id = " + str(e), exception=traceback.format_exc(e))
 
     def list_invalidations(self, distribution_id):
         try:
             func = partial(self.client.list_invalidations, DistributionId=distribution_id)
-            return self.paginated_response(func, 'InvalidationList')
+            return self.paginated_response(func, 'InvalidationList')['Items']
         except Exception as e:
             self.module.fail_json(msg="Error listing invalidations = " + str(e), exception=traceback.format_exc(e))
 
     def list_streaming_distributions(self):
         try:
             func = partial(self.client.list_streaming_distributions)
-            return self.paginated_response(func, 'StreamingDistributionList')
+            streaming_distributions = self.paginated_response(func, 'StreamingDistributionList')['Items']
+            return self.keyed_list_helper(streaming_distributions)
         except Exception as e:
             self.module.fail_json(msg="Error listing streaming distributions = " + str(e), exception=traceback.format_exc(e))
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
             distribution_id = ""
-            distributions = self.list_distributions()
-            for dist in distributions['Items']:
+            distributions = self.list_distributions(False)
+            for dist in distributions:
                 for alias in dist['Aliases']['Items']:
                     if str(alias).lower() == domain_name.lower():
                         distribution_id = str(dist['Id'])
@@ -315,8 +319,8 @@ class CloudFrontServiceManager:
     def get_aliases_from_distribution_id(self, distribution_id):
         aliases = []
         try:
-            distributions = self.list_distributions()
-            for dist in distributions['Items']:
+            distributions = self.list_distributions(False)
+            for dist in distributions:
                 if dist['Id'] == distribution_id:
                     for alias in dist['Aliases']['Items']:
                         aliases.append(alias)
@@ -344,6 +348,16 @@ class CloudFrontServiceManager:
             args['NextToken'] = response.get('NextToken')
             loop = args['NextToken'] is not None
         return results
+
+    def keyed_list_helper(self, list_to_key):
+        keyed_list = dict()
+        for item in list_to_key:
+            aliases = item['Aliases']['Items']
+            distribution_id = item['Id']
+            keyed_list.update({distribution_id: item})
+            for alias in aliases:
+                keyed_list.update({alias: item})
+        return keyed_list
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -424,7 +438,7 @@ def main():
             module.fail_json(msg='Error unable to source a distribution id from domain_name_alias')
 
     # set appropriate cloudfront id
-    if distribution_id:
+    if distribution_id and not list_invalidations:
         result = { 'cloudfront': { distribution_id: {} } }
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
@@ -432,6 +446,12 @@ def main():
         if invalidation_id:
             result['cloudfront'].update( { invalidation_id: {} } )
         facts = result['cloudfront']
+    elif list_invalidations:
+        result = { 'cloudfront': { 'invalidations': {} } }
+        facts = result['cloudfront']['invalidations']
+        aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
+        for alias in aliases:
+            result['cloudfront']['invalidations'].update( { alias: {} } )
     elif origin_access_identity_id:
         result = { 'cloudfront': { origin_access_identity_id: {} } }
         facts = result['cloudfront'][origin_access_identity_id]
@@ -473,6 +493,11 @@ def main():
         facts[distribution_id] = streaming_distribution_config_details
         for alias in aliases:
             facts[alias] = streaming_distribution_config_details
+    if list_invalidations:
+        invalidations = service_mgr.list_invalidations(distribution_id)
+        facts[distribution_id] = invalidations
+        for alias in aliases:
+            facts[alias] = invalidations
 
     # get list based on options
     if all_lists or list_origin_access_identities:
@@ -483,8 +508,6 @@ def main():
         facts['streaming_distributions'] = service_mgr.list_streaming_distributions()
     if list_distributions_by_web_acl_id:
         facts['distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl(web_acl_id)
-    if list_invalidations:
-        facts['invalidations'] = service_mgr.list_invalidations(distribution_id)
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
