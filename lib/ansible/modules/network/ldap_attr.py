@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Peter Sagerson <psagers@getcloak.com>
+# (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
 #
 # This file is part of Ansible
