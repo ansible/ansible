@@ -102,10 +102,29 @@
       shell: >
         yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem
 
+    - name: Generate client key
+      command: >
+        openssl req -new -nodes -out /root/ca/client.ansible.http.tests-req.pem -keyout /root/ca/private/client.ansible.http.tests-key.pem -config /etc/ssl/openssl.cnf
+          -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=client.ansible.http.tests"
+
+    - name: Generate client.ansible.http.tests cert
+      shell: >
+        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/client.ansible.http.tests-cert.pem -infiles /root/ca/client.ansible.http.tests-req.pem
+
     - name: Copy cacert.pem into nginx doc root for easy retrieval
       copy:
-        src: /root/ca/cacert.pem
-        dest: /usr/share/nginx/html/cacert.pem
+        src: "/root/ca/cacert.pem"
+        dest: "/usr/share/nginx/html/cacert.pem"
+        remote_src: true
+
+    - copy:
+        src: /root/ca/client.ansible.http.tests-cert.pem
+        dest: /usr/share/nginx/html/client.pem
+        remote_src: true
+
+    - copy:
+        src: /root/ca/private/client.ansible.http.tests-key.pem
+        dest: /usr/share/nginx/html/client.key
         remote_src: true
 
     - name: Install gunicorn and httpbin

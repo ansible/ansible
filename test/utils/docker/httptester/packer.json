@@ -37,7 +37,8 @@
     "post-processors": [
         {
             "type": "docker-tag",
-            "repository": "ansible/httptester"
+            "repository": "ansible/ansible",
+            "tag": "httptester"
         }
     ]
 }
