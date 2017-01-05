@@ -28,6 +28,7 @@
 
 from xml.dom.minidom import parseString as parseXML
 import re
+import time
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'committer',
@@ -107,6 +108,18 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    retries:
+        version_added: "2.3"
+        description:
+            - Number of retries if another instance of zypper is running. Defaults to no retries.
+        required: false
+        default: 0
+    retry_interval:
+        version_added: "2.3"
+        description:
+            - Time in seconds to wait between retries.
+        required: false
+        default: 10
 
 # informational: requirements for nodes
 requirements:
@@ -168,7 +181,14 @@ EXAMPLES = '''
 # Install specific version (possible comparisons: <, >, <=, >=, =)
 - zypper:
     name: 'docker>=1.10'
-    state: installed
+    state: present
+
+# Retry the zypper command to work around potential race with other running zypper instance
+- zypper:
+    name: mosh
+    state: present
+    retries: 5
+    retry_interval: 20
 '''
 
 
@@ -229,7 +249,11 @@ def get_installed_state(m, packages):
     return parse_zypper_xml(m, cmd, fail_not_found=False)[0]
 
 
-def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
+def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None, retries_left=None):
+    """run zypper and parse its ouput
+
+    reruns zypper if this is needed either by a zypper upgrade or according to retries
+    """
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
     dom = parseXML(stdout)
@@ -240,6 +264,18 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
             m.fail_json(msg=errmsg, rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
         else:
             return {}, rc, stdout, stderr
+    elif rc == 7:
+        if retries_left is None:
+            retries_left = m.params['retries']
+        if retries_left > 0:
+            time.sleep(m.params['retry_interval'])
+            return parse_zypper_xml(m,
+                                    cmd,
+                                    fail_not_found=fail_not_found,
+                                    retries_left=retries_left-1)
+        else:
+            return {}, rc, stdout, stderr
+
     elif rc in [0, 106, 103]:
         # zypper exit codes
         # 0: success
@@ -430,6 +466,8 @@ def main():
             force = dict(required=False, default='no', type='bool'),
             update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
             oldpackage = dict(required=False, default='no', type='bool'),
+            retries=dict(required=False, default=0, type='int'),
+            retry_interval=dict(required=False, default=10, type='int'),
         ),
         supports_check_mode = True
     )
