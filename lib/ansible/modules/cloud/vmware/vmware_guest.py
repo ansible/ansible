@@ -75,7 +75,7 @@ options:
         version_added: "2.3"
    folder:
         description:
-            - Destination folder path for the new VM
+            - Destination folder, absolute path to find an existing guest or create the new guest
         required: False
    hardware:
         description:
@@ -526,10 +526,6 @@ class PyVmomiHelper(object):
         self.params = module.params
         self.si = None
         self.content = connect_to_api(self.module)
-        self.datacenter = None
-        self.folders = None
-        self.foldermap = {'fvim_by_path': {}, 'path_by_fvim': {}, 'path_by_vvim': {}, 'paths': {},
-                          'uuids': {}}
         self.configspec = None
         self.change_detected = False
         self.customspec = None
@@ -539,94 +535,7 @@ class PyVmomiHelper(object):
     def should_deploy_from_template(self):
         return self.params.get('template') is not None
 
-    def _build_folder_tree(self, folder):
-
-        tree = {'virtualmachines': [],
-                'subfolders': {},
-                'vimobj': folder,
-                'name': folder.name}
-
-        children = None
-        if hasattr(folder, 'childEntity'):
-            children = folder.childEntity
-
-        if children:
-            for child in children:
-                if child == folder or child in tree:
-                    continue
-                if isinstance(child, vim.Folder):
-                    ctree = self._build_folder_tree(child)
-                    tree['subfolders'][child] = dict.copy(ctree)
-                elif isinstance(child, vim.VirtualMachine):
-                    tree['virtualmachines'].append(child)
-        else:
-            if isinstance(folder, vim.VirtualMachine):
-                return folder
-        return tree
-
-    def _build_folder_map(self, folder, inpath='/'):
-
-        """ Build a searchable index for vms+uuids+folders """
-        if isinstance(folder, tuple):
-            folder = folder[1]
-
-        thispath = os.path.join(inpath, folder['name'])
-
-        if thispath not in self.foldermap['paths']:
-            self.foldermap['paths'][thispath] = []
-
-        # store object by path and store path by object
-        self.foldermap['fvim_by_path'][thispath] = folder['vimobj']
-        self.foldermap['path_by_fvim'][folder['vimobj']] = thispath
-
-        for item in folder.items():
-            k = item[0]
-            v = item[1]
-
-            if k == 'name':
-                pass
-            elif k == 'subfolders':
-                for x in v.items():
-                    self._build_folder_map(x, inpath=thispath)
-            elif k == 'virtualmachines':
-                for x in v:
-                    # Apparently x.config can be None on corrupted VMs
-                    if x.config is None: continue
-                    self.foldermap['uuids'][x.config.uuid] = x.config.name
-                    self.foldermap['paths'][thispath].append(x.config.uuid)
-
-                    if x not in self.foldermap['path_by_vvim']:
-                        self.foldermap['path_by_vvim'][x] = thispath
-
-    def getfolders(self):
-        if not self.datacenter:
-            self.get_datacenter()
-        self.folders = self._build_folder_tree(self.datacenter.vmFolder)
-        self._build_folder_map(self.folders)
-
-    @staticmethod
-    def compile_folder_path_for_object(vobj):
-        """ make a /vm/foo/bar/baz like folder path for an object """
-
-        paths = []
-        if isinstance(vobj, vim.Folder):
-            paths.append(vobj.name)
-
-        thisobj = vobj
-        while hasattr(thisobj, 'parent'):
-            thisobj = thisobj.parent
-            if isinstance(thisobj, vim.Folder):
-                paths.append(thisobj.name)
-        paths.reverse()
-        if paths[0] == 'Datacenters':
-            paths.remove('Datacenters')
-        return '/' + '/'.join(paths)
-
-    def get_datacenter(self):
-        self.datacenter = get_obj(self.content, [vim.Datacenter],
-                                  self.params['datacenter'])
-
-    def getvm(self, name=None, uuid=None, folder=None, name_match=None, cache=False):
+    def getvm(self, name=None, uuid=None, folder=None):
 
         # https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.SearchIndex.html
         # self.si.content.searchIndex.FindByInventoryPath('DC1/vm/test_folder')
@@ -641,16 +550,7 @@ class PyVmomiHelper(object):
             if self.params['folder'].startswith('/'):
                 searchpath = '%(datacenter)s%(folder)s' % self.params
             else:
-                # need to look for matching absolute path
-                if not self.folders:
-                    self.getfolders()
-                paths = self.foldermap['paths'].keys()
-                paths = [x for x in paths if x.endswith(self.params['folder'])]
-                if len(paths) > 1:
-                    self.module.fail_json(
-                        msg='%(folder)s matches more than one folder. Please use the absolute path starting with /vm/' % self.params)
-                elif paths:
-                    searchpath = paths[0]
+                self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
 
             if searchpath:
                 # get all objects for this path ...
@@ -664,48 +564,7 @@ class PyVmomiHelper(object):
                         if cObj.name == name:
                             vm = cObj
                             break
-
-        if not vm:
-            # FIXME - this is unused if folder has a default value
-            # narrow down by folder
-            if folder:
-                if not self.folders:
-                    self.getfolders()
-
-                # compare the folder path of each VM against the search path
-                vmList = get_all_objs(self.content, [vim.VirtualMachine])
-                for item in vmList.items():
-                    vobj = item[0]
-                    if not isinstance(vobj.parent, vim.Folder):
-                        continue
-                    if self.compile_folder_path_for_object(vobj) == searchpath:
-                        # Match by name
-                        if vobj.config.name == name:
-                            self.current_vm_obj = vobj
-                            return vobj
-
-            if name_match:
-                if name_match == 'first':
-                    vm = get_obj(self.content, [vim.VirtualMachine], name)
-                elif name_match == 'last':
-                    matches = []
-                    for thisvm in get_all_objs(self.content, [vim.VirtualMachine]):
-                        if thisvm.config.name == name:
-                            matches.append(thisvm)
-                    if matches:
-                        vm = matches[-1]
-            else:
-                matches = []
-                for thisvm in get_all_objs(self.content, [vim.VirtualMachine]):
-                    if thisvm.config.name == name:
-                        matches.append(thisvm)
-                    if len(matches) > 1:
-                        self.module.fail_json(
-                            msg='More than 1 VM exists by the name %s. Please specify a uuid, or a folder, '
-                                'or a datacenter or name_match' % name)
-                    if matches:
-                        vm = matches[0]
-        if cache and vm:
+        if vm:
             self.current_vm_obj = vm
 
         return vm
@@ -1309,22 +1168,15 @@ class PyVmomiHelper(object):
         if not datacenter:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
 
-        # find matching folders
-        if self.params['folder'].startswith('/'):
-            folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
-        else:
-            folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
+        destfolder = None
+        if not self.params['folder'].startswith('/'):
+            self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
 
-        # throw error if more than one match or no matches
-        if len(folders) == 0:
+        fObj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
+        if fObj is None:
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
-        elif len(folders) > 1:
-            self.module.fail_json(
-                msg='Too many folders matched "%s", please give the full path starting with /vm/' % self.params[
-                    'folder'])
+        destfolder = fObj
 
-        # grab the folder vim object
-        destfolder = folders[0][1]
         hostsystem = self.select_host()
 
         if self.should_deploy_from_template():
@@ -1672,9 +1524,7 @@ def main():
     # Check if the VM exists before continuing
     vm = pyv.getvm(name=module.params['name'],
                    folder=module.params['folder'],
-                   uuid=module.params['uuid'],
-                   name_match=module.params['name_match'],
-                   cache=True)
+                   uuid=module.params['uuid'])
 
     # VM already exists
     if vm:
