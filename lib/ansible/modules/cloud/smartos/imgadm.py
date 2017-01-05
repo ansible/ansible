@@ -48,10 +48,10 @@ options:
         - URI for the image source.
     state:
         required: true
-        choices: [ present, absent, deleted, imported, updated, vacumed ]
+        choices: [ present, absent, deleted, imported, updated, vacuumed ]
         description:
         - State the object operated on should be in. C(imported) is an alias for
-          for C(present) and C(deleted) for C(absent). When set to C(vacumed)
+          for C(present) and C(deleted) for C(absent). When set to C(vacuumed)
           and C(uuid) to C(*), it will remove all unused images.
     type:
         required: false
@@ -63,6 +63,8 @@ options:
         required: false
         description:
         - Image UUID. Can either be a full UUID or C(*) for all images.
+requirements:
+    - python >= 2.6
 '''
 
 EXAMPLES = '''
@@ -124,7 +126,7 @@ def update_images(module):
     cmd = IMGADM + ' update'
 
     if uuid != '*':
-        cmd += ' {}'.format(uuid)
+        cmd = '{0} {1}'.format(cmd, uuid)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -136,7 +138,7 @@ def update_images(module):
 def manage_sources(module, present):
     force = module.params['force']
     source = module.params['source']
-    type = module.params['type']
+    imgtype = module.params['type']
 
     cmd = IMGADM + ' sources'
 
@@ -144,7 +146,7 @@ def manage_sources(module, present):
         cmd += ' -f'
 
     if present:
-        cmd += ' -a {0} -t {1}'.format(source, type)
+        cmd = '{0} -a {1} -t {2}'.format(cmd, source, imgtype)
         (rc, stdout, stderr) = module.run_command(cmd)
 
         # Check the various responses.
@@ -152,11 +154,11 @@ def manage_sources(module, present):
         # above as it results in a non-zero status.
         changed = True
 
-        regex = 'Already have "{0}" image source "{1}", no change'.format(type, source)
+        regex = 'Already have "{0}" image source "{1}", no change'.format(imgtype, source)
         if re.match(regex, stdout):
             changed = False
 
-        regex = 'Added "%s" image source "%s"' % (type, source)
+        regex = 'Added "%s" image source "%s"' % (imgtype, source)
         if re.match(regex, stdout):
             changed = True
 
@@ -184,7 +186,7 @@ def manage_images(module, present):
     pool = module.params['pool']
     state = module.params['state']
 
-    if state == 'vacumed':
+    if state == 'vacuumed':
         # Unconditionally pass '--force', otherwise we're prompted with 'y/N'
         cmd = '{0} vacuum -f'.format(IMGADM)
 
@@ -240,7 +242,7 @@ def main():
             force=dict(default=None, type='bool'),
             pool=dict(default='zones'),
             source=dict(default=None),
-            state=dict(default=None, required=True, choices=['present', 'absent', 'deleted', 'imported', 'updated', 'vacumed']),
+            state=dict(default=None, required=True, choices=['present', 'absent', 'deleted', 'imported', 'updated', 'vacuumed']),
             type=dict(default='imgapi', choices=['imgapi', 'docker', 'dsapi']),
             uuid=dict(default=None)
         ),
@@ -281,7 +283,7 @@ def main():
             (rc, stdout, stderr, changed) = update_images(module)
         else:
             # Make sure operate on a single image for the following actions
-            if (uuid == '*') and (state != 'vacumed'):
+            if (uuid == '*') and (state != 'vacuumed'):
                 module.fail_json(msg='Can only specify uuid as "*" when updating image(s)')
 
             (rc, stdout, stderr, changed) = manage_images(module, present)
