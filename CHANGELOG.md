@@ -65,6 +65,8 @@ Ansible Changes By Release
 - packet:
   * packet_device
   * packet_sshkey
+- smartos:
+  * imgadm
 - windows:
   * win_say
 
