@@ -396,6 +396,22 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
         https_request = AbstractHTTPHandler.do_request_
 
 
+class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+    def __init__(self, client_cert, client_cert_key, *args, **kwargs):
+        urllib_request.HTTPSHandler.__init__(self, *args, **kwargs)
+        self.client_cert = client_cert
+        self.client_cert_key = client_cert_key
+        self.ctx = kwargs.get('context')
+
+    def https_open(self, req):
+        return self.do_open(self.getConnection, req)
+
+    def getConnection(self, *args, **kwargs):
+        return httplib.HTTPSConnection(*args, key_file=self.client_cert_key,
+                                       cert_file=self.client_cert,
+                                       context=self.ctx, **kwargs)
+
+
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
@@ -778,7 +794,8 @@ def maybe_add_ssl_handler(url, validate_certs):
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=False, follow_redirects='urllib2'):
+             force_basic_auth=False, follow_redirects='urllib2',
+             client_cert=None, client_cert_key=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -857,7 +874,16 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.options |= ssl.OP_NO_SSLv3
         context.verify_mode = ssl.CERT_NONE
         context.check_hostname = False
-        handlers.append(urllib_request.HTTPSHandler(context=context))
+        if client_cert:
+            handlers.append(HTTPSClientAuthHandler(client_cert,
+                                                   client_cert_key,
+                                                   context=context))
+        else:
+            handlers.append(urllib_request.HTTPSHandler(context=context))
+    else:
+        if client_cert:
+            handlers.append(HTTPSClientAuthHandler(client_cert,
+                                                   client_cert_key))
 
     # pre-2.6 versions of python cannot use the custom https
     # handler, since the socket class is lacking create_connection.
@@ -934,7 +960,8 @@ def url_argument_spec():
         url_username=dict(required=False),
         url_password=dict(required=False),
         force_basic_auth=dict(required=False, type='bool', default='no'),
-
+        client_cert=dict(required=False, type='path', default=None),
+        client_cert_key=dict(required=False, type='path', default=None),
     )
 
 
@@ -983,6 +1010,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     follow_redirects = module.params.get('follow_redirects', 'urllib2')
 
+    client_cert = module.params.get('client_cert')
+    client_cert_key = module.params.get('client_cert_key')
+
     r = None
     info = dict(url=url)
     try:
@@ -990,7 +1020,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
-                     follow_redirects=follow_redirects)
+                     follow_redirects=follow_redirects, client_cert=client_cert,
+                     client_cert_key=client_cert_key)
         info.update(r.info())
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
     except NoSSLError:

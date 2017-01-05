@@ -293,3 +293,22 @@
     return_content: true
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Test client cert auth, no certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:NONE"
+  when: has_httptester
+
+- name: Test client cert auth, with certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: /Users/matt/tmp/client.key.crt
+    client_cert_key: /Users/matt/tmp/client.key
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
