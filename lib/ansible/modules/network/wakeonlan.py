@@ -61,7 +61,7 @@ EXAMPLES = '''
 - wakeonlan:
     mac: '00:00:5E:00:53:66'
     broadcast: 192.0.2.23
-  delegate_to: loclahost
+  delegate_to: localhost
 
 - wakeonlan:
     mac: 00:00:5E:00:53:66
