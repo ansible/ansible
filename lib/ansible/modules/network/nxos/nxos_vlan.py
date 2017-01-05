@@ -628,7 +628,7 @@ def main():
     end_state_vlans_list = existing_vlans_list
 
     if commands:
-        if existing.get('mapped_vni'):
+        if existing.get('mapped_vni') and state != 'absent':
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                 existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
