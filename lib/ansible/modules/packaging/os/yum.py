@@ -22,12 +22,21 @@
 #
 
 import os
-import yum
-import rpm
-import platform
-import tempfile
+import re
 import shutil
-from distutils.version import LooseVersion
+import tempfile
+
+try:
+    import rpm
+    HAS_RPM_PYTHON = True
+except ImportError:
+    HAS_RPM_PYTHON = False
+
+try:
+    import yum
+    HAS_YUM_PYTHON = True
+except ImportError:
+    HAS_YUM_PYTHON = False
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -35,6 +44,11 @@ try:
     transaction_helpers = True
 except:
     transaction_helpers = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
 
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
@@ -234,7 +248,8 @@ def yum_base(conf_file=None, installroot='/'):
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
         # in old yum version (like in CentOS 6.6)
-        my.conf.installroot=installroot
+        my.preconf.root = installroot
+        my.conf.installroot = installroot
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if os.geteuid() != 0:
@@ -318,6 +333,8 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             rpmbin = module.get_bin_path('rpm', required=True)
 
         cmd = [rpmbin, '-q', '--qf', qf, pkgspec]
+        if installroot != '/':
+            cmd.extend(['--root', installroot])
         # rpm localizes messages and we're screen scraping so make sure we use
         # the C locale
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
@@ -330,6 +347,8 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
         pkgs = [p for p in out.replace('(none)', '0').split('\n') if p.strip()]
         if not pkgs and not is_pkg:
             cmd = [rpmbin, '-q', '--qf', qf, '--whatprovides', pkgspec]
+            if installroot != '/':
+                cmd.extend(['--root', installroot])
             rc2, out2, err2 = module.run_command(cmd, environ_update=lang_env)
         else:
             rc2, out2, err2 = (0, '', '')
@@ -593,6 +612,8 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
     # is_installed goes through rpm instead of repoquery so it needs a slightly different format
     is_installed_qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|installed\n"
     repoq = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+    if installroot != '/':
+        repoq.extend(['--installroot', installroot])
     if conf_file and os.path.exists(conf_file):
         repoq += ['-c', conf_file]
 
@@ -1095,6 +1116,15 @@ def main():
         supports_check_mode = True
     )
 
+    error_msgs = []
+    if not HAS_RPM_PYTHON:
+        error_msgs.append('python2 bindings for rpm are needed for this module')
+    if not HAS_YUM_PYTHON:
+        error_msgs.append('python2 yum module is needed for this  module')
+
+    if error_msgs:
+        module.fail_json(msg='. '.join(error_msgs))
+
     params = module.params
 
     if params['list']:
@@ -1122,6 +1152,8 @@ def main():
                 repoquerybin = ensure_yum_utils(module)
                 if repoquerybin:
                     repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+                    if params['installroot'] != '/':
+                        repoquery.extend(['--installroot', params['installroot']])
 
         pkg = [ p.strip() for p in params['name']]
         exclude = params['exclude']
@@ -1138,8 +1170,6 @@ def main():
 
     module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()
