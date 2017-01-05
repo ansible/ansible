@@ -368,12 +368,6 @@ class CloudFrontServiceManager:
             for alias in aliases:
                 keyed_list.update({alias: item})
         return keyed_list
-def to_dict(items, key, value):
-    ''' Transforms a list of items to a Key/Value dictionary '''
-    if items:
-        return dict(zip([i[key] for i in items], [i[value] for i in items]))
-    else:
-        return dict()
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -468,7 +462,6 @@ def main():
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
             result['cloudfront']['invalidations'].update( { alias: {} } )
-        facts = result['cloudfront']
     elif origin_access_identity_id:
         result = { 'cloudfront': { origin_access_identity_id: {} } }
         facts = result['cloudfront'][origin_access_identity_id]
