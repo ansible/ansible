@@ -494,14 +494,14 @@ def main():
             facts[alias].update(streaming_distribution_details)
     if streaming_distribution_config:
         streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
-        facts[distribution_id] = streaming_distribution_config_details
+        facts[distribution_id].update(streaming_distribution_config_details)
         for alias in aliases:
-            facts[alias] = streaming_distribution_config_details
+            facts[alias].update(streaming_distribution_config_details)
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
-        facts[distribution_id] = invalidations
+        facts[distribution_id].update(invalidations)
         for alias in aliases:
-            facts[alias] = invalidations
+            facts[alias].update(invalidations)
 
     # get list based on options
     if all_lists or list_origin_access_identities:
