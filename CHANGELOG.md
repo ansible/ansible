@@ -31,6 +31,7 @@ Ansible Changes By Release
 - archive
 - aws
   * ec2_lc_facts
+  * aws_kms
 - f5
   * bigip_gtm_facts
   * bigip_hostname
