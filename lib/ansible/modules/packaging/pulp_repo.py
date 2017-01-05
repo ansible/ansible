@@ -217,7 +217,7 @@ class pulp_server(object):
         repo_config = self.get_repo_config_by_id(repo_id)
 
         for distributor in repo_config['distributors']:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if not distributor['config'][key] == value:
                     return False
 
@@ -227,7 +227,7 @@ class pulp_server(object):
         repo_config = self.get_repo_config_by_id(repo_id)
 
         for importer in repo_config['importers']:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if value is not None:
                     if key not in importer['config'].keys():
                         return False
@@ -411,7 +411,7 @@ class pulp_server(object):
             data = dict()
             data['distributor_config'] = dict()
 
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 data['distributor_config'][key] = value
 
             response, info = fetch_url(
@@ -432,7 +432,7 @@ class pulp_server(object):
         data = dict()
         importer_config = dict()
 
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             if value is not None:
                 importer_config[key] = value
 
