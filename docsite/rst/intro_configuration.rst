@@ -1165,6 +1165,16 @@ The default behavior is no::
 
     libvirt_lxc_noseclabel = True
 
+.. _show_custom_stats:
+
+show_custom_stats
+=================
+
+.. versionadded:: 2.3
+
+If enabled, this setting will display custom stats (set via set_stats plugin) when using the default callback.
+
+
 Galaxy Settings
 ---------------
 
