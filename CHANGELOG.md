@@ -32,6 +32,12 @@ Ansible Changes By Release
 - aws
   * ec2_lc_facts
   * aws_kms
+- cloudstack
+  * cs_host
+  * cs_nic
+  * cs_region
+  * cs_role
+  * cs_vpc
 - f5
   * bigip_gtm_facts
   * bigip_hostname
