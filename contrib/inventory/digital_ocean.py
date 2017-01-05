@@ -47,7 +47,7 @@ The following groups are generated from --list:
  - size_NAME
  - status_STATUS
 
-When run against a specific host, this script returns the following variables:
+For each host, the following variables are registered:
  - do_backup_ids
  - do_created_at
  - do_disk
@@ -407,18 +407,16 @@ or environment variables (DO_API_TOKEN)\n''')
                         self.inventory[tag] = { 'hosts': [ ], 'vars': {} }
                     self.inventory[tag]['hosts'].append(dest)
 
+            # hostvars
+            info = self.do_namespace(droplet)
+            self.inventory['_meta']['hostvars'][dest] = info
+
 
     def load_droplet_variables_for_host(self):
         '''Generate a JSON response to a --host call'''
         host = int(self.args.host)
-
         droplet = self.manager.show_droplet(host)
-
-        # Put all the information in a 'do_' namespace
-        info = {}
-        for k, v in droplet.items():
-            info['do_'+k] = v
-
+        info = self.do_namespace(droplet)
         return {'droplet': info}
 
 
@@ -476,6 +474,13 @@ or environment variables (DO_API_TOKEN)\n''')
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
         return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+
+    def do_namespace(self, data):
+        ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''
+        info = {}
+        for k, v in data.items():
+            info['do_'+k] = v
+        return info
 
 
 
