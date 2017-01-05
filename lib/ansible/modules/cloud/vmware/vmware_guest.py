@@ -158,6 +158,11 @@ options:
           - A key, value pair of snapshot operation types and their additional required parameters.
         required: False
         version_added: "2.3"
+   windows_sysprep:
+        description:
+          - Possibility to sysprep for join Active Directory Domain and change administrator password for Windows Host
+            customize must be set to True
+        required: False
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -240,6 +245,44 @@ Example from Ansible playbook
            gateway: '192.168.1.1'
            ip: "192.168.1.100"
            mac: "aa:bb:dd:aa:00:14"
+#
+# Create a Windows VM from a template and sysprep to join AD
+#
+    - name: create the VM and sysprep to join AD
+    vmware_guest:
+    validate_certs: False
+    hostname: 192.0.2.44
+    username: administrator@vsphere.local
+    password: vmware
+    name: test_vm
+    state: poweredon
+    datacenter: datacenter1
+    template: template_win2008
+    wait_for_ip_address: yes
+    customize: True
+    windows_sysprep:
+      fullName: "windows specific full name"
+      orgName: "steph"
+      computerName: "test_vm"
+      #productId: "12134" # not necessary
+      timeZone: 0 # integer https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx
+      password: "win_pwd" # change local administrator password not necessary
+      autoLogon: False
+      autoLogonCount: 0
+      joinDomain : "mydomain.net"
+      domainAdmin: "adroot"
+      domainAdminPassword: "win_password"
+      passwordPlainText: True
+      guiRunOnce: ['cmd.exe /C echo first > c:\command.txt','cmd.exe /C echo second >> c:\command.txt'] # optional, autoLogon must be set to True and autoLogonCount > 0
+    dns_servers: ['192.168.202.5']
+    domain: "mydomain.net"
+    guest_id: windows7Server64Guest # be carefull it must be the right one until the sysprep can fail
+    networks:
+        '192.168.202.0/24':
+        network: 'vcenter_dvs'
+        gateway: '192.168.202.1'
+        ip: "192.168.202.250" #use vmxnet3
+  register: deploy
 #
 # Gather facts only
 #
@@ -941,13 +984,51 @@ class PyVmomiHelper(object):
             globalip.dnsServerList = self.params['dns_servers']
             globalip.dnsSuffixList = str(self.params['domain'])
 
-            # Hostname settings
-            ident = vim.vm.customization.LinuxPrep()
-            ident.domain = str(self.params['domain'])
-            ident.hostName = vim.vm.customization.FixedName()
-            ident.hostName.name = self.params['name']
-
             self.customspec = vim.vm.customization.Specification()
+            # Hostname settings if not windows
+            if not self.params['windows_sysprep']:
+                ident = vim.vm.customization.LinuxPrep()
+                ident.domain = str(self.params['domain'])
+                ident.hostName = vim.vm.customization.FixedName()
+                ident.hostName.name = self.params['name']
+            # Windows Sysprep
+            if self.params['windows_sysprep']:
+                user_data = vim.vm.customization.UserData()
+                user_data.fullName = self.params['windows_sysprep']['fullName']
+                user_data.orgName = self.params['windows_sysprep']['orgName']
+                user_data.computerName = vim.vm.customization.FixedName()
+                user_data.computerName.name = self.params['windows_sysprep']['computerName']
+                if hasattr(self.params['windows_sysprep'],'productId'):
+                  user_data.productId = self.params['windows_sysprep']['productId']
+                gui_unattended = vim.vm.customization.GuiUnattended()
+                gui_unattended.timeZone = self.params['windows_sysprep']['timeZone']
+                gui_unattended.autoLogon = self.params['windows_sysprep']['autoLogon']
+                gui_unattended.autoLogonCount = self.params['windows_sysprep']['autoLogonCount']
+                try:
+                    gui_unattended.password = vim.vm.customization.Password()
+                    gui_unattended.password.value = self.params['windows_sysprep']['password']
+                    gui_unattended.password.plainText = self.params['windows_sysprep']['passwordPlainText']
+                except:
+                    pass
+                identification = vim.vm.customization.Identification()
+                identification.joinDomain = self.params['windows_sysprep']['joinDomain']
+                identification.domainAdmin = self.params['windows_sysprep']['domainAdmin']
+                identification.domainAdminPassword = vim.vm.customization.Password()
+                identification.domainAdminPassword.value = self.params['windows_sysprep']['domainAdminPassword']
+                identification.domainAdminPassword.plainText = self.params['windows_sysprep']['passwordPlainText']
+                ident = vim.vm.customization.Sysprep()
+                ident.userData = user_data
+                ident.guiUnattended = gui_unattended
+                ident.identification = identification
+                if self.params['windows_sysprep']['autoLogon'] == True and self.params['windows_sysprep']['autoLogonCount'] > 0 and 'guiRunOnce' in self.params['windows_sysprep']:
+                    run_once = vim.vm.customization.GuiRunOnce()
+                    run_once.commandList = self.params['windows_sysprep']['guiRunOnce']
+                    ident.guiRunOnce = run_once
+                self.customspec.options = vim.vm.customization.WinOptions()
+                self.customspec.options.changeSID = True
+                
+
+            
             self.customspec.nicSettingMap = adaptermaps
             self.customspec.globalIPSettings = globalip
             self.customspec.identity = ident
@@ -1225,7 +1306,7 @@ class PyVmomiHelper(object):
                                              location=relospec)
                 if self.params['customize'] is True:
                     clonespec.customization = self.customspec
-
+                    
                 clonespec.config = self.configspec
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
             else:
@@ -1644,7 +1725,8 @@ def main():
             dns_servers=dict(required=False, type='list', default=None),
             domain=dict(required=False, type='str', default=None),
             networks=dict(required=False, type='dict', default={}),
-            resource_pool=dict(required=False, type='str', default=None)
+            resource_pool=dict(required=False, type='str', default=None),
+            windows_sysprep=dict(required=False, type='dict', default={})
         ),
         supports_check_mode=True,
         mutually_exclusive=[
