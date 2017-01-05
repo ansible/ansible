@@ -31,7 +31,6 @@ import itertools
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
 from ansible.module_utils.netcli import Cli, Command
-from ansible.module_utils.netcfg import Config
 from ansible.module_utils._text import to_native
 
 NET_TRANSPORT_ARGS = dict(
@@ -77,6 +76,25 @@ class NetworkError(Exception):
     def __init__(self, msg, **kwargs):
         super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self, commands, **kwargs):
+        lines = to_list(commands)
+        return self.connection.configure(lines, **kwargs)
+
+    def load_config(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.connection.load_config(commands, **kwargs)
+
+    def get_config(self, **kwargs):
+        return self.connection.get_config(**kwargs)
+
+    def save_config(self):
+        return self.connection.save_config()
 
 
 class NetworkModule(AnsibleModule):
@@ -174,8 +192,3 @@ def register_transport(transport, default=False):
 def add_argument(key, value):
     NET_CONNECTION_ARGS[key] = value
 
-def get_module(*args, **kwargs):
-    # This is a temporary factory function to avoid break all modules
-    # until the modules are updated.  This function *will* be removed
-    # before 2.2 final
-    return NetworkModule(*args, **kwargs)
