@@ -137,6 +137,9 @@ EXAMPLES = '''
 - debug:
     msg: '{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}'
 
+- debug:
+    msg: '{{ ansible_facts['cloudfront']['www.my-website.com'] }}'
+
 # Get all information about an invalidation for a distribution.
 - cloudfront_facts:
     invalidation: true
