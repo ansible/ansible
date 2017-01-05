@@ -108,21 +108,21 @@ options:
     public_builds:
         description:
             - If true, builds can be viewed by non-project-members.
-            - Will only work if "builds_enabled" is set to True.
+            - Will only work when C(builds_enabled=True).
         choices: ["true", "false"]
         default: false
         version_added: "2.3"
     only_allow_merge_if_build_succeeds:
         description:
             - Set whether merge requests can only be merged with successful builds.
-            - Will only work if "builds_enabled" is set to True.
+            - Will only work when C(builds_enabled=True).
         choices: ["true", "false"]
         default: false
         version_added: "2.3"
     container_registry_enabled:
         description:
             - Enable container registry for this project.
-            - Will only work if "builds_enabled" is set to True.
+            - Will only work when C(builds_enabled=True).
         choices: ["true", "false"]
         default: false
         version_added: "2.3"
