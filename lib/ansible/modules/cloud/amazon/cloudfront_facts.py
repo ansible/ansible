@@ -496,7 +496,6 @@ def main():
         streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
         facts[distribution_id] = streaming_distribution_config_details
         for alias in aliases:
-<<<<<<< HEAD
             facts[alias] = streaming_distribution_config_details
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
