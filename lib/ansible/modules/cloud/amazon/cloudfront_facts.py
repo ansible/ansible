@@ -99,7 +99,7 @@ options:
             - Get a list of cloudfront distributions.
         required: false
         default: false
-    list_distributions_by_web_acl:
+    list_distributions_by_web_acl_id:
         description:
             - Get a list of distributions using web acl id as a filter. Requires web_acl_id to be set.
         required: false
@@ -281,10 +281,11 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions = " + str(e), exception=traceback.format_exc(e))
 
-    def list_distributions_by_web_acl(self, web_acl_id):
+    def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
-            func = partial(self.client.list_distributions, WebAclId=web_acl_id)
-            return self.paginated_response(func, 'DistributionList')['Items']
+            func = partial(self.client.list_distributions_by_web_acl_id, WebAclId=web_acl_id)
+            distributions = self.paginated_response(func, 'DistributionList')['Items']
+            return self.keyed_list_helper(distributions)
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions by web acl id = " + str(e), exception=traceback.format_exc(e))
 
@@ -376,7 +377,7 @@ def main():
         streaming_distribution_config=dict(required=False, default=False, type='bool'),
         list_origin_access_identities=dict(required=False, default=False, type='bool'),
         list_distributions=dict(required=False, default=False, type='bool'),
-        list_distributions_by_web_acl=dict(required=False, default=False, type='bool'),
+        list_distributions_by_web_acl_id=dict(required=False, default=False, type='bool'),
         list_invalidations=dict(required=False, default=False, type='bool'),
         list_streaming_distributions=dict(required=False, default=False, type='bool')
     ))
@@ -507,7 +508,7 @@ def main():
     if all_lists or list_streaming_distributions:
         facts['streaming_distributions'] = service_mgr.list_streaming_distributions()
     if list_distributions_by_web_acl_id:
-        facts['distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl(web_acl_id)
+        facts['distributions_by_web_acl_id'] = service_mgr.list_distributions_by_web_acl_id(web_acl_id)
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
