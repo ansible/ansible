@@ -247,7 +247,9 @@ class CallbackModule(CallbackBase):
         hosts = sorted(stats.processed.keys())
         for h in hosts:
             t = stats.summarize(h)
-
+            h_ip = stats.inventory.get_host(h)
+            if h_ip.vars.get('ansible_host'):
+                h = '%s - %s' % (h, h_ip.vars['ansible_host'])
             self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t),
                 colorize(u'ok', t['ok'], C.COLOR_OK),

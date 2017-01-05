@@ -71,7 +71,7 @@ class TaskQueueManager:
         self._variable_manager = variable_manager
         self._loader           = loader
         self._options          = options
-        self._stats            = AggregateStats()
+        self._stats            = AggregateStats(inventory)
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
