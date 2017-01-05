@@ -318,8 +318,8 @@ def main():
         login_result={}
     )
 
-    if module.params['state'] == 'present' and module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not module.params['email']:
-        module.fail_json(msg="'email' is required when loging into DockerHub")
+    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
+        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:
