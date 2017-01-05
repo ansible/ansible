@@ -268,6 +268,22 @@ class CallbackModule(CallbackBase):
 
         self._display.display("", screen_only=True)
 
+        # print custom stats
+        if C.SHOW_CUSTOM_STATS and stats.custom:
+            self._display.banner("CUSTOM STATS: ")
+            # per host
+            #TODO: come up with 'pretty format'
+            for k in sorted(stats.custom.keys()):
+                if k == '_run':
+                    continue
+                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n','')))
+
+            # print per run custom stats
+            if '_run' in stats.custom:
+                self._display.display("", screen_only=True)
+                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n',''))
+            self._display.display("", screen_only=True)
+
     def v2_playbook_on_start(self, playbook):
         if self._display.verbosity > 1:
             from os.path import basename
