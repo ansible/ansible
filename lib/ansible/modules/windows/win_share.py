@@ -84,7 +84,12 @@ options:
       - Specify user list that should get no access, regardless of implied access on share, separated by comma.
     required: no
     default: none
-author: Hans-Joachim Kliemeck (@h0nIg)
+  caching_mode:
+    description:
+      - Set the CachingMode for this share Options: BranchCache, Documents, Manual, None, Programs, Unkown
+    requred: no
+    default: Manual
+author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
 '''
 
 EXAMPLES = '''
