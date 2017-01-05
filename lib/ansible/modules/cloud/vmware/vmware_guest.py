@@ -420,12 +420,20 @@ class PyVmomiDeviceHelper(object):
 
     def create_nic(self, device_type, device_label, device_infos):
         nic = vim.vm.device.VirtualDeviceSpec()
-        if device_type == 'vmxnet3':
+        if device_type == 'pcnet32':
+            nic.device = vim.vm.device.VirtualPCNet32()
+        if device_type == 'vmxnet2':
+            nic.device = vim.vm.device.VirtualVmxnet2()
+        elif device_type == 'vmxnet3':
             nic.device = vim.vm.device.VirtualVmxnet3()
         elif device_type == 'e1000':
             nic.device = vim.vm.device.VirtualE1000()
+        elif device_type == 'e1000e':
+            nic.device = vim.vm.device.VirtualE1000e()
+        elif device_type == 'sriov':
+            nic.device = vim.vm.device.VirtualSriovEthernetCard()
         else:
-            self.module.fail_json(msg="invalid device_type '%s' for network %s" %
+            self.module.fail_json(msg="Invalid device_type '%s' for network %s" %
                                       (device_type, device_infos['network']))
 
         nic.device.wakeOnLanEnabled = True
@@ -828,7 +836,12 @@ class PyVmomiHelper(object):
 
         device_list = []
         for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualVmxnet3) or isinstance(device, vim.vm.device.VirtualE1000):
+            if isinstance(device, vim.vm.device.VirtualPCNet32) or \
+               isinstance(device, vim.vm.device.VirtualVmxnet2) or \
+               isinstance(device, vim.vm.device.VirtualVmxnet3) or \
+               isinstance(device, vim.vm.device.VirtualE1000) or \
+               isinstance(device, vim.vm.device.VirtualE1000e) or \
+               isinstance(device, vim.vm.device.VirtualSriovEthernetCard):
                 device_list.append(device)
 
         return device_list
