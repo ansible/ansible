@@ -421,8 +421,6 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
-
 The ``description``, and ``notes`` fields
 support formatting with some special macros.
 
@@ -642,7 +640,6 @@ The following  checklist items are important guidelines for people who want to c
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
-    * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * The `required` setting is only required when true, otherwise it is assumed to be false.
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
