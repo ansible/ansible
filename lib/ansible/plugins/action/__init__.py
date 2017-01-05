@@ -145,7 +145,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 raise AnsibleError("The module %s was not found in configured module paths. "
                                    "Additionally, core modules are missing. If this is a checkout, "
-                                   "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
+                                   "run 'git pull --rebase' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
