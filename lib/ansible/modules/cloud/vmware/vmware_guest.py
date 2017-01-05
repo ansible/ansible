@@ -1324,7 +1324,7 @@ class PyVmomiHelper(object):
         while task.info.state not in ['success', 'error']:
             time.sleep(1)
 
-    def wait_for_vm_ip(self, vm, poll=100, sleep=5):
+    def wait_for_vm_ip(self, vm, poll=200, sleep=5):
         ips = None
         facts = {}
         thispoll = 0
