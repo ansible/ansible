@@ -323,6 +323,7 @@ def main():
     msg = ''
     looked = 0
     for npath in params['paths']:
+        npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
 
             ''' ignore followlinks for python version < 2.6 '''
