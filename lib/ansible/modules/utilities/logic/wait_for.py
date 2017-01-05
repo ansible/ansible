@@ -85,13 +85,18 @@ options:
       - port number to poll
     required: false
     default: null
+  protocol:
+    description:
+      - protocol tcp or udp
+    required: false
+    default: tcp
   state:
     description:
       - either C(present), C(started), or C(stopped), C(absent), or C(drained)
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections
       - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
     choices: [ "present", "started", "stopped", "absent", "drained" ]
-    required: False
+    required: false
     default: "started"
   path:
     version_added: "1.4"
@@ -359,7 +364,7 @@ def _convert_host_to_hex(host):
             ips.append((family, hexip_hf))
     return ips
 
-def _create_connection(host, port, connect_timeout):
+def _create_connection(host, port, connect_timeout, protocol):
     """
     Connect to a 2-tuple (host, port) and return
     the socket object.
@@ -369,13 +374,15 @@ def _create_connection(host, port, connect_timeout):
     Returns:
         Socket object
     """
-    if sys.version_info < (2, 6):
-        (family, _) = (_convert_host_to_ip(host))[0]
-        connect_socket = socket.socket(family, socket.SOCK_STREAM)
-        connect_socket.settimeout(connect_timeout)
-        connect_socket.connect( (host, port) )
-    else:
-        connect_socket = socket.create_connection( (host, port), connect_timeout)
+    if protocol == 'tcp':
+        protocol = socket.SOCK_STREAM
+    if protocol == 'udp':
+        protocol = socket.SOCK_DGRAM
+
+    (family, _) = (_convert_host_to_ip(host))[0]
+    connect_socket = socket.socket(family, protocol)
+    connect_socket.settimeout(connect_timeout)
+    connect_socket.connect( (host, port) )
     return connect_socket
 
 def _timedelta_total_seconds(timedelta):
@@ -392,6 +399,7 @@ def main():
             connect_timeout=dict(default=5, type='int'),
             delay=dict(default=0, type='int'),
             port=dict(default=None, type='int'),
+            protocol=dict(default='tcp', choices=['tcp', 'udp']),
             path=dict(default=None, type='path'),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
@@ -407,6 +415,7 @@ def main():
     connect_timeout = params['connect_timeout']
     delay = params['delay']
     port = params['port']
+    protocol = params['protocol']
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
@@ -423,7 +432,6 @@ def main():
         module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
     if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
-
 
     start = datetime.datetime.now()
 
@@ -445,7 +453,7 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection(host, port, connect_timeout)
+                    s = _create_connection(host, port, connect_timeout, protocol)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except:
@@ -491,7 +499,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.now()))
                 try:
-                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
+                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout), protocol)
                 except:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
@@ -536,9 +544,9 @@ def main():
             elapsed = datetime.datetime.now() - start
             if port:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s:%s protocol: %s" % (search_regex, host, port, protocol), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for %s:%s protocol: %s" % (host, port, protocol), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
                     module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
