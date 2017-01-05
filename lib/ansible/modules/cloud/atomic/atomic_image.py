@@ -49,7 +49,7 @@ options:
         default: latest
     started:
         description:
-          - Start or Stop the continer
+          - Start or Stop the container
         required: False
         choices: ["yes", "no"]
         default: yes
