@@ -476,15 +476,15 @@ def main():
 
     # get list based on options
     if all_lists or list_origin_access_identities:
-        facts['list_origin_access_identities'] = service_mgr.list_origin_access_identities()
+        facts['origin_access_identities'] = service_mgr.list_origin_access_identities()
     if all_lists or list_distributions:
-        facts['list_distributions'] = service_mgr.list_distributions()
+        facts['distributions'] = service_mgr.list_distributions()
     if all_lists or list_streaming_distributions:
-        facts['list_streaming_distributions'] = service_mgr.list_streaming_distributions()
+        facts['streaming_distributions'] = service_mgr.list_streaming_distributions()
     if list_distributions_by_web_acl_id:
-        facts['list_distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl(web_acl_id)
+        facts['distributions_by_web_acl'] = service_mgr.list_distributions_by_web_acl(web_acl_id)
     if list_invalidations:
-        facts['list_invalidations'] = service_mgr.list_invalidations(distribution_id)
+        facts['invalidations'] = service_mgr.list_invalidations(distribution_id)
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
