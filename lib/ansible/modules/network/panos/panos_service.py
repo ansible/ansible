@@ -78,11 +78,8 @@ EXAMPLES = '''
       port: "22"
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -91,6 +88,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import get_exception
 
 try:
     import pan.xapi
@@ -147,30 +145,19 @@ def main():
         module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
     password = module.params["password"]
-    if not password:
-        module.fail_json(msg="password is required")
     username = module.params['username']
+    service_name = module.params['service_name']
+    protocol = module.params['protocol']
+    port = module.params['port']
+    source_port = module.params['source_port']
+    commit = module.params['commit']
 
     xapi = pan.xapi.PanXapi(
         hostname=ip_address,
         api_username=username,
         api_password=password
     )
-
-    service_name = module.params['service_name']
-    if not service_name:
-        module.fail_json(msg='service_name is required')
-    protocol = module.params['protocol']
-    if not protocol:
-        module.fail_json(msg="protocol is required")
-    port = module.params['port']
-    if not port:
-        module.fail_json(msg="port is required")
-    source_port = module.params['source_port']
-    commit = module.params['commit']
 
     try:
         changed = add_service(xapi, module,
@@ -181,9 +168,8 @@ def main():
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
     except PanXapiError:
-        import sys
-        x = sys.exc_info()[1]
-        module.fail_json(msg=x.message)
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
 
     module.exit_json(changed=changed, msg="okey dokey")
 
