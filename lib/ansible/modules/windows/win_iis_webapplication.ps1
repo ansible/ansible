@@ -124,9 +124,11 @@ try {
 
 # Result
 $application = Get-WebApplication -Site $site -Name $name
-$result.application = New-Object psobject @{
-  PhysicalPath = $application.PhysicalPath
-  ApplicationPool = $application.applicationPool
+if ($application){
+    $result.application = New-Object psobject @{
+      PhysicalPath = $application.PhysicalPath
+      ApplicationPool = $application.applicationPool
+    }
 }
 
 Exit-Json $result
