@@ -20,18 +20,21 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import errno
+import json
 import sys
 import time
+from io import BytesIO, StringIO
 
+from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
-from ansible.compat.six import StringIO, BytesIO
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
 
-from ansible.module_utils import basic
-from ansible.module_utils.basic import AnsibleModule
+from units.mock.procenv import swap_stdin_and_argv
 
-class OpenStringIO(StringIO):
-    """StringIO with dummy close() method
+import ansible.module_utils.basic
+
+class OpenBytesIO(BytesIO):
+    """BytesIO with dummy close() method
 
     So that you can inspect the content after close() was called.
     """
@@ -39,11 +42,9 @@ class OpenStringIO(StringIO):
     def close(self):
         pass
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
+
 class TestAnsibleModuleRunCommand(unittest.TestCase):
-
     def setUp(self):
-
         self.cmd_out = {
             # os.read() is returning 'bytes', not strings
             sentinel.stdout: BytesIO(),
@@ -60,8 +61,19 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
             if path == '/inaccessible':
                 raise OSError(errno.EPERM, "Permission denied: '/inaccessible'")
 
-        basic.MODULE_COMPLEX_ARGS = '{}'
-        self.module = AnsibleModule(argument_spec=dict())
+        def mock_os_abspath(path):
+            if path.startswith('/'):
+                return path
+            else:
+                return self.os.getcwd.return_value + '/' +  path
+
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap.__enter__()
+
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
+        self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
         self.os = patch('ansible.module_utils.basic.os').start()
@@ -72,11 +84,12 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.os.path.isdir.return_value = True
         self.os.chdir.side_effect = mock_os_chdir
         self.os.read.side_effect = mock_os_read
+        self.os.path.abspath.side_effect = mock_os_abspath
 
         self.subprocess = patch('ansible.module_utils.basic.subprocess').start()
         self.cmd = Mock()
         self.cmd.returncode = 0
-        self.cmd.stdin = OpenStringIO()
+        self.cmd.stdin = OpenBytesIO()
         self.cmd.stdout.fileno.return_value = sentinel.stdout
         self.cmd.stderr.fileno.return_value = sentinel.stderr
         self.subprocess.Popen.return_value = self.cmd
@@ -85,6 +98,11 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.select.select.side_effect = mock_select
 
         self.addCleanup(patch.stopall)
+
+
+    def tearDown(self):
+        # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
+        self.stdin_swap.__exit__(None, None, None)
 
     def test_list_as_args(self):
         self.module.run_command(['/bin/ls', 'a', ' b', 'c '])
@@ -111,15 +129,17 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.assertEqual(args, ('ls a " b" "c "', ))
         self.assertEqual(kwargs['shell'], True)
 
-    def test_path_prefix(self):
-        self.module.run_command('foo', path_prefix='/opt/bin')
-        self.assertEqual('/opt/bin', self.os.environ['PATH'].split(':')[0])
-
     def test_cwd(self):
         self.os.getcwd.return_value = '/old'
         self.module.run_command('/bin/ls', cwd='/new')
         self.assertEqual(self.os.chdir.mock_calls,
                          [call('/new'), call('/old'), ])
+
+    def test_cwd_relative_path(self):
+        self.os.getcwd.return_value = '/old'
+        self.module.run_command('/bin/ls', cwd='sub-dir')
+        self.assertEqual(self.os.chdir.mock_calls,
+                         [call('/old/sub-dir'), call('/old'), ])
 
     def test_cwd_not_a_dir(self):
         self.os.getcwd.return_value = '/old'
@@ -161,19 +181,30 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
 
     def test_text_stdin(self):
         (rc, stdout, stderr) = self.module.run_command('/bin/foo', data='hello world')
-        self.assertEqual(self.cmd.stdin.getvalue(), 'hello world\n')
+        self.assertEqual(self.cmd.stdin.getvalue(), b'hello world\n')
 
     def test_ascii_stdout(self):
         self.cmd_out[sentinel.stdout] = BytesIO(b'hello')
         (rc, stdout, stderr) = self.module.run_command('/bin/cat hello.txt')
         self.assertEqual(rc, 0)
-        self.assertEqual(stdout, 'hello')
+        # module_utils function.  On py3 it returns text and py2 it returns
+        # bytes because it's returning native strings
+        if PY3:
+            self.assertEqual(stdout, u'hello')
+        else:
+            self.assertEqual(stdout, b'hello')
 
     def test_utf8_output(self):
         self.cmd_out[sentinel.stdout] = BytesIO(u'Žarn§'.encode('utf-8'))
         self.cmd_out[sentinel.stderr] = BytesIO(u'لرئيسية'.encode('utf-8'))
         (rc, stdout, stderr) = self.module.run_command('/bin/something_ugly')
         self.assertEqual(rc, 0)
-        self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
-        self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
+        # module_utils function.  On py3 it returns text and py2 it returns
+        # bytes because it's returning native strings
+        if PY3:
+            self.assertEqual(stdout, u'Žarn§')
+            self.assertEqual(stderr, u'لرئيسية')
+        else:
+            self.assertEqual(stdout.decode('utf-8'), u'Žarn§')
+            self.assertEqual(stderr.decode('utf-8'), u'لرئيسية')
 

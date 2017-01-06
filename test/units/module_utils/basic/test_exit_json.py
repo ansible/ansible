@@ -25,27 +25,30 @@ import json
 import sys
 
 from ansible.compat.tests import unittest
-from ansible.compat.six import StringIO
+from units.mock.procenv import swap_stdin_and_argv, swap_stdout
 
 from ansible.module_utils import basic
-from ansible.module_utils.basic import heuristic_log_sanitize
-from ansible.module_utils.basic import return_values, remove_values
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
+
+empty_invocation = {u'module_args': {}}
+
 class TestAnsibleModuleExitJson(unittest.TestCase):
     def setUp(self):
-        self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
-        basic.MODULE_COMPLEX_ARGS = '{}'
+        args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
+        self.stdin_swap_ctx = swap_stdin_and_argv(stdin_data=args)
+        self.stdin_swap_ctx.__enter__()
 
-        self.old_stdout = sys.stdout
-        self.fake_stream = StringIO()
-        sys.stdout = self.fake_stream
+        # since we can't use context managers and "with" without overriding run(), call them directly
+        self.stdout_swap_ctx = swap_stdout()
+        self.fake_stream = self.stdout_swap_ctx.__enter__()
 
+        basic._ANSIBLE_ARGS = None
         self.module = basic.AnsibleModule(argument_spec=dict())
 
     def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.COMPLEX_ARGS
-        sys.stdout = self.old_stdout
+        # since we can't use context managers and "with" without overriding run(), call them directly to clean up
+        self.stdin_swap_ctx.__exit__(None, None, None)
+        self.stdout_swap_ctx.__exit__(None, None, None)
 
     def test_exit_json_no_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -56,7 +59,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=False))
+        self.assertEquals(return_val, dict(changed=False, invocation=empty_invocation))
 
     def test_exit_json_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -67,7 +70,7 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", changed=False))
+        self.assertEquals(return_val, dict(msg="message", changed=False, invocation=empty_invocation))
 
     def test_fail_json_exits(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -78,15 +81,14 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         else:
             self.assertEquals(ctx.exception.code, 1)
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(msg="message", failed=True))
+        self.assertEquals(return_val, dict(msg="message", failed=True, invocation=empty_invocation))
 
     def test_exit_json_proper_changed(self):
         with self.assertRaises(SystemExit) as ctx:
             self.module.exit_json(changed=True, msg='success')
         return_val = json.loads(self.fake_stream.getvalue())
-        self.assertEquals(return_val, dict(changed=True, msg='success'))
+        self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset = (
@@ -94,59 +96,63 @@ class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             (dict(username='person', password='password12345'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             (dict(username='person', password='$ecret k3y'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
-                    not_secret='following the leader', changed=False, msg='here')
+                    not_secret='following the leader', changed=False, msg='here',
+                    invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
             )
 
-    def setUp(self):
-        self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
-        self.old_stdout = sys.stdout
-
-    def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.COMPLEX_ARGS
-        sys.stdout = self.old_stdout
-
     def test_exit_json_removes_values(self):
+        self.maxDiff = None
         for args, return_val, expected in self.dataset:
-            sys.stdout = StringIO()
-            basic.MODULE_COMPLEX_ARGS = json.dumps(args)
-            module = basic.AnsibleModule(
-                argument_spec = dict(
-                    username=dict(),
-                    password=dict(no_log=True),
-                    token=dict(no_log=True),
-                    ),
-                )
-            with self.assertRaises(SystemExit) as ctx:
-                self.assertEquals(module.exit_json(**return_val), expected)
-            self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
+            params = dict(ANSIBLE_MODULE_ARGS=args)
+            params = json.dumps(params)
+
+            with swap_stdin_and_argv(stdin_data=params):
+                with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
+                    module = basic.AnsibleModule(
+                        argument_spec = dict(
+                            username=dict(),
+                            password=dict(no_log=True),
+                            token=dict(no_log=True),
+                            ),
+                        )
+                    with self.assertRaises(SystemExit) as ctx:
+                        self.assertEquals(module.exit_json(**return_val), expected)
+                    self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
 
     def test_fail_json_removes_values(self):
+        self.maxDiff = None
         for args, return_val, expected in self.dataset:
             expected = copy.deepcopy(expected)
             del expected['changed']
             expected['failed'] = True
-            sys.stdout = StringIO()
-            basic.MODULE_COMPLEX_ARGS = json.dumps(args)
-            module = basic.AnsibleModule(
-                argument_spec = dict(
-                    username=dict(),
-                    password=dict(no_log=True),
-                    token=dict(no_log=True),
-                    ),
-                )
-            with self.assertRaises(SystemExit) as ctx:
-                self.assertEquals(module.fail_json(**return_val), expected)
-            self.assertEquals(json.loads(sys.stdout.getvalue()), expected)
+            params = dict(ANSIBLE_MODULE_ARGS=args)
+            params = json.dumps(params)
+            with swap_stdin_and_argv(stdin_data=params):
+                with swap_stdout():
+                    basic._ANSIBLE_ARGS = None
+                    module = basic.AnsibleModule(
+                        argument_spec = dict(
+                            username=dict(),
+                            password=dict(no_log=True),
+                            token=dict(no_log=True),
+                            ),
+                        )
+                    with self.assertRaises(SystemExit) as ctx:
+                        self.assertEquals(module.fail_json(**return_val), expected)
+                    self.assertEquals(json.loads(sys.stdout.getvalue()), expected)

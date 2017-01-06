@@ -25,6 +25,7 @@ The file lookup is the most basic lookup type.
 
 Contents can be read off the filesystem as follows::
 
+    ---
     - hosts: all
       vars:
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
@@ -48,7 +49,7 @@ a file at a given filepath.
 (Docs about crypted save modes are pending)
  
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
-up random passwords per host (what simplifies password management in 'host_vars' variables).
+up random passwords per host (which simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
@@ -66,7 +67,9 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
-.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
+.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string.
+
+Caution: Since this runs on the ansible host as the user running the playbook, and "become" does not apply, the target file must be readable by the playbook user, or, if it does not exist, the playbook user must have sufficient privileges to create it. (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).
 
 Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
 
@@ -134,9 +137,10 @@ appears exactly once in column 0 (the first column, 0-indexed) of the table. All
 Field        Default        Description
 ----------   ------------   -----------------------------------------------------------------------------------------
 file         ansible.csv    Name of the file to load
-delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
 col          1              The column to output, indexed by 0
-default      empty string   return value if the key is not in the csv file
+delimiter    TAB            Delimiter used by CSV file. As a special case, tab can be specified as either TAB or \t.
+default      empty string   Default return value if the key is not in the csv file
+encoding     utf-8          Encoding (character set) of the used CSV file (added in version 2.1)
 ==========   ============   =========================================================================================
 
 .. note:: The default delimiter is TAB, *not* comma.
@@ -235,10 +239,226 @@ You can specify regions or tables to fetch secrets from::
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
+      
+      
+If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
+
+    ---
+    - name: test
+      hosts: localhost
+      vars:
+        context:
+          app: my_app
+          environment: production
+      tasks:
+
+      - name: "Test credstash lookup plugin -- get the password with a context passed as a variable"
+        debug: msg="{{ lookup('credstash', 'some-password', context=context) }}"
+
+      - name: "Test credstash lookup plugin -- get the password with a context defined here"
+        debug: msg="{{ lookup('credstash', 'some-password', context=dict(app='my_app', environment='production')) }}"
 
 If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
     debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
+
+.. _dns_lookup:
+
+The DNS Lookup (dig)
+````````````````````
+.. versionadded:: 1.9.0
+
+.. warning:: This lookup depends on the `dnspython <http://www.dnspython.org/>`_
+             library.
+
+The ``dig`` lookup runs queries against DNS servers to retrieve DNS records for
+a specific name (*FQDN* - fully qualified domain name). It is possible to lookup any DNS record in this manner.
+
+There is a couple of different syntaxes that can be used to specify what record
+should be retrieved, and for which name. It is also possible to explicitly
+specify the DNS server(s) to use for lookups.
+
+In its simplest form, the ``dig`` lookup plugin can be used to retrieve an IPv4
+address (DNS ``A`` record) associated with *FQDN*:
+
+.. note:: If you need to obtain the ``AAAA`` record (IPv6 address), you must
+          specify the record type explicitly. Syntax for specifying the record
+          type is described below.
+
+.. note:: The trailing dot in most of the examples listed is purely optional,
+          but is specified for completeness/correctness sake.
+
+::
+
+      - debug: msg="The IPv4 address for example.com. is {{ lookup('dig', 'example.com.')}}"
+
+In addition to (default) ``A`` record, it is also possible to specify a different
+record type that should be queried. This can be done by either passing-in
+additional parameter of format ``qtype=TYPE`` to the ``dig`` lookup, or by
+appending ``/TYPE`` to the *FQDN* being queried. For example::
+
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org.', 'qtype=TXT') }}"
+  - debug: msg="The TXT record for example.org. is {{ lookup('dig', 'example.org./TXT') }}"
+
+If multiple values are associated with the requested record, the results will be
+returned as a comma-separated list. In such cases you may want to pass option
+``wantlist=True`` to the plugin, which will result in the record values being
+returned as a list over which you can iterate later on::
+
+  - debug: msg="One of the MX records for gmail.com. is {{ item }}"
+    with_items: "{{ lookup('dig', 'gmail.com./MX', wantlist=True) }}"
+
+In case of reverse DNS lookups (``PTR`` records), you can also use a convenience
+syntax of format ``IP_ADDRESS/PTR``. The following three lines would produce the
+same output::
+
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '192.0.2.5/PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa./PTR') }}"
+  - debug: msg="Reverse DNS for 192.0.2.5 is {{ lookup('dig', '5.2.0.192.in-addr.arpa.', 'qtype=PTR') }}"
+
+By default, the lookup will rely on system-wide configured DNS servers for
+performing the query. It is also possible to explicitly specify DNS servers to
+query using the ``@DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N`` notation. This
+needs to be passed-in as an additional parameter to the lookup. For example::
+
+  - debug: msg="Querying 198.51.100.23 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@198.51.100.23') }}"
+
+In some cases the DNS records may hold a more complex data structure, or it may
+be useful to obtain the results in a form of a dictionary for future
+processing. The ``dig`` lookup supports parsing of a number of such records,
+with the result being returned as a dictionary. This way it is possible to
+easily access such nested data. This return format can be requested by
+passing-in the ``flat=0`` option to the lookup. For example::
+
+  - debug: msg="XMPP service for gmail.com. is available at {{ item.target }} on port {{ item.port }}"
+    with_items: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
+
+Take note that due to the way Ansible lookups work, you must pass the
+``wantlist=True`` argument to the lookup, otherwise Ansible will report errors.
+
+Currently the dictionary results are supported for the following records:
+
+.. note:: *ALL* is not a record per-se, merely the listed fields are available
+          for any record results you retrieve in the form of a dictionary.
+
+==========   =============================================================================
+Record       Fields
+----------   -----------------------------------------------------------------------------
+*ALL*        owner, ttl, type
+A            address
+AAAA         address
+CNAME        target
+DNAME        target
+DLV          algorithm, digest_type, key_tag, digest
+DNSKEY       flags, algorithm, protocol, key
+DS           algorithm, digest_type, key_tag, digest
+HINFO        cpu, os
+LOC          latitude, longitude, altitude, size, horizontal_precision, vertical_precision
+MX           preference, exchange
+NAPTR        order, preference, flags, service, regexp, replacement
+NS           target
+NSEC3PARAM   algorithm, flags, iterations, salt
+PTR          target
+RP           mbox, txt
+SOA          mname, rname, serial, refresh, retry, expire, minimum
+SPF          strings
+SRV          priority, weight, port, target
+SSHFP        algorithm, fp_type, fingerprint
+TLSA         usage, selector, mtype, cert
+TXT          strings
+==========   =============================================================================
+
+.. _mongodb_lookup:
+
+MongoDB Lookup
+``````````````
+.. versionadded:: 2.3
+
+.. warning:: This lookup depends on the `pymongo 2.4+ <http://www.mongodb.org/>`_
+             library.
+
+
+The ``MongoDB`` lookup runs the *find()* command on a given *collection* on a given *MongoDB* server.
+
+The result is a list of jsons, so slightly different from what PyMongo returns. In particular, *timestamps* are converted to epoch integers.
+
+Currently, the following parameters are supported.
+
+===========================  =========   =======   ====================   =======================================================================================================================================================================
+Parameter                    Mandatory   Type      Default Value          Comment
+---------------------------  ---------   -------   --------------------   -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+connection_string            no          string    mongodb://localhost/   Can be any valid MongoDB connection string, supporting authentication, replicasets, etc. More info at https://docs.mongodb.org/manual/reference/connection-string/
+extra_connection_parameters  no          dict      {}                     Dictionary with extra parameters like ssl, ssl_keyfile, maxPoolSize etc... Check the full list here: https://api.mongodb.org/python/current/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient
+database                     yes         string                           Name of the database which the query will be made
+collection                   yes         string                           Name of the collection which the query will be made
+filter                       no          dict      [pymongo default]      Criteria of the output Example: { "hostname": "batman" }
+projection                   no          dict      [pymongo default]      Fields you want returned. Example: { "pid": True    , "_id" : False , "hostname" : True }
+skip                         no          integer   [pymongo default]      How many results should be skept
+limit                        no          integer   [pymongo default]      How many results should be shown
+sort                         no          list      [pymongo default]      Sorting rules. Please notice the constats are replaced by strings. [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
+[any find() parameter]       no          [any]     [pymongo default]      Every parameter with exception to *connection_string*, *database* and *collection* are passed to pymongo directly.
+===========================  =========   =======   ====================   =======================================================================================================================================================================
+
+Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais.
+
+Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters::
+
+    ---
+    - hosts: all
+      gather_facts: false
+
+      vars:
+        mongodb_parameters:
+          #optional parameter, default = "mongodb://localhost/"
+          # connection_string: "mongodb://localhost/"
+          # extra_connection_parameters: { "ssl" : True , "ssl_certfile": /etc/self_signed_certificate.pem" }
+
+          #mandatory parameters
+          database: 'local'
+          collection: "startup_log"
+
+          #optional query  parameters
+          #we accept any parameter from the normal mongodb query.
+          # the offical documentation is here
+          # https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find
+          # filter:  { "hostname": "batman" }
+          projection: { "pid": True    , "_id" : False , "hostname" : True }
+          # skip: 0
+          limit: 1
+          # sort:  [ [ "startTime" , "ASCENDING" ] , [ "age", "DESCENDING" ] ]
+
+      tasks:
+        - debug: msg="Mongo has already started with the following PID [{{ item.pid }}]"
+          with_items:
+            - "{{ lookup('mongodb', mongodb_parameters) }}"
+
+
+
+Sample output::
+
+    ---
+    mdiez@batman:~/ansible$ ansible-playbook m.yml -i localhost.ini
+
+    PLAY [all] *********************************************************************
+
+    TASK [debug] *******************************************************************
+    Sunday 20 March 2016  22:40:39 +0200 (0:00:00.023)       0:00:00.023 **********
+    ok: [localhost] => (item={u'hostname': u'batman', u'pid': 60639L}) => {
+        "item": {
+            "hostname": "batman",
+            "pid": 60639
+        },
+        "msg": "Mongo has already started with the following PID [60639]"
+    }
+
+    PLAY RECAP *********************************************************************
+    localhost                  : ok=1    changed=0    unreachable=0    failed=0
+
+    Sunday 20 March 2016  22:40:39 +0200 (0:00:00.067)       0:00:00.091 **********
+    ===============================================================================
+    debug ------------------------------------------------------------------- 0.07s
+    mdiez@batman:~/ansible$
+
 
 .. _more_lookups:
 

@@ -1,6 +1,7 @@
-# (c) 2013-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013-2016, Michael DeHaan <michael.dehaan@gmail.com>
 #           Stephen Fromm <sfromm@gmail.com>
 #           Brian Coca  <briancoca+dev@gmail.com>
+#           Toshio Kuratomi  <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -18,13 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import os
 import os.path
-import tempfile
 import re
+import tempfile
 
+from ansible.constants import mk_boolean as boolean
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
 
 
@@ -36,36 +40,37 @@ class ActionModule(ActionBase):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
-        tmp = os.fdopen(tmpfd,'w')
+        tmp = os.fdopen(tmpfd, 'wb')
         delimit_me = False
         add_newline = False
 
-        for f in sorted(os.listdir(src_path)):
+        for f in (to_text(p, errors='surrogate_or_strict') for p in sorted(os.listdir(src_path))):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
-            fragment = "%s/%s" % (src_path, f)
+            fragment = u"%s/%s" % (src_path, f)
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
-            fragment_content = file(fragment).read()
+
+            fragment_content = open(self._loader.get_real_file(fragment), 'rb').read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
-                tmp.write('\n')
+                tmp.write(b'\n')
 
             # delimiters should only appear between fragments
             if delimit_me:
                 if delimiter:
                     # un-escape anything like newlines
-                    delimiter = delimiter.decode('unicode-escape')
+                    delimiter = codecs.escape_decode(delimiter)[0]
                     tmp.write(delimiter)
                     # always make sure there's a newline after the
                     # delimiter, so lines don't run together
-                    if delimiter[-1] != '\n':
-                        tmp.write('\n')
+                    if delimiter[-1] != b'\n':
+                        tmp.write(b'\n')
 
             tmp.write(fragment_content)
             delimit_me = True
-            if fragment_content.endswith('\n'):
+            if fragment_content.endswith(b'\n'):
                 add_newline = False
             else:
                 add_newline = True
@@ -89,6 +94,7 @@ class ActionModule(ActionBase):
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
+        follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
 
         if src is None or dest is None:
@@ -96,14 +102,27 @@ class ActionModule(ActionBase):
             result['msg'] = "src and dest are required"
             return result
 
-        if boolean(remote_src):
-            result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
-            return result
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
-        elif self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
+        if boolean(remote_src):
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
+            self._remove_tmp_path(tmp)
+            return result
         else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
+            try:
+                src = self._find_needle('files', src)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_native(e)
+                return result
+
+        if not os.path.isdir(src):
+            result['failed'] = True
+            result['msg'] = u"Source (%s) is not a directory" % src
+            return result
 
         _re = None
         if regexp is not None:
@@ -114,46 +133,45 @@ class ActionModule(ActionBase):
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
+        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=tmp)
 
         diff = {}
-        if path_checksum != remote_checksum:
-            resultant = file(path).read()
+
+        # setup args for running modules
+        new_module_args = self._task.args.copy()
+
+        # clean assemble specific options
+        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
+            if opt in new_module_args:
+                del new_module_args[opt]
+
+        new_module_args.update(
+            dict(
+                dest=dest,
+                original_basename=os.path.basename(src),
+            )
+        )
+
+        if path_checksum != dest_stat['checksum']:
 
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, path, task_vars)
 
-            xfered = self._transfer_data('src', resultant)
+            remote_path = self._connection._shell.join_path(tmp, 'src')
+            xfered = self._transfer_file(path, remote_path)
 
             # fix file permissions when the copy is done as a different user
-            if self._play_context.become and self._play_context.become_user != 'root':
-                self._remote_chmod('a+r', xfered)
+            self._fixup_perms2((tmp, remote_path), remote_user)
 
-            # run the copy module
+            new_module_args.update( dict( src=xfered,))
 
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
-
-            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
             if diff:
                 res['diff'] = diff
             result.update(res)
-            return result
         else:
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-                dict(
-                    src=xfered,
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp))
-            return result
+        self._remove_tmp_path(tmp)
+
+        return result

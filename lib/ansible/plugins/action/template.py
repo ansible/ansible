@@ -23,34 +23,31 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
-from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_bytes, to_unicode
 
+boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, dest, all_vars, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(dest, all_vars=all_vars)
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
+        try:
+            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        if remote_checksum in ('0', '2', '3', '4'):
-            # Note: 1 means the file is not present which is fine; template
-            # will create it.  3 means directory was specified instead of file
-            if try_directory and remote_checksum == '3' and source:
+            if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(dest, all_vars=all_vars, try_directory=False)
-                if remote_checksum not in ('0', '2', '3', '4'):
-                    return remote_checksum
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-            result = dict(failed=True, msg="failed to checksum remote file."
-                        " Checksum error code: %s" % remote_checksum)
-            return result
+        except AnsibleError:
+            return dict(failed=True, msg=to_native(get_exception()))
 
-        return remote_checksum
+        return dest_stat['checksum']
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
@@ -61,28 +58,24 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
-        faf    = self._task.first_available_file
         force  = boolean(self._task.args.get('force', True))
+        state  = self._task.args.get('state', None)
 
-        if (source is None and faf is not None) or dest is None:
+        if state is not None:
+            result['failed'] = True
+            result['msg'] = "'state' cannot be specified on a template"
+        elif source is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
-            return result
-
-        if tmp is None:
-            tmp = self._make_tmp_path()
-
-        if faf:
-            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
-                return result
         else:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
+            try:
+                source = self._find_needle('templates', source)
+            except AnsibleError:
+                result['failed'] = True
+                result['msg'] = to_native(get_exception())
+
+        if 'failed' in result:
+            return result
 
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest)
@@ -94,19 +87,20 @@ class ActionModule(ActionBase):
             dest = os.path.join(dest, base)
 
         # template the source data locally & get ready to transfer
+        b_source = to_bytes(source)
         try:
-            with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
+            with open(b_source, 'r') as f:
+                template_data = to_text(f.read())
 
             try:
-                template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
+                template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
             except:
-                template_uid = os.stat(source).st_uid
+                template_uid = os.stat(b_source).st_uid
 
             temp_vars = task_vars.copy()
             temp_vars['template_host']     = os.uname()[1]
             temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
+            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
             temp_vars['template_uid']      = template_uid
             temp_vars['template_fullpath'] = os.path.abspath(source)
             temp_vars['template_run_date'] = datetime.datetime.now()
@@ -119,29 +113,44 @@ class ActionModule(ActionBase):
             )
             temp_vars['ansible_managed'] = time.strftime(
                 managed_str,
-                time.localtime(os.path.getmtime(source))
+                time.localtime(os.path.getmtime(b_source))
             )
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                searchpath.insert(1, self._task._role._role_path)
+
+            searchpath = []
+            # set jinja2 internal search path for includes
+            if 'ansible_search_path' in task_vars:
+                searchpath = task_vars['ansible_search_path']
+                # our search paths aren't actually the proper ones for jinja includes.
+
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
+            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
+
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
             result.update(remote_checksum)
@@ -157,12 +166,11 @@ class ActionModule(ActionBase):
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
 
-            if not self._play_context.check_mode: # do actual work thorugh copy
+            if not self._play_context.check_mode:  # do actual work through copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered)
+                self._fixup_perms2((tmp, xfered), remote_user)
 
                 # run the copy module
                 new_module_args.update(
@@ -171,14 +179,12 @@ class ActionModule(ActionBase):
                        dest=dest,
                        original_basename=os.path.basename(source),
                        follow=True,
-                    ),
+                   ),
                 )
-                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
-
-            return result
 
         else:
             # when running the file module based on the template data, we do
@@ -194,6 +200,8 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
-            return result
+        self._remove_tmp_path(tmp)
+
+        return result

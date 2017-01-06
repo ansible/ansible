@@ -123,7 +123,7 @@ Here's what it would look like in a playbook, assuming the parameters were defin
 
 The rax module returns data about the nodes it creates, like IP addresses, hostnames, and login passwords.  By registering the return value of the step, it is possible used this data to dynamically add the resulting hosts to inventory (temporarily, in memory). This facilitates performing configuration actions on the hosts in a follow-on task.  In the following example, the servers that were successfully created using the above task are dynamically added to a group called "raxhosts", with each nodes hostname, IP address, and root password being added to the inventory.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 .. code-block:: yaml
 
@@ -134,7 +134,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
           ansible_host: "{{ item.rax_accessipv4 }}"
           ansible_ssh_pass: "{{ item.rax_adminpass }}"
           groups: raxhosts
-      with_items: rax.success
+      with_items: "{{ rax.success }}"
       when: rax.action == 'create'
 
 With the host group now created, the next play in this playbook could now configure servers belonging to the raxhosts group.
@@ -156,7 +156,7 @@ to the next section.
 Host Inventory
 ``````````````
 
-Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle his is to use the "rax" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up Ansible via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, etc.  Utilizing metadata is highly recommended in "rax" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended.
+Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the "rax" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, etc.  Utilizing metadata is highly recommended in "rax" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended.
 
 In Ansible it is quite possible to use multiple dynamic inventory plugins along with INI file data.  Just put them in a common directory and be sure the scripts are chmod +x, and the INI-based ones are not.
 
@@ -200,23 +200,23 @@ following information, which will be utilized for inventory and variables.
         "_meta": {
             "hostvars": {
                 "test": {
-                    "ansible_host": "1.1.1.1",
-                    "rax_accessipv4": "1.1.1.1",
-                    "rax_accessipv6": "2607:f0d0:1002:51::4",
+                    "ansible_host": "198.51.100.1",
+                    "rax_accessipv4": "198.51.100.1",
+                    "rax_accessipv6": "2001:DB8::2342",
                     "rax_addresses": {
                         "private": [
                             {
-                                "addr": "2.2.2.2",
+                                "addr": "192.0.2.2",
                                 "version": 4
                             }
                         ],
                         "public": [
                             {
-                                "addr": "1.1.1.1",
+                                "addr": "198.51.100.1",
                                 "version": 4
                             },
                             {
-                                "addr": "2607:f0d0:1002:51::4",
+                                "addr": "2001:DB8::2342",
                                 "version": 6
                             }
                         ]
@@ -262,11 +262,11 @@ following information, which will be utilized for inventory and variables.
                     "rax_name_attr": "name",
                     "rax_networks": {
                         "private": [
-                            "2.2.2.2"
+                            "192.0.2.2"
                         ],
                         "public": [
-                            "1.1.1.1",
-                            "2607:f0d0:1002:51::4"
+                            "198.51.100.1",
+                            "2001:DB8::2342"
                         ]
                     },
                     "rax_os-dcf_diskconfig": "AUTO",
@@ -322,22 +322,22 @@ The ``rax_facts`` module provides facts as followings, which match the ``rax.py`
 
     {
         "ansible_facts": {
-            "rax_accessipv4": "1.1.1.1",
-            "rax_accessipv6": "2607:f0d0:1002:51::4",
+            "rax_accessipv4": "198.51.100.1",
+            "rax_accessipv6": "2001:DB8::2342",
             "rax_addresses": {
                 "private": [
                     {
-                        "addr": "2.2.2.2",
+                        "addr": "192.0.2.2",
                         "version": 4
                     }
                 ],
                 "public": [
                     {
-                        "addr": "1.1.1.1",
+                        "addr": "198.51.100.1",
                         "version": 4
                     },
                     {
-                        "addr": "2607:f0d0:1002:51::4",
+                        "addr": "2001:DB8::2342",
                         "version": 6
                     }
                 ]
@@ -383,11 +383,11 @@ The ``rax_facts`` module provides facts as followings, which match the ``rax.py`
             "rax_name_attr": "name",
             "rax_networks": {
                 "private": [
-                    "2.2.2.2"
+                    "192.0.2.2"
                 ],
                 "public": [
-                    "1.1.1.1",
-                    "2607:f0d0:1002:51::4"
+                    "198.51.100.1",
+                    "2001:DB8::2342"
                 ]
             },
             "rax_os-dcf_diskconfig": "AUTO",
@@ -522,7 +522,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             ansible_ssh_pass: "{{ item.rax_adminpass }}"
             ansible_user: root
             groups: web
-          with_items: rax.success
+          with_items: "{{ rax.success }}"
           when: rax.action == 'create'
     
         - name: Add servers to Load balancer
@@ -536,7 +536,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             type: primary
             wait: yes
             region: IAD
-          with_items: rax.success
+          with_items: "{{ rax.success }}"
           when: rax.action == 'create'
     
     - name: Configure servers
@@ -608,7 +608,7 @@ Using a Control Machine
             ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web
-          with_items: rax.success
+          with_items: "{{ rax.success }}"
           when: rax.action == 'create'
     
     - name: Wait for rackconnect and managed cloud automation to complete
@@ -637,6 +637,19 @@ Using a Control Machine
           retries: 30
           delay: 10
     
+    - name: Update new_web hosts with IP that RackConnect assigns
+      hosts: new_web
+      gather_facts: false
+      tasks:
+        - name: Get facts about servers
+          local_action:
+            module: rax_facts
+            name: "{{ inventory_hostname }}"
+            region: DFW
+        - name: Map some facts
+          set_fact:
+            ansible_host: "{{ rax_accessipv4 }}"
+        
     - name: Base Configure Servers
       hosts: web
       roles:

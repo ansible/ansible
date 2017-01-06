@@ -1,0 +1,162 @@
+---
+- name: test fail if missing name
+  cs_configuration:
+  register: config
+  ignore_errors: true
+- name: verify results of fail if missing arguments
+  assert:
+    that:
+      - config|failed
+      - "config.msg == 'missing required arguments: value,name'"
+
+- name: test configuration
+  cs_configuration:
+    name: network.loadbalancer.haproxy.stats.visibility
+    value: global
+  register: config
+- name: verify test configuration
+  assert:
+    that:
+    - config|success
+
+- name: test update configuration string
+  cs_configuration:
+    name: network.loadbalancer.haproxy.stats.visibility
+    value: all
+  register: config
+- name: verify test update configuration string
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "all"
+    - config.name == "network.loadbalancer.haproxy.stats.visibility"
+
+- name: test update configuration string idempotence
+  cs_configuration:
+    name: network.loadbalancer.haproxy.stats.visibility
+    value: all
+  register: config
+- name: verify test update configuration string idempotence
+  assert:
+    that:
+    - config|success
+    - not config|changed
+    - config.value == "all"
+    - config.name == "network.loadbalancer.haproxy.stats.visibility"
+
+- name: test reset configuration string
+  cs_configuration:
+    name: network.loadbalancer.haproxy.stats.visibility
+    value: global
+  register: config
+- name: verify test reset configuration string
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "global"
+    - config.name == "network.loadbalancer.haproxy.stats.visibility"
+
+- name: test configuration
+  cs_configuration:
+    name: vmware.recycle.hung.wokervm
+    value: false
+  register: config
+- name: verify test configuration
+  assert:
+    that:
+    - config|success
+
+- name: test update configuration bool
+  cs_configuration:
+    name: vmware.recycle.hung.wokervm
+    value: true
+  register: config
+- name: verify test update configuration bool
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "true"
+    - config.name == "vmware.recycle.hung.wokervm"
+
+- name: test update configuration bool idempotence
+  cs_configuration:
+    name: vmware.recycle.hung.wokervm
+    value: true
+  register: config
+- name: verify test update configuration bool idempotence
+  assert:
+    that:
+    - config|success
+    - not config|changed
+    - config.value == "true"
+    - config.name == "vmware.recycle.hung.wokervm"
+
+- name: test reset configuration bool
+  cs_configuration:
+    name: vmware.recycle.hung.wokervm
+    value: false
+  register: config
+- name: verify test reset configuration bool
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "false"
+    - config.name == "vmware.recycle.hung.wokervm"
+
+- name: test configuration
+  cs_configuration:
+    name: agent.load.threshold
+    value: 0.7
+  register: config
+- name: verify test configuration
+  assert:
+    that:
+    - config|success
+
+- name: test update configuration float
+  cs_configuration:
+    name: agent.load.threshold
+    value: 0.81
+  register: config
+- name: verify update configuration float
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "0.81"
+    - config.name == "agent.load.threshold"
+
+- name: test update configuration float idempotence
+  cs_configuration:
+    name: agent.load.threshold
+    value: 0.81
+  register: config
+- name: verify update configuration float idempotence
+  assert:
+    that:
+    - config|success
+    - not config|changed
+    - config.value == "0.81"
+    - config.name == "agent.load.threshold"
+
+- name: reset configuration float
+  cs_configuration:
+    name: agent.load.threshold
+    value: 0.7
+  register: config
+- name: verify reset configuration float
+  assert:
+    that:
+    - config|success
+    - config|changed
+    - config.value == "0.7"
+    - config.name == "agent.load.threshold"
+
+- include: storage.yml
+- include: account.yml
+- include: zone.yml
+- include: cluster.yml

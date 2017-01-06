@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-from json import JSONEncoder
+from json import dumps
 from collections import MutableMapping
 
 from ansible.compat.six import iteritems, string_types
@@ -28,7 +28,8 @@ from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_native, to_text
+
 
 def _validate_mutable_mappings(a, b):
     """
@@ -43,9 +44,16 @@ def _validate_mutable_mappings(a, b):
     # a variable number of arguments instead.
 
     if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
-        raise AnsibleError("failed to combine variables, expected dicts but"
-                " got a '{0}' and a '{1}'".format(
-                    a.__class__.__name__, b.__class__.__name__))
+        myvars = []
+        for x in [a, b]:
+            try:
+                myvars.append(dumps(x))
+            except:
+                myvars.append(to_native(x))
+        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
+            a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
+        )
+
 
 def combine_vars(a, b):
     """
@@ -61,19 +69,26 @@ def combine_vars(a, b):
         result.update(b)
         return result
 
+
 def merge_hash(a, b):
     """
     Recursively merges hash b into a so that keys from b take precedence over keys from a
     """
 
     _validate_mutable_mappings(a, b)
+
+    # if a is empty or equal to b, return b
+    if a == {} or a == b:
+        return b.copy()
+
+    # if b is empty the below unfolds quickly
     result = a.copy()
 
     # next, iterate over b keys and values
     for k, v in iteritems(b):
         # if there's already such key in a
         # and that key contains a MutableMapping
-        if k in result and isinstance(result[k], MutableMapping):
+        if k in result and isinstance(result[k], MutableMapping) and isinstance(v, MutableMapping):
             # merge those dicts recursively
             result[k] = merge_hash(result[k], v)
         else:
@@ -82,10 +97,11 @@ def merge_hash(a, b):
 
     return result
 
+
 def load_extra_vars(loader, options):
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
-        extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
+        extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
         if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             data = loader.load_from_file(extra_vars_opt[1:])
@@ -97,6 +113,15 @@ def load_extra_vars(loader, options):
             data = parse_kv(extra_vars_opt)
         extra_vars = combine_vars(extra_vars, data)
     return extra_vars
+
+
+def load_options_vars(options):
+    options_vars = {}
+    # For now only return check mode, but we can easily return more
+    # options if we need variables for them
+    options_vars['ansible_check_mode'] = options.check
+    return options_vars
+
 
 def isidentifier(ident):
     """
@@ -128,4 +153,3 @@ def isidentifier(ident):
         return False
 
     return True
-

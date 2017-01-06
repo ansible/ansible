@@ -62,14 +62,15 @@ codeCodes = {
     'purple':    u'0;35', 'bright red':     u'1;31',
     'yellow':    u'0;33', 'bright purple':  u'1;35',
     'dark gray': u'1;30', 'bright yellow':  u'1;33',
-    'normal':    u'0'
+    'magenta':   u'0;35', 'bright magenta': u'1;35',
+    'normal':    u'0'   ,
 }
 
 def stringc(text, color):
     """String in color."""
 
     if ANSIBLE_COLOR:
-        return u"\033[%sm%s\033[0m" % (codeCodes[color], text)
+        return "\n".join([u"\033[%sm%s\033[0m" % (codeCodes[color], t) for t in text.split('\n')])
     else:
         return text
 
@@ -77,18 +78,18 @@ def stringc(text, color):
 
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
+    s = u"%s=%-4s" % (lead, str(num))
     if num != 0 and ANSIBLE_COLOR and color is not None:
-        return u"%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
-    else:
-        return u"%s=%-4s" % (lead, str(num))
+        s = stringc(s, color)
+    return s
 
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return u"%-37s" % stringc(host, 'red')
+            return u"%-37s" % stringc(host, C.COLOR_ERROR)
         elif stats['changed'] != 0:
-            return u"%-37s" % stringc(host, 'yellow')
+            return u"%-37s" % stringc(host, C.COLOR_CHANGED)
         else:
-            return u"%-37s" % stringc(host, 'green')
+            return u"%-37s" % stringc(host, C.COLOR_OK)
     return u"%-26s" % host
 

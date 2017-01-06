@@ -67,7 +67,7 @@ based on the data obtained from CloudStack API:
   }
 
 
-usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]
+usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]  [--domain DOMAIN]
 """
 
 from __future__ import print_function
@@ -97,32 +97,46 @@ class CloudStackInventory(object):
         parser.add_argument('--host')
         parser.add_argument('--list', action='store_true')
         parser.add_argument('--project')
+        parser.add_argument('--domain')
 
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
         except CloudStackException as e:
             print("Error: Could not connect to CloudStack API", file=sys.stderr)
+            sys.exit(1)
 
-        project_id = ''
+        domain_id = None
+        if options.domain:
+            domain_id = self.get_domain_id(options.domain)
+
+        project_id = None
         if options.project:
-            project_id = self.get_project_id(options.project)
+            project_id = self.get_project_id(options.project, domain_id)
 
         if options.host:
-            data = self.get_host(options.host)
+            data = self.get_host(options.host, project_id, domain_id)
             print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list()
+            data = self.get_list(project_id, domain_id)
             print(json.dumps(data, indent=2))
         else:
-            print("usage: --list | --host <hostname> [--project <project>]",
+            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]",
                   file=sys.stderr)
             sys.exit(1)
 
+    def get_domain_id(self, domain):
+        domains = self.cs.listDomains(listall=True)
+        if domains:
+            for d in domains['domain']:
+                if d['path'].lower() == domain.lower():
+                    return d['id']
+        print("Error: Domain %s not found." % domain, file=sys.stderr)
+        sys.exit(1)
 
-    def get_project_id(self, project):
-        projects = self.cs.listProjects()
+    def get_project_id(self, project, domain_id=None):
+        projects = self.cs.listProjects(domainid=domain_id)
         if projects:
             for p in projects['project']:
                 if p['name'] == project or p['id'] == project:
@@ -131,8 +145,8 @@ class CloudStackInventory(object):
         sys.exit(1)
 
 
-    def get_host(self, name, project_id=''):
-        hosts = self.cs.listVirtualMachines(projectid=project_id)
+    def get_host(self, name, project_id=None, domain_id=None):
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
         data = {}
         if not hosts:
             return data
@@ -169,7 +183,7 @@ class CloudStackInventory(object):
         return data
 
 
-    def get_list(self, project_id=''):
+    def get_list(self, project_id=None, domain_id=None):
         data = {
             'all': {
                 'hosts': [],
@@ -179,7 +193,7 @@ class CloudStackInventory(object):
                 },
             }
 
-        groups = self.cs.listInstanceGroups(projectid=project_id)
+        groups = self.cs.listInstanceGroups(projectid=project_id, domainid=domain_id)
         if groups:
             for group in groups['instancegroup']:
                 group_name = group['name']
@@ -188,14 +202,23 @@ class CloudStackInventory(object):
                             'hosts': []
                         }
 
-        hosts = self.cs.listVirtualMachines(projectid=project_id)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
         if not hosts:
             return data
         for host in hosts['virtualmachine']:
             host_name = host['displayname']
             data['all']['hosts'].append(host_name)
             data['_meta']['hostvars'][host_name] = {}
+
+            # Make a group per zone
             data['_meta']['hostvars'][host_name]['zone'] = host['zonename']
+            group_name = host['zonename']
+            if group_name not in data:
+                data[group_name] = {
+                    'hosts': []
+                }
+            data[group_name]['hosts'].append(host_name)
+
             if 'group' in host:
                 data['_meta']['hostvars'][host_name]['group'] = host['group']
             data['_meta']['hostvars'][host_name]['state'] = host['state']

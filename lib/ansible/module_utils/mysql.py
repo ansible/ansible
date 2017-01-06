@@ -27,18 +27,24 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 
+try:
+    import MySQLdb
+    mysqldb_found = True
+except ImportError:
+    mysqldb_found = False
 
-def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None):
-    config = {
-        'host': module.params['login_host'],
-        'ssl': {
-            }
-    }
+def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None, connect_timeout=30):
+    config = {}
+
+    if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
+        config['ssl'] = {}
 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
     else:
+        config['host'] = module.params['login_host']
         config['port'] = module.params['login_port']
 
     if os.path.exists(config_file):
@@ -58,6 +64,8 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
         config['ssl']['ca'] = ssl_ca
     if db is not None:
         config['db'] = db
+    if connect_timeout is not None:
+        config['connect_timeout'] = connect_timeout
 
     db_connection = MySQLdb.connect(**config)
     if cursor_class is not None:

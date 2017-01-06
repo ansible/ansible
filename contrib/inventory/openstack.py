@@ -3,6 +3,7 @@
 # Copyright (c) 2012, Marco Vito Moscaritolo <marco@agavee.com>
 # Copyright (c) 2013, Jesse Keating <jesse.keating@rackspace.com>
 # Copyright (c) 2015, Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2016, Rackspace Australia
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +19,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 # The OpenStack Inventory module uses os-client-config for configuration.
-# https://github.com/stackforge/os-client-config
+# https://github.com/openstack/os-client-config
 # This means it will either:
 #  - Respect normal OS_* environment variables like other OpenStack tools
 #  - Read values from a clouds.yaml file.
@@ -39,12 +40,17 @@
 # use_hostnames changes the behavior from registering every host with its UUID
 #               and making a group of its hostname to only doing this if the
 #               hostname in question has more than one server
+# fail_on_errors causes the inventory to fail and return no hosts if one cloud
+#                has failed (for example, bad credentials or being offline).
+#                When set to False, the inventory will return hosts from
+#                whichever other clouds it can contact. (Default: True)
 
 import argparse
 import collections
 import os
 import sys
 import time
+from distutils.version import StrictVersion
 
 try:
     import json
@@ -55,7 +61,7 @@ import os_client_config
 import shade
 import shade.inventory
 
-CONFIG_FILES = ['/etc/ansible/openstack.yaml']
+CONFIG_FILES = ['/etc/ansible/openstack.yaml', '/etc/ansible/openstack.yml']
 
 
 def get_groups_from_server(server_vars, namegroup=True):
@@ -80,7 +86,7 @@ def get_groups_from_server(server_vars, namegroup=True):
 
     for extra_group in metadata.get('groups', '').split(','):
         if extra_group:
-            groups.append(extra_group)
+            groups.append(extra_group.strip())
 
     groups.append('instance-%s' % server_vars['id'])
     if namegroup:
@@ -112,6 +118,14 @@ def get_host_groups(inventory, refresh=False):
     return groups
 
 
+def append_hostvars(hostvars, groups, key, server, namegroup=False):
+    hostvars[key] = dict(
+        ansible_ssh_host=server['interface_ip'],
+        openstack=server)
+    for group in get_groups_from_server(server, namegroup=namegroup):
+        groups[group].append(key)
+
+
 def get_host_groups_from_cloud(inventory):
     groups = collections.defaultdict(list)
     firstpass = collections.defaultdict(list)
@@ -120,6 +134,9 @@ def get_host_groups_from_cloud(inventory):
     if hasattr(inventory, 'extra_config'):
         use_hostnames = inventory.extra_config['use_hostnames']
         list_args['expand'] = inventory.extra_config['expand_hostvars']
+        if StrictVersion(shade.__version__) >= StrictVersion("1.6.0"):
+            list_args['fail_on_cloud_config'] = \
+                inventory.extra_config['fail_on_errors']
     else:
         use_hostnames = False
 
@@ -130,20 +147,19 @@ def get_host_groups_from_cloud(inventory):
         firstpass[server['name']].append(server)
     for name, servers in firstpass.items():
         if len(servers) == 1 and use_hostnames:
-            server = servers[0]
-            hostvars[name] = dict(
-                ansible_ssh_host=server['interface_ip'],
-                openstack=server)
-            for group in get_groups_from_server(server, namegroup=False):
-                groups[group].append(server['name'])
+            append_hostvars(hostvars, groups, name, servers[0])
         else:
+            server_ids = set()
+            # Trap for duplicate results
             for server in servers:
-                server_id = server['id']
-                hostvars[server_id] = dict(
-                    ansible_ssh_host=server['interface_ip'],
-                    openstack=server)
-                for group in get_groups_from_server(server, namegroup=True):
-                    groups[group].append(server_id)
+                server_ids.add(server['id'])
+            if len(server_ids) == 1 and use_hostnames:
+                append_hostvars(hostvars, groups, name, servers[0])
+            else:
+                for server in servers:
+                    append_hostvars(
+                        hostvars, groups, server['id'], server,
+                        namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
 
@@ -152,7 +168,7 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     ''' Determines if cache file has expired, or if it is still valid '''
     if refresh:
         return True
-    if os.path.isfile(cache_file):
+    if os.path.isfile(cache_file) and os.path.getsize(cache_file) > 0:
         mod_time = os.path.getmtime(cache_file)
         current_time = time.time()
         if (mod_time + cache_expiration_time) > current_time:
@@ -209,6 +225,7 @@ def main():
                 config_defaults={
                     'use_hostnames': False,
                     'expand_hostvars': True,
+                    'fail_on_errors': True,
                 }
             ))
 

@@ -31,6 +31,7 @@ docs/man/man3/*
 *.sublime-workspace
 # docsite stuff...
 docsite/rst/modules_by_category.rst
+docsite/rst/playbooks_directives.rst
 docsite/rst/list_of_*.rst
 docsite/rst/*_module.rst
 docsite/*.html
@@ -39,16 +40,20 @@ docsite/_static/*.png
 docsite/_static/websupport.js
 docsite/searchindex.js
 docsite/htmlout
+docs-api/rst/
+docs-api/_build/
 # deb building stuff...
-debian/
+/debian/
 deb-build
 # Vim swap files
 *.swp
 *.swo
 credentials.yml
 # test output
-.coverage
+*.retry
+*.out
 .tox
+.cache
 results.xml
 coverage.xml
 /test/units/cover-html
@@ -58,3 +63,27 @@ venv
 Vagrantfile
 .vagrant
 ansible.egg-info/
+/shippable/
+# Release directory
+packaging/release/ansible_release
+/.cache/
+/test/results/coverage/coverage*
+/test/results/reports/coverage.xml
+/test/results/reports/coverage/
+/test/results/junit/*.xml
+/test/results/logs/*.log
+/test/integration/inventory.remote
+/test/integration/inventory.winrm
+# old submodule dirs
+lib/ansible/modules/core
+lib/ansible/modules/extras
+# python 'rope' stuff
+.ropeproject
+# local 'ack' config files
+.ackrc
+# default 'coverage html' results
+htmlcov/
+# default 'coverage' tool data
+.coverage
+# ansible-test coverage results
+test/units/.coverage.*

@@ -1,0 +1,42 @@
+---
+- debug: msg="START cli/sublevel.yaml"
+
+- name: setup test
+  dellos10_config:
+    lines:
+      - 'no ip access-list test'
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure sub level command
+  dellos10_config:
+    lines: ['seq 5 permit ip any any count byte']
+    parents: ['ip access-list test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ip access-list test' in result.updates"
+      - "'seq 5 permit ip any any count byte' in result.updates"
+
+- name: configure sub level command idempotent check
+  dellos10_config:
+    lines: ['seq 5 permit ip any any count byte']
+    parents: ['ip access-list test']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos10_config:
+    lines:
+      - 'no ip access-list test'
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/sublevel.yaml"

@@ -41,6 +41,14 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
 
+    # define certain JSON types
+    # eg. JSON booleans are unknown to python eval()
+    JSON_TYPES = {
+        'false': False,
+        'null': None,
+        'true': True,
+    }
+
     # this is the whitelist of AST nodes we are going to
     # allow in the evaluation. Any node type other than
     # those listed here will raise an exception in our custom
@@ -61,6 +69,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             ast.Name,
             ast.Str,
             ast.Sub,
+            ast.USub,
             ast.Tuple,
             ast.UnaryOp,
         )
@@ -116,7 +125,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
-        result = eval(compiled, {}, dict(locals))
+        result = eval(compiled, JSON_TYPES, dict(locals))
 
         if include_exceptions:
             return (result, None)
@@ -124,7 +133,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             return result
     except SyntaxError as e:
         # special handling for syntax errors, we just return
-        # the expression string back as-is
+        # the expression string back as-is to support late evaluation
         if include_exceptions:
             return (expr, None)
         return expr
@@ -132,4 +141,3 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         if include_exceptions:
             return (expr, e)
         return expr
-

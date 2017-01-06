@@ -1,6 +1,0 @@
-- hosts: localhost
-  gather_facts: no
-  tags:
-  - included
-  tasks:
-  - debug: msg="incuded playbook, variable is {{a}}"

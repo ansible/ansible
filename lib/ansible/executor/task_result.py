@@ -23,7 +23,7 @@ from ansible.parsing.dataloader import DataLoader
 
 class TaskResult:
     '''
-    This class is responsible for interpretting the resulting data
+    This class is responsible for interpreting the resulting data
     from an executed task, and provides helper methods for determining
     the result of a given task.
     '''
@@ -40,14 +40,16 @@ class TaskResult:
         return self._check_key('changed')
 
     def is_skipped(self):
-        if 'results' in self._result and self._task.loop:
-            flag = True
-            for res in self._result.get('results', []):
-                if isinstance(res, dict):
-                    flag &= res.get('skipped', False)
-            return flag
-        else:
-            return self._result.get('skipped', False)
+        # loop results
+        if 'results' in self._result:
+            results = self._result['results']
+            # Loop tasks are only considered skipped if all items were skipped.
+            # some squashed results (eg, yum) are not dicts and can't be skipped individually
+            if results and all(isinstance(res, dict) and res.get('skipped', False) for res in results):
+                return True
+
+        # regular tasks and squashed non-dict results
+        return self._result.get('skipped', False)
 
     def is_failed(self):
         if 'failed_when_result' in self._result or \
@@ -60,11 +62,13 @@ class TaskResult:
         return self._check_key('unreachable')
 
     def _check_key(self, key):
-        if 'results' in self._result and self._task.loop:
+        '''get a specific key from the result or it's items'''
+
+        if isinstance(self._result, dict) and key in self._result:
+            return self._result.get(key, False)
+        else:
             flag = False
             for res in self._result.get('results', []):
                 if isinstance(res, dict):
                     flag |= res.get(key, False)
             return flag
-        else:
-            return self._result.get(key, False)

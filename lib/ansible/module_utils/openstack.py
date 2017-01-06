@@ -28,6 +28,7 @@
 
 import os
 
+from ansible.module_utils.six import iteritems
 
 def openstack_argument_spec():
     # DEPRECATED: This argument spec is only used for the deprecated old
@@ -61,7 +62,7 @@ def openstack_argument_spec():
 def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 
     ret = []
-    for (k, v) in addresses.iteritems():
+    for (k, v) in iteritems(addresses):
         if key_name and k == key_name:
             ret.extend([addrs['addr'] for addrs in v])
         else:
@@ -74,10 +75,10 @@ def openstack_full_argument_spec(**kwargs):
     spec = dict(
         cloud=dict(default=None),
         auth_type=dict(default=None),
-        auth=dict(default=None, no_log=True),
+        auth=dict(default=None, type='dict', no_log=True),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        verify=dict(default=True, aliases=['validate_certs']),
+        verify=dict(default=True, type='bool', aliases=['validate_certs']),
         cacert=dict(default=None),
         cert=dict(default=None),
         key=dict(default=None, no_log=True),

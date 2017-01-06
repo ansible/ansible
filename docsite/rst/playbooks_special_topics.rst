@@ -11,11 +11,14 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_acceleration
    playbooks_async
    playbooks_checkmode
+   playbooks_debugger
    playbooks_delegation
    playbooks_environment
    playbooks_error_handling
+   playbooks_advanced_syntax
    playbooks_lookups
    playbooks_prompts
    playbooks_tags
    playbooks_vault
    playbooks_startnstep
+   playbooks_directives

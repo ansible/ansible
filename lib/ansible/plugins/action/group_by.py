@@ -40,6 +40,6 @@ class ActionModule(ActionBase):
         group_name = self._task.args.get('key')
         group_name = group_name.replace(' ','-')
 
-        result['changed'] = True
+        result['changed'] = False
         result['add_group'] = group_name
         return result

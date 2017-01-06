@@ -21,7 +21,9 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils._text import to_text
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import get_all_plugin_loaders
@@ -42,7 +44,7 @@ class Playbook:
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
-        self._basedir = os.getcwd()
+        self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader  = loader
         self._file_name = None
 
@@ -60,6 +62,7 @@ class Playbook:
             self._basedir = os.path.normpath(os.path.join(self._basedir, os.path.dirname(file_name)))
 
         # set the loaders basedir
+        cur_basedir = self._loader.get_basedir()
         self._loader.set_basedir(self._basedir)
 
         self._file_name = file_name
@@ -73,6 +76,8 @@ class Playbook:
 
         ds = self._loader.load_from_file(os.path.basename(file_name))
         if not isinstance(ds, list):
+            # restore the basedir in case this error is caught and handled
+            self._loader.set_basedir(cur_basedir)
             raise AnsibleParserError("playbooks must be a list of plays", obj=ds)
 
         # Parse the playbook entries. For plays, we simply parse them
@@ -80,6 +85,8 @@ class Playbook:
         # PlaybookInclude() object
         for entry in ds:
             if not isinstance(entry, dict):
+                # restore the basedir in case this error is caught and handled
+                self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
             if 'include' in entry:
@@ -87,10 +94,13 @@ class Playbook:
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color='cyan')
+                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)
+
+        # we're done, so restore the old basedir in the loader
+        self._loader.set_basedir(cur_basedir)
 
     def get_loader(self):
         return self._loader

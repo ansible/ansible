@@ -1,0 +1,11 @@
+---
+- hosts: ops
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: ops_command, when: "limit_to in ['*', 'ops_command']" }

@@ -1,6 +1,6 @@
 ansible-playbook(1)
 ===================
-:doctype:manpage
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -34,20 +34,25 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
-*--ask-become-pass*::
+*-b*, *--become*::
+
+Use privilege escalation (specific one depends on become_method),
+this does not imply prompting for passwords.
+
+*-K*, *--ask-become-pass*::
 
 Ask for privilege escalation password.
 
 *-k*, *--ask-pass*::
 
 Prompt for the connection password, if it is needed for the transport used.
-For example, using ssh and not having  a key-based authentication with ssh-agent.
+For example, using ssh and not having a key-based authentication with ssh-agent.
 
 *--ask-su-pass*::
 
 Prompt for su password, used with --su (deprecated, use become).
 
-*-K*, *--ask-sudo-pass*::
+*--ask-sudo-pass*::
 
 Prompt for the password to use with --sudo, if any (deprecated, use become).
 
@@ -91,17 +96,17 @@ Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
 *-h*, *--help*::
 
-Show help page and exit
+Show help page and exit.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
-Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
+Alternatively, you can use a comma-separated list of hosts or a single host with a trailing comma 'host,'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
 Further limits the selected host/group patterns.
-You can prefix it with '~' to indicate that the pattern in a regex.
+You can prefix it with '~' to indicate that the pattern is a regex.
 
 *--list-hosts*::
 
@@ -123,11 +128,7 @@ environment variable.
 
 *--private-key=*'PRIVATE_KEY_FILE'::
 
-Use this file to authenticate the connection
-
-*--skip-tages=*'SKIP_TAGS'::
-
-Only run plays and tasks whose tags do not match these values.
+Use this file to authenticate the connection.
 
 *--start-at-task=*'START_AT'::
 
@@ -139,11 +140,11 @@ One-step-at-a-time: confirm each task before running.
 
 *-S*, --su*::
 
-Run operations with su (deprecated, use become)
+Run operations with su (deprecated, use become).
 
 *-R SU-USER*, *--su-user=*'SU_USER'::
 
-run operations with su as this user (default=root) (deprecated, use become)
+Run operations with su as this user (default=root) (deprecated, use become).
 
 *-s*, *--sudo*::
 
@@ -169,7 +170,7 @@ Add the specified arguments to any ssh command-line.
 
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
-Sudo to 'SUDO_USERNAME' deafult is root. (deprecated, use become).
+Sudo to 'SUDO_USERNAME' default is root. (deprecated, use become).
 
 *--skip-tags=*'SKIP_TAGS'::
 
@@ -177,7 +178,7 @@ Only run plays and tasks whose tags do not match these values.
 
 *--syntax-check*::
 
-Look for syntax errors in the playbook, but don't run anything
+Look for syntax errors in the playbook, but don't run anything.
 
 *-t*, 'TAGS', *--tags=*'TAGS'::
 
@@ -204,11 +205,29 @@ up to three times for more output.
 
 Show program's version number and exit.
 
+EXIT STATUS
+-----------
+
+*0* -- OK or no hosts matched
+
+*1* -- Error
+
+*2* -- One or more hosts failed
+
+*3* -- One or more hosts were unreachable
+
+*4* -- Parser error
+
+*5* -- Bad or incomplete options
+
+*99* -- User interrupted execution
+
+*250* -- Unexpected error
 
 ENVIRONMENT
 -----------
 
-The following environment variables may be specified.
+The following environment variables may be specified:
 
 ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 

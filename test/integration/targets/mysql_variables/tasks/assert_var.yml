@@ -1,0 +1,34 @@
+# test code to assert variables in mysql_variables module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+# Assert mysql variable name and value from mysql database
+#
+- name: assert output message changed value
+  assert: { that: "output.changed == {{changed}}" }
+
+- name: run mysql command to show variable
+  command: mysql "-e show variables like '{{var_name}}';"
+  register: result
+
+- name: assert output mysql variable name and value
+  assert:
+    that:
+       - "result.changed == true"
+       - "'{{var_name}}' in result.stdout"
+       - "'{{var_value}}' in result.stdout"

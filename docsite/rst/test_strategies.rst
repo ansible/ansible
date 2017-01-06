@@ -32,6 +32,8 @@ If you think the service may not be started, the best thing to do is request it 
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to
 do later).
 
+.. _check_mode_drift:
+
 Check Mode As A Drift Test
 ``````````````````````````
 
@@ -40,7 +42,7 @@ existing system, using the `--check` flag to the `ansible` command will report i
 bring the system into a desired state.
 
 This can let you know up front if there is any need to deploy onto the given system.  Ordinarily scripts and commands don't run in check mode, so if you
-want certain steps to always execute in check mode, such as calls to the script module, add the 'always_run' flag::
+want certain steps to always execute in check mode, such as calls to the script module, disable check mode for those tasks::
 
 
    roles:
@@ -48,7 +50,7 @@ want certain steps to always execute in check mode, such as calls to the script 
 
    tasks:
      - script: verify.sh
-       always_run: True
+       check_mode: no
 
 Modules That Are Useful for Testing
 ```````````````````````````````````
@@ -256,7 +258,7 @@ system.
    :doc:`playbooks`
        An introduction to playbooks
    :doc:`playbooks_delegation`
-       Delegation, useful for working with loud balancers, clouds, and locally executed steps.
+       Delegation, useful for working with load balancers, clouds, and locally executed steps.
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

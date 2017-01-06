@@ -24,21 +24,21 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import traceback
 
 from ansible import constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.module_utils._text import to_bytes
+
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
@@ -56,8 +56,8 @@ class Connection(ConnectionBase):
         if os.geteuid() != 0:
             raise AnsibleError("zone connection requires running as root")
 
-        self.zoneadm_cmd = self._search_executable('zoneadm')
-        self.zlogin_cmd = self._search_executable('zlogin')
+        self.zoneadm_cmd = to_bytes(self._search_executable('zoneadm'))
+        self.zlogin_cmd = to_bytes(self._search_executable('zlogin'))
 
         if self.zone not in self.list_zones():
             raise AnsibleError("incorrect zone name %s" % self.zone)
@@ -86,7 +86,7 @@ class Connection(ConnectionBase):
     def get_zone_path(self):
         #solaris10vm# zoneadm -z cswbuild list -p
         #-:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
-        process = subprocess.Popen([self.zoneadm_cmd, '-z', self.zone, 'list', '-p'],
+        process = subprocess.Popen([self.zoneadm_cmd, '-z', to_bytes(self.zone), 'list', '-p'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -113,6 +113,7 @@ class Connection(ConnectionBase):
         # this through /bin/sh -c here.  Instead it goes through the shell
         # that zlogin selects.
         local_cmd = [self.zlogin_cmd, self.zone, cmd]
+        local_cmd = map(to_bytes, local_cmd)
 
         display.vvv("EXEC %s" % (local_cmd), host=self.zone)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
@@ -148,7 +149,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
                 try:
@@ -170,7 +171,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = shlex_quote(self._prefix_login_path(in_path))
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:

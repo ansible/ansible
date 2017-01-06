@@ -1,3 +1,4 @@
+TEST_DIR ?= ~/ansible_testing
 INVENTORY ?= inventory
 VARS_FILE ?= integration_config.yml
 
@@ -20,90 +21,172 @@ MYTMPDIR = $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
+EUID := $(shell id -u -r)
 
-all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
+UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
+
+all: other non_destructive destructive
+
+other: ansible test_test_infra parsing test_var_blending test_var_precedence unicode test_templating_settings environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix test_hosts_field test_lookup_properties args
+
+ansible:
+	(cd targets/ansible && ./runme.sh $(TEST_FLAGS))
+
+test_test_infra:
+	(cd targets/test_infra && ./runme.sh $(TEST_FLAGS))
+
+setup:
+	rm -rf $(TEST_DIR)
+	mkdir -p $(TEST_DIR)
 
 parsing:
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
-	ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	(cd targets/parsing && ./runme.sh $(TEST_FLAGS))
 
 includes:
-	ansible-playbook test_includes.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
+	(cd targets/includes && ./runme.sh $(TEST_FLAGS))
+
+pull_run:
+	(cd targets/pull_run && ./runme.sh $(TEST_FLAGS))
+
+pull_no_127:
+	(cd targets/pull_no_127 && ./runme.sh $(TEST_FLAGS))
+
+pull_limit_inventory:
+	(cd targets/pull_limit_inventory && ./runme.sh $(TEST_FLAGS))
 
 unicode:
-	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) -e 'extra_var=café'
-	# Test the start-at-task flag #9571
-	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v --start-at-task '*¶' -e 'start_at_task=True' $(TEST_FLAGS)
+	(cd targets/unicode && ./runme.sh $(TEST_FLAGS))
 
 test_templating_settings:
-	ansible-playbook test_templating_settings.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	(cd targets/templating_settings && ./runme.sh $(TEST_FLAGS))
+
+test_gathering_facts:
+	(cd targets/gathering_facts && ./runme.sh $(TEST_FLAGS))
 
 environment:
-	ansible-playbook test_environment.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
+	(cd targets/environment && ./runme.sh $(TEST_FLAGS))
 
-non_destructive:
-	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+non_destructive: setup
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
-destructive:
-	ansible-playbook destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+# Tests which can be run when running as root and a local SSH daemon is available.
+test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh test_delegate_to
+
+# For tests running in our Docker containers (identified with "ENV container=docker").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_docker: test_root_ssh test_async_extra_data
+
+# For tests running in our FreeBSD instances on EC2 (identified with "ENV container=freebsd").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_freebsd: test_root_ssh
+
+# For tests running in our OS X instances at MacStadium (identified with "ENV container=osx").
+# These tests are run as root and have access to a local SSH daemon.
+test_as_osx: test_root_ssh
+
+# For tests running as root.
+# Login to a local SSH daemon assumed to be unavailable.
+test_as_root: test_connection_local test_connection_chroot
+
+# For tests not running as root.
+# Login to a local SSH daemon assumed to be unavailable.
+test_as_non_root: test_connection_local
+
+# Determine which of the above environments we're running in.
+ifeq ($(container),docker)
+TEST_AS_TARGET := test_as_docker
+else ifeq ($(container),freebsd)
+TEST_AS_TARGET := test_as_freebsd
+else ifeq ($(container),osx)
+TEST_AS_TARGET := test_as_osx
+else ifeq ($(EUID),0)
+TEST_AS_TARGET := test_as_root
+else
+TEST_AS_TARGET := test_as_non_root
+endif
+
+test_as: $(TEST_AS_TARGET)
+
+test_connection_local:
+	(cd targets/connection_local && ./runme.sh $(TEST_FLAGS))
+
+test_connection_chroot:
+	(cd targets/connection_chroot && ./runme.sh $(TEST_FLAGS))
+
+test_connection_docker:
+	(cd targets/connection_docker && ./runme.sh $(TEST_FLAGS))
+
+test_connection_libvirt_lxc:
+	(cd targets/connection_libvirt_lxc && ./runme.sh $(TEST_FLAGS))
+
+test_connection_jail:
+	(cd targets/connection_jail && ./runme.sh $(TEST_FLAGS))
+
+test_connection_ssh:
+	(cd targets/connection_ssh && ./runme.sh $(TEST_FLAGS))
+
+test_connection_paramiko_ssh:
+	(cd targets/connection_paramiko_ssh && ./runme.sh $(TEST_FLAGS))
+
+test_connection_lxd:
+	(cd targets/connection_lxd && ./runme.sh $(TEST_FLAGS))
+
+test_connection_lxc:
+	(cd targets/connection_lxc && ./runme.sh $(TEST_FLAGS))
+
+test_connection_winrm:
+	(cd targets/connection_winrm && ./runme.sh $(TEST_FLAGS))
+
+destructive: setup
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 check_mode:
-	ansible-playbook check_mode.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v --check $(TEST_FLAGS)
+	(cd targets/check_mode && ./runme.sh $(TEST_FLAGS))
 
 test_group_by:
-	ansible-playbook test_group_by.yml -i inventory.group_by -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	(cd targets/group_by && ./runme.sh $(TEST_FLAGS))
 
 test_handlers:
-	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
-	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | grep -Po 'RUNNING HANDLER \[test_handlers : \K[^\]]+')" = "test handler" ]
-	# Not forcing, should only run on successful host
-	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
-	# Forcing from command line
-	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
-	# Forcing from command line, should only run later tasks on unfailed hosts
-	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_TASK_. | sort | uniq | xargs)" = "CALLED_TASK_B CALLED_TASK_D CALLED_TASK_E" ]
-	# Forcing from command line, should call handlers even if all hosts fail
-	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers --force-handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v -e fail_all=yes $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
-	# Forcing from ansible.cfg
-	[ "$$(ANSIBLE_FORCE_HANDLERS=true ansible-playbook --tags normal test_force_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
-	# Forcing true in play
-	[ "$$(ansible-playbook test_force_handlers.yml --tags force_true_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
-	# Forcing false in play, which overrides command line
-	[ "$$(ansible-playbook test_force_handlers.yml --force-handlers --tags force_false_in_play -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
+	(cd targets/handlers && ./runme.sh $(TEST_FLAGS))
 
 test_hash:
-	ANSIBLE_HASH_BEHAVIOUR=replace ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
-	ANSIBLE_HASH_BEHAVIOUR=merge ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
+	(cd targets/hash && ./runme.sh $(TEST_FLAGS))
+
+test_var_blending:
+	(cd targets/var_blending && ./runme.sh $(TEST_FLAGS))
 
 test_var_precedence:
-	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) $(TEST_FLAGS) -v -e 'extra_var=extra_var' -e 'extra_var_override=extra_var_override'
+	(cd targets/var_precedence && ./runme.sh $(TEST_FLAGS))
 
 test_vault:
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-tasks
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
+	(cd targets/vault && ./runme.sh $(TEST_FLAGS))
 
-# test_delegate_to does not work unless we have permission to ssh to localhost.
-# Would take some more effort on our test systems to implement that -- probably
-# the test node should create an ssh public-private key pair that allows the
-# root user on a node to ssh to itself.  Until then, this is not in make all.
-# Have to run it manually.  Ordinary users should be able to run this test as
-# long as they have permissions to login to their local machine via ssh.
 test_delegate_to:
-	ansible-playbook test_delegate_to.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	(cd targets/delegate_to && ./runme.sh $(TEST_FLAGS))
 
-test_winrm:
-	ansible-playbook test_winrm.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+# Split Windows CI targets to support parallel execution.
+# Targets should be balanced to have similar run times.
+ci_win: ci_win1 ci_win2 ci_win3
+ci_win1: test_win_group1
+ci_win2: test_win_group2 test_binary_modules_winrm
+ci_win3: test_win_group3 test_connection_winrm
+
+test_winrm: test_win_group1 test_win_group2 test_win_group3
+
+test_win_group1:
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group1.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group2:
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group2.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+test_win_group3:
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group3.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags:
-	# Run everything by default
-	[ "$$(ansible-playbook --list-tasks test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
-	# Run the exact tags, and always
-	[ "$$(ansible-playbook --list-tasks --tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always]" ]
-	# Skip one tag
-	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
+	(cd targets/tags && ./runme.sh $(TEST_FLAGS))
 
+blocks:
+	(cd targets/blocks && ./runme.sh $(TEST_FLAGS))
 
 cloud: amazon rackspace azure
 
@@ -158,6 +241,21 @@ cloudstack:
 	RC=$$? ; \
 	exit $$RC;
 
+exoscale:
+	ansible-playbook exoscale.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
+jenkins:
+	ansible-playbook jenkins.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
+cloudflare: $(CREDENTIALS_FILE)
+	ansible-playbook cloudflare.yml -i $(INVENTORY) -e @$(VARS_FILE) -e @$(CREDENTIALS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
 $(CONSUL_RUNNING):
 
 consul:
@@ -168,30 +266,55 @@ else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif
 
-test_galaxy: test_galaxy_spec test_galaxy_yaml
+test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git
 
-test_galaxy_spec:
+test_galaxy_spec: setup
 	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles -vvvv ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
-    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC
 
-test_galaxy_yaml:
+test_galaxy_yaml: setup
 	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles -vvvv; \
     cp galaxy_playbook.yml $$mytmpdir ; \
-    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
+test_galaxy_git: setup
+	mytmpdir=$(MYTMPDIR) ; \
+	ansible-galaxy install git+https://bitbucket.org/willthames/git-ansible-galaxy,v1.6 -p $$mytmpdir/roles -vvvv; \
+    cp galaxy_playbook_git.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook_git.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC
 
 test_lookup_paths:
-	ansible-playbook lookup_paths/play.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+	(cd targets/lookup_paths && ./runme.sh $(TEST_FLAGS))
 
 no_log:
-	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
-	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -vvvvv | awk -e 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
+	(cd targets/no_log && ./runme.sh $(TEST_FLAGS))
 
+test_binary_modules_winrm:
+	(cd targets/binary_modules_winrm && ./runme.sh $(TEST_FLAGS))
+
+test_binary_modules_posix:
+	(cd targets/binary_modules_posix && ./runme.sh $(TEST_FLAGS))
+
+test_async_extra_data:
+	(cd targets/async_extra_data && ./runme.sh $(TEST_FLAGS))
+
+test_hosts_field:
+	(cd targets/hosts_field && ./runme.sh $(TEST_FLAGS))
+
+test_lookup_properties:
+	(cd targets/lookup_properties && ./runme.sh $(TEST_FLAGS))
+
+args:
+	(cd targets/args && ./runme.sh $(TEST_FLAGS))

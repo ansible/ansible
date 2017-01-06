@@ -1,0 +1,61 @@
+---
+- debug: msg="START cli/sublevel_strict.yaml"
+
+- name: setup
+  asa_config:
+    lines:
+      - network-object 192.168.10.0 255.255.255.0
+      - network-object 192.168.20.0 255.255.255.0
+      - network-object 192.168.30.0 255.255.255.0
+      - network-object 192.168.40.0 255.255.255.0
+      - network-object 192.168.50.0 255.255.255.0
+    parents: ['object-group network OG-ANSIBLE-STRICT']
+    before: ['no object-group network OG-ANSIBLE-STRICT']
+    after: ['exit']
+    provider: "{{ cli }}"
+
+- name: configure sub level command using strict match
+  asa_config:
+    lines:
+      - network-object 192.168.10.0 255.255.255.0
+      - network-object 192.168.20.0 255.255.255.0
+      - network-object 192.168.30.0 255.255.255.0
+      - network-object 192.168.40.0 255.255.255.0
+    parents: ['object-group network OG-ANSIBLE-STRICT']
+    match: strict
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: check sub level command using strict match
+  asa_config:
+    lines:
+      - network-object 192.168.10.0 255.255.255.0
+      - network-object 192.168.30.0 255.255.255.0
+      - network-object 192.168.30.0 255.255.255.0
+    parents: ['object-group network OG-ANSIBLE-STRICT']
+    after: ['exit']
+    match: strict
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'object-group network OG-ANSIBLE-STRICT' in result.updates"
+      - "'network-object 192.168.10.0 255.255.255.0' not in result.updates"
+      - "'network-object 192.168.30.0 255.255.255.0' in result.updates"
+      - "'network-object 192.168.30.0 255.255.255.0' in result.updates"
+      - "'network-object 192.168.40.0 255.255.255.0' not in result.updates"
+      - "'network-object 192.168.50.0 255.255.255.0' not in result.updates"
+
+- name: teardown
+  asa_config:
+    lines:
+      - no object-group network OG-ANSIBLE-STRICT
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/sublevel_strict.yaml"

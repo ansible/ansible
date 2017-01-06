@@ -28,7 +28,7 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='0.01'
+VERSION='2.2'
 AUTHOR='Ansible, Inc'
 
 
@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2013-2015 Ansible, Inc"
+copyright = "2013-2016 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -100,7 +100,22 @@ exclude_patterns = ['modules']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-highlight_language = 'YAML'
+highlight_language = 'yaml'
+
+#Substitutions, variables, entities, & shortcuts for text which do not need to link to anything. 
+#For titles which should be a link, use the intersphinx anchors set at the index, chapter, and section levels, such as  qi_start_:
+rst_epilog = """
+.. |acapi| replace:: *Ansible Core API Guide*
+.. |acrn| replace:: *Ansible Core Release Notes*
+.. |ac| replace:: Ansible Core
+.. |acversion| replace:: Ansible Core Version 2.1
+.. |acversionshort| replace:: Ansible Core 2.1
+.. |versionshortest| replace:: 2.2
+.. |versiondev| replace:: 2.3
+.. |pubdate| replace:: July 19, 2016
+.. |rhel| replace:: Red Hat Enterprise Linux
+
+"""
 
 
 # Options for HTML output

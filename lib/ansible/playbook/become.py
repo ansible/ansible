@@ -31,10 +31,11 @@ except ImportError:
 
 class Become:
 
-    # Privlege escalation
+    # Privilege escalation
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
+    _become_flags        = FieldAttribute(isa='string')
 
     def __init__(self):
         return super(Become, self).__init__()
@@ -60,7 +61,7 @@ class Become:
 
         This is called from the Base object's preprocess_data() method which
         in turn is called pretty much anytime any sort of playbook object
-        (plays, tasks, blocks, etc) are created.
+        (plays, tasks, blocks, etc) is created.
         """
 
         self._detect_privilege_escalation_conflict(ds)
@@ -90,7 +91,6 @@ class Become:
 
             display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
 
-
         return ds
 
     def set_become_defaults(self, become, become_method, become_user):
@@ -102,29 +102,3 @@ class Become:
             if become_user is None:
                 become_user = C.DEFAULT_BECOME_USER
 
-    def _get_attr_become(self):
-        '''
-        Override for the 'become' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become')
-        else:
-            return self._attributes['become']
-
-    def _get_attr_become_method(self):
-        '''
-        Override for the 'become_method' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_method')
-        else:
-            return self._attributes['become_method']
-
-    def _get_attr_become_user(self):
-        '''
-        Override for the 'become_user' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_user')
-        else:
-            return self._attributes['become_user']

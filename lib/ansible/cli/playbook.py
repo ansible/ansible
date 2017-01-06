@@ -30,7 +30,10 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.block import Block
+from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager
 
 try:
@@ -72,10 +75,8 @@ class PlaybookCLI(CLI):
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
 
-        self.options, self.args = parser.parse_args(self.args[1:])
-
-
         self.parser = parser
+        super(PlaybookCLI, self).parse()
 
         if len(self.args) == 0:
             raise AnsibleOptionsError("You must specify a playbook file to run")
@@ -94,6 +95,14 @@ class PlaybookCLI(CLI):
         vault_pass = None
         passwords = {}
 
+        # initial error check, to make sure all specified playbooks are accessible
+        # before we start running anything through the playbook executor
+        for playbook in self.args:
+            if not os.path.exists(playbook):
+                raise AnsibleError("the playbook: %s could not be found" % playbook)
+            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
         # don't deal with privilege escalation or passwords when we don't need to
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
             self.normalize_become_options()
@@ -107,21 +116,15 @@ class PlaybookCLI(CLI):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
             loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             loader.set_vault_password(vault_pass)
-
-        # initial error check, to make sure all specified playbooks are accessible
-        # before we start running anything through the playbook executor
-        for playbook in self.args:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
+
+        variable_manager.options_vars = load_options_vars(self.options)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
@@ -143,6 +146,10 @@ class PlaybookCLI(CLI):
             # Invalid limit
             raise AnsibleError("Specified --limit does not match any hosts")
 
+        # flush fact cache if requested
+        if self.options.flush_cache:
+            self._flush_cache(inventory, variable_manager)
+
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
 
@@ -152,18 +159,16 @@ class PlaybookCLI(CLI):
             for p in results:
 
                 display.display('\nplaybook: %s' % p['playbook'])
-                i = 1
-                for play in p['plays']:
-                    if play.name:
-                        playname = play.name
+                for idx, play in enumerate(p['plays']):
+                    if play._included_path is not None:
+                        loader.set_basedir(play._included_path)
                     else:
-                        playname = '#' + str(i)
+                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
+                        loader.set_basedir(pb_dir)
 
-                    msg = "\n  PLAY: %s" % (playname)
-                    mytags = set()
-                    if self.options.listtags and play.tags:
-                        mytags = mytags.union(set(play.tags))
-                        msg += '    TAGS: [%s]' % (','.join(mytags))
+                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
+                    mytags = set(play.tags)
+                    msg += '\tTAGS: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
                         playhosts = set(inventory.get_hosts(play.hosts))
@@ -173,23 +178,53 @@ class PlaybookCLI(CLI):
 
                     display.display(msg)
 
+                    all_tags = set()
                     if self.options.listtags or self.options.listtasks:
-                        taskmsg = '    tasks:'
+                        taskmsg = ''
+                        if self.options.listtasks:
+                            taskmsg = '    tasks:\n'
 
+                        def _process_block(b):
+                            taskmsg = ''
+                            for task in b.block:
+                                if isinstance(task, Block):
+                                    taskmsg += _process_block(task)
+                                else:
+                                    if task.action == 'meta':
+                                        continue
+
+                                    all_tags.update(task.tags)
+                                    if self.options.listtasks:
+                                        cur_tags = list(mytags.union(set(task.tags)))
+                                        cur_tags.sort()
+                                        if task.name:
+                                            taskmsg += "      %s" % task.get_name()
+                                        else:
+                                            taskmsg += "      %s" % task.action
+                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+                            return taskmsg
+
+                        all_vars = variable_manager.get_vars(loader=loader, play=play)
+                        play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
+                            block = block.filter_tagged_tasks(play_context, all_vars)
                             if not block.has_tasks():
                                 continue
+                            taskmsg += _process_block(block)
 
-                            j = 1
-                            for task in block.block:
-                                taskmsg += "\n      %s" % task
-                                if self.options.listtags and task.tags:
-                                    taskmsg += "    TAGS: [%s]" % ','.join(mytags.union(set(task.tags)))
-                                j = j + 1
+                        if self.options.listtags:
+                            cur_tags = list(mytags.union(all_tags))
+                            cur_tags.sort()
+                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
 
                         display.display(taskmsg)
 
-                    i = i + 1
             return 0
         else:
             return results
+
+    def _flush_cache(self, inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)

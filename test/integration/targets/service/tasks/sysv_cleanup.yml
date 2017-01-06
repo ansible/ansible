@@ -1,0 +1,9 @@
+- name: remove the sysV init file
+  file: path=/etc/init.d/ansible_test state=absent
+  register: remove_sysv_result
+
+- name: assert that the sysV init file was removed
+  assert:
+    that:
+    - "remove_sysv_result.path == '/etc/init.d/ansible_test'"
+    - "remove_sysv_result.state == 'absent'"

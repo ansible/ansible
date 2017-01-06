@@ -20,6 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.compat.six import string_types
+
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
 from ansible.errors import AnsibleError
@@ -53,9 +55,13 @@ class ActionModule(ActionBase):
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        name, port = parse_address(new_name, allow_ranges=False)
-        if not name:
-            raise AnsibleError("Invalid inventory hostname: %s" % new_name)
+        try:
+            name, port = parse_address(new_name, allow_ranges=False)
+        except:
+            # not a parsable hostname, but might still be usable
+            name = new_name
+            port = None
+
         if port:
             self._task.args['ansible_ssh_port'] = port
 
@@ -63,7 +69,14 @@ class ActionModule(ActionBase):
         # add it to the group if that was specified
         new_groups = []
         if groups:
-            for group_name in groups.split(","):
+            if isinstance(groups, list):
+               group_list = groups
+            elif isinstance(groups, string_types):
+               group_list = groups.split(",")
+            else:
+               raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
+
+            for group_name in group_list:
                 if group_name not in new_groups:
                     new_groups.append(group_name.strip())
 

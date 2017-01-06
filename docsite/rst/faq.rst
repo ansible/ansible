@@ -15,6 +15,7 @@ Setting environment variables can be done with the `environment` keyword. It can
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
       SOME: value
 
+.. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
 
 
 How do I handle different machines needing different user accounts or ports to log in with?
@@ -22,7 +23,7 @@ How do I handle different machines needing different user accounts or ports to l
 
 Setting inventory variables in the inventory file is the easiest way.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports::
 
@@ -38,7 +39,7 @@ You can also dictate the connection type to be used, if you want::
     foo.example.com
     bar.example.com 
 
-You may also wish to keep these in group variables instead, or file in them in a group_vars/<groupname> file.
+You may also wish to keep these in group variables instead, or file them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
 
 .. _use_ssh:
@@ -174,7 +175,9 @@ How do I loop over a list of hosts in a group, inside of a template?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 A pretty common pattern is to iterate over a list of hosts inside of a host group, perhaps to populate a template configuration
-file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this::
+file with a list of servers. To do this, you can just access the "$groups" dictionary in your template, like this:
+
+.. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
         {{ host }}
@@ -184,7 +187,7 @@ If you need to access facts about these hosts, for instance, the IP address of e
 
     - hosts:  db_servers
       tasks:
-        - # doesn't matter what you do, just that they were talked to previously.
+        - debug: msg="doesn't matter what you do, just that they were talked to previously."
 
 Then you can use the facts inside your template, like this::
 
@@ -261,11 +264,11 @@ How do I generate crypted passwords for the user module?
 
 The mkpasswd utility that is available on most Linux systems is a great option::
 
-    mkpasswd --method=SHA-512
+    mkpasswd --method=sha-512
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
-password hashing library is installed.
+password hashing library is installed::
 
     pip install passlib
 
@@ -273,12 +276,15 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
     python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
 
+Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
+
 .. _commercial_support:
 
-Can I get training on Ansible or find commercial support?
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Can I get training on Ansible?
+++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <http://www.ansible.com/services>`_ for information on our services and training offerings. Support is also included with :doc:`tower`. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <http://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
 We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
@@ -304,8 +310,6 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-.. _i_dont_see_my_question:
-
 In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
@@ -320,7 +324,42 @@ The no_log attribute can also apply to an entire play::
       no_log: True
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
-be applied to single tasks only, once a playbook is completed.   
+be applied to single tasks only, once a playbook is completed. Note that the use of the
+no_log attribute does not prevent data from being shown when debugging Ansible itself via
+the ANSIBLE_DEBUG environment variable.
+
+
+.. _when_to_use_brackets:
+.. _dynamic_variables:
+.. _interpolate_variables:
+
+When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+A steadfast rule is 'always use {{ }} except when `when:`'.
+Conditionals are always run through Jinja2 as to resolve the expression,
+so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
+
+In most other cases you should always use the brackets, even if previouslly you could use variables without specifying (like `with_` clauses),
+as this made it hard to distinguish between an undefined variable and a string.
+
+Another rule is 'moustaches don't stack'. We often see this::
+
+     {{ somevar_{{other_var}} }}
+
+The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
+
+    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+
+
+.. _i_dont_see_my_question:
+
+
+Why don't you ship in X format?
++++++++++++++++++++++++++++++++
+
+Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
+In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
 
 
 I don't see my question here

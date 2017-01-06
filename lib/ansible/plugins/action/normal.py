@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
+from ansible.utils.vars import merge_hash
 
 
 class ActionModule(ActionBase):
@@ -27,12 +28,16 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         results = super(ActionModule, self).run(tmp, task_vars)
-        results.update(self._execute_module(tmp=tmp, task_vars=task_vars))
-
+        # remove as modules might hide due to nolog
+        del results['invocation']['module_args']
+        results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars))
         # Remove special fields from the result, which can only be set
         # internally by the executor engine. We do this only here in
         # the 'normal' action, as other action plugins may set this.
-        for field in ('ansible_notify',):
+        #
+        # We don't want modules to determine that running the module fires
+        # notify handlers.  That's for the playbook to decide.
+        for field in ('_ansible_notify',):
             if field in results:
                 results.pop(field)
 

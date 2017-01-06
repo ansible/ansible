@@ -23,13 +23,13 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import traceback
 
-from ansible import constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase
+from ansible.module_utils._text import to_bytes
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 try:
     from __main__ import display
@@ -37,16 +37,16 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-BUFSIZE = 65536
-
 
 class Connection(ConnectionBase):
     ''' Local BSD Jail based connections '''
 
+    modified_jailname_key = 'conn_jail_name'
+
     transport = 'jail'
     # Pipelining may work.  Someone needs to test by setting this to True and
     # having pipelining=True in their ansible.cfg
-    has_pipelining = False
+    has_pipelining = True
     # Some become_methods may work in v2 (sudo works for other chroot-based
     # plugins while su seems to be failing).  If some work, check chroot.py to
     # see how to disable just some methods.
@@ -56,6 +56,8 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
+        if self.modified_jailname_key in kwargs :
+            self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:
             raise AnsibleError("jail connection requires running as root")
@@ -70,7 +72,7 @@ class Connection(ConnectionBase):
     def _search_executable(executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise AnsibleError("%s command not found in PATH") % executable
+            raise AnsibleError("%s command not found in PATH" % executable)
         return cmd
 
     def list_jails(self):
@@ -83,7 +85,7 @@ class Connection(ConnectionBase):
         return stdout.split()
 
     def get_jail_path(self):
-        p = subprocess.Popen([self.jls_cmd, '-j', self.jail, '-q', 'path'],
+        p = subprocess.Popen([self.jls_cmd, '-j', to_bytes(self.jail), '-q', 'path'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -95,7 +97,7 @@ class Connection(ConnectionBase):
         ''' connect to the jail; nothing to do here '''
         super(Connection, self)._connect()
         if not self._connected:
-            display.vvv("THIS IS A LOCAL JAIL DIR", host=self.jail)
+            display.vvv(u"ESTABLISH JAIL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self.jail)
             self._connected = True
 
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
@@ -106,10 +108,19 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
 
-        display.vvv("EXEC %s" % (local_cmd), host=self.jail)
+        local_cmd = [self.jexec_cmd]
+        set_env = ''
+
+        if self._play_context.remote_user is not None:
+            local_cmd += ['-U', self._play_context.remote_user]
+            # update HOME since -U does not update the jail environment
+            set_env = 'HOME=~' + self._play_context.remote_user + ' '
+
+        local_cmd += [self.jail, self._play_context.executable, '-c', set_env + cmd]
+
+        display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -118,13 +129,6 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the jail '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-
-        # TODO: Check whether we can send the command to stdin via
-        # p.communicate(in_data)
-        # If we can, then we can change this plugin to has_pipelining=True and
-        # remove the error if in_data is given.
-        if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         p = self._buffered_exec_command(cmd)
 
@@ -150,9 +154,9 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
-            with open(in_path, 'rb') as in_file:
+            with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
@@ -172,13 +176,13 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = shlex_quote(self._prefix_login_path(in_path))
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:
             raise AnsibleError("jail connection requires dd command in the jail")
 
-        with open(out_path, 'wb+') as out_file:
+        with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
             try:
                 chunk = p.stdout.read(BUFSIZE)
                 while chunk:

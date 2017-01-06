@@ -1,0 +1,35 @@
+---
+- debug: msg="START netconf/src_basic.yaml"
+
+- name: setup
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname }}
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+
+- name: configure device with config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is not defined"
+
+- name: check device with config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is not defined"
+
+- debug: msg="END netconf/src_basic.yaml"

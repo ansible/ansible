@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # This code is part of Ansible, but is an independent component.
@@ -43,6 +42,7 @@ def f5_argument_spec():
         user=dict(type='str', required=True),
         password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
         validate_certs = dict(default='yes', type='bool'),
+        server_port = dict(type='int', default=443, required=False),
         state = dict(type='str', default='present', choices=['present', 'absent']),
         partition = dict(type='str', default='Common')
     )
@@ -51,19 +51,41 @@ def f5_argument_spec():
 def f5_parse_arguments(module):
     if not bigsuds_found:
         module.fail_json(msg="the python bigsuds module is required")
-    if not module.params['validate_certs']:
-        disable_ssl_cert_validation()
-    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'])
 
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+    if module.params['validate_certs']:
+        import ssl
+        if not hasattr(ssl, 'SSLContext'):
+            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+
+    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'],module.params['server_port'])
+
+
+def bigip_api(bigip, user, password, validate_certs, port=443):
+    try:
+        if bigsuds.__version__ >= '1.0.4':
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs, port=port)
+        elif bigsuds.__version__ == '1.0.3':
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs)
+        else:
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+    except TypeError:
+        # bigsuds < 1.0.3, no verify param
+        if validate_certs:
+            # Note: verified we have SSLContext when we parsed params
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+        else:
+            import ssl
+            if hasattr(ssl, 'SSLContext'):
+                # Really, you should never do this.  It disables certificate
+                # verification *globally*.  But since older bigip libraries
+                # don't give us a way to toggle verification we need to
+                # disable it at the global level.
+                # From https://www.python.org/dev/peps/pep-0476/#id29
+                ssl._create_default_https_context = ssl._create_unverified_context
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+
     return api
 
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
 
 # Fully Qualified name (with the partition)
 def fq_name(partition,name):
@@ -71,10 +93,13 @@ def fq_name(partition,name):
         return '/%s/%s' % (partition,name)
     return name
 
-# Fully Qualified name (with partition) for a list 
+
+# Fully Qualified name (with partition) for a list
 def fq_list_names(partition,list_names):
     if list_names is None:
         return None
     return map(lambda x: fq_name(partition,x),list_names)
 
 
+class F5ModuleError(Exception):
+    pass

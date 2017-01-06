@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 '''
 nsot
@@ -148,6 +148,7 @@ from pynsot.client import get_api_client
 from pynsot.app import HttpServerError
 from click.exceptions import UsageError
 
+from six import string_types
 
 def warning(*objs):
         print("WARNING: ", *objs, file=sys.stderr)
@@ -200,7 +201,7 @@ class NSoTInventory(object):
         _inventory_group()
         '''
         inventory = dict()
-        for group, contents in self.config.iteritems():
+        for group, contents in self.config.items():
             group_response = self._inventory_group(group, contents)
             inventory.update(group_response)
         inventory.update({'_meta': self._meta})
@@ -251,7 +252,7 @@ class NSoTInventory(object):
         obj[group]['hosts'] = []
         obj[group]['vars'] = hostvars
         try:
-            assert isinstance(query, basestring)
+            assert isinstance(query, string_types)
         except:
             sys.exit('ERR: Group queries must be a single string\n'
                      '  Group: %s\n'

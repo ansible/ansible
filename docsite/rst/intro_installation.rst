@@ -27,12 +27,11 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version.
 
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
-these are infrequent.
+Ansible's release cycles are usually about four months long. Due to this short release cycle,
+minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
+Major bugs will still have maintenance releases when needed, though these are infrequent.
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
@@ -48,21 +47,27 @@ Control Machine Requirements
 
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
+.. note::
+  Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
+
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of 2.0 ansible uses a few more file handles to manage its forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+    As of version 2.0, Ansible uses a few more file handles to manage its forks. Mac OS X by default is configured for a small amount of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
+
+.. warning::
+
+    Please note that some modules and plugins have additional requirements. For modules these need to be satisfied on the 'target' machine and should be listed in the module specific docs.
 
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
-Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, which is normally ssh. By default this uses sftp. If that's not available, you can switch to scp in ansible.cfg.
+You also need Python 2.4 or later. If you are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson``
 
@@ -83,13 +88,16 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
 
 .. note::
 
-   Python 3 is a slightly different language than Python 2 and most Python programs (including
-   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
+
+   By default, Ansible uses Python 2 in order to maintain compatibility with older distributions
+   such as RHEL 5 and RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.
+
 
    If you need to bootstrap these remote systems by installing Python 2.X,
    using the 'raw' module will be able to do it remotely. For example,
@@ -100,85 +108,6 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
 
 Installing the Control Machine
 ``````````````````````````````
-
-.. _from_source:
-
-Running From Source
-+++++++++++++++++++
-
-Ansible is trivially easy to run from a checkout, root permissions are not required
-to use it and there is no software to actually install for Ansible itself.  No daemons
-or database setup are required.  Because of this, many users in our community use the
-development version of Ansible all of the time, so they can take advantage of new features
-when they are implemented, and also easily contribute to the project. Because there is
-nothing to install, following the development version is significantly easier than most
-open source projects.
-
-.. note::
-  
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
-
-
-To install from source.
-
-.. code-block:: bash
-
-    $ git clone git://github.com/ansible/ansible.git --recursive
-    $ cd ./ansible
-
-Using Bash:
-
-.. code-block:: bash
-
-    $ source ./hacking/env-setup
-
-Using Fish::
-
-    $ . ./hacking/env-setup.fish
-
-If you want to suppress spurious warnings/errors, use::
-
-    $ source ./hacking/env-setup -q
-
-If you don't have pip installed in your version of Python, install pip::
-
-    $ sudo easy_install pip
-
-Ansible also uses the following Python modules that need to be installed [1]_::
-
-    $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
-
-Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
-which point at Ansible's own modules (not the same kind of modules, alas).
-
-.. code-block:: bash
-
-    $ git pull --rebase
-    $ git submodule update --init --recursive
-
-Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
-other than /etc/ansible/hosts:
-
-.. code-block:: bash
-
-    $ echo "127.0.0.1" > ~/ansible_hosts
-    $ export ANSIBLE_INVENTORY=~/ansible_hosts
-
-.. note::
-
-    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
-
-You can read more about the inventory file in later parts of the manual.
-
-Now let's test things with a ping command:
-
-.. code-block:: bash
-
-    $ ansible all -m ping --ask-pass
-
-You can also use "sudo make install" if you wish.
-
 .. _from_yum:
 
 Latest Release Via Yum
@@ -186,19 +115,19 @@ Latest Release Via Yum
 
 RPMs are available from yum for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6, 7, and currently supported
-Fedora distributions. 
+Fedora distributions.
 
 Ansible itself can manage earlier operating
 systems that contain Python 2.4 or higher (so also EL5).
 
 Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-   
+
 .. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
+You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install. Make sure you have ``rpm-build``, ``make``, ``asciidoc``, ``git``, ``python-setuptools`` and ``python2-devel`` installed.
 
 .. code-block:: bash
 
@@ -223,6 +152,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
+.. note:: For the older version 1.9 we use this ppa:ansible/ansible-1.9
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
@@ -233,7 +163,25 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
 You may also wish to run from source to get the latest, which is covered above.
 
-.. _from_pkg:
+Latest Releases Via Apt (Debian)
+++++++++++++++++++++++++++++++++
+
+Debian users may leverage the same source as the Ubuntu PPA.
+
+Add the following line to /etc/apt/sources.list:
+
+.. code-block:: bash
+
+    deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
+
+Then run these commands:
+
+.. code-block:: bash
+
+    $ sudo apt-get update
+    $ sudo apt-get install ansible
+
+.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
 
 Latest Releases Via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
@@ -319,6 +267,10 @@ Then install Ansible with [1]_::
 
    $ sudo pip install ansible
 
+Or if you are looking for the latest development version::
+
+    pip install git+git://github.com/ansible/ansible.git@devel
+
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
@@ -333,6 +285,84 @@ Tarballs of Tagged Releases
 Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the `Ansible downloads <http://releases.ansible.com/ansible>`_ page.
 
 These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
+
+.. _from_source:
+
+Running From Source
++++++++++++++++++++
+
+Ansible is easy to run from a checkout - root permissions are not required
+to use it and there is no software to actually install.  No daemons
+or database setup are required.  Because of this, many users in our community use the
+development version of Ansible all of the time so they can take advantage of new features
+when they are implemented and easily contribute to the project. Because there is
+nothing to install, following the development version is significantly easier than most
+open source projects.
+
+.. note::
+
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
+
+
+To install from source.
+
+.. code-block:: bash
+
+    $ git clone git://github.com/ansible/ansible.git --recursive
+    $ cd ./ansible
+
+Using Bash:
+
+.. code-block:: bash
+
+    $ source ./hacking/env-setup
+
+Using Fish::
+
+    $ . ./hacking/env-setup.fish
+
+If you want to suppress spurious warnings/errors, use::
+
+    $ source ./hacking/env-setup -q
+
+If you don't have pip installed in your version of Python, install pip::
+
+    $ sudo easy_install pip
+
+Ansible also uses the following Python modules that need to be installed [1]_::
+
+    $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
+
+Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
+which point at Ansible's own modules (not the same kind of modules, alas).
+
+.. code-block:: bash
+
+    $ git pull --rebase
+    $ git submodule update --init --recursive
+
+Once running the env-setup script you'll be running from checkout and the default inventory file
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
+other than /etc/ansible/hosts:
+
+.. code-block:: bash
+
+    $ echo "127.0.0.1" > ~/ansible_hosts
+    $ export ANSIBLE_INVENTORY=~/ansible_hosts
+
+.. note::
+
+    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
+
+You can read more about the inventory file in later parts of the manual.
+
+Now let's test things with a ping command:
+
+.. code-block:: bash
+
+    $ ansible all -m ping --ask-pass
+
+You can also use "sudo make install".
 
 .. seealso::
 

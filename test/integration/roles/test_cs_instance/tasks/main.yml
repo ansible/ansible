@@ -4,3 +4,8 @@
 - include: tags.yml
 - include: absent.yml
 - include: cleanup.yml
+
+- include: setup.yml
+- include: present_display_name.yml
+- include: absent_display_name.yml
+- include: cleanup.yml

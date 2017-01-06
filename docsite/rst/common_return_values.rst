@@ -1,40 +1,82 @@
+.. _common_return_values:
+
 Common Return Values
 ====================
 
 .. contents:: Topics
 
-Ansible modules normally return a data structure that can be registered into a variable, or seen directly when using
-the `ansible` program as output. Here we document the values common to all modules, each module can optionally document
-its own unique returns. If these docs exist they will be visible through ansible-doc and https://docs.ansible.com.
+Ansible modules normally return a data structure that can be registered into a variable, or seen directly when output by 
+the `ansible` program. Each module can optionally document its own unique return values (visible through ansible-doc and https://docs.ansible.com).
 
-.. _facts:
+This document covers return values common to all modules. 
 
-Facts
-`````
-
-Some modules return 'facts' to ansible (i.e setup), this is done through a 'ansible_facts' key and anything inside
-will automatically be available for the current host directly as a variable and there is no need to
-register this data.
+.. note:: Some of these keys might be set by Ansible itself once it processes the module's return information.
 
 
-.. _status:
 
-Status
+backup_file
+```````````
+For those modules that implement `backup=no|yes` when manipulating files, a path to the backup file created.
+
+changed
+```````
+A boolean indicating if the task had to make changes.
+
+failed
 ``````
+A boolean that indicates if the task was failed or not.
 
-Every module must return a status, saying if the module was successful, if anything changed or not. Ansible itself
-will return a status if it skips the module due to a user condition (when: ) or running in check mode when the module
-does not support it.
+invocation
+``````````
+Information on how the module was invoked.
 
+msg
+```
+A string with a generic message relayed to the user.
 
-.. _other:
+rc
+``
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains 'return code' of these utilities.
 
-Other common returns
-````````````````````
+results
+```````
+If this key exists, it indicates that a loop was present for the task and that it contains a list of the normal module 'result' per item.
 
-It is common on failure or success to return a 'msg' that either explains the failure or makes a note about the execution.
-Some modules, specifically those that execute shell or commands directly, will return stdout and stderr, if ansible sees
-a stdout in the results it will append a stdout_lines which is just a list or the lines in stdout.
+skipped
+```````
+A boolean that indicates if the task was skipped or not
+
+stderr
+``````
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains the error output of these utilities.
+
+stderr_lines
+````````````
+When c(stderr) is returned we also always provide this field which is a list of strings, one item per line from the original.
+
+stdout
+``````
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc). This field contains the normal output of these utilities.
+
+stdout_lines
+````````````
+When c(stdout) is returned, Ansible always provides a list of strings, each containing one item per line from the original output.
+
+Internal use
+============
+These keys can be added by modules but will be removed from registered variables; they are 'consumed' by Ansible itself.
+
+ansible_facts
+`````````````
+This key should contain a dictionary which will be appended to the facts assigned to the host. These will be directly accessible and don't require using a registered variable.
+
+exception
+`````````
+This key can contain traceback information caused by an exception in a module. It will only be displayed on high verbosity (-vvv).
+
+warnings
+````````
+This key contains a list of strings that will be presented to the user.
 
 .. seealso::
 

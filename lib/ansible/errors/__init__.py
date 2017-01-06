@@ -24,9 +24,9 @@ from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
         YAML_COMMON_DICT_ERROR,
         YAML_COMMON_UNQUOTED_COLON_ERROR,
         YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
-        YAML_COMMON_UNBALANCED_QUOTES_ERROR )
-
-from ansible.utils.unicode import to_unicode, to_str
+        YAML_COMMON_UNBALANCED_QUOTES_ERROR,
+        YAML_COMMON_LEADING_TAB_ERROR)
+from ansible.module_utils._text import to_native, to_text
 
 
 class AnsibleError(Exception):
@@ -44,7 +44,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message="", obj=None, show_content=True):
+    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=False):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -53,10 +53,12 @@ class AnsibleError(Exception):
         self._show_content = show_content
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
-            if extended_error:
-                self.message = 'ERROR! %s\n\n%s' % (message, to_str(extended_error))
+            if extended_error and not suppress_extended_error:
+                self.message = '%s\n\n%s' % (to_native(message), to_native(extended_error))
+            else:
+                self.message = '%s' % to_native(message)
         else:
-            self.message = 'ERROR! %s' % message
+            self.message = '%s' % to_native(message)
 
     def __str__(self):
         return self.message
@@ -66,7 +68,7 @@ class AnsibleError(Exception):
 
     def _get_error_lines_from_file(self, file_name, line_number):
         '''
-        Returns the line in the file which coresponds to the reported error
+        Returns the line in the file which corresponds to the reported error
         location, as well as the line preceding it (if the error did not
         occur on the first line), to provide context to the error.
         '''
@@ -102,14 +104,17 @@ class AnsibleError(Exception):
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
-                target_line = to_unicode(target_line)
-                prev_line = to_unicode(prev_line)
+                target_line = to_text(target_line)
+                prev_line = to_text(prev_line)
                 if target_line:
                     stripped_line = target_line.replace(" ","")
                     arrow_line    = (" " * (col_number-1)) + "^ here"
                     #header_line   = ("=" * 73)
                     error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
 
+                    # TODO: There may be cases where there is a valid tab in a line that has other errors.
+                    if '\t' in target_line:
+                        error_message += YAML_COMMON_LEADING_TAB_ERROR
                     # common error/remediation checking here:
                     # check for unquoted vars starting lines
                     if ('{{' in target_line and '}}' in target_line) and ('"{{' not in target_line or "'{{" not in target_line):
@@ -191,3 +196,8 @@ class AnsibleUndefinedVariable(AnsibleRuntimeError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
     pass
+
+class AnsibleModuleExit(Exception):
+    ''' local module exit '''
+    def __init__(self, result):
+        self.result = result

@@ -1,0 +1,42 @@
+---
+- debug: msg="START cli/facts.yaml"
+
+- name: test all facts
+  dellos9_facts:
+    gather_subset:
+      - all
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.ansible_facts is defined"
+
+- name: test all facts except hardware
+  dellos9_facts:
+    gather_subset:
+      - "!hardware"
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.ansible_facts.ansible_net_filesystems is not defined"
+
+- name: test interface facts
+  dellos9_facts:
+    gather_subset:
+      - interfaces
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.ansible_facts.ansible_net_interfaces is defined"
+      - "result.ansible_facts.ansible_net_filesystems is not defined"
+
+
+- debug: msg="END cli/facts.yaml"

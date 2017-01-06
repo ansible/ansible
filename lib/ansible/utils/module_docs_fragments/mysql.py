@@ -24,32 +24,38 @@ class ModuleDocFragment(object):
 options:
   login_user:
     description:
-      - The username used to authenticate with
+      - The username used to authenticate with.
     required: false
     default: null
   login_password:
     description:
-      - The password used to authenticate with
+      - The password used to authenticate with.
     required: false
     default: null
   login_host:
     description:
-      - Host running the database
+      - Host running the database.
     required: false
     default: localhost
   login_port:
     description:
-      - Port of the MySQL server. Requires login_host be defined as other then localhost if login_port is used
+      - Port of the MySQL server. Requires I(login_host) be defined as other then localhost if login_port is used.
     required: false
     default: 3306
   login_unix_socket:
     description:
-      - The path to a Unix domain socket for local connections
+      - The path to a Unix domain socket for local connections.
     required: false
     default: null
+  connect_timeout:
+    description:
+      - The connection timeout when connecting to the MySQL server.
+    required: false
+    default: 30
+    version_added: "2.1"
   config_file:
     description:
-      - Specify a config file from which user and password are to be read
+      - Specify a config file from which user and password are to be read.
     required: false
     default: '~/.my.cnf'
     version_added: "2.0"

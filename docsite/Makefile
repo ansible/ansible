@@ -1,11 +1,12 @@
-#!/usr/bin/make
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../hacking/module_formatter.py
+DUMPER=../hacking/dump_playbook_attributes.py
+CPUS ?= 1
 
 all: clean docs
 
-docs: clean modules staticmin
-	./build-site.py
+docs: clean directives modules staticmin
+	./build-site.py -j $(CPUS)
 	-(cp *.ico htmlout/)
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
@@ -15,10 +16,12 @@ variables:
 	dot variables.dot -Tpng -o htmlout/variables.png
 
 viewdocs: clean staticmin
-	./build-site.py view
+	./build-site.py -j $(CPUS) view
 
 htmldocs: staticmin
-	./build-site.py rst
+	./build-site.py -j $(CPUS) rst
+
+webdocs: htmldocs
 
 clean:
 	-rm -rf htmlout
@@ -39,8 +42,11 @@ clean:
 
 .PHONEY: docs clean
 
+directives: $(FORMATTER) ../hacking/templates/rst.j2
+	PYTHONPATH=../lib $(DUMPER) --template-dir=../hacking/templates --output-dir=rst/
+
 modules: $(FORMATTER) ../hacking/templates/rst.j2
 	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../lib/ansible/modules -o rst/
 
 staticmin:
-	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ \t]*//g; s/[ \t]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
+	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css

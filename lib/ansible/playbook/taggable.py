@@ -37,8 +37,12 @@ class Taggable:
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
-        elif isinstance(ds, basestring):
-            return [ ds ]
+        elif isinstance(ds, string_types):
+            value = ds.split(',')
+            if isinstance(value, list):
+                return [ x.strip() for x in value ]
+            else:
+                return [ ds ]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 

@@ -20,8 +20,10 @@ __metaclass__ = type
 
 import os
 
+from ansible.constants import mk_boolean as boolean
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 
 
 class ActionModule(ActionBase):
@@ -34,6 +36,7 @@ class ActionModule(ActionBase):
 
         src        = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
+        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
         if src is None:
             result['failed'] = True
@@ -45,21 +48,22 @@ class ActionModule(ActionBase):
             result.update(self._execute_module(task_vars=task_vars))
             return result
 
-        if self._task._role is not None:
-            src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
-        else:
-            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
+        try:
+            src = self._find_needle('files', src)
+        except AnsibleError as e:
+            result['failed'] = True
+            result['msg'] = to_native(e)
+            return result
 
         # create the remote tmp dir if needed, and put the source file there
         if tmp is None or "-tmp-" not in tmp:
-            tmp = self._make_tmp_path()
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
-        self._connection.put_file(src, tmp_src)
+        self._transfer_file(src, tmp_src)
 
-        if self._play_context.become and self._play_context.become_user != 'root':
-            if not self._play_context.check_mode:
-                self._remote_chmod('a+r', tmp_src)
+        self._fixup_perms2((tmp, tmp_src), remote_user)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(
@@ -69,4 +73,5 @@ class ActionModule(ActionBase):
         )
 
         result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
         return result
