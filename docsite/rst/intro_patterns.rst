@@ -37,6 +37,8 @@ This means the host may be in either one group or the other::
     webservers
     webservers:dbservers
 
+.. note:: Prior to version 2, the notation for listing multiple selectors was a colon, ":", instead of a comma
+
 You can exclude groups as well, for instance, all machines must be in the group webservers but not in the group phoenix::
 
     webservers:!phoenix
