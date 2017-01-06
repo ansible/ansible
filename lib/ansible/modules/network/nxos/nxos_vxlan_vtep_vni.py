@@ -376,11 +376,11 @@ def get_existing(module, args):
         parents = ['interface {0}'.format(interface_exist)]
         temp_config = netcfg.get_section(parents)
 
-        if 'associate-vrf' in temp_config:
+        if 'member vni {0} associate-vrf'.format(module.params['vni']) in temp_config:
             parents.append('member vni {0} associate-vrf'.format(
                                                     module.params['vni']))
             config = netcfg.get_section(parents)
-        elif 'member vni' in temp_config:
+        elif "member vni {0}".format(module.params['vni']) in temp_config:
             parents.append('member vni {0}'.format(module.params['vni']))
             config = netcfg.get_section(parents)
         else:
