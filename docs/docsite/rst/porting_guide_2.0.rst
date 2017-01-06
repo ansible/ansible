@@ -91,7 +91,7 @@ uses key=value escaping which has not changed.  The other option is to check for
   `environment` at the play level and depending on `ansible_env` existing. Previouslly this was ignored but now might issue an 'Undefined' error.
 
 Deprecated
-----------
+~~~~~~~~~~
 
 While all items listed here will show a deprecation warning message, they still work as they did in 1.9.x. Please note that they will be removed in 2.2 (Ansible always waits two major releases to remove a deprecated feature).
 
@@ -151,7 +151,7 @@ Should now be::
 
 
 Other caveats
--------------
+~~~~~~~~~~~~~
 
 Here are some corner cases encountered when updating, these are mostly caused by the more stringent parser validation and the capture of errors that were previouslly ignored.
 
@@ -204,28 +204,29 @@ Here are some corner cases encountered when updating, these are mostly caused by
   The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it difficult to display a proper error.
 
 Porting plugins
-===============
+---------------
 
 In ansible-1.9.x, you would generally copy an existing plugin to create a new one. Simply implementing the methods and attributes that the caller of the plugin expected made it a plugin of that type. In ansible-2.0, most plugins are implemented by subclassing a base class for each plugin type. This way the custom plugin does not need to contain methods which are not customized.
 
 
 Lookup plugins
---------------
+~~~~~~~~~~~~~~
 * lookup plugins ; import version
 
 
 Connection plugins
-------------------
+~~~~~~~~~~~~~~~~~~
 
 * connection plugins
 
 Action plugins
---------------
+~~~~~~~~~~~~~~
+
 
 * action plugins
 
 Callback plugins
-----------------
+~~~~~~~~~~~~~~~~
 
 Although Ansible 2.0 provides a new callback API the old one continues to work
 for most callback plugins.  However, if your callback plugin makes use of
@@ -259,13 +260,14 @@ populates the callback with them.  Here's a short snippet that shows you how::
 
 
 Connection plugins
-------------------
+~~~~~~~~~~~~~~~~~~
 
 * connection plugins
 
 
 Hybrid plugins
-==============
+--------------
+
 In specific cases you may want a plugin that supports both ansible-1.9.x *and* ansible-2.0. Much like porting plugins from v1 to v2, you need to understand how plugins work in each version and support both requirements. It may mean playing tricks on Ansible.
 
 Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your plugin to provide similar pieces (subclasses, methods) for ansible-1.9.x as ansible-2.0 expects. This way your code will look a lot cleaner.
@@ -286,7 +288,7 @@ You may find the following tips useful:
 
 
 Lookup plugins
---------------
+~~~~~~~~~~~~~~
 As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand::
 
     from __future__ import (absolute_import, division, print_function)
@@ -351,28 +353,28 @@ As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  T
 
 
 Connection plugins
-------------------
+~~~~~~~~~~~~~~~~~~
 
 * connection plugins
 
 Action plugins
---------------
+~~~~~~~~~~~~~~
 
 * action plugins
 
 Callback plugins
-----------------
+~~~~~~~~~~~~~~~~
 
 * callback plugins
 
 Connection plugins
-------------------
+~~~~~~~~~~~~~~~~~~
 
 * connection plugins
 
 
 Porting custom scripts
-======================
+----------------------
 
 Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to:
 https://github.com/ansible/ansible/blob/devel/docsite/rst/developing_api.rst
