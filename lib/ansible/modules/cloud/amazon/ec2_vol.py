@@ -69,7 +69,7 @@ options:
     description:
       - Specify the id of the KMS key to use.
     default: null
-    version_added: "2.1"
+    version_added: "2.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -332,7 +332,6 @@ def boto_supports_kms_key_id():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
 
-
 def create_volume(module, ec2, zone):
     changed = False
     name = module.params.get('name')
@@ -350,7 +349,7 @@ def create_volume(module, ec2, zone):
     if volume is None:
         try:
             if boto_supports_volume_encryption():
-                if kms_key_id:
+                if kms_key_id is not None:
                     volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted, kms_key_id)
                 else:
                     volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
@@ -427,7 +426,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
         dot = instance.block_device_mapping[device_name].delete_on_termination
     except boto.exception.BotoServerError as e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-  
+
     if delete_on_termination != dot:
         try:
             bdt = BlockDeviceType(delete_on_termination=delete_on_termination)
@@ -436,7 +435,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
 
             ec2.modify_instance_attribute(instance_id=instance.id, attribute='blockDeviceMapping', value=bdm)
 
-	    while instance.block_device_mapping[device_name].delete_on_termination != delete_on_termination:
+            while instance.block_device_mapping[device_name].delete_on_termination != delete_on_termination:
                 time.sleep(3)
                 instance.update()
             changed = True
@@ -566,7 +565,7 @@ def main():
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
 
-    if kms_key_id and not boto_supports_kms_key_id():
+    if kms_key_id is not None and not boto_supports_kms_key_id():
         module.fail_json(msg="You must use boto >= v2.39.0 to use kms_key_id")
 
     # Here we need to get the zone info for the instance. This covers situation where
