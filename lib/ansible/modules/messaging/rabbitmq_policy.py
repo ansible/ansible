@@ -90,7 +90,7 @@ EXAMPLES = '''
     name: HA
     pattern: .*
     tags:
-      - ha-mode: all
+      ha-mode: all
 '''
 class RabbitMqPolicy(object):
     def __init__(self, module, name):
