@@ -330,6 +330,11 @@ Other hashes (platform dependent)::
 
     {{ 'test2'|hash('blowfish') }}
 
+Get a hash in integer form of a string. Takes two arguments where the first
+is the minimum and the second is the maximum possible integer returned.
+
+    {{ 'test3'|int_hash(0, 4294967294) }}
+
 To get a sha512 password hash (random salt)::
 
     {{ 'passwordsaresecret'|password_hash('sha512') }}

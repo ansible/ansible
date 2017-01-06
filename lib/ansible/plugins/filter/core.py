@@ -239,6 +239,20 @@ def get_hash(data, hashtype='sha1'):
     h.update(data)
     return h.hexdigest()
 
+def get_int_hash(data, min=0, max=None):
+    hex_hash = get_hash(data, hashtype='sha512')
+    int_hash = int(hex_hash, 16)
+    if max is None:
+        if min != 0:
+            raise errors.AnsibleFilterError('|int_hash expects a max value to be given together with min')
+        return int_hash
+    else:
+        if min >= max:
+            raise errors.AnsibleFilterError('|int_hash expects max to be higher than min')
+        if min < 0:
+            raise errors.AnsibleFilterError('|int_hash expects min to be a positive integer')
+        return min + int_hash % (max + 1 - min)
+
 def get_encrypted_password(password, hashtype='sha512', salt=None):
 
     # TODO: find a way to construct dynamically from system
@@ -490,6 +504,7 @@ class FilterModule(object):
             # generic hashing
             'password_hash': get_encrypted_password,
             'hash': get_hash,
+            'int_hash': get_int_hash,
 
             # file glob
             'fileglob': fileglob,
