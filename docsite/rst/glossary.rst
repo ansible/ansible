@@ -437,12 +437,12 @@ when a term comes up on the mailing list.
         the time server information on a remote host.
 
     Tasks
-        :term:`Playbooks` exist to run tasks.  Tasks combine an :term:`action`
-        (a module and its arguments) with a name and optionally some other
-        keywords (like :term:`looping directives <loops>`).   :term:`Handlers`
-        are also tasks, but they are a special kind of task that do not run
-        unless they are notified by name when a task reports an underlying
-        change on a remote system.
+        Tasks combine an :term:`action` (a module and its arguments) with a
+        name and optionally some other keywords (such as :term:`looping directives
+        <loops>`).   :term:`Playbooks` exist to run tasks.  A special subset
+        of tasks are :term:`Handlers`, which only run when triggered by an underlying
+        change on a remote system, reported from some other task. Handlers bear
+        a strong relationship to database triggers.
 
     Templates
         Ansible can easily transfer files to remote systems but often it is
