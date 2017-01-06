@@ -165,6 +165,8 @@ clean:
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
 	find . -type f -name '*.pyc' -delete
+	@echo "Cleaning up docsite"
+	$(MAKE) -C docs/docsite clean
 
 python:
 	$(PYTHON) setup.py build
