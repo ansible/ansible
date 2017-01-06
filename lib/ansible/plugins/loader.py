@@ -127,12 +127,10 @@ class PluginLoader:
         self.subdir = subdir or self.subdir
         self.aliases = aliases or self.aliases or {}
 
-        self.config = self.default_config
-        config = config or []
-        if not isinstance(config, list):
-            config = [config]
-        if config:
-            self.config = config
+        self.config = config or self.default_config or []
+
+        if not isinstance(self.config, list):
+            self.config = [self.config]
 
         self._plugin_path_cache = defaultdict(dict)
         self._module_cache = {}
