@@ -44,7 +44,7 @@ class ActionLoader(loader.PluginLoader):
 class CacheLoader(loader.PluginLoader):
     class_name = 'CacheModule'
     package = 'ansible.plugins.cache'
-    config = C.DEFAULT_CACHE_PLUGIN_PATH
+    default_config = C.DEFAULT_CACHE_PLUGIN_PATH
     subdir = 'cache_plugins'
 
 
@@ -58,7 +58,7 @@ class CallbackLoader(loader.PluginLoader):
 class ConnectionLoader(loader.PluginLoader):
     class_name = 'Connection'
     package = 'ansible.plugins.connection'
-    config = C.DEFAULT_CONNECTION_PLUGIN_PATH
+    default_config = C.DEFAULT_CONNECTION_PLUGIN_PATH
     subdir = 'connection_plugins'
     aliases = {'paramiko': 'paramiko_ssh'}
     required_base_class = 'ConnectionBase'
@@ -68,14 +68,14 @@ class ShellLoader(loader.PluginLoader):
     class_name = 'ShellModule'
     package = 'ansible.plugins.shell'
     # FIXME: why is config just shell_plugins?
-    config = 'shell_plugins'
+    default_config = 'shell_plugins'
     subdir = 'shell_plugins'
 
 
 class ModuleLoader(loader.PluginLoader):
     class_name = ''
     package = 'ansible.modules'
-    config = C.DEFAULT_MODULE_PATH
+    default_config = C.DEFAULT_MODULE_PATH
     subdir = 'library'
 
 #module_loader = loader.PluginLoader(
@@ -89,7 +89,7 @@ class ModuleLoader(loader.PluginLoader):
 class LookupLoader(loader.PluginLoader):
     class_name = 'LookupModule'
     package = 'ansible.plugins.lookup'
-    config = C.DEFAULT_LOOKUP_PLUGIN_PATH
+    default_config = C.DEFAULT_LOOKUP_PLUGIN_PATH
     subdir = 'lookup_plugins'
     required_base_class = 'LookupBase'
 
@@ -97,35 +97,35 @@ class LookupLoader(loader.PluginLoader):
 class VarsLoader(loader.PluginLoader):
     class_name = 'VarsModule'
     package = 'ansible.plugins.vars'
-    config = C.DEFAULT_VARS_PLUGIN_PATH
+    default_config = C.DEFAULT_VARS_PLUGIN_PATH
     subdir = 'vars_plugins'
 
 
 class FilterLoader(loader.PluginLoader):
     class_name = 'FilterModule'
     package = 'ansible.plugins.filter'
-    config = C.DEFAULT_FILTER_PLUGIN_PATH
+    default_config = C.DEFAULT_FILTER_PLUGIN_PATH
     subdir = 'filter_plugins'
 
 
 class TestLoader(loader.PluginLoader):
     class_name = 'TestModule'
     package = 'ansible.plugins.test'
-    config = C.DEFAULT_TEST_PLUGIN_PATH
+    default_config = C.DEFAULT_TEST_PLUGIN_PATH
     subdir = 'test_plugins'
 
 
 class FragmentLoader(loader.PluginLoader):
     class_name = 'ModuleDocFragment'
     package = 'ansible.utils.module_docs_fragments'
-    config = os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    default_config = os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
     subdir = ''
 
 
 class StrategyLoader(loader.PluginLoader):
     class_name = 'StrategyModule'
     package = 'ansible.plugins.strategy'
-    config = C.DEFAULT_STRATEGY_PLUGIN_PATH
+    default_config = C.DEFAULT_STRATEGY_PLUGIN_PATH
     subdir = 'strategy_plugins'
     required_base_class = 'StrategyBase'
 
@@ -133,5 +133,5 @@ class StrategyLoader(loader.PluginLoader):
 class TerminalLoader(loader.PluginLoader):
     class_name = 'TerminalModule'
     package = 'ansible.plugins.terminal'
-    config = 'terminal_plugins'
+    default_config = 'terminal_plugins'
     subdir = 'terminal_plugins'
