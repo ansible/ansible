@@ -94,10 +94,9 @@ specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module does not
-   support shell variables and things like piping.  If we want to execute a module using a
-   shell, use the 'shell' module instead. Read more about the differences on the :doc:`modules`
-   page.
+   The :ref:`command` module does not support extended shell syntax like piping and redirects (although
+   shell variables will always work). If your command requires shell-specific syntax, use the `shell` module
+   instead. Read more about the differences on the :doc:`modules` page.
 
 Using the :ref:`shell` module looks like this::
 
@@ -109,10 +108,12 @@ the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
-So far we've been demoing simple command execution, but most Ansible modules usually do not work like
-simple scripts. They make the remote system look like a state, and run the commands necessary to
-get it there.  This is commonly referred to as 'idempotence', and is a core design goal of Ansible.
-However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
+So far we've been demoing simple command execution, but most Ansible modules are not simple imperative scripts. Instead, they use a declarative model,
+calculating and executing the actions required to reach a specified final state.
+Furthermore, they achieve a form of idempotence by checking the current state
+before they begin, and if the current state matches the specified final state,
+doing nothing.
+However, we also recognize that running arbitrary commands can be valuable, so Ansible easily supports both.
 
 .. _file_transfer:
 
@@ -166,10 +167,10 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=absent"
 
-Ansible has modules for managing packages under many platforms.  If your package manager
-does not have a module available for it, you can install
-packages using the command module or (better!) contribute a module
-for other package managers.  Stop by the mailing list for info/details.
+Ansible has modules for managing packages under many platforms.  If there isn't 
+a module for your package manager, you can install packages using the 
+command module or (better!) contribute a module for your package manager. 
+Stop by the mailing list for info/details.
 
 .. _users_and_groups:
 
@@ -223,8 +224,10 @@ Ensure a service is stopped::
 Time Limited Background Operations
 ``````````````````````````````````
 
-Long running operations can be backgrounded, and their status can be checked on
-later. If you kick hosts and don't want to poll, it looks like this::
+Long running operations can be run in the background, and it is possible to
+check their status later. For example, to execute ``long_running_operation``
+asynchronously in the background, with a timeout of 3600 seconds (``-B``), 
+and without polling (``-P``)::
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
@@ -238,7 +241,7 @@ Polling is built-in and looks like this::
 
     $ ansible all -B 1800 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
 
-The above example says "run for 30 minutes max (``-B``: 30*60=1800),
+The above example says "run for 30 minutes max (``-B`` 30*60=1800),
 poll for status (``-P``) every 60 seconds".
 
 Poll mode is smart so all jobs will be started before polling will begin on any machine.

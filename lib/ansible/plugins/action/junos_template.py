@@ -23,6 +23,22 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.action.net_template import ActionModule as NetActionModule
 
 class ActionModule(NetActionModule, ActionBase):
-    pass
 
+    def run(self, tmp=None, task_vars=None):
+        src = self._task.args.get('src')
+
+        if self._task.args.get('config_format') is None:
+            if src.endswith('.xml'):
+                fmt = 'xml'
+            elif src.endswith('.set'):
+                fmt = 'set'
+            else:
+                fmt = 'text'
+
+            self._task.args['config_format'] = fmt
+
+        if self._task.args.get('comment') is None:
+            self._task.args['comment'] = self._task.name
+
+        return super(ActionModule, self).run(tmp, task_vars)
 

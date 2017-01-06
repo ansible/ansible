@@ -1,6 +1,6 @@
 ansible(1)
 =========
-:doctype:manpage
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -131,7 +131,7 @@ Purge the checkout after the playbook is run.
 
 *-s* 'SLEEP', *--sleep=*'SLEEP'::
 
-Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way ot disperse git requests.
+Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way to disperse git requests.
 
 *--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
 
@@ -162,6 +162,14 @@ URL of the playbook repository to checkout.
 *--vault-password-file=*'VAULT_PASSWORD_FILE'::
 
 Vault password file.
+
+*--clean*::
+
+Modified files in the working repository will be discarded.
+
+*--track-subs*::
+
+Submodules will track the latest changes.
 
 *-v*, *--verbose*::
 

@@ -33,7 +33,6 @@ python.default_version  27
 depends_lib-append      port:py${python.version}-jinja2 \
                         port:py${python.version}-paramiko \
                         port:py${python.version}-yaml
-# fireball mode requires py-zmq, py-asn1, py-crypto and py-keyczar
 
 patch {
     fs-traverse f ${worksrcpath} {

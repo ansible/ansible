@@ -64,7 +64,7 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
 
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango]
+    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 .. _truthiness:
 
@@ -134,13 +134,21 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 
-The same applies for strings that start or contain any YAML special characters `` [] {} : > | `` .
+The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
 
 Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
 In these cases just use quotes::
 
     non_boolean: "yes"
     other_string: "False"
+
+
+YAML converts certain strings into floating-point values, such as the string
+`1.0`. If you need to specify a version number (in a requirements.yml file, for
+example), you will need to quote the value if it looks like a floating-point
+value::
+
+  version: "1.0"
 
 
 .. seealso::

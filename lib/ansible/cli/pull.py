@@ -30,6 +30,7 @@ import time
 
 from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
+from ansible.module_utils._text import to_native
 from ansible.plugins import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -91,11 +92,16 @@ class PullCLI(CLI):
         self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
             help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
                  ' This needs the corresponding VCS module to support such an operation')
+        self.parser.add_option('--clean', dest='clean', default=False, action='store_true',
+            help='modified files in the working repository will be discarded')
+        self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
+            help='submodules will track the latest changes'
+                 ' This is equivalent to specifying the --remote flag to git submodule update')
 
         # for pull we don't wan't a default
         self.parser.set_defaults(inventory=None)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(PullCLI, self).parse()
 
         if not self.options.dest:
             hostname = socket.getfqdn()
@@ -160,6 +166,12 @@ class PullCLI(CLI):
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
 
+            if self.options.clean:
+                repo_opts += ' force=yes'
+
+            if self.options.tracksubs:
+                repo_opts += ' track_submodules=yes'
+
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
 
@@ -207,8 +219,10 @@ class PullCLI(CLI):
             cmd += ' -e "%s"' % ev
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
+        if self.options.skip_tags:
+            cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))
         if self.options.tags:
-            cmd += ' -t "%s"' % self.options.tags
+            cmd += ' -t "%s"' % to_native(u','.join(self.options.tags))
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
         else:

@@ -4736,3 +4736,125 @@ span[id*='MathJax-Span'] {
 .DocSiteBanner-imgWrapper {
     max-width: 100%;
 }
+
+th, td {
+    min-width: 100px;
+}
+
+table {
+       overflow-x: scroll;
+       display: block;
+       max-width: 100%;
+}
+
+@media print {
+    * { background: transparent !important; color: black !important; text-shadow: none !important; filter:none !important; -ms-filter: none !important; }
+    #nav,
+    a, a:visited { text-decoration: underline; }
+    a[href]:after { content: " (" attr(href) ")"; }
+    abbr[title]:after { content: " (" attr(title) ")"; }
+    .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }  /* Don't show links for images, or javascript/internal links */
+    pre, blockquote { border: 0px solid #999; page-break-inside: avoid; }
+    thead { display: table-header-group; } /* h5bp.com/t */
+    tr, img { page-break-inside: avoid; }
+    img { max-width: 100% !important; }
+    @page { margin: 0.5cm; }
+    p, h2, h3 { orphans: 3; widows: 3; }
+    h2, h3 { page-break-after: avoid; }
+    .DocSiteBanner,
+    #google_image_div {
+        display: none !important;
+    }
+}
+
+
+#sideBanner{
+    display: none;
+}
+
+.DocSite-globalNav {
+   display: none;
+}
+
+
+.DocSite-sideNav {
+   display: block;
+    margin-bottom: 40px;
+}
+
+.ansibleNav {
+   background: #000;
+   padding: 0px 20px;
+   width: auto;
+   border-bottom: 1px solid #444;
+   font-size: 14px;
+}
+
+.ansibleNav ul {
+    list-style: none;
+    padding-left: 0px;
+    margin-top: 0px;
+}
+
+    
+.ansibleNav ul li{
+    padding: 7px 0px;
+    border-bottom: 1px solid #444;
+}
+
+.ansibleNav ul li:last-child{
+    border: none;
+}
+
+.ansibleNav ul li a {
+    color: #fff;
+   text-decoration: none;
+   text-transform: uppercase;
+   padding: 6px 0px;
+}
+.ansibleNav ul li a:hover {
+    color: #5bbdbf ;
+    background: transparent;
+}
+ 
+@media screen and (min-width: 768px) {
+    
+    .DocSite-globalNav{
+        display: block
+    }
+    
+    #sideBanner{
+        display: block;
+    }
+    
+    .DocSite-sideNav{
+        display: none;
+    }
+    
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+    
+        
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+    
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+}

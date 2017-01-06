@@ -30,26 +30,44 @@ options:
     required: true
   port:
     description:
-      - Specifies the port to use when buiding the connection to the remote
+      - Specifies the port to use when building the connection to the remote
         device.  This value applies to either I(cli) or I(nxapi).  The port
-        value will default to the approriate transport common port if
+        value will default to the appropriate transport common port if
         none is provided in the task.  (cli=22, http=80, https=443).
     required: false
     default: 0 (use common port)
   username:
     description:
-      - Configures the usename to use to authenticate the connection to
-        the remote device.  The value of I(username) is used to authenticate
+      - Configures the username to use to authenticate the connection to
+        the remote device.  This value is used to authenticate
         either the CLI login or the nxapi authentication depending on which
-        transport is used.
-    required: true
+        transport is used. If the value is not specified in the task, the
+        value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
+    required: false
   password:
     description:
-      - Specifies the password to use when authentication the connection to
+      - Specifies the password to use to authenticate the connection to
         the remote device.  This is a common argument used for either I(cli)
-        or I(nxapi) transports.
+        or I(nxapi) transports. If the value is not specified in the task, the
+        value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
     required: false
     default: null
+  timeout:
+    description:
+      - Specifies the timeout in seconds for communicating with the network device
+        for either connecting or sending commands.  If the timeout is
+        exceeded before the operation is completed, the module will error.
+        NX-API can be slow to return on long-running commands (sh mac, sh bgp, etc).
+    require: false
+    default: 10
+    version_added: 2.3
+  ssh_keyfile:
+    description:
+      - Specifies the SSH key to use to authenticate the connection to
+        the remote device.  This argument is only used for the I(cli)
+        transport. If the value is not specified in the task, the
+        value of environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
+    required: false
   transport:
     description:
       - Configures the transport connection to use when connecting to the
@@ -60,14 +78,13 @@ options:
   use_ssl:
     description:
       - Configures the I(transport) to use SSL if set to true only when the
-        I(transport) argument is configured as nxapi.  If the transport
-        argument is not nxapi, this value is ignored
+        C(transport=nxapi), otherwise this value is ignored.
     required: false
-    default: false
-    choices: BOOLEANS
+    default: no
+    choices: ['yes', 'no']
   provider:
     description:
-      - Convience method that allows all M(nxos) arguments to be passed as
+      - Convenience method that allows all I(nxos) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
     required: false

@@ -34,6 +34,12 @@ from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.path import unfrackpath
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 __all__ = ['RoleDefinition']
 
@@ -138,18 +144,21 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
             os.path.join(self._loader.get_basedir(), u'roles'),
-            self._loader.get_basedir(),
         ]
 
         # also search in the configured roles path
         if C.DEFAULT_ROLES_PATH:
-            configured_paths = C.DEFAULT_ROLES_PATH.split(os.pathsep)
-            role_search_paths.extend(configured_paths)
+            role_search_paths.extend(C.DEFAULT_ROLES_PATH)
 
-        # finally, append the roles basedir, if it was set, so we can
+        # next, append the roles basedir, if it was set, so we can
         # search relative to that directory for dependent roles
         if self._role_basedir:
             role_search_paths.append(self._role_basedir)
+
+        # finally as a last resort we look in the current basedir as set
+        # in the loader (which should be the playbook dir itself) but without
+        # the roles/ dir appended
+        role_search_paths.append(self._loader.get_basedir())
 
         # create a templar class to template the dependency names, in
         # case they contain variables
@@ -184,7 +193,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self._get_base_attributes().keys())
+        base_attribute_names = frozenset(self._valid_attrs.keys())
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
@@ -194,6 +203,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        or make this list more automatic in some way so we don't have to
             #        remember to update it manually.
             if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
+                if key in ('connection', 'port', 'remote_user'):
+                    display.deprecated("Using '%s' as a role param has been deprecated. " % key + \
+                                       "In the future, these values should be entered in the `vars:` " + \
+                                       "section for roles, but for now we'll store it as both a param and an attribute.")
+                    role_def[key] = value
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:

@@ -32,6 +32,8 @@ import os
 import re
 from uuid import UUID
 
+from ansible.module_utils.basic import BOOLEANS
+from ansible.module_utils.six import text_type, binary_type
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
@@ -43,7 +45,7 @@ CLB_PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS',
                  'IMAPv4', 'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP',
                  'TCP', 'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
 
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, binary_type, bool, dict, int, list, type(None))
 PUBLIC_NET_ID = "00000000-0000-0000-0000-000000000000"
 SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
 
@@ -162,7 +164,7 @@ def rax_find_volume(module, rax_module, name):
             volume = cbs.find(name=name)
         except rax_module.exc.NotFound:
             volume = None
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e)
     return volume
 
@@ -262,7 +264,7 @@ def rax_required_together():
 
 def setup_rax_module(module, rax_module, region_required=True):
     """Set up pyrax in a standard way for all modules"""
-    rax_module.USER_AGENT = 'ansible/%s %s' % (ANSIBLE_VERSION,
+    rax_module.USER_AGENT = 'ansible/%s %s' % (module.ansible_version,
                                                rax_module.USER_AGENT)
 
     api_key = module.params.get('api_key')
@@ -301,7 +303,7 @@ def setup_rax_module(module, rax_module, region_required=True):
                        os.environ.get('RAX_CREDS_FILE'))
         region = (region or os.environ.get('RAX_REGION') or
                   rax_module.get_setting('region'))
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     try:
@@ -316,7 +318,7 @@ def setup_rax_module(module, rax_module, region_required=True):
             rax_module.set_credential_file(credentials, region=region)
         else:
             raise Exception('No credentials supplied!')
-    except Exception, e:
+    except Exception as e:
         if e.message:
             msg = str(e.message)
         else:

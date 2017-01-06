@@ -19,16 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import queue
-
-import json
 import multiprocessing
 import os
-import signal
 import sys
-import time
 import traceback
-import zlib
 
 from jinja2.exceptions import TemplateNotFound
 
@@ -40,15 +34,16 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
-from ansible.playbook.handler import Handler
-from ansible.playbook.task import Task
-from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
+from ansible.module_utils._text import to_text
 
-from ansible.utils.debug import debug
-from ansible.utils.unicode import to_unicode
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['WorkerProcess']
 
@@ -85,26 +80,27 @@ class WorkerProcess(multiprocessing.Process):
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
                     pass
-        except ValueError:
+        except (AttributeError, ValueError):
             # couldn't get stdin's fileno, so we just carry on
             pass
 
     def run(self):
         '''
-        Called when the process is started, and loops indefinitely
-        until an error is encountered (typically an IOerror from the
-        queue pipe being disconnected). During the loop, we attempt
-        to pull tasks off the job queue and run them, pushing the result
-        onto the results queue. We also remove the host from the blocked
-        hosts list, to signify that they are ready for their next task.
+        Called when the process is started.  Pushes the result onto the
+        results queue. We also remove the host from the blocked hosts list, to
+        signify that they are ready for their next task.
         '''
+
+        #import cProfile, pstats, StringIO
+        #pr = cProfile.Profile()
+        #pr.enable()
 
         if HAS_ATFORK:
             atfork()
 
         try:
             # execute the task and build a TaskResult from the result
-            debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
             executor_result = TaskExecutor(
                 self._host,
                 self._task,
@@ -116,20 +112,20 @@ class WorkerProcess(multiprocessing.Process):
                 self._rslt_q
             ).run()
 
-            debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host, self._task, executor_result)
+            task_result = TaskResult(self._host.name, self._task._uuid, executor_result)
 
             # put the result on the result queue
-            debug("sending task result")
+            display.debug("sending task result")
             self._rslt_q.put(task_result)
-            debug("done sending task result")
+            display.debug("done sending task result")
 
         except AnsibleConnectionFailure:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host, self._task, dict(unreachable=True))
+            task_result = TaskResult(self._host.name, self._task._uuid, dict(unreachable=True))
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
@@ -137,11 +133,19 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
+                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''))
                     self._rslt_q.put(task_result, block=False)
                 except:
-                    debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
-                    debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
+                    display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 
-        debug("WORKER PROCESS EXITING")
+        display.debug("WORKER PROCESS EXITING")
+
+        #pr.disable()
+        #s = StringIO.StringIO()
+        #sortby = 'time'
+        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        #ps.print_stats()
+        #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
+        #    f.write(s.getvalue())
 

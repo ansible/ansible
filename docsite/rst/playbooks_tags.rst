@@ -29,19 +29,67 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 
     ansible-playbook example.yml --skip-tags "notification"
 
+
+.. _tag_reuse:
+
+Tag Reuse
+```````````````
+You can apply the same tag name to more than one task, in the same file 
+or included files. This will run all tasks with that tag.
+
+Example::
+
+    ---
+    # file: roles/common/tasks/main.yml
+
+    - name: be sure ntp is installed
+      yum: name=ntp state=installed
+      tags: ntp
+
+    - name: be sure ntp is configured
+      template: src=ntp.conf.j2 dest=/etc/ntp.conf
+      notify:
+        - restart ntpd
+      tags: ntp
+
+    - name: be sure ntpd is running and enabled
+      service: name=ntpd state=started enabled=yes
+      tags: ntp
+
+.. _tag_inheritance:
+
+Tag Inheritance
+```````````````
+
+You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applying tags anywhere else is just a
+convenience so you don't have to write it on every task::
+
+    - hosts: all
+      tags:
+        - bar
+      tasks:
+        ...
+
+    - hosts: all
+      tags: ['foo']
+      tasks:
+        ...
+
 You may also apply tags to roles::
 
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
 
-And you may also tag basic include statements::
+And include statements::
 
     - include: foo.yml
       tags: [web,foo]
 
-Both of these apply the specified tags to every task inside the included
-file or role, so that these tasks can be selectively run when the playbook
+All of these apply the specified tags to EACH task inside the play, included
+file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
+
+.. _special_tags:
 
 Special Tags
 ````````````

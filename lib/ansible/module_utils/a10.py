@@ -27,8 +27,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
-# Note: modules using this must have from ansible.module_utils.urls import *
-# before this is imported
+
+from ansible.module_utils.urls import fetch_url
+
 
 AXAPI_PORT_PROTOCOLS = {
     'tcp': 2,
@@ -88,6 +89,43 @@ def axapi_authenticate(module, base_url, username, password):
     sessid = result['session_id']
     return base_url + '&session_id=' + sessid
 
+def axapi_authenticate_v3(module, base_url, username, password):
+    url = base_url
+    auth_payload = {"credentials": {"username": username, "password": password}}
+    result = axapi_call_v3(module, url, method='POST', body=json.dumps(auth_payload))
+    if axapi_failure(result):
+        return module.fail_json(msg=result['response']['err']['msg'])
+    signature = result['authresponse']['signature']
+    return signature
+
+def axapi_call_v3(module, url, method=None, body=None, signature=None):
+    '''
+    Returns a datastructure based on the result of the API call
+    '''
+    if signature:
+        headers = {'content-type': 'application/json', 'Authorization': 'A10 %s' % signature}
+    else:
+        headers = {'content-type': 'application/json'}
+    rsp, info = fetch_url(module, url, method=method, data=body, headers=headers)
+    if not rsp or info['status'] >= 400:
+        module.fail_json(msg="failed to connect (status code %s), error was %s" % (info['status'], info.get('msg', 'no error given')))
+    try:
+        raw_data = rsp.read()
+        data = json.loads(raw_data)
+    except ValueError:
+        # at least one API call (system.action.write_config) returns
+        # XML even when JSON is requested, so do some minimal handling
+        # here to prevent failing even when the call succeeded
+        if 'status="ok"' in raw_data.lower():
+            data = {"response": {"status": "OK"}}
+        else:
+            data = {"response": {"status": "fail", "err": {"msg": raw_data}}}
+    except:
+        module.fail_json(msg="could not read the result from the host")
+    finally:
+        rsp.close()
+    return data
+
 def axapi_enabled_disabled(flag):
     '''
     The axapi uses 0/1 integer values for flags, rather than strings
@@ -104,4 +142,3 @@ def axapi_get_port_protocol(protocol):
 
 def axapi_get_vport_protocol(protocol):
     return AXAPI_VPORT_PROTOCOLS.get(protocol.lower(), None)
-

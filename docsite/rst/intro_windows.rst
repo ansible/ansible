@@ -44,7 +44,7 @@ Installing python-kerberos dependencies
    yum -y install python-devel krb5-devel krb5-libs krb5-workstation
 
    # Via Apt (Ubuntu)
-   sudo apt-get install python-dev libkrb5-dev
+   sudo apt-get install python-dev libkrb5-dev krb5-user
 
    # Via Portage (Gentoo)
    emerge -av app-crypt/mit-krb5
@@ -68,7 +68,7 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 .. code-block:: bash
 
-   pip install kerberos
+   pip install kerberos requests_kerberos
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
@@ -158,7 +158,7 @@ Ansible's windows support relies on a few standard variables to indicate the use
     winserver1.example.com
     winserver2.example.com
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 In group_vars/windows.yml, define the following inventory variables::
 
@@ -169,14 +169,14 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
-    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    # The following is necessary for Python 2.7.9+ (or any older Python that has backported SSLContext, eg, Python 2.7.5 on RHEL7) when using default WinRM self-signed certificates:
     ansible_winrm_server_cert_validation: ignore
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
 
 Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
-If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
+If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not* ``ansible_user``. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -205,9 +205,9 @@ Since 2.0, the following custom inventory variables are also supported for addit
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable PowerShell remoting configured.
+In order for Ansible to manage your windows machines, you will have to enable and configure PowerShell remoting.
 
-To automate setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
+To automate the setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
 
 The example script accepts a few arguments which Admins may choose to use to modify the default setup slightly, which might be appropriate in some cases.
 
@@ -216,6 +216,9 @@ Pass the -CertValidityDays option to customize the expiration date of the genera
 
 Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)
   powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
+
+Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)
+  powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
 
 .. note::
    On Windows 7 and Server 2008 R2 machines, due to a bug in Windows
@@ -243,7 +246,24 @@ What modules are available
 ``````````````````````````
 
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various
-Windows modules as listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
+Windows-only modules. These are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
+
+In addition, the following core modules work with Windows:
+    assemble
+    fetch
+    raw
+    script
+    slurp
+    template
+    add_host
+    assert
+    debug
+    fail
+    group_by
+    include_vars
+    meta
+    pause
+    set_fact
 
 Browse this index to see what is available.
 
@@ -255,7 +275,7 @@ In particular, the "script" module can be used to run arbitrary PowerShell scrip
       tasks:
         - script: foo.ps1 --argument --other-argument
 
-Note there are a few other Ansible modules that don't start with "win" that also function, including "slurp", "raw", and "setup" (which is how fact gathering works).
+Note:: There are a few other Ansible modules that don't start with "win" that also function with Windows, including "fetch", "slurp", "raw", and "setup" (which is how fact gathering works).
 
 .. _developers_developers_developers:
 
@@ -336,7 +356,17 @@ Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on
          - name: Move file on remote Windows Server from one location to another
            raw: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
+You may wind up with a more readable playbook by using the PowerShell equivalents of DOS commands.  For example, to achieve the same effect as the example above, you could use::
+
+    - name: another raw module example demonstrating powershell one liner
+      hosts: windows
+      tasks:
+         - name: Move file on remote Windows Server from one location to another
+           raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
+
+Bear in mind that using C(raw) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+
+Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
@@ -355,14 +385,14 @@ And for a final example, here's how to use the win_stat module to test for file 
                  - "stat_file.stat.size > 0"
                  - "stat_file.stat.md5"
 
-Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", and "fetch" modules are also available.  These modules do not start with a "win" prefix.
+Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", "slurp" and "fetch" modules are also available.  These modules do not start with a "win" prefix.
 
 .. _windows_contributions:
 
 Windows Contributions
 `````````````````````
 
-Windows support in Ansible is still very new, and contributions are quite welcome, whether this is in the
+Windows support in Ansible is still relatively new, and contributions are quite welcome, whether this is in the
 form of new modules, tweaks to existing modules, documentation, or something else.  Please stop by the ansible-devel mailing list if you would like to get involved and say hi.
 
 .. seealso::

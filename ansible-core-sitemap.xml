@@ -113,6 +113,11 @@
 		<priority>0.5</priority>
 	</url>
 	<url>
+		<loc>http://docs.ansible.com/ansible/playbooks_debugger.html</loc>
+		<changefreq>weekly</changefreq>
+		<priority>0.5</priority>
+	</url>
+	<url>
 		<loc>http://docs.ansible.com/ansible/become.html</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.5</priority>
@@ -1744,11 +1749,6 @@
 	</url>
 	<url>
 		<loc>http://docs.ansible.com/ansible/git_module.html</loc>
-		<changefreq>weekly</changefreq>
-		<priority>0.3</priority>
-	</url>
-	<url>
-		<loc>http://docs.ansible.com/ansible/fireball_module.html</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.3</priority>
 	</url>

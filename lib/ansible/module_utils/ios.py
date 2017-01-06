@@ -1,146 +1,71 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+_DEVICE_CONFIGS = {}
 
-NET_COMMON_ARGS = dict(
-    host=dict(required=True),
-    port=dict(default=22, type='int'),
-    username=dict(required=True),
-    password=dict(no_log=True),
-    authorize=dict(default=False, type='bool'),
-    auth_pass=dict(no_log=True),
-    provider=dict()
-)
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
 
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = module.exec_command(cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=err)
+        cfg = str(out).strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+def run_commands(module, commands, check_rc=True):
+    assert isinstance(commands, list), 'commands must be a list'
+    responses = list()
 
+    for cmd in commands:
+        rc, out, err = module.exec_command(cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=err, rc=rc)
+        responses.append(out)
+    return responses
 
-class Cli(object):
+def load_config(module, commands):
+    assert isinstance(commands, list), 'commands must be a list'
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+    rc, out, err = module.exec_command('configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=err)
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+    for command in commands:
+        if command == 'end':
+            continue
+        rc, out, err = module.exec_command(command)
+        if rc != 0:
+            module.fail_json(msg=err, command=command, rc=rc)
 
-        username = self.module.params['username']
-        password = self.module.params['password']
-
-        self.shell = Shell(kickstart=False)
-
-        try:
-            self.shell.open(host, port=port, username=username, password=password)
-        except Exception, exc:
-            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
-            self.module.fail_json(msg=msg)
-
-    def authorize(self):
-        passwd = self.module.params['auth_pass']
-        self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
-
-    def send(self, commands):
-        return self.shell.send(commands)
-
-
-class NetworkModule(AnsibleModule):
-
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
-
-    def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                params[key] = value
-        return params
-
-    def connect(self):
-        try:
-            self.connection = Cli(self)
-            self.connection.connect()
-            self.execute('terminal length 0')
-
-            if self.params['authorize']:
-                self.connection.authorize()
-
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
-
-    def configure(self, commands):
-        commands = to_list(commands)
-        commands.insert(0, 'configure terminal')
-        responses = self.execute(commands)
-        responses.pop(0)
-        return responses
-
-    def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message, commands=commands)
-
-    def disconnect(self):
-        self.connection.close()
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=1)
-
-    def get_config(self):
-        cmd = 'show running-config'
-        if self.params.get('include_defaults'):
-            cmd += ' all'
-        return self.execute(cmd)[0]
-
-
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
-
-    module = NetworkModule(**kwargs)
-
-    # HAS_PARAMIKO is set by module_utils/shell.py
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    module.connect()
-    return module
-
+    module.exec_command('end')

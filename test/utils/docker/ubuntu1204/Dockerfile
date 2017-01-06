@@ -1,20 +1,55 @@
-FROM ubuntu:precise
-RUN apt-get clean; apt-get update -y;
-RUN apt-get install -y \
+FROM ubuntu:12.04
+
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     acl \
+    apache2 \
+    asciidoc \
+    bzip2 \
+    cdbs \
+    curl \
+    debhelper \
     debianutils \
+    devscripts \
+    docbook-xml \
+    dpkg-dev \
+    fakeroot \
     gawk \
+    gcc \
     git \
+    libxml2-utils \
     locales \
     make \
     mercurial \
+    mysql-server \
+    openssh-client \
+    openssh-server \
+    python-coverage \
+    python-dev \
+    python-httplib2 \
+    python-keyczar \
+    python-mock \
+    python-mysqldb \
+    python-nose \
+    python-paramiko \
+    python-passlib \
+    python-pip \
+    python-setuptools \
+    python-virtualenv \
+    python-yaml \
+    reprepro \
+    rsync \
     ruby \
     rubygems \
     subversion \
     sudo \
-    openssh-client \
-    openssh-server \
-    unzip
+    unzip \
+    xsltproc \
+    zip \
+    && \
+    apt-get clean
+
+RUN pip install --upgrade jinja2 pycrypto
 
 # helpful things taken from the ubuntu-upstart Dockerfile:
 # https://github.com/tianon/dockerfiles/blob/4d24a12b54b75b3e0904d8a285900d88d3326361/sbin-init/ubuntu/upstart/14.04/Dockerfile
@@ -44,27 +79,14 @@ RUN /usr/sbin/update-rc.d -f ondemand remove; \
 	echo '# /lib/init/fstab: cleared out for bare-bones Docker' > /lib/init/fstab
 # end things from ubuntu-upstart Dockerfile
 
-RUN apt-get install -y \
-    python-coverage \
-    python-dev \
-    python-httplib2 \
-    python-jinja2 \
-    python-keyczar \
-    python-mock \
-    python-nose \
-    python-paramiko \
-    python-pip \
-    python-setuptools \
-    python-virtualenv \
-    python-yaml
-RUN pip install --upgrade jinja2 pycrypto
 RUN rm /etc/apt/apt.conf.d/docker-clean
-RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/
 RUN /bin/echo -e "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts
 RUN locale-gen en_US.UTF-8
 RUN ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys && \
     for key in /etc/ssh/ssh_host_*_key.pub; do echo "localhost $(cat ${key})" >> /root/.ssh/known_hosts; done
-ENV container docker
+VOLUME /sys/fs/cgroup /run/lock /run /tmp
+RUN pip install junit-xml
+ENV container=docker
 CMD ["/sbin/init"]

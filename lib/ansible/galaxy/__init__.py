@@ -39,54 +39,24 @@ class Galaxy(object):
     def __init__(self, options):
 
         self.options = options
-        roles_paths = getattr(self.options, 'roles_path', [])
-        if isinstance(roles_paths, string_types):
-            self.roles_paths = [os.path.expanduser(roles_path) for roles_path in roles_paths.split(os.pathsep)]
+        # self.options.roles_path needs to be a list and will be by default
+        roles_path = getattr(self.options, 'roles_path', [])
+        # cli option handling is responsible for making roles_path a list
+        self.roles_paths = roles_path
 
         self.roles =  {}
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)
-        self.DATA_PATH = os.path.join(this_dir, "data")
-
-        self._default_readme = None
-        self._default_meta = None
-        self._default_test = None
-        self._default_travis = None
+        type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
+        self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
 
     @property
-    def default_readme(self):
-        if self._default_readme is None:
-            self._default_readme = self._str_from_data_file('readme')
-        return self._default_readme
-
-    @property
-    def default_meta(self):
-        if self._default_meta is None:
-            self._default_meta = self._str_from_data_file('metadata_template.j2')
-        return self._default_meta
-
-    @property
-    def default_test(self):
-        if self._default_test is None:
-            self._default_test = self._str_from_data_file('test_playbook.j2')
-        return self._default_test
-
-    @property
-    def default_travis(self):
-        if self._default_travis is None:
-            self._default_travis = self._str_from_data_file('travis.j2')
-        return self._default_travis
+    def default_role_skeleton_path(self):
+        return self.DATA_PATH
 
     def add_role(self, role):
         self.roles[role.name] = role
 
     def remove_role(self, role_name):
         del self.roles[role_name]
-
-    def _str_from_data_file(self, filename):
-        myfile = os.path.join(self.DATA_PATH, filename)
-        try:
-            return open(myfile).read()
-        except Exception as e:
-            raise AnsibleError("Could not open %s: %s" % (filename, str(e)))

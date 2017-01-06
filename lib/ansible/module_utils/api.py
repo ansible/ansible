@@ -60,6 +60,17 @@ def retry_argument_spec(spec=None):
         arg_spec.update(spec)
     return arg_spec
 
+def basic_auth_argument_spec(spec=None):
+    arg_spec = (dict(
+        api_username=dict(type='str', required=False),
+        api_password=dict(type='str', required=False, no_log=True),
+        api_url=dict(type='str', required=False),
+        validate_certs=dict(type='bool', default=True)
+    ))
+    if spec:
+        arg_spec.update(spec)
+    return arg_spec
+
 def rate_limit(rate=None, rate_limit=None):
     """rate limiting decorator"""
     minrate = None

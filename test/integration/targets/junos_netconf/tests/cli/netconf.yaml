@@ -1,0 +1,72 @@
+---
+- debug: msg="START netconf/netconf.yaml"
+
+
+- name: Ensure netconf is enabled
+  junos_netconf:
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- name: idempotent tests
+  junos_netconf:
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+###################################
+
+- name: Ensure we can communicate over netconf
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname }}
+    provider: "{{ netconf }}"
+
+# Disable netconf
+
+- name: Disable netconf
+  junos_netconf:
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: idempotent tests
+  junos_netconf:
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+
+- name: Ensure we can NOT talk via netconf
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname }}
+    provider: "{{ netconf }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'unable to connect to' in result.msg"
+
+- name: re-enable netconf
+  junos_netconf:
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+
+- debug: msg="END netconf/netconfg.yaml"

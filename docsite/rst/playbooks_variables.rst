@@ -480,6 +480,11 @@ And this data can be accessed in a ``template/playbook`` as::
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
 
+.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
+
+.. _ConfigParser: https://docs.python.org/2/library/configparser.html
+.. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
+
 If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
 can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
 Here is an example of what that might look like::
@@ -599,6 +604,8 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
+When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbook_loops` section on using register with a loop.
+
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
 .. _accessing_complex_variable_data:
@@ -632,7 +639,7 @@ these names themselves as they are reserved.  ``environment`` is also reserved.
 
 ``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can get at the variables, but you will not be able to see the facts.
+or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
@@ -666,15 +673,31 @@ be useful for when you don't want to rely on the discovered hostname ``ansible_h
 reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
 period, without the rest of the domain.
 
-``play_hosts`` is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+``play_hosts`` has been deprecated in 2.2, it was the same as the new ``ansible_play_batch`` variable.
 
-``delegate_to`` is the inventory hostname of the host that the current task has been delegated to using ``delegate_to`` keyword.
+.. versionadded:: 2.2
+
+``ansible_play_hosts`` is the full list of all hosts still active in the current play.
+
+.. versionadded:: 2.2
+
+``ansible_play_batch`` is available as a list of hostnames that are in scope for the current 'batch' of the play. The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
+
+.. versionadded:: 2.3
+
+``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool.
+
+These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
-And finally, ``role_path`` will return the current role's pathname (since 1.8). This will only work inside a role.
+``playbook_dir`` contains the playbook base directory.
+
+We then have ``role_path`` which will return the current role's pathname (since 1.8). This will only work inside a role.
+
+And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic variable which will be set to ``True`` if you run Ansible with ``--check``.
 
 .. _variable_file_separation_details:
 
@@ -777,7 +800,7 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-.. include:: ansible_ssh_changes_note.rst
+.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 
@@ -801,11 +824,11 @@ In 2.x, we have made the order of precedence more specific (with the last listed
   * playbook group_vars
   * playbook host_vars
   * host facts
-  * registered vars
-  * set_facts
   * play vars
   * play vars_prompt
   * play vars_files
+  * registered vars
+  * set_facts
   * role and include vars
   * block vars (only for tasks in block)
   * task vars (only for the task)
@@ -925,7 +948,7 @@ like so::
        - { role: app_user, name: Graham }
        - { role: app_user, name: John   }
 
-That's a bit arbitrary, but you can see how the same role was invoked multiple Times.  In that example it's quite likely there was
+That's a bit arbitrary, but you can see how the same role was invoked multiple times.  In that example it's quite likely there was
 no default for 'name' supplied at all.  Ansible can yell at you when variables aren't defined -- it's the default behavior in fact.
 
 So that's a bit about roles.

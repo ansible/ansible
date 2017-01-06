@@ -20,15 +20,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections import defaultdict
-from six import iteritems
 
+from ansible.compat.six import iteritems
+from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from ansible.compat.tests.mock import MagicMock, mock_open, patch
 from ansible.inventory import Inventory
 from ansible.playbook.play import Play
-from ansible.vars import VariableManager
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+
+from ansible.vars import VariableManager
+
 
 class TestVariableManager(unittest.TestCase):
 
@@ -43,12 +47,11 @@ class TestVariableManager(unittest.TestCase):
 
         v = VariableManager()
         vars = v.get_vars(loader=fake_loader, use_cache=False)
-        if 'omit' in vars:
-            del vars['omit']
-        if 'vars' in vars:
-            del vars['vars']
-        if 'ansible_version' in vars:
-            del vars['ansible_version']
+
+        #FIXME: not sure why we remove all and only test playbook_dir
+        for remove in ['omit', 'vars', 'ansible_version', 'ansible_check_mode', 'ansible_playbook_python']:
+            if remove in vars:
+                del vars[remove]
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 
@@ -179,6 +182,7 @@ class TestVariableManager(unittest.TestCase):
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
     @patch.object(Inventory, 'basedir')
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_precedence(self, mock_basedir):
         '''
         Tests complex variations and combinations of get_vars() with different
@@ -188,9 +192,7 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager()
         v._fact_cache = defaultdict(dict)
 
-        fake_loader = DictDataLoader({
-            # inventory1
-            '/etc/ansible/inventory1': """
+        inventory1_filedata = """
             [group2:children]
             group1
 
@@ -202,8 +204,11 @@ class TestVariableManager(unittest.TestCase):
 
             [group2:vars]
             group_var = group_var_from_inventory_group2
-            """,
+            """
 
+        fake_loader = DictDataLoader({
+            # inventory1
+            '/etc/ansible/inventory1': inventory1_filedata,
             # role defaults_only1
             '/etc/ansible/roles/defaults_only1/defaults/main.yml': """
             default_var: "default_var_from_defaults_only1"
@@ -227,7 +232,8 @@ class TestVariableManager(unittest.TestCase):
         })
 
         mock_basedir.return_value = './'
-        inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
+        with patch.object(builtins, 'open', mock_open(read_data=inventory1_filedata)):
+            inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
         inv1.set_playbook_basedir('./')
 
         play1 = Play.load(dict(
@@ -270,19 +276,83 @@ class TestVariableManager(unittest.TestCase):
         fake_loader.push("/etc/ansible/host_vars/host1", """
         host_var: host_var_from_host_vars_host1
         """)
+        fake_loader.push("group_vars/group1", """
+        playbook_group_var: playbook_group_var
+        """)
+        fake_loader.push("host_vars/host1", """
+        playbook_host_var: playbook_host_var
+        """)
 
         v.add_group_vars_file("/etc/ansible/group_vars/all", loader=fake_loader)
         v.add_group_vars_file("/etc/ansible/group_vars/group1", loader=fake_loader)
         v.add_group_vars_file("/etc/ansible/group_vars/group2", loader=fake_loader)
+        v.add_group_vars_file("group_vars/group1", loader=fake_loader)
         v.add_host_vars_file("/etc/ansible/host_vars/host1", loader=fake_loader)
+        v.add_host_vars_file("host_vars/host1", loader=fake_loader)
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
         self.assertEqual(res['group_var'], 'group_var_from_group_vars_group1')
         self.assertEqual(res['group_var_all'], 'group_var_all_from_group_vars_all')
+        self.assertEqual(res['playbook_group_var'], 'playbook_group_var')
         self.assertEqual(res['host_var'], 'host_var_from_host_vars_host1')
+        self.assertEqual(res['playbook_host_var'], 'playbook_host_var')
 
         # add in the fact cache
         v._fact_cache['host1'] = dict(fact_cache_var="fact_cache_var_from_fact_cache")
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
         self.assertEqual(res['fact_cache_var'], 'fact_cache_var_from_fact_cache')
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_variable_manager_role_vars_dependencies(self):
+        '''
+        Tests vars from role dependencies with duplicate dependencies.
+        '''
+
+        v = VariableManager()
+        v._fact_cache = defaultdict(dict)
+
+        fake_loader = DictDataLoader({
+            # role common-role
+            '/etc/ansible/roles/common-role/tasks/main.yml': """
+            - debug: msg="{{role_var}}"
+            """,
+            # We do not need allow_duplicates: yes for this role
+            # because eliminating duplicates is done by the execution
+            # strategy, which we do not test here.
+
+            # role role1
+            '/etc/ansible/roles/role1/vars/main.yml': """
+            role_var: "role_var_from_role1"
+            """,
+            '/etc/ansible/roles/role1/meta/main.yml': """
+            dependencies:
+              - { role: common-role }
+            """,
+
+            # role role2
+            '/etc/ansible/roles/role2/vars/main.yml': """
+            role_var: "role_var_from_role2"
+            """,
+            '/etc/ansible/roles/role2/meta/main.yml': """
+            dependencies:
+              - { role: common-role }
+            """,
+        })
+
+        play1 = Play.load(dict(
+           hosts=['all'],
+           roles=['role1', 'role2'],
+        ), loader=fake_loader, variable_manager=v)
+
+        # The task defined by common-role exists twice because role1
+        # and role2 depend on common-role.  Check that the tasks see
+        # different values of role_var.
+        blocks = play1.compile()
+        task = blocks[1].block[0]
+        res = v.get_vars(loader=fake_loader, play=play1, task=task)
+        self.assertEqual(res['role_var'], 'role_var_from_role1')
+
+        task = blocks[2].block[0]
+        res = v.get_vars(loader=fake_loader, play=play1, task=task)
+        self.assertEqual(res['role_var'], 'role_var_from_role2')

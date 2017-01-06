@@ -192,7 +192,6 @@
     volume: 3
     wait: true
     wait_timeout: "{{ rackspace_wait_timeout }}"
-    wait_timeout: 600
   register: rax_cdb
 
 - name: Validate rax_cdb resize volume 2
@@ -251,7 +250,6 @@
     flavor: 2
     wait: true
     wait_timeout: "{{ rackspace_wait_timeout }}"
-    wait_timeout: 600
   register: rax_cdb
 
 - name: Validate rax_cdb resize flavor 2

@@ -50,6 +50,12 @@ Other options include:
 
 which restricts the included nodes to those from the given datacenter
 
+'url':
+
+the URL of the Consul cluster. host, port and scheme are derived from the
+URL. If not specified, connection configuration defaults to http requests
+to localhost on port 8500.
+
 'domain':
 
 if specified then the inventory will generate domain names that will resolve
@@ -84,9 +90,9 @@ to retrieve the kv_groups and kv_metadata based on your consul configuration.
 This is used to lookup groups for a node in the key value store. It specifies a
 path to which each discovered node's name will be added to create a key to query
 the key/value store. There it expects to find a comma separated list of group
-names to which the node should be added e.g. if the inventory contains
-'nyc-web-1' and kv_groups = 'ansible/groups' then the key
-'v1/kv/ansible/groups/nyc-web-1' will be queried for a group list. If this query
+names to which the node should be added e.g. if the inventory contains node
+'nyc-web-1' in datacenter 'nyc-dc1' and kv_groups = 'ansible/groups' then the key
+'ansible/groups/nyc-dc1/nyc-web-1' will be queried for a group list. If this query
  returned 'test,honeypot' then the node address to both groups.
 
 'kv_metadata':
@@ -94,7 +100,9 @@ names to which the node should be added e.g. if the inventory contains
 kv_metadata is used to lookup metadata for each discovered node. Like kv_groups
 above it is used to build a path to lookup in the kv store where it expects to
 find a json dictionary of metadata entries. If found, each key/value pair in the
-dictionary is added to the metadata for the node.
+dictionary is added to the metadata for the node. eg node 'nyc-web-1' in datacenter
+'nyc-dc1' and kv_metadata = 'ansible/metadata', then the key
+'ansible/metadata/nyc-dc1/nyc-web-1' should contain '{"databse": "postgres"}'
 
 'availability':
 
@@ -124,10 +132,63 @@ be used to access the machine.
 import os
 import re
 import argparse
+import sys
 from time import time
 import sys
 import ConfigParser
 import urllib, urllib2, base64
+
+
+def get_log_filename():
+    tty_filename = '/dev/tty'
+    stdout_filename = '/dev/stdout'
+
+    if not os.path.exists(tty_filename):
+        return stdout_filename
+    if not os.access(tty_filename, os.W_OK):
+        return stdout_filename
+    if os.getenv('TEAMCITY_VERSION'):
+        return stdout_filename
+
+    return tty_filename
+
+
+def setup_logging():
+    filename = get_log_filename()
+
+    import logging.config
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            },
+        },
+        'root': {
+            'level': os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_LEVEL', 'WARN'),
+            'handlers': ['console'],
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.FileHandler',
+                'filename': filename,
+                'formatter': 'simple',
+            },
+        },
+        'loggers': {
+            'iso8601': {
+                'qualname': 'iso8601',
+                'level': 'INFO',
+            },
+        },
+    })
+    logger = logging.getLogger('consul_io.py')
+    logger.debug('Invoked with %r', sys.argv)
+
+
+if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
+    setup_logging()
+
 
 try:
   import json
@@ -137,9 +198,8 @@ except ImportError:
 try:
   import consul
 except ImportError as e:
-  print("""failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'""")
-  sys.exit(1)
+  sys.exit("""failed=True msg='python-consul required for this module.
+See http://python-consul.readthedocs.org/en/latest/#installation'""")
 
 from six import iteritems
 
@@ -411,6 +471,7 @@ class ConsulConfig(dict):
       host = 'localhost'
       port =  8500
       token = None
+      scheme = 'http'
 
       if hasattr(self, 'url'):
           from urlparse import urlparse
@@ -419,11 +480,13 @@ class ConsulConfig(dict):
               host = o.hostname
           if o.port:
               port = o.port
+          if o.scheme:
+              scheme = o.scheme
 
       if hasattr(self, 'token'):
           token = self.token
           if not token:
               token = 'anonymous'
-      return consul.Consul(host=host, port=port, token=token)
+      return consul.Consul(host=host, port=port, token=token, scheme=scheme)
 
 ConsulInventory()

@@ -23,53 +23,60 @@ __metaclass__ = type
 import sys
 import json
 
+from units.mock.procenv import swap_stdin_and_argv
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock
+
 
 class TestModuleUtilsBasic(unittest.TestCase):
     @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic__log_invocation(self):
-        from ansible.module_utils import basic
+        with swap_stdin_and_argv(stdin_data=json.dumps(
+            dict(
+                ANSIBLE_MODULE_ARGS=dict(
+                    foo=False, bar=[1,2,3], bam="bam", baz=u'baz'),
+                ))):
+            from ansible.module_utils import basic
 
-        # test basic log invocation
-        basic.MODULE_COMPLEX_ARGS = json.dumps(dict(foo=False, bar=[1,2,3], bam="bam", baz=u'baz'))
-        am = basic.AnsibleModule(
-            argument_spec=dict(
-                foo = dict(default=True, type='bool'),
-                bar = dict(default=[], type='list'),
-                bam = dict(default="bam"),
-                baz = dict(default=u"baz"),
-                password = dict(default=True),
-                no_log = dict(default="you shouldn't see me", no_log=True),
-            ),
-        )
-
-        am.log = MagicMock()
-        am._log_invocation()
-
-        # Message is generated from a dict so it will be in an unknown order.
-        # have to check this manually rather than with assert_called_with()
-        args = am.log.call_args[0]
-        self.assertEqual(len(args), 1)
-        message = args[0]
-
-        self.assertEqual(len(message), len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD'))
-        self.assertTrue(message.startswith('Invoked with '))
-        self.assertIn(' bam=bam', message)
-        self.assertIn(' bar=[1, 2, 3]', message)
-        self.assertIn(' foo=False', message)
-        self.assertIn(' baz=baz', message)
-        self.assertIn(' no_log=NOT_LOGGING_PARAMETER', message)
-        self.assertIn(' password=NOT_LOGGING_PASSWORD', message)
-
-        kwargs = am.log.call_args[1]
-        self.assertEqual(kwargs, 
-                dict(log_args={
-                    'foo': 'False',
-                    'bar': '[1, 2, 3]',
-                    'bam': 'bam',
-                    'baz': 'baz',
-                    'password': 'NOT_LOGGING_PASSWORD',
-                    'no_log': 'NOT_LOGGING_PARAMETER',
-                })
+            # test basic log invocation
+            am = basic.AnsibleModule(
+                argument_spec=dict(
+                    foo = dict(default=True, type='bool'),
+                    bar = dict(default=[], type='list'),
+                    bam = dict(default="bam"),
+                    baz = dict(default=u"baz"),
+                    password = dict(default=True),
+                    no_log = dict(default="you shouldn't see me", no_log=True),
+                ),
             )
+
+            am.log = MagicMock()
+            am._log_invocation()
+
+            # Message is generated from a dict so it will be in an unknown order.
+            # have to check this manually rather than with assert_called_with()
+            args = am.log.call_args[0]
+            self.assertEqual(len(args), 1)
+            message = args[0]
+
+            self.assertEqual(len(message), len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD'))
+            self.assertTrue(message.startswith('Invoked with '))
+            self.assertIn(' bam=bam', message)
+            self.assertIn(' bar=[1, 2, 3]', message)
+            self.assertIn(' foo=False', message)
+            self.assertIn(' baz=baz', message)
+            self.assertIn(' no_log=NOT_LOGGING_PARAMETER', message)
+            self.assertIn(' password=NOT_LOGGING_PASSWORD', message)
+
+            kwargs = am.log.call_args[1]
+            self.assertEqual(kwargs,
+                    dict(log_args={
+                        'foo': 'False',
+                        'bar': '[1, 2, 3]',
+                        'bam': 'bam',
+                        'baz': 'baz',
+                        'password': 'NOT_LOGGING_PASSWORD',
+                        'no_log': 'NOT_LOGGING_PARAMETER',
+                    })
+                )

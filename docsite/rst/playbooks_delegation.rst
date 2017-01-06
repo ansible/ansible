@@ -37,10 +37,40 @@ The ''serial'' keyword can also be specified as a percentage in Ansible 1.8 and 
 play, in order to determine the number of hosts per pass::
 
     - name: test play
-      hosts: websevers
+      hosts: webservers
       serial: "30%"
 
 If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
+
+As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - 10
+
+In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
+every following batch would contain 10 hosts until all available hosts are used.
+
+It is also possible to list multiple batche sizes as percentages::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - "10%"
+      - "20%"
+      - "100%"
+
+You can also mix and match the values::
+
+    - name: test play
+      hosts: webservers
+      serial:
+      - 1
+      - 5
+      - "20%"
 
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
@@ -130,6 +160,8 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
+
 .. _delegate_facts:
 
 Delegated facts
@@ -190,9 +222,9 @@ This approach is similar to applying a conditional to a task such as::
           when: inventory_hostname == webservers[0]
 
 .. note::
-     When used together with "serial", tasks marked as "run_once" will be ran on one host in *each* serial batch.
+     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
-     :code:`inventory_hostname == my_group_name[0]` construct.
+     :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
 
 .. _local_playbooks:
 
@@ -200,7 +232,7 @@ Local Playbooks
 ```````````````
 
 It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
+for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
 To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
@@ -218,20 +250,20 @@ use the default remote connection type::
 Interrupt execution on any error
 ````````````````````````````````
 
-With option ''any_errors_fatal'' any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
+With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
 
-Sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
+Sometimes ''serial'' execution is unsuitable; the number of hosts is unpredictable (because of dynamic inventory) and speed is crucial (simultaneous execution is required), but all tasks must be 100% successful to continue playbook execution.
 
-For example there is a service located in many datacenters, there a some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
+For example, consider a service located in many datacenters with some load balancers to pass traffic from users to the service. There is a deploy playbook to upgrade service deb-packages. The playbook has the stages:
 
 - disable traffic on load balancers (must be turned off simultaneously)
-- gracefully stop service
-- upgrade software (this step includes tests and starting service)
-- enable traffic on load balancers (should be turned off simultaneously)
+- gracefully stop the service
+- upgrade software (this step includes tests and starting the service)
+- enable traffic on the load balancers (which should be turned on simultaneously)
 
-Service can't be stopped with "alive" load balancers, they must be disabled, all of them. So second stage can't be played if any server failed on "stage 1".
+The service can't be stopped with "alive" load balancers; they must be disabled first. Because of this, the second stage can't be played if any server failed in the first stage.
 
-For datacenter "A" playbook can be written this way::
+For datacenter "A", the playbook can be written this way::
 
     ---
     - hosts: load_balancers_dc_a
@@ -253,7 +285,7 @@ For datacenter "A" playbook can be written this way::
         command: /usr/bin/enable-dc
 
 
-In this example Ansible will start software upgrade on frontends only if all load balancers are successfully disabled.
+In this example Ansible will start the software upgrade on the front ends only if all of the load balancers are successfully disabled.
 
 .. seealso::
 

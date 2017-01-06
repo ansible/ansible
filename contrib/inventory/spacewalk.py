@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 """
 Spacewalk external inventory script
@@ -70,7 +70,7 @@ if not os.path.exists(SW_REPORT):
 # Pre-startup work
 if not os.path.exists(CACHE_DIR):
     os.mkdir(CACHE_DIR)
-    os.chmod(CACHE_DIR, 2775)
+    os.chmod(CACHE_DIR, 0o2775)
 
 # Helper functions
 #------------------------------

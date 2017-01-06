@@ -28,8 +28,8 @@ It is also possible to address a specific host or set of hosts by name::
 
     one.example.com
     one.example.com:two.example.com
-    192.168.1.50
-    192.168.1.*
+    192.0.2.50
+    192.0.2.*
 
 The following patterns address one or more groups.  Groups separated by a colon indicate an "OR" configuration.
 This means the host may be in either one group or the other::
@@ -97,7 +97,7 @@ And if you want to read the list of hosts from a file, prefix the file name with
 
 Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
 
-.. note:: With the exception of version 1.9, you can use ',' instead of ':' as a host list separator. The ',' is prefered specially when dealing with ranges and ipv6.
+.. note:: With the exception of version 1.9, you can use ',' instead of ':' as a host list separator. The ',' is preferred specially when dealing with ranges and ipv6.
 .. note:: As of 2.0 the ';' is deprecated as a host list separator.
 
 .. seealso::
@@ -110,4 +110,3 @@ Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply 
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

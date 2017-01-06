@@ -24,8 +24,10 @@ import os
 import smtplib
 import json
 
-from ansible.utils.unicode import to_bytes
+from ansible.compat.six import string_types
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
+
 
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
 
@@ -83,20 +85,20 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        attach =  res._task.action
+        attach = res._task.action
         if 'invocation' in res._result:
             attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
 
         subject = 'Failed: %s' % attach
         body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach
 
-        if 'stdout' in res._result.keys() and res._result['stdout']:
+        if 'stdout' in res._result and res._result['stdout']:
             subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
-        if 'stderr' in res._result.keys() and res._result['stderr']:
-            subject = res['stderr'].strip('\r\n').split('\n')[-1]
+        if 'stderr' in res._result and res._result['stderr']:
+            subject = res._result['stderr'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
-        if 'msg' in res._result.keys() and res._result['msg']:
+        if 'msg' in res._result and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
             body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
         body += 'A complete dump of the error:\n\n' + self._dump_results(res._result)
@@ -108,7 +110,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:
@@ -123,7 +125,7 @@ class CallbackModule(CallbackBase):
         res = result._result
 
         sender = '"Ansible: %s" <root>' % host
-        if isinstance(res, basestring):
+        if isinstance(res, string_types):
             subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
             body = 'An error occurred for host ' + host + ' with the following message:\n\n' + res
         else:

@@ -29,6 +29,8 @@ from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader
+from units.mock.path import mock_unfrackpath_noop
+
 
 class TestPlayIterator(unittest.TestCase):
 
@@ -55,7 +57,10 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
+        #import epdb; epdb.st()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
@@ -116,7 +121,7 @@ class TestPlayIterator(unittest.TestCase):
 
         # lookup up an original task
         target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_block=True)
+        task_copy = target_task.copy(exclude_parent=True)
         found_task = itr.get_original_task(hosts[0], task_copy)
         self.assertEqual(target_task, found_task)
 
@@ -324,7 +329,7 @@ class TestPlayIterator(unittest.TestCase):
         # test the high-level add_tasks() method
         s = HostState(blocks=[0,1,2])
         itr._insert_tasks_into_state = MagicMock(return_value=s)
-        itr.add_tasks(hosts[0], [3,4,5])
+        itr.add_tasks(hosts[0], [MagicMock(), MagicMock(), MagicMock()])
         self.assertEqual(itr._host_states[hosts[0].name], s)
 
         # now actually test the lower-level method that does the work

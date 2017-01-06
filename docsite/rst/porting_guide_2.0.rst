@@ -26,7 +26,7 @@ To make an escaped string that will work on all versions you have two options::
 
 uses key=value escaping which has not changed.  The other option is to check for the ansible version::
 
-"{{ (ansible_version|version_compare('ge', '2.0'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
+"{{ (ansible_version|version_compare('2.0', 'ge'))|ternary( 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') , 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') ) }}"
 
 * trailing newline When a string with a trailing newline was specified in the
   playbook via yaml dict format, the trailing newline was stripped. When
@@ -54,6 +54,10 @@ uses key=value escaping which has not changed.  The other option is to check for
         msg: "{{ message }}"
     # Output
     "msg": "Testing some things"
+
+* Behavior of templating DOS-type text files changes with Ansible v2.
+
+  A bug in Ansible v1 causes DOS-type text files (using a carriage return and newline) to be templated to Unix-type text files (using only a newline). In Ansible v2 this long-standing bug was finally fixed and DOS-type text files are preserved correctly. This may be confusing when you expect your playbook to not show any differences when migrating to Ansible v2, while in fact you will see every DOS-type file being completely replaced (with what appears to be the exact same content).
 
 * When specifying complex args as a variable, the variable must use the full jinja2
   variable syntax (```{{var_name}}```) - bare variable names there are no longer accepted.
@@ -241,7 +245,7 @@ populates the callback with them.  Here's a short snippet that shows you how::
 
         def v2_playbook_on_start(self, playbook):
             self.playbook = playbook
-            self.playbook_name = os.path.basename(self.playbook._filename)
+            self.playbook_name = os.path.basename(self.playbook._file_name)
 
         def v2_playbook_on_play_start(self, play):
             self.play = play

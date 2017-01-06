@@ -14,4 +14,3 @@
 - src: git@github.com:geerlingguy/ansible-role-php.git
   scm: git
   name: php
-

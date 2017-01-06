@@ -16,56 +16,44 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
-import json
+
+import re
 
 try:
-    from runconfig import runconfig
-    from opsrest.settings import settings
-    from opsrest.manager import OvsdbConnectionManager
+    import ovs.poller
+    import ops.dc
+    from ops.settings import settings
     from opslib import restparser
     HAS_OPS = True
 except ImportError:
     HAS_OPS = False
 
-NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
+from ansible.module_utils.network import add_argument, register_transport, to_list
+from ansible.module_utils.shell import CliBase
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-NET_COMMON_ARGS = dict(
-    host=dict(),
-    port=dict(type='int'),
-    username=dict(),
-    password=dict(no_log=True),
-    use_ssl=dict(default=True, type='bool'),
-    transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
-    provider=dict()
-)
+add_argument('use_ssl', dict(default=True, type='bool'))
+add_argument('validate_certs', dict(default=True, type='bool'))
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
+def get_opsidl():
+    extschema = restparser.parseSchema(settings.get('ext_schema'))
+    ovsschema = settings.get('ovs_schema')
+    ovsremote = settings.get('ovs_remote')
+    opsidl = ops.dc.register(extschema, ovsschema, ovsremote)
 
-def get_runconfig():
-    manager = OvsdbConnectionManager(settings.get('ovs_remote'),
-                                     settings.get('ovs_schema'))
-    manager.start()
+    init_seqno = opsidl.change_seqno
+    while True:
+        opsidl.run()
+        if init_seqno != opsidl.change_seqno:
+            break
+        poller = ovs.poller.Poller()
+        opsidl.wait(poller)
+        poller.block()
 
-    timeout = 10
-    interval = 0
-    init_seq_no = manager.idl.change_seqno
+    return (extschema, opsidl)
 
-    while (init_seq_no == manager.idl.change_seqno):
-        if interval > timeout:
-            raise TypeError('timeout')
-        manager.idl.run()
-        interval += 1
-        time.sleep(1)
-
-    schema = restparser.parseSchema(settings.get('ext_schema'))
-    return runconfig.RunConfigUtil(manager.idl, schema)
 
 class Response(object):
 
@@ -85,166 +73,187 @@ class Response(object):
         except ValueError:
             return None
 
+
 class Rest(object):
 
-    def __init__(self, module):
-        self.module = module
-        self.baseurl = None
+    DEFAULT_HEADERS = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 
-    def connect(self):
-        host = self.module.params['host']
-        port = self.module.params['port']
+    def __init__(self):
+        self.url = None
+        self.url_args = ModuleStub(url_argument_spec(), self._error)
 
-        if self.module.params['use_ssl']:
+        self.headers = self.DEFAULT_HEADERS
+
+        self._connected = False
+        self.default_output = 'json'
+
+    def _error(self, msg):
+        raise NetworkError(msg, url=self.url)
+
+    def connect(self, params, **kwargs):
+        host = params['host']
+        port = params['port']
+
+        # sets the module_utils/urls.py req parameters
+        self.url_args.params['url_username'] = params['username']
+        self.url_args.params['url_password'] = params['password']
+        self.url_args.params['validate_certs'] = params['validate_certs']
+
+        if params['use_ssl']:
             proto = 'https'
             if not port:
-                port = 18091
+                port = 443
         else:
             proto = 'http'
             if not port:
-                port = 8091
+                port = 80
 
-        self.baseurl = '%s://%s:%s/rest/v1' % (proto, host, port)
+        baseurl = '%s://%s:%s' % (proto, host, port)
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        # Get a cookie and save it the rest of the operations.
+        url = '%s/%s' % (baseurl, 'login')
+        data = 'username=%s&password=%s' % (params['username'], params['password'])
+        resp, hdrs = fetch_url(self.url_args, url, data=data, headers=headers, method='POST')
+
+        # Update the base url for the rest of the operations.
+        self.url = '%s/rest/v1' % (baseurl)
+        self.headers['Cookie'] = hdrs['set-cookie']
+
+    def disconnect(self, **kwargs):
+        self.url = None
+        self._connected = False
+
+    def authorize(self, params, **kwargs):
+        raise NotImplementedError
+
+    ### REST methods ###
 
     def _url_builder(self, path):
         if path[0] == '/':
             path = path[1:]
-        return '%s/%s' % (self.baseurl, path)
+        return '%s/%s' % (self.url, path)
 
-    def send(self, method, path, data=None, headers=None):
+    def request(self, method, path, data=None, headers=None):
         url = self._url_builder(path)
-        data = self.module.jsonify(data)
+        data = self._jsonify(data)
 
         if headers is None:
             headers = dict()
-        headers.update({'Content-Type': 'application/json'})
+        headers.update(self.headers)
 
-        resp, hdrs = fetch_url(self.module, url, data=data, headers=headers,
-                method=method)
+        resp, hdrs = fetch_url(self.url_args, url, data=data, headers=headers, method=method)
 
         return Response(resp, hdrs)
 
     def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
+        return self.request('GET', path, data, headers)
 
     def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
+        return self.request('PUT', path, data, headers)
 
     def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
+        return self.request('POST', path, data, headers)
 
     def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
+        return self.request('DELETE', path, data, headers)
 
-class Cli(object):
+    ### Command methods ###
 
-    def __init__(self, module):
-        self.module = module
-        self.shell = None
+    def run_commands(self, commands):
+        raise NotImplementedError
 
-    def connect(self, **kwargs):
-        host = self.module.params['host']
-        port = self.module.params['port'] or 22
+    ### Config methods ###
 
-        username = self.module.params['username']
-        password = self.module.params['password']
+    def configure(self, commands):
+        path = '/system/full-configuration'
+        return self.put(path, data=commands)
 
-        self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
 
-    def send(self, commands, encoding='text'):
-        return self.shell.send(commands)
+    def get_config(self, **kwargs):
+        resp = self.get('/system/full-configuration')
+        return resp.json
 
-class NetworkModule(AnsibleModule):
+    def save_config(self):
+        raise NotImplementedError
 
-    def __init__(self, *args, **kwargs):
-        super(NetworkModule, self).__init__(*args, **kwargs)
-        self.connection = None
-        self._config = None
-        self._runconfig = None
+    def _jsonify(self, data):
+        for encoding in ("utf-8", "latin-1"):
+            try:
+                return json.dumps(data, encoding=encoding)
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
+                continue
+        self._error(msg='Invalid unicode encoding encountered')
 
-    @property
-    def config(self):
-        if not self._config:
-            self._config = self.get_config()
-        return self._config
+Rest = register_transport('rest')(Rest)
 
-    def _load_params(self):
-        params = super(NetworkModule, self)._load_params()
-        provider = params.get('provider') or dict()
-        for key, value in provider.items():
-            if key in NET_COMMON_ARGS.keys():
-                params[key] = value
-        return params
 
-    def connect(self):
-        if self.params['transport'] == 'rest':
-            self.connection = Rest(self)
-        elif self.params['transport'] == 'cli':
-            self.connection = Cli(self)
+class Cli(CliBase):
 
-        self.connection.connect()
+    CLI_PROMPTS_RE = [
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    ]
+
+    CLI_ERRORS_RE = [
+        re.compile(r"(?:unknown|incomplete|ambiguous) command", re.I),
+    ]
+
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+
+    ### Config methods ###
+
+    def configure(self, commands, **kwargs):
+        cmds = ['configure terminal']
+        cmds.extend(to_list(commands))
+        if cmds[-1] != 'end':
+            cmds.append('end')
+        responses = self.execute(cmds)
+        return responses[1:]
+
+    def get_config(self, **kwargs):
+        return self.execute('show running-config')[0]
+
+    def load_config(self, commands, **kwargs):
+        return self.configure(commands)
+
+    def save_config(self):
+        self.execute(['copy running-config startup-config'])
+
+Cli = register_transport('cli')(Cli)
+
+
+class Ssh(object):
+
+    def __init__(self):
+        if not HAS_OPS:
+            msg = 'ops.dc lib is required but does not appear to be available'
+            raise NetworkError(msg)
+        self._opsidl = None
+        self._extschema = None
 
     def configure(self, config):
-        if self.params['transport'] == 'cli':
-            commands = to_list(config)
-            commands.insert(0, 'configure terminal')
-            responses = self.execute(commands)
-            responses.pop(0)
-            return responses
-        elif self.params['transport'] == 'rest':
-            path = '/system/full-configuration'
-            return self.connection.put(path, data=config)
-        else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            self._runconfig.write_config_to_db(config)
-
-    def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message, commands=commands)
-
-    def disconnect(self):
-        self.connection.close()
-
-    def parse_config(self, cfg):
-        return parse(cfg, indent=4)
+        if not self._opsidl:
+            (self._extschema, self._opsidl) = get_opsidl()
+        return ops.dc.write(self._extschema, self._opsidl)
 
     def get_config(self):
-        if self.params['transport'] == 'cli':
-            return self.execute('show running-config')[0]
+        if not self._opsidl:
+            (self._extschema, self._opsidl) = get_opsidl()
+        return ops.dc.read(self._extschema, self._opsidl)
 
-        elif self.params['transport'] == 'rest':
-            resp = self.connection.get('/system/full-configuration')
-            return resp.json
+    def load_config(self, config):
+        return self.configure(config)
 
-        else:
-            if not self._runconfig:
-                self._runconfig = get_runconfig()
-            return self._runconfig.get_running_config()
-
-
-def get_module(**kwargs):
-    """Return instance of NetworkModule
-    """
-    argument_spec = NET_COMMON_ARGS.copy()
-    if kwargs.get('argument_spec'):
-        argument_spec.update(kwargs['argument_spec'])
-    kwargs['argument_spec'] = argument_spec
-
-    module = NetworkModule(**kwargs)
-
-    if not HAS_OPS and module.params['transport'] == 'ssh':
-        module.fail_json(msg='could not import ops library')
-
-    # HAS_PARAMIKO is set by module_utils/shell.py
-    if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    if module.params['transport'] in ['cli', 'rest']:
-        module.connect()
-
-    return module
-
+Ssh = register_transport('ssh', default=True)(Ssh)

@@ -32,10 +32,16 @@ ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
 if os.getenv('ANSIBLE_ETCD_URL') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
 
+ANSIBLE_ETCD_VERSION = 'v1'
+if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
+    ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
+
 class Etcd:
-    def __init__(self, url=ANSIBLE_ETCD_URL, validate_certs=True):
+    def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,
+                 validate_certs=True):
         self.url = url
-        self.baseurl = '%s/v1/keys' % (self.url)
+        self.version = version
+        self.baseurl = '%s/%s/keys' % (self.url,self.version)
         self.validate_certs = validate_certs
 
     def get(self, key):
@@ -52,8 +58,13 @@ class Etcd:
         try:
             # {"action":"get","key":"/name","value":"Jane Jolie","index":5}
             item = json.loads(data)
-            if 'value' in item:
-                value = item['value']
+            if self.version == 'v1':
+                if 'value' in item:
+                    value = item['value']
+            else:
+                if 'node' in item:
+                    value = item['node']['value']
+
             if 'errorCode' in item:
                 value = "ENOENT"
         except:

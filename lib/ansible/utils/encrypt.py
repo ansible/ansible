@@ -20,6 +20,8 @@ __metaclass__ = type
 
 import os
 import stat
+import tempfile
+import multiprocessing
 import time
 import warnings
 
@@ -65,8 +67,12 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_bytes
 
 __all__ = ['do_encrypt']
+
+_LOCK = multiprocessing.Lock()
+
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -78,13 +84,21 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         if salt_size:
             result = crypt.encrypt(result, salt_size=salt_size)
         elif salt:
+            if crypt._salt_is_bytes:
+                salt = to_bytes(salt, encoding='ascii', errors='strict')
+            else:
+                salt = to_text(salt, encoding='ascii', errors='strict')
             result = crypt.encrypt(result, salt=salt)
         else:
             result = crypt.encrypt(result)
     else:
         raise AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
-    return result
+    # Hashes from passlib.hash should be represented as ascii strings of hex
+    # digits so this should not traceback.  If it's not representable as such
+    # we need to traceback and then blacklist such algorithms because it may
+    # impact calling code.
+    return to_text(result, errors='strict')
 
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
@@ -95,8 +109,15 @@ def key_for_hostname(hostname):
 
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path, mode=0o700)
-        os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+        # avoid race with multiple forks trying to create paths on host
+        # but limit when locking is needed to creation only
+        with(_LOCK):
+            if not os.path.exists(key_path):
+                # use a temp directory and rename to ensure the directory
+                # searched for only appears after permissions applied.
+                tmp_dir = tempfile.mkdtemp(dir=os.path.dirname(key_path))
+                os.chmod(tmp_dir, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+                os.rename(tmp_dir, key_path)
     elif not os.path.isdir(key_path):
         raise AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
@@ -107,19 +128,26 @@ def key_for_hostname(hostname):
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
     if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
-        key = AesKey.Generate(size=256)
-        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
-        fh = os.fdopen(fd, 'w')
-        fh.write(str(key))
-        fh.close()
-        return key
-    else:
-        if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
-            raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
-        fh = open(key_path)
-        key = AesKey.Read(fh.read())
-        fh.close()
-        return key
+        # avoid race with multiple forks trying to create key
+        # but limit when locking is needed to creation only
+        with(_LOCK):
+            if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+                key = AesKey.Generate()
+                # use temp file to ensure file only appears once it has
+                # desired contents and permissions
+                with tempfile.NamedTemporaryFile(mode='w', dir=os.path.dirname(key_path), delete=False) as fh:
+                    tmp_key_path = fh.name
+                    fh.write(str(key))
+                os.chmod(tmp_key_path, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
+                os.rename(tmp_key_path, key_path)
+                return key
+
+    if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
+        raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
+    fh = open(key_path)
+    key = AesKey.Read(fh.read())
+    fh.close()
+    return key
 
 def keyczar_encrypt(key, msg):
     return key.Encrypt(msg.encode('utf-8'))

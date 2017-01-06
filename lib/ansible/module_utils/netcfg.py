@@ -1,176 +1,298 @@
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
-# This file is part of Ansible
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
 import re
-import collections
+
+from ansible.module_utils.six.moves import zip
+
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
+
 
 class ConfigLine(object):
 
-    def __init__(self, text):
-        self.text = text
-        self.children = list()
-        self.parents = list()
-        self.raw = None
+    def __init__(self, raw):
+        self.text = str(raw).strip()
+        self.raw = raw
+        self._children = list()
+        self._parents = list()
 
     def __str__(self):
         return self.raw
 
     def __eq__(self, other):
-        if self.text == other.text:
-            return self.parents == other.parents
+        return self.line == other.line
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __getitem__(self, key):
+        for item in self._children:
+            if item.text == key:
+                return item
+        raise KeyError(key)
 
-def parse(lines, indent):
-    toplevel = re.compile(r'\S')
-    childline = re.compile(r'^\s*(.+)$')
-    repl = r'([{|}|;])'
+    @property
+    def line(self):
+        line = self.parents
+        line.append(self.text)
+        return ' '.join(line)
 
-    ancestors = list()
-    config = list()
+    @property
+    def children(self):
+        return _obj_to_text(self._children)
 
-    for line in str(lines).split('\n'):
-        text = str(re.sub(repl, '', line)).strip()
+    @property
+    def parents(self):
+        return _obj_to_text(self._parents)
 
-        cfg = ConfigLine(text)
-        cfg.raw = line
+    @property
+    def path(self):
+        config = _obj_to_raw(self._parents)
+        config.append(self.raw)
+        return '\n'.join(config)
 
-        if not text or text[0] in ['!', '#']:
-            continue
+    def add_child(self, obj):
+        assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
+        self._children.append(obj)
 
-        # handle top level commands
-        if toplevel.match(line):
-            ancestors = [cfg]
+def ignore_line(text, tokens=None):
+    for item in (tokens or DEFAULT_COMMENT_TOKENS):
+        if text.startswith(item):
+            return True
 
-        # handle sub level commands
-        else:
-            match = childline.match(line)
-            line_indent = match.start(1)
-            level = int(line_indent / indent)
-            parent_level = level - 1
+_obj_to_text = lambda x: [o.text for o in x]
+_obj_to_raw = lambda x: [o.raw for o in x]
 
-            cfg.parents = ancestors[:level]
+def dumps(objects, output='block'):
+    if output == 'block':
+        item = _obj_to_raw(objects)
+    elif output == 'commands':
+        items = _obj_to_text(objects)
+    else:
+        raise TypeError('unknown value supplied for keyword output')
+    return '\n'.join(items)
 
-            if level > len(ancestors):
-                config.append(cfg)
+class NetworkConfig(object):
+
+    def __init__(self, indent=1, contents=None):
+        self._indent = indent
+        self._items = list()
+
+        if contents:
+            self.load(contents)
+
+    @property
+    def items(self):
+        return self._items
+
+    def __getitem__(self, key):
+        for line in self:
+            if line.text == key:
+                return line
+        raise KeyError(key)
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __str__(self):
+        return '\n'.join([c.raw for c in self.items])
+
+    def load(self, s):
+        self._items = self.parse(s)
+
+    def loadfp(self, fp):
+        return self.load(open(fp).read())
+
+    def parse(self, lines, comment_tokens=None):
+        toplevel = re.compile(r'\S')
+        childline = re.compile(r'^\s*(.+)$')
+
+        ancestors = list()
+        config = list()
+
+        curlevel = 0
+        prevlevel = 0
+
+        for linenum, line in enumerate(str(lines).split('\n')):
+            text = str(re.sub(r'([{};])', '', line)).strip()
+
+            cfg = ConfigLine(line)
+
+            if not text or ignore_line(text, comment_tokens):
                 continue
 
-            for i in range(level, len(ancestors)):
-                ancestors.pop()
+            # handle top level commands
+            if toplevel.match(line):
+                ancestors = [cfg]
+                prevlevel = curlevel
+                curlevel = 0
 
-            ancestors.append(cfg)
-            ancestors[parent_level].children.append(cfg)
-
-        config.append(cfg)
-
-    return config
-
-
-class Conditional(object):
-    """Used in command modules to evaluate waitfor conditions
-    """
-
-    OPERATORS = {
-        'eq': ['eq', '=='],
-        'neq': ['neq', 'ne', '!='],
-        'gt': ['gt', '>'],
-        'ge': ['ge', '>='],
-        'lt': ['lt', '<'],
-        'le': ['le', '<='],
-        'contains': ['contains']
-    }
-
-    def __init__(self, conditional):
-        self.raw = conditional
-
-        key, op, val = shlex.split(conditional)
-        self.key = key
-        self.func = self.func(op)
-        self.value = self._cast_value(val)
-
-    def __call__(self, data):
-        try:
-            value = self.get_value(dict(result=data))
-            return self.func(value)
-        except Exception:
-            raise ValueError(self.key)
-
-    def _cast_value(self, value):
-        if value in BOOLEANS_TRUE:
-            return True
-        elif value in BOOLEANS_FALSE:
-            return False
-        elif re.match(r'^\d+\.d+$', value):
-            return float(value)
-        elif re.match(r'^\d+$', value):
-            return int(value)
-        else:
-            return unicode(value)
-
-    def func(self, oper):
-        for func, operators in self.OPERATORS.items():
-            if oper in operators:
-                return getattr(self, func)
-        raise AttributeError('unknown operator: %s' % oper)
-
-    def get_value(self, result):
-        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
-        for part in parts:
-            match = re.findall(r'\[(\S+?)\]', part)
-            if match:
-                key = part[:part.find('[')]
-                result = result[key]
-                for m in match:
-                    try:
-                        m = int(m)
-                    except ValueError:
-                        m = str(m)
-                    result = result[m]
+            # handle sub level commands
             else:
-                result = result.get(part)
-        return result
+                match = childline.match(line)
+                line_indent = match.start(1)
 
-    def number(self, value):
-        if '.' in str(value):
-            return float(value)
+                prevlevel = curlevel
+                curlevel = int(line_indent / self._indent)
+
+                if (curlevel - 1) > prevlevel:
+                    curlevel = prevlevel + 1
+
+                parent_level = curlevel - 1
+
+                cfg._parents = ancestors[:curlevel]
+
+                if curlevel > len(ancestors):
+                    config.append(cfg)
+                    continue
+
+                for i in range(curlevel, len(ancestors)):
+                    ancestors.pop()
+
+                ancestors.append(cfg)
+                ancestors[parent_level].add_child(cfg)
+
+            config.append(cfg)
+
+        return config
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                if item.parents == path[:-1]:
+                    return item
+
+    def get_section(self, path):
+        assert isinstance(path, list), 'path argument must be a list object'
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self._expand_section(obj)
+
+    def _expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj._children:
+            if child in S:
+                continue
+            self._expand_section(child, S)
+        return S
+
+    def _diff_line(self, other):
+        updates = list()
+        for item in self.items:
+            if item not in other:
+                updates.append(item)
+        return updates
+
+    def _diff_strict(self, other):
+        updates = list()
+        for index, line in enumerate(self._items):
+            try:
+                if line != other._lines[index]:
+                    updates.append(line)
+            except IndexError:
+                updates.append(line)
+        return updates
+
+    def _diff_exact(self, other):
+        updates = list()
+        if len(other) != len(self._items):
+            updates.extend(self._items)
         else:
-            return int(value)
+            for ours, theirs in zip(self._items, other):
+                if ours != theirs:
+                    updates.extend(self._items)
+                    break
+        return updates
 
-    def eq(self, value):
-        return value == self.value
+    def difference(self, other, match='line', path=None, replace=None):
+        try:
+            meth = getattr(self, '_diff_%s' % match)
+            updates = meth(other)
+        except AttributeError:
+            raise TypeError('invalid value for match keyword argument, '
+                            'valid values are line, strict, or exact')
 
-    def neq(self, value):
-        return value != self.value
+        visited = set()
+        expanded = list()
 
-    def gt(self, value):
-        return self.number(value) > self.value
+        for item in updates:
+            for p in item._parents:
+                if p not in visited:
+                    visited.add(p)
+                    expanded.append(p)
+            expanded.append(item)
+            visited.add(item)
 
-    def ge(self, value):
-        return self.number(value) >= self.value
+        return expanded
 
-    def lt(self, value):
-        return self.number(value) < self.value
+    def add(self, lines, parents=None):
+        ancestors = list()
+        offset = 0
+        obj = None
 
-    def le(self, value):
-        return self.number(value) <= self.value
+        ## global config command
+        if not parents:
+            for line in lines:
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
 
-    def contains(self, value):
-        return self.value in value
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self._indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in lines:
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self._indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item._parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)

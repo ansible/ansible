@@ -35,8 +35,10 @@ Another way to pass arguments to a module is using yaml syntax also called 'comp
 All modules technically return JSON format data, though if you are using the command line or playbooks, you don't really need to know much about
 that.  If you're writing your own module, you care, and this means you do not have to write modules in any particular language -- you get to choose.
 
-Modules strive to be `idempotent`, meaning they will seek to avoid changes to the system unless a change needs to be made.  When using Ansible
-playbooks, these modules can trigger 'change events' in the form of notifying 'handlers' to run additional tasks.
+Modules should be idempotent, and should avoid making any changes if
+they detect that the current state matches the desired final state. When using
+Ansible playbooks, these modules can trigger 'change events' in the form of
+notifying 'handlers' to run additional tasks.
 
 Documentation for each module can be accessed from the command line with the ansible-doc tool::
 

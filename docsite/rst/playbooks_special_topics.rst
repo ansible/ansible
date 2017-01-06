@@ -11,6 +11,7 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_acceleration
    playbooks_async
    playbooks_checkmode
+   playbooks_debugger
    playbooks_delegation
    playbooks_environment
    playbooks_error_handling

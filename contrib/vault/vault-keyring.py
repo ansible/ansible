@@ -47,16 +47,17 @@
 import sys
 import getpass
 import keyring
+import ConfigParser
+
 
 import ansible.constants as C
 
-
 def main():
-    parser = C.load_config_file()
+    (parser,config_path)  = C.load_config_file()
     try:
         username = parser.get('vault', 'username')
-    except:
-        sys.stderr.write('No [vault] section configured\n')
+    except ConfigParser.NoSectionError:
+        sys.stderr.write('No [vault] section configured in config file: %s\n' % config_path)
         sys.exit(1)
 
     if len(sys.argv) == 2 and sys.argv[1] == 'set':

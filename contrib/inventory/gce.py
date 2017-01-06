@@ -69,7 +69,8 @@ Examples:
   $ contrib/inventory/gce.py --host my_instance
 
 Author: Eric Johnson <erjohnso@google.com>
-Version: 0.0.1
+Contributors: Matt Hite <mhite@hotmail.com>, Tom Melendez <supertom@google.com>
+Version: 0.0.3
 '''
 
 __requires__ = ['pycrypto>=2.6']
@@ -83,11 +84,14 @@ except ImportError:
     pass
 
 USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v1"
+USER_AGENT_VERSION="v2"
 
 import sys
 import os
 import argparse
+
+from time import time
+
 import ConfigParser
 
 import logging
@@ -103,31 +107,103 @@ try:
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
 except:
-    print("GCE inventory script requires libcloud >= 0.13")
-    sys.exit(1)
+    sys.exit("GCE inventory script requires libcloud >= 0.13")
+
+
+class CloudInventoryCache(object):
+    def __init__(self, cache_name='ansible-cloud-cache', cache_path='/tmp',
+                 cache_max_age=300):
+        cache_dir = os.path.expanduser(cache_path)
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        self.cache_path_cache = os.path.join(cache_dir, cache_name)
+
+        self.cache_max_age = cache_max_age
+
+    def is_valid(self, max_age=None):
+        ''' Determines if the cache files have expired, or if it is still valid '''
+
+        if max_age is None:
+            max_age = self.cache_max_age
+
+        if os.path.isfile(self.cache_path_cache):
+            mod_time = os.path.getmtime(self.cache_path_cache)
+            current_time = time()
+            if (mod_time + max_age) > current_time:
+                return True
+
+        return False
+
+    def get_all_data_from_cache(self, filename=''):
+        ''' Reads the JSON inventory from the cache file. Returns Python dictionary. '''
+
+        data = ''
+        if not filename:
+            filename = self.cache_path_cache
+        with open(filename, 'r') as cache:
+            data = cache.read()
+        return json.loads(data)
+
+    def write_to_cache(self, data, filename=''):
+        ''' Writes data to file as JSON.  Returns True. '''
+        if not filename:
+            filename = self.cache_path_cache
+        json_data = json.dumps(data)
+        with open(filename, 'w') as cache:
+            cache.write(json_data)
+        return True
 
 
 class GceInventory(object):
     def __init__(self):
+        # Cache object
+        self.cache = None
+        # dictionary containing inventory read from disk
+        self.inventory = {}
+
         # Read settings and parse CLI arguments
         self.parse_cli_args()
+        self.config = self.get_config()
         self.driver = self.get_gce_driver()
+        self.ip_type = self.get_inventory_options()
+        if self.ip_type:
+            self.ip_type = self.ip_type.lower()
+
+        # Cache management
+        start_inventory_time = time()
+        cache_used = False
+        if self.args.refresh_cache or not self.cache.is_valid():
+            self.do_api_calls_update_cache()
+        else:
+            self.load_inventory_from_cache()
+            cache_used = True
+            self.inventory['_meta']['stats'] = {'use_cache': True}
+        self.inventory['_meta']['stats'] = {
+            'inventory_load_time': time() - start_inventory_time,
+            'cache_used': cache_used
+        }
 
         # Just display data for specific host
         if self.args.host:
-            print(self.json_format_dict(self.node_to_dict(
-                    self.get_instance(self.args.host)),
-                    pretty=self.args.pretty))
-            sys.exit(0)
-
-        # Otherwise, assume user wants all instances grouped
-        print(self.json_format_dict(self.group_instances(),
-            pretty=self.args.pretty))
+            print(self.json_format_dict(
+                self.inventory['_meta']['hostvars'][self.args.host],
+                pretty=self.args.pretty))
+        else:
+            # Otherwise, assume user wants all instances grouped
+            zones = self.parse_env_zones()
+            print(self.json_format_dict(self.inventory,
+                                        pretty=self.args.pretty))
         sys.exit(0)
 
-    def get_gce_driver(self):
-        """Determine the GCE authorization settings and return a
-        libcloud driver.
+    def get_config(self):
+        """
+        Reads the settings from the gce.ini file.
+
+        Populates a SafeConfigParser object with defaults and
+        attempts to read an .ini-style configuration from the filename
+        specified in GCE_INI_PATH. If the environment variable is
+        not present, the filename defaults to gce.ini in the current
+        working directory.
         """
         gce_ini_default_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "gce.ini")
@@ -142,14 +218,57 @@ class GceInventory(object):
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
             'libcloud_secrets': '',
+            'inventory_ip_type': '',
+            'cache_path': '~/.ansible/tmp',
+            'cache_max_age': '300'
         })
         if 'gce' not in config.sections():
             config.add_section('gce')
+        if 'inventory' not in config.sections():
+            config.add_section('inventory')
+        if 'cache' not in config.sections():
+            config.add_section('cache')
+
         config.read(gce_ini_path)
 
+        #########
+        # Section added for processing ini settings
+        #########
+
+        # Set the instance_states filter based on config file options
+        self.instance_states = []
+        if config.has_option('gce', 'instance_states'):
+            states = config.get('gce', 'instance_states')
+            # Ignore if instance_states is an empty string.
+            if states:
+                self.instance_states = states.split(',')
+
+        # Caching
+        cache_path = config.get('cache', 'cache_path')
+        cache_max_age = config.getint('cache', 'cache_max_age')
+        # TOOD(supertom): support project-specific caches
+        cache_name = 'ansible-gce.cache'
+        self.cache = CloudInventoryCache(cache_path=cache_path,
+                                         cache_max_age=cache_max_age,
+                                         cache_name=cache_name)
+        return config
+
+    def get_inventory_options(self):
+        """Determine inventory options. Environment variables always
+        take precedence over configuration files."""
+        ip_type = self.config.get('inventory', 'inventory_ip_type')
+        # If the appropriate environment variables are set, they override
+        # other configuration
+        ip_type = os.environ.get('INVENTORY_IP_TYPE', ip_type)
+        return ip_type
+
+    def get_gce_driver(self):
+        """Determine the GCE authorization settings and return a
+        libcloud driver.
+        """
         # Attempt to get GCE params from a configuration file, if one
         # exists.
-        secrets_path = config.get('gce', 'libcloud_secrets')
+        secrets_path = self.config.get('gce', 'libcloud_secrets')
         secrets_found = False
         try:
             import secrets
@@ -163,8 +282,7 @@ class GceInventory(object):
             if not secrets_path.endswith('secrets.py'):
                 err = "Must specify libcloud secrets file as "
                 err += "/absolute/path/to/secrets.py"
-                print(err)
-                sys.exit(1)
+                sys.exit(err)
             sys.path.append(os.path.dirname(secrets_path))
             try:
                 import secrets
@@ -175,10 +293,10 @@ class GceInventory(object):
                 pass
         if not secrets_found:
             args = [
-                config.get('gce','gce_service_account_email_address'),
-                config.get('gce','gce_service_account_pem_file_path')
+                self.config.get('gce','gce_service_account_email_address'),
+                self.config.get('gce','gce_service_account_pem_file_path')
             ]
-            kwargs = {'project': config.get('gce', 'gce_project_id')}
+            kwargs = {'project': self.config.get('gce', 'gce_project_id')}
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
@@ -193,6 +311,14 @@ class GceInventory(object):
         )
         return gce
 
+    def parse_env_zones(self):
+        '''returns a list of comma separated zones parsed from the GCE_ZONE environment variable.
+        If provided, this will be used to filter the results of the grouped_instances call'''
+        import csv
+        reader = csv.reader([os.environ.get('GCE_ZONE',"")], skipinitialspace=True)
+        zones = [r for r in reader]
+        return [z for z in zones[0]]
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -204,6 +330,9 @@ class GceInventory(object):
                            help='Get all information about an instance')
         parser.add_argument('--pretty', action='store_true', default=False,
                            help='Pretty format (default: False)')
+        parser.add_argument(
+            '--refresh-cache', action='store_true', default=False,
+            help='Force refresh of cache by making API requests (default: False - use cache files)')
         self.args = parser.parse_args()
 
 
@@ -213,11 +342,17 @@ class GceInventory(object):
         if inst is None:
             return {}
 
-        if inst.extra['metadata'].has_key('items'):
+        if 'items' in inst.extra['metadata']:
             for entry in inst.extra['metadata']['items']:
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        # default to exernal IP unless user has specified they prefer internal
+        if self.ip_type == 'internal':
+            ssh_host = inst.private_ips[0]
+        else:
+            ssh_host = inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+
         return {
             'gce_uuid': inst.uuid,
             'gce_id': inst.id,
@@ -233,29 +368,67 @@ class GceInventory(object):
             'gce_metadata': md,
             'gce_network': net,
             # Hosts don't have a public name, so we add an IP
-            'ansible_ssh_host': inst.public_ips[0] if len(inst.public_ips) >= 1 else inst.private_ips[0]
+            'ansible_ssh_host': ssh_host
         }
 
-    def get_instance(self, instance_name):
-        '''Gets details about a specific instance '''
-        try:
-            return self.driver.ex_get_node(instance_name)
-        except Exception as e:
-            return None
+    def load_inventory_from_cache(self):
+        ''' Loads inventory from JSON on disk. '''
 
-    def group_instances(self):
+        try:
+            self.inventory = self.cache.get_all_data_from_cache()
+            hosts = self.inventory['_meta']['hostvars']
+        except Exception as e:
+            print(
+                "Invalid inventory file %s.  Please rebuild with -refresh-cache option."
+                % (self.cache.cache_path_cache))
+            raise
+
+    def do_api_calls_update_cache(self):
+        ''' Do API calls and save data in cache. '''
+        zones = self.parse_env_zones()
+        data = self.group_instances(zones)
+        self.cache.write_to_cache(data)
+        self.inventory = data
+
+    def list_nodes(self):
+        all_nodes = []
+        params, more_results = {'maxResults': 500}, True
+        while more_results:
+            self.driver.connection.gce_params=params
+            all_nodes.extend(self.driver.list_nodes())
+            more_results = 'pageToken' in params
+        return all_nodes
+
+    def group_instances(self, zones=None):
         '''Group all instances'''
         groups = {}
         meta = {}
         meta["hostvars"] = {}
 
-        for node in self.driver.list_nodes():
+        for node in self.list_nodes():
+
+            # This check filters on the desired instance states defined in the
+            # config file with the instance_states config option.
+            #
+            # If the instance_states list is _empty_ then _ALL_ states are returned.
+            #
+            # If the instance_states list is _populated_ then check the current
+            # state against the instance_states list
+            if self.instance_states and not node.extra['status'] in self.instance_states:
+                continue
+
             name = node.name
 
             meta["hostvars"][name] = self.node_to_dict(node)
 
             zone = node.extra['zone'].name
-            if groups.has_key(zone): groups[zone].append(name)
+
+            # To avoid making multiple requests per zone
+            # we list all nodes and then filter the results
+            if zones and zone not in zones:
+                continue
+
+            if zone in groups: groups[zone].append(name)
             else: groups[zone] = [name]
 
             tags = node.extra['tags']
@@ -264,25 +437,25 @@ class GceInventory(object):
                     tag = t[6:]
                 else:
                     tag = 'tag_%s' % t
-                if groups.has_key(tag): groups[tag].append(name)
+                if tag in groups: groups[tag].append(name)
                 else: groups[tag] = [name]
 
             net = node.extra['networkInterfaces'][0]['network'].split('/')[-1]
             net = 'network_%s' % net
-            if groups.has_key(net): groups[net].append(name)
+            if net in groups: groups[net].append(name)
             else: groups[net] = [name]
 
             machine_type = node.size
-            if groups.has_key(machine_type): groups[machine_type].append(name)
+            if machine_type in groups: groups[machine_type].append(name)
             else: groups[machine_type] = [name]
 
             image = node.image and node.image or 'persistent_disk'
-            if groups.has_key(image): groups[image].append(name)
+            if image in groups: groups[image].append(name)
             else: groups[image] = [name]
 
             status = node.extra['status']
             stat = 'status_%s' % status.lower()
-            if groups.has_key(stat): groups[stat].append(name)
+            if stat in groups: groups[stat].append(name)
             else: groups[stat] = [name]
 
         groups["_meta"] = meta
@@ -298,6 +471,6 @@ class GceInventory(object):
         else:
             return json.dumps(data)
 
-
 # Run the script
-GceInventory()
+if __name__ == '__main__':
+    GceInventory()

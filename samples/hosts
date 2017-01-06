@@ -1,1 +1,0 @@
-testing ansible_connection=local ansible_ssh_host=192.168.122.100 ansible_ssh_user=testing

@@ -1,0 +1,19 @@
+extends: default
+
+rules:
+  braces: {max-spaces-inside: 1, level: error}
+  brackets: {max-spaces-inside: 1, level: error}
+  colons: {max-spaces-after: -1, level: error}
+  commas: {max-spaces-after: -1, level: error}
+  comments: disable
+  comments-indentation: disable
+  document-start: disable
+  empty-lines: {max: 3, level: error}
+  hyphens: {level: error}
+  indentation: disable
+  key-duplicates: enable
+  line-length: disable
+  new-line-at-end-of-file: disable
+  new-lines: {type: unix}
+  trailing-spaces: disable
+  truthy: disable

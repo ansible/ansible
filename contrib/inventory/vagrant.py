@@ -69,7 +69,7 @@ parser.add_option('--host', default=None, dest="host",
 
 # get all the ssh configs for all boxes in an array of dictionaries.
 def get_ssh_config():
-    return {k: get_a_ssh_config(k) for k in list_running_boxes()}
+    return dict((k, get_a_ssh_config(k)) for k in list_running_boxes())
 
 
 # list all the running boxes
@@ -102,7 +102,7 @@ def get_a_ssh_config(box_name):
         if os.path.isfile(id):
             host_config['identityfile'] = id
 
-    return {v: host_config[k] for k, v in _ssh_to_ansible}
+    return dict((v, host_config[k]) for k, v in _ssh_to_ansible)
 
 # List out servers that vagrant has running
 # ------------------------------

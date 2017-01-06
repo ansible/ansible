@@ -19,89 +19,105 @@ __metaclass__ = type
 
 import os
 import re
-import pipes
 import ansible.constants as C
 import time
 import random
 
 from ansible.compat.six import text_type
+from ansible.compat.six.moves import shlex_quote
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
+
 
 class ShellBase(object):
 
     def __init__(self):
-        self.env = dict(
-            LANG        = C.DEFAULT_MODULE_LANG,
-            LC_ALL      = C.DEFAULT_MODULE_LANG,
-            LC_MESSAGES = C.DEFAULT_MODULE_LANG,
-        )
+        self.env = dict()
+        if C.DEFAULT_MODULE_SET_LOCALE:
+            self.env.update(
+                dict(
+                    LANG        = C.DEFAULT_MODULE_LANG,
+                    LC_ALL      = C.DEFAULT_MODULE_LANG,
+                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                )
+            )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
 
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
-    def get_remote_filename(self, base_name):
+    def get_remote_filename(self, pathname):
+        base_name = os.path.basename(pathname.strip())
         return base_name.strip()
 
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
-    def chmod(self, mode, path, recursive=True):
-        path = pipes.quote(path)
-        cmd = ['chmod', mode, path]
-        if recursive:
-            cmd.append('-R')
-        return ' '.join(cmd)
-
-    def chown(self, path, user, group=None, recursive=True):
-        path = pipes.quote(path)
-        user = pipes.quote(user)
-
-        if group is None:
-            cmd = ['chown', user, path]
-        else:
-            group = pipes.quote(group)
-            cmd = ['chown', '%s:%s' % (user, group), path]
-
-        if recursive:
-            cmd.append('-R')
+    def chmod(self, paths, mode):
+        cmd = ['chmod', mode]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
-    def set_user_facl(self, path, user, mode, recursive=True):
+    def chown(self, paths, user):
+        cmd = ['chown', user]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
+
+        return ' '.join(cmd)
+
+    def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        path = pipes.quote(path)
-        mode = pipes.quote(mode)
-        user = pipes.quote(user)
-
-        cmd = ['setfacl']
-        if recursive:
-            cmd.append('-R')
-        cmd.extend(('-m', 'u:%s:%s %s' % (user, mode, path)))
+        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = pipes.quote(path)
+        path = shlex_quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
+    def exists(self, path):
+        cmd = ['test', '-e', shlex_quote(path)]
+        return ' '.join(cmd)
+
     def mkdtemp(self, basefile=None, system=False, mode=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
-        basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
-        if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
-            basetmp = self.join_path('/tmp', basefile)
+
+        # When system is specified we have to create this in a directory where
+        # other users can read and access the temp directory.  This is because
+        # we use system to create tmp dirs for unprivileged users who are
+        # sudo'ing to a second unprivileged user.  The only dirctories where
+        # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
+        # allow one of those two locations if system=True.  However, users
+        # might want to have some say over which of /tmp or /var/tmp is used
+        # (because /tmp may be a tmpfs and want to conserve RAM or persist the
+        # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
+        # to somewhere in or below /var/tmp and if so use /var/tmp.  If
+        # anything else we use /tmp (because /tmp is specified by POSIX nad
+        # /var/tmp is not).
+        if system:
+            if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
+                basetmpdir = '/var/tmp'
+            else:
+                basetmpdir = '/tmp'
+        else:
+            basetmpdir = C.DEFAULT_REMOTE_TMP
+        basetmp = self.join_path(basetmpdir, basefile)
+
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
-        cmd += ' %s echo %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
@@ -123,18 +139,32 @@ class ShellBase(object):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # pipes.quote will make the shell return the string verbatim
-                user_home_path = pipes.quote(user_home_path)
+                # shlex_quote will make the shell return the string verbatim
+                user_home_path = shlex_quote(user_home_path)
         return 'echo %s' % user_home_path
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
-            cmd = pipes.quote(cmd)
-        cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+            cmd = shlex_quote(cmd)
+
+        cmd_parts = []
+        if shebang:
+            shebang = shebang.replace("#!", "").strip()
+        else:
+            shebang = ""
+        cmd_parts.extend([env_string.strip(), shebang, cmd])
         if arg_path is not None:
             cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
         if rm_tmp:
             new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd
+
+    def append_command(self, cmd, cmd_to_append):
+        """Append an additional command if supported by the shell"""
+
+        if self._SHELL_AND:
+            cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
+
+        return cmd

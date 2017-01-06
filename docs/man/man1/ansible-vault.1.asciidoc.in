@@ -52,7 +52,7 @@ the password.
 Show a help message related to the given sub-command.
 
 
-If '--valut-password-file' is not supplied ansib-vault will automatically prompt for passwords as required.
+If '--vault-password-file' is not supplied ansible-vault will automatically prompt for passwords as required.
 
 
 CREATE
@@ -63,7 +63,7 @@ CREATE
 The *create* sub-command is used to initialize a new encrypted file.
 
 After providing a password, the tool will launch whatever editor you have defined
-with $EDITOR, and defaults to vim. Once you are done with the editor session, the
+with $EDITOR, and defaults to vi. Once you are done with the editor session, the
 file will be saved as encrypted data.
 
 The default cipher is AES (which is shared-secret based).

@@ -108,7 +108,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
     
        - name: Add all instance public IPs to host group
          add_host: hostname={{ item.public_ip }} groups=ec2hosts
-         with_items: ec2.instances
+         with_items: "{{ ec2.instances }}"
 
 With the host group now created, a second play at the bottom of the the same provisioning playbook file might now have some configuration steps::
 
@@ -220,7 +220,7 @@ ec2_ami module.
 
 Generally speaking, we find most users using Packer.
 
-`Documentation for the Ansible Packer provisioner can be found here <https://www.packer.io/docs/provisioners/ansible-local.html>`_.
+See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible-local.html>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible.html>`_.
 
 If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable.
 

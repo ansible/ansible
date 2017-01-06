@@ -23,7 +23,35 @@ from copy import deepcopy
 
 class Attribute:
 
-    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, always_post_validate=False):
+    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, class_type=None, always_post_validate=False, inherit=True):
+        """
+        :class:`Attribute` specifies constraints for attributes of objects which
+        derive from playbook data.  The attributes of the object are basically
+        a schema for the yaml playbook.
+
+        :kwarg isa: The type of the attribute.  Allowable values are a string
+            representation of any yaml basic datatype, python class, or percent.
+            (Enforced at post-validation time).
+        :kwarg private: (not used)
+        :kwarg default: Default value if unspecified in the YAML document.
+        :kwarg required: Whether or not the YAML document must contain this field.
+            If the attribute is None when post-validated, an error will be raised.
+        :kwarg listof: If isa is set to "list", this can optionally be set to
+            ensure that all elements in the list are of the given type. Valid
+            values here are the same as those for isa.
+        :kwarg priority: The order in which the fields should be parsed. Generally
+            this does not need to be set, it is for rare situations where another
+            field depends on the fact that another field was parsed first.
+        :kwarg class_type: If isa is set to "class", this can be optionally set to
+            a class (not a string name). The YAML data for this field will be
+            passed to the __init__ method of that class during post validation and
+            the field will be an instance of that class.
+        :kwarg always_post_validate: Controls whether a field should be post
+            validated or not (default: True).
+        :kwarg inherit: A boolean value, which controls whether the object
+            containing this field should attempt to inherit the value from its
+            parent object if the local value is None.
+        """
 
         self.isa = isa
         self.private = private
@@ -31,7 +59,9 @@ class Attribute:
         self.required = required
         self.listof = listof
         self.priority = priority
+        self.class_type = class_type
         self.always_post_validate = always_post_validate
+        self.inherit = inherit
 
         if default is not None and self.isa in ('list', 'dict', 'set'):
             self.default = deepcopy(default)

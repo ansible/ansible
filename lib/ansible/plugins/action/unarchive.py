@@ -20,8 +20,11 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):
@@ -37,8 +40,19 @@ class ActionModule(ActionBase):
 
         source  = self._task.args.get('src', None)
         dest    = self._task.args.get('dest', None)
-        copy    = boolean(self._task.args.get('copy', True))
+        remote_src = boolean(self._task.args.get('remote_src', False))
         creates = self._task.args.get('creates', None)
+
+        # "copy" is deprecated in favor of "remote_src".
+        if 'copy' in self._task.args:
+            # They are mutually exclusive.
+            if 'remote_src' in self._task.args:
+                result['failed'] = True
+                result['msg'] = "parameters are mutually exclusive: ('copy', 'remote_src')"
+                return result
+            # We will take the information from copy and store it in
+            # the remote_src var to use later in this file.
+            remote_src = not boolean(self._task.args.get('copy'))
 
         if source is None or dest is None:
             result['failed'] = True
@@ -48,38 +62,45 @@ class ActionModule(ActionBase):
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         if creates:
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
-            stat = result.get('stat', None)
-            if stat and stat.get('exists', False):
+            if self._remote_file_exists(creates):
                 result['skipped'] = True
                 result['msg'] = "skipped, since %s exists" % creates
+                self._remove_tmp_path(tmp)
                 return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
 
-        if copy:
-            if self._task._role is not None:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
-            else:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
+        if not remote_src:
+            try:
+                source = self._loader.get_real_file(self._find_needle('files', source))
+            except AnsibleError:
+                result['failed'] = True
+                result['msg'] = to_native(get_exception())
+                self._remove_tmp_path(tmp)
+                return result
 
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
-        if remote_checksum == '4':
+        try:
+            remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
+        except AnsibleError:
             result['failed'] = True
-            result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            result['msg'] = to_native(get_exception())
+            self._remove_tmp_path(tmp)
             return result
-        elif remote_checksum != '3':
+
+        if not remote_stat['exists'] or not remote_stat['isdir']:
             result['failed'] = True
             result['msg'] = "dest '%s' must be an existing dir" % dest
+            self._remove_tmp_path(tmp)
             return result
 
-        if copy:
+        if not remote_src:
             # transfer the file to a remote tmp location
             tmp_src = self._connection._shell.join_path(tmp, 'source')
             self._transfer_file(source, tmp_src)
@@ -87,9 +108,9 @@ class ActionModule(ActionBase):
         # handle diff mode client side
         # handle check mode client side
 
-        if copy:
+        if not remote_src:
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms(tmp, remote_user, recursive=True)
+            self._fixup_perms2((tmp, tmp_src), remote_user)
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -109,4 +130,5 @@ class ActionModule(ActionBase):
 
         # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+        self._remove_tmp_path(tmp)
         return result

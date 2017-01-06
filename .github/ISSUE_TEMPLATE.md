@@ -1,4 +1,7 @@
-<!--- Verify first that your issue/request is not already reported in GitHub -->
+<!---
+Verify first that your issue/request is not already reported on GitHub.
+Also test if the latest release, and master branch are affected too.
+-->
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest: -->
@@ -6,10 +9,13 @@
  - Feature Idea
  - Documentation Report
 
+##### COMPONENT NAME
+<!--- Name of the module/plugin/task/feature -->
 
 ##### ANSIBLE VERSION
+<!--- Paste verbatim output from “ansible --version” between quotes below -->
 ```
-<!--- Paste verbatim output from “ansible --version” between quotes -->
+
 ```
 
 ##### CONFIGURATION
@@ -29,12 +35,13 @@ managing, or say “N/A” for anything that is not platform-specific.
 
 ##### STEPS TO REPRODUCE
 <!---
-For bugs, show exactly how to reproduce the problem.
+For bugs, show exactly how to reproduce the problem, using a minimal test-case.
 For new features, show how the feature would be used.
 -->
 
-```
-<!--- Paste example playbooks or commands between quotes -->
+<!--- Paste example playbooks or commands between quotes below -->
+```yaml
+
 ```
 
 <!--- You can also paste gist.github.com links for larger files -->
@@ -43,8 +50,9 @@ For new features, show how the feature would be used.
 <!--- What did you expect to happen when running the steps above? -->
 
 ##### ACTUAL RESULTS
-<!--- What actually happened? If possible run with high verbosity (-vvvv) -->
+<!--- What actually happened? If possible run with extra verbosity (-vvvv) -->
 
+<!--- Paste verbatim command output between quotes below -->
 ```
-<!--- Paste verbatim command output between quotes -->
+
 ```
