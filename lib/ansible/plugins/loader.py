@@ -128,12 +128,11 @@ class PluginLoader:
         self.aliases = aliases or self.aliases or {}
 
         self.config = self.default_config
-        if config and not isinstance(config, list):
+        config = config or []
+        if not isinstance(config, list):
             config = [config]
-        elif not config:
-            config = []
-
-        self.config = config
+        if config:
+            self.config = config
 
         self._plugin_path_cache = defaultdict(dict)
         self._module_cache = {}
@@ -283,6 +282,7 @@ class PluginLoader:
     def find_plugin(self, name, mod_type=''):
         ''' Find a plugin named name '''
 
+        display.debug('Looking for %s plugin name=%s and mod_type=%s' % (self.__class__.__name__, name, mod_type))
         if mod_type:
             suffix = mod_type
         elif self.class_name:
@@ -297,7 +297,9 @@ class PluginLoader:
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
         try:
-            return pull_cache[name]
+            ret = pull_cache[name]
+            display.debug('Found plugin %s for name=%s in the plugin_path_cache' % (ret, name))
+            return ret
         except KeyError:
             # Cache miss.  Now let's find the plugin
             pass
@@ -309,6 +311,7 @@ class PluginLoader:
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+            display.debug('%s path=%s' % (self.__class__.__name__, path))
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
@@ -317,6 +320,7 @@ class PluginLoader:
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
 
+                display.debug('%s full_path=%s' % (self.__class__.__name__, full_path))
                 # HACK: We have no way of executing python byte
                 # compiled files as ansible modules so specifically exclude them
                 if full_path.endswith(('.pyc', '.pyo')):
