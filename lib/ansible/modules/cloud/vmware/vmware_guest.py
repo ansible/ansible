@@ -132,30 +132,39 @@ options:
             - A note or annotation to include in the VM
         required: False
         version_added: "2.3"
-   customize:
-        description:
-           - Should customization spec be applied. This is only used when deploying a template.
-        required: False
-        version_added: "2.3"
    networks:
         description:
           - Network to use should include VM network name or VLAN, ip and gateway
           - "You can add 'mac' optional field to customize mac address"
-        required: False
-        version_added: "2.3"
-   dns_servers:
-        description:
-          - DNS servers to use
-        required: False
-        version_added: "2.3"
-   domain:
-        description:
-          - Domain to use while customizing
+          - "Yan can add 'domain' optinal field to configure different dns domain on windows network interfaces"
         required: False
         version_added: "2.3"
    snapshot_op:
         description:
           - A key, value pair of snapshot operation types and their additional required parameters.
+        required: False
+        version_added: "2.3"
+   customizations:
+        description:
+          - "Parameters to customize template"
+          - "Common parameters (linux/Windows):"
+          - " hostname (string): Computer hostname (Default: name parameter)"
+          - " domain (string)"
+          - " dns_servers (list)"
+          - " dns_suffix (list): Default: domain parameter"
+          - "Parameters related to windows customizations:"
+          - " autologon (bool): Auto logon after VM customizations (Default: False)"
+          - " autologoncount (int): Number of autologon after reboot (Default: 1)"
+          - " fullname (string): Server owner name (Mandatory)"
+          - " orgname (string): Organisation name (Mandatory)"
+          - " timezone (int): See https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx"
+          - " password (string): Local administrator password"
+          - " productid (string): Product ID"
+          - " joindomain (string): AD domain to join"
+          - " domainadmin (string): User used to join in AD domain (mandatory with joindomain)"
+          - " domainadminpassword (string): Password used to join in AD domain (mandatory with joindomain)"
+          - " joinworkgroup (string): Workgroup to join (Not compatible with joindomain)"
+          - " runonce (list): Command to run at first user logon"
         required: False
         version_added: "2.3"
 extends_documentation_fragment: vmware.documentation
@@ -218,6 +227,25 @@ Example from Ansible playbook
       register: deploy
 
 #
+# Clone Template
+#
+   - name: Clone template
+     vmware_guest:
+       hostname: "192.168.1.209"
+       username: "administrator@vsphere.local"
+       password: "vmware"
+       validate_certs: False
+       name: testvm-2
+       datacenter: datacenter1
+       cluster: cluster
+       validate_certs: False
+       template: template_el7
+       networks:
+         '192.168.1.0/24':
+           network: 'VM Network'
+           mac: "aa:bb:dd:aa:00:14"
+
+#
 # Clone Template and customize
 #
    - name: Clone template and customize
@@ -230,16 +258,27 @@ Example from Ansible playbook
        datacenter: datacenter1
        cluster: cluster
        validate_certs: False
-       template: template_el7
+       template: template_windows
        customize: True
-       domain: "example.com"
-       dns_servers: ['192.168.1.1','192.168.1.2']
        networks:
          '192.168.1.0/24':
            network: 'VM Network'
            gateway: '192.168.1.1'
            ip: "192.168.1.100"
            mac: "aa:bb:dd:aa:00:14"
+           domain: "my_domain"
+           dns_servers: ['192.168.1.1','192.168.1.2']
+       customizations:
+         autologon: True
+         fullname: Jack
+         orgname: My_org
+         password: new_vm_password
+         dns_servers: ['192.168.1.1','192.168.1.2']
+         domain: my_domain
+         guirunonce:
+           - route add -P 10.10.10.10/24 1.1.1.1
+           - shutdown /l
+
 #
 # Gather facts only
 #
@@ -873,8 +912,6 @@ class PyVmomiHelper(object):
 
                 network_devices.append(self.params['networks'][network])
 
-        adaptermaps = []
-
         # List current device for Clone or Idempotency
         current_net_devices = self.get_vm_network_interfaces(vm=vm_obj)
         if len(network_devices) < len(current_net_devices):
@@ -930,38 +967,95 @@ class PyVmomiHelper(object):
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
-            if vm_obj is None or self.should_deploy_from_template():
-                if 'ip' in network_devices[key]:
+    def customize_vm(self, vm_obj):
+        # Network settings
+        adaptermaps = []
+        if len(self.params['networks']) > 0:
+            for network in self.params['networks']:
+                if 'ip' in self.params['networks'][network]:
                     guest_map = vim.vm.customization.AdapterMapping()
                     guest_map.adapter = vim.vm.customization.IPSettings()
                     guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                    guest_map.adapter.ip.ipAddress = str(network_devices[key]['ip'])
-                    guest_map.adapter.subnetMask = str(network_devices[key]['subnet_mask'])
+                    guest_map.adapter.ip.ipAddress = str(self.params['networks'][network]['ip'])
+                    guest_map.adapter.subnetMask = str(self.params['networks'][network]['subnet_mask'])
 
-                    if 'gateway' in network_devices[key]:
-                        guest_map.adapter.gateway = network_devices[key]['gateway']
+                    if 'gateway' in self.params['networks'][network]:
+                        guest_map.adapter.gateway = self.params['networks'][network]['gateway']
 
-                    if self.params.get('domain'):
-                        guest_map.adapter.dnsDomain = self.params['domain']
+                    # On Windows, DNS domain and DNS servers can be set by network interface
+                    # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
+                    if 'domain' in self.params['networks'][network]:
+                        guest_map.adapter.dnsDomain = self.params['networks'][network]['domain']
+                    elif self.params['customizations'].get('domain'):
+                        guest_map.adapter.dnsDomain = self.params['customizations']['domain']
+                    if 'dns_servers' in self.params['networks'][network]:
+                        guest_map.adapter.dnsServerList = self.params['networks'][network]['dns_servers']
+                    elif self.params['customizations'].get('dns_servers'):
+                        guest_map.adapter.dnsServerList = self.params['customizations']['dns_servers']
 
                     adaptermaps.append(guest_map)
 
-        if vm_obj is None or self.should_deploy_from_template():
-            # DNS settings
-            globalip = vim.vm.customization.GlobalIPSettings()
-            globalip.dnsServerList = self.params['dns_servers']
-            globalip.dnsSuffixList = str(self.params['domain'])
+        # Global DNS settings
+        globalip = vim.vm.customization.GlobalIPSettings()
+        globalip.dnsServerList = self.params['customizations']['dns_servers']
+        globalip.dnsSuffixList = self.params['customizations'].get(dns_suffix, self.params['customizations']['domain'])
 
-            # Hostname settings
+        if self.params['guest_id']:
+            guest_id = self.params['guest_id']
+        else:
+            guest_id = vm_obj.summary.guest.guestId
+
+        # If I install a Windows use Sysprep
+        # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.Sysprep.html#field_detail
+        if 'windows' in guest_id:
+            ident = vim.vm.customization.Sysprep()
+            if 'fullname' not in self.params['customizations']:
+                self.module.fail_json(msg="You need to define fullname to use Windows customization")
+            if 'orgname' not in self.params['customizations']:
+                self.module.fail_json(msg="You need to define orgname to use Windows customization")
+
+            ident.userData = vim.vm.customization.UserData()
+            ident.userData.computerName = vim.vm.customization.FixedName()
+            ident.userData.computerName.name = self.params['customizations'].get(hostname, self.params['name'])
+            ident.userData.fullName = str(self.params['customizations']['fullname'])
+            ident.userData.orgName = str(self.params['customizations']['orgname'])
+
+            ident.guiUnattended = vim.vm.customization.GuiUnattended()
+            ident.guiUnattended.autoLogon = self.params['customizations'].get(autologon, False)
+            ident.guiUnattended.autoLogonCount = self.params['customizations'].get(autologoncount, 1)
+
+            ident.identification = vim.vm.customization.Identification()
+
+            if 'password' in self.params['customizations']:
+                ident.guiUnattended.password = vim.vm.customization.Password()
+                ident.guiUnattended.password.value = str(self.params['customizations']['password'])
+                ident.guiUnattended.password.plainText = True
+
+            if 'productid' in self.params['customizations']:
+                ident.userData.orgName = str(self.params['customizations']['productid'])
+
+            if 'joindomain' in self.params['customizations']:
+                ident.identification.domainadmin = str(self.params['customizations']['domainadmin'])
+                ident.identification.domainadminpassword = str(self.params['customizations']['domainadminpassword'])
+                ident.identification.joindomain = str(self.params['customizations']['joindomain'])
+            elif 'joinworkgroup' in self.params['customizations']:
+                ident.identification.joinworkgroup = str(self.params['customizations']['joinworkgroup'])
+
+            if 'runonce' in self.params['customizations']:
+                ident.guiRunOnce = vim.vm.customization.GuiRunOnce()
+                ident.guiRunOnce.commandList = self.params['customizations']['runonce']
+        else:
+            # Else use LinuxPrep
+            # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
             ident = vim.vm.customization.LinuxPrep()
-            ident.domain = str(self.params['domain'])
+            ident.domain = str(self.params['customizations']['domain'])
             ident.hostName = vim.vm.customization.FixedName()
-            ident.hostName.name = self.params['name']
+            ident.hostName.name = self.params['customizations'].get(hostname, self.params['name'])
 
-            self.customspec = vim.vm.customization.Specification()
-            self.customspec.nicSettingMap = adaptermaps
-            self.customspec.globalIPSettings = globalip
-            self.customspec.identity = ident
+        self.customspec = vim.vm.customization.Specification()
+        self.customspec.nicSettingMap = adaptermaps
+        self.customspec.globalIPSettings = globalip
+        self.customspec.identity = ident
 
     def get_vm_scsi_controller(self, vm_obj):
         # If vm_obj doesn't exists no SCSI controller to find
@@ -1221,6 +1315,8 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
+        if self.should_deploy_from_template() and len(self.params['customize']) > 0:
+            self.customize_vm(vm_obj=vm_obj)
 
         try:
             if self.should_deploy_from_template():
@@ -1649,11 +1745,9 @@ def main():
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=True),
-            customize=dict(required=False, type='bool', default=False),
-            dns_servers=dict(required=False, type='list', default=None),
-            domain=dict(required=False, type='str', default=None),
             networks=dict(required=False, type='dict', default={}),
-            resource_pool=dict(required=False, type='str', default=None)
+            resource_pool=dict(required=False, type='str', default=None),
+            customizations=dict(required=False, type='dict', no_log=True, default={})
         ),
         supports_check_mode=True,
         mutually_exclusive=[
