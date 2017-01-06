@@ -200,10 +200,10 @@ class TestVariableManager(unittest.TestCase):
             host1 host_var=host_var_from_inventory_host1
 
             [group1:vars]
-            group_var = group_var_from_inventory_group1
+            inventory_group_var = inventory_group_var_from_inventory_group1
 
             [group2:vars]
-            group_var = group_var_from_inventory_group2
+            inventory_group_var = inventory_group_var_from_inventory_group2
             """
 
         fake_loader = DictDataLoader({
@@ -225,7 +225,6 @@ class TestVariableManager(unittest.TestCase):
             '/etc/ansible/roles/defaults_only2/defaults/main.yml': """
             default_var: "default_var_from_defaults_only2"
             host_var: "host_var_from_defaults_only2"
-            group_var: "group_var_from_defaults_only2"
             group_var_all: "group_var_all_from_defaults_only2"
             extra_var: "extra_var_from_defaults_only2"
             """,
@@ -259,15 +258,23 @@ class TestVariableManager(unittest.TestCase):
         h1 = inv1.get_host('host1')
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
-        self.assertEqual(res['group_var'], 'group_var_from_inventory_group1')
         self.assertEqual(res['host_var'], 'host_var_from_inventory_host1')
 
         # next we test with group_vars/ files loaded
         fake_loader.push("/etc/ansible/group_vars/all", """
         group_var_all: group_var_all_from_group_vars_all
+        # Overrided by /etc/ansible/group_vars/group1
+        group_var_group1: group_var_group1_from_group_vars_all
+        """)
+        fake_loader.push("group_vars/group1", """
+        playbook_group_var: playbook_group_var
+        group_var: group_var_from_playbook_vars_group1
         """)
         fake_loader.push("/etc/ansible/group_vars/group1", """
         group_var: group_var_from_group_vars_group1
+        inventory_group_var: inventory_group_var_from_group_vars_group1
+        group_var_group1: group_var_group1_from_group_vars_group1
+        host_var: host_var_from_group_vars_group1
         """)
         fake_loader.push("/etc/ansible/group_vars/group3", """
         # this is a dummy, which should not be used anywhere
@@ -275,9 +282,6 @@ class TestVariableManager(unittest.TestCase):
         """)
         fake_loader.push("/etc/ansible/host_vars/host1", """
         host_var: host_var_from_host_vars_host1
-        """)
-        fake_loader.push("group_vars/group1", """
-        playbook_group_var: playbook_group_var
         """)
         fake_loader.push("host_vars/host1", """
         playbook_host_var: playbook_host_var
@@ -291,6 +295,7 @@ class TestVariableManager(unittest.TestCase):
         v.add_host_vars_file("host_vars/host1", loader=fake_loader)
 
         res = v.get_vars(loader=fake_loader, play=play1, host=h1)
+        self.assertEqual(res['inventory_group_var'], 'inventory_group_var_from_inventory_group1')
         self.assertEqual(res['group_var'], 'group_var_from_group_vars_group1')
         self.assertEqual(res['group_var_all'], 'group_var_all_from_group_vars_all')
         self.assertEqual(res['playbook_group_var'], 'playbook_group_var')

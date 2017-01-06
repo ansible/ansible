@@ -258,9 +258,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            # we merge in vars from groups specified in the inventory (INI or script)
-            all_vars = combine_vars(all_vars, host.get_group_vars())
-
+            # then we merge in the group_vars/<group name> file, if it exists
             for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
@@ -268,8 +266,8 @@ class VariableManager:
                         for item in data:
                             all_vars = combine_vars(all_vars, item)
 
-            # then we merge in vars from the host specified in the inventory (INI or script)
-            all_vars = combine_vars(all_vars, host.get_vars())
+            # then we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
 
             # then we merge in the host_vars/<hostname> file, if it exists
             host_name = host.get_name()
@@ -278,6 +276,9 @@ class VariableManager:
                     data = preprocess_vars(data)
                     for item in data:
                         all_vars = combine_vars(all_vars, item)
+
+            # then we merge in vars from the host specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_vars())
 
             # finally, the facts caches for this host, if it exists
             try:

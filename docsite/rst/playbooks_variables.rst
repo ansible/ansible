@@ -820,7 +820,12 @@ In 2.x, we have made the order of precedence more specific (with the last listed
   * role defaults [1]_
   * inventory vars [2]_
   * inventory group_vars
+     * ``group_vars/all`` file
+     * ``group_vars/<group name>`` file
+     * inventory file or script
   * inventory host_vars
+     * ``host_vars/<hostname>`` file
+     * inventory file or script
   * playbook group_vars
   * playbook host_vars
   * host facts
