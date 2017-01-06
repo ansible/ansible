@@ -1,9 +1,9 @@
 uri_os_packages:
   RedHat:
     - python-pyasn1
-    - pyOpenSSL
-    - python-urllib3
+    - libffi-devel
+    - openssl-devel
   Debian:
     - python-pyasn1
-    - python-openssl
-    - python-urllib3
+    - libffi-dev
+    - libssl-dev
