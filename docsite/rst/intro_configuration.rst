@@ -10,6 +10,15 @@ for most users, but there may be reasons you would want to change them.
 
 Changes can be made and used in a configuration file which will be processed in the following order::
 
+    * /etc/ansible/ansible.cfg
+    * .ansible.cfg (in the home directory)
+    * ansible.cfg (in the current directory)
+    * ANSIBLE_CONFIG (an environment variable)
+
+Ansible will process the above list and merge settings, overriding values from top to bottom of the list.
+
+Prior to 2.3, settings where not merged. Ansible processing files in the following order and using the first file found::
+
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
     * .ansible.cfg (in the home directory)
