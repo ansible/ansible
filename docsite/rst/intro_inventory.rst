@@ -81,6 +81,17 @@ You can also select the connection type and user on a per host basis:
 As mentioned above, setting these in the inventory file is only a shorthand, and we'll discuss how to store them in individual files
 in the 'host_vars' directory a bit later on.
 
+Please note that the keyword 'all' has a special meaning: it refers to all hosts in any group in the inventory file, as well
+as 'localhost'.  This means that you don't want to name any of your groups 'all'.  It also means that you can create variables
+for the 'all' group even if you haven't explicitly created the group or assigned it any hosts:
+
+::
+
+   [all:vars]
+   ansible_become: true
+
+In general, it's better to handle this through a 'group_vars' file, which we will describe later on.
+
 .. _host_variables:
 
 Host Variables
