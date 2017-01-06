@@ -163,9 +163,9 @@ class PlayIterator:
         self._task_uuid_cache = dict()
 
         # Default options to gather
-        gather_subset = C.DEFAULT_GATHER_SUBSET
-        gather_timeout = C.DEFAULT_GATHER_TIMEOUT
-        fact_path = C.DEFAULT_FACT_PATH
+        gather_subset = play_context.gather_subset
+        gather_timeout = play_context.gather_timeout
+        fact_path = play_context.fact_path
 
         # Retrieve subset to gather
         if self._play.gather_subset is not None:
