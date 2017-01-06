@@ -243,6 +243,8 @@
   pip:
     name: "{{ item }}"
   with_items:
+    - urllib3
+    - PyOpenSSL
     - ndg-httpsclient
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
