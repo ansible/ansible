@@ -118,7 +118,7 @@ class TestLoader(loader.PluginLoader):
 class FragmentLoader(loader.PluginLoader):
     class_name = 'ModuleDocFragment'
     package = 'ansible.utils.module_docs_fragments'
-    default_config = os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    default_config = os.path.join(os.path.dirname(__file__), 'module_docs_fragments')
     subdir = ''
 
 
