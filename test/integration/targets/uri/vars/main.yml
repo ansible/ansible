@@ -7,6 +7,7 @@ uri_os_packages:
     step2:
       - libffi-devel
       - openssl-devel
+      - python-devel
   Debian:
     step1:
       - python-pyasn1
@@ -15,3 +16,4 @@ uri_os_packages:
     step2:
       - libffi-dev
       - libssl-dev
+      - python-dev
