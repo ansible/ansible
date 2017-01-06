@@ -67,6 +67,8 @@ Ansible Changes By Release
   * packet_sshkey
 - smartos:
   * imgadm
+- web_infrastructure
+  * jenkins_script
 - windows:
   * win_say
 
