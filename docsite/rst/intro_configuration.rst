@@ -858,6 +858,12 @@ Users should usually leave this setting as 'smart' and let their playbooks choos
 
     transport = paramiko
 
+On OSX, sshpass v1.05 is known to cause cause kernel panics. When executing on this system 'smart' will fall-back
+to the 'paramiko' connector instead of 'ssh' by default. To override this behavior, set the ``transport`` parameter to
+'ssh' either via config or through command-line argument. See `#5007`_ for a detailed discussion of the issue.
+
+.. _#5007: https://github.com/ansible/ansible/issues/5007#issuecomment-57946035
+
 .. _vars_plugins:
 
 vars_plugins
