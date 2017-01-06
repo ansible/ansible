@@ -85,6 +85,9 @@ Suppose you have the following variable::
       bob:
         name: Bob Bananarama
         telephone: 987-654-3210
+        
+    'alice' and 'bob' are the `key` in this example
+    and 'name' and 'telephone' are `value`
 
 And you want to print every user's name and phone number.  You can loop through the elements of a hash using ``with_dict`` like this::
 
