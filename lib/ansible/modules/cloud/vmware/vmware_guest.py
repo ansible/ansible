@@ -532,10 +532,7 @@ class PyVmomiHelper(object):
         if isinstance(folder, tuple):
             folder = folder[1]
 
-        if inpath == '/':
-            thispath = '/vm'
-        else:
-            thispath = os.path.join(inpath, folder['name'])
+        thispath = os.path.join(inpath, folder['name'])
 
         if thispath not in self.foldermap['paths']:
             self.foldermap['paths'][thispath] = []
@@ -602,14 +599,9 @@ class PyVmomiHelper(object):
         if uuid:
             vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
         elif folder:
-            if self.params['folder'].endswith('/'):
-                self.params['folder'] = self.params['folder'][0:-1]
-
             # Build the absolute folder path to pass into the search method
-            if self.params['folder'].startswith('/vm'):
+            if self.params['folder'].startswith('/'):
                 searchpath = '%(datacenter)s%(folder)s' % self.params
-            elif self.params['folder'].startswith('/'):
-                searchpath = '%(datacenter)s/vm%(folder)s' % self.params
             else:
                 # need to look for matching absolute path
                 if not self.folders:
@@ -1195,8 +1187,6 @@ class PyVmomiHelper(object):
 
         # find matching folders
         if self.params['folder'].startswith('/'):
-            if not self.params['folder'].startswith('/vm'):
-                self.params['folder'] = '/vm' + self.params['folder']
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0] == self.params['folder']]
         else:
             folders = [x for x in self.foldermap['fvim_by_path'].items() if x[0].endswith(self.params['folder'])]
@@ -1206,7 +1196,7 @@ class PyVmomiHelper(object):
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
         elif len(folders) > 1:
             self.module.fail_json(
-                msg='too many folders matched "%s", please give the full path starting with /vm/' % self.params[
+                msg='Too many folders matched "%s", please give the full path starting with /vm/' % self.params[
                     'folder'])
 
         # grab the folder vim object
@@ -1676,6 +1666,11 @@ def main():
     )
 
     result = {'failed': False, 'changed': False}
+
+    # Prepend /vm if it was missing from the folder path, also strip trailing slashes
+    if not module.params['folder'].startswith('/vm') and module.params['folder'].startswith('/'):
+        module.params['folder'] = '/vm%(folder)s' % module.params
+    module.params['folder'] = module.params['folder'].rstrip('/')
 
     # Fail check, customize require template to be defined
     if module.params["customize"] and not module.params['template']:
