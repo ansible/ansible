@@ -21,9 +21,9 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
-New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR -ErrorAction SilentlyContinue
-New-PSDrive -PSProvider registry -Root HKEY_USERS -Name HKU -ErrorAction SilentlyContinue
-New-PSDrive -PSProvider registry -Root HKEY_CURRENT_CONFIG -Name HCCC -ErrorAction SilentlyContinue
+New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR -ErrorAction SilentlyContinue | Out-Null
+New-PSDrive -PSProvider registry -Root HKEY_USERS -Name HKU -ErrorAction SilentlyContinue | Out-Null
+New-PSDrive -PSProvider registry -Root HKEY_CURRENT_CONFIG -Name HCCC -ErrorAction SilentlyContinue | Out-Null
 
 $params = Parse-Args $args;
 $result = New-Object PSObject;
@@ -134,7 +134,7 @@ if($state -eq "present") {
         if (Test-RegistryValueData -Path $registryKey -Value $registryValue)
         {
             # handle binary data
-            $currentRegistryData =(Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) 
+            $currentRegistryData =(Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue)
 
             if ($registryValue.ToLower() -eq "(default)") {
                 # Special case handling for the key's default property. Because .GetValueKind() doesn't work for the (default) key property
