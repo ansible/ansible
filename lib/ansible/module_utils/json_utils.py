@@ -68,7 +68,10 @@ def _filter_non_json_lines(data):
         # Trailing junk is uncommon and can point to things the user might
         # want to change.  So print a warning if we find any
         trailing_junk = lines[len(lines) - reverse_end_offset:]
-        warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+        for line in trailing_junk:
+            if line.strip():
+                warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+                break
 
     lines = lines[:(len(lines) - reverse_end_offset)]
 
