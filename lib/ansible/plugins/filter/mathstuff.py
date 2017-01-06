@@ -63,6 +63,20 @@ def union(a, b):
         c = unique(a + b)
     return c
 
+def keys(a):
+    if isinstance(a,collections.Hashable):
+        c = set(a)
+    else:
+        c = range(len(a))
+    return c
+
+def values(a):
+   if isinstance(a,collections.Hashable):
+        c = [ x[y] for y in set(x)]
+   else:
+        c = a
+   return c
+
 def min(a):
     _min = __builtins__.get('min')
     return _min(a);

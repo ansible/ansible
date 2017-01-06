@@ -140,6 +140,15 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. versionadded:: x.x
+
+To get the keys of a dictionary or list as a list (lists get numeric keys):
+
+   {{ dict | keys }}
+
+To get the values of a dictionary or list as a list:
+
+   {{ dict | values }}
 
 .. _random_filter:
 
