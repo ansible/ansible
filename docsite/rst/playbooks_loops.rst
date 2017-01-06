@@ -262,6 +262,10 @@ Negative numbers are not supported.  This works as follows::
         # create 4 groups
         - group: name=group{{ item }} state=present
           with_sequence: count=4
+          
+        # count ten steps backwards
+        - debug: msg="{{ item }}"
+          with_sequence: start=20 count=8 stride=-1
 
 .. _random_choice:
 
