@@ -275,6 +275,10 @@ If you are installing on OS X Mavericks, you may encounter some noise from your 
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
+If you are installing on OS X El Capitan, you may get some errors regarding pip setuptools. This happens due to the System Integrity Protection introduced in OS X El Capitan. Run following command to work around this problem::
+
+   $ pip install --upgrade setuptools --user python
+
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
 .. _tagged_releases:
