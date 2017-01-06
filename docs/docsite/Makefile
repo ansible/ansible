@@ -1,6 +1,6 @@
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
-FORMATTER=../hacking/module_formatter.py
-DUMPER=../hacking/dump_playbook_attributes.py
+FORMATTER=../../hacking/module_formatter.py
+DUMPER=../../hacking/dump_playbook_attributes.py
 CPUS ?= 1
 
 all: clean docs
@@ -42,11 +42,11 @@ clean:
 
 .PHONEY: docs clean
 
-directives: $(FORMATTER) ../hacking/templates/rst.j2
-	PYTHONPATH=../lib $(DUMPER) --template-dir=../hacking/templates --output-dir=rst/
+directives: $(FORMATTER) ../../hacking/templates/rst.j2
+	PYTHONPATH=../../lib $(DUMPER) --template-dir=../../hacking/templates --output-dir=rst/
 
-modules: $(FORMATTER) ../hacking/templates/rst.j2
-	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../lib/ansible/modules -o rst/
+modules: $(FORMATTER) ../../hacking/templates/rst.j2
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../../hacking/templates --module-dir=../../lib/ansible/modules -o rst/
 
 staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
