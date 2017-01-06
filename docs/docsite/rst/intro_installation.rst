@@ -341,7 +341,7 @@ To update ansible checkouts, use pull-with-rebase so any local changes are repla
 
 Note: when updating ansible checkouts that are v2.2 and older, be sure to not
 only update the source tree, but also the "submodules" in git which point at
-Ansible's own modules (not the same kind of modules, alas).
+Ansible's own modules.
 
 .. code-block:: bash
 
