@@ -379,7 +379,7 @@ def main():
             object         = dict(default=None),
             src            = dict(default=None),
             dest           = dict(default=None),
-            expiration     = dict(default=600, aliases=['expiry']),
+            expiration     = dict(type='int', default=600, aliases=['expiry']),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
             permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
             headers        = dict(type='dict', default={}),
