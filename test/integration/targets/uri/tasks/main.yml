@@ -236,15 +236,13 @@
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
-  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: install python modules for Older Python SNI verification
   pip:
     name: "{{ item }}"
   with_items:
-    - urllib3
-    - PyOpenSSL
     - ndg-httpsclient
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
@@ -262,7 +260,7 @@
       - 'sni_host in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
-- name: Uninstall ndg-httpsclient and urllib3
+- name: Uninstall ndg-httpsclient
   pip:
     name: "{{ item }}"
     state: absent
@@ -274,7 +272,45 @@
   package:
     name: "{{ item }}"
     state: absent
-  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install OS packages that are needed for building cryptography
+  package:
+    name: "{{ item }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install urllib3 and pyopenssl via pip
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - urllib3
+    - PyOpenSSL
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Verify SNI verification succeeds on old python with pip urllib3 contrib
+  uri:
+    url: 'https://{{ sni_host }}'
+    return_content: true
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  register: result
+
+- name: Assert SNI verification succeeds on old python with pip urllib3 contrib
+  assert:
+    that:
+      - result|success
+      - 'sni_host in result.content'
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Uninstall urllib3 and PyOpenSSL
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - urllib3
+    - PyOpenSSL
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: validate the status_codes are correct
