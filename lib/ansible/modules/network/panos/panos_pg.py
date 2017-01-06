@@ -101,11 +101,8 @@ EXAMPLES = '''
     vulnerability: "default"
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -113,6 +110,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'version': '1.0'}
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import get_exception
 
 
 try:
@@ -190,11 +188,7 @@ def main():
         module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
     password = module.params["password"]
-    if not password:
-        module.fail_json(msg="password is required")
     username = module.params['username']
 
     xapi = pan.xapi.PanXapi(
@@ -204,8 +198,6 @@ def main():
     )
 
     pg_name = module.params['pg_name']
-    if not pg_name:
-        module.fail_json(msg='pg_name is required')
     data_filtering = module.params['data_filtering']
     file_blocking = module.params['file_blocking']
     spyware = module.params['spyware']
@@ -222,9 +214,8 @@ def main():
         if changed and commit:
             xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
     except PanXapiError:
-        import sys
-        x = sys.exc_info()[1]
-        module.fail_json(msg=x.message)
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
 
     module.exit_json(changed=changed, msg="okey dokey")
 
