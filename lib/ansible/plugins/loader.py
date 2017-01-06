@@ -384,7 +384,12 @@ class PluginLoader:
                 continue
 
             if path not in self._module_cache:
-                self._module_cache[path] = self._load_module_source(name, path)
+                try:
+                    self._module_cache[path] = self._load_module_source(name, path)
+                except ImportError as e:
+                    print('Error loading %s: %s' % (path, e))
+                    continue
+
                 found_in_cache = False
 
             try:
