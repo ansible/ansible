@@ -865,7 +865,7 @@ class StrategyBase:
         #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=h, task=task)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
