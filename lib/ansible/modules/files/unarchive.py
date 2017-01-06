@@ -37,7 +37,7 @@ options:
   src:
     description:
       - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
-      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0)
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for simple cases, for full download support look at the M(get_url) module.
     required: true
     default: null
   dest:
