@@ -1526,7 +1526,7 @@ class Host(LogicMonitor):
                          groups,
                          properties,
                          alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a host using the rpc function"""
         self.module.debug("Running Host._build_host_hash...")
 
@@ -1557,7 +1557,7 @@ class Host(LogicMonitor):
         if properties is not None and properties is not {}:
             self.module.debug("Properties hash exists")
             propnum = 0
-            for key, value in properties.iteritems():
+            for key, value in properties.items():
                 h["propName" + str(propnum)] = key
                 h["propValue" + str(propnum)] = value
                 propnum = propnum + 1
@@ -2017,7 +2017,7 @@ class Hostgroup(LogicMonitor):
                                description,
                                properties,
                                alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a hostgroup using the rpc function"""
         self.module.debug("Running Hostgroup._build_host_hash")
 
@@ -2049,7 +2049,7 @@ class Hostgroup(LogicMonitor):
         if properties != {}:
             self.module.debug("Properties hash exists")
             propnum = 0
-            for key, value in properties.iteritems():
+            for key, value in properties.items():
                 h["propName" + str(propnum)] = key
                 h["propValue" + str(propnum)] = value
                 propnum = propnum + 1

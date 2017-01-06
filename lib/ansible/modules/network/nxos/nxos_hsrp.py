@@ -512,7 +512,7 @@ def get_commands_config_hsrp(delta, interface, args):
         elif preempt == 'disabled':
             delta['preempt'] = 'no preempt'
 
-    for key, value in delta.iteritems():
+    for key, value in delta.items():
         command = config_args.get(key, 'DNE').format(**delta)
         if command and command != 'DNE':
             if key == 'group':
@@ -664,7 +664,7 @@ def main():
                 preempt=preempt, vip=vip, auth_type=auth_type,
                 auth_string=auth_string)
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_hsrp_group(group, interface, module)
 
@@ -685,7 +685,7 @@ def main():
     commands = []
     if state == 'present':
         delta = dict(
-                    set(proposed.iteritems()).difference(existing.iteritems()))
+                    set(proposed.items()).difference(existing.items()))
         if delta:
             command = get_commands_config_hsrp(delta, interface, args)
             commands.extend(command)

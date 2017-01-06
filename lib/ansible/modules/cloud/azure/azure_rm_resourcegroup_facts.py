@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_resouregroup_facts
+module: azure_rm_resourcegroup_facts
 
 version_added: "2.1"
 

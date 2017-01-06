@@ -19,12 +19,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4 as sdk
-except ImportError:
-    pass
+import traceback
 
-from ansible.module_utils.ovirt import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_facts_full_argument_spec,
+)
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -48,7 +51,7 @@ options:
         - "Search term which is accepted by oVirt search backend."
         - "For example to search host X from datacenter Y use following pattern:
            name=X and datacenter=Y"
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -73,7 +76,7 @@ ovirt_hosts:
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
@@ -87,13 +90,20 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_hosts=[
-                    get_dict_of_struct(c) for c in hosts
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in hosts
                 ],
             ),
         )
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    finally:
+        connection.close(logout=False)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -781,7 +781,10 @@ class Inventory(object):
         path = os.path.realpath(os.path.join(basedir, 'group_vars'))
         found_vars = set()
         if os.path.exists(path):
-            found_vars = set(os.listdir(to_text(path)))
+            if os.path.isdir(path):
+                found_vars = set(os.listdir(to_text(path)))
+            else:
+                display.warning("Found group_vars that is not a directory, skipping: %s" % path)
         return found_vars
 
     def _find_host_vars_files(self, basedir):

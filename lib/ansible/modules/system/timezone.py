@@ -92,13 +92,14 @@ class Timezone(object):
         """Return the platform-specific subclass.
 
         It does not use load_platform_subclass() because it need to judge based
-        on whether the `timedatectl` command exists.
+        on whether the `timedatectl` command exists and available.
 
         Args:
             module: The AnsibleModule.
         """
         if get_platform() == 'Linux':
-            if module.get_bin_path('timedatectl') is not None:
+            timedatectl = module.get_bin_path('timedatectl')
+            if timedatectl is not None and module.run_command(timedatectl)[0] == 0:
                 return super(Timezone, SystemdTimezone).__new__(SystemdTimezone)
             else:
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
@@ -228,6 +229,7 @@ class Timezone(object):
         tzfile = '/usr/share/zoneinfo/%s' % tz
         if not os.path.isfile(tzfile):
             self.abort('given timezone "%s" is not available' % tz)
+        return tzfile
 
 
 class SystemdTimezone(Timezone):
@@ -306,7 +308,7 @@ class NosystemdTimezone(Timezone):
         super(NosystemdTimezone, self).__init__(module)
         # Validate given timezone
         if 'name' in self.value:
-            self._verify_timezone()
+            tzfile = self._verify_timezone()
             self.update_timezone  = self.module.get_bin_path('cp', required=True)
             self.update_timezone += ' %s /etc/localtime' % tzfile
         self.update_hwclock = self.module.get_bin_path('hwclock', required=True)

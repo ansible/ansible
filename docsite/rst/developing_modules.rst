@@ -421,8 +421,6 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
-
 The ``description``, and ``notes`` fields
 support formatting with some special macros.
 
@@ -453,17 +451,17 @@ the ``copy`` module::
         description: destination file/path
         returned: success
         type: string
-        sample: "/path/to/file.txt"
+        sample: /path/to/file.txt
     src:
         description: source file used for the copy on the target machine
         returned: changed
         type: string
-        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+        sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
         description: md5 checksum of the file after running copy
         returned: when supported
         type: string
-        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+        sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
 
@@ -642,7 +640,6 @@ The following  checklist items are important guidelines for people who want to c
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
-    * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * The `required` setting is only required when true, otherwise it is assumed to be false.
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
@@ -778,7 +775,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{

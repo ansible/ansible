@@ -125,7 +125,7 @@ The following example shows how Ansible's timer plugin is implemented::
           runtime = end_time - self.start_time
           self._display.display("Playbook run took %s days, %s hours, %s minutes, %s seconds" % (self.days_hours_minutes_seconds(runtime)))
 
-Note that the CALLBACK_VERSION and CALLBACK_NAME definitons are required for properly functioning plugins for Ansible >=2.0.
+Note that the CALLBACK_VERSION and CALLBACK_NAME definitions are required for properly functioning plugins for Ansible >=2.0.
 
 .. _developing_connection_plugins:
 
@@ -193,7 +193,7 @@ An example of how this lookup is called::
 
        - debug: msg="the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}"
 
-Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type becasue the strings will be run through jinja2.  To do this, you can use::
+Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use::
 
     from ansible.module_utils._text import to_text
     result_string = to_text(result_string)

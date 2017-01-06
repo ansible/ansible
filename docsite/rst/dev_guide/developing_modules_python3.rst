@@ -71,7 +71,7 @@ numbers, other printable symbols, and a small number of unprintable "symbols"
 (control codes).
 
 In Python-2, the two types for these (:class:`str` for bytes and
-:class:`unicode` for text) are often used interchangably.  When dealing only
+:class:`unicode` for text) are often used interchangeably.  When dealing only
 with ASCII characters, the strings can be combined, compared, and converted
 from one type to another automatically.  When non-ASCII characters are
 introduced, Python starts throwing exceptions due to not knowing what encoding

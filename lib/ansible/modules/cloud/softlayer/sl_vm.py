@@ -118,7 +118,7 @@ options:
     default: null
   post_uri:
     description:
-      - URL of a post provisioning script ot be loaded and exectued on virtual instance
+      - URL of a post provisioning script to be loaded and executed on virtual instance
     required: false
     default: null
   state:
@@ -149,8 +149,7 @@ EXAMPLES = '''
   gather_facts: False
   tasks:
   - name: Build instance request
-    local_action:
-      module: sl_vm
+    sl_vm:
       hostname: instance-1
       domain: anydomain.com
       datacenter: dal09
@@ -170,8 +169,7 @@ EXAMPLES = '''
   gather_facts: False
   tasks:
   - name: Build instances request
-    local_action:
-      module: sl_vm
+    sl_vm:
       hostname: "{{ item.hostname }}"
       domain: "{{ item.domain }}"
       datacenter: "{{ item.datacenter }}"
@@ -187,17 +185,49 @@ EXAMPLES = '''
       ssh_keys: "{{ item.ssh_keys }}"
       wait: "{{ item.wait }}"
     with_items:
-      - { hostname: 'instance-2', domain: 'anydomain.com', datacenter: 'dal09', tags: ['ansible-module-test', 'ansible-module-test-slaves'], hourly: True, private: False, dedicated: False, local_disk: True, cpus: 1, memory: 1024, disks: [25,100], os_code: 'UBUNTU_LATEST', ssh_keys: [], wait: True }
-      - { hostname: 'instance-3', domain: 'anydomain.com', datacenter: 'dal09', tags: ['ansible-module-test', 'ansible-module-test-slaves'], hourly: True, private: False, dedicated: False, local_disk: True, cpus: 1, memory: 1024, disks: [25,100], os_code: 'UBUNTU_LATEST', ssh_keys: [], wait: True }
-
+      - hostname: instance-2
+        domain: anydomain.com
+        datacenter: dal09
+        tags:
+          - ansible-module-test
+          - ansible-module-test-slaves
+        hourly: True
+        private: False
+        dedicated: False
+        local_disk: True
+        cpus: 1
+        memory: 1024
+        disks:
+          - 25
+          - 100
+        os_code: UBUNTU_LATEST
+        ssh_keys: []
+        wait: True
+      - hostname: instance-3
+        domain: anydomain.com
+        datacenter: dal09
+        tags: 
+          - ansible-module-test
+          - ansible-module-test-slaves
+        hourly: True
+        private: False
+        dedicated: False
+        local_disk: True
+        cpus: 1
+        memory: 1024
+        disks:
+          - 25
+          - 100
+        os_code: UBUNTU_LATEST
+        ssh_keys: []
+        wait: True
 
 - name: Cancel instances
   hosts: localhost
   gather_facts: False
   tasks:
   - name: Cancel by tag
-    local_action:
-      module: sl_vm
+    sl_vm:
       state: absent
       tags: ansible-module-test
 '''

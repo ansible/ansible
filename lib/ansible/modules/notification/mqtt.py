@@ -119,12 +119,13 @@ author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES = '''
-- local_action: mqtt
-              topic=service/ansible/{{ ansible_hostname }}
-              payload="Hello at {{ ansible_date_time.iso8601 }}"
-              qos=0
-              retain=false
-              client_id=ans001
+-  mqtt:
+    topic: 'service/ansible/{{ ansible_hostname }}'
+    payload: 'Hello at {{ ansible_date_time.iso8601 }}'
+    qos: 0
+    retain: False
+    client_id: ans001
+  delegate_to: localhost
 '''
 
 # ===========================================

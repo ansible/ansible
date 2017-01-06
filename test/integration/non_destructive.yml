@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: True
+  gather_facts: yes
   roles: 
     - { role: ping, tags: test_ping }
     - { role: special_vars, tags: test_special_vars }
@@ -34,3 +34,4 @@
     - { role: loops, tags: test_loops }
     - { role: mount, tags: [test_mount, needs_root, needs_privileged]}
     - { role: include_vars, tags: test_include_vars }
+    - { role: sefcontext, tags: [test_sefcontext, needs_root]}

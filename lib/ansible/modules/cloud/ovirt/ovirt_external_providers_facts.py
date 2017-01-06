@@ -27,7 +27,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
 )
 
 
@@ -38,10 +38,10 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_external_providers_facts
-short_description: Retrieve facts about one or more oVirt external_providers
+short_description: Retrieve facts about one or more oVirt external providers
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt external_providers."
+    - "Retrieve facts about one or more oVirt external providers."
 notes:
     - "This module creates a new top-level C(ovirt_external_providers) fact, which
        contains a list of external_providers."
@@ -54,7 +54,7 @@ options:
     name:
         description:
             - "Name of the external provider, can be used as glob expression."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -105,13 +105,13 @@ def _external_provider_service(provider_type, system_service):
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         name=dict(default=None, required=False),
         type=dict(
             default=None,
             required=True,
             choices=[
-                'os_image', 'os_network', 'os_volume',  'foreman',
+                'os_image', 'os_network', 'os_volume', 'foreman',
             ],
             aliases=['provider'],
         ),
@@ -137,7 +137,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_external_providers=[
-                    get_dict_of_struct(c) for c in external_providers
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in external_providers
                 ],
             ),
         )

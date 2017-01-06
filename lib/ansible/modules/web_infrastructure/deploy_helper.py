@@ -171,9 +171,9 @@ procedure to remove it during cleanup.
     path: /path/to/root
 - name: Clone the project to the new release folder
   git:
-    repo: 'git://foosball.example.org/path/to/repo.git'
+    repo: git://foosball.example.org/path/to/repo.git
     dest: '{{ deploy_helper.new_release_path }}'
-    version: 'v1.1.1'
+    version: v1.1.1
 - name: Add an unfinished file, to allow cleanup on successful finalize
   file:
     path: '{{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }}'
@@ -227,7 +227,7 @@ procedure to remove it during cleanup.
 # Using your own naming strategy for releases (a version tag in this case):
 - deploy_helper:
     path: /path/to/root
-    release: 'v1.1.1'
+    release: v1.1.1
     state: present
 - deploy_helper:
     path: /path/to/root
@@ -289,8 +289,6 @@ from ansible.module_utils.pycompat24 import get_exception
 class DeployHelper(object):
 
     def __init__(self, module):
-        module.params['path'] = os.path.expanduser(module.params['path'])
-
         self.module    = module
         self.file_args = module.load_file_common_arguments(module.params)
 
@@ -462,11 +460,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            path                = dict(aliases=['dest'], required=True, type='str'),
+            path                = dict(aliases=['dest'], required=True, type='path'),
             release             = dict(required=False, type='str', default=None),
             releases_path       = dict(required=False, type='str', default='releases'),
-            shared_path         = dict(required=False, type='str', default='shared'),
-            current_path        = dict(required=False, type='str', default='current'),
+            shared_path         = dict(required=False, type='path', default='shared'),
+            current_path        = dict(required=False, type='path', default='current'),
             keep_releases       = dict(required=False, type='int', default=5),
             clean               = dict(required=False, type='bool', default=True),
             unfinished_filename = dict(required=False, type='str', default='DEPLOY_UNFINISHED'),

@@ -143,7 +143,7 @@ Binary modules take their arguments and will return data to Ansible in the same
 way as :ref:`want JSON modules <flow_want_json_modules>`.
 
 .. seealso:: One example of a `binary module
-    <https://github.com/ansible/ansible/blob/devel/test/integration/library/helloworld.go>`_
+    <https://github.com/ansible/ansible/blob/devel/test/integration/targets/binary_modules/library/helloworld.go>`_
     written in go.
 
 .. _flow_old_style_modules:
@@ -404,7 +404,7 @@ This is a boolean that turns on more verbose logging.  If a module uses
 :py:meth:`AnsibleModule.debug` rather than :py:meth:`AnsibleModule.log` then
 the messages are only logged if this is True.  This also turns on logging of
 external commands that the module executes.  This can be changed via
-the``debug`` setting in :file:`ansible.cfg` or the environment variable
+the ``debug`` setting in :file:`ansible.cfg` or the environment variable
 :envvar:`ANSIBLE_DEBUG`.  If, for some reason, a module must access this, it
 should do so by instantiating an :class:`AnsibleModule` and accessing
 :attr:`AnsibleModule._debug`.

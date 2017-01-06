@@ -268,7 +268,7 @@ The mkpasswd utility that is available on most Linux systems is a great option::
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
-password hashing library is installed.
+password hashing library is installed::
 
     pip install passlib
 
@@ -353,6 +353,14 @@ The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars 
 
 
 .. _i_dont_see_my_question:
+
+
+Why don't you ship in X format?
++++++++++++++++++++++++++++++++
+
+Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
+In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
+
 
 I don't see my question here
 ++++++++++++++++++++++++++++

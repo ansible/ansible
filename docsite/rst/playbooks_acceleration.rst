@@ -37,13 +37,6 @@ the SSH connection (this key is different for every host, and is also regenerate
 
 By default, Ansible will use port 5099 for the accelerated connection, though this is configurable. Once running, the daemon will accept connections for 30 minutes, after which time it will terminate itself and need to be restarted over SSH.
 
-Accelerated mode offers several improvements over the (deprecated) original fireball mode from which it was based:
-
-* No bootstrapping is required, only a single line needs to be added to each play you wish to run in accelerated mode.
-* Support for sudo commands (see below for more details and caveats) is available.
-* There are fewer requirements. ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar 
-* python 2.5 or higher is required.
-
 In order to use accelerated mode, simply add `accelerate: true` to your play::
 
     ---

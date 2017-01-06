@@ -165,7 +165,7 @@ inside another.
 .. _dynamic_static:
 
 Dynamic versus Static Includes
-```````````````````````````
+``````````````````````````````
 
 In Ansible 2.0 there were changes on how 'task' includes are processed. The 'play' includes are still 'static' or unchanged.
 

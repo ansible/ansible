@@ -61,7 +61,7 @@ EXAMPLES = '''
 - wakeonlan:
     mac: '00:00:5E:00:53:66'
     broadcast: 192.0.2.23
-  delegate_to: loclahost
+  delegate_to: localhost
 
 - wakeonlan:
     mac: 00:00:5E:00:53:66
@@ -84,7 +84,7 @@ def wakeonlan(module, mac, broadcast, port):
 
     mac_orig = mac
 
-    # Remove possible seperator from MAC address
+    # Remove possible separator from MAC address
     if len(mac) == 12 + 5:
         mac = mac.replace(mac[2], '')
 

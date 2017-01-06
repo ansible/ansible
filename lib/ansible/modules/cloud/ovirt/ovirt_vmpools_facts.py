@@ -26,7 +26,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
 )
 
 
@@ -50,7 +50,7 @@ options:
       description:
         - "Search term which is accepted by oVirt search backend."
         - "For example to search vmpool X: name=X"
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -74,7 +74,7 @@ ovirt_vm_pools:
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
@@ -88,7 +88,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_vm_pools=[
-                    get_dict_of_struct(c) for c in vmpools
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in vmpools
                 ],
             ),
         )

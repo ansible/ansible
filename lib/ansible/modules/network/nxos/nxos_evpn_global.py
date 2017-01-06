@@ -269,7 +269,7 @@ def get_commands(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if value is True:
             commands.append(key)
         elif value is False:

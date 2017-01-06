@@ -19,13 +19,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import traceback
+
 try:
-    import ovirtsdk4 as sdk
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.ovirt import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+)
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -35,7 +48,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt."
+short_description: "Module to manage Virtual Machines in oVirt"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
@@ -219,6 +232,20 @@ options:
             - "C(nic_name) - Set name to network interface of Virtual Machine."
             - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
         version_added: "2.3"
+    kernel_path:
+        description:
+            - "Path to a kernel image used to boot the virtual machine."
+            - "Kernel image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    initrd_path:
+        description:
+            - "Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option."
+            - "Ramdisk image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    kernel_params:
+        description:
+            - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -401,7 +428,7 @@ class VmsModule(BaseModule):
         """
         oVirt in version 4.1 doesn't support search by template+version_number,
         so we need to list all templates with specific name and then iterate
-        throught it's version until we find the version we look for.
+        through it's version until we find the version we look for.
         """
         template = None
         if self._module.params['template']:
@@ -679,7 +706,7 @@ def _get_initialization(sysprep, cloud_init, cloud_init_nics):
         initialization = otypes.Initialization(
             **sysprep
         )
-    return  initialization
+    return initialization
 
 
 def control_state(vm, vms_service, module):
@@ -706,7 +733,7 @@ def control_state(vm, vms_service, module):
         vm.status == otypes.VmStatus.UNKNOWN
     ):
         # Invalid states:
-        module.fail_json("Not possible to control VM, if it's in '{}' status".format(vm.status))
+        module.fail_json(msg="Not possible to control VM, if it's in '{}' status".format(vm.status))
     elif vm.status == otypes.VmStatus.POWERING_DOWN:
         if (force and state == 'stopped') or state == 'absent':
             vm_service.stop()
@@ -771,6 +798,9 @@ def main():
         host=dict(default=None),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
+        kernel_path=dict(default=None),
+        initrd_path=dict(default=None),
+        kernel_params=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -794,8 +824,9 @@ def main():
         if state == 'present' or state == 'running' or state == 'next_run':
             sysprep = module.params['sysprep']
             cloud_init = module.params['cloud_init']
-            cloud_init_nics = module.params['cloud_init_nics']
-            cloud_init_nics.append(cloud_init)
+            cloud_init_nics = module.params['cloud_init_nics'] or []
+            if cloud_init is not None:
+                cloud_init_nics.append(cloud_init)
 
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:
@@ -827,6 +858,11 @@ def main():
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
                     initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    os=otypes.OperatingSystem(
+                        cmdline=module.params.get('kernel_params'),
+                        initrd=module.params.get('initrd_path'),
+                        kernel=module.params.get('kernel_path'),
+                    ),
                 ),
             )
 
@@ -878,10 +914,10 @@ def main():
 
         module.exit_json(**ret)
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         connection.close(logout=False)
 
-from ansible.module_utils.basic import *
+
 if __name__ == "__main__":
     main()

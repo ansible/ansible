@@ -139,7 +139,6 @@ class CommandRunner(object):
 
         self._default_output = module.connection.default_output
 
-
     def add_command(self, command, output=None, prompt=None, response=None,
                     **kwargs):
         if command in [str(c) for c in self.commands]:
@@ -184,6 +183,7 @@ class CommandRunner(object):
             failed_conditions = [item.raw for item in self.conditionals]
             errmsg = 'One or more conditional statements have not been satisfied'
             raise FailedConditionsError(errmsg, failed_conditions)
+
 
 class Conditional(object):
     """Used in command modules to evaluate waitfor conditions

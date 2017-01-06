@@ -417,7 +417,7 @@ def state_present(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if key == 'associate-vrf':
             command = 'member vni {0} {1}'.format(module.params['vni'], key)
 
@@ -532,11 +532,11 @@ def main():
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key != 'interface':
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)

@@ -176,7 +176,7 @@ Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_passwor
 
 Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
-If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
+If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not* ``ansible_user``. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -364,7 +364,7 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
 
-Bear in mind that using C(raw) will allways report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using C(raw) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 

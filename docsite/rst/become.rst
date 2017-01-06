@@ -20,7 +20,7 @@ privilege escalation tools, which you probably already use or have configured, l
 
 Directives
 -----------
-These can be set from play to task level, but are overriden by connection variables as they can be host specific.
+These can be set from play to task level, but are overridden by connection variables as they can be host specific.
 
 become
     set to 'true'/'yes' to activate privilege escalation.
@@ -162,7 +162,7 @@ Ways to resolve this include:
   file permissions are also secure if you make the connection to the managed
   machine as root and then use ``become`` to an unprivileged account.
 
-.. warn:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
+.. warning:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
     are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
     cannot use these ACLs to manage its temp file permissions so you may have
     to resort to ``allow_world_readable_tmpfiles`` if the remote machines use ZFS.

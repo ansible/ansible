@@ -71,13 +71,13 @@ The top level of the directory would contain files and directories like so::
 .. _alternative_directory_layout:
 
 Alternative Directory Layout
-````````````````
+````````````````````````````
 
 Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this::
 
     inventories/
        production/
-          hosts.yml           # inventory file for production servers
+          hosts               # inventory file for production servers
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""
@@ -86,7 +86,7 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
              hostname2        # ""
 
        staging/
-          hosts.yml           # inventory file for staging environment
+          hosts               # inventory file for staging environment
           group_vars/
              group1           # here we assign variables to particular groups
              group2           # ""

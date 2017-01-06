@@ -220,7 +220,7 @@ def get_instance(module):
 def started(module, instance, commands):
     commands.append('no shutdown')
     setters = set()
-    for key, value in module.argument_spec.iteritems():
+    for key, value in module.argument_spec.items():
         if module.params[key] is not None:
             setter = value.get('setter') or 'set_%s' % key
             if setter not in setters:

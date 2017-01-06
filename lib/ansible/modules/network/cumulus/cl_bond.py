@@ -152,16 +152,17 @@ EXAMPLES = '''
 # configure a bond interface with IP address
 - cl_bond:
     name: bond0
-    slaves: "swp4-5"
+    slaves:
+      - swp4-5
     ipv4: 10.1.1.1/24
-  notify: reload networking
 
 # configure bond as a dual-connected clag bond
 - cl_bond:
     name: bond1
-    slaves: "swp1s0 swp2s0"
+    slaves:
+      - swp1s0
+      - swp2s0
     clag_id: 1
-  notify: reload networking
 
 # define cl_bond once in tasks file
 # then write interface config in variables file
@@ -182,18 +183,21 @@ EXAMPLES = '''
     mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge|default('no') }}"
     mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard|default('no') }}"
   with_dict: "{{ cl_bonds }}"
-  notify: reload networking
 
 # In vars file
 # ============
 cl_bonds:
-    bond0:
-        alias_name: 'uplink to isp'
-        slaves: ['swp1', 'swp3']
-        ipv4: '10.1.1.1/24'
-    bond2:
-        vids: [1, 50]
-        clag_id: 1
+  bond0:
+    alias_name: uplink to isp
+    slaves:
+      - swp1
+      - swp3
+    ipv4: 10.1.1.1/24'
+  bond2:
+    vids:
+      - 1
+      - 50
+    clag_id: 1
 '''
 
 RETURN = '''
@@ -455,7 +459,7 @@ def main():
     # checks all lists and removes it, so that functions expecting
     # an empty list, get this result. May upstream this fix into
     # the AnsibleModule code to have it check for this.
-    for k, _param in module.params.iteritems():
+    for k, _param in module.params.items():
         if isinstance(_param, list):
             module.params[k] = [x for x in _param if x]
 

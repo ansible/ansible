@@ -447,6 +447,9 @@ def _create_server(module, cloud):
     if not module.params['boot_volume']:
         image_id = cloud.get_image_id(
             module.params['image'], module.params['image_exclude'])
+        if not image_id:
+            module.fail_json(msg="Could not find image %s" %
+                             module.params['image'])
 
     if flavor:
         flavor_dict = cloud.get_flavor(flavor)

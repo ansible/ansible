@@ -143,7 +143,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         needs_change = False
 
         if existing_ssl:
-            for ssl_attr, value in ssl_attrs.iteritems():
+            for ssl_attr, value in ssl_attrs.items():
                 if ssl_attr == 'privatekey':
                     # The private key is not included in get_ssl_termination's
                     # output (as it shouldn't be). Also, if you're changing the

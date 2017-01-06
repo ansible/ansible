@@ -32,7 +32,7 @@ If there's another source of truth in your infrastructure, Ansible can also plug
 Here's what a plain text inventory file looks like::
 
     ---
-    webservers]
+    [webservers]
     www1.example.com
     www2.example.com
 

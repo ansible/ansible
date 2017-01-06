@@ -1,4 +1,4 @@
-#!/usr/bin/pythonapi/
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.

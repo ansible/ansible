@@ -76,67 +76,54 @@ options:
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
-EXAMPLES = '''
-  # Creates Registry Key called MyCompany.
+EXAMPLES = r'''
+- name: Create Registry Key called MyCompany
   win_regedit:
     key: HKCU:\Software\MyCompany
     
-  # Creates Registry Key called MyCompany,
-  # a value within MyCompany Key called "hello", and
-  # data for the value "hello" containing "world".
+- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "world".
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     data: world
 
-  # Creates Registry Key called MyCompany,
-  # a value within MyCompany Key called "hello", and
-  # data for the value "hello" containing "1337" as type "dword".
+- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "1337" as type "dword".
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     data: 1337
     datatype: dword
 
-  # Creates Registry Key called MyCompany,
-  # a value within MyCompany Key called "hello", and
-  # binary data for the value "hello" as type "binary"
-  # data expressed as comma separated list
+- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and binary data for the value "hello" as type "binary" data expressed as comma separated list
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
     datatype: binary
 
-  # Creates Registry Key called MyCompany,
-  # a value within MyCompany Key called "hello", and
-  # binary data for the value "hello" as type "binary"
-  # data expressed as yaml array of bytes
+- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and binary data for the value "hello" as type "binary" data expressed as yaml array of bytes
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     data: [0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef]
     datatype: binary
 
-  # Delete Registry Key MyCompany
-  # NOTE: Not specifying a value will delete the root key which means
-  # all values will be deleted
+- name: Delete Registry Key MyCompany. Not specifying a value will delete the root key which means all values will be deleted
   win_regedit:
     key: HKCU:\Software\MyCompany
     state: absent
     
-  # Delete Registry Value "hello" from MyCompany Key
+- name: Delete Registry Value "hello" from MyCompany Key
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     state: absent
 
-  # Ensure registry paths containing spaces are quoted.
-  # Creates Registry Key called 'My Company'.
+- name: Creates Registry Key called 'My Company'
   win_regedit:
-    key: 'HKCU:\Software\My Company'
-
+    key: HKCU:\Software\My Company
 '''
+
 RETURN = '''
 data_changed:
     description: whether this invocation changed the data in the registry value 

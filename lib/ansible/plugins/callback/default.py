@@ -65,7 +65,7 @@ class CallbackModule(CallbackBase):
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
-        if result._task.ignore_errors:
+        if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_ok(self, result):
@@ -267,6 +267,22 @@ class CallbackModule(CallbackBase):
             )
 
         self._display.display("", screen_only=True)
+
+        # print custom stats
+        if C.SHOW_CUSTOM_STATS and stats.custom:
+            self._display.banner("CUSTOM STATS: ")
+            # per host
+            #TODO: come up with 'pretty format'
+            for k in sorted(stats.custom.keys()):
+                if k == '_run':
+                    continue
+                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n','')))
+
+            # print per run custom stats
+            if '_run' in stats.custom:
+                self._display.display("", screen_only=True)
+                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n',''))
+            self._display.display("", screen_only=True)
 
     def v2_playbook_on_start(self, playbook):
         if self._display.verbosity > 1:

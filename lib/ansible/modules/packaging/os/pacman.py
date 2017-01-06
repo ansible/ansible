@@ -216,14 +216,14 @@ def remove_packages(module, pacman_path, packages):
         args = "R"
 
     remove_c = 0
-    # Using a for loop incase of error, we can report the package that failed
+    # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         installed, updated, unknown = query_package(module, pacman_path, package)
         if not installed:
             continue
 
-        cmd = "%s -%s %s --noconfirm" % (pacman_path, args, package)
+        cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -243,6 +243,8 @@ def install_packages(module, pacman_path, state, packages, package_files):
     package_err = []
     message = ""
 
+    to_install_repos = []
+    to_install_files = []
     for i, package in enumerate(packages):
         # if the package is installed and state == present or state == latest and is up-to-date then skip
         installed, updated, latestError = query_package(module, pacman_path, package)
@@ -253,17 +255,26 @@ def install_packages(module, pacman_path, state, packages, package_files):
             continue
 
         if package_files[i]:
-            params = '-U %s' % package_files[i]
+            to_install_files.append(package_files[i])
         else:
-            params = '-S %s' % package
+            to_install_repos.append(package)
 
-        cmd = "%s %s --noconfirm --needed" % (pacman_path, params)
+    if to_install_repos:
+        cmd = "%s -S %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_repos))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to install %s" % (package))
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
-        install_c += 1
+        install_c += len(to_install_repos)
+
+    if to_install_files:
+        cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        if rc != 0:
+            module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
+
+        install_c += len(to_install_files)
 
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
@@ -348,7 +359,7 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if pkg.endswith('.pkg.tar.xz'):
+            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

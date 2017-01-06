@@ -895,7 +895,7 @@ def state_present(module, existing, proposed, candidate):
         'route-map out',
         'soft-reconfiguration inbound'
     ]
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if key == 'send-community' and value == 'none':
             commands.append('{0}'.format(key))
 
@@ -1070,11 +1070,11 @@ def main():
         module.params['advertise_map_non_exist'] = 'default'
 
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key not in ['asn', 'vrf', 'neighbor']:
             if not isinstance(value, list):
                 if str(value).lower() == 'true':

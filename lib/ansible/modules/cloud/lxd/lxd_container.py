@@ -38,7 +38,7 @@ options:
         required: true
     architecture:
         description:
-          - The archiecture for the container (e.g. "x86_64" or "i686").
+          - The architecture for the container (e.g. "x86_64" or "i686").
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     config:
@@ -388,7 +388,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
+        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.values()])
 
     def _get_addresses(self):
         try:

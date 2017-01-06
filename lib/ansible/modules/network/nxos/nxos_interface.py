@@ -907,8 +907,8 @@ def main():
                                                      existing)
                 commands.append(cmds)
             else:
-                delta = dict(set(proposed.iteritems()).difference(
-                    existing.iteritems()))
+                delta = dict(set(proposed.items()).difference(
+                    existing.items()))
                 if delta:
                     cmds = get_interface_config_commands(delta,
                                                          normalized_interface,

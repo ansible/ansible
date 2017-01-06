@@ -120,6 +120,8 @@ options:
         manually.
       - It might take longer to verify that the correct version is installed.
         This is especially true if a specific version number is specified.
+      - Quote the version to prevent the value to be interpreted as float. For
+        example if C(1.20) would be unquoted, it would become C(1.2).
   with_dependencies:
     required: false
     choices: ['yes', 'no']
@@ -128,7 +130,7 @@ options:
       - Defines whether to install plugin dependencies.
 
 notes:
-  - Plugin installation shoud be run under root or the same user which owns
+  - Plugin installation should be run under root or the same user which owns
     the plugin files on the disk. Only if the plugin is not installed yet and
     no version is specified, the API installation is performed which requires
     only the Web UI credentials.
@@ -159,7 +161,7 @@ EXAMPLES = '''
 - name: Install specific version of the plugin
   jenkins_plugin:
     name: token-macro
-    version: 1.15
+    version: "1.15"
 
 - name: Pin the plugin
   jenkins_plugin:
@@ -212,7 +214,7 @@ EXAMPLES = '''
       token-macro:
         enabled: yes
       build-pipeline-plugin:
-        version: 1.4.9
+        version: "1.4.9"
         pinned: no
         enabled: yes
   tasks:
@@ -442,6 +444,13 @@ class JenkinsPlugin(object):
                     msg_exception="Plugin installation has failed.",
                     data=data)
 
+                hpi_file = '%s/plugins/%s.hpi' % (
+                    self.params['jenkins_home'],
+                    self.params['name'])
+
+                if os.path.isfile(hpi_file):
+                    os.remove(hpi_file)
+
             changed = True
         else:
             # Check if the plugin directory exists
@@ -567,20 +576,11 @@ class JenkinsPlugin(object):
                 msg_exception="Updates download failed.")
 
             # Write the updates file
-            updates_file = tempfile.mkstemp()
+            update_fd, updates_file = tempfile.mkstemp()
+            os.write(update_fd, r.read())
 
             try:
-                fd = open(updates_file, 'wb')
-            except IOError:
-                e = get_exception()
-                self.module.fail_json(
-                    msg="Cannot open the tmp updates file %s." % updates_file,
-                    details=str(e))
-
-            fd.write(r.read())
-
-            try:
-                fd.close()
+                os.close(update_fd)
             except IOError:
                 e = get_exception()
                 self.module.fail_json(
@@ -644,25 +644,15 @@ class JenkinsPlugin(object):
 
     def _write_file(self, f, data):
         # Store the plugin into a temp file and then move it
-        tmp_f = tempfile.mkstemp()
-
-        try:
-            fd = open(tmp_f, 'wb')
-        except IOError:
-            e = get_exception()
-            self.module.fail_json(
-                msg='Cannot open the temporal plugin file %s.' % tmp_f,
-                details=str(e))
+        tmp_f_fd, tmp_f = tempfile.mkstemp()
 
         if isinstance(data, str):
-            d = data
+            os.write(tmp_f_fd, data)
         else:
-            d = data.read()
-
-        fd.write(d)
+            os.write(tmp_f_fd, data.read())
 
         try:
-            fd.close()
+            os.close(tmp_f_fd)
         except IOError:
             e = get_exception()
             self.module.fail_json(

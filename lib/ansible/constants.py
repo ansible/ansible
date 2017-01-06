@@ -72,7 +72,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
             and return it as a python list.
         :none: Sets the value to None
         :path: Expands any environment variables and tilde's in the value.
-        :tmp_path: Create a unique temporary directory inside of the dirctory
+        :tmp_path: Create a unique temporary directory inside of the directory
             specified by value and return its path.
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
             means colon separated strings.)  Split the value and then expand
@@ -123,18 +123,20 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
 
 def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
-    if env_var is not None:
-        value = os.environ.get(env_var, None)
-        if value is not None:
-            return value
+    value = default
+
     if p is not None:
         try:
-            # TODO: Once we branch Ansible-2.2, change to the following in devel
-            #return to_text(p.get(section, key, raw=True), errors='surrogate_or_strict')
-            return p.get(section, key, raw=True)
+            value = p.get(section, key, raw=True)
         except:
-            return default
-    return default
+            pass
+
+    if env_var is not None:
+        env_value = os.environ.get(env_var, None)
+        if env_value is not None:
+            value = env_value
+
+    return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
 
 def load_config_file():
@@ -231,6 +233,7 @@ DEFAULT_INVENTORY_IGNORE  = get_config(p, DEFAULTS, 'inventory_ignore_extensions
 DEFAULT_VAR_COMPRESSION_LEVEL = get_config(p, DEFAULTS, 'var_compression_level', 'ANSIBLE_VAR_COMPRESSION_LEVEL', 0, value_type='integer')
 DEFAULT_INTERNAL_POLL_INTERVAL = get_config(p, DEFAULTS, 'internal_poll_interval', None, 0.001, value_type='float')
 ERROR_ON_MISSING_HANDLER  = get_config(p, DEFAULTS, 'error_on_missing_handler', 'ANSIBLE_ERROR_ON_MISSING_HANDLER', True, value_type='boolean')
+SHOW_CUSTOM_STATS = get_config(p, DEFAULTS, 'show_custom_stats', 'ANSIBLE_SHOW_CUSTOM_STATS', False, value_type='boolean')
 
 # static includes
 DEFAULT_TASK_INCLUDES_STATIC    = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, value_type='boolean')
@@ -278,7 +281,7 @@ DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pa
 # the module takes both, bad things could happen.
 # In the future we should probably generalize this even further
 # (mapping of param: squash field)
-DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apk, apt, dnf, homebrew, pacman, pkgng, yum, zypper", value_type='list')
+DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apk, apt, dnf, homebrew, openbsd_pkg, pacman, pkgng, yum, zypper", value_type='list')
 # paths
 DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '~/.ansible/plugins/action:/usr/share/ansible/plugins/action', value_type='pathlist')
 DEFAULT_CACHE_PLUGIN_PATH      = get_config(p, DEFAULTS, 'cache_plugins',      'ANSIBLE_CACHE_PLUGINS', '~/.ansible/plugins/cache:/usr/share/ansible/plugins/cache', value_type='pathlist')
@@ -322,6 +325,10 @@ MAX_FILE_SIZE_FOR_DIFF         = get_config(p, DEFAULTS, 'max_diff_size', 'ANSIB
 # CONNECTION RELATED
 USE_PERSISTENT_CONNECTIONS     = get_config(p, DEFAULTS, 'use_persistent_connections', 'ANSIBLE_USE_PERSISTENT_CONNECTIONS', False, value_type='boolean')
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', '-C -o ControlMaster=auto -o ControlPersist=60s')
+### WARNING: Someone might be tempted to switch this from percent-formatting
+# to .format() in the future.  be sure to read this:
+# http://lucumr.pocoo.org/2016/12/29/careful-with-str-format/ and understand
+# that it may be a security risk to do so.
 ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', u"%(directory)s/ansible-ssh-%%h-%%p-%%r")
 ANSIBLE_SSH_CONTROL_PATH_DIR   = get_config(p, 'ssh_connection', 'control_path_dir', 'ANSIBLE_SSH_CONTROL_PATH_DIR', u'~/.ansible/cp')
 ANSIBLE_SSH_PIPELINING         = get_config(p, 'ssh_connection', 'pipelining', 'ANSIBLE_SSH_PIPELINING', False, value_type='boolean')
@@ -336,7 +343,6 @@ PERSISTENT_CONNECT_RETRIES     = get_config(p, 'persistent_connection', 'connect
 PERSISTENT_CONNECT_INTERVAL    = get_config(p, 'persistent_connection', 'connect_interval', 'ANSIBLE_PERSISTENT_CONNECT_INTERVAL', 1, value_type='integer')
 
 # obsolete -- will be formally removed
-ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, value_type='integer')
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, value_type='integer')
 ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30, value_type='integer')
 ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, value_type='float')
@@ -374,8 +380,8 @@ COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LI
 DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, value_type='integer')
 
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
-MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
+MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS         = None

@@ -521,7 +521,7 @@ class GalaxyCLI(CLI):
 
     def execute_login(self):
         """
-        Verify user's identify via Github and retreive an auth token from Galaxy.
+        Verify user's identify via Github and retrieve an auth token from Galaxy.
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
@@ -540,7 +540,7 @@ class GalaxyCLI(CLI):
         token = GalaxyToken()
         token.set(galaxy_response['token'])
 
-        display.display("Succesfully logged into Galaxy as %s" % galaxy_response['username'])
+        display.display("Successfully logged into Galaxy as %s" % galaxy_response['username'])
         return 0
 
     def execute_import(self):

@@ -1,13 +1,7 @@
 <!---
-Please do not report issues/requests related to Ansible modules here !!
-
-Report them to the appropriate modules-core or modules-extras project:
-  - https://github.com/ansible/ansible-modules-core/issues
-  - https://github.com/ansible/ansible-modules-extras/issues
-
-Also verify first that your issue/request is not already reported in GitHub
+Verify first that your issue/request is not already reported on GitHub.
+Also test if the latest release, and master branch are affected too.
 -->
-
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest: -->
@@ -16,7 +10,7 @@ Also verify first that your issue/request is not already reported in GitHub
  - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Name of the plugin/task/feature -->
+<!--- Name of the module/plugin/task/feature -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from “ansible --version” between quotes below -->
@@ -41,12 +35,12 @@ managing, or say “N/A” for anything that is not platform-specific.
 
 ##### STEPS TO REPRODUCE
 <!---
-For bugs, show exactly how to reproduce the problem.
+For bugs, show exactly how to reproduce the problem, using a minimal test-case.
 For new features, show how the feature would be used.
 -->
 
 <!--- Paste example playbooks or commands between quotes below -->
-```
+```yaml
 
 ```
 

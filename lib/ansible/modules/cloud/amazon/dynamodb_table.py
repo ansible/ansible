@@ -274,14 +274,14 @@ def update_dynamo_table(table, throughput=None, check_mode=False, global_indexes
     removed_indexes, added_indexes, index_throughput_changes = get_changed_global_indexes(table, global_indexes)
     if removed_indexes:
         if not check_mode:
-            for name, index in removed_indexes.iteritems():
+            for name, index in removed_indexes.items():
                 global_indexes_changed = table.delete_global_secondary_index(name) or global_indexes_changed
         else:
             global_indexes_changed = True
 
     if added_indexes:
         if not check_mode:
-            for name, index in added_indexes.iteritems():
+            for name, index in added_indexes.items():
                 global_indexes_changed = table.create_global_secondary_index(global_index=index) or global_indexes_changed
         else:
             global_indexes_changed = True
@@ -328,18 +328,18 @@ def get_changed_global_indexes(table, global_indexes):
     set_index_info = dict((index.name, index.schema()) for index in global_indexes)
     set_index_objects = dict((index.name, index) for index in global_indexes)
 
-    removed_indexes = dict((name, index) for name, index in table_index_info.iteritems() if name not in set_index_info)
-    added_indexes = dict((name, set_index_objects[name]) for name, index in set_index_info.iteritems() if name not in table_index_info)
+    removed_indexes = dict((name, index) for name, index in table_index_info.items() if name not in set_index_info)
+    added_indexes = dict((name, set_index_objects[name]) for name, index in set_index_info.items() if name not in table_index_info)
     # todo: uncomment once boto has https://github.com/boto/boto/pull/3447 fixed
-    # index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.iteritems() if name not in added_indexes and (index.throughput['read'] != str(table_index_objects[name].throughput['read']) or index.throughput['write'] != str(table_index_objects[name].throughput['write'])))
+    # index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.items() if name not in added_indexes and (index.throughput['read'] != str(table_index_objects[name].throughput['read']) or index.throughput['write'] != str(table_index_objects[name].throughput['write'])))
     # todo: remove once boto has https://github.com/boto/boto/pull/3447 fixed
-    index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.iteritems() if name not in added_indexes)
+    index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.items() if name not in added_indexes)
 
     return removed_indexes, added_indexes, index_throughput_changes
 
 
 def validate_index(index, module):
-    for key, val in index.iteritems():
+    for key, val in index.items():
         if key not in INDEX_OPTIONS:
             module.fail_json(msg='%s is not a valid option for an index' % key)
     for required_option in INDEX_REQUIRED_OPTIONS:

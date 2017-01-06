@@ -64,15 +64,15 @@ options:
 
 EXAMPLES = """
 - name: Send notification message via Nexmo
-  local_action:
-    module: nexmo
+  nexmo:
     api_key: 640c8a53
     api_secret: 0ce239a6
     src: 12345678901
     dest:
       - 10987654321
       - 16789012345
-    msg: "{{ inventory_hostname }} completed"
+    msg: '{{ inventory_hostname }} completed'
+  delegate_to: localhost
 """
 
 import urllib

@@ -242,7 +242,7 @@ class DockerNetworkManager(object):
                 different = True
                 differences.append('driver_options')
             else:
-                for key, value in self.parameters.driver_options.iteritems():
+                for key, value in self.parameters.driver_options.items():
                     if not net['Options'].get(key) or value != net['Options'][key]:
                         different = True
                         differences.append('driver_options.%s' % key)
@@ -255,7 +255,7 @@ class DockerNetworkManager(object):
                 different = True
                 differences.append('ipam_options')
             else:
-                for key, value in self.parameters.ipam_options.iteritems():
+                for key, value in self.parameters.ipam_options.items():
                     camelkey = None
                     for net_key in net['IPAM']['Config'][0]:
                         if key == net_key.lower():

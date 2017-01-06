@@ -1,4 +1,4 @@
-#!/usr/bin/pythonapi/
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
@@ -43,7 +43,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_labels
-short_description: Module to affinity labels in oVirt
+short_description: Module to manage affinity labels in oVirt
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
@@ -103,7 +103,7 @@ id:
     returned: On success if affinity label is found.
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
-template:
+affinity_label:
     description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
     returned: On success if affinity label is found.

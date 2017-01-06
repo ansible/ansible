@@ -28,37 +28,38 @@ description:
 options:
   instance_id:
     description:
-      - instance id of the image to create
+      - Instance ID to create the AMI from.
     required: false
     default: null
   name:
     description:
-      - The name of the new image to create
+      - The name of the new AMI.
     required: false
     default: null
   wait:
     description:
-      - wait for the AMI to be in state 'available' before returning.
+      - Wait for the AMI to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds.
     default: 300
   state:
     description:
-      - create or deregister/delete image
+      - Create or deregister/delete AMI.
     required: false
     default: 'present'
+    choices: [ "absent", "present" ]
   description:
     description:
-      - An optional human-readable string describing the contents and purpose of the AMI.
+      - Human-readable string describing the contents and purpose of the AMI.
     required: false
     default: null
   no_reboot:
     description:
-      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance. The default choice is "no".
+      - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance.
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -70,25 +71,28 @@ options:
   device_mapping:
     version_added: "2.0"
     description:
-      - An optional list of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
+      - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
       - "Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)"
     required: false
     default: null
   delete_snapshot:
     description:
-      - Whether or not to delete snapshots when deregistering AMI.
+      - Delete snapshots when deregistering the AMI.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   tags:
     description:
-      - a dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
     version_added: "2.0"
   launch_permissions:
     description:
-      - Users and groups that should be able to launch the ami. Expects dictionary with a key of user_ids and/or group_names. user_ids should be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
+      - Users and groups that should be able to launch the AMI. Expects
+        dictionary with a key of user_ids and/or group_names. user_ids should
+        be a list of account ids. group_name should be a list of groups, "all"
+        is the only acceptable value currently.
     required: false
     default: null
     version_added: "2.0"
@@ -488,7 +492,7 @@ def update_image(module, ec2):
     """
 
     image_id = module.params.get('image_id')
-    launch_permissions = module.params.get('launch_permissions')
+    launch_permissions = module.params.get('launch_permissions') or []
     if 'user_ids' in launch_permissions:
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
 

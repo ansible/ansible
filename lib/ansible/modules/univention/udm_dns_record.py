@@ -30,10 +30,16 @@ from ansible.module_utils.univention_umc import (
     config,
     uldap,
 )
-from univention.admin.handlers.dns import (
-    forward_zone,
-    reverse_zone,
-)
+
+HAVE_UNIVENTION = False
+try:
+    from univention.admin.handlers.dns import (
+        forward_zone,
+        reverse_zone,
+    )
+    HAVE_UNIVENTION = True
+except ImportError:
+    pass
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -51,6 +57,7 @@ description:
        It uses the python API of the UCS to create a new object or edit it."
 requirements:
     - Python >= 2.6
+    - Univention
 options:
     state:
         required: false
@@ -117,6 +124,10 @@ def main():
             ('state', 'present', ['data'])
         ])
     )
+
+    if not HAVE_UNIVENTION:
+        module.fail_json(msg="This module requires univention python bindings")
+
     type        = module.params['type']
     zone        = module.params['zone']
     name        = module.params['name']

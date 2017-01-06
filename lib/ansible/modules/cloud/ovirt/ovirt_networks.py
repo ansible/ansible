@@ -237,22 +237,23 @@ def main():
             ret = networks_module.create(entity=network)
 
             # Update clusters networks:
-            for param_cluster in module.params.get('clusters', []):
-                cluster = search_by_name(clusters_service, param_cluster.get('name', None))
-                if cluster is None:
-                    raise Exception("Cluster '%s' was not found." % cluster_name)
-                cluster_networks_service = clusters_service.service(cluster.id).networks_service()
-                cluster_networks_module = ClusterNetworksModule(
-                    network_id=ret['id'],
-                    cluster_network=param_cluster,
-                    connection=connection,
-                    module=module,
-                    service=cluster_networks_service,
-                )
-                if param_cluster.get('assigned', True):
-                    ret = cluster_networks_module.create()
-                else:
-                    ret = cluster_networks_module.remove()
+            if module.params.get('clusters') is not None:
+                for param_cluster in module.params.get('clusters'):
+                    cluster = search_by_name(clusters_service, param_cluster.get('name'))
+                    if cluster is None:
+                        raise Exception("Cluster '%s' was not found." % param_cluster.get('name'))
+                    cluster_networks_service = clusters_service.service(cluster.id).networks_service()
+                    cluster_networks_module = ClusterNetworksModule(
+                        network_id=ret['id'],
+                        cluster_network=param_cluster,
+                        connection=connection,
+                        module=module,
+                        service=cluster_networks_service,
+                    )
+                    if param_cluster.get('assigned', True):
+                        ret = cluster_networks_module.create()
+                    else:
+                        ret = cluster_networks_module.remove()
 
         elif state == 'absent':
             ret = networks_module.remove(entity=network)

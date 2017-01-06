@@ -1,11 +1,12 @@
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../hacking/module_formatter.py
 DUMPER=../hacking/dump_playbook_attributes.py
+CPUS ?= 1
 
 all: clean docs
 
 docs: clean directives modules staticmin
-	./build-site.py
+	./build-site.py -j $(CPUS)
 	-(cp *.ico htmlout/)
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
@@ -15,10 +16,10 @@ variables:
 	dot variables.dot -Tpng -o htmlout/variables.png
 
 viewdocs: clean staticmin
-	./build-site.py view
+	./build-site.py -j $(CPUS) view
 
 htmldocs: staticmin
-	./build-site.py rst
+	./build-site.py -j $(CPUS) rst
 
 webdocs: htmldocs
 

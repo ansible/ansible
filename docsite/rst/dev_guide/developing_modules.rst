@@ -638,6 +638,14 @@ The following  checklist items are important guidelines for people who want to c
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
+* Modules must have a metadata section.  For the vast majority of new modules,
+  the metadata should look exactly like this::
+
+    ANSIBLE_METADATA = {'status': ['preview'],
+                        'supported_by': 'community',
+                        'version': '1.0'}
+
+  The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
@@ -698,7 +706,8 @@ The following  checklist items are important guidelines for people who want to c
 
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes.
-* Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Import ``ansible.module_utils`` code in the same place as you import other libraries.  In older code, this was done at the bottom of the file but that's no longer needed.
+* Do not use wildcards for importing other python modules (ex: ``from ansible.module_utils.basic import *``).  This used to be required for code imported from ``ansible.module_utils`` but, from Ansible-2.1 onwards, it's just an outdated and bad practice.
 * The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
   import them into unittests in the future example::
@@ -763,7 +772,7 @@ Windows modules checklist
     * Look at existing modules for more examples of argument checking.
 
 * Results
-    * The result object should allways contain an attribute called changed set to either $true or $false
+    * The result object should always contain an attribute called changed set to either $true or $false
     * Create your result object like this::
 
         $result = New-Object psobject @{
