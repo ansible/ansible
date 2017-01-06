@@ -115,7 +115,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     # python3
@@ -725,7 +725,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             build_ssl_validation_error(self.hostname, self.port, paths_checked)
         except socket.error:
             e = get_exception()
-            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, str(e)))
+            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
             # cleanup the temp file created, don't worry
