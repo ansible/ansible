@@ -173,8 +173,6 @@ SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 # Escaping quotes and apostrophe however is related to how Ansible handles them.
 html_escape_table = {
     '&': "&amp;",
-    '>': "&gt;",
-    '<': "&lt;",
     '"': "\"",
     "'": "\'",
 }
