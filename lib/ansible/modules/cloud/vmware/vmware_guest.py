@@ -554,16 +554,18 @@ class PyVmomiHelper(object):
 
             if searchpath:
                 # get all objects for this path ...
-                fObj = self.content.searchIndex.FindByInventoryPath(searchpath)
-                if fObj:
-                    if isinstance(fObj, vim.Datacenter):
-                        fObj = fObj.vmFolder
-                    for cObj in fObj.childEntity:
-                        if not isinstance(cObj, vim.VirtualMachine):
+                f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
+                if f_obj:
+                    if isinstance(f_obj, vim.Datacenter):
+                        f_obj = f_obj.vmFolder
+                    for c_obj in f_obj.childEntity:
+                        if not isinstance(c_obj, vim.VirtualMachine):
                             continue
-                        if cObj.name == name:
-                            vm = cObj
-                            break
+                        if c_obj.name == name:
+                            vm = c_obj
+                            if self.params['name_match'] == 'first':
+                                break
+
         if vm:
             self.current_vm_obj = vm
 
@@ -1172,10 +1174,10 @@ class PyVmomiHelper(object):
         if not self.params['folder'].startswith('/'):
             self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
 
-        fObj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
-        if fObj is None:
+        f_obj = self.content.searchIndex.FindByInventoryPath('/%(datacenter)s%(folder)s' % self.params)
+        if f_obj is None:
             self.module.fail_json(msg='No folder matched the path: %(folder)s' % self.params)
-        destfolder = fObj
+        destfolder = f_obj
 
         hostsystem = self.select_host()
 
@@ -1495,7 +1497,7 @@ def main():
             disk=dict(required=False, type='list', default=[]),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=False, type='str', default=None),
+            datacenter=dict(required=True, type='str'),
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=True),
