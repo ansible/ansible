@@ -232,7 +232,7 @@ Test Plugins
 
 Test plugins are for verifying data. They are a feature of Jinja2 and are also available in Jinja2 templates used by the `template` module. As with all plugins, they can be easily extended, but instead of having a file for each one you can have several per file. Most of the test plugins shipped with Ansible reside in a `core.py`. These are specially useful in conjunction with some filter plugins like `map` and `select`; they are also available for conditional directives like `when:`.
 
-See `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
+See `lib/ansible/plugins/test <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/test>`_ for details.
 
 .. _distributing_plugins:
 
