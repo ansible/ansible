@@ -368,6 +368,15 @@ This would result in::
 
     {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
 
+The filter also accepts an optional `concat_lists=True` parameter to combine
+list values for any key::
+
+    {{ {'a': [1, 2], 'b': 2}|combine({'a': [3]}, concat_lists=True) }}
+
+This would result in::
+
+    {'a': [1, 2, 3], 'b': 2}
+
 The filter can also take multiple arguments to merge::
 
     {{ a|combine(b, c, d) }}

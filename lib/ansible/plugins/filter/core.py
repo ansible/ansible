@@ -34,6 +34,7 @@ from functools import partial
 from random import Random, SystemRandom, shuffle
 from datetime import datetime
 import uuid
+from collections import defaultdict
 
 import yaml
 from jinja2.filters import environmentfilter
@@ -288,17 +289,38 @@ def mandatory(a):
 
 def combine(*terms, **kwargs):
     recursive = kwargs.get('recursive', False)
-    if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
-        raise errors.AnsibleFilterError("'recursive' is the only valid keyword argument")
+    concat_lists = kwargs.get('concat_lists', False)
+
+    for key in kwargs:
+        if key not in ['recursive', 'concat_lists']:
+            raise errors.AnsibleFilterError("'%s' is not a valid keyword argument" % key)
 
     for t in terms:
         if not isinstance(t, dict):
             raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
 
-    if recursive:
-        return reduce(merge_hash, terms)
-    else:
-        return dict(itertools.chain(*map(iteritems, terms)))
+    flattened = defaultdict(list)
+
+    for term in terms:
+        for key in term:
+            flattened[key].append(term[key])
+
+    combined = {}
+
+    for key in flattened:
+        dict_instances = [isinstance(v, dict) for v in flattened[key]]
+
+        if recursive and any(dict_instances):
+            combined[key] = combine(*flattened[key], **kwargs)
+        else:
+            list_instances = [isinstance(v, list) for v in flattened[key]]
+
+            if concat_lists and any(list_instances):
+                combined[key] = sum(flattened[key], [])
+            else:
+                combined[key] = flattened[key][-1]
+
+    return combined
 
 def comment(text, style='plain', **kw):
     # Predefined comment types
