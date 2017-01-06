@@ -114,6 +114,7 @@ Else {
 Set-Attr $result.win_robocopy "return_code" $rc
 Set-Attr $result.win_robocopy "output" $robocopy_output
 
+$changed = $false
 $cmd_msg = "Success"
 If ($rc -eq 0) {
     $cmd_msg = "No files copied."
