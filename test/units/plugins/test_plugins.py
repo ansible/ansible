@@ -52,7 +52,6 @@ class BasePluginLoader:
 
     def test_print_paths(self):
         self.pl.print_paths()
-        #print(ret)
 
     def test_package_paths(self):
         ret = self.pl._get_package_paths()
@@ -101,7 +100,7 @@ class BasePluginLoader:
         ret_iterator = self.pl.all(class_only=True, base_class=self.pl.required_base_class,
                                    path_only=True)
         for ret in ret_iterator:
-            self.assertIsInstance(ret, str)
+            self.assertIsInstance(ret, (str, unicode))
 
     def test_getstate(self):
         self.pl.__getstate__()
