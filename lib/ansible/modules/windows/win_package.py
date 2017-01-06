@@ -33,7 +33,7 @@ author: Trond Hindenes
 short_description: Installs/Uninstalls an installable package, either from local file system or url
 description:
      - Installs or uninstalls a package.
-     - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
+     - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs by running C(Get-WMIObject Win32_Product) in Powershell or in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
 options:
   path:
     description:
@@ -47,7 +47,7 @@ options:
   product_id:
     description:
       - Product id of the installed package (used for checking if already installed)
-      - You can find product ids for installed programs in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
+      - You can find product ids for installed programs by running C(Get-WMIObject Win32_Product) in Powershell or in the windows registry either in C(HKLM:Software\\Microsoft\\Windows\CurrentVersion\\Uninstall) or for 32 bit programs C(HKLM:Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall)'
     required: true
     aliases: [productid]
   arguments:
