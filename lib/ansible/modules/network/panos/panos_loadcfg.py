@@ -71,11 +71,8 @@ EXAMPLES = '''
       file: "{{result.filename}}"
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -114,23 +111,16 @@ def main():
         module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
     password = module.params["password"]
-    if not password:
-        module.fail_json(msg="password is required")
     username = module.params['username']
+    file_ = module.params['file']
+    commit = module.params['commit']
 
     xapi = pan.xapi.PanXapi(
         hostname=ip_address,
         api_username=username,
         api_password=password
     )
-
-    file_ = module.params['file']
-    if file_ is None:
-        module.fail_json(msg="file is required")
-    commit = module.params['commit']
 
     changed = load_cfgfile(xapi, module, ip_address, file_)
     if changed and commit:
