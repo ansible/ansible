@@ -119,7 +119,7 @@ def _clear_rules(module, redshift, group):
             }
             redshift.revoke_cluster_security_group_ingress(group['ClusterSecurityGroupName'], **group_kwargs)
 
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
 
@@ -129,7 +129,7 @@ def delete_group(module, redshift):
 
     try:
         redshift.delete_cluster_security_group(group_name)
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     return True
@@ -155,7 +155,7 @@ def create_group(module, redshift):
 
         try:
             redshift.create_cluster_security_group(group_name, description)
-        except boto.exception.JSONResponseError, e:
+        except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
     # Process all rule properties.
@@ -175,7 +175,7 @@ def create_group(module, redshift):
 
             redshift.authorize_cluster_security_group_ingress(group_name, **group_kwargs)
 
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     return True
@@ -208,7 +208,7 @@ def main():
     # Connect to the Redshift endpoint.
     try:
         conn = connect_to_aws(boto.redshift, region, **aws_connect_params)
-    except boto.exception.JSONResponseError, e:
+    except boto.exception.JSONResponseError as e:
         module.fail_json(msg=str(e))
 
     if state == 'absent':
