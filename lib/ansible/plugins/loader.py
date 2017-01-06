@@ -36,6 +36,72 @@ except ImportError:
     display = Display()
 
 
+class PluginInfo:
+    '''The various info related to a plugin path.'''
+    def __init__(self, full_path=None, base_name=None, split_name=None, full_name=None, extension=None):
+        self.full_path = full_path
+        self.base_name = base_name
+        self.split_name = split_name
+        self.full_name = full_name
+        self.extension = extension
+        # module/plugin type (ie, python or powershell etc?)
+
+    @classmethod
+    def from_full_path(cls, full_path):
+
+        full_name = os.path.basename(full_path)
+        split_name = os.path.splitext(full_name)
+        base_name = split_name[0]
+        try:
+            extension = split_name[1]
+        except IndexError:
+            extension = ''
+        return cls(full_path=full_path,
+                   base_name=base_name,
+                   split_name=split_name,
+                   full_name=full_name,
+                   extension=extension)
+
+    def __repr__(self):
+        return "%s(full_path=%s, base_name=%s, split_name=%s, full_name=%s, extension=%s)" % \
+            (self.__class__.__name__, self.full_path, self.base_name, self.split_name, self.full_name, self.extension)
+
+
+class PluginPath:
+    def __init__(self):
+        self.name = None
+
+    def glob(self, pattern):
+        return []
+
+
+# - search for something in the paths
+# - enumerate everything found in the paths
+# - add a path
+# - maintain and respect an ordering or paths
+# - get a container of python 'ids' (ie, the python import path ansible.plugins.foo.bar')
+#
+# a stack of PluginPaths for ordering? potentially with a cache on top of the stack?
+#  (chain of responsibity?)
+# each plugin type would have differnt PluginPaths instances
+# different impl for powershell modules?
+class PluginPaths:
+    '''A container of plugin paths.'''
+    def __init__(self):
+        self._paths = []
+
+
+class CachedPluginPaths(PluginPaths):
+    pass
+
+
+class ChainedPluginPaths:
+    '''chain of resp of PluginPaths objects.
+
+    one could be a cache and a finder for ex.'''
+    pass
+
+
 class PluginLoader:
     '''
     PluginLoader loads plugins from the configured plugin directories.
@@ -75,6 +141,8 @@ class PluginLoader:
 
         self._extra_dirs = []
         self._searched_paths = set()
+
+        self._plugin_paths = PluginPaths()
 
     def __setstate__(self, data):
         '''
