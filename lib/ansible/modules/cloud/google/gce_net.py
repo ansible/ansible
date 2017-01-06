@@ -257,7 +257,7 @@ def main():
     )
 
     if not HAS_LIBCLOUD:
-        module.exit_json(msg='libcloud with GCE support (0.17.0+) required for this module')
+        module.fail_json(msg='libcloud with GCE support (0.17.0+) required for this module')
 
     gce = gce_connect(module)
 
