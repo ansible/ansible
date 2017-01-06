@@ -124,16 +124,17 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
 def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
     value = default
-    if env_var is not None:
-        env_value = os.environ.get(env_var, None)
-        if env_value is not None:
-            value = env_value
 
     if p is not None:
         try:
             value = p.get(section, key, raw=True)
         except:
             pass
+
+    if env_var is not None:
+        env_value = os.environ.get(env_var, None)
+        if env_value is not None:
+            value = env_value
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
