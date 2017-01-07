@@ -153,24 +153,29 @@ items), but can also generate a random number based on a range.
 
 To get a random item from a list::
 
-    {{ ['a','b','c']|random }} => 'c'
+    "{{ ['a','b','c']|random }}"
+    # => 'c'
 
 To get a random number from 0 to supplied end::
 
-    {{ 59 |random}} * * * * root /script/from/cron
+    "{{ 59 |random}} * * * * root /script/from/cron"
+    # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 100 |random(step=10) }}  => 70
+    {{ 100 |random(step=10) }}
+    # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 100 |random(1, 10) }}    => 31
-    {{ 100 |random(start=1, step=10) }}    => 51
+    {{ 100 |random(1, 10) }}
+    # => 31
+    {{ 100 |random(start=1, step=10) }}
+    # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    {{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron
+    "{{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -182,12 +187,15 @@ This filter will randomize an existing list, giving a different order every invo
 
 To get a random list from an existing  list::
 
-    {{ ['a','b','c']|shuffle }} => ['c','a','b']
-    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+    {{ ['a','b','c']|shuffle }}
+    # => ['c','a','b']
+    {{ ['a','b','c']|shuffle }}
+    # => ['b','c','a']
 
 As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
 
-    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }} => ['b','a','c']
+    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }}
+    # => ['b','a','c']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
 
@@ -360,7 +368,9 @@ The resulting hash would be::
 
 The filter also accepts an optional `recursive=True` parameter to not
 only override keys in the first hash, but also recurse into nested
-hashes and merge their keys too::
+hashes and merge their keys too
+
+.. code-block:: jinja
 
     {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
 
@@ -441,7 +451,9 @@ It is also possible to fully customize the comment style::
 
     {{ "Custom style" | comment('plain', prefix='#######\n#', postfix='#\n#######\n   ###\n    #') }}
 
-That will create the following output::
+That will create the following output:
+
+.. code-block:: sh
 
     #######
     #
@@ -453,7 +465,9 @@ That will create the following output::
 
 The filter can also be applied to any Ansible variable. For example to
 make the output of the ``ansible_managed`` variable more readable, we can
-change the definition in the ``ansible.cfg`` file to this::
+change the definition in the ``ansible.cfg`` file to this:
+
+.. code-block:: jinja
 
     [defaults]
 
@@ -467,7 +481,9 @@ and then use the variable with the `comment` filter::
 
     {{ ansible_managed | comment }}
 
-which will produce this output::
+which will produce this output:
+
+.. code-block:: sh
 
     #
     # This file is managed by Ansible.
@@ -477,6 +493,17 @@ which will produce this output::
     # user: ansible
     # host: myhost
     #
+
+ipaddr() filters
+----------------
+
+A number of filters are available, including:
+
+* `ipaddr`
+* `ipv4`
+* `ipv6`
+
+See :doc:`playbooks_filters_ipaddr`
 
 .. _other_useful_filters:
 

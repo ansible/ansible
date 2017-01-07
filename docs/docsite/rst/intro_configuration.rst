@@ -82,7 +82,7 @@ different locations::
 
    action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details.
 
 
 .. _allow_world_readable_tmpfiles:
@@ -208,7 +208,7 @@ different locations::
 
    callback_plugins = ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 .. _callback_whitelist:
 
@@ -259,7 +259,7 @@ different locations::
 
     connection_plugins = ~/.ansible/plugins/connection_plugins/:/usr/share/ansible_plugins/connection_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 .. _deprecation_warnings:
 
@@ -349,7 +349,7 @@ different locations::
 
     filter_plugins = ~/.ansible/plugins/filter_plugins/:/usr/share/ansible_plugins/filter_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 .. _force_color:
 
@@ -555,7 +555,7 @@ different locations::
 
     lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 .. _merge_multiple_cli_tags:
 
@@ -779,7 +779,7 @@ different locations::
 
     strategy_plugins = ~/.ansible/plugins/strategy_plugins/:/usr/share/ansible_plugins/strategy_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 .. _cfg_strategy:
 
@@ -868,7 +868,7 @@ different locations::
 
     vars_plugins = ~/.ansible/plugins/vars_plugins/:/usr/share/ansible_plugins/vars_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details
 
 
 .. _vault_password_file:

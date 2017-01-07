@@ -4,7 +4,7 @@ Developing Dynamic Inventory Sources
 .. contents:: Topics
    :local:
 
-As described in :doc:`intro_dynamic_inventory`, ansible can pull inventory information from dynamic sources, including cloud sources.
+As described in :doc:`../intro_dynamic_inventory`, Ansible can pull inventory information from dynamic sources, including cloud sources.
 
 How do we write a new one?
 

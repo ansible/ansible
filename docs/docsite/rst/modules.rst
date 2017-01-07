@@ -23,9 +23,9 @@ like services, packages, or files (anything really), or handle executing system 
        Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`developing_modules`
+   :doc:`dev_guide/developing_modules`
        How to write your own modules
-   :doc:`developing_api`
+   :doc:`dev_guide/developing_api`
        Examples of using modules with the Python API
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

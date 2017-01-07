@@ -144,7 +144,7 @@ Our CloudStack cloud has an advanced networking setup, we would like to provisio
 
 This is how our inventory looks like:
 
-.. code-block:: ini
+.. code-block:: none
 
     [cloud-vm:children]
     webserver
@@ -249,7 +249,7 @@ A basic networking CloudStack setup is slightly different: Every VM gets a publi
 
 This is how our inventory looks like:
 
-.. code-block:: ini
+.. code-block:: none
 
     [cloud-vm:children]
     webserver

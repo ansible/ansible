@@ -4,6 +4,7 @@ Ansible Core 2.2
 **********************
 Target: September 2016
 **********************
+
 - **Docker** (lead by Chris Houseknecht)
 
   - Docker_network: **done**
@@ -109,37 +110,42 @@ Target: September 2016
     a critical task and one that has so much work and so many moving parts
     that we don’t expect this to be complete by the 2.2 release.  Toshio will
     lead this overall effort.
+
   - Motivation:
     - Ubuntu LTS (16.04) already ships without python2.  RHEL8 is coming which is also expected to be python3 based.  These considerations make this high priority.
     - Ansible users are getting restless: https://groups.google.com/forum/#!topic/ansible-project/DUKzTho3OCI
     - This is probably going to take multiple releases to complete; need to get started now
+
   - Baselines:
     - We're targeting Python-3.5 and above.
 
   - Goals for 2.2:
+
     - Tech preview level of support
     - Controller-side code can run on Python3
-      - Update: Essential features have been shown to work on Python3.
-        Currently all unittests and all but three integration tests are
-        passing on Python3.  Code has not been line-by-line audited so bugs
-        remain but can be treated as bugs, not as massive, invasive new features.
-      - Almost all of our deps have been ported:
-        - The base deps in setup.py are ported: ['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto &gt;= 2.6']
-        - python-six from the rpm spec file has been ported
-        - Python-keyczar from the rpm spec file is not.
-          - Strategy: removing keyczar when we drop accelerate for 2.3. Print deprecation in 2.1.
+    - Update: Essential features have been shown to work on Python3.
+      Currently all unittests and all but three integration tests are
+      passing on Python3.  Code has not been line-by-line audited so bugs
+      remain but can be treated as bugs, not as massive, invasive new features.
+    - Almost all of our deps have been ported:
+      - The base deps in setup.py are ported: ['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto &gt;= 2.6']
+      - python-six from the rpm spec file has been ported
+      - Python-keyczar from the rpm spec file is not.
+      - Strategy: removing keyczar when we drop accelerate for 2.3. Print deprecation in 2.1.
 
     - Module_utils ported to dual python3/python2(2.4 for much of it, python2.6 for specific things)
-      - Update: Mostly done.  Also not line-by-line audited but the unittests
-        and integration tests do show that the most use functionality is working.
+      **Mostly done:**  Also not line-by-line audited but the unittests 
+      and integration tests do show that the most use functionality is working.
     - Add module_utils files to help port
       - Update: copy of the six library (v1.4.1 for python2.4 compat) and unicode helpers are here (ansible.module_utils._text.{to_bytes,to_text,to_native})
     - A few basic modules ported to python3
       - Stat module best example module since it’s essential.
-      - Update: A handful of modules like stat have been line-by-line ported.  They should work reliably with few python3-specific bugs.  All but three integration tests pass which means that most essential modules are working to some extent on Python3.
-        - The three failing tests are: service, hg, and uri.
-          - Note, large swaths of the modules are not tested.  The status of
-            these is unknown
+      - Update:
+
+         - A handful of modules like stat have been line-by-line ported.  They should work reliably with few python3-specific bugs.  All but three integration tests pass which means that most essential modules are working to some extent on Python3.
+         - The three failing tests are: service, hg, and uri.
+         - Note, large swaths of the modules are not tested.  The status of
+           these is unknown
     - All code should compile under Python3.
       - lib/ansible/* and all modules now compile under Python-3.5
 
@@ -160,20 +166,34 @@ Target: September 2016
 
   - **CI Performance**
       Reduce time spent waiting on CI for PRs. Combination of optimizing existing Travis setup and offloading work to other services. Will be impacted by available budget.
+
       **Done:** Most tests have been migrated from Travis to Shippable.
+
   - **Core Module Test Organization**
       Relocate core module tests to ansible-modules-core to encourage inclusion of tests in core module PRs.
+
       **Deferred:** Relocation of core module tests has been deferred due to proposed changes in `modules management <https://github.com/ansible/proposals/blob/master/modules-management.md>`_.
+
   - **Documentation**
       Expand documentation on setting up a development and test environment, as well as writing tests. The goal is to ease development for new contributors and encourage more testing, particularly with module contributions.
   - **Test Coverage**
-      Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
+
+    - Expand test coverage, particularly for CI. Being testing, this is open ended. Will be impacted by available budget.
+
       **Done:** Module PRs now run integration tests for the module(s) being changed.
+
     - Python 3 - Run integration tests using Python 3 on CI with tagging for those which should pass, so we can track progress and detect regressions.
+
       **Done:** Integration tests now run on Shippable using a Ubuntu 16.04 docker image with only Python 3 installed.
+
     - Windows - Create framework for running Windows integration tests, ideally both locally and on CI.
+
       **Done:** Windows integration tests now run on Shippable.
+
     - FreeBSD - Include FreeBSD in CI coverage. Not originally on the roadmap, this is an intermediary step for CI coverage for OS X.
+
       **Done:** FreeBSD integration tests now run on Shippable.
+
     - OS X - Include OS X in CI coverage.
+
       **Done:** OS X integration tests now run on Shippable.

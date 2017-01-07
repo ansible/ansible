@@ -25,19 +25,22 @@ Setting inventory variables in the inventory file is the easiest way.
 
 .. include:: ../rst_common/ansible_ssh_changes_note.rst
 
-For instance, suppose these hosts have different usernames and ports::
+For instance, suppose these hosts have different usernames and ports:
+
+.. code-block:: ini
 
     [webservers]
     asdf.example.com  ansible_port=5000   ansible_user=alice
     jkl.example.com   ansible_port=5001   ansible_user=bob
 
-You can also dictate the connection type to be used, if you want::
+You can also dictate the connection type to be used, if you want:
+
+.. code-block:: ini
 
     [testcluster]
     localhost           ansible_connection=local
     /path/to/chroot1    ansible_connection=chroot
-    foo.example.com
-    bar.example.com 
+    foo.example.com     ansible_connection=paramiko
 
 You may also wish to keep these in group variables instead, or file them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
@@ -67,7 +70,9 @@ How do I configure a jump host to access servers that I have no direct access to
 With Ansible 2, you can set a `ProxyCommand` in the
 `ansible_ssh_common_args` inventory variable. Any arguments specified in
 this variable are added to the sftp/scp/ssh command line when connecting
-to the relevant host(s). Consider the following inventory group::
+to the relevant host(s). Consider the following inventory group:
+
+..  code-block:: ini
 
     [gatewayed]
     foo ansible_host=192.0.2.1
@@ -147,6 +152,8 @@ How do I disable cowsay?
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
 that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable::
 
+.. code-block:: shell-session
+
     export ANSIBLE_NOCOWS=1
 
 .. _browse_facts:
@@ -154,7 +161,9 @@ that you would like to work in a professional cow-free environment, you can eith
 How do I see a list of all of the ansible\_ variables?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in Playbooks and in templates. To see a list of all of the facts that are available about a machine, you can run the "setup" module as an ad-hoc action::
+Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in Playbooks and in templates. To see a list of all of the facts that are available about a machine, you can run the "setup" module as an ad-hoc action:
+
+.. code-block:: shell-session
 
     ansible -m setup hostname
 
@@ -165,7 +174,9 @@ This will print out a dictionary of all of the facts that are available for that
 How do I see all the inventory vars defined for my host?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-You can see the resulting vars you define in inventory running the following command::
+You can see the resulting vars you define in inventory running the following command:
+
+.. code-block:: shell-session
 
     ansible -m debug -a "var=hostvars['hostname']" localhost
 
@@ -189,7 +200,9 @@ If you need to access facts about these hosts, for instance, the IP address of e
       tasks:
         - debug: msg="doesn't matter what you do, just that they were talked to previously."
 
-Then you can use the facts inside your template, like this::
+Then you can use the facts inside your template, like this:
+
+.. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
        {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
@@ -201,7 +214,9 @@ How do I access a variable name programmatically?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
-via a role parameter or other input.  Variable names can be built by adding strings together, like so::
+via a role parameter or other input.  Variable names can be built by adding strings together, like so:
+
+.. code-block:: jinja
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
@@ -218,7 +233,9 @@ are using dynamic inventory, which host is the 'first' may not be consistent, so
 was static and predictable.  (If you are using :doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
-Anyway, here's the trick::
+Anyway, here's the trick:
+
+.. code-block:: jinja
 
     {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
 
@@ -253,7 +270,9 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Ansible 1.4 will also make remote environment variables available via facts in the 'ansible_env' variable::
+Ansible 1.4 will also make remote environment variables available via facts in the 'ansible_env' variable:
+
+.. code-block:: jinja
 
    {{ ansible_env.SOME_VARIABLE }}
 
@@ -262,17 +281,23 @@ Ansible 1.4 will also make remote environment variables available via facts in t
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option::
+The mkpasswd utility that is available on most Linux systems is a great option:
+
+.. code-block:: shell-session
 
     mkpasswd --method=sha-512
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
-password hashing library is installed::
+password hashing library is installed:
+
+.. code-block:: shell-session
 
     pip install passlib
 
-Once the library is ready, SHA512 password values can then be generated as follows::
+Once the library is ready, SHA512 password values can then be generated as follows:
+
+.. code-block:: shell-session
 
     python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
 
@@ -343,11 +368,15 @@ so `when:`, `failed_when:` and `changed_when:` are always templated and you shou
 In most other cases you should always use the brackets, even if previouslly you could use variables without specifying (like `with_` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
-Another rule is 'moustaches don't stack'. We often see this::
+Another rule is 'moustaches don't stack'. We often see this:
+
+.. code-block:: jinja
 
      {{ somevar_{{other_var}} }}
 
-The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate::
+The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate:
+
+.. code-block:: jinja
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 

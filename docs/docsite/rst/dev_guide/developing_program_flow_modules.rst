@@ -86,11 +86,15 @@ JSONARGS
 
 Scripts can arrange for an argument string to be placed within them by placing
 the string ``<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>`` somewhere inside of the
-file.  The module typically sets a variable to that value like this:: python
+file.  The module typically sets a variable to that value like this:
+
+.. code-block:: python
 
     json_arguments = """<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"""
 
-Which is expanded as:: python
+Which is expanded as:
+
+.. code-block:: python
 
     json_arguments = """{"param1": "test's quotes", "param2": "\"To be or not to be\" - Hamlet"}"""
 
@@ -458,7 +462,7 @@ this.  If a module has to use this on its own, it should instantiate an
 :attr:`AnsibleModule._syslog_facility`.  The code will look slightly different
 than it did under :ref:`module_replacer` due to how hacky the old way was
 
-:: python
+.. code-block:: python
 
         # Old way
         import syslog

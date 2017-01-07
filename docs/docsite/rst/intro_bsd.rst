@@ -82,7 +82,7 @@ Please feel free to report any issues or incompatibilities you discover with BSD
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language
-   :doc:`developing_modules`
+   :doc:`dev_guide/developing_modules`
        How to write modules
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

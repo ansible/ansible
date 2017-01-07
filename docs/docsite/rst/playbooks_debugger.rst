@@ -24,9 +24,11 @@ For example, run the playbook below::
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-The debugger is invoked since the *wrong_var* variable is undefined. 
+The debugger is invoked since the *wrong_var* variable is undefined.
 
-Let's change the module's arguments and run the task again::
+Let's change the module's arguments and run the task again
+
+.. code-block:: none
 
     PLAY ***************************************************************************
 

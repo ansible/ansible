@@ -59,7 +59,9 @@ is uncommonly used::
     webservers:!{{excluded}}:&{{required}}
 
 You also don't have to manage by strictly defined groups.  Individual host names, IPs and groups, can also be referenced using
-wildcards::
+wildcards
+
+.. code-block:: none
 
     *.example.com
     *.com

@@ -142,7 +142,7 @@ If using `with_dict` which does not take a list::
 Loading in Custom Facts
 ```````````````````````
 
-It's also easy to provide your own facts if you want, which is covered in :doc:`developing_modules`.  To run them, just
+It's also easy to provide your own facts if you want, which is covered in :doc:`dev_guide/developing_modules`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
 

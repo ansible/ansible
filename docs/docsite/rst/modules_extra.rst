@@ -18,5 +18,5 @@ Development oriented topics should instead use the similar `ansible-devel google
 
 Documentation updates for this module can also be edited directly in the module and by submitting a pull request to the module source code, just look for the "DOCUMENTATION" block in the source tree.
 
-For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`developing_test_pr` and :doc:`developing_modules`.
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
 

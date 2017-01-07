@@ -441,7 +441,7 @@ Embedding Modules and Plugins In Roles
 
 This is an advanced topic that should not be relevant for most users.
 
-If you write a custom module (see :doc:`developing_modules`) or a plugin (see :doc:`developing_plugins`), you may wish to distribute it as part of a role.
+If you write a custom module (see :doc:`dev_guide/developing_modules`) or a plugin (see :doc:`dev_guide/developing_plugins`), you may wish to distribute it as part of a role.
 Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
 A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
@@ -508,7 +508,7 @@ Read the "About" page on the Galaxy site for more information.
        Loops in playbooks
    :doc:`modules`
        Learn about available modules
-   :doc:`developing_modules`
+   :doc:`dev_guide/developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
