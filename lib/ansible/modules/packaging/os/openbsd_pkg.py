@@ -126,7 +126,7 @@ EXAMPLES = '''
 
 # Update all packages on the system
 - openbsd_pkg:
-    name: *
+    name: '*'
     state: latest
 
 # Purge a package and it's configuration files
