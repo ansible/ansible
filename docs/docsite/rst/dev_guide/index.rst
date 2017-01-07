@@ -26,3 +26,4 @@ To get started, select one of the following topics.
    developing_rebasing
    repomerge
    developing_releases
+   ../committer_guidelines
