@@ -78,12 +78,8 @@ EXAMPLES = '''
     signed_by: "root-ca"
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
-    sample: "Last login: Fri Sep 16 11:09:20 2016 from 10.35.34.56.....Configuration committed successfully"
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -91,6 +87,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'version': '1.0'}
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import get_exception
 import time
 
 try:
@@ -100,6 +97,7 @@ except ImportError:
     HAS_LIB=False
 
 _PROMPTBUFF = 4096
+
 
 def wait_with_timeout(module, shell, prompt, timeout=60):
     now = time.time()
@@ -115,6 +113,7 @@ def wait_with_timeout(module, shell, prompt, timeout=60):
             module.fail_json(msg="Timeout waiting for prompt")
 
     return result
+
 
 def generate_cert(module, ip_address, key_filename, password,
                   cert_cn, cert_friendly_name, signed_by, rsa_nbits ):
@@ -167,43 +166,30 @@ def main():
         signed_by=dict(required=True)
 
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['key_filename', 'password']])
     if not HAS_LIB:
         module.fail_json(msg='paramiko is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
-
     key_filename = module.params["key_filename"]
-    password = None
-    if not key_filename:
-        password = module.params["password"]
-        if not password:
-            module.fail_json(msg="either key or password is required")
-
+    password = module.params["password"]
     cert_cn = module.params["cert_cn"]
-    if not cert_cn:
-        module.fail_json(msg="cert_cn is required")
-
     cert_friendly_name = module.params["cert_friendly_name"]
-    if not cert_friendly_name:
-        module.fail_json(msg="cert_friendly_name is required")
-
     signed_by = module.params["signed_by"]
-    if not signed_by:
-        module.fail_json(msg="signed_by is required")
-
     rsa_nbits = module.params["rsa_nbits"]
 
-    stdout = generate_cert(module,
-                           ip_address,
-                           key_filename,
-                           password,
-                           cert_cn,
-                           cert_friendly_name,
-                           signed_by,
-                           rsa_nbits)
+    try:
+        stdout = generate_cert(module,
+                               ip_address,
+                               key_filename,
+                               password,
+                               cert_cn,
+                               cert_friendly_name,
+                               signed_by,
+                               rsa_nbits)
+    except Exception:
+        exc = get_exception()
+        module.fail_json(msg=exc.message)
 
     module.exit_json(changed=True, msg="okey dokey")
 
