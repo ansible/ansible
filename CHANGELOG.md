@@ -47,6 +47,8 @@ Ansible Changes By Release
 - openwrt_init
 - windows:
   * win_say
+- openstack
+  * os_quota
 
 ####New Callbacks:
 
