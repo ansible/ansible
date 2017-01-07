@@ -368,7 +368,9 @@ The resulting hash would be::
 
 The filter also accepts an optional `recursive=True` parameter to not
 only override keys in the first hash, but also recurse into nested
-hashes and merge their keys too::
+hashes and merge their keys too
+
+.. code-block:: jinja
 
     {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
 
@@ -449,7 +451,7 @@ It is also possible to fully customize the comment style::
 
     {{ "Custom style" | comment('plain', prefix='#######\n#', postfix='#\n#######\n   ###\n    #') }}
 
-That will create the following output::
+That will create the following output:
 
 .. code-block:: sh
 
@@ -463,7 +465,9 @@ That will create the following output::
 
 The filter can also be applied to any Ansible variable. For example to
 make the output of the ``ansible_managed`` variable more readable, we can
-change the definition in the ``ansible.cfg`` file to this::
+change the definition in the ``ansible.cfg`` file to this
+
+.. code-block::
 
     [defaults]
 
