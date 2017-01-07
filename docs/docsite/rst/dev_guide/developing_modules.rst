@@ -74,8 +74,8 @@ There's a useful test script in the source checkout for Ansible:
 
 .. code-block:: shell-session
 
-    $ git clone git://github.com/ansible/ansible.git --recursive
-    $ source ansible/hacking/env-setup
+    git clone git://github.com/ansible/ansible.git --recursive
+    source ansible/hacking/env-setup
 
 For instructions on setting up Ansible from source, please see
 :doc:`../intro_installation`.
@@ -84,7 +84,7 @@ Let's run the script you just wrote with that:
 
 .. code-block:: shell-session
 
-    $ ansible/hacking/test-module -m ./timetest.py
+    ansible/hacking/test-module -m ./timetest.py
 
 You should see output that looks something like this:
 
@@ -243,10 +243,10 @@ The :ref:`setup` module that ships with Ansible provides many variables about a 
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
 this, just have the module return a `ansible_facts` key, like so, along with other return data:
 
-.. code-block:: none
+.. code-block:: json
 
     {
-        "changed" : True,
+        "changed" : true,
         "rc" : 5,
         "ansible_facts" : {
             "leptons" : 5000,
