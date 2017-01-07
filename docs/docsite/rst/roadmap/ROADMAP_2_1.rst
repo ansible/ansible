@@ -1,6 +1,10 @@
-==========================================
-2.1 Roadmap, Targeted for the End of April
-==========================================
+****************
+Ansible Core 2.1
+****************
+*************
+Target: April
+*************
+
 -  Windows, General
      - Figuring out privilege escalation (runas w/ username/password)
      - Implement kerberos encryption over http

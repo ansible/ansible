@@ -172,53 +172,55 @@ To see what information is available, try the following::
 
     ansible hostname -m setup
 
-This will return a ginormous amount of variable data, which may look like this, as taken from Ansible 1.4 on a Ubuntu 12.04 system::
+This will return a ginormous amount of variable data, which may look like this, as taken from Ansible 1.4 on a Ubuntu 12.04 system
+
+.. code-block: none
 
         "ansible_all_ipv4_addresses": [
             "REDACTED IP ADDRESS"
         ], 
         "ansible_all_ipv6_addresses": [
             "REDACTED IPV6 ADDRESS"
-        ], 
-        "ansible_architecture": "x86_64", 
-        "ansible_bios_date": "09/20/2012", 
-        "ansible_bios_version": "6.00", 
+        ],
+        "ansible_architecture": "x86_64",
+        "ansible_bios_date": "09/20/2012",
+        "ansible_bios_version": "6.00",
         "ansible_cmdline": {
-            "BOOT_IMAGE": "/boot/vmlinuz-3.5.0-23-generic", 
-            "quiet": true, 
-            "ro": true, 
-            "root": "UUID=4195bff4-e157-4e41-8701-e93f0aec9e22", 
+            "BOOT_IMAGE": "/boot/vmlinuz-3.5.0-23-generic",
+            "quiet": true,
+            "ro": true,
+            "root": "UUID=4195bff4-e157-4e41-8701-e93f0aec9e22",
             "splash": true
-        }, 
+        },
         "ansible_date_time": {
-            "date": "2013-10-02", 
-            "day": "02", 
-            "epoch": "1380756810", 
-            "hour": "19", 
-            "iso8601": "2013-10-02T23:33:30Z", 
-            "iso8601_micro": "2013-10-02T23:33:30.036070Z", 
-            "minute": "33", 
-            "month": "10", 
-            "second": "30", 
-            "time": "19:33:30", 
-            "tz": "EDT", 
+            "date": "2013-10-02",
+            "day": "02",
+            "epoch": "1380756810",
+            "hour": "19",
+            "iso8601": "2013-10-02T23:33:30Z",
+            "iso8601_micro": "2013-10-02T23:33:30.036070Z",
+            "minute": "33",
+            "month": "10",
+            "second": "30",
+            "time": "19:33:30",
+            "tz": "EDT",
             "year": "2013"
         }, 
         "ansible_default_ipv4": {
-            "address": "REDACTED", 
-            "alias": "eth0", 
-            "gateway": "REDACTED", 
-            "interface": "eth0", 
-            "macaddress": "REDACTED", 
-            "mtu": 1500, 
-            "netmask": "255.255.255.0", 
-            "network": "REDACTED", 
+            "address": "REDACTED",
+            "alias": "eth0",
+            "gateway": "REDACTED",
+            "interface": "eth0",
+            "macaddress": "REDACTED",
+            "mtu": 1500,
+            "netmask": "255.255.255.0",
+            "network": "REDACTED",
             "type": "ether"
         }, 
-        "ansible_default_ipv6": {}, 
+        "ansible_default_ipv6": {},
         "ansible_devices": {
             "fd0": {
-                "holders": [], 
+                "holders": [],
                 "host": "", 
                 "model": null, 
                 "partitions": {}, 
@@ -604,7 +606,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
-When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbook_loops` section on using register with a loop.
+When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
@@ -646,20 +648,27 @@ assigned to another node, it's easy to do so within a template or even an action
 
     {{ hostvars['test.example.com']['ansible_distribution'] }}
 
-Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host::
+Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host
+
+.. code-block:: jinja
 
    {% if 'webserver' in group_names %}
       # some part of a configuration file that only applies to webservers
    {% endif %}
 
+
 ``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
-For example::
+For example
+
+.. code-block:: jinja
 
    {% for host in groups['app_servers'] %}
       # something that applies to all app servers.
    {% endfor %}
 
-A frequently used idiom is walking a group to find all IP addresses in that group::
+A frequently used idiom is walking a group to find all IP addresses in that group
+
+.. code-block:: jinja
 
    {% for host in groups['app_servers'] %}
       {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}

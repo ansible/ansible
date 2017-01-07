@@ -482,7 +482,7 @@ This best practice has no limit on the amount of variable and vault files or the
        Review the basic playbook features
    :doc:`modules`
        Learn about available modules
-   :doc:`developing_modules`
+   :doc:`dev_guide/developing_modules`
        Learn how to extend Ansible by writing your own modules
    :doc:`intro_patterns`
        Learn about how to select hosts

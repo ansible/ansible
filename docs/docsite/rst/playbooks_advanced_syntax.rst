@@ -21,7 +21,9 @@ As of Ansible 2.0, there is an internal data type for declaring variable values 
 
 Jinja2 contains functionality for escaping, or telling Jinja2 to not template data by means of functionality such as ``{% raw %} ... {% endraw %}``, however this uses a more comprehensive implementation to ensure that the value is never templated.
 
-Using YAML tags, you can also mark a value as "unsafe" by using the ``!unsafe`` tag such as::
+Using YAML tags, you can also mark a value as "unsafe" by using the ``!unsafe`` tag such as:
+
+.. code-block:: yaml
 
     ---
     my_unsafe_variable: !unsafe 'this variable has {{ characters that should not be treated as a jinja2 template'
