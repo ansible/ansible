@@ -153,24 +153,29 @@ items), but can also generate a random number based on a range.
 
 To get a random item from a list::
 
-    {{ ['a','b','c']|random }} => 'c'
+    "{{ ['a','b','c']|random }}"
+    # => 'c'
 
 To get a random number from 0 to supplied end::
 
-    {{ 59 |random}} * * * * root /script/from/cron
+    "{{ 59 |random}} * * * * root /script/from/cron"
+    # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 100 |random(step=10) }}  => 70
+    {{ 100 |random(step=10) }}
+    # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 100 |random(1, 10) }}    => 31
-    {{ 100 |random(start=1, step=10) }}    => 51
+    {{ 100 |random(1, 10) }}
+    # => 31
+    {{ 100 |random(start=1, step=10) }}
+    # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    {{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron
+    "{{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -182,12 +187,15 @@ This filter will randomize an existing list, giving a different order every invo
 
 To get a random list from an existing  list::
 
-    {{ ['a','b','c']|shuffle }} => ['c','a','b']
-    {{ ['a','b','c']|shuffle }} => ['b','c','a']
+    {{ ['a','b','c']|shuffle }}
+    # => ['c','a','b']
+    {{ ['a','b','c']|shuffle }}
+    # => ['b','c','a']
 
 As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
 
-    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }} => ['b','a','c']
+    {{ ['a','b','c']|shuffle(seed=inventory_hostname) }}
+    # => ['b','a','c']
 
 note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
 
@@ -443,6 +451,8 @@ It is also possible to fully customize the comment style::
 
 That will create the following output::
 
+.. code-block:: sh
+
     #######
     #
     # Custom style
@@ -467,7 +477,9 @@ and then use the variable with the `comment` filter::
 
     {{ ansible_managed | comment }}
 
-which will produce this output::
+which will produce this output:
+
+.. code-block:: sh
 
     #
     # This file is managed by Ansible.
@@ -584,9 +596,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. versionadded:: 2.0
 
-To escape special characters within a regex, use the "regex_escape" filter
-
-.. code-block:: none
+To escape special characters within a regex, use the "regex_escape" filter::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
@@ -639,6 +649,3 @@ to be added to core so everyone can make use of them.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-

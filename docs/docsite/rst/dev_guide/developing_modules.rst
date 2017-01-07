@@ -70,27 +70,27 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 Testing Modules
 ````````````````
 
-There's a useful test script in the source checkout for Ansible
+There's a useful test script in the source checkout for Ansible:
 
-.. code-block:: sh
+.. code-block:: shell-session
 
-    git clone git://github.com/ansible/ansible.git --recursive
-    source ansible/hacking/env-setup
+    $ git clone git://github.com/ansible/ansible.git --recursive
+    $ source ansible/hacking/env-setup
 
 For instructions on setting up Ansible from source, please see
 :doc:`../intro_installation`.
 
-Let's run the script you just wrote with that
+Let's run the script you just wrote with that:
 
-.. code-block:: sh
+.. code-block:: shell-session
 
-    ansible/hacking/test-module -m ./timetest.py
+    $ ansible/hacking/test-module -m ./timetest.py
 
-You should see output that looks something like this
+You should see output that looks something like this:
 
-.. code-block:: none
+.. code-block:: json
 
-    {'time': '2012-03-14 22:13:48.539183'}
+    {"time": "2012-03-14 22:13:48.539183"}
 
 If you did not, you might have a typo in your module, so recheck it and try again.
 
@@ -119,7 +119,7 @@ If no time parameter is set, we'll just leave the time as is and return the curr
 
 Let's look at the code.  Read the comments as we'll explain as we go.  Note that this
 is highly verbose because it's intended as an educational example.  You can write modules
-a lot shorter than this
+a lot shorter than this:
 
 .. code-block:: python
 
@@ -221,7 +221,7 @@ Binary Modules Input
 Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
 supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
 would resemble something similar to the following payload for a module accepting the same arguments as the
-``ping`` module
+``ping`` module:
 
 .. code-block:: json
 
@@ -241,7 +241,7 @@ Module Provided 'Facts'
 
 The :ref:`setup` module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
-this, just have the module return a `ansible_facts` key, like so, along with other return data
+this, just have the module return a `ansible_facts` key, like so, along with other return data:
 
 .. code-block:: none
 
@@ -279,7 +279,7 @@ Rather than mention these here, the best way to learn is to read some of the `so
 The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
 Key parts include always importing the boilerplate code from
-:mod:`ansible.module_utils.basic` like this
+:mod:`ansible.module_utils.basic` like this:
 
 .. code-block:: python
 
@@ -290,13 +290,13 @@ Key parts include always importing the boilerplate code from
 .. note::
     Prior to Ansible-2.1.0, importing only what you used from
     :mod:`ansible.module_utils.basic` did not work.  You needed to use
-    a wildcard import like this
+    a wildcard import like this:
 
 .. code-block:: python
 
         from ansible.module_utils.basic import *
 
-And instantiating the module class like
+And instantiating the module class like:
 
 .. code-block:: python
 
@@ -313,13 +313,13 @@ And instantiating the module class like
 The :class:`AnsibleModule` provides lots of common code for handling returns, parses your arguments
 for you, and allows you to check inputs.
 
-Successful returns are made like this
+Successful returns are made like this:
 
 .. code-block:: python
 
     module.exit_json(changed=True, something_else=12345)
 
-And failures are just as simple (where `msg` is a required parameter to explain the error)
+And failures are just as simple (where `msg` is a required parameter to explain the error):
 
 .. code-block:: python
 
@@ -346,7 +346,7 @@ mode, the module should try to predict whether changes will occur.
 
 For your module to support check mode, you must pass ``supports_check_mode=True``
 when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute
-will evaluate to True when check mode is enabled. For example
+will evaluate to True when check mode is enabled. For example:
 
 .. code-block:: python
 
@@ -370,7 +370,7 @@ mode, your module will simply be skipped.
 Common Pitfalls
 ```````````````
 
-You should also never do this in a module
+You should also NEVER do this in a module:
 
 .. code-block:: python
 
@@ -441,7 +441,7 @@ Example
 
 See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
-Include it in your module file like this
+Include it in your module file like this:
 
 .. code-block:: python
 
@@ -541,7 +541,7 @@ some helper methods to do just that.
 
 If you are using Ansible with the :envvar:`ANSIBLE_KEEP_REMOTE_FILES`
 environment variables to keep the remote module file, here's a sample of how
-your debugging session will start
+your debugging session will start:
 
 .. code-block:: sh
 
@@ -569,9 +569,9 @@ That way it prints the file name of the temporary module file for you to see.
 If you want to examine the wrapper file you can.  It will show a small python
 script with a large, base64 encoded string.  The string contains the module
 that is going to be executed.  Run the wrapper's explode command to turn the
-string into some python files that you can work with
+string into some python files that you can work with:
 
-.. code-block:: sh
+.. code-block:: shell-session
 
     $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping explode
     Module expanded into:
@@ -609,9 +609,9 @@ When you look into the debug_dir you'll see a directory structure like this::
   the module code you have written.
 
 Once you edit the code or arguments in the exploded tree you need some way to
-run it.  There's a separate wrapper subcommand for this
+run it.  There's a separate wrapper subcommand for this:
 
-.. code-block:: sh
+.. code-block:: shell-session
 
     $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping execute
     {"invocation": {"module_args": {"data": "debugging_session"}}, "changed": false, "ping": "debugging_session"}
@@ -679,7 +679,7 @@ The following  checklist items are important guidelines for people who want to c
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
-  the metadata should look exactly like this
+  the metadata should look exactly like this:
 
 .. code-block:: python
 

@@ -76,7 +76,7 @@ You can only have one plugin be the main manager of your console output. If you 
 Developing Callback Plugins
 +++++++++++++++++++++++++++
 
-Callback plugins are created by creating a new class with the Base(Callbacks) class as the parent
+Callback plugins are created by creating a new class with the Base(Callbacks) class as the parent:
 
 .. code-block:: python
 
@@ -88,7 +88,7 @@ Callback plugins are created by creating a new class with the Base(Callbacks) cl
 From there, override the specific methods from the CallbackBase that you want to provide a callback for. For plugins intended for use with Ansible version 2.0 and later, you should only override methods that start with `v2`. For a complete list of methods that you can override, please see ``__init__.py`` in the `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_ directory.
 
 
-The following example shows how Ansible's timer plugin is implemented
+The following example shows how Ansible's timer plugin is implemented:
 
 .. code-block:: python
 
@@ -137,8 +137,7 @@ Connection Plugins
 ------------------
 
 By default, Ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), 'local' connection type, and there are also some minor players like 'chroot' and 'jail'.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
-are covered in the :doc:`../intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
-Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
+are covered in the :doc:`../intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
 'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 and later.  Previous versions did not support 'smart'.
 
@@ -151,7 +150,7 @@ Lookup Plugins
 
 Lookup plugins are used to pull in data from external data stores. Lookup plugins can be used within playbooks for both looping - playbook language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins - and to return values into a variable or parameter.
 
-Here's a simple lookup plugin implementation - this lookup returns the contents of a text file as a variable
+Here's a simple lookup plugin implementation - this lookup returns the contents of a text file as a variable:
 
 .. code-block:: python
 
@@ -199,7 +198,7 @@ An example of how this lookup is called::
 
        - debug: msg="the value of foo.txt is {{ contents }} as seen today {{ lookup('pipe', 'date +"%Y-%m-%d"') }}"
 
-Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use::
+Errors encountered during execution should be returned by raising AnsibleError() with a message describing the error. Any strings returned by your lookup plugin implementation that could ever contain non-ASCII characters must be converted into Python's unicode type because the strings will be run through jinja2.  To do this, you can use:
 
 .. code-block:: python
 

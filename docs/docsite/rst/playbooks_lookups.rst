@@ -65,7 +65,7 @@ This length can be changed by passing an extra parameter::
                       password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
-        (...)
+        # (...)
 
 .. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string.
 
@@ -93,7 +93,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
                       password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
-        (...)
+        # (...)
 
 To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
 
@@ -156,7 +156,9 @@ This plugin retrieve the value on the right side after the equal sign ('=') of
 a given section ([section]). You can also read a property file which - in this
 case - does not contain section.
 
-Here's a simple example of an INI file with user/password configuration::
+Here's a simple example of an INI file with user/password configuration:
+
+.. code-block:: ini
 
     [production]
     # My production information
@@ -175,7 +177,9 @@ We can use the ``ini`` plugin to lookup user configuration::
     - debug: msg="User in production  is {{ lookup('ini', 'user section=production  file=users.ini') }}"
 
 Another example for this plugin is for looking for a value on java properties.
-Here's a simple properties we'll take as an example::
+Here's a simple properties we'll take as an example:
+
+.. code-block:: ini
 
     user.name=robert
     user.pass=somerandompassword
@@ -213,12 +217,13 @@ The Credstash Lookup
 
 Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
 
-First, you need to store your secrets with credstash::
+First, you need to store your secrets with credstash:
 
+.. code-block:: shell-session
 
-    $ credstash put my-github-password secure123
+    credstash put my-github-password secure123
 
-    my-github-password has been stored
+    # my-github-password has been stored
 
 
 Example usage::
@@ -239,8 +244,8 @@ You can specify regions or tables to fetch secrets from::
 
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
-      
-      
+
+
 If you use the context feature when putting your secret, you can get it by passing a dictionary to the context option like this::
 
     ---
@@ -401,7 +406,7 @@ sort                         no          list      [pymongo default]      Sortin
 
 Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais.
 
-Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters
+Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters:
 
 .. code-block:: yaml
 
@@ -436,11 +441,10 @@ Since there are too many parameters for this lookup method, below is a sample pl
 
 
 
-Sample output
+Sample output:
 
-.. code-block:: none
+.. code-block:: shell-session
 
-    ---
     mdiez@batman:~/ansible$ ansible-playbook m.yml -i localhost.ini
 
     PLAY [all] *********************************************************************

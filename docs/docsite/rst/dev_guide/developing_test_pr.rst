@@ -116,7 +116,9 @@ For Those About To Test, We Salute You
 At this point, you should be ready to begin testing!
 
 If the PR is a bug-fix pull request, the first things to do are to run the suite of unit and integration tests, to ensure
-the pull request does not break current functionality::
+the pull request does not break current functionality:
+
+.. code-block:: shell-session
 
    # Unit Tests
    make tests
@@ -139,16 +141,20 @@ We encourage users to provide playbook examples for bugs that show how to reprod
 the issue if available.  You may wish to also do your own review to poke the corners of the change.
 
 Since some reproducers can be quite involved, you might wish to create a testing directory with the issue # as a sub-
-directory to keep things organized::
+directory to keep things organized:
+
+.. code-block:: shell-session
 
    mkdir -p testing/XXXX # where XXXX is again the issue # for the original issue or PR
    cd testing/XXXX
-   <create files or git clone example playbook repo>
+   # create files or git clone example playbook repo
 
 While it should go without saying, be sure to read any playbooks before you run them.  VMs help with running untrusted content greatly,
 though a playbook could still do something to your computing resources that you'd rather not like.
 
-Once the files are in place, you can run the provided playbook (if there is one) to test the functionality::
+Once the files are in place, you can run the provided playbook (if there is one) to test the functionality:
+
+.. code-block:: shell-session
 
    ansible-playbook -vvv playbook_name.yml
 
@@ -164,30 +170,31 @@ If the pull request resolves the issue, please leave a comment on the pull reque
 
 In some cases, you may wish to share playbook output from the test run as well.  
 
-Example!::
+Example!
 
-   Works for me!  Tested on `Ansible 1.7.1`.  I verified this on CentOS 6.5 and also Ubuntu 14.04.
+   | Works for me!  Tested on `Ansible 1.7.1`.  I verified this on CentOS 6.5 and also Ubuntu 14.04.
 
-If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead
+If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead:
 
-.. code-block:: none
+   | This doesn't work for me.
+   |
+   | When I ran this Ubuntu 16.04 it failed with the following:
+   |
+   |   ```
+   |   BLARG
+   |   StrackTrace
+   |   RRRARRGGG
+   |   ```
 
-   This doesn't work for me.
+When you are done testing a feature branch, you can remove it with the following command:
 
-   When I ran this Ubuntu 16.04 it failed with the following:
+.. code-block:: shell-session
 
-      ```
-      BLARG
-      StrackTrace
-      RRRARRGGG
-      ```
+   $ git branch -D someuser-feature_branch_name
 
-When you are done testing a feature branch, you can remove it with the following command::
-
-   git branch -D someuser-feature_branch_name
-
-We understand some users may be inexperienced with git, or other aspects of the above procedure, so feel free to stop by ansible-devel
-list for questions and we'd be happy to help answer them.
+We understand some users may be inexperienced with git, or other aspects of
+the above procedure, so feel free to stop by ansible-devel list for questions
+and we'd be happy to help answer them.
 
 
 
