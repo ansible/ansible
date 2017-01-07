@@ -109,7 +109,7 @@ options:
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
-         If C(remaining_days < cert_days), then it will be renewed.
+         If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."         
     required: false

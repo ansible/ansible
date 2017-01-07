@@ -115,7 +115,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     # python3
@@ -309,7 +309,7 @@ if not HAS_MATCH_HOSTNAME:
 # ca cert, regardless of validity, for Python on Mac OS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
-DUMMY_CA_CERT = """-----BEGIN CERTIFICATE-----
+b_DUMMY_CA_CERT = b("""-----BEGIN CERTIFICATE-----
 MIICvDCCAiWgAwIBAgIJAO8E12S7/qEpMA0GCSqGSIb3DQEBBQUAMEkxCzAJBgNV
 BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
 MRAwDgYDVQQKEwdBbnNpYmxlMB4XDTE0MDMxODIyMDAyMloXDTI0MDMxNTIyMDAy
@@ -326,7 +326,7 @@ MUB80IR6knq9K/tY+hvPsZer6eFMzO3JGkRFBh2kn6JdMDnhYGX7AXVHGflrwNQH
 qFy+aenWXsC0ZvrikFxbQnX8GVtDADtVznxOi7XzFw7JOxdsVrpXgSN0eh0aMzvV
 zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
-"""
+""")
 
 #
 # Exceptions
@@ -603,7 +603,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
-            os.write(tmp_fd, DUMMY_CA_CERT)
+            os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
@@ -721,15 +721,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error):
-            e = get_exception()
-            # fail if we tried all of the certs but none worked
-            if 'connection refused' in str(e).lower():
-                raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
-            else:
-                build_ssl_validation_error(self.hostname, self.port, paths_checked)
-        except CertificateError:
+        except (ssl.SSLError, CertificateError):
             build_ssl_validation_error(self.hostname, self.port, paths_checked)
+        except socket.error:
+            e = get_exception()
+            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
             # cleanup the temp file created, don't worry

@@ -46,7 +46,7 @@ else
 GITINFO = ""
 endif
 
-ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
@@ -165,6 +165,8 @@ clean:
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
 	find . -type f -name '*.pyc' -delete
+	@echo "Cleaning up docsite"
+	$(MAKE) -C docs/docsite clean
 
 python:
 	$(PYTHON) setup.py build
@@ -286,7 +288,7 @@ deb-src-upload: deb-src
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 webdocs:
-	(cd docsite/; make docs)
+	(cd docs/docsite/; make docs)
 
 docs: $(MANPAGES)
 

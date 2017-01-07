@@ -213,7 +213,7 @@ def _create_or_update_bucket(connection, module, location):
             # only show changed if there was already a policy
             changed = bool(current_policy)
 
-        elif current_policy != policy:
+        elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
             try:
                 bucket.set_policy(json.dumps(policy))
                 changed = True

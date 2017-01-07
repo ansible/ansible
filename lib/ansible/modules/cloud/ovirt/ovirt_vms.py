@@ -48,7 +48,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt."
+short_description: "Module to manage Virtual Machines in oVirt"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
@@ -231,6 +231,20 @@ options:
             - "C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine."
             - "C(nic_name) - Set name to network interface of Virtual Machine."
             - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
+        version_added: "2.3"
+    kernel_path:
+        description:
+            - "Path to a kernel image used to boot the virtual machine."
+            - "Kernel image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    initrd_path:
+        description:
+            - "Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option."
+            - "Ramdisk image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    kernel_params:
+        description:
+            - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
         version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -719,7 +733,7 @@ def control_state(vm, vms_service, module):
         vm.status == otypes.VmStatus.UNKNOWN
     ):
         # Invalid states:
-        module.fail_json("Not possible to control VM, if it's in '{}' status".format(vm.status))
+        module.fail_json(msg="Not possible to control VM, if it's in '{}' status".format(vm.status))
     elif vm.status == otypes.VmStatus.POWERING_DOWN:
         if (force and state == 'stopped') or state == 'absent':
             vm_service.stop()
@@ -784,6 +798,9 @@ def main():
         host=dict(default=None),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
+        kernel_path=dict(default=None),
+        initrd_path=dict(default=None),
+        kernel_params=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -841,6 +858,11 @@ def main():
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
                     initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    os=otypes.OperatingSystem(
+                        cmdline=module.params.get('kernel_params'),
+                        initrd=module.params.get('initrd_path'),
+                        kernel=module.params.get('kernel_path'),
+                    ),
                 ),
             )
 

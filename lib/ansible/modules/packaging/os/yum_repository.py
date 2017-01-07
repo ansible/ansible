@@ -398,6 +398,8 @@ notes:
   - Parameters in a section are ordered alphabetically in an existing repo
     file.
   - The repo file will be automatically deleted if it contains no repository.
+  - When removing a repository, beware that the metadata cache may still remain
+    on disk until you run C(yum clean all). Use a notification handler for this.
 '''
 
 EXAMPLES = '''
@@ -424,10 +426,18 @@ EXAMPLES = '''
     mirrorlist: http://mirrorlist.repoforge.org/el7/mirrors-rpmforge
     enabled: no
 
-- name: Remove repository
+# Handler showing how to clean yum metadata cache
+- name: yum-clean-metadata
+  command: yum clean metadata
+  args:
+    warn: no
+
+# Example removing a repository and cleaning up metadata cache
+- name: Remove repository (and clean up left-over metadata)
   yum_repository:
     name: epel
     state: absent
+  notify: yum-clean-all
 
 - name: Remove repository from a specific repo file
   yum_repository:

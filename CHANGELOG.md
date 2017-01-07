@@ -31,6 +31,13 @@ Ansible Changes By Release
 - archive
 - aws
   * ec2_lc_facts
+  * aws_kms
+- cloudstack
+  * cs_host
+  * cs_nic
+  * cs_region
+  * cs_role
+  * cs_vpc
 - f5
   * bigip_gtm_facts
   * bigip_hostname
@@ -53,7 +60,15 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
+- omapi_host
 - openwrt_init
+- packet:
+  * packet_device
+  * packet_sshkey
+- smartos:
+  * imgadm
+- web_infrastructure
+  * jenkins_script
 - windows:
   * win_say
 

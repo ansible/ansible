@@ -314,7 +314,7 @@ def write_ssh_wrapper():
     except (IOError, OSError):
         fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
-    template = """#!/bin/sh
+    template = b("""#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
     BASEOPTS=""
 else
@@ -326,7 +326,7 @@ if [ -z "$GIT_KEY" ]; then
 else
     ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
 fi
-"""
+""")
     fh.write(template)
     fh.close()
     st = os.stat(wrapper_path)

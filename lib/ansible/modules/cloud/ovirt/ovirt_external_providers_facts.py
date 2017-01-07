@@ -38,10 +38,10 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_external_providers_facts
-short_description: Retrieve facts about one or more oVirt external_providers
+short_description: Retrieve facts about one or more oVirt external providers
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt external_providers."
+    - "Retrieve facts about one or more oVirt external providers."
 notes:
     - "This module creates a new top-level C(ovirt_external_providers) fact, which
        contains a list of external_providers."

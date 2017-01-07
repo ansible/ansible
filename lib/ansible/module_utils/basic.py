@@ -2036,18 +2036,6 @@ class AnsibleModule(object):
         creating = not os.path.exists(b_dest)
 
         try:
-            login_name = os.getlogin()
-        except OSError:
-            # not having a tty can cause the above to fail, so
-            # just get the LOGNAME environment variable instead
-            login_name = os.environ.get('LOGNAME', None)
-
-        # if the original login_name doesn't match the currently
-        # logged-in user, or if the SUDO_USER environment variable
-        # is set, then this user has switched their credentials
-        switched_user = login_name and login_name != pwd.getpwuid(os.getuid())[0] or os.environ.get('SUDO_USER')
-
-        try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(b_src, b_dest)
         except (IOError, OSError):
@@ -2055,7 +2043,7 @@ class AnsibleModule(object):
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
             else:
                 b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
@@ -2075,7 +2063,7 @@ class AnsibleModule(object):
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=sys.exc_info())
+                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
 
                 b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
@@ -2084,12 +2072,13 @@ class AnsibleModule(object):
                         # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
                         os.close(tmp_dest_fd)
                         # leaves tmp file behind when sudo and not root
-                        if switched_user and os.getuid() != 0:
+                        try:
+                            shutil.move(b_src, b_tmp_dest_name)
+                        except OSError:
                             # cleanup will happen by 'rm' of tempdir
                             # copy2 will preserve some metadata
                             shutil.copy2(b_src, b_tmp_dest_name)
-                        else:
-                            shutil.move(b_src, b_tmp_dest_name)
+
                         if self.selinux_enabled():
                             self.set_context_if_different(
                                 b_tmp_dest_name, context, False)
@@ -2108,10 +2097,10 @@ class AnsibleModule(object):
                             if unsafe_writes and e.errno == errno.EBUSY:
                                 self._unsafe_writes(b_tmp_dest_name, b_dest)
                             else:
-                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e))
+                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
                     except (shutil.Error, OSError, IOError):
                         e = get_exception()
-                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e))
+                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
@@ -2121,8 +2110,12 @@ class AnsibleModule(object):
             umask = os.umask(0)
             os.umask(umask)
             os.chmod(b_dest, DEFAULT_PERM & ~umask)
-            if switched_user:
-                os.chown(b_dest, os.getuid(), os.getgid())
+            try:
+                os.chown(b_dest, os.geteuid(), os.getegid())
+            except OSError:
+                # We're okay with trying our best here.  If the user is not
+                # root (or old Unices) they won't be able to chown.
+                pass
 
         if self.selinux_enabled():
             # rename might not preserve context
@@ -2143,7 +2136,7 @@ class AnsibleModule(object):
                     in_src.close()
         except (shutil.Error, OSError, IOError):
             e = get_exception()
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e), exception=traceback.format_exc())
 
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):

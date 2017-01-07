@@ -217,10 +217,14 @@ def rand(environment, end, start=None, step=None, seed=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
-def randomize_list(mylist):
+def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
-        shuffle(mylist)
+        if seed:
+            r = Random(seed)
+            r.shuffle(mylist)
+        else:
+            shuffle(mylist)
     except:
         pass
     return mylist
