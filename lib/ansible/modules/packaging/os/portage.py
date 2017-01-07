@@ -208,12 +208,12 @@ EXAMPLES = '''
 
 # Re-install world from binary packages only and do not allow any compiling
 - portage:
-    package: @world
+    package: '@world'
     usepkgonly: yes
 
 # Sync repositories and update world
 - portage:
-    package: @world
+    package: '@world'
     update: yes
     deep: yes
     sync: yes

@@ -150,12 +150,12 @@ EXAMPLES = '''
 
 # Update all packages
 - zypper:
-    name: *
+    name: '*'
     state: latest
 
 # Apply all available patches
 - zypper:
-    name: *
+    name: '*'
     state: latest
     type: patch
 

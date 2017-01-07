@@ -543,7 +543,7 @@ If you are using Ansible with the :envvar:`ANSIBLE_KEEP_REMOTE_FILES`
 environment variables to keep the remote module file, here's a sample of how
 your debugging session will start:
 
-.. code-block:: sh
+.. code-block:: shell-session
 
     $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible localhost -m ping -a 'data=debugging_session' -vvv
     <127.0.0.1> ESTABLISH LOCAL CONNECTION FOR USER: badger

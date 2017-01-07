@@ -124,7 +124,7 @@ EXAMPLES = '''
 
 - name: upgrade all packages
   dnf:
-    name: *
+    name: "*"
     state: latest
 
 - name: install the nginx rpm from a remote repo

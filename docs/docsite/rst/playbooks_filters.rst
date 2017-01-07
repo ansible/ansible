@@ -455,6 +455,8 @@ That will create the following output:
 
 .. code-block:: sh
 
+.. code-block:: sh
+
     #######
     #
     # Custom style

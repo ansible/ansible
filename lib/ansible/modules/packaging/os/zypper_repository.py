@@ -135,7 +135,7 @@ EXAMPLES = '''
 
 # Refresh all repos
 - zypper_repository:
-    repo: *
+    repo: '*'
     runrefresh: yes
 
 # Add a repo and add it's gpg key
