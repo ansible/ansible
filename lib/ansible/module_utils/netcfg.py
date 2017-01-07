@@ -244,11 +244,11 @@ class NetworkConfig(object):
 
         for item in updates:
             for p in item._parents:
-                if p not in visited:
-                    visited.add(p)
+                if p.line not in visited:
+                    visited.add(p.line)
                     expanded.append(p)
             expanded.append(item)
-            visited.add(item)
+            visited.add(item.line)
 
         return expanded
 
