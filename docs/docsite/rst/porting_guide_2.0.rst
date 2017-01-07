@@ -232,7 +232,9 @@ Although Ansible 2.0 provides a new callback API the old one continues to work
 for most callback plugins.  However, if your callback plugin makes use of
 :attr:`self.playbook`, :attr:`self.play`, or :attr:`self.task` then you will
 have to store the values for these yourself as ansible no longer automatically
-populates the callback with them.  Here's a short snippet that shows you how::
+populates the callback with them.  Here's a short snippet that shows you how
+
+.. code-block:: python
 
     import os
     from ansible.plugins.callback import CallbackBase
@@ -289,7 +291,9 @@ You may find the following tips useful:
 
 Lookup plugins
 ~~~~~~~~~~~~~~
-As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand::
+As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.  The ``fileglob`` lookup plugin is pretty simple to understand
+
+.. code-block:: python
 
     from __future__ import (absolute_import, division, print_function)
     __metaclass__ = type
@@ -376,6 +380,5 @@ Connection plugins
 Porting custom scripts
 ----------------------
 
-Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to:
-https://github.com/ansible/ansible/blob/devel/docsite/rst/developing_api.rst
+Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to: :doc:`dev_guide//developing_api`
 

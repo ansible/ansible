@@ -22,6 +22,7 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
    playbooks_roles
    playbooks_variables
    playbooks_filters
+   playbooks_filters_ipaddr
    playbooks_tests
    playbooks_conditionals
    playbooks_loops
