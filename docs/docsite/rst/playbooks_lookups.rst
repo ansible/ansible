@@ -401,7 +401,9 @@ sort                         no          list      [pymongo default]      Sortin
 
 Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais.
 
-Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters::
+Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters
+
+.. code-block:: yaml
 
     ---
     - hosts: all
@@ -434,7 +436,9 @@ Since there are too many parameters for this lookup method, below is a sample pl
 
 
 
-Sample output::
+Sample output
+
+.. code-block:: none
 
     ---
     mdiez@batman:~/ansible$ ansible-playbook m.yml -i localhost.ini

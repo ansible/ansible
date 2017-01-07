@@ -478,6 +478,17 @@ which will produce this output::
     # host: myhost
     #
 
+ipaddr() filters
+----------------
+
+A number of filters are available, including:
+
+* `ipaddr`
+* `ipv4`
+* `ipv6`
+
+See :doc:`playbooks_filters_ipadddr`
+
 .. _other_useful_filters:
 
 Other Useful Filters

@@ -112,7 +112,9 @@ Looping over Files
             - first_example_file
             - second_example_file
 
-Assuming that ``first_example_file`` contained the text "hello" and ``second_example_file`` contained the text "world", this would result in::
+Assuming that ``first_example_file`` contained the text "hello" and ``second_example_file`` contained the text "world", this would result in
+
+.. code-block:: none
 
     TASK [debug msg={{ item }}] ******************************************************
     ok: [localhost] => (item=hello) => {
