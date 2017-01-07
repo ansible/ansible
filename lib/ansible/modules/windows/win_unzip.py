@@ -71,16 +71,16 @@ author: Phil Schwartz
 
 EXAMPLES = r'''
 # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
-$ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib rm=true" all
+# $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=true" all
 # Playbook example
 
 # Simple unzip
 ---
 - name: Unzip a bz2 (BZip) file
   win_unzip:
-    src: "C:\Users\Phil\Logs.bz2"
-    dest: "C:\Users\Phil\OldLogs"
-    creates: "C:\Users\Phil\OldLogs"
+    src: C:\Users\Phil\Logs.bz2
+    dest: C:\Users\Phil\OldLogs
+    creates: C:\Users\Phil\OldLogs
 
 # This playbook example unzips a .zip file and recursively decompresses the contained .gz files and removes all unneeded compressed files after completion.
 ---

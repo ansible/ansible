@@ -110,7 +110,7 @@ EXAMPLES = '''
 # Add or modify memlock, both soft and hard, limit for the user james with a comment.
 - pam_limits:
     domain: james
-    limit_type: -
+    limit_type: '-'
     limit_item: memlock
     value: unlimited
     comment: unlimited memory lock for james
