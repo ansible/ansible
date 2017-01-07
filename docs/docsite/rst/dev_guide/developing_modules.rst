@@ -51,7 +51,9 @@ modules.   Keep in mind, though, that some modules in Ansible's source tree are 
 so look at :ref:`service` or :ref:`yum`, and don't stare too close into things like ``async_wrapper`` or
 you'll turn to stone.  Nobody ever executes ``async_wrapper`` directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`
+
+.. code-block:: python
 
     #!/usr/bin/python
 
@@ -68,7 +70,9 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 Testing Modules
 ````````````````
 
-There's a useful test script in the source checkout for Ansible::
+There's a useful test script in the source checkout for Ansible
+
+.. code-block:: sh
 
     git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
@@ -76,11 +80,15 @@ There's a useful test script in the source checkout for Ansible::
 For instructions on setting up Ansible from source, please see
 :doc:`intro_installation`.
 
-Let's run the script you just wrote with that::
+Let's run the script you just wrote with that
+
+.. code-block:: sh
 
     ansible/hacking/test-module -m ./timetest.py
 
-You should see output that looks something like this::
+You should see output that looks something like this
+
+.. code-block:: none
 
     {'time': '2012-03-14 22:13:48.539183'}
 
@@ -111,7 +119,9 @@ If no time parameter is set, we'll just leave the time as is and return the curr
 
 Let's look at the code.  Read the comments as we'll explain as we go.  Note that this
 is highly verbose because it's intended as an educational example.  You can write modules
-a lot shorter than this::
+a lot shorter than this
+
+.. code-block:: python
 
     #!/usr/bin/python
 
@@ -211,7 +221,9 @@ Binary Modules Input
 Support for binary modules was added in Ansible 2.2.  When Ansible detects a binary module, it will proceed to
 supply the argument input as a file on ``argv[1]`` that is formatted as JSON.  The JSON contents of that file
 would resemble something similar to the following payload for a module accepting the same arguments as the
-``ping`` module::
+``ping`` module
+
+.. code-block:: json
 
     {
         "data": "pong",
@@ -229,7 +241,9 @@ Module Provided 'Facts'
 
 The :ref:`setup` module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
-this, just have the module return a `ansible_facts` key, like so, along with other return data::
+this, just have the module return a `ansible_facts` key, like so, along with other return data
+
+.. code-block:: none
 
     {
         "changed" : True,
@@ -265,7 +279,9 @@ Rather than mention these here, the best way to learn is to read some of the `so
 The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
 Key parts include always importing the boilerplate code from
-:mod:`ansible.module_utils.basic` like this::
+:mod:`ansible.module_utils.basic` like this
+
+.. code-block:: python
 
     from ansible.module_utils.basic import AnsibleModule
     if __name__ == '__main__':
@@ -274,11 +290,15 @@ Key parts include always importing the boilerplate code from
 .. note::
     Prior to Ansible-2.1.0, importing only what you used from
     :mod:`ansible.module_utils.basic` did not work.  You needed to use
-    a wildcard import like this::
+    a wildcard import like this
+
+.. code-block:: python
 
         from ansible.module_utils.basic import *
 
-And instantiating the module class like::
+And instantiating the module class like
+
+.. code-block:: python
 
     def main():
         module = AnsibleModule(
@@ -293,11 +313,15 @@ And instantiating the module class like::
 The :class:`AnsibleModule` provides lots of common code for handling returns, parses your arguments
 for you, and allows you to check inputs.
 
-Successful returns are made like this::
+Successful returns are made like this
+
+.. code-block:: python
 
     module.exit_json(changed=True, something_else=12345)
 
-And failures are just as simple (where `msg` is a required parameter to explain the error)::
+And failures are just as simple (where `msg` is a required parameter to explain the error)
+
+.. code-block:: python
 
     module.fail_json(msg="Something fatal happened")
 
@@ -322,7 +346,9 @@ mode, the module should try to predict whether changes will occur.
 
 For your module to support check mode, you must pass ``supports_check_mode=True``
 when instantiating the AnsibleModule object. The AnsibleModule.check_mode attribute
-will evaluate to True when check mode is enabled. For example::
+will evaluate to True when check mode is enabled. For example
+
+.. code-block:: python
 
     module = AnsibleModule(
         argument_spec = dict(...),
@@ -344,7 +370,9 @@ mode, your module will simply be skipped.
 Common Pitfalls
 ```````````````
 
-You should also never do this in a module::
+You should also never do this in a module
+
+.. code-block:: python
 
     print "some status message"
 
@@ -413,7 +441,9 @@ Example
 
 See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
-Include it in your module file like this::
+Include it in your module file like this
+
+.. code-block:: python
 
     #!/usr/bin/python
     # Copyright header....
@@ -511,7 +541,9 @@ some helper methods to do just that.
 
 If you are using Ansible with the :envvar:`ANSIBLE_KEEP_REMOTE_FILES`
 environment variables to keep the remote module file, here's a sample of how
-your debugging session will start::
+your debugging session will start
+
+.. code-block:: sh
 
     $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible localhost -m ping -a 'data=debugging_session' -vvv
     <127.0.0.1> ESTABLISH LOCAL CONNECTION FOR USER: badger
@@ -519,13 +551,13 @@ your debugging session will start::
     <127.0.0.1> PUT /var/tmp/tmpjdbJ1w TO /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping
     <127.0.0.1> EXEC /bin/sh -c 'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping'
     localhost | SUCCESS => {
-        "changed": false, 
+        "changed": false,
         "invocation": {
             "module_args": {
                 "data": "debugging_session"
-            }, 
+            },
             "module_name": "ping"
-        }, 
+        },
         "ping": "debugging_session"
     }
 
@@ -537,7 +569,9 @@ That way it prints the file name of the temporary module file for you to see.
 If you want to examine the wrapper file you can.  It will show a small python
 script with a large, base64 encoded string.  The string contains the module
 that is going to be executed.  Run the wrapper's explode command to turn the
-string into some python files that you can work with::
+string into some python files that you can work with
+
+.. code-block:: sh
 
     $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping explode
     Module expanded into:
@@ -575,7 +609,9 @@ When you look into the debug_dir you'll see a directory structure like this::
   the module code you have written.
 
 Once you edit the code or arguments in the exploded tree you need some way to
-run it.  There's a separate wrapper subcommand for this::
+run it.  There's a separate wrapper subcommand for this
+
+.. code-block:: sh
 
     $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping execute
     {"invocation": {"module_args": {"data": "debugging_session"}}, "changed": false, "ping": "debugging_session"}
@@ -643,13 +679,16 @@ The following  checklist items are important guidelines for people who want to c
 * Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
-  the metadata should look exactly like this::
+  the metadata should look exactly like this
+
+.. code-block:: python
 
     ANSIBLE_METADATA = {'status': ['preview'],
                         'supported_by': 'community',
                         'version': '1.0'}
 
-  The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
+The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
+
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
@@ -685,7 +724,7 @@ The following  checklist items are important guidelines for people who want to c
     * Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
     * Modules should not do the job of other modules, that is what roles are for. Less magic is more.
     * Don't reinvent the wheel. Part of the problem is that code sharing is not that easy nor documented, we also need to expand our base functions to provide common patterns (retry, throttling, etc).
-    * Support check mode. This is not required for all modules, as it won't make sense for certain ones, but please attempt to include this when applicable). For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.        
+    * Support check mode. This is not required for all modules, as it won't make sense for certain ones, but please attempt to include this when applicable). For more information, refer to :ref:`check_mode_drift` and :ref:`check_mode_dry`.
 * Exceptions: The module must handle them. (exceptions are bugs)
     * Give out useful messages on what you were doing and you can add the exception message to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
@@ -699,7 +738,9 @@ The following  checklist items are important guidelines for people who want to c
             - ec2
 
 * The module must not use sys.exit() --> use fail_json() from the module object.
-* Import custom packages in try/except and handled with fail_json() in main() e.g.::
+* Import custom packages in try/except and handled with fail_json() in main() e.g.
+
+.. code-block:: python
 
     try:
         import foo
@@ -713,7 +754,9 @@ The following  checklist items are important guidelines for people who want to c
 * Do not use wildcards for importing other python modules (ex: ``from ansible.module_utils.basic import *``).  This used to be required for code imported from ``ansible.module_utils`` but, from Ansible-2.1 onwards, it's just an outdated and bad practice.
 * The module must have a `main` function that wraps the normal execution.
 * Call your :func:`main` from a conditional so that it would be possible to
-  import them into unittests in the future example::
+  import them into unittests in the future example
+
+.. code-block:: python
 
     if __name__ == '__main__':
         main()
@@ -747,49 +790,63 @@ The following  checklist items are important guidelines for people who want to c
 
 Windows modules checklist
 `````````````````````````
-* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
+* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
 * look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
 * Ansible uses strictmode version 2.0 so be sure to test with that enabled
-* start with::
+
+All powershell modules must start:
+
+
+.. code-block:: powershell
 
     #!powershell
 
-  then::
-
     <GPL header>
-
-  then::
 
     # WANT_JSON
     # POWERSHELL_COMMON
-    
-  then, to parse all arguments into a variable modules generally use::
+
+To parse all arguments into a variable modules generally use:
+
+.. code-block:: powershell
 
     $params = Parse-Args $args
 
-* Arguments:
-    * Try and use state present and state absent like other modules
-    * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
-    * Required arguments::
+Arguments
++++++++++
+
+* Try and use state present and state absent like other modules
+* You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
+* Required arguments:
+
+.. code-block:: powershell
 
         $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
 
-    * Required arguments with name validation::
+Required arguments with name validation:
+
+.. code-block:: powershell
 
         $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 
-    * Optional arguments with name validation::
+Optional arguments with name validation
++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: powershell
 
         $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
 
-    * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
-      using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
-    * Look at existing modules for more examples of argument checking.
+* If the "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message
+  using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
+* Look at existing modules for more examples of argument checking.
 
-* Results
-    * The result object should always contain an attribute called changed set to either $true or $false
-    * Create your result object like this::
+Results
++++++++
+* The result object should always contain an attribute called changed set to either $true or $false
+* Create your result object like this
+
+.. code-block:: powershell
 
         $result = New-Object psobject @{
         changed = $false
@@ -799,10 +856,10 @@ Windows modules checklist
         If all is well, exit with a
         Exit-Json $result
 
-    * Ensure anything you return, including errors can be converted to json.
-    * Be aware that because exception messages could contain almost anything.
-    * ConvertTo-Json will fail if it encounters a trailing \ in a string.
-    * If all is not well use Fail-Json to exit.
+* Ensure anything you return, including errors can be converted to json.
+* Be aware that because exception messages could contain almost anything.
+* ConvertTo-Json will fail if it encounters a trailing \ in a string.
+* If all is not well use Fail-Json to exit.
 
 * Have you tested for powershell 3.0 and 4.0 compliance?
 
@@ -811,15 +868,6 @@ Deprecating and making module aliases
 
 Starting in 1.8, you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
 _old_cloud.py. This keeps the module available, but hides it from the primary docs and listing.
-
-You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
-This example allows the stat module to be called with fileinfo, making the following examples equivalent::
-
-    EXAMPLES = '''
-    ln -s stat.py _fileinfo.py
-    ansible -m stat -a "path=/tmp" localhost
-    ansible -m fileinfo -a "path=/tmp" localhost
-    '''
 
 
 .. seealso::
