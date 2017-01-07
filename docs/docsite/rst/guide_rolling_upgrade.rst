@@ -156,7 +156,7 @@ You can also use these variables in templates, like this, in ``roles/common/temp
 You can see that the variable substitution syntax of {{ and }} is the same for both templates and variables. The syntax 
 inside the curly braces is Jinja2, and you can do all sorts of operations and apply different filters to the 
 data inside. In templates, you can also use for loops and if statements to handle more complex situations, 
-like this, in ``roles/common/templates/iptables.j2``
+like this, in ``roles/common/templates/iptables.j2``:
 
 .. code-block:: jinja
 
@@ -167,7 +167,7 @@ like this, in ``roles/common/templates/iptables.j2``
 This is testing to see if the inventory name of the machine we're currently operating on (``inventory_hostname``) 
 exists in the inventory group ``dbservers``. If so, that machine will get an iptables ACCEPT line for port 3306.
 
-Here's another example, from the same template
+Here's another example, from the same template:
 
 .. code-block:: jinja
 

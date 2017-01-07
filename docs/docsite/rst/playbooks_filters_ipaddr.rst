@@ -240,7 +240,7 @@ just subnets or single IP addresses::
     # {{ test_list | ipaddr('host/prefix') }}
     ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24']
 
-In Debian-based systems, network configuration stored in ``/etc/network/interfaces`` file uses combination of IP address, network address, netmask and broadcast address to configure IPv4 network interface. We can get these values from single 'host/prefix' combination
+In Debian-based systems, network configuration stored in ``/etc/network/interfaces`` file uses combination of IP address, network address, netmask and broadcast address to configure IPv4 network interface. We can get these values from a single 'host/prefix' combination:
 
 .. code-block:: jinja
 

@@ -408,7 +408,7 @@ Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?
 
 Since there are too many parameters for this lookup method, below is a sample playbook which shows its usage and a nice way to feed the parameters:
 
-.. code-block:: yaml
+.. code-block:: YAML+Jinja
 
     ---
     - hosts: all
