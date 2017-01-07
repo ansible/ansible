@@ -25,13 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-import itertools
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
 from ansible.module_utils.netcli import Cli, Command
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
@@ -54,6 +52,12 @@ NET_CONNECTION_ARGS = dict()
 
 NET_CONNECTIONS = dict()
 
+def _transitional_argument_spec():
+    argument_spec = {}
+    for key, value in iteritems(NET_TRANSPORT_ARGS):
+        value['required'] = False
+        argument_spec[key] = value
+    return argument_spec
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
