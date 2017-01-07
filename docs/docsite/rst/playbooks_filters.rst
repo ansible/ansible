@@ -487,7 +487,7 @@ A number of filters are available, including:
 * `ipv4`
 * `ipv6`
 
-See :doc:`playbooks_filters_ipadddr`
+See :doc:`playbooks_filters_ipaddr`
 
 .. _other_useful_filters:
 
