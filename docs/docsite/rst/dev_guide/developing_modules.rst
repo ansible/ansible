@@ -358,6 +358,12 @@ how the command module is implemented.
 If a module returns stderr or otherwise fails to produce valid JSON, the actual output
 will still be shown in Ansible, but the command will not succeed.
 
+Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+
+Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+
+Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
 
@@ -419,8 +425,6 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
-
 The ``description``, and ``notes`` fields
 support formatting with some special macros.
 
@@ -451,17 +455,17 @@ the ``copy`` module::
         description: destination file/path
         returned: success
         type: string
-        sample: "/path/to/file.txt"
+        sample: /path/to/file.txt
     src:
         description: source file used for the copy on the target machine
         returned: changed
         type: string
-        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+        sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
         description: md5 checksum of the file after running copy
         returned: when supported
         type: string
-        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+        sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
 
@@ -648,7 +652,6 @@ The following  checklist items are important guidelines for people who want to c
   The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
-    * If an argument takes both C(True)/C(False) and C(Yes)/C(No), the documentation should use C(True) and C(False). 
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * The `required` setting is only required when true, otherwise it is assumed to be false.
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing). Ensure that the default parameter in docs matches default parameter in code.
@@ -727,7 +730,20 @@ The following  checklist items are important guidelines for people who want to c
   fields of a dictionary and return the dictionary.
 * When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
   rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
-
+* facts modules must return facts in the ansible_facts field of the result
+  dictionary. :ref:`module_provided_facts`
+* modules that are purely about fact gathering need to implement check_mode.
+  they should not cause any changes anyway so it should be as simple as adding
+  check_mode=True when instantiating AnsibleModule.  (The reason is that
+  playbooks which conditionalize based on fact information will only
+  conditionalize correctly in check_mode if the facts are returned in
+  check_mode).
+* Basic auth: module_utils.api has some helpers for doing basic auth with
+  module_utils.urls.fetch_url().  If you use those you may find you also want
+  to fallback on environment variables for default values.  If you do that,
+  be sure to use non-generic environment variables (like
+  :envvar:`API_<MODULENAME>_USERNAME`).  Using generic environment variables
+  like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
 `````````````````````````
