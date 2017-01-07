@@ -16,7 +16,7 @@ write various plugins, and you can plug in inventory data from external data sou
 covers the execution and Playbook API at a basic level.
 
 If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
-or have access control and logging demands, take a look at :doc:`tower` 
+or have access control and logging demands, take a look at :doc:`../tower` 
 as it has a very nice REST API that provides all of these things at a higher level.
 
 Ansible is written in its own API so you have a considerable amount of power across the board.  
@@ -125,7 +125,7 @@ It's pretty simple::
 
 The run method returns results per host, grouped by whether they
 could be contacted or not.  Return types are module specific, as
-expressed in the :doc:`modules` documentation.::
+expressed in the :doc:`../modules` documentation.::
 
     {
         "dark" : {

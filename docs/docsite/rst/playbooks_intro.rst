@@ -478,7 +478,7 @@ can do this::
        Hop back to the documentation index for a lot of special topics about playbooks
    :doc:`modules`
        Learn about available modules
-   :doc:`developing_modules`
+   :doc:`dev_guide/developing_modules`
        Learn how to extend Ansible by writing your own modules
    :doc:`intro_patterns`
        Learn about how to select hosts

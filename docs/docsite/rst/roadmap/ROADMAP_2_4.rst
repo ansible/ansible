@@ -1,7 +1,9 @@
+****************************
 Ansible by Red Hat, Core 2.4
-============================
-
-**Target Delivery: June/July 2017**
+****************************
+**********************
+Target: June/July 2017
+**********************
 
 This is meant to be a living document, and is by no means **FINAL** until
 stated otherwise in the document.
@@ -11,7 +13,9 @@ stated otherwise in the document.
   - Extend the ability of the current config system by adding creating an ansible-config command and add the following:
 
     - Dump existing config settings
+
     - Update / write a config entry
+
     - Show available options (ini entry, yaml, env var, etc)
 
   - Proposal found in ansible/proposals issue `#35 <https://github.com/ansible/proposals/issues/35>`_.

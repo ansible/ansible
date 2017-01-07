@@ -29,7 +29,9 @@ Basic tests
 
 ``ipaddr()`` is designed to return the input value if a query is True, and
 ``False`` if query is False. This way it can be very easily used in chained
-filters. To use the filter, pass a string to it::
+filters. To use the filter, pass a string to it
+
+.. code-block:: none
 
     {{ '192.0.2.0' | ipaddr }}
 
@@ -238,7 +240,9 @@ just subnets or single IP addresses::
     # {{ test_list | ipaddr('host/prefix') }}
     ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24']
 
-In Debian-based systems, network configuration stored in ``/etc/network/interfaces`` file uses combination of IP address, network address, netmask and broadcast address to configure IPv4 network interface. We can get these values from single 'host/prefix' combination::
+In Debian-based systems, network configuration stored in ``/etc/network/interfaces`` file uses combination of IP address, network address, netmask and broadcast address to configure IPv4 network interface. We can get these values from a single 'host/prefix' combination:
+
+.. code-block:: jinja
 
     # Jinja2 template
     {% set ipv4_host = host_prefix | unique | ipv4('host/prefix') | first %}
