@@ -15,15 +15,12 @@ To get started, select one of the following topics.
    :maxdepth: 1
 
    overview_architecture
-   overview_components
-   overview_contributing
    developing_modules
+   developing_modules_python3
    developing_plugins
    developing_inventory
    developing_api
-   
-   
-   
+   developing_module_utilities
    developing_core
    developing_test_pr
    developing_rebasing

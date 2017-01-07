@@ -189,7 +189,9 @@ If you need to access facts about these hosts, for instance, the IP address of e
       tasks:
         - debug: msg="doesn't matter what you do, just that they were talked to previously."
 
-Then you can use the facts inside your template, like this::
+Then you can use the facts inside your template, like this
+
+.. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
        {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}

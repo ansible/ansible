@@ -168,13 +168,13 @@ Example!::
 
    Works for me!  Tested on `Ansible 1.7.1`.  I verified this on CentOS 6.5 and also Ubuntu 14.04.
 
-If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead::
+If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead
+
+.. code-block:: none
 
    This doesn't work for me.
 
-   When I ran this my toaster started making loud noises!
-
-   Output from the toaster looked like this:
+   When I ran this Ubuntu 16.04 it failed with the following:
 
       ```
       BLARG
@@ -187,7 +187,7 @@ When you are done testing a feature branch, you can remove it with the following
    git branch -D someuser-feature_branch_name
 
 We understand some users may be inexperienced with git, or other aspects of the above procedure, so feel free to stop by ansible-devel
-list for questions and we'd be happy to help answer them.  
+list for questions and we'd be happy to help answer them.
 
 
 

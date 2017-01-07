@@ -573,7 +573,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. versionadded:: 2.0
 
-To escape special characters within a regex, use the "regex_escape" filter::
+To escape special characters within a regex, use the "regex_escape" filter
+
+.. code-block:: none
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
@@ -626,3 +628,6 @@ to be added to core so everyone can make use of them.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+
+
+

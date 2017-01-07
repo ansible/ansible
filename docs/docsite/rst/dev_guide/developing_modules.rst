@@ -9,7 +9,7 @@ return information to ansible by printing a JSON string to stdout before
 exiting.  They take arguments in in one of several ways which we'll go into
 as we work through this tutorial.
 
-See :doc:`modules` for a list of various ones developed in core.
+See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
@@ -78,7 +78,7 @@ There's a useful test script in the source checkout for Ansible
     source ansible/hacking/env-setup
 
 For instructions on setting up Ansible from source, please see
-:doc:`intro_installation`.
+:doc:`../intro_installation`.
 
 Let's run the script you just wrote with that
 
@@ -872,7 +872,7 @@ _old_cloud.py. This keeps the module available, but hides it from the primary do
 
 .. seealso::
 
-   :doc:`modules`
+   :doc:`../modules`
        Learn about available modules
    :doc:`developing_plugins`
        Learn about developing plugins
