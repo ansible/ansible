@@ -73,6 +73,7 @@ packaging/release/ansible_release
 /test/results/junit/*.xml
 /test/results/logs/*.log
 /test/integration/inventory.remote
+/test/integration/inventory.networking
 /test/integration/inventory.winrm
 # old submodule dirs
 lib/ansible/modules/core

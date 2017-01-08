@@ -194,6 +194,11 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    network_integration.add_argument('--platform',
+                                     metavar='PLATFORM',
+                                     action='append',
+                                     help='network platform/version').completer = complete_network_platform
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -501,6 +506,18 @@ def complete_windows(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
+
+
+def complete_network_platform(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    with open('test/runner/completion/network.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
 
 if __name__ == '__main__':

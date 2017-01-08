@@ -25,6 +25,7 @@ from lib.core_ci import (
 
 from lib.manage_ci import (
     ManageWindowsCI,
+    ManageNetworkCI,
 )
 
 from lib.util import (
@@ -182,7 +183,83 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
+
+    if args.platform:
+        instances = []  # type: list [lib.thread.WrappedThread]
+
+        for platform_version in args.platform:
+            platform, version = platform_version.split('/', 1)
+            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
+            instance.daemon = True
+            instance.start()
+            instances.append(instance)
+
+        install_command_requirements(args)
+
+        while any(instance.is_alive() for instance in instances):
+            time.sleep(1)
+
+        remotes = [instance.wait_for_result() for instance in instances]
+        inventory = network_inventory(remotes)
+
+        if not args.explain:
+            with open('test/integration/inventory.networking', 'w') as inventory_fd:
+                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+                inventory_fd.write(inventory)
+    else:
+        install_command_requirements(args)
+
     command_integration_filtered(args, internal_targets)
+
+
+def network_run(args, platform, version):
+    """
+    :type args: NetworkIntegrationConfig
+    :type platform: str
+    :type version: str
+    :rtype: AnsibleCoreCI
+    """
+
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    core_ci.start()
+    core_ci.wait()
+
+    manage = ManageNetworkCI(core_ci)
+    manage.wait()
+
+    return core_ci
+
+
+def network_inventory(remotes):
+    """
+    :type remotes: list[AnsibleCoreCI]
+    :rtype: str
+    """
+    groups = dict([(remote.platform, []) for remote in remotes])
+
+    for remote in remotes:
+        groups[remote.platform].append(
+            '%s ansible_host=%s ansible_user=%s ansible_connection=network_cli ansible_ssh_private_key_file=%s' % (
+                remote.name.replace('.', '_'),
+                remote.connection.hostname,
+                remote.connection.username,
+                remote.ssh_key.key,
+            )
+        )
+
+    template = ''
+
+    for group in groups:
+        hosts = '\n'.join(groups[group])
+
+        template += """
+        [%s]
+        %s
+        """ % (group, hosts)
+
+    inventory = textwrap.dedent(template)
+
+    return inventory
 
 
 def command_windows_integration(args):
@@ -210,6 +287,7 @@ def command_windows_integration(args):
 
         if not args.explain:
             with open('test/integration/inventory.winrm', 'w') as inventory_fd:
+                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -428,9 +506,11 @@ def command_integration_role(args, target, start_at_task):
         hosts = 'windows'
         gather_facts = False
     elif 'network/' in target.aliases:
-        inventory = 'inventory.network'
+        inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
+        if hosts == 'net':
+            hosts = 'all'
     else:
         inventory = 'inventory'
         hosts = 'testhost'
@@ -1214,6 +1294,8 @@ class NetworkIntegrationConfig(IntegrationConfig):
         :type args: any
         """
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
+
+        self.platform = args.platform  # type list [str]
 
 
 class UnitsConfig(TestConfig):

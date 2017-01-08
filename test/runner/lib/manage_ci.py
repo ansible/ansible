@@ -59,6 +59,41 @@ class ManageWindowsCI(object):
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
 
+class ManageNetworkCI(object):
+    """Manage access to a network instance provided by Ansible Core CI."""
+    def __init__(self, core_ci):
+        """
+        :type core_ci: AnsibleCoreCI
+        """
+        self.core_ci = core_ci
+
+    def wait(self):
+        """Wait for instance to respond to ansible ping."""
+        extra_vars = [
+            'ansible_host=%s' % self.core_ci.connection.hostname,
+            'ansible_user=%s' % self.core_ci.connection.username,
+            'ansible_port=%s' % self.core_ci.connection.port,
+            'ansible_connection=network_cli',
+            'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+        ]
+
+        name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
+
+        env = ansible_environment(self.core_ci.args)
+        cmd = ['ansible', '-m', 'net_command', '-a', '?', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+
+        for _ in range(1, 90):
+            try:
+                run_command(self.core_ci.args, cmd, env=env)
+                return
+            except SubprocessError:
+                sleep(10)
+                continue
+
+        raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
+                               (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
+
+
 class ManagePosixCI(object):
     """Manage access to a POSIX instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
