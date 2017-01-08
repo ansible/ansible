@@ -217,49 +217,6 @@ DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
     'minimum_healthy_percent': 'int'
 }
 
-class TypeMapper:
-   def map_complex_type(self, complex_type, type_map):
-       if complex_type is None:
-           return
-       new_type = type(complex_type)()
-       if isinstance(complex_type, dict):
-           for key in complex_type:
-               if key in type_map:
-                   if isinstance(type_map[key], list):
-                       new_type[key] = self.map_complex_type(
-                           complex_type[key],
-                           type_map[key][0])
-                   else:
-                       new_type[key] = self.map_complex_type(
-                           complex_type[key],
-                           type_map[key])
-               else:
-                   return complex_type
-       elif isinstance(complex_type, list):
-           for i in range(len(complex_type)):
-               new_type.append(self.map_complex_type(
-                   complex_type[i],
-                   type_map))
-       elif type_map:
-           return vars(globals()['__builtins__'])[type_map](complex_type)
-       return new_type
-
-   def camelize(self, complex_type):
-       if complex_type is None:
-           return
-       new_type = type(complex_type)()
-       if isinstance(complex_type, dict):
-           for key in complex_type:
-               new_type[self.camel(key)] = self.camelize(complex_type[key])
-       elif isinstance(complex_type, list):
-           for i in range(len(complex_type)):
-               new_type.append(self.camelize(complex_type[i]))
-       else:
-           return complex_type
-       return new_type
-
-   def camel(self, words):
-       return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
 try:
     import boto
@@ -275,7 +232,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict, map_complex_type
 
 
 class EcsServiceManager:
@@ -403,10 +360,10 @@ def main():
 
     service_mgr = EcsServiceManager(module)
 
-    type_mapper = TypeMapper()
-    deployment_configuration = type_mapper.map_complex_type(module.params['deployment_configuration'],
+    deployment_configuration = map_complex_type(module.params['deployment_configuration'],
                                                             DEPLOYMENT_CONFIGURATION_TYPE_MAP)
-    deployment_configuration = type_mapper.camelize(deployment_configuration)
+
+    deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
 
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
@@ -440,7 +397,7 @@ def main():
                         module.params['desired_count'],
                         clientToken,
                         role,
-                        deployment_configuration)
+                        deploymentConfiguration)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
@@ -450,7 +407,7 @@ def main():
                         module.params['desired_count'],
                         clientToken,
                         role,
-                        deployment_configuration)
+                        deploymentConfiguration)
 
                 results['service'] = response
 
