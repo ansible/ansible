@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipadm_addrprop
@@ -65,7 +69,29 @@ ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
 '''
 
 RETURN = '''
+property:
+    description: property name
+    returned: always
+    type: string
+    sample: deprecated
+addrobj:
+    description: address object name
+    returned: always
+    type: string
+    sample: bge0/v4
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+value:
+    description: property value
+    returned: when value is provided
+    type: string
+    sample: 26
 '''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class AddrProp(object):
@@ -233,5 +259,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
