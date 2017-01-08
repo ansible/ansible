@@ -5,16 +5,18 @@
 # necessary changes to allow Ansible to connect, authenticate and execute
 # PowerShell commands.
 #
+# All events are logged to the Windows EventLog, useful for unattended runs.
+#
 # Use option -Verbose in order to see the verbose output messages.
 #
-# Set $SkipNetworkProfileCheck to skip the network profile check.  Without
-# specifying this the script will only run if the device's interfaces are in
-# DOMAIN or PRIVATE zones.  Provide this switch if you want to enable winrm on
-# a device with an interface in PUBLIC zone.
+# Use option -SkipNetworkProfileCheck to skip the network profile check.
+# Without specifying this the script will only run if the device's interfaces
+# are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
+# WinRM on a device with an interface in PUBLIC zone.
 #
-# Set $ForceNewSSLCert if the system has been syspreped and a new SSL Cert
-# must be forced on the WinRM Listener when re-running this script. This
-# is necessary when a new SID and CN name is created.
+# Use option -ForceNewSSLCert if the system has been SysPreped and a new
+# SSL Certifcate must be forced on the WinRM Listener when re-running this
+# script. This is necessary when a new SID and CN name is created.
 #
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
@@ -22,11 +24,11 @@
 # Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 #
-# Version 1.0 - July 6th, 2014
-# Version 1.1 - November 11th, 2014
-# Version 1.2 - May 15th, 2015
-# Version 1.3 - April 4th, 2016
-# Version 1.4 - Jan 5th, 2017
+# Version 1.0 - 2014-07-06
+# Version 1.1 - 2014-11-11
+# Version 1.2 - 2015-05-15
+# Version 1.3 - 2016-04-04
+# Version 1.4 - 2017-01-05
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -38,6 +40,26 @@ Param (
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert
 )
+
+Function Write-Log
+{
+    $Message = $args[0]
+    Write-EventLog -LogName Application -Source $EventSource -EntryType Information -EventId 1 -Message $Message
+}
+
+Function Write-VerboseLog
+{
+    $Message = $args[0]
+    Write-Verbose $Message
+    Write-Log $Message
+}
+
+Function Write-HostLog
+{
+    $Message = $args[0]
+    Write-Host $Message
+    Write-Log $Message
+}
 
 Function New-LegacySelfSignedCert
 {
@@ -91,15 +113,21 @@ Trap
     Exit 1
 }
 $ErrorActionPreference = "Stop"
-
-If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.Diagnostics.EventLog]::SourceExists($MyInvocation.MyCommand.Name) -eq $False)
+$EventSource = $MyInvocation.MyCommand.Name
+If ($EventSource -eq $Null)
 {
-    New-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name
+    $EventSource = "Powershell CLI"
+}
+
+If ([System.Diagnostics.EventLog]::Exists('Application') -eq $False -or [System.Diagnostics.EventLog]::SourceExists($EventSource) -eq $False)
+{
+    New-EventLog -LogName Application -Source $EventSource
 }
 
 # Detect PowerShell version.
 If ($PSVersionTable.PSVersion.Major -lt 3)
 {
+    Write-Log "PowerShell version 3 or higher is required."
     Throw "PowerShell version 3 or higher is required."
 }
 
@@ -107,31 +135,32 @@ If ($PSVersionTable.PSVersion.Major -lt 3)
 Write-Verbose "Verifying WinRM service."
 If (!(Get-Service "WinRM"))
 {
+    Write-Log "Unable to find the WinRM service."
     Throw "Unable to find the WinRM service."
 }
 ElseIf ((Get-Service "WinRM").Status -ne "Running")
 {
     Write-Verbose "Starting WinRM service."
     Start-Service -Name "WinRM" -ErrorAction Stop
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 1 -Message "Starting WinRM service."
+    Write-Log "Started WinRM service."
     Write-Verbose "Setting WinRM service to start automatically on boot."
     Set-Service -Name "WinRM" -StartupType Automatic
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 2 -Message "Setting WinRM service to start automatically on boot."
+    Write-Log "Set WinRM service to start automatically on boot."
 
 }
 
 # WinRM should be running; check that we have a PS session config.
 If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\localhost\Listener)))
 {
-  if ($SkipNetworkProfileCheck) {
+  If ($SkipNetworkProfileCheck) {
     Write-Verbose "Enabling PS Remoting without checking Network profile."
     Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 3 -Message "Enabling PS Remoting without checking Network profile."
+    Write-Log "Enabled PS Remoting without checking Network profile."
   }
-  else {
+  Else {
     Write-Verbose "Enabling PS Remoting."
     Enable-PSRemoting -Force -ErrorAction Stop
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 4 -Message "Enabling PS Remoting."
+    Write-Log "Enabled PS Remoting."
   }
 }
 Else
@@ -148,14 +177,12 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
     {
         $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My"
         $thumbprint = $cert.Thumbprint
-        Write-Host "Self-signed SSL certificate generated; thumbprint: $thumbprint"
-        Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 5 -Message "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
     }
     Else
     {
         $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName
-        Write-Host "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
-        Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 6 -Message "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
     }
 
     # Create the hashtables of settings to be used.
@@ -169,28 +196,27 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
 
     Write-Verbose "Enabling SSL listener."
     New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 7 -Message "Enabling SSL listener."
+    Write-Log "Enabled SSL listener."
 }
 Else
 {
     Write-Verbose "SSL listener is already active."
-    
+
     # Force a new SSL cert on Listener if the $ForceNewSSLCert
-    if($ForceNewSSLCert){
-        
+    If ($ForceNewSSLCert)
+    {
+
         # Create the new cert.
         If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
         {
             $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My"
             $thumbprint = $cert.Thumbprint
-            Write-Host "Self-signed SSL certificate generated; thumbprint: $thumbprint"
-            Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 8 -Message "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+            Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
         }
         Else
         {
             $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName
-            Write-Host "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
-            Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 9 -Message "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
+            Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
         }
 
         $valueset = @{}
@@ -214,7 +240,7 @@ If (($basicAuthSetting.Value) -eq $false)
 {
     Write-Verbose "Enabling basic auth support."
     Set-Item -Path "WSMan:\localhost\Service\Auth\Basic" -Value $true
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 10 -Message "Enabling basic auth support."
+    Write-Log "Enabled basic auth support."
 }
 Else
 {
@@ -228,13 +254,13 @@ If ($fwtest1.count -lt 5)
 {
     Write-Verbose "Adding firewall rule to allow WinRM HTTPS."
     netsh advfirewall firewall add rule profile=any name="Allow WinRM HTTPS" dir=in localport=5986 protocol=TCP action=allow
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 11 -Message "Adding firewall rule to allow WinRM HTTPS."
+    Write-Log "Added firewall rule to allow WinRM HTTPS."
 }
 ElseIf (($fwtest1.count -ge 5) -and ($fwtest2.count -lt 5))
 {
     Write-Verbose "Updating firewall rule to allow WinRM HTTPS for any profile."
     netsh advfirewall firewall set rule name="Allow WinRM HTTPS" new profile=any
-    Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 12 -Message "Updating firewall rule to allow WinRM HTTPS for any profile."
+    Write-Log "Updated firewall rule to allow WinRM HTTPS for any profile."
 }
 Else
 {
@@ -261,7 +287,7 @@ ElseIf ($httpResult -and !$httpsResult)
 }
 Else
 {
+    Write-Log "Unable to establish an HTTP or HTTPS remoting session."
     Throw "Unable to establish an HTTP or HTTPS remoting session."
 }
-Write-Verbose "PS Remoting has been successfully configured for Ansible."
-Write-EventLog -LogName Application -Source $MyInvocation.MyCommand.Name -EntryType Information -EventId 13 "PS Remoting has been successfully configured for Ansible."
+Write-VerboseLog "PS Remoting has been successfully configured for Ansible."
