@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: dladm_iptun
@@ -64,18 +68,54 @@ options:
 '''
 
 EXAMPLES = '''
-# Create IPv4 tunnel interface 'iptun0'
+name: Create IPv4 tunnel interface 'iptun0'
 dladm_iptun: name=iptun0 local_address=192.0.2.23 remote_address=203.0.113.10 state=present
 
-# Change IPv4 tunnel remote address
+name: Change IPv4 tunnel remote address
 dladm_iptun: name=iptun0 type=ipv4 local_address=192.0.2.23 remote_address=203.0.113.11
 
-# Create IPv6 tunnel interface 'tun0'
+name: Create IPv6 tunnel interface 'tun0'
 dladm_iptun: name=tun0 type=ipv6 local_address=192.0.2.23 remote_address=203.0.113.42
 
-# Remove 'iptun0' tunnel interface
+name: Remove 'iptun0' tunnel interface
 dladm_iptun: name=iptun0 state=absent
 '''
+
+RETURN = '''
+name:
+    description: tunnel interface name
+    returned: always
+    type: string
+    sample: iptun0
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+temporary:
+    description: specifies if operation will persist across reboots
+    returned: always
+    type: boolean
+    sample: True
+local_address:
+    description: local IP address
+    returned: always
+    type: string
+    sample: 1.1.1.1/32
+remote_address:
+    description: remote IP address
+    returned: always
+    type: string
+    sample: 2.2.2.2/32
+type:
+    description: tunnel type
+    returned: always
+    type: string
+    sample: ipv4
+'''
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 SUPPORTED_TYPES = ['ipv4', 'ipv6', '6to4']
 
@@ -224,7 +264,7 @@ def main():
                 module.fail_json(name=iptun.name, msg=err, rc=rc)
         else:
             if iptun.iptun_needs_updating():
-                (rc, out, err) = ipyim.update_iptun()
+                (rc, out, err) = iptun.update_iptun()
                 if rc != 0:
                     module.fail_json(msg='Error while updating tunnel interface: "%s"' % err,
                                      name=iptun.name,
@@ -243,5 +283,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()
