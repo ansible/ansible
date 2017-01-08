@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: zpool_facts
@@ -62,11 +66,22 @@ with_items: '{{ ansible_zfs_pools }}'
 '''
 
 RETURN = '''
+name:
+    description: ZFS pool name
+    returned: always
+    type: string
+    sample: rpool
+parsable:
+    description: if parsable output should be provided in machine friendly format.
+    returned: if 'parsable' is set to True
+    type: boolean
+    sample: True
 '''
 
 import os
 from collections import defaultdict
-
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
 
 class ZPoolFacts(object):
     def __init__(self, module):
@@ -154,7 +169,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

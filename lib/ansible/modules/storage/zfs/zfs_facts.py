@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: zfs_facts
@@ -74,21 +78,37 @@ options:
 '''
 
 EXAMPLES = '''
-# Gather facts about ZFS dataset rpool/export/home
+name: Gather facts about ZFS dataset rpool/export/home
 zfs_facts: dataset=rpool/export/home
 
-# Report space usage on ZFS filesystems under data/home
+name: Report space usage on ZFS filesystems under data/home
 zfs_facts: name=data/home recurse=yes type=filesystem
 debug: msg='ZFS dataset {{ item.name }} consumes {{ item.used }} of disk space.'
 with_items: '{{ ansible_zfs_datasets }}
 '''
 
 RETURN = '''
+name:
+    description: ZFS dataset name
+    returned: always
+    type: string
+    sample: rpool/var/spool
+parsable:
+    description: if parsable output should be provided in machine friendly format.
+    returned: if 'parsable' is set to True
+    type: boolean
+    sample: True
+recurse:
+    description: if we should recurse over ZFS dataset
+    returned: if 'recurse' is set to True
+    type: boolean
+    sample: True
 '''
 
 import os
 from collections import defaultdict
-
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
 
 SUPPORTED_TYPES = ['all', 'filesystem', 'volume', 'snapshot', 'bookmark']
 
@@ -193,7 +213,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
