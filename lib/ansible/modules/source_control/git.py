@@ -240,19 +240,16 @@ before:
     returned: success
     type: string
     sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
-'''
-
-RETURN = '''
-after:
-    description: last commit revision of the repository retrived during the update
+remote_url_changed:
+    description: Contains True or False whether or not the remote URL was changed.
     returned: success
+    type: boolean
+    sample: True
+warnings:
+    description: List of warnings if requested features were not available due to a too old git version.
+    returned: error
     type: string
-    sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
-before:
-    description: commit revision before the repository was updated, "null" for new repository
-    returned: success
-    type: string
-    sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
+    sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 '''
 
 import os
