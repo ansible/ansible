@@ -71,6 +71,8 @@ Ansible Changes By Release
   * jenkins_script
 - windows:
   * win_say
+- openstack
+  * os_quota
 
 ####New Callbacks:
 
