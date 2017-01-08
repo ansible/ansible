@@ -354,6 +354,28 @@ def camel_dict_to_snake_dict(camel_dict):
     return snake_dict
 
 
+def snake_dict_to_camel_dict(snake_dict):
+
+    def camelize(complex_type):
+        if complex_type is None:
+            return
+        new_type = type(complex_type)()
+        if isinstance(complex_type, dict):
+            for key in complex_type:
+                new_type[camel(key)] = camelize(complex_type[key])
+        elif isinstance(complex_type, list):
+            for i in range(len(complex_type)):
+                new_type.append(camelize(complex_type[i]))
+        else:
+            return complex_type
+        return new_type
+
+    def camel(words):
+        return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+
+    return camelize(snake_dict)
+
+
 def ansible_dict_to_boto3_filter_list(filters_dict):
 
     """ Convert an Ansible dict of filters to list of dicts that boto3 can use
@@ -556,3 +578,45 @@ def sort_json_policy_dict(policy_dict):
             ordered_policy_dict[key] = value
 
     return ordered_policy_dict
+
+
+def map_complex_type(complex_type, type_map):
+    """
+        Allows to cast elements within a dictionary to a specific type
+        Example of usage:
+
+        DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
+            'maximum_percent': 'int',
+            'minimum_healthy_percent': 'int'
+        }
+
+        deployment_configuration = map_complex_type(module.params['deployment_configuration'],
+                                                    DEPLOYMENT_CONFIGURATION_TYPE_MAP)
+
+        This ensures all keys within the root element are casted and valid integers
+    """
+
+    if complex_type is None:
+        return
+    new_type = type(complex_type)()
+    if isinstance(complex_type, dict):
+        for key in complex_type:
+            if key in type_map:
+                if isinstance(type_map[key], list):
+                    new_type[key] = map_complex_type(
+                        complex_type[key],
+                        type_map[key][0])
+                else:
+                    new_type[key] = map_complex_type(
+                        complex_type[key],
+                        type_map[key])
+            else:
+                return complex_type
+    elif isinstance(complex_type, list):
+        for i in range(len(complex_type)):
+            new_type.append(map_complex_type(
+                complex_type[i],
+                type_map))
+    elif type_map:
+        return vars(globals()['__builtins__'])[type_map](complex_type)
+    return new_type
