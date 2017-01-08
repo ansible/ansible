@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: beadm
@@ -73,33 +77,69 @@ options:
 '''
 
 EXAMPLES = '''
-# Create ZFS boot environment
+name: Create ZFS boot environment
 beadm: name=upgrade-be state=present
 
-# Create ZFS boot environment from existing inactive boot environment
+name: Create ZFS boot environment from existing inactive boot environment
 beadm: name=upgrade-be snapshot=be@old state=present
 
-# Create ZFS boot environment with compression enabled and description "upgrade"
+name: Create ZFS boot environment with compression enabled and description "upgrade"
 beadm: name=upgrade-be options="compression=on" description="upgrade"
        state=present
 
-# Delete ZFS boot environment
+name: Delete ZFS boot environment
 beadm: name=old-be state=absent
 
-# Mount ZFS boot environment on /tmp/be
+name: Mount ZFS boot environment on /tmp/be
 beadm: name=BE mountpoint=/tmp/be state=mounted
 
-# Unmount ZFS boot environment
+name: Unmount ZFS boot environment
 beadm: name=BE state=unmounted
 
-# Activate ZFS boot environment
+name: Activate ZFS boot environment
 beadm: name=upgrade-be state=activated
 '''
 
 RETURN = '''
+name:
+    description: BE name
+    returned: always
+    type: string
+    sample: pre-upgrade
+snapshot:
+    description: ZFS snapshot to create BE from
+    returned: always
+    type: string
+    sample: rpool/ROOT/oi-hipster@fresh
+description:
+    description: BE description
+    returned: always
+    type: string
+    sample: Upgrade from 9.0 to 10.0
+options:
+    description: BE additional options
+    returned: always
+    type: string
+    sample: compression=on
+mountpoint:
+    description: BE mountpoint
+    returned: always
+    type: string
+    sample: /mnt/be
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+force:
+    description: if forced action is wanted
+    returned: always
+    type: boolean
+    sample: False
 '''
 
 import os
+from ansible.module_utils.basic import AnsibleModule
 
 
 class BE(object):
@@ -371,6 +411,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
