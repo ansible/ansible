@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipadm_addr
@@ -65,20 +69,54 @@ options:
 '''
 
 EXAMPLES = '''
-# Configure IP address 10.0.0.1 on e1000g0
+name: Configure IP address 10.0.0.1 on e1000g0
 ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
 
-# Delete addrobj
+name: Delete addrobj
 ipadm_addr: addrobj=e1000g0/v4 state=absent
 
-# Configure link-local IPv6 address
+name: Configure link-local IPv6 address
 ipadm_addr: addtype=addrconf addrobj=vnic0/v6
 
-# Configure address via DHCP and wait 180 seconds for address obtaining
+name: Configure address via DHCP and wait 180 seconds for address obtaining
 ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
 '''
 
+RETURN = '''
+addrobj:
+    description: address object name
+    returned: always
+    type: string
+    sample: bge0/v4
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+temporary:
+    description: specifies if operation will persist across reboots
+    returned: always
+    type: boolean
+    sample: True
+addrtype:
+    description: address type
+    returned: always
+    type: string
+    sample: static
+address:
+    description: IP address
+    returned: only if addrtype is 'static'
+    type: string
+    sample: 1.3.3.7/32
+wait:
+    description: time we wait for DHCP
+    returned: only if addrtype is 'dhcp'
+    type: string
+    sample: 10
+'''
+
 import socket
+from ansible.module_utils.basic import AnsibleModule
 
 SUPPORTED_TYPES = ['static', 'addrconf', 'dhcp']
 
@@ -369,5 +407,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
