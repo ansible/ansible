@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: dladm_linkprop
@@ -62,18 +66,46 @@ options:
 '''
 
 EXAMPLES = '''
-# Set 'maxbw' to 100M on e1000g1
+name: Set 'maxbw' to 100M on e1000g1
 dladm_linkprop: name=e1000g1 property=maxbw value=100M state=present
 
-# Set 'mtu' to 9000 on e1000g1
+name: Set 'mtu' to 9000 on e1000g1
 dladm_linkprop: name=e1000g1 property=mtu value=9000
 
-# Reset 'mtu' property on e1000g1
+name: Reset 'mtu' property on e1000g1
 dladm_linkprop: name=e1000g1 property=mtu state=reset
 '''
 
 RETURN = '''
+property:
+    description: property name
+    returned: always
+    type: string
+    sample: mtu
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+temporary:
+    description: specifies if operation will persist across reboots
+    returned: always
+    type: boolean
+    sample: True
+link:
+    description: link name
+    returned: always
+    type: string
+    sample: e100g0
+value:
+    description: property value
+    returned: always
+    type: string
+    sample: 9000
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class LinkProp(object):
 
@@ -268,5 +300,7 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-main()
+
+
+if __name__ == '__main__':
+    main()
