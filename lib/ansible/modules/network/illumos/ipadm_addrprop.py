@@ -84,6 +84,11 @@ state:
     returned: always
     type: string
     sample: present
+temporary:
+    description: specifies if operation will persist across reboots
+    returned: always
+    type: boolean
+    sample: True
 value:
     description: property value
     returned: when value is provided
@@ -215,6 +220,7 @@ def main():
     result['property'] = addrprop.property
     result['addrobj'] = addrprop.addrobj
     result['state'] = addrprop.state
+    result['temporary'] = addrprop.temporary
     if addrprop.value:
         result['value'] = addrprop.value
 
