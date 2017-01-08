@@ -73,6 +73,9 @@ Ansible Changes By Release
   * win_say
 - openstack
   * os_quota
+- zfs:
+  * zfs_facts
+  * zpool_facts
 
 ####New Callbacks:
 
