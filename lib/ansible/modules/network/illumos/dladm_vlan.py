@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: dladm_vlan
@@ -57,12 +61,42 @@ options:
 '''
 
 EXAMPLES = '''
-# Create 'vlan42' VLAN over 'bnx0' link
+name: Create 'vlan42' VLAN over 'bnx0' link
 dladm_vlan: name=vlan42 link=bnx0 vlan_id=42 state=present
 
-# Remove 'vlan1337' VLAN interface
+name: Remove 'vlan1337' VLAN interface
 dladm_vlan: name=vlan1337 state=absent
 '''
+
+RETURN = '''
+name:
+    description: VLAN name
+    returned: always
+    type: string
+    sample: vlan42
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+temporary:
+    description: specifies if operation will persist across reboots
+    returned: always
+    type: boolean
+    sample: True
+link:
+    description: VLAN's underlying link name
+    returned: always
+    type: string
+    sample: e100g0
+vlan_id:
+    description: VLAN ID
+    returned: always
+    type: string
+    sample: 42
+'''
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class VLAN(object):
@@ -184,5 +218,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()
