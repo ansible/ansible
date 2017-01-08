@@ -16,6 +16,8 @@
 # must be forced on the WinRM Listener when re-running this script. This
 # is necessary when a new SID and CN name is created.
 #
+# Comment to trigger full Windows testing.
+#
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
