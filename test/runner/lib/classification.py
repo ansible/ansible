@@ -140,6 +140,11 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('examples/'):
+            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
+                return {
+                    'windows-integration': 'all',
+                }
+
             return minimal
 
         if path.startswith('hacking/'):
