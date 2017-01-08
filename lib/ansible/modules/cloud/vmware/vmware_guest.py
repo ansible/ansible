@@ -56,6 +56,7 @@ options:
             - Rename a VM
             - New Name of the exising VM
         required: False
+        version_added: "2.3"
    name_match:
         description:
             - If multiple vms matching the name, use the first or last found
@@ -1404,8 +1405,15 @@ class PyVmomiHelper(object):
 
             change_applied = True
 
+        # Mark VM as Template
+        if self.params['is_template']:
+            task = self.current_vm_obj.MarkAsTemplate()
+            change_applied = True
+
+        # Rename VM
         if self.params['new_name']:
             task = self.current_vm_obj.Rename_Task(self.params['new_name'])
+
             if task.info.state == 'error':
                 return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
 
