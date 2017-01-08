@@ -1,4 +1,4 @@
-jinja2
+jinja2<2.9
 jmespath
 junit-xml
 ordereddict ; python_version < '2.7'
