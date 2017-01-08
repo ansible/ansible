@@ -51,6 +51,11 @@ options:
         description:
             - Name of the newly deployed guest
         required: True
+   new_name:
+        description:
+            - Rename a VM
+            - New Name of the exising VM
+        required: False
    name_match:
         description:
             - If multiple vms matching the name, use the first or last found
@@ -1399,6 +1404,13 @@ class PyVmomiHelper(object):
 
             change_applied = True
 
+        if self.params['new_name']:
+            task = self.current_vm_obj.Rename_Task(self.params['new_name'])
+            if task.info.state == 'error':
+                return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+
+            change_applied = True
+
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': change_applied, 'failed': False, 'instance': vm_facts}
 
@@ -1733,6 +1745,7 @@ def main():
             is_template=dict(required=False, type='bool', default=False),
             annotation=dict(required=False, type='str', aliases=['notes']),
             name=dict(required=True, type='str'),
+            new_name=dict(required=False, type='str'),
             name_match=dict(required=False, type='str', default='first'),
             snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
