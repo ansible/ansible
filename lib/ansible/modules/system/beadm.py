@@ -30,7 +30,7 @@ short_description: Manage ZFS boot environments on FreeBSD/Solaris/illumos syste
 description:
     - Create, delete or activate ZFS boot environments.
     - Mount and unmount ZFS boot environments.
-version_added: "2.2"
+version_added: "2.3"
 author: Adam Števko (@xen0l)
 options:
     name:
