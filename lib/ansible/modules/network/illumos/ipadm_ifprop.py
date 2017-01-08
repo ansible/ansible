@@ -19,6 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ipadm_ifprop
@@ -61,21 +65,48 @@ options:
 '''
 
 EXAMPLES = '''
-# Allow forwarding of IPv4 packets on network interface e1000g0
+name: Allow forwarding of IPv4 packets on network interface e1000g0
 ipadm_ifprop: protocol=ipv4 property=forwarding value=on interface=e1000g0
 
-# Temporarily reset IPv4 forwarding property on network interface e1000g0
+name: Temporarily reset IPv4 forwarding property on network interface e1000g0
 ipadm_ifprop: protocol=ipv4 interface=e1000g0  temporary=true property=forwarding state=reset
 
-# Configure IPv6 metric on network interface e1000g0
+name: Configure IPv6 metric on network interface e1000g0
 ipadm_ifprop: protocol=ipv6 nic=e1000g0 name=metric value=100
 
-# Set IPv6 MTU on network interface bge0
+name: Set IPv6 MTU on network interface bge0
 ipadm_ifprop: interface=bge0 name=mtu value=1280 protocol=ipv6
 '''
 
 RETURN = '''
+protocol:
+    description: property's protocol
+    returned: always
+    type: str
+    sample: ipv4
+property:
+    description: property's name
+    returned: always
+    type: str
+    sample: mtu
+interface:
+    description: interface name we want to set property on
+    returned: always
+    type: str
+    sample: e1000g0
+state:
+    description: state of the target
+    returned: always
+    type: string
+    sample: present
+value:
+    description: property's value
+    returned: when value is provided
+    type: str
+    sample: 1280
 '''
+
+from ansible.module_utils.basic import AnsibleModule
 
 SUPPORTED_PROTOCOLS = ['ipv4', 'ipv6']
 
@@ -261,5 +292,5 @@ def main():
     module.exit_json(**result)
 
 
-from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
