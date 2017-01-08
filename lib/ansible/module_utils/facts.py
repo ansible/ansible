@@ -1672,7 +1672,7 @@ class SunOSHardware(Hardware):
         if rc != 0:
             return
 
-        self.facts['uptime_secodns'] = int(float(out.split('\t')[1]))
+        self.facts['uptime_seconds'] = int(float(out.split('\t')[1]))
 
 
 class OpenBSDHardware(Hardware):
