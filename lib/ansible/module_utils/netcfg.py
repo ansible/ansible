@@ -75,6 +75,14 @@ class ConfigLine(object):
         config.append(self.raw)
         return '\n'.join(config)
 
+    @property
+    def has_chilren(self):
+        return len(self._children) > 0
+
+    @property
+    def has_parents(self):
+        return len(self._parents) > 0
+
     def add_child(self, obj):
         assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
         self._children.append(obj)
@@ -87,13 +95,36 @@ def ignore_line(text, tokens=None):
 _obj_to_text = lambda x: [o.text for o in x]
 _obj_to_raw = lambda x: [o.raw for o in x]
 
-def dumps(objects, output='block'):
+def _obj_to_block(objects, visited=None):
+    items = list()
+    for o in objects:
+        if o not in items:
+            items.append(o)
+            for child in o._children:
+                if child not in items:
+                    items.append(child)
+    return _obj_to_raw(items)
+
+def dumps(objects, output='block', comments=False):
     if output == 'block':
-        item = _obj_to_raw(objects)
+        items = _obj_to_block(objects)
+    #elif output == 'block':
+    #    items = _obj_to_raw(objects)
     elif output == 'commands':
         items = _obj_to_text(objects)
     else:
         raise TypeError('unknown value supplied for keyword output')
+
+    if output != 'commands':
+        if comments:
+            for index, item in enumerate(items):
+                nextitem = index + 1
+                if nextitem < len(items) and not item.startswith(' ') and items[nextitem].startswith(' '):
+                    item = '!\n%s' % item
+                items[index] = item
+            items.append('!')
+        items.append('end')
+
     return '\n'.join(items)
 
 class NetworkConfig(object):
@@ -186,21 +217,21 @@ class NetworkConfig(object):
                 if item.parents == path[:-1]:
                     return item
 
-    def get_section(self, path):
+    def get_block(self, path):
         assert isinstance(path, list), 'path argument must be a list object'
         obj = self.get_object(path)
         if not obj:
             raise ValueError('path does not exist in config')
-        return self._expand_section(obj)
+        return self._expand_block(obj)
 
-    def _expand_section(self, configobj, S=None):
+    def _expand_block(self, configobj, S=None):
         if S is None:
             S = list()
         S.append(configobj)
         for child in configobj._children:
             if child in S:
                 continue
-            self._expand_section(child, S)
+            self._expand_block(child, S)
         return S
 
     def _diff_line(self, other):
@@ -212,9 +243,9 @@ class NetworkConfig(object):
 
     def _diff_strict(self, other):
         updates = list()
-        for index, line in enumerate(self._items):
+        for index, line in enumerate(self.items):
             try:
-                if line != other._lines[index]:
+                if line != other[index]:
                     updates.append(line)
             except IndexError:
                 updates.append(line)
@@ -222,22 +253,52 @@ class NetworkConfig(object):
 
     def _diff_exact(self, other):
         updates = list()
-        if len(other) != len(self._items):
-            updates.extend(self._items)
+        if len(other) != len(self.items):
+            updates.extend(self.items)
         else:
-            for ours, theirs in zip(self._items, other):
+            for ours, theirs in zip(self.items, other):
                 if ours != theirs:
-                    updates.extend(self._items)
+                    updates.extend(self.items)
                     break
         return updates
 
     def difference(self, other, match='line', path=None, replace=None):
-        try:
-            meth = getattr(self, '_diff_%s' % match)
-            updates = meth(other)
-        except AttributeError:
-            raise TypeError('invalid value for match keyword argument, '
-                            'valid values are line, strict, or exact')
+        """Perform a config diff against the another network config
+
+        :param other: instance of NetworkConfig to diff against
+        :param match: type of diff to perform.  valid values are 'line',
+            'strict', 'exact'
+        :param path: context in the network config to filter the diff
+        :param replace: the method used to generate the replacement lines.
+            valid values are 'block', 'line'
+
+        :returns: a string of lines that are different
+        """
+        if path and match != 'line':
+            try:
+                other = other.get_block(path)
+            except ValueError:
+                other = list()
+        else:
+            other = other.items
+
+        # generate a list of ConfigLines that aren't in other
+        meth = getattr(self, '_diff_%s' % match)
+        updates = meth(other)
+
+        if replace == 'block':
+            parents = list()
+            for item in updates:
+                if not item.has_parents:
+                    parents.append(item)
+                else:
+                    for p in item._parents:
+                        if p not in parents:
+                            parents.append(p)
+
+            updates = list()
+            for item in parents:
+                updates.extend(self._expand_block(item))
 
         visited = set()
         expanded = list()
@@ -269,7 +330,7 @@ class NetworkConfig(object):
             for index, p in enumerate(parents):
                 try:
                     i = index + 1
-                    obj = self.get_section(parents[:i])[0]
+                    obj = self.get_block(parents[:i])[0]
                     ancestors.append(obj)
 
                 except ValueError:
@@ -278,15 +339,15 @@ class NetworkConfig(object):
                     obj = ConfigLine(p)
                     obj.raw = p.rjust(len(p) + offset)
                     if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
+                        obj._parents = list(ancestors)
+                        ancestors[-1]._children.append(obj)
                     self.items.append(obj)
                     ancestors.append(obj)
 
             # add child objects
             for line in lines:
                 # check if child already exists
-                for child in ancestors[-1].children:
+                for child in ancestors[-1]._children:
                     if child.text == line:
                         break
                 else:
@@ -294,5 +355,7 @@ class NetworkConfig(object):
                     item = ConfigLine(line)
                     item.raw = line.rjust(len(line) + offset)
                     item._parents = ancestors
-                    ancestors[-1].children.append(item)
+                    ancestors[-1]._children.append(item)
                     self.items.append(item)
+
+
