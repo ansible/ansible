@@ -333,12 +333,19 @@ Ansible also uses the following Python modules that need to be installed [1]_::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
-Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
-which point at Ansible's own modules (not the same kind of modules, alas).
+To update ansible checkouts, use pull-with-rebase so any local changes are replayed.
 
 .. code-block:: bash
 
     $ git pull --rebase
+
+Note: when updating ansible checkouts that are v2.2 and older, be sure to not
+only update the source tree, but also the "submodules" in git which point at
+Ansible's own modules.
+
+.. code-block:: bash
+
+    $ git pull --rebase #same as above
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
