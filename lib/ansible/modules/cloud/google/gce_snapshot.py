@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 
