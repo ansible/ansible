@@ -22,7 +22,10 @@ __metaclass__ = type
 import os
 import sys
 import json
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
