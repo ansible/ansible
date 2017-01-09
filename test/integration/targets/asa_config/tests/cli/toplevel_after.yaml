@@ -36,7 +36,7 @@
   asa_config:
     lines:
       - "no snmp-server contact"
-      - "hostname {{ inventory_hostname }}"
+      - "hostname {{ inventory_hostname_short }}"
     provider: "{{ cli }}"
 
 - debug: msg="END cli/toplevel_after.yaml"

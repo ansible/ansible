@@ -5,7 +5,7 @@
 - name: setup
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 - name: configure single command
@@ -34,7 +34,7 @@
 - name: teardown
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 

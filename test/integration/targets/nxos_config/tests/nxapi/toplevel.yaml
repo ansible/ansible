@@ -3,7 +3,7 @@
 
 - name: setup
   nxos_config:
-    lines: hostname {{ inventory_hostname }}
+    lines: hostname {{ inventory_hostname_short }}
     provider: "{{ nxapi }}"
     match: none
 
@@ -30,7 +30,7 @@
 
 - name: teardown
   nxos_config:
-    lines: hostname {{ inventory_hostname }}
+    lines: hostname {{ inventory_hostname_short }}
     provider: "{{ nxapi }}"
     match: none
 

@@ -35,7 +35,7 @@
 - name: Ensure we can communicate over 8080
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
     port: 8080
 
@@ -43,7 +43,7 @@
 - name: Ensure we can NOT communicate over default port
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
   register: result
   ignore_errors: true
@@ -62,7 +62,7 @@
 - name: Ensure we can communicate over netconf
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 - debug: msg="END netconf/changeport.yaml"

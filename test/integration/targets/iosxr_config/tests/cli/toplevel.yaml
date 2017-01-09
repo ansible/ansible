@@ -3,7 +3,7 @@
 
 - name: setup
   iosxr_config:
-    commands: ['hostname {{ inventory_hostname }}']
+    commands: ['hostname {{ inventory_hostname_short }}']
     provider: "{{ cli }}"
     match: none
 
@@ -30,7 +30,7 @@
 
 - name: teardown
   iosxr_config:
-    commands: ['hostname {{ inventory_hostname }}']
+    commands: ['hostname {{ inventory_hostname_short }}']
     provider: "{{ cli }}"
     match: none
 

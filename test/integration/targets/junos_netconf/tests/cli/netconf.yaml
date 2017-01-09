@@ -23,7 +23,7 @@
 - name: Ensure we can communicate over netconf
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
 
 # Disable netconf
@@ -52,7 +52,7 @@
 - name: Ensure we can NOT talk via netconf
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
     provider: "{{ netconf }}"
   register: result
   ignore_errors: true
