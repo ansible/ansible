@@ -4,7 +4,7 @@
 - name: setup
   junos_config:
     lines:
-      - "set system host-name {{ inventory_hostname }}"
+      - "set system host-name {{ inventory_hostname_short }}"
       - "delete interfaces lo0"
     provider: "{{ netconf }}"
   register: test
@@ -12,7 +12,7 @@
 - name: configure multiple commands
   junos_config:
     lines:
-      - 'set system host-name {{ inventory_hostname }}'
+      - 'set system host-name {{ inventory_hostname_short }}'
       - 'set interfaces lo0 unit 0 family inet address 1.1.1.1/32'
     provider: "{{ netconf }}"
   register: result
@@ -28,7 +28,7 @@
 - name: check multiple commands idempotent
   junos_config:
     lines:
-      - 'set system host-name {{ inventory_hostname }}'
+      - 'set system host-name {{ inventory_hostname_short }}'
       - 'set interfaces lo0 unit 0 family inet address 1.1.1.1/32'
     provider: "{{ netconf }}"
   register: result
@@ -41,7 +41,7 @@
 - name: teardown
   junos_config:
     lines:
-      - "set system host-name {{ inventory_hostname }}"
+      - "set system host-name {{ inventory_hostname_short }}"
       - "delete interfaces lo0"
     provider: "{{ netconf }}"
   register: test
