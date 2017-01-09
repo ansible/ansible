@@ -167,7 +167,7 @@ options:
           - "  joindomain (string): AD domain to join (Not compatible with C(joinworkgroup))"
           - "  joinworkgroup (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
           - "  orgname (string): Organisation name (default: ACME)"
-          - "  password (string): Local administrator password"
+          - "  password (string): Local administrator password (mandatory)"
           - "  productid (string): Product ID"
           - "  runonce (list): List of commands to run at first user logon"
           - "  timezone (int): Timezone (default: 85) See https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx"
@@ -814,7 +814,7 @@ class PyVmomiHelper(object):
         if vm_creation and self.params['guest_id'] is None:
             self.module.fail_json(msg="guest_id attribute is mandatory for VM creation")
 
-        if vm_obj is None or self.configspec.guestId != vm_obj.summary.guest.guestId:
+        if vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId:
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
 
@@ -982,11 +982,11 @@ class PyVmomiHelper(object):
         if self.params['guest_id']:
             guest_id = self.params['guest_id']
         else:
-            guest_id = vm_obj.summary.guest.guestId
+            guest_id = vm_obj.summary.config.guestId
 
         # If I install a Windows use Sysprep
         # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.Sysprep.html#field_detail
-        if 'windows' in guest_id:
+        if 'win' in guest_id:
             ident = vim.vm.customization.Sysprep()
 
             ident.userData = vim.vm.customization.UserData()
@@ -1002,10 +1002,12 @@ class PyVmomiHelper(object):
 
             ident.identification = vim.vm.customization.Identification()
 
-            if 'password' in self.params['customization']:
+            if self.params['customization'].get('password'):
                 ident.guiUnattended.password = vim.vm.customization.Password()
                 ident.guiUnattended.password.value = str(self.params['customization']['password'])
                 ident.guiUnattended.password.plainText = True
+            else:
+                self.module.fail_json(msg="A 'password' entry is mandatory in the 'customization' section.")
 
             if 'productid' in self.params['customization']:
                 ident.userData.orgName = str(self.params['customization']['productid'])
@@ -1294,8 +1296,8 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
-        if self.should_deploy_from_template() and len(self.params['customizations']) > 0:
-        if self.params.get('customization') != dict() and ( vm_obj is None or self.should_deploy_from_template() ):
+
+        if self.should_deploy_from_template() and len(self.params['customization']) > 0:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
