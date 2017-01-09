@@ -626,7 +626,7 @@ class LinuxService(Service):
             if "stop" in cleanout:
                 self.running = False
             elif "run" in cleanout:
-                self.running = ("not " in cleanout)
+                self.running = not ("not " in cleanout)
             elif "start" in cleanout and "not " not in cleanout:
                 self.running = True
             elif 'could not access pid file' in cleanout:
