@@ -21,26 +21,31 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args
 $TargetFile = Get-AnsibleParam -obj $params -name "src" -failifempty $true
 $ShortcutFile = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
+$Hotkey = Get-AnsibleParam -obj $params -name "hotkey" -failifempty $true
+$IconLocation = Get-AnsibleParam -obj $params -name "iconlocation" -failifempty $true
 $result = New-Object psobject @{
     changed = $FALSE
 }
 try
 {
- $Scriptsh = New-Object -COM WScript.Shell
- $targetPath = $Scriptsh.CreateShortcut($ShortcutFile).TargetPath
  if(!(Test-Path $TargetFile))
  {
-  Fail-Json (New-Object psobject) "missing required argument: Provide valid Folder where exe present"
+  Fail-Json (New-Object psobject) "missing required argument: Provide valid exe path"
  }
- elseif($targetPath -eq $TargetFile)
+ $WScriptShell = New-Object -ComObject WScript.Shell
+ $targetPath = $WScriptShell.CreateShortcut($ShortcutFile).TargetPath
+ $ShortcutKey = $WScriptShell.CreateShortcut($ShortcutFile).HotKey
+ $ShortcutIconloc = $WScriptShell.CreateShortcut($ShortcutFile).IconLocation
+ if(($targetPath -eq $TargetFile) -and ($ShortcutKey -eq $Hotkey) -and ($ShortcutIconloc -eq $IconLocation))
  {
  $result.changed = $FALSE
  }
  else
  {
-  $WScriptShell = New-Object -ComObject WScript.Shell
   $Shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
   $Shortcut.TargetPath = $TargetFile
+  $Shortcut.HotKey = $Hotkey
+  $Shortcut.IconLocation = $IconLocation
   $Shortcut.Save()
   $result.changed = $TRUE
  }
