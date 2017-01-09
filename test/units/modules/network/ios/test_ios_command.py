@@ -132,7 +132,7 @@ class test_iosCommandModule(unittest.TestCase):
     def test_ios_command_match_all(self):
         wait_for = ['result[0] contains "Cisco IOS"',
                     'result[0] contains "IOSv Software"']
-        set_module_args(dict(commands=['show version'], wait_for=wait_for, match='any'))
+        set_module_args(dict(commands=['show version'], wait_for=wait_for, match='all'))
         self.execute_module()
 
     def test_ios_command_match_all_failure(self):
