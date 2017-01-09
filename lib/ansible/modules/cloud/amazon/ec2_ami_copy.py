@@ -17,29 +17,29 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.1'}
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
-    - Copies AMI from a source region to a destination region. This module has a dependency on python-boto >= 2.5
+    - Copies AMI from a source region to a destination region. This module has a dependency on boto3
 version_added: "2.0"
 options:
   source_region:
     description:
-      - the source region that AMI should be copied from
+      - The source region the AMI should be copied from.
     required: true
   source_image_id:
     description:
-      - the id of the image in source region that should be copied
+      - The ID of the AMI in source region that should be copied.
     required: true
   name:
     description:
-      - The name of the new image to copy
-    required: true
-    default: null
+      - The name of the new AMI to copy.
+    required: false
+    default: "default"
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
@@ -47,7 +47,7 @@ options:
     default: null
   encrypted:
     description:
-      - Whether or not to encrypt the target image
+      - Whether or not the destination snapshots of the copied AMI should be encrypted.
     required: false
     default: null
     version_added: "2.2"
@@ -59,16 +59,22 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - wait for the copied AMI to be in state 'available' before returning.
+      - Wait for the copied AMI to be in state 'available' before returning.
     required: false
-    default: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - How long before wait gives up, in seconds. (Deprecated: no longer used, see boto3 Waiters)
+    required: false
+    default: 1200
   tags:
     description:
-      - a hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
 
-author: Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>
+author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -134,7 +140,7 @@ except ImportError:
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
+    from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError, WaiterError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -156,7 +162,6 @@ def copy_image(ec2, module):
               'Name': module.params.get('name'),
               'Description': module.params.get('description'),
               'Encrypted': module.params.get('encrypted'),
-#              'KmsKeyId': module.params.get('kms_key_id')
               }
     if module.params.get('kms_key_id'):
         params['KmsKeyId'] = module.params.get('kms_key_id')
@@ -172,12 +177,14 @@ def copy_image(ec2, module):
                     )
 
         module.exit_json(changed=True, image_id=image_id)
+    except WaiterError as we:
+        module.fail_json(msg='An error occured waiting for the image to become available. (%s)' %  we.reason)
     except ClientError as ce:
-        module.fail_json(msg=ce)
+        module.fail_json(msg=ce.message)
     except NoCredentialsError:
-        module.fail_json(msg="Unable to locate AWS credentials")
+        module.fail_json(msg="Unable to authenticate, AWS credentials are invalid.")
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg='Unhandled exception. (%s)' % str(e))
 
 
 def main():
@@ -185,11 +192,12 @@ def main():
     argument_spec.update(dict(
         source_region=dict(required=True),
         source_image_id=dict(required=True),
-        name=dict(required=True),
+        name=dict(default=''),
         description=dict(default=''),
         encrypted=dict(type='bool', required=False),
         kms_key_id=dict(type='str', required=False),
-        wait=dict(type='bool', default=False, required=False),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(default=1200),
         tags=dict(type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)
