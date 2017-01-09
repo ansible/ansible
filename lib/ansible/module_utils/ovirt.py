@@ -364,6 +364,29 @@ def check_params(module):
         module.fail_json(msg='"name" or "id" is required')
 
 
+def engine_version(connection):
+    """
+    Return string representation of oVirt engine version.
+    """
+    engine_api = connection.system_service().get()
+    engine_version = engine_api.product_info.version
+    return '%s.%s' % (engine_version.major, engine_version.minor)
+
+
+def check_support(version, connection, module, params):
+    """
+    Check if parameters used by user are supported by oVirt Python SDK
+    and oVirt engine.
+    """
+    api_version = LooseVersion(engine_version(connection))
+    version = LooseVersion(version)
+    for param in params:
+        if module.params.get(param) is not None:
+            return LooseVersion(sdk_version.VERSION) >= version and api_version >= version
+
+    return True
+
+
 class BaseModule(object):
     """
     This is base class for oVirt modules. oVirt modules should inherit this
