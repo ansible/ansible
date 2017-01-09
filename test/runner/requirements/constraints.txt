@@ -1,2 +1,3 @@
 coverage >= 4.2
+jinja2 < 2.9 # 2.9 introduces changes which break tests
 pywinrm >= 0.2.1 # 0.1.1 required, but 0.2.1 provides better performance
