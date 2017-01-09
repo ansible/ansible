@@ -1,7 +1,7 @@
 .. _common_return_values:
 
 Common Return Values
-====================
+--------------------
 
 .. contents:: Topics
 
@@ -62,8 +62,10 @@ stdout_lines
 ````````````
 When c(stdout) is returned, Ansible always provides a list of strings, each containing one item per line from the original output.
 
+
 Internal use
-============
+------------
+
 These keys can be added by modules but will be removed from registered variables; they are 'consumed' by Ansible itself.
 
 ansible_facts
