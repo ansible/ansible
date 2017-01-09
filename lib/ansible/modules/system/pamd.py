@@ -381,7 +381,7 @@ def remove_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_absent'}
     changed = False
     change_count = 0
-    if isinstance(module_args, ansible.module_utils.six.string_types):
+    if isinstance(module_args, string_types):
         module_args = module_args.split(' ')
 
     for rule in service.rules:
@@ -405,7 +405,7 @@ def add_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_present'}
     changed = False
     change_count = 0
-    if isinstance(module_args, ansible.module_utils.six.string_types):
+    if isinstance(module_args, string_types):
         module_args = module_args.split(' ')
 
     for rule in service.rules:
