@@ -103,10 +103,9 @@ EXAMPLES = '''
 try:
     from libcloud.compute.types import Provider
     _ = Provider.GCE
+    HAS_LIBCLOUD = True
 except ImportError:
-    print("failed=True " +
-          "msg='libcloud with GCE support is required for this module.'")
-    sys.exit(1)
+    HAS_LIBCLOUD = False
 
 
 def find_snapshot(volume, name):
@@ -141,6 +140,9 @@ def main():
             project_id=dict(type='str')
         )
     )
+
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud with GCE support (0.19.0+) is required for this module')
 
     gce = gce_connect(module)
 
