@@ -227,6 +227,7 @@ import re
 import shlex
 from operator import itemgetter
 
+from ansible.compat.six import PY3
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
@@ -534,6 +535,8 @@ def enforce_state(module, params):
                 module.fail_json(msg=error_msg % key)
             else:
                 key = resp.read()
+                if PY3:
+                    key = key.decode()
         except Exception:
             module.fail_json(msg=error_msg % key)
 
