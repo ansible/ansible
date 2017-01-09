@@ -60,7 +60,7 @@ options:
   msg:
     description:
       - Message to send. Note that the module does not handle escaping characters.
-        Plain-text angle brackets and ampersands should be converted to HTMl entities (e.g. & to &amp;) before sending.
+        Plain-text angle brackets and ampersands should be converted to HTML entities (e.g. & to &amp;) before sending.
         See Slack's documentation (U(https://api.slack.com/docs/message-formatting)) for more.
     required: false
     default: None
