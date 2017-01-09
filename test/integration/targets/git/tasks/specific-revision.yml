@@ -136,3 +136,79 @@
 - assert:
     that:
       - 'git_result.stdout == "2cfde3668b8bb10fbe2b9d5cec486025ad8cc51b"'
+
+# Test that a forced shallow checkout referincing branch only always fetches latest head
+
+- name: clear checkout_dir
+  file: state=absent path={{ item }}
+  with_items:
+    - "{{ checkout_dir }}"
+    - "{{ checkout_dir }}.copy"
+
+- name: create original repo dir
+  file: state=directory path="{{checkout_dir}}"
+
+- name: prepare origina repo
+  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{checkout_dir}}"
+
+- name: clone example repo locally
+  git: 
+    repo: "{{ checkout_dir }}"
+    dest: "{{checkout_dir}}.copy"
+
+- name: create branch in original
+  command: git checkout -b test/branch chdir="{{checkout_dir}}"
+
+- name: get commit for HEAD on new branch
+  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  register: originaltip0
+
+- name: shallow force checkout new branch in copy
+  git: 
+    repo: "{{checkout_dir}}" 
+    dest: "{{checkout_dir}}.copy"
+    version: test/branch 
+    depth: 1 
+    force: yes
+
+- name: create new commit in original
+  shell: git init; echo "2" > b; git add b; git commit -m "2"
+  args:
+    chdir: "{{checkout_dir}}"
+
+- name: get commit for new HEAD on original branch
+  command: git rev-parse HEAD chdir="{{checkout_dir}}"
+  register: originaltip1
+
+- name: get commit for HEAD on new branch
+  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  register: newtip
+
+- name: assert that copy is still pointing at previous tip
+  assert:
+    that:
+      - "newtip.stdout == originaltip0.stdout"
+
+- name: create a local modification in the copy
+  shell: echo "3" > c
+  args:
+    chdir: "{{ checkout_dir }}.copy"
+
+- name: shallow force checkout new branch in copy (again)
+  git: 
+    repo: "{{checkout_dir}}"
+    dest: "{{checkout_dir}}.copy" 
+    version: test/branch
+    depth: 1 
+    force: yes
+
+- name: get commit for HEAD on new branch
+  command: git rev-parse HEAD chdir="{{checkout_dir}}.copy"
+  register: newtip
+
+- name: make sure copy tip is not pointing at previous sha and that new tips match
+  assert:
+    that:
+      - "newtip.stdout != originaltip0.stdout and newtip.stdout == originaltip1.stdout"
