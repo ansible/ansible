@@ -27,9 +27,9 @@ try:
     from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
             MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
     import dns.exception
-    HAVE_DNS = True
+    HAS_DNS = True
 except ImportError:
-    HAVE_DNS = False
+    HAS_DNS = False
 
 def make_rdata_dict(rdata):
     ''' While the 'dig' lookup plugin supports anything which dnspython supports
@@ -115,7 +115,7 @@ class LookupModule(LookupBase):
             ... flat=0                                      # returns a dict; default is 1 == string
         '''
 
-        if HAVE_DNS == False:
+        if HAS_DNS == False:
             raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
 
         # Create Resolver object so that we can set NS if necessary

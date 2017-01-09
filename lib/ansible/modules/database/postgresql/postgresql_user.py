@@ -360,10 +360,10 @@ def has_table_privileges(cursor, user, table, privs):
         * privileges requested that they do not hold
     """
     cur_privs = get_table_privileges(cursor, user, table)
-    have_currently = cur_privs.intersection(privs)
+    has_currently = cur_privs.intersection(privs)
     other_current = cur_privs.difference(privs)
     desired = privs.difference(cur_privs)
-    return (have_currently, other_current, desired)
+    return (has_currently, other_current, desired)
 
 def get_table_privileges(cursor, user, table):
     if '.' in table:
@@ -419,10 +419,10 @@ def has_database_privileges(cursor, user, db, privs):
         * privileges requested that they do not hold
     """
     cur_privs = get_database_privileges(cursor, user, db)
-    have_currently = cur_privs.intersection(privs)
+    has_currently = cur_privs.intersection(privs)
     other_current = cur_privs.difference(privs)
     desired = privs.difference(cur_privs)
-    return (have_currently, other_current, desired)
+    return (has_currently, other_current, desired)
 
 def grant_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs

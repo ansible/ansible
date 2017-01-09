@@ -534,7 +534,7 @@ def create_autoscaling_group(connection, module):
                     setattr(as_group, attr, module_attr)
 
         if len(set_tags) > 0:
-            have_tags = {}
+            has_tags = {}
             want_tags = {}
 
             for tag in asg_tags:
@@ -542,7 +542,7 @@ def create_autoscaling_group(connection, module):
 
             dead_tags = []
             for tag in as_group.tags:
-                have_tags[tag.key] = [tag.value, tag.propagate_at_launch]
+                has_tags[tag.key] = [tag.value, tag.propagate_at_launch]
                 if tag.key not in want_tags:
                     changed = True
                     dead_tags.append(tag)
@@ -550,7 +550,7 @@ def create_autoscaling_group(connection, module):
             if dead_tags != []:
                 connection.delete_tags(dead_tags)
 
-            if have_tags != want_tags:
+            if has_tags != want_tags:
                 changed = True
                 connection.create_or_update_tags(asg_tags)
 

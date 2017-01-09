@@ -26,10 +26,10 @@ import shlex
 import traceback
 import json
 
-HAVE_KERBEROS = False
+HAS_KERBEROS = False
 try:
     import kerberos
-    HAVE_KERBEROS = True
+    HAS_KERBEROS = True
 except ImportError:
     pass
 
@@ -101,7 +101,7 @@ class Connection(ConnectionBase):
         # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
         transport_selector = 'ssl' if self._winrm_scheme == 'https' else 'plaintext'
 
-        if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
+        if HAS_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
             self._winrm_transport = 'kerberos,%s' % transport_selector
         else:
             self._winrm_transport = transport_selector
@@ -142,7 +142,7 @@ class Connection(ConnectionBase):
         endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
         for transport in self._winrm_transport:
-            if transport == 'kerberos' and not HAVE_KERBEROS:
+            if transport == 'kerberos' and not HAS_KERBEROS:
                 errors.append('kerberos: the python kerberos library is not installed')
                 continue
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)

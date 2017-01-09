@@ -301,15 +301,15 @@ def run(module, result):
     candidate, want_banners = get_candidate(module)
 
     if match != 'none':
-        config, have_banners = get_config(module, result)
+        config, has_banners = get_config(module, result)
         path = module.params['parents']
         configobjs = candidate.difference(config, path=path,match=match,
                                           replace=replace)
     else:
         configobjs = candidate.items
-        have_banners = {}
+        has_banners = {}
 
-    banners = diff_banners(want_banners, have_banners)
+    banners = diff_banners(want_banners, has_banners)
 
     if configobjs or banners:
         commands = dumps(configobjs, 'commands').split('\n')

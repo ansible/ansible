@@ -22,10 +22,10 @@ import pwd
 import grp
 import stat
 
-HAVE_SELINUX=False
+HAS_SELINUX=False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAS_SELINUX=True
 except ImportError:
     pass
 
@@ -41,7 +41,7 @@ except ImportError:
 # If selinux fails to find a default, return an array of None
 def selinux_context(path):
     context = [None, None, None, None]
-    if HAVE_SELINUX and selinux.is_selinux_enabled():
+    if HAS_SELINUX and selinux.is_selinux_enabled():
         try:
             # note: the selinux module uses byte strings on python2 and text
             # strings on python3
@@ -94,7 +94,7 @@ def file_props(root, path):
     ret['mtime'] = st.st_mtime
     ret['ctime'] = st.st_ctime
 
-    if HAVE_SELINUX and selinux.is_selinux_enabled() == 1:
+    if HAS_SELINUX and selinux.is_selinux_enabled() == 1:
         context = selinux_context(abspath)
         ret['seuser'] = context[0]
         ret['serole'] = context[1]

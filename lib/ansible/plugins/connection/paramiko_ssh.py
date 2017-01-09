@@ -63,12 +63,12 @@ Are you sure you want to continue connecting (yes/no)?
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
-HAVE_PARAMIKO=False
+HAS_PARAMIKO=False
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import paramiko
-        HAVE_PARAMIKO=True
+        HAS_PARAMIKO=True
         logging.getLogger("paramiko").setLevel(logging.WARNING)
     except ImportError:
         pass
@@ -192,7 +192,7 @@ class Connection(ConnectionBase):
     def _connect_uncached(self):
         ''' activates the connection object '''
 
-        if not HAVE_PARAMIKO:
+        if not HAS_PARAMIKO:
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22

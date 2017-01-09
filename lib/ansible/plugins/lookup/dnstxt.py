@@ -17,11 +17,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-HAVE_DNS=False
+HAS_DNS=False
 try:
     import dns.resolver
     from dns.exception import DNSException
-    HAVE_DNS=True
+    HAS_DNS=True
 except ImportError:
     pass
 
@@ -39,7 +39,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        if HAVE_DNS == False:
+        if HAS_DNS == False:
             raise AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
 
         ret = []

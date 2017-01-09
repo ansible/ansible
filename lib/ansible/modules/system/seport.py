@@ -88,15 +88,15 @@ EXAMPLES = '''
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAS_SELINUX=True
 except ImportError:
-    HAVE_SELINUX=False
+    HAS_SELINUX=False
 
 try:
     import seobject
-    HAVE_SEOBJECT=True
+    HAS_SEOBJECT=True
 except ImportError:
-    HAVE_SEOBJECT=False
+    HAS_SEOBJECT=False
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
@@ -288,10 +288,10 @@ def main():
             },
         supports_check_mode=True
     )
-    if not HAVE_SELINUX:
+    if not HAS_SELINUX:
         module.fail_json(msg="This module requires libselinux-python")
 
-    if not HAVE_SEOBJECT:
+    if not HAS_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
     if not selinux.is_selinux_enabled():
