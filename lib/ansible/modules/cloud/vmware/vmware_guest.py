@@ -1321,7 +1321,7 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
-        if self.should_deploy_from_template() and len(self.params['customize']) > 0:
+        if self.should_deploy_from_template() and len(self.params['customizations']) > 0:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
@@ -1334,7 +1334,7 @@ class PyVmomiHelper(object):
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'],
                                              location=relospec)
-                if self.params['customize'] is True:
+                if len(self.params['customizations']) > 0:
                     clonespec.customization = self.customspec
 
                 clonespec.config = self.configspec
@@ -1787,9 +1787,9 @@ def main():
         module.params['folder'] = '/vm%(folder)s' % module.params
     module.params['folder'] = module.params['folder'].rstrip('/')
 
-    # Fail check, customize require template to be defined
-    if module.params["customize"] and not module.params['template']:
-        module.fail_json(msg="customize option is only valid when template option is defined")
+    # Fail check, customizations require template to be defined
+    if len(module.params['customizations']) > 0 and not module.params['template']:
+        module.fail_json(msg="customizations option is only valid when template option is defined")
 
     pyv = PyVmomiHelper(module)
     # Check if the VM exists before continuing
