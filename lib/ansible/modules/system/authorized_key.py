@@ -227,7 +227,7 @@ import re
 import shlex
 from operator import itemgetter
 
-from ansible.compat.six import PY3
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
@@ -535,10 +535,11 @@ def enforce_state(module, params):
                 module.fail_json(msg=error_msg % key)
             else:
                 key = resp.read()
-                if PY3:
-                    key = key.decode()
         except Exception:
             module.fail_json(msg=error_msg % key)
+
+        # resp.read gives bytes on python3, convert to native string type
+        key = to_native(key, errors='surrogate_or_strict')
 
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]
