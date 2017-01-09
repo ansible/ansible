@@ -31,7 +31,7 @@ description:
     - Create/delete static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
     - Up/down static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
     - Manage IPv6 link-local addresses on network interfaces on Solaris/illumos systems.
-version_added: "2.1"
+version_added: "2.3"
 author: Adam Števko (@xen0l)
 options:
     address:
