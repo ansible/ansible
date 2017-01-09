@@ -469,7 +469,11 @@ def main():
                                 'args_absent', 'args_present']),
             path=dict(required=False, default='/etc/pam.d', type='str')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=[
+            ("state", "args_present", ["module_arguments"]),
+            ("state", "args_absent", ["module_arguments"])
+        ]
     )
 
     service = module.params['name']
