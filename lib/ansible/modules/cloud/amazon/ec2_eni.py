@@ -313,34 +313,32 @@ def create_eni(connection, vpc_id, module):
     changed = False
 
     try:
-        eni = find_eni(connection, module)
-        if eni is None:
-            eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-            if attached == True and instance_id is not None:
-                try:
-                    eni.attach(instance_id, device_index)
-                except BotoServerError:
-                    eni.delete()
-                    raise
-                # Wait to allow creation / attachment to finish
-                wait_for_eni(eni, "attached")
-                eni.update()
+        eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
+        if attached == True and instance_id is not None:
+            try:
+                eni.attach(instance_id, device_index)
+            except BotoServerError:
+                eni.delete()
+                raise
+            # Wait to allow creation / attachment to finish
+            wait_for_eni(eni, "attached")
+            eni.update()
 
-            if secondary_private_ip_address_count is not None:
-                try:
-                    connection.assign_private_ip_addresses(network_interface_id=eni.id, secondary_private_ip_address_count=secondary_private_ip_address_count)
-                except BotoServerError:
-                    eni.delete()
-                    raise
+        if secondary_private_ip_address_count is not None:
+            try:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id, secondary_private_ip_address_count=secondary_private_ip_address_count)
+            except BotoServerError:
+                eni.delete()
+                raise
 
-            if secondary_private_ip_addresses is not None:
-                try:
-                    connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses)
-                except BotoServerError:
-                    eni.delete()
-                    raise
+        if secondary_private_ip_addresses is not None:
+            try:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses)
+            except BotoServerError:
+                eni.delete()
+                raise
 
-            changed = True
+        changed = True
 
     except BotoServerError as e:
         module.fail_json(msg=e.message)
@@ -458,28 +456,32 @@ def detach_eni(eni, module):
         module.exit_json(changed=False, interface=get_eni_info(eni))
 
 
-def find_eni(connection, module):
+def univocally_find_eni(connection, module):
 
     eni_id = module.params.get("eni_id")
-    subnet_id = module.params.get('subnet_id')
     private_ip_address = module.params.get('private_ip_address')
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
 
     try:
         filters = {}
-        if subnet_id:
-            filters['subnet-id'] = subnet_id
+
+        # proceed only if we're univocally specifying an ENI
+        if eni_id is None and private_ip_address is None and (instance_id is None and device_index is None):
+            return None
+
         if private_ip_address:
             filters['private-ip-address'] = private_ip_address
         else:
-            if instance_id:
+            if instance_id and device_index:
                 filters['attachment.instance-id'] = instance_id
-            if device_index:
                 filters['attachment.device-index'] = device_index
 
+        if eni_id == None or len(filters) == 0:
+            return None
+
         eni_result = connection.get_all_network_interfaces(eni_id, filters=filters)
-        if len(eni_result) > 0:
+        if len(eni_result) == 1:
             return eni_result[0]
         else:
             return None
@@ -562,7 +564,7 @@ def main():
         subnet_id = module.params.get("subnet_id")
         vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
 
-        eni = find_eni(connection, module)
+        eni = univocally_find_eni(connection, module)
         if eni is None:
             create_eni(connection, vpc_id, module)
         else:
