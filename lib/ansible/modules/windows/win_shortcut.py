@@ -39,6 +39,16 @@ options:
       - Path for a linking file and it should end with .lnk or .url.
     required: true
     default: no default
+ hotkey:
+    description:
+      - Shortcut Key for Windows Shortcut.
+    required: true
+    default: no default
+ iconlocation:
+    description:
+      - Shortcut Icon location for a Windows shortcut.
+    required: true
+    default: no default
 author: "SyedShabir, RajeshKumar"
 notes:
    - This module is helpful in deploying application which requires windows shortcut.
@@ -49,6 +59,8 @@ EXAMPLES = '''
   win_shortcut:
     src: 'C:\Program Files\Mozilla Firefox\Firefox.exe'
     dest: 'D:\test\Mozilla Firefox\Firefox.lnk'
+    hotkey: 'CTRL+SHIFT+1'
+    iconlocation: 'C:\Windows\System32\Shell32.dll,18'
 '''
 
 RETURN = '''
