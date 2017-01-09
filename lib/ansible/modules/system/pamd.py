@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.pycompat24 import get_exception
 
 DOCUMENTATION = """
@@ -381,8 +380,6 @@ def remove_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_absent'}
     changed = False
     change_count = 0
-    if isinstance(module_args, ansible.module_utils.six.string_types):
-        module_args = module_args.split(' ')
 
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
@@ -405,8 +402,6 @@ def add_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_present'}
     changed = False
     change_count = 0
-    if isinstance(module_args, ansible.module_utils.six.string_types):
-        module_args = module_args.split(' ')
 
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
@@ -418,15 +413,22 @@ def add_module_arguments(service, old_rule, module_args):
                     indicies = [i for i, arg
                                 in enumerate(rule.rule_module_args)
                                 if arg.startswith(pre_string)]
-                    for i in indicies:
-                        if rule.rule_module_args[i] != arg_to_add:
-                            rule.rule_module_args[i] = arg_to_add
-                            changed = True
-                            result['updated_arg_' +
-                                   str(change_count)] = arg_to_add
-                            result['in_rule_' +
-                                   str(change_count)] = str(rule)
-                            change_count += 1
+                    if len(indicies) == 0:
+                        rule.rule_module_args.append(arg_to_add)
+                        changed = True
+                        result['added_arg_'+str(change_count)] = arg_to_add
+                        result['to_rule_'+str(change_count)] = str(rule)
+                        change_count += 1
+                    else:
+                        for i in indicies:
+                            if rule.rule_module_args[i] != arg_to_add:
+                                rule.rule_module_args[i] = arg_to_add
+                                changed = True
+                                result['updated_arg_' +
+                                       str(change_count)] = arg_to_add
+                                result['in_rule_' +
+                                       str(change_count)] = str(rule)
+                                change_count += 1
                 elif arg_to_add not in rule.rule_module_args:
                     rule.rule_module_args.append(arg_to_add)
                     changed = True
@@ -474,7 +476,11 @@ def main():
                                 'args_absent', 'args_present']),
             path=dict(required=False, default='/etc/pam.d', type='str')
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if=[
+            ("state", "args_present", ["module_arguments"]),
+            ("state", "args_absent", ["module_arguments"])
+        ]
     )
 
     service = module.params['name']
