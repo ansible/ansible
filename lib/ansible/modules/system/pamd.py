@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.pycompat24 import get_exception
 
 DOCUMENTATION = """
@@ -381,8 +380,6 @@ def remove_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_absent'}
     changed = False
     change_count = 0
-    if isinstance(module_args, string_types):
-        module_args = module_args.split(' ')
 
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
@@ -405,8 +402,6 @@ def add_module_arguments(service, old_rule, module_args):
     result = {'action': 'args_present'}
     changed = False
     change_count = 0
-    if isinstance(module_args, string_types):
-        module_args = module_args.split(' ')
 
     for rule in service.rules:
         if (old_rule.rule_type == rule.rule_type and
