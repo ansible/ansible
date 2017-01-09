@@ -299,7 +299,7 @@ class ModuleArgsParser:
             if 'ping' not in module_loader:
                 raise AnsibleParserError("The requested action was not found in configured module paths. "
                         "Additionally, core modules are missing. If this is a checkout, "
-                        "run 'git submodule update --init --recursive' to correct this problem.",
+                        "run 'git pull --rebase' to correct this problem.",
                         obj=self._task_ds)
 
             else:
