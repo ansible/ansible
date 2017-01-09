@@ -429,25 +429,25 @@ a first argument, ``ipsubnet()`` filter will instead return biggest subnet that
 contains a given IP address::
 
     # {{ address | ipsubnet(20) }}
-    192.168.128.0/18
+    192.168.128.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::
 
     # First subnet
-    # {{ subnet | ipsubnet(18, 0) }}
+    # {{ address | ipsubnet(18, 0) }}
     192.168.128.0/18
 
     # Last subnet
-    # {{ subnet | ipsubnet(18, -1) }}
+    # {{ address | ipsubnet(18, -1) }}
     192.168.144.4/31
 
     # Fifth subnet
-    # {{ subnet | ipsubnet(18, 5) }}
+    # {{ address | ipsubnet(18, 5) }}
     192.168.144.0/23
 
     # Fifth to last subnet
-    # {{ subnet | ipsubnet(18, -5) }}
+    # {{ address | ipsubnet(18, -5) }}
     192.168.144.0/27
 
 You can use ``ipsubnet()`` filter with ``ipaddr()`` filter to for example split
