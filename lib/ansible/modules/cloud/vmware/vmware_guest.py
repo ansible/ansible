@@ -362,7 +362,6 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.vmware import get_all_objs, connect_to_api
-from ansible.module_utils.pycompat24 import get_exception
 
 try:
     import json
