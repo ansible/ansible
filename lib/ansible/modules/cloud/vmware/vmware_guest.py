@@ -758,7 +758,6 @@ class PyVmomiHelper(object):
         return result
 
     def gather_facts(self, vm):
-
         """ Gather facts from vim.VirtualMachine object. """
         facts = {
             'module_hw': True,
@@ -978,7 +977,7 @@ class PyVmomiHelper(object):
                 self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
 
             # If kv is not kv fetched from facts, change it
-            if kv['key'] in facts['customvalues'] and facts['customvalues'][kv['key']] != kv['value']:
+            if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
                 try:
                     vm_obj.setCustomValue(key=kv['key'], value=kv['value'])
                     self.change_detected = True
@@ -1340,7 +1339,6 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
-        self.customize_customvalues(vm_obj=vm_obj)
 
         if len(self.params['customization']) > 0:
             self.customize_vm(vm_obj=vm_obj)
@@ -1384,6 +1382,8 @@ class PyVmomiHelper(object):
                 annotation_spec.annotation = str(self.params['annotation'])
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
+
+            self.customize_customvalues(vm_obj=vm)
 
             if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
                 self.set_powerstate(vm, 'poweredon', force=False)
