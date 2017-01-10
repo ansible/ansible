@@ -61,43 +61,10 @@ def check_libcloud_or_fail():
         raise LibcloudNotFound("apache-libcloud is required.")
 
 
-def get_configured_credentials(module):
+def get_credentials(module):
     """
-    Attempt to retrieve credentials from the module parameters.
-    If 'mcp_user' is present then 'mcp_password' is also required.
-
-    Returns None if 'mcp_user' is not present.
-
-    If successful, returns a dict with 'user_id' and 'key'
-    representing the MCP username and password.
-    """
-
-    if not HAS_LIBCLOUD:
-        module.fail_json(msg='libcloud is required for this module.')
-
-        return None
-
-    if 'mcp_user' not in module.params:
-        return None
-
-    if 'mcp_password' not in module.params:
-        module.fail_json(
-            '"mcp_user" parameter was specified, but not "mcp_password" ' +
-            '(either both must be specified, or neither).'
-        )
-
-        return None
-
-    return dict(
-        user_id=module.params['mcp_user'],
-        key=module.params['mcp_password']
-    )
-
-
-def get_credentials():
-    """
-    This method will get user_id and key from module configuration, environment, or dotfile.
-    Environment takes priority.
+    Get user_id and key from module configuration, environment, or dotfile.
+    Order of priority is environment, dotfile, module.
 
     To set in environment:
 
@@ -111,22 +78,40 @@ def get_credentials():
         MCP_USER: myusername
         MCP_PASSWORD: mypassword
     """
-    check_libcloud_or_fail()
 
-    # Attempt to grab from environment
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud is required for this module.')
+
+        return None
+
+    # First try the environment.
     user_id = os.environ.get('MCP_USER', None)
     key = os.environ.get('MCP_PASSWORD', None)
 
-    # Environment failed try dot file
+    # Environment failed, try '~/.dimensiondata'.
     if not user_id or not key:
         home = expanduser('~')
         config = ConfigParser.RawConfigParser()
         config.read("%s/.dimensiondata" % home)
+
         try:
             user_id = config.get("dimensiondatacloud", "MCP_USER")
             key = config.get("dimensiondatacloud", "MCP_PASSWORD")
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
+
+    if 'mcp_user' in module.params:
+        if 'mcp_password' not in module.params:
+            module.fail_json(
+                '"mcp_user" parameter was specified, but not "mcp_password" ' +
+                '(either both must be specified, or neither).'
+            )
+
+            return None
+
+        # Finally, fall back to module configuration.
+        user_id = user_id or module.params['mcp_user']
+        key = key or module.params['mcp_password']
 
     # One or more credentials not found. Function can't recover from this
     # so it has to raise an error instead of fail silently.
