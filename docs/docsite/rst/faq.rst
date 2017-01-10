@@ -288,7 +288,7 @@ The mkpasswd utility that is available on most Linux systems is a great option:
     mkpasswd --method=sha-512
 
 If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
-generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
+generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
 password hashing library is installed:
 
 .. code-block:: shell-session
