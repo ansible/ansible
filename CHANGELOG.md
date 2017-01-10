@@ -54,6 +54,13 @@ Ansible Changes By Release
   * ipa_sudorule
   * ipa_user
 - icinga2_feature
+- illumos:
+  * dladm_iptun
+  * dladm_linkprop
+  * dladm_vlan
+  * ipadm_addr
+  * ipadm_addrprop
+  * ipadm_ifprop
 - infinibox:
   * infini_export
   * infini_export_client
@@ -92,7 +99,7 @@ Ansible Changes By Release
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
 * `meta` tasks can now use conditionals.
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
 * Windows `async:` support for long-running or background tasks.
 * Windows `environment:` support for setting module environment vars in play/task.
