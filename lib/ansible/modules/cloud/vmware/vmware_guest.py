@@ -139,10 +139,10 @@ options:
             - A note or annotation to include in the VM
         required: False
         version_added: "2.3"
-   customvalues:
+   fields:
         description:
-            - Define a list of customvalues to set on VM.
-            - "A customvalue object takes 2 fields 'key' and 'value'."
+            - Define a list of custom fields to set on VM.
+            - A field entry takes 2 fields C(key) and C(value).
         required: False
         version_added: "2.3"
    networks:
@@ -771,11 +771,11 @@ class PyVmomiHelper(object):
             'ipv4': None,
             'ipv6': None,
             'annotation': vm.config.annotation,
-            'customvalues': {},
+            'fields': {},
         }
 
         cfm = self.content.customFieldsManager
-        # Resolve customvalues
+        # Resolve fields
         for value_obj in vm.summary.customValue:
             kn = value_obj.key
             if cfm is not None and cfm.field:
@@ -785,7 +785,7 @@ class PyVmomiHelper(object):
                         # Exit the loop immediately, we found it
                         break
 
-            facts['customvalues'][kn] = value_obj.value
+            facts['fields'][kn] = value_obj.value
 
         netDict = {}
         for device in vm.guest.net:
@@ -966,23 +966,23 @@ class PyVmomiHelper(object):
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
-    def customize_customvalues(self, vm_obj):
-        if len(self.params['customvalues']) == 0:
+    def customize_fields(self, vm_obj):
+        if len(self.params['fields']) == 0:
             return
 
         facts = self.gather_facts(vm_obj)
-        for kv in self.params['customvalues']:
+        for kv in self.params['fields']:
             if 'key' not in kv or 'value' not in kv:
-                self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
+                self.module.exit_json(msg="fields require both 'key' and 'value' entries.")
 
             # If kv is not kv fetched from facts, change it
-            if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
+            if kv['key'] not in facts['fields'] or facts['fields'][kv['key']] != kv['value']:
                 try:
                     vm_obj.setCustomValue(key=kv['key'], value=kv['value'])
                     self.change_detected = True
                 except Exception:
                     e = get_exception()
-                    self.module.fail_json(msg="Failed to set custom value for key='%s' and value='%s'. Error was: %s"
+                    self.module.fail_json(msg="Failed to set custom field for key='%s' and value='%s'. Error was: %s"
                                           % (kv['key'], kv['value'], e))
 
     def customize_vm(self, vm_obj):
@@ -1382,7 +1382,7 @@ class PyVmomiHelper(object):
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
 
-            self.customize_customvalues(vm_obj=vm)
+            self.customize_fields(vm_obj=vm)
 
             if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
                 self.set_powerstate(vm, 'poweredon', force=False)
@@ -1401,7 +1401,7 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
-        self.customize_customvalues(vm_obj=self.current_vm_obj)
+        self.customize_fields(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
@@ -1776,7 +1776,7 @@ def main():
             template_src=dict(required=False, type='str', aliases=['template'], default=None),
             is_template=dict(required=False, type='bool', default=False),
             annotation=dict(required=False, type='str', aliases=['notes']),
-            customvalues=dict(required=False, type='list', default=[]),
+            fields=dict(required=False, type='list', default=[]),
             name=dict(required=True, type='str'),
             new_name=dict(required=False, type='str'),
             name_match=dict(required=False, type='str', default='first'),
