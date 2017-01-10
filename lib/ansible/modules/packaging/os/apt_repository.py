@@ -117,7 +117,6 @@ EXAMPLES = '''
 - apt_repository:
     repo: 'ppa:nginx/stable'
     codename: 'trusty'
-    repo: 'ppa:nginx/stable'
 '''
 
 import glob
