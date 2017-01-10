@@ -155,7 +155,7 @@ class AnsibleContext(Context):
         '''
         if isinstance(val, dict):
             for key in val.keys():
-                if self._is_unsafe(val[key]):
+                if self._is_unsafe(key) or self._is_unsafe(val[key]):
                     return True
         elif isinstance(val, list):
             for item in val:
@@ -392,11 +392,11 @@ class Templar:
                             fail_on_undefined=fail_on_undefined,
                             overrides=overrides,
                         )
-                        if convert_data and not self._no_type_regex.match(variable):
+                        unsafe = hasattr(result, '__UNSAFE__')
+                        if convert_data and not self._no_type_regex.match(variable) and not unsafe:
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                                     result.startswith("[") or result in ("True", "False"):
-                                unsafe = hasattr(result, '__UNSAFE__')
                                 eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
                                 if eval_results[1] is None:
                                     result = eval_results[0]
