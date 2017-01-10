@@ -50,7 +50,7 @@ some other options, but otherwise works equivalently::
        prompt: "Product release version"
        private: no
 
-If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the
+If `Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed, vars_prompt can also crypt the
 entered value so you can use it, for instance, with the user module to define a password::
 
    vars_prompt:
