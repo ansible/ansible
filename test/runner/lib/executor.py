@@ -74,6 +74,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
     '3.5',
+    '3.6',
 )
 
 COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
