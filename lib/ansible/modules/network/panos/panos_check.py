@@ -75,11 +75,8 @@ EXAMPLES = '''
   delay: 30
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -121,11 +118,7 @@ def main():
         module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
     password = module.params["password"]
-    if not password:
-        module.fail_json(msg="password is required")
     username = module.params['username']
     timeout = module.params['timeout']
     interval = module.params['interval']
