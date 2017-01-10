@@ -14,6 +14,8 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
 
+.. warning:: Some lookups pass arguments to a shell, if using variables from a remote/untrusted source use the `|quote` filter to ensure safe usage.
+
 .. contents:: Topics
 
 .. _getting_file_contents:
@@ -60,10 +62,11 @@ This length can be changed by passing an extra parameter::
 
       tasks:
 
-        # create a mysql user with a random password:
-        - mysql_user: name={{ client }}
-                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
-                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+        - name: create a mysql user with a random password
+          mysql_user:
+            name: "{{ client }}"
+            password: "{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
+            priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
         # (...)
 
@@ -78,20 +81,20 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
       tasks:
 
-        # create a mysql user with a random password using only ascii letters:
-        - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
-                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+        - name: create a mysql user with a random password using only ascii letters
+          mysql_user: name={{ client }} password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}" priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
-        # create a mysql user with a random password using only digits:
-        - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
-                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+        - name: create a mysql user with a random password using only digits
+          mysql_user:
+            name: "{{ client }}"
+            password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+            priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
-        # create a mysql user with a random password using many different char sets:
-        - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
-                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+        - name: create a mysql user with a random password using many different char sets
+          mysql_user:
+            name: "{{ client }}"
+            password" "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+            priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
         # (...)
 
@@ -436,8 +439,7 @@ Since there are too many parameters for this lookup method, below is a sample pl
 
       tasks:
         - debug: msg="Mongo has already started with the following PID [{{ item.pid }}]"
-          with_items:
-            - "{{ lookup('mongodb', mongodb_parameters) }}"
+          with_mongodb: "{{mongodb_parameters}}"
 
 
 
@@ -475,8 +477,7 @@ More Lookups
 
 Various *lookup plugins* allow additional ways to iterate over data.  In :doc:`Loops <playbooks_loops>` you will learn
 how to use them to walk over collections of numerous types.  However, they can also be used to pull in data
-from remote sources, such as shell commands or even key value stores. This section will cover lookup
-plugins in this capacity.
+from remote sources, such as shell commands or even key value stores. This section will cover lookup plugins in this capacity.
 
 Here are some examples::
 
@@ -487,22 +488,29 @@ Here are some examples::
 
          - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
 
-         - debug: msg="{{ item }} is a line from the result of this command"
-           with_lines:
-             - cat /etc/motd
+         - name: lines will iterate over each line from stdout of a command
+           debug: msg="{{ item }} is a line from the result of this command"
+           with_lines: cat /etc/motd
 
          - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         # redis_kv lookup requires the Python redis package
-         - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+         - name: Always use quote filter to make sure your variables are safe to use with shell
+           debug: msg="{{ lookup('pipe','getent ' + myuser|quote ) }}"
 
-         # dnstxt lookup requires the Python dnspython package
-         - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
+         - name: Quote variables with_lines also as it executes shell
+           debug: msg="{{ item }} is a line from myfile"
+           with_lines: "cat {{myfile|quote}}"
+
+         - name: redis_kv lookup requires the Python redis package
+           debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+
+         - name: dnstxt lookup requires the Python dnspython package
+           debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
-         # loading a json file from a template as a string
-         - debug: msg="{{ lookup('template', './some_json.json.j2', convert_data=False) }} is a value from evaluation of this template"
+         - name: loading a json file from a template as a string
+           debug: msg="{{ lookup('template', './some_json.json.j2', convert_data=False) }} is a value from evaluation of this template"
 
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
@@ -518,13 +526,12 @@ Here are some examples::
          # outputs the cartesian product of the supplied lists
          - debug: msg="{{item}}"
            with_cartesian:
-                - list1
-                - list2
-                - list3
+                - "{{list1}}"
+                - "{{list2}}"
+                - [1,2,3,4,5,6]
 
-As an alternative you can also assign lookup plugins to variables or use them
-elsewhere.  This macros are evaluated each time they are used in a task (or
-template)::
+As an alternative you can also assign lookup plugins to variables or use them elsewhere.
+This macros are evaluated each time they are used in a task (or template)::
 
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
