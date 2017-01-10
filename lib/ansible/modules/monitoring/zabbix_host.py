@@ -124,18 +124,15 @@ options:
     tls_connect:
         description:
             - Specifies what encryption to use for outgoing connections.
-            - The tls_connect parameter accepts values of 1 to 7
-            - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
-            - Values can be combined.
-        default: 1
+            - Possible value is "None", "PSK", or "certificate"
+        default: "None"
         version_added: "2.3"
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
-            - The tls_accept parameter accepts values of 1 to 7
-            - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
-            - Values can be combined.
-        default: 1
+            - Possible values, "None", "PSK", or "certificate"
+            - Values can be combined in a list.
+        default: "['None']"
         version_added: "2.3"
     tls_psk_identity:
         description:
@@ -212,7 +209,7 @@ EXAMPLES = '''
     host_groups:
       - Example group1
     tls_psk_identity: test
-    tls_connect: 2
+    tls_connect: PSK
     tls_psk: 123456789abcdef123456789abcdef12
 
 '''
@@ -302,6 +299,7 @@ class Host(object):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
+
             parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'tls_connect': tls_connect,
                           'tls_accept': tls_accept}
             if proxy_id:
@@ -513,6 +511,18 @@ class Host(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to set inventory_mode to host: %s" % e)
 
+    # Calculate encryption level
+    def get_encryption_level(self, parameters):
+        settings = {'None': 1, 'PSK': 2, 'certificate': 4}
+        value = 0
+        for item in parameters:
+            value += settings[item]
+        if value != 0:
+            return value
+        else:
+            # When nothing or an incorrect params are given, always return 1 (None)
+            return 1
+
 
 def main():
     module = AnsibleModule(
@@ -528,8 +538,8 @@ def main():
             status=dict(default="enabled", choices=['enabled', 'disabled']),
             state=dict(default="present", choices=['present', 'absent']),
             inventory_mode=dict(required=False, choices=['automatic', 'manual', 'disabled']),
-            tls_connect=dict(type='int', default=1),
-            tls_accept=dict(type='int', default=1),
+            tls_connect=dict(type='str', default='None'),
+            tls_accept=dict(type='list', default=['None']),
             tls_psk_identity=dict(type='str', required=False),
             tls_psk=dict(type='str', required=False),
             tls_issuer=dict(type='str', required=False),
@@ -598,6 +608,11 @@ def main():
             if interface['type'] == 1:
                 ip = interface['ip']
 
+    # Calculate encryption levels
+    tls_connect_list = [tls_connect]
+    tls_connect_int = host.get_encryption_level(parameters=tls_connect_list)
+    tls_accept_int = host.get_encryption_level(parameters=tls_accept)
+
     # check if host exist
     is_host_exist = host.is_host_exist(host_name)
 
@@ -635,7 +650,7 @@ def main():
                                              exist_interfaces, zabbix_host_obj, proxy_id, visible_name):
                     host.link_or_clear_template(host_id, template_ids)
                     host.update_host(host_name, group_ids, status, host_id,
-                                     interfaces, exist_interfaces, proxy_id, visible_name, tls_connect, tls_accept,
+                                     interfaces, exist_interfaces, proxy_id, visible_name, tls_connect_int, tls_accept_int,
                                      tls_psk_identity, tls_psk, tls_issuer, tls_subject)
                     module.exit_json(changed=True,
                                      result="Successfully update host %s (%s) and linked with template '%s'"
@@ -646,9 +661,9 @@ def main():
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
                                              exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name):
                     host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
-                                     visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
+                                     visible_name, tls_connect_int, tls_accept_int, tls_psk_identity, tls_psk, tls_issuer,
                                      tls_subject)
-                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                    host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
                                                 tls_psk, tls_issuer, tls_subject)
                     host.update_inventory_mode(host_id, inventory_mode)
                     module.exit_json(changed=True,
@@ -674,9 +689,9 @@ def main():
             module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
-        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name, tls_connect,
-                                tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject)
-        host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+        host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name, tls_connect_int,
+                                tls_accept_int, tls_psk_identity, tls_psk, tls_issuer, tls_subject)
+        host.link_or_clear_template(host_id, template_ids, tls_connect_int, tls_accept_int, tls_psk_identity,
                                     tls_psk, tls_issuer, tls_subject)
         host.update_inventory_mode(host_id, inventory_mode)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
