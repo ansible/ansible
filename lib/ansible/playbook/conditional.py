@@ -87,7 +87,7 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
+        if conditional in all_vars and re.match("^[_A-Za-z][_a-zA-Z0-9]*$", conditional):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
@@ -99,12 +99,12 @@ class Conditional:
                 return conditional
 
             # a Jinja2 evaluation that results in something Python can eval!
-            if hasattr(conditional, '__UNSAFE__') and LOOKUP_REGEX.match(conditional):
-                raise AnsibleError("The conditional '%s' contains variables which came from an unsafe " \
-                                   "source and also contains a lookup() call, failing conditional check" % conditional)
+            disable_lookups = False
+            if hasattr(conditional, '__UNSAFE__'):
+                disable_lookups = True
 
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            val = templar.template(presented).strip()
+            val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
             elif val == "False":

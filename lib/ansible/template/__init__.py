@@ -30,10 +30,8 @@ from ansible.compat.six import string_types, text_type, binary_type
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.nodes import EvalContext
 from jinja2.utils import concat as j2_concat
 from jinja2.runtime import Context, StrictUndefined
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
 from ansible.plugins import filter_loader, lookup_loader, test_loader
@@ -126,13 +124,6 @@ def _count_newlines_from_end(in_str):
         # Uncommon cases: zero length string and string containing only newlines
         return i
 
-class AnsibleEvalContext(EvalContext):
-    '''
-    A custom jinja2 EvalContext, which is currently unused and saved
-    here for possible future use.
-    '''
-    pass
-
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -142,7 +133,6 @@ class AnsibleContext(Context):
     '''
     def __init__(self, *args, **kwargs):
         super(AnsibleContext, self).__init__(*args, **kwargs)
-        self.eval_ctx = AnsibleEvalContext(self.environment, self.name)
         self.unsafe = False
 
     def _is_unsafe(self, val):
@@ -334,7 +324,7 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True, bare_deprecated=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -391,6 +381,7 @@ class Templar:
                             escape_backslashes=escape_backslashes,
                             fail_on_undefined=fail_on_undefined,
                             overrides=overrides,
+                            disable_lookups=disable_lookups,
                         )
                         unsafe = hasattr(result, '__UNSAFE__')
                         if convert_data and not self._no_type_regex.match(variable) and not unsafe:
@@ -401,6 +392,7 @@ class Templar:
                                 if eval_results[1] is None:
                                     result = eval_results[0]
                                     if unsafe:
+                                        from ansible.vars.unsafe_proxy import wrap_var
                                         result = wrap_var(result)
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
@@ -469,6 +461,9 @@ class Templar:
         '''
         return thing if thing is not None else ''
 
+    def _fail_lookup(self, name, *args, **kwargs):
+        raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
+
     def _lookup(self, name, *args, **kwargs):
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
@@ -488,6 +483,7 @@ class Templar:
                 ran = None
 
             if ran:
+                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
@@ -503,7 +499,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
+    def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
@@ -548,7 +544,11 @@ class Templar:
                 else:
                     return data
 
-            t.globals['lookup']   = self._lookup
+            if disable_lookups:
+                t.globals['lookup'] = self._fail_lookup
+            else:
+                t.globals['lookup'] = self._lookup
+
             t.globals['finalize'] = self._finalize
 
             jvars = AnsibleJ2Vars(self, t.globals)
@@ -559,6 +559,7 @@ class Templar:
             try:
                 res = j2_concat(rf)
                 if new_context.unsafe:
+                    from ansible.vars.unsafe_proxy import wrap_var
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_str(te):
