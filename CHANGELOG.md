@@ -80,6 +80,7 @@ Ansible Changes By Release
 - windows:
   * win_say
   * win_shortcut
+  * win_path
 - openstack
   * os_quota
 - zfs:
