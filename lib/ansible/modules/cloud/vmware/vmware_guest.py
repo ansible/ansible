@@ -740,8 +740,8 @@ class PyVmomiHelper(object):
                                   'msg': 'Cannot suspend VM in the current state %s' % current_state}
 
             except Exception:
-                result = {'changed': False, 'failed': True,
-                          'msg': get_exception()}
+                e = get_exception()
+                result = {'changed': False, 'failed': True, 'msg': e}
 
             if task:
                 self.wait_for_task(task)
