@@ -53,6 +53,10 @@ options:
     description:
     - Command to expect success for to determine the machine is ready for management
     default: whoami
+  msg:
+    description:
+    - Message to display to users
+    default: Reboot initiated by Ansible
 author:
     - Matt Davis (@nitzmahone)
 '''
