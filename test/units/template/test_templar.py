@@ -63,89 +63,6 @@ class TestTemplar(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_lookup_missing_plugin(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                'lookup plugin \(not_a_real_lookup_plugin\) not found',
-                                self.templar._lookup,
-                                'not_a_real_lookup_plugin',
-                                'an_arg', a_keyword_arg='a_keyword_arg_value')
-
-    def test_lookup_list(self):
-        res = self.templar._lookup('list', 'an_arg', 'another_arg')
-        self.assertEquals(res, 'an_arg,another_arg')
-
-    def test_lookup_jinja_undefined(self):
-        self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'an_undefined_jinja_var' is undefined",
-                                self.templar._lookup,
-                                'list', '{{ an_undefined_jinja_var }}')
-
-    def test_lookup_jinja_defined(self):
-        res = self.templar._lookup('list', '{{ some_var }}')
-        self.assertIsInstance(res, AnsibleUnsafe)
-
-    def test_lookup_jinja_dict_string_passed(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                '{{ some_var }}')
-
-    def test_lookup_jinja_dict_list_passed(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                ['foo', 'bar'])
-
-    def test_lookup_jinja_kwargs(self):
-        res = self.templar._lookup('list', 'blip', random_keyword='12345')
-        self.assertIsInstance(res, AnsibleUnsafe)
-
-    def test_lookup_jinja_list_wantlist(self):
-        res = self.templar._lookup('list', '{{ some_var }}', wantlist=True)
-        self.assertEquals(res, ["blip"])
-
-    def test_lookup_jinja_list_wantlist_undefined(self):
-        self.assertRaisesRegexp(AnsibleUndefinedVariable,
-                                "'some_undefined_var' is undefined",
-                                self.templar._lookup,
-                                'list',
-                                '{{ some_undefined_var }}',
-                                wantlist=True)
-
-    def test_lookup_jinja_list_wantlist_unsafe(self):
-        res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
-        for lookup_result in res:
-            self.assertIsInstance(lookup_result, AnsibleUnsafe)
-
-        # Should this be an AnsibleUnsafe
-        # self.assertIsInstance(res, AnsibleUnsafe)
-
-    def test_lookup_jinja_dict(self):
-        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_var }}'})
-        self.assertEquals(res['{{ a_keyword }}'], "blip")
-        # TODO: Should this be an AnsibleUnsafe
-        #self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
-        #self.assertIsInstance(res, AnsibleUnsafe)
-
-
-    def test_lookup_jinja_dict_unsafe(self):
-        res = self.templar._lookup('list', {'{{ some_unsafe_key }}': '{{ some_unsafe_var }}'})
-        self.assertIsInstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
-        # TODO: Should this be an AnsibleUnsafe
-        #self.assertIsInstance(res, AnsibleUnsafe)
-
-    def test_lookup_jinja_dict_unsafe_value(self):
-        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_unsafe_var }}'})
-        self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
-        # TODO: Should this be an AnsibleUnsafe
-        #self.assertIsInstance(res, AnsibleUnsafe)
-
-    def test_lookup_jinja_none(self):
-        res = self.templar._lookup('list', None)
-        self.assertIsNone(res)
-
 #    def test_templar_template_static_dict(self):
 #        res = self.templar.template("{{var_dict}}", static_vars=['blip'])
 #        print(res)
@@ -303,19 +220,164 @@ class TestTemplar(unittest.TestCase):
             C.DEFAULT_JINJA2_EXTENSIONS = old_exts
 
 
-class TestAnsibleEnvironment(unittest.TestCase):
-    def test(self):
-        env = AnsibleEnvironment()
-        self.assertIsInstance(env, AnsibleEnvironment)
-        self.assertIsInstance(env, Environment)
+class TestTemplarLookup(unittest.TestCase):
+
+    def setUp(self):
+        fake_loader = DictDataLoader({
+            "/path/to/my_file.txt": "foo\n",
+        })
+        shared_loader = SharedPluginLoaderObj()
+        variables = dict(
+            foo="bar",
+            bam="{{foo}}",
+            num=1,
+            var_true=True,
+            var_false=False,
+            var_dict=dict(a="b"),
+            bad_dict="{a='b'",
+            var_list=[1],
+            recursive="{{recursive}}",
+            some_var="blip",
+            some_static_var="static_blip",
+            some_keyword="{{ foo }}",
+            some_unsafe_var=wrap_var("unsafe_blip"),
+            some_unsafe_keyword=wrap_var("{{ foo }}"),
+        )
+        self.templar = Templar(loader=fake_loader, variables=variables)
+
+    def test_lookup_missing_plugin(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                'lookup plugin \(not_a_real_lookup_plugin\) not found',
+                                self.templar._lookup,
+                                'not_a_real_lookup_plugin',
+                                'an_arg', a_keyword_arg='a_keyword_arg_value')
+
+    def test_lookup_list(self):
+        res = self.templar._lookup('list', 'an_arg', 'another_arg')
+        self.assertEquals(res, 'an_arg,another_arg')
+
+    def test_lookup_jinja_undefined(self):
+        self.assertRaisesRegexp(AnsibleUndefinedVariable,
+                                "'an_undefined_jinja_var' is undefined",
+                                self.templar._lookup,
+                                'list', '{{ an_undefined_jinja_var }}')
+
+    def test_lookup_jinja_defined(self):
+        res = self.templar._lookup('list', '{{ some_var }}')
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_string_passed(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                "with_dict expects a dict",
+                                self.templar._lookup,
+                                'dict',
+                                '{{ some_var }}')
+
+    def test_lookup_jinja_dict_list_passed(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                "with_dict expects a dict",
+                                self.templar._lookup,
+                                'dict',
+                                ['foo', 'bar'])
+
+    def test_lookup_jinja_kwargs(self):
+        res = self.templar._lookup('list', 'blip', random_keyword='12345')
+        self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_list_wantlist(self):
+        res = self.templar._lookup('list', '{{ some_var }}', wantlist=True)
+        self.assertEquals(res, ["blip"])
+
+    def test_lookup_jinja_list_wantlist_undefined(self):
+        self.assertRaisesRegexp(AnsibleUndefinedVariable,
+                                "'some_undefined_var' is undefined",
+                                self.templar._lookup,
+                                'list',
+                                '{{ some_undefined_var }}',
+                                wantlist=True)
+
+    def test_lookup_jinja_list_wantlist_unsafe(self):
+        res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)
+        for lookup_result in res:
+            self.assertIsInstance(lookup_result, AnsibleUnsafe)
+
+        # Should this be an AnsibleUnsafe
+        # self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict(self):
+        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_var }}'})
+        self.assertEquals(res['{{ a_keyword }}'], "blip")
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
+        #self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_unsafe(self):
+        res = self.templar._lookup('list', {'{{ some_unsafe_key }}': '{{ some_unsafe_var }}'})
+        self.assertIsInstance(res['{{ some_unsafe_key }}'], AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_dict_unsafe_value(self):
+        res = self.templar._lookup('list', {'{{ a_keyword }}': '{{ some_unsafe_var }}'})
+        self.assertIsInstance(res['{{ a_keyword }}'], AnsibleUnsafe)
+        # TODO: Should this be an AnsibleUnsafe
+        #self.assertIsInstance(res, AnsibleUnsafe)
+
+    def test_lookup_jinja_none(self):
+        res = self.templar._lookup('list', None)
+        self.assertIsNone(res)
 
 
-class TestAnsibleEvalContext(unittest.TestCase):
-    def test(self):
-        env = AnsibleEnvironment()
-        eval_context = AnsibleEvalContext(env)
-        self.assertIsInstance(eval_context, AnsibleEvalContext)
-        self.assertIsInstance(eval_context, EvalContext)
+class TestTemplarLookupTemplate(unittest.TestCase):
+
+    def setUp(self):
+        fake_loader = DictDataLoader({
+            "/path/to/my_file.txt": "foo\n",
+        })
+        shared_loader = SharedPluginLoaderObj()
+        variables = dict(
+            foo="bar",
+            bam="{{foo}}",
+            num=1,
+            var_true=True,
+            var_false=False,
+            var_dict=dict(a="b"),
+            bad_dict="{a='b'",
+            var_list=[1],
+            recursive="{{recursive}}",
+            some_var="blip",
+            some_static_var="static_blip",
+            some_keyword="{{ foo }}",
+            some_unsafe_var=wrap_var("unsafe_blip"),
+            some_unsafe_keyword=wrap_var("{{ foo }}"),
+        )
+        self.templar = Templar(loader=fake_loader, variables=variables)
+
+    def test_unknown_lookup(self):
+        self.assertRaisesRegexp(AnsibleError,
+                                'lookup plugin \(sdfsdf\) not found',
+                                self.templar.template,
+                                u"{{ lookup('sdfsdf','sdfsdf') }}")
+
+    def test_file(self):
+        res = self.templar.template(u"{{ lookup('file', '/tmp/lookup_test') }}")
+        print(res)
+
+    def test_env(self):
+        res = self.templar.template(u"{{ lookup('env', 'TEST_VAR') }}")
+        print(res)
+
+    def test_nested_env(self):
+        res = self.templar.template(u"{{ lookup('env', lookup('env', 'TEST_VAR_VAR')) }}")
+        print(res)
+
+    def test_lines(self):
+        res = self.templar.template(u"{{ lookup('lines', '/tmp/lookup_test') }}")
+        print(res)
+
+    def test_fileglob(self):
+        res = self.templar.template(u"{{ lookup('fileglob', '/usr/share/man/man4/*') }}")
+        print(res)
 
 
 class TestAnsibleContext(unittest.TestCase):
