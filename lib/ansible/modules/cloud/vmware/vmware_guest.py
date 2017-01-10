@@ -1297,7 +1297,7 @@ class PyVmomiHelper(object):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
 
-        if self.should_deploy_from_template() and len(self.params['customization']) > 0:
+        if len(self.params['customization']) > 0:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
