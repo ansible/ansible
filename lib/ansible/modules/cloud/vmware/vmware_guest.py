@@ -352,6 +352,7 @@ from netaddr import IPNetwork, IPAddress
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.vmware import get_all_objs, connect_to_api
@@ -731,8 +732,8 @@ class PyVmomiHelper(object):
                                   'msg': 'Cannot suspend VM in the current state %s' % current_state}
 
             except Exception:
-                result = {'changed': False, 'failed': True,
-                          'msg': get_exception()}
+                e = get_exception()
+                result = {'changed': False, 'failed': True, 'msg': e}
 
             if task:
                 self.wait_for_task(task)
