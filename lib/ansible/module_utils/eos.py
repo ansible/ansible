@@ -61,15 +61,16 @@ class EosConfigMixin(object):
         return self.execute([cmd])[0]
 
     def load_config(self, config, commit=False, replace=False):
-        if self.supports_sessions():
-            return self.load_config_session(config, commit, replace)
+        session = self.supports_sessions()
+        if session:
+            return self.load_config_session(config, session, commit, replace)
         else:
             return self.configure(config)
 
-    def load_config_session(self, config, commit=False, replace=False):
+
+    def load_config_session(self, config, session, commit=False, replace=False):
         """ Loads the configuration into the remote device
         """
-        session = 'ansible_%s' % int(time.time())
         commands = ['configure session %s' % session]
 
         if replace:
@@ -124,14 +125,31 @@ class EosConfigMixin(object):
         self.execute(commands)
 
     def supports_sessions(self):
+        session = 'ansible_%s' % int(time.time())
+
         try:
             if isinstance(self, Eapi):
                 self.execute(['show configuration sessions'], output='text')
             else:
                 self.execute('show configuration sessions')
-            return True
         except NetworkError:
             return False
+        commands = ['configure session %s' % session,
+                    'show session-config diffs',
+                    'end']
+        try:
+            if isinstance(self, Eapi):
+                self.execute(commands, output='text')
+            else:
+                self.execute(commands)
+        except NetworkError:
+            return False
+        finally:
+            if isinstance(self, Eapi):
+                self.execute(['no configure session %s' % session, ], output='text')
+            else:
+                self.execute('no configure session %s' % session)
+        return Session
 
 
 
