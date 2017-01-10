@@ -14,7 +14,7 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
 
-.. warning:: Some lookups pass arguments to a shell, if using variables from a remote/untrusted source use the `|quote` filter to ensure safe usage.
+.. warning:: Some lookups pass arguments to a shell. When using variables from a remote/untrusted source, use the `|quote` filter to ensure safe usage.
 
 .. contents:: Topics
 
@@ -530,8 +530,8 @@ Here are some examples::
                 - "{{list2}}"
                 - [1,2,3,4,5,6]
 
-As an alternative you can also assign lookup plugins to variables or use them elsewhere.
-This macros are evaluated each time they are used in a task (or template)::
+As an alternative, you can also assign lookup plugins to variables or use them elsewhere.
+These macros are evaluated each time they are used in a task (or template)::
 
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
