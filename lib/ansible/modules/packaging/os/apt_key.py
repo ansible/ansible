@@ -112,9 +112,9 @@ EXAMPLES = '''
     id: 0x473041FA
     state: absent
 
-# Add a key from a file on the Ansible server
+# Add a key from a file on the Ansible server. Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
 - apt_key:
-    data: "{{ lookup('file', 'apt.gpg') }}"
+    data: "{{ lookup('file', 'apt.asc') }}"
     state: present
 
 # Add an Apt signing key to a specific keyring file
