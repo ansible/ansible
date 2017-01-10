@@ -5,9 +5,8 @@ About Modules
    :maxdepth: 1
 
    modules_intro
-   modules_core
-   modules_extra
    common_return_values
+   modules_support
 
 
 Ansible ships with a number of modules (called the 'module library')
