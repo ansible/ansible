@@ -65,7 +65,7 @@ options:
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. (Deprecated: no longer used, see boto3 Waiters)
+      - How long before wait gives up, in seconds. (Deprecated, no longer required. See boto3 Waiters)
     required: false
     default: 1200
   tags:
@@ -182,7 +182,7 @@ def copy_image(ec2, module):
     except ClientError as ce:
         module.fail_json(msg=ce.message)
     except NoCredentialsError:
-        module.fail_json(msg="Unable to authenticate, AWS credentials are invalid.")
+        module.fail_json(msg='Unable to authenticate, AWS credentials are invalid.')
     except Exception as e:
         module.fail_json(msg='Unhandled exception. (%s)' % str(e))
 
@@ -192,7 +192,7 @@ def main():
     argument_spec.update(dict(
         source_region=dict(required=True),
         source_image_id=dict(required=True),
-        name=dict(default=''),
+        name=dict(default='default'),
         description=dict(default=''),
         encrypted=dict(type='bool', required=False),
         kms_key_id=dict(type='str', required=False),
