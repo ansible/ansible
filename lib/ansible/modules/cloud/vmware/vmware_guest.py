@@ -139,6 +139,12 @@ options:
             - A note or annotation to include in the VM
         required: False
         version_added: "2.3"
+   customvalues:
+        description:
+            - Define a list of customvalues to set on VM.
+            - "A customvalue object takes 2 fields 'key' and 'value'."
+        required: False
+        version_added: "2.3"
    networks:
         description:
           - Network to use should include VM network name or VLAN, ip and gateway
@@ -355,6 +361,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.vmware import get_all_objs, connect_to_api
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     import json
@@ -369,6 +376,7 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     pass
+
 
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
@@ -748,11 +756,9 @@ class PyVmomiHelper(object):
             result['instance'] = facts
         return result
 
-    @staticmethod
-    def gather_facts(vm):
+    def gather_facts(self, vm):
 
         """ Gather facts from vim.VirtualMachine object. """
-
         facts = {
             'module_hw': True,
             'hw_name': vm.config.name,
@@ -765,7 +771,22 @@ class PyVmomiHelper(object):
             'hw_interfaces': [],
             'ipv4': None,
             'ipv6': None,
+            'annotation': vm.config.annotation,
+            'customvalues': {},
         }
+
+        cfm = self.content.customFieldsManager
+        # Resolve customvalues
+        for value_obj in vm.summary.customValue:
+            kn = value_obj.key
+            if cfm is not None and cfm.field:
+                for f in cfm.field:
+                    if f.key == value_obj.key:
+                        kn = f.name
+                        # Exit the loop immediately, we found it
+                        break
+
+            facts['customvalues'][kn] = value_obj.value
 
         netDict = {}
         for device in vm.guest.net:
@@ -945,6 +966,25 @@ class PyVmomiHelper(object):
             if nic_change_detected:
                 self.configspec.deviceChange.append(nic)
                 self.change_detected = True
+
+    def customize_customvalues(self, vm_obj):
+        if len(self.params['customvalues']) == 0:
+            return
+
+        facts = self.gather_facts(vm_obj)
+        for kv in self.params['customvalues']:
+            if 'key' not in kv or 'value' not in kv:
+                self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
+
+            # If kv is not kv fetched from facts, change it
+            if kv['key'] in facts['customvalues'] and facts['customvalues'][kv['key']] != kv['value']:
+                try:
+                    vm_obj.setCustomValue(key=kv['key'], value=kv['value'])
+                    self.change_detected = True
+                except Exception:
+                    e = get_exception()
+                    self.module.fail_json(msg="Failed to set custom value for key='%s' and value='%s'. Error was: %s"
+                                          % (kv['key'], kv['value'], e))
 
     def customize_vm(self, vm_obj):
         # Network settings
@@ -1299,6 +1339,7 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
+        self.customize_customvalues(vm_obj=vm_obj)
 
         if len(self.params['customization']) > 0:
             self.customize_vm(vm_obj=vm_obj)
@@ -1360,6 +1401,11 @@ class PyVmomiHelper(object):
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
+        self.customize_customvalues(vm_obj=self.current_vm_obj)
+
+        if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
+            self.configspec.annotation = str(self.params['annotation'])
+            self.change_detected = True
 
         relospec = vim.vm.RelocateSpec()
         hostsystem = self.select_host()
@@ -1730,6 +1776,7 @@ def main():
             template_src=dict(required=False, type='str', aliases=['template'], default=None),
             is_template=dict(required=False, type='bool', default=False),
             annotation=dict(required=False, type='str', aliases=['notes']),
+            customvalues=dict(required=False, type='list', default=[]),
             name=dict(required=True, type='str'),
             new_name=dict(required=False, type='str'),
             name_match=dict(required=False, type='str', default='first'),
