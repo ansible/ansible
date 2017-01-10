@@ -45,6 +45,7 @@ class ActionModule(ActionBase):
     DEFAULT_CONNECT_TIMEOUT_SEC = 5
     DEFAULT_PRE_REBOOT_DELAY_SEC = 2
     DEFAULT_TEST_COMMAND = 'whoami'
+    DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
     def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
@@ -70,7 +71,8 @@ class ActionModule(ActionBase):
         reboot_timeout_sec = int(self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT_SEC))
         connect_timeout_sec = int(self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT_SEC))
         pre_reboot_delay_sec = int(self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY_SEC))
-        test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
+        test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
+        msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
 
         if self._play_context.check_mode:
             display.vvv("win_reboot: skipping for check_mode")
@@ -82,7 +84,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
 
         # initiate reboot
-        (rc, stdout, stderr) = self._connection.exec_command("shutdown /r /t %d" % pre_reboot_delay_sec)
+        (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay_sec, msg))
 
         if rc != 0:
             result['failed'] = True
