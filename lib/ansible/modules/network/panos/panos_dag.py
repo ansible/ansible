@@ -71,11 +71,8 @@ EXAMPLES = '''
     dag_filter: "'aws-tag.aws:cloudformation:logical-id.ServerInstance' and 'instanceState.running'"
 '''
 
-RETURN = '''
-status:
-    description: success status
-    returned: success
-    type: string
+RETURN='''
+# Default return values
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -133,11 +130,7 @@ def main():
         module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
-    if not ip_address:
-        module.fail_json(msg="ip_address should be specified")
     password = module.params["password"]
-    if not password:
-        module.fail_json(msg="password is required")
     username = module.params['username']
 
     xapi = pan.xapi.PanXapi(
@@ -147,11 +140,7 @@ def main():
     )
 
     dag_name = module.params['dag_name']
-    if not dag_name:
-        module.fail_json(msg="dag_name is required")
     dag_filter = module.params['dag_filter']
-    if not dag_filter:
-        module.fail_json(msg="dag_filter is required")
     commit = module.params['commit']
 
     changed = add_dag(xapi, dag_name, dag_filter)
