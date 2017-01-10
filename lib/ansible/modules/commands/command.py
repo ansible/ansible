@@ -71,30 +71,33 @@ options:
       - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
     required: false
 notes:
-    -  If you want to run a command through the shell (say you are using C(<),
-       C(>), C(|), etc), you actually want the M(shell) module instead. The
-       M(command) module is much more secure as it's not affected by the user's
-       environment.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
+       The M(command) module is much more secure as it's not affected by the user's environment.
+    -  " C(creates), C(removes), and C(chdir) can be specified after the command.
+       For instance, if you only want to run a command if a certain file does not exist, use this."
 author: 
     - Ansible Core Team
     - Michael DeHaan
 '''
 
 EXAMPLES = '''
-# Example from Ansible Playbooks.
-- command: /sbin/shutdown -t now
+- name: return motd to registered var
+  command: cat /etc/motd
+  register: mymotd
 
-# Run the command if the specified file does not exist.
-- command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+- name: Run the command if the specified file does not exist.
+  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
 
-# You can also use the 'args' form to provide the options. This command
-# will change the working directory to somedir/ and will only run when
-# /path/to/database doesn't exist.
-- command: /usr/bin/make_database.sh arg1 arg2
+# You can also use the 'args' form to provide the options.
+- name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
+  command: /usr/bin/make_database.sh arg1 arg2
   args:
     chdir: somedir/
     creates: /path/to/database
+
+- name: safely use tempalated variable to run command. Always use the quote filter to avoid injection issues.
+  command: cat {{ myfile|quote }}
+  register: myoutput
 '''
 
 import datetime
