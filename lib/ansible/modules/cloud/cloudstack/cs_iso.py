@@ -109,6 +109,12 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
+  poll_async:
+    description:
+      - Poll async jobs until job has finished.
+    required: false
+    default: true
+    version_added: "2.3"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -244,6 +250,8 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             self.result['changed'] = True
             if not self.module.check_mode:
                 res = self.cs.registerIso(**args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 iso = res['iso'][0]
         return iso
 
@@ -288,6 +296,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    self.poll_job(res, 'iso')
         return iso
 
 
@@ -309,6 +322,7 @@ def main():
         is_featured = dict(type='bool', default=False),
         is_dynamically_scalable = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent'], default='present'),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
