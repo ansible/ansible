@@ -264,6 +264,10 @@ class PlaybookExecutor:
         else:
             grouped_hosts = [(len(all_hosts), all_hosts)]
 
+        if len(grouped_hosts) == 0:
+            # shortcut: no hosts at all, no reason to continue
+            return []
+
         min_group_len = min(len(g) for _, g in grouped_hosts)
 
         cur_item = 0

@@ -134,6 +134,13 @@ class TestPlaybookExecutor(unittest.TestCase):
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9']])
 
+        # simple serial value, but with no hosts at all - check that it does not matter
+        playbook = Playbook.load(pbe._playbooks[0], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = []
+        self.assertEqual(pbe._get_serialized_batches(play), [])
+
         playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)
         play = playbook.get_plays()[0]
         play.post_validate(templar)
@@ -222,3 +229,11 @@ class TestPlaybookExecutor(unittest.TestCase):
             [gh_even_extra[3], gh_even_extra[4], gh_odd[4]],
             [gh_even_extra[5]]
         ])
+
+        # grouping feature, but with empty hosts - check that it does not fail
+        playbook = Playbook.load(playbook_grouping_int, variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        mock_inventory.get_hosts.return_value = []
+        self.assertEqual(pbe._get_serialized_batches(play), [])
+
