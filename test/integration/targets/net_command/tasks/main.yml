@@ -33,5 +33,3 @@
     that:
       - result.changed == true
       - "'VyOS' in result.stdout"
-
-
