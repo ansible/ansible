@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os.path import basename
+from os.path import normpath
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
@@ -108,9 +108,15 @@ class IncludeRole(TaskInclude):
 
         # build options for role includes
         for key in ['tasks', 'vars', 'defaults']:
+<<<<<<< HEAD
             from_key = '%s_from' % key
             if ir.args.get(from_key):
                 ir._from_files[key] = basename(ir.args.get(from_key))
+=======
+            from_key ='%s_from' % key
+            if  ir.args.get(from_key):
+                ir._from_files[key] = normpath(ir.args.get(from_key))
+>>>>>>> fix include_role files path resolving
 
         # FIXME: find a way to make this list come from object ( attributes does not work as per below)
         # manual list as otherwise the options would set other task parameters we don't want.
