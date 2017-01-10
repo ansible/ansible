@@ -147,8 +147,8 @@ options:
         version_added: "2.3"
    networks:
         description:
-          - Network to use should include a C(name) or C(vlan) entry
-          - Add an optional C(ip) and either a C(network) or a C(netmask) entry for network configuration
+          - Network to use should include C(name) or C(vlan) entry
+          - Add an optional C(ip) and C(netmask) for network configuration
           - Add an optional C(gateway) entry to configure a gateway
           - Add an optional C(mac) entry to customize mac address
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
@@ -209,9 +209,10 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: paravirtual
       networks:
-        '192.168.1.0/24':
-          network: VM Network
-          mac: 'aa:bb:dd:aa:00:14'
+      - network: VM Network
+        ip: 192.168.1.100
+        netmask: 255.255.255.0
+        mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
     register: deploy
@@ -255,7 +256,7 @@ EXAMPLES = '''
       networks:
       - name: VM Network
         ip: 192.168.1.100
-        network: 192.168.1.0/24
+        netmask: 255.255.255.0
         gateway: 192.168.1.1
         mac: 'aa:bb:dd:aa:00:14'
         domain: my_domain
@@ -356,7 +357,6 @@ instance:
 
 import os
 import time
-from netaddr import IPNetwork, IPAddress
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -691,7 +691,7 @@ class PyVmomiHelper(object):
                         matches.append(thisvm)
                     if len(matches) > 1:
                         self.module.fail_json(
-                            msg='More than 1 vm exists by the name %s. Please specify a uuid, or a folder, '
+                            msg='More than 1 VM exists by the name %s. Please specify a uuid, or a folder, '
                                 'or a datacenter or name_match' % name)
                     if matches:
                         vm = matches[0]
@@ -884,24 +884,10 @@ class PyVmomiHelper(object):
             return
 
         network_devices = list()
-        for network in self.params.get('networks'):
-            if 'ip' in network:
-
-                if 'netmask' in network:
-                    pass
-
-                # TODO: What if netmask and network are provided but conflict ?
-                elif 'network' in network:
-                    ip = IPAddress(network['ip'])
-                    ipnet = IPNetwork(network['network'])
-
-                    if ip not in ipnet:
-                        self.module.fail_json(msg="IP '%(ip)s' not in network '%(network)s'" % network)
-
-                    network['netmask'] = str(ipnet.netmask)
-
-                else:
-                    self.module.fail_json(msg="No 'network' or 'netmask' entry defined in networks section")
+        for network in self.params['networks']:
+            if 'ip' in network or 'netmask' in network:
+                if 'ip' in network and 'netmask' in network:
+                    self.module.fail_json(msg="Both 'ip' and 'network' are required together.")
 
             if 'name' in network:
                 if get_obj(self.content, [vim.Network], network['name']) is None:
@@ -1000,30 +986,29 @@ class PyVmomiHelper(object):
     def customize_vm(self, vm_obj):
         # Network settings
         adaptermaps = []
-        if len(self.params['networks']) > 0:
-            for network in self.params['networks']:
-                if 'ip' in self.params['networks'][network]:
-                    guest_map = vim.vm.customization.AdapterMapping()
-                    guest_map.adapter = vim.vm.customization.IPSettings()
-                    guest_map.adapter.ip = vim.vm.customization.FixedIp()
-                    guest_map.adapter.ip.ipAddress = str(network['ip'])
-                    guest_map.adapter.subnetMask = str(network['netmask'])
+        for network in self.params['networks']:
+            if 'ip' in network and 'netmask' in network:
+                guest_map = vim.vm.customization.AdapterMapping()
+                guest_map.adapter = vim.vm.customization.IPSettings()
+                guest_map.adapter.ip = vim.vm.customization.FixedIp()
+                guest_map.adapter.ip.ipAddress = str(network['ip'])
+                guest_map.adapter.subnetMask = str(network['netmask'])
 
-                    if 'gateway' in network:
-                        guest_map.adapter.gateway = network['gateway']
+                if 'gateway' in network:
+                    guest_map.adapter.gateway = network['gateway']
 
-                    # On Windows, DNS domain and DNS servers can be set by network interface
-                    # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
-                    if 'domain' in network:
-                        guest_map.adapter.dnsDomain = network['domain']
-                    elif self.params['customization'].get('domain'):
-                        guest_map.adapter.dnsDomain = self.params['customization']['domain']
-                    if 'dns_servers' in network:
-                        guest_map.adapter.dnsServerList = network['dns_servers']
-                    elif self.params['customization'].get('dns_servers'):
-                        guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
+                # On Windows, DNS domain and DNS servers can be set by network interface
+                # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.IPSettings.html
+                if 'domain' in network:
+                    guest_map.adapter.dnsDomain = network['domain']
+                elif self.params['customization'].get('domain'):
+                    guest_map.adapter.dnsDomain = self.params['customization']['domain']
+                if 'dns_servers' in network:
+                    guest_map.adapter.dnsServerList = network['dns_servers']
+                elif self.params['customization'].get('dns_servers'):
+                    guest_map.adapter.dnsServerList = self.params['customization']['dns_servers']
 
-                    adaptermaps.append(guest_map)
+                adaptermaps.append(guest_map)
 
         # Global DNS settings
         globalip = vim.vm.customization.GlobalIPSettings()
