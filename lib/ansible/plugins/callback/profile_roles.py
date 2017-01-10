@@ -72,7 +72,7 @@ class CallbackModule(CallbackBase):
     """
     This callback module provides profiling for ansible roles.
     """
-    CALLBACK_VERSION = 1.0
+    CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'profile_roles'
     CALLBACK_NEEDS_WHITELIST = True
