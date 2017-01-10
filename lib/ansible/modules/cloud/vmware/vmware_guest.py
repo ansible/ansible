@@ -25,12 +25,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: vmware_guest
-short_description: Manages virtualmachines in vcenter
+short_description: Manages virtual machines in vcenter
 description:
-    - Uses pyvmomi to ...
-    - copy a template to a new virtualmachine
-    - poweron/poweroff/restart a virtualmachine
-    - remove a virtualmachine
+    - Create new virtual machines (from templates or not)
+    - Power on/power off/restart a virtual machine
+    - Modify an existing virtual machine
+    - Remove a virtual machine
 version_added: 2.2
 author:
     - James Tanner (@jctanner) <tanner.jc@gmail.com>
@@ -43,13 +43,13 @@ requirements:
 options:
    state:
         description:
-            - What state should the virtualmachine be in?
-            - if state is set to present and VM exists, ensure the VM configuration if conform to task arguments
+            - What state should the virtual machine be in?
+            - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments
         required: True
         choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
    name:
         description:
-            - Name of the newly deployed guest
+            - Name of the VM to work with
         required: True
    new_name:
         description:
@@ -59,20 +59,20 @@ options:
         version_added: "2.3"
    name_match:
         description:
-            - If multiple vms matching the name, use the first or last found
+            - If multiple VMs matching the name, use the first or last found
         required: False
         default: 'first'
         choices: ['first', 'last']
    uuid:
         description:
-            - UUID of the instance to manage if known, this is vmware's unique identifier.
+            - UUID of the instance to manage if known, this is VMware's unique identifier.
             - This is required if name is not supplied.
         required: False
    template:
         description:
-            - Template used to create guest.
+            - Template used to create VM.
             - If this value is not set, VM is created without using a template.
-            - If the guest exists already this setting will be ignored.
+            - If the VM exists already this setting will be ignored.
         required: False
    is_template:
         description:
@@ -82,7 +82,7 @@ options:
         version_added: "2.3"
    folder:
         description:
-            - Destination folder path for the new guest
+            - Destination folder path for the new VM
         required: False
    hardware:
         description:
@@ -114,7 +114,8 @@ options:
         version_added: "2.3"
    wait_for_ip_address:
         description:
-            - Wait until vcenter detects an IP address for the guest
+            - Wait until vCenter detects an IP address for the VM
+            - This requires vmware-tools (vmtoolsd) to properly work after creation
         required: False
    force:
         description:
@@ -148,6 +149,7 @@ options:
    snapshot_op:
         description:
           - A key, value pair of snapshot operation types and their additional required parameters.
+          - Beware that this functionality will disappear in v2.3 and move into module C(vmware_guest_snapshot)
         required: False
         version_added: "2.3"
    customization:
@@ -177,7 +179,6 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
 # Create a VM from a template
   - name: create the VM
     vmware_guest:
@@ -276,6 +277,8 @@ Example from Ansible playbook
     register: facts
 
 ### Snapshot Operations
+###
+### BEWARE: This functionality will move into vmware_guest_snapshot before release !
 # Create snapshot
   - vmware_guest:
       hostname: 192.168.1.209
