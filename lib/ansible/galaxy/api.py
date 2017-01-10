@@ -32,7 +32,7 @@ from ansible.compat.six.moves.urllib.error import HTTPError
 from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.errors import AnsibleError
 from ansible.galaxy.token import GalaxyToken
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 
 try:
@@ -93,7 +93,7 @@ class GalaxyAPI(object):
             display.vvv(url)
             resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method,
                             timeout=20)
-            data = json.load(resp)
+            data = json.load(to_text(resp, errors='surrogate_or_strict'))
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['detail'])
@@ -119,7 +119,7 @@ class GalaxyAPI(object):
             raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
 
         try:
-            data = json.load(return_data)
+            data = json.load(to_text(return_data, errors='surrogate_or_strict'))
         except Exception as e:
             raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
@@ -136,7 +136,7 @@ class GalaxyAPI(object):
         url = '%s/tokens/' % self.baseurl
         args = urlencode({"github_token": github_token})
         resp = open_url(url, data=args, validate_certs=self._validate_certs, method="POST")
-        data = json.load(resp)
+        data = json.load(to_text(resp, errors='surrogate_or_strict'))
         return data
 
     @g_connect
