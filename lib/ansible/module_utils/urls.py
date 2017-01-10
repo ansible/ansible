@@ -528,7 +528,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     return RedirectHandler
 
 
-def build_ssl_validation_error(hostname, port, paths):
+def build_ssl_validation_error(hostname, port, paths, exc=None):
     '''Inteligently build out the SSLValidationError based on what support
     you have installed
     '''
@@ -550,7 +550,10 @@ def build_ssl_validation_error(hostname, port, paths):
     msg.append('You can use validate_certs=False if you do'
                ' not need to confirm the servers identity but this is'
                ' unsafe and not recommended.'
-               ' Paths checked for this platform: %s')
+               ' Paths checked for this platform: %s.')
+
+    if exc:
+        msg.append('The exception msg was: %s.' % to_native(exc))
 
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
@@ -722,7 +725,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             #ssl_s.unwrap()
             s.close()
         except (ssl.SSLError, CertificateError):
-            build_ssl_validation_error(self.hostname, self.port, paths_checked)
+            e = get_exception()
+            build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
         except socket.error:
             e = get_exception()
             raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
