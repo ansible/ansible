@@ -2091,7 +2091,7 @@ class AIX(Hardware):
         if mount_out:
             for line in mount_out.split('\n'):
                 fields = line.split()
-                if len(fields) != 0 and re.match('^/.*|^[a-zA-Z].*(!node)|^[0-9].*', fields[0]):
+                if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
                     if re.match('^/', fields[0]):
                         # normal mount
                         self.facts['mounts'].append({'mount': fields[1],
@@ -2101,11 +2101,13 @@ class AIX(Hardware):
                                                  'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
                     else:
                         # nfs or cifs based mount
-                        # in case of nfs no mount options are provided on command line...
+                        # in case of nfs if no mount options are provided on command line
+                        # add into fields empty string...
+                        if len(fields) < 8: fields.append("")
                         self.facts['mounts'].append({'mount': fields[2],
                                                  'device': '%s:%s' % (fields[0], fields[1]),
                                                  'fstype' : fields[3],
-                                                 'options': '',
+                                                 'options': fields[7],
                                                  'time': '%s %s %s' % ( fields[4], fields[5], fields[6])})
 
 class HPUX(Hardware):
