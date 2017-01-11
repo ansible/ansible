@@ -27,8 +27,8 @@ from ansible.compat.tests.mock import patch
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment
-#from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var, is_unsafe
-from ansible.unsafe_proxy import AnsibleUnsafe, wrap_var, is_unsafe
+from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var
+#from ansible.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
 
 
@@ -280,7 +280,6 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_kwargs(self):
         res = self.templar._lookup('list', 'blip', random_keyword='12345')
-        print(dir(res))
         self.assertTrue(self.is_unsafe(res))
         #self.assertIsInstance(res, AnsibleUnsafe)
 
@@ -329,34 +328,6 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
     def test_lookup_jinja_none(self):
         res = self.templar._lookup('list', None)
         self.assertIsNone(res)
-
-
-class TestTemplarLookupTemplate(BaseTemplar, unittest.TestCase):
-    def test_unknown_lookup(self):
-        self.assertRaisesRegexp(AnsibleError,
-                                'lookup plugin \(sdfsdf\) not found',
-                                self.templar.template,
-                                u"{{ lookup('sdfsdf','sdfsdf') }}")
-
-#    def test_file(self):
-#        res = self.templar.template(u"{{ lookup('file', '/tmp/lookup_test') }}")
-#        print(res)
-
-    def test_env(self):
-        res = self.templar.template(u"{{ lookup('env', 'TEST_VAR') }}")
-        print(res)
-
-    def test_nested_env(self):
-        res = self.templar.template(u"{{ lookup('env', lookup('env', 'TEST_VAR_VAR')) }}")
-        print(res)
-
-#    def test_lines(self):
-#        res = self.templar.template(u"{{ lookup('lines', '/tmp/lookup_test') }}")
-#        print(res)
-
-    def test_fileglob(self):
-        res = self.templar.template(u"{{ lookup('fileglob', '/usr/share/man/man4/*') }}")
-        print(res)
 
 
 class TestAnsibleContext(BaseTemplar, unittest.TestCase):
