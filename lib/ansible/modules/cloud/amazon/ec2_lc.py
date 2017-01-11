@@ -263,7 +263,7 @@ def create_launch_config(connection, module):
             if bdm.ebs is not None:
                 result['block_device_mappings'][-1]['ebs'] = dict(snapshot_id=bdm.ebs.snapshot_id, volume_size=bdm.ebs.volume_size)
 
-    if launch_configs[0].user_data is not None:
+    if launch_configs[0].user_data != "":
         result['user_data'] = "hidden" # Otherwise, we dump binary to the user's terminal
 
     module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
