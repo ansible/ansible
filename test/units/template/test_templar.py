@@ -23,6 +23,7 @@ from jinja2.runtime import Context
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
+from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
@@ -75,6 +76,9 @@ class BaseTemplar(object):
             for item in obj:
                 if self.is_unsafe(item):
                     return True
+
+        if isinstance(obj, string_types) and hasattr(obj, '__UNSAFE__'):
+            return True
 
         return False
 
