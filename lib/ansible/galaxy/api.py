@@ -95,7 +95,7 @@ class GalaxyAPI(object):
                             timeout=20)
             data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         except HTTPError as e:
-            res = json.load(e)
+            res = json.loads(to_text(e.fp.read(), errors='surrogate_or_strict'))
             raise AnsibleError(res['detail'])
         return data
 
