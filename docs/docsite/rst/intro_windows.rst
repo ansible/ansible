@@ -207,18 +207,18 @@ Windows System Prep
 
 In order for Ansible to manage your windows machines, you will have to enable and configure PowerShell remoting.
 
-To automate the setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
+To automate the setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/Enable-WinRM.ps1>`_ on the remote machine.
 
 The example script accepts a few arguments which Admins may choose to use to modify the default setup slightly, which might be appropriate in some cases.
 
 Pass the -CertValidityDays option to customize the expiration date of the generated certificate.
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -CertValidityDays 100
+  powershell.exe -File Enable-WinRM.ps1 -CertValidityDays 100
 
 Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
+  powershell.exe -File Enable-WinRM.ps1 -SkipNetworkProfileCheck
 
 Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
+  powershell.exe -File Enable-WinRM.ps1 -ForceNewSSLCert
 
 .. note::
    On Windows 7 and Server 2008 R2 machines, due to a bug in Windows
