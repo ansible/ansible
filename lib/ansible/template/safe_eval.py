@@ -32,10 +32,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     with_items: a_list_variable
 
     Where Jinja2 would return a string but we do not want to allow it to
-    call functions (outside of Jinja2, where the env is constrained). If
-    the input data to this function came from an untrusted (remote) source,
-    it should first be run through _clean_data_struct() to ensure the data
-    is further sanitized prior to evaluation.
+    call functions (outside of Jinja2, where the env is constrained).
 
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
