@@ -48,6 +48,7 @@ class BaseTemplar(object):
             some_static_var="static_blip",
             some_keyword="{{ foo }}",
             some_unsafe_var=wrap_var("unsafe_blip"),
+            some_static_unsafe_var=wrap_var("static_unsafe_blip"),
             some_unsafe_keyword=wrap_var("{{ foo }}"),
         )
         self.fake_loader = DictDataLoader({
@@ -127,6 +128,32 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         #self.assertIsInstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
+    def test_template_convert_data(self):
+        res = self.templar.template('{{foo}}', convert_data=True)
+        self.assertTrue(res)
+        self.assertEquals(res, 'bar')
+
+    @patch('ansible.template.safe_eval', side_effect=AnsibleError)
+    def test_template_convert_data_template_in_data(self, mock_safe_eval):
+        res = self.templar.template('{{bam}}', convert_data=True)
+        self.assertTrue(res)
+        self.assertEquals(res, 'bar')
+
+    def test_template_convert_data_bare(self):
+        res = self.templar.template('bam', convert_data=True)
+        self.assertTrue(res)
+        self.assertEquals(res, 'bam')
+
+    def test_template_convert_data_to_json(self):
+        res = self.templar.template('{{bam|to_json}}', convert_data=True)
+        self.assertTrue(res)
+        self.assertEquals(res, '"bar"')
+
+    def test_template_convert_data_convert_bare_data_bare(self):
+        res = self.templar.template('bam', convert_data=True, convert_bare=True)
+        self.assertTrue(res)
+        self.assertEquals(res, 'bar')
+
     @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
     def test_template_unsafe_clean_data_exception(self, mock_clean_data):
         self.assertRaises(AnsibleError,
@@ -154,6 +181,13 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         unsafe_obj = wrap_var(some_obj)
         res = self.templar.template(unsafe_obj)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
+
+    def test_weird(self):
+        data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''
+        self.assertRaisesRegexp(AnsibleError,
+                                'template error while templating string',
+                                self.templar.template,
+                                data)
 
 
 class TestTemplarCleanData(BaseTemplar, unittest.TestCase):
