@@ -355,8 +355,6 @@ class CLI(with_metaclass(ABCMeta, object)):
                 help="specify extra arguments to pass to scp only (e.g. -l)")
             connect_group.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
                 help="specify extra arguments to pass to ssh only (e.g. -R)")
-            connect_group.add_option('--nspawn-extra-args', default='', dest='nspawn_extra_args',
-                help="specify extra arguments to pass to systemd-nspawn only (e.g. --bind)")
 
             parser.add_option_group(connect_group)
 
