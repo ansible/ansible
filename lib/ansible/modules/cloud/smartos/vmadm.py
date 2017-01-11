@@ -35,140 +35,140 @@ options:
     debug:
         required: false
         description:
-        - Don't delete the JSON payload used to generated a VM.
+          - Don't delete the JSON payload used to generated a VM.
     force:
         required: false
         description:
-        - Force a particular action (i.e. stop or delete a VM).
+          - Force a particular action (i.e. stop or delete a VM).
     state:
         required: true
         choices: [ present, absent, created, deleted, running, stopped, rebooted ]
         description:
-        - States for the VM to be in. There are various aliases defined,
-          C(present) for C(running), C(absent) for C(deleted) and C(created) for C(stopped).
+          - States for the VM to be in. There are various aliases defined,
+            C(present) for C(running), C(absent) for C(deleted) and C(created) for C(stopped).
     alias:
         required: false
         description:
-        - Name of the VM. vmadm(1M) uses this as an optional name.
+          - Name of the VM. vmadm(1M) uses this as an optional name.
     autoboot:
         required: false
         description:
-        - Whether or not a VM is booted when the system is rebooted.
+          - Whether or not a VM is booted when the system is rebooted.
     brand:
         required: true
         choices: [ joyent, joyent-minimal, kvm, lx ]
         default: joyent
         description:
-        - Type for of virtual machine.
+          - Type for of virtual machine.
     cpu_cap:
         required: false
         description:
-        - Sets a limit on the amount of CPU time that can be used by a VM.
-          Use C(0) for no cap.
+          - Sets a limit on the amount of CPU time that can be used by a VM.
+            Use C(0) for no cap.
     cpu_shares:
         required: false
         description:
-        - Sets a limit on the number of fair share scheduler (FSS) CPU shares for
-          a VM. This limit is relative to all other VMs on the system.
+          - Sets a limit on the number of fair share scheduler (FSS) CPU shares for
+            a VM. This limit is relative to all other VMs on the system.
     customer_metadata:
         required: false
         description:
-        - Metadata to be set and associated with this VM, this contain customer
-          modifiable keys.
+          - Metadata to be set and associated with this VM, this contain customer
+            modifiable keys.
     delegate_dataset:
         required: false
         description:
-        - Whether to delegate a ZFS dataset to an OS VM.
+          - Whether to delegate a ZFS dataset to an OS VM.
     disk_driver:
         required: false
         description:
-        - Default value for a virtual disk model for KVM guests.
+          - Default value for a virtual disk model for KVM guests.
     disks:
         required: false
         description:
-        - A list of disks to add, valid properties are documented in vmadm(1M).
+          - A list of disks to add, valid properties are documented in vmadm(1M).
     dns_domain:
         required: false
         description:
-        - Domain value for C(/etc/hosts).
+          - Domain value for C(/etc/hosts).
     filesystems:
         required: false
         description:
-        - Mount additional filesystems into an OS VM.
+          - Mount additional filesystems into an OS VM.
     firewall_enabled:
         required: false
         description:
-        - Enables the firewall, allowing fwadm(1M) rules to be applied.
+          - Enables the firewall, allowing fwadm(1M) rules to be applied.
     fs_allowed:
         required: false
         description:
-        - Comma separated list of filesystem types this zone is allowed to mount.
+          - Comma separated list of filesystem types this zone is allowed to mount.
     hostname:
         required: false
         description:
-        - Zone/VM hostname.
+          - Zone/VM hostname.
     image_uuid:
         required: false
         description:
-        - Image UUID.
+          - Image UUID.
     indestructible_zoneroot:
         required: false
         description:
-        - Adds an C(@indestructible) snapshot to zoneroot.
+          - Adds an C(@indestructible) snapshot to zoneroot.
     internal_metadata:
         required: false
         description:
-        - Metadata to be set and associated with this VM, this contains operator
-          generated keys.
+          - Metadata to be set and associated with this VM, this contains operator
+            generated keys.
     kernel_version:
         required: false
         description:
-        - Kernel version to emulate for LX VMs.
+          - Kernel version to emulate for LX VMs.
     maintain_resolvers:
         required: false
         description:
-        - Resolvers in C(/etc/resolv.conf) will be updated when updating
-          the C(resolvers) property.
+          - Resolvers in C(/etc/resolv.conf) will be updated when updating
+            the C(resolvers) property.
     max_physical_memory:
         required: false
         description:
-        - Maximum amount of memory (in MiBs) on the host that the VM is allowed to use.
+          - Maximum amount of memory (in MiBs) on the host that the VM is allowed to use.
     max_swap:
         required: false
         description:
-        - Maximum amount of virtual memory (in MiBs) the VM is allowed to use.
+          - Maximum amount of virtual memory (in MiBs) the VM is allowed to use.
     nic_driver:
         required: false
         description:
-        - Default value for a virtual NIC model for KVM guests.
+          - Default value for a virtual NIC model for KVM guests.
     nics:
         required: false
         description:
-        - A list of nics to add, valid properties are documented in vmadm(1M).
+          - A list of nics to add, valid properties are documented in vmadm(1M).
     qemu_extra_opts:
         required: false
         description:
-        - Additional qemu cmdline arguments for KVM guests.
+          - Additional qemu cmdline arguments for KVM guests.
     quota:
         required: false
         description:
-        - Quota on zone filesystems (in MiBs).
+          - Quota on zone filesystems (in MiBs).
     ram:
         required: false
         description:
-        - Amount of virtual RAM for a KVM guest (in MiBs).
+          - Amount of virtual RAM for a KVM guest (in MiBs).
     resolvers:
         required: false
         description:
-        - List of resolvers to be put into C(/etc/resolv.conf).
+          - List of resolvers to be put into C(/etc/resolv.conf).
     uuid:
         required: false
         description:
-        - UUID of the VM. Can either be a full UUID or C(*) for all VMs.
+          - UUID of the VM. Can either be a full UUID or C(*) for all VMs.
     vcpus:
         required: false
         description:
-        - Number of virtual CPUs for a KVM guest.
+          - Number of virtual CPUs for a KVM guest.
     vnc_port:
         required: false
         description:
@@ -177,11 +177,11 @@ options:
     zfs_io_priority:
         required: false
         description:
-        - IO throttle priority value relative to other VMs.
+          - IO throttle priority value relative to other VMs.
     zpool:
         required: false
         description:
-        - ZFS pool the VM's zone dataset will be created in.
+          - ZFS pool the VM's zone dataset will be created in.
 requirements:
     - python >= 2.6
 '''
