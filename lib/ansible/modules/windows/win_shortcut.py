@@ -44,7 +44,7 @@ options:
       - Shortcut Key for Windows Shortcut.
     required: true
     default: no default
- iconlocation:
+ icon:
     description:
       - Shortcut Icon location for a Windows shortcut.
     required: true
@@ -60,7 +60,7 @@ EXAMPLES = '''
     src: 'C:\Program Files\Mozilla Firefox\Firefox.exe'
     dest: 'D:\test\Mozilla Firefox\Firefox.lnk'
     hotkey: 'CTRL+SHIFT+1'
-    iconlocation: 'C:\Windows\System32\Shell32.dll,18'
+    icon: 'C:\Windows\System32\Shell32.dll,18'
 '''
 
 RETURN = '''
