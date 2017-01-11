@@ -155,6 +155,15 @@ EXAMPLES = '''
       lun_id: 1IET_000d0002
       address: 10.34.63.204
 
+# Add data glusterfs storage domain
+-  ovirt_storage_domains:
+    name: glusterfs_1
+    host: myhost
+    data_center: mydatacenter
+    glusterfs:
+      address: 10.10.10.10
+      path: /path/data
+
 # Import export NFS storage domain:
 - ovirt_storage_domains:
     domain_function: export
@@ -247,7 +256,7 @@ class StorageDomainModule(BaseModule):
                     ),
                 ] if storage_type in ['iscsi', 'fcp'] else None,
                 mount_options=storage.get('mount_options'),
-                vfs_type=storage.get('vfs_type'),
+                vfs_type='glusterfs' if storage_type in ['glusterfs'] else storage.get('vfs_type'),
                 address=storage.get('address'),
                 path=storage.get('path'),
                 nfs_retrans=storage.get('retrans'),
