@@ -222,16 +222,17 @@ uuid:
     sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
 alias:
     description: Alias of the managed VM.
-    returned: when not using UUIDs.
+    returned: When addressing a VM by alias.
     type: string
     sample: 'dns-zone'
 state:
-    description: state of the target, after execution
+    description: State of the target, after execution.
     returned: success
     type: string
     sample: 'running'
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 import os
 import re
 import tempfile
@@ -244,6 +245,7 @@ except ImportError:
 # generated JSON does not play well with the JSON parsers of Python.
 # The returned message contains '\n' as part of the stacktrace,
 # which breaks the parsers.
+
 
 def get_vm_prop(module, uuid, prop):
     """Lookup a property for the given VM.
@@ -260,6 +262,7 @@ def get_vm_prop(module, uuid, prop):
     except:
         return None
 
+
 def get_vm_uuid(module, alias):
     """Lookup the uuid that goes with the given alias.
     Returns the uuid or '' if not found."""
@@ -274,6 +277,7 @@ def get_vm_uuid(module, alias):
         return json.loads(stdout)[0]['uuid']
     except:
         return ''
+
 
 def get_all_vm_uuids(module):
     """Retrieve the UUIDs for all VMs"""
@@ -290,15 +294,54 @@ def get_all_vm_uuids(module):
     except:
         return []
 
-def create_vm(module, payload_file):
+
+def new_vm(module, uuid, vm_state):
+    payload_file = create_payload(module, uuid)
+
+    (rc, stdout, stderr) = vmadm_create_vm(module, payload_file)
+
+    if rc != 0:
+        changed = False
+        module.fail_json(msg='Could not create VM: {0}'.format(stderr))
+    else:
+        changed = True
+        # 'vmadm create' returns all output to stderr...
+        match = re.match('Successfully created VM (.*)', stderr)
+        if match:
+            vm_uuid = match.groups()[0]
+            if not is_valid_uuid(vm_uuid):
+                module.fail_json(msg='Invalid UUID for VM {0}?'.format(vm_uuid))
+        else:
+            module.fail_json(msg='Could not retrieve UUID of newly created(?) VM')
+
+        # Now that the VM is created, ensure it is in the desired state (if not 'running')
+        if vm_state != 'running':
+            ret = set_vm_state(module, vm_uuid, vm_state)
+            if not ret:
+                module.fail_json(msg='Could not set VM {0} to state {1}'.format(vm_uuid, vm_state))
+
+    if not module.params['debug']:
+        try:
+            os.unlink(payload_file)
+        except Exception as e:
+            # Since the payload may contain sensitive information, fail hard
+            # if we cannot remove the file so the operator knows about it.
+            module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.
+                             format(payload_file, e))
+
+    return changed, vm_uuid
+
+
+def vmadm_create_vm(module, payload_file):
     """Create a new VM using the provided payload."""
     cmd = 'vmadm create -f {0}'.format(payload_file)
 
     return module.run_command(cmd)
 
+
 def set_vm_state(module, vm_uuid, vm_state):
     p = module.params
-    
+
     # Check if the VM is already in the desired state.
     state = get_vm_prop(module, vm_uuid, 'state')
     if state and (state == vm_state):
@@ -313,7 +356,7 @@ def set_vm_state(module, vm_uuid, vm_state):
         'rebooted': ['reboot', False]
     }
 
-    if p['force'] and cmds[vm_state][1] == True:
+    if p['force'] and cmds[vm_state][1]:
         force = '-F'
     else:
         force = ''
@@ -327,6 +370,7 @@ def set_vm_state(module, vm_uuid, vm_state):
         return True
     else:
         return False
+
 
 def create_payload(module, uuid):
     """Create the JSON payload (vmdef) and return the filename."""
@@ -361,22 +405,60 @@ def create_payload(module, uuid):
 
     return fname
 
+
 def vm_state_transition(module, uuid, vm_state):
     ret = set_vm_state(module, uuid, vm_state)
 
     # Whether the VM changed state.
-    if ret == None:
+    if ret is None:
         return False
-    elif ret == True:
+    elif ret:
         return True
     else:
         module.fail_json(msg='Failed to set VM {0} to state {1}'.format(uuid, vm_state))
 
-def validate_uuid(uuid):
+
+def is_valid_uuid(uuid):
     if re.match('^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$', uuid, re.IGNORECASE):
         return True
     else:
         return False
+
+
+def validate_uuids(module):
+    # Perform basic UUID validation.
+    for u in [['uuid', module.params['uuid']],
+              ['image_uuid', module.params['image_uuid']]]:
+        if u[1] and u[1] != '*':
+            if not is_valid_uuid(u[1]):
+                module.fail_json(msg='{0} is not a valid UUID for {1}'.format(u[1], u[0]))
+
+
+def manage_all_vms(module, vm_state, changed):
+    """ Handle operations for all VMs, which can by definition only
+    be state transitions.
+    """
+    state = module.params['state']
+
+    if state == 'created':
+        module.fail_json(msg='State "created" is only valid for tasks with a single VM')
+
+    # If any of the VMs has a change, the task as a whole has a change.
+    any_changed = changed
+
+    # First get all VM uuids and for each check their state, and adjust it if needed.
+    for uuid in get_all_vm_uuids(module):
+        current_vm_state = get_vm_prop(module, uuid, 'state')
+        if not current_vm_state and vm_state == 'deleted':
+            changed = False
+        else:
+            if module.check_mode:
+                if (not current_vm_state) or (get_vm_prop(module, uuid, 'state') != state):
+                    any_changed = True
+            else:
+                any_changed = (vm_state_transition(module, uuid, vm_state) | any_changed)
+
+    return any_changed
 
 def main():
     # In order to reduce the clutter and boilerplate for trivial options,
@@ -432,7 +514,6 @@ def main():
 
     p = module.params
     uuid = p['uuid']
-    image_uuid = p['image_uuid']
     state = p['state']
 
     # Translate the state paramter into something we can use later on.
@@ -445,9 +526,7 @@ def main():
     elif state == 'rebooted':
         vm_state = 'rebooted'
 
-    stderr = stdout = ''
-    rc = 0
-    result = { 'state': state }
+    result = {'state': state}
     changed = False
 
     # While it's possible to refer to a given VM by it's `alias`, it's easier
@@ -464,39 +543,14 @@ def main():
             result['alias'] = p['alias']
             module.exit_json(**result)
 
-    # Perform basic UUID validation.
-    for u in [['uuid', uuid],
-              ['image_uuid', image_uuid]]:
-        if u[1] and u[1] != '*':
-            if not validate_uuid(u[1]):
-                module.fail_json(msg='{0} is not a valid UUID for {1}'.format(u[1], u[0]))
+    validate_uuids(module)
 
     if p['alias']:
         result['alias'] = p['alias']
     result['uuid'] = uuid
 
-    # First handle operations for all VMs, which can by definition only
-    # be state transitions.
     if uuid == '*':
-        if state == 'created':
-            module.fail_json(msg='State "created" is only valid for tasks with a single VM')
-
-        # If any of the VMs has a change, the task as a whole has a change.
-        any_changed = changed
-
-        # First get all VM uuids and for each check their state, and adjust it if needed.
-        for uuid in get_all_vm_uuids(module):
-            current_vm_state = get_vm_prop(module, uuid, 'state')
-            if not current_vm_state and vm_state == 'deleted':
-                changed = False
-            else:
-                if module.check_mode:
-                    if (not current_vm_state) or (get_vm_prop(module, uuid, 'state') != state):
-                        any_changed = True
-                else:
-                    any_changed = (vm_state_transition(module, uuid, vm_state) | any_changed)
-
-        result['changed'] = any_changed
+        result['changed'] = manage_all_vms(module, vm_state, changed)
         module.exit_json(**result)
 
     # The general flow is as follows:
@@ -530,40 +584,7 @@ def main():
         module.exit_json(**result)
     # No VM was found that matched the given ID (alias or uuid), so we create it.
     elif not current_vm_state:
-        payload_file = create_payload(module, uuid)
-
-        (rc, stdout, stderr) = create_vm(module, payload_file)
-
-        if rc != 0:
-            changed = False
-            module.fail_json(msg='Could not create VM: {0}'.format(stderr))
-        else:
-            changed = True
-            # 'vmadm create' returns all output to stderr...
-            match = re.match('Successfully created VM (.*)', stderr)
-            if match:
-                vm_uuid = match.groups()[0]
-                if not validate_uuid(vm_uuid):
-                    module.fail_json(msg='Invalid UUID for VM {0}?'.format(vm_uuid))
-            else:
-                module.fail_json(msg='Could not retrieve UUID of newly created(?) VM')
-
-            # Now that the VM is created, ensure it is in the desired state (if not 'running')
-            if vm_state != 'running':
-                ret = set_vm_state(module, vm_uuid, vm_state)
-                if not ret:
-                    module.fail_json(msg='Could not set VM {0} to state {1}'.format(vm_uuid, vm_state))
-
-        result['uuid'] = vm_uuid
-
-        if not p['debug']:
-            try:
-                os.unlink(payload_file)
-            except Exception as e:
-                # Since the payload may contain sensitive information, fail hard
-                # if we cannot remove the file so the operator knows about it.
-                module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.
-                    format(payload_file, e))
+        changed, result['uuid'] = new_vm(module, uuid, vm_state)
     else:
         # VM was found, operate on its state directly.
         changed = vm_state_transition(module, uuid, vm_state)
@@ -572,7 +593,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
