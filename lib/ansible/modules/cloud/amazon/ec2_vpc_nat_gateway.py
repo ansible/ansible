@@ -662,11 +662,15 @@ def release_address(client, allocation_id, check_mode=False):
         return True, ''
 
     ip_released = False
-    params = {
-        'AllocationId': allocation_id,
-    }
     try:
-        client.release_address(**params)
+        client.describe_addresses(AllocationIds=[allocation_id])
+    except botocore.exceptions.ClientError as e:
+        # IP address likely already released
+        # Happens with gateway in 'deleted' state that
+        # still lists associations
+        return True, str(e)
+    try:
+        client.release_address(AllocationId=allocation_id)
         ip_released = True
     except botocore.exceptions.ClientError as e:
         err_msg = str(e)
