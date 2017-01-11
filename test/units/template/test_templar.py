@@ -139,6 +139,22 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         unsafe_obj = AnsibleUnsafe()
         self.templar.template(unsafe_obj)
 
+    # TODO: not sure what template is supposed to do it, but it currently throws attributeError
+    @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
+    def test_template_unsafe_wrap_var_non_string_clean_data_exception(self, mock_clean_data):
+        unsafe_obj = AnsibleUnsafe()
+
+        class SomeClass(object):
+            foo = 'bar'
+
+            def __init__(self):
+                self.blip = 'blip'
+
+        some_obj = SomeClass()
+        unsafe_obj = wrap_var(some_obj)
+        res = self.templar.template(unsafe_obj)
+        self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
+
 
 class TestTemplarCleanData(BaseTemplar, unittest.TestCase):
     def test_clean_data(self):
