@@ -154,6 +154,7 @@ There are additional environment variables that can be used. A few of the more u
   - `KEEP_CONTAINERS=1` - Containers will always be preserved.
   - `SHARE_SOURCE=1` - Changes to source from the host or container will be shared between host and container.
                        _**CAUTION:** Files created by the container will be owned by root on the host._
+  - `REMOTE_DOCKER=1` - Will ultimately use `docker cp` instead of mounting your ansible directory as a docker volume, to support remote docker servers
 
 Network Tests
 =============

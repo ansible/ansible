@@ -9,6 +9,8 @@ test_target="${TARGET:-all}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
 test_python3="${PYTHON3:-}"
 
+remote_docker="${REMOTE_DOCKER:-}"
+
 http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
 
 # Keep the docker containers after tests complete.
@@ -120,7 +122,11 @@ if [ "${skip}" ]; then
 fi
 
 if [ -z "${share_source}" ]; then
-    docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
+    if [ "${remote_docker}" ]; then
+        docker cp "${host_shared_dir}" "${container_id}:${test_ansible_dir}"
+    else
+        docker exec "${container_id}" cp -a "${test_shared_dir}" "${test_ansible_dir}"
+    fi
 fi
 
 docker exec "${container_id}" \
