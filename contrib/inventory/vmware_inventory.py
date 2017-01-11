@@ -86,6 +86,7 @@ class VMWareInventory(object):
     password = None
     validate_certs = True
     host_filters = []
+    skip_keys = []
     groupby_patterns = []
 
     if sys.version_info > (3, 0):
@@ -95,14 +96,6 @@ class VMWareInventory(object):
     iter_types = [dict, list]
 
     bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
-    skip_keys = ['declaredalarmstate',
-                 'disabledmethod',
-                 'dynamicproperty',
-                 'dynamictype',
-                 'environmentbrowser',
-                 'managedby',
-                 'parent',
-                 'childtype']
 
     vimTableMaxDepth = {
         "vim.HostSystem": 2,
@@ -218,6 +211,15 @@ class VMWareInventory(object):
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': 3600,
             'max_object_level': 1,
+            'skip_keys': 'declaredalarmstate,'
+                         'disabledmethod,'
+                         'dynamicproperty,'
+                         'dynamictype,'
+                         'environmentbrowser,'
+                         'managedby,'
+                         'parent,'
+                         'childtype,'
+                         'resourceconfig',
             'alias_pattern': '{{ config.name + "_" + config.uuid }}',
             'host_pattern': '{{ guest.ipaddress }}',
             'host_filters': '{{ guest.gueststate == "running" }}',
@@ -276,7 +278,8 @@ class VMWareInventory(object):
             else:
                 self.lowerkeys = False
         self.debugl('lower keys is %s' % self.lowerkeys)
-
+        self.skip_keys = list(config.get('vmware', 'skip_keys').split(','))
+        self.debugl('skip keys is %s' % self.skip_keys)
         self.host_filters = list(config.get('vmware', 'host_filters').split(','))
         self.debugl('host filters are %s' % self.host_filters)
         self.groupby_patterns = list(config.get('vmware', 'groupby_patterns').split(','))
@@ -464,6 +467,9 @@ class VMWareInventory(object):
             for k, v in inventory['_meta']['hostvars'].items():
                 if 'customvalue' in v:
                     for tv in v['customvalue']:
+                        if not isinstance(tv['value'], str) and not isinstance(tv['value'], unicode):
+                            continue
+
                         newkey = None
                         field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
                         values = []
