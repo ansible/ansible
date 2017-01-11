@@ -46,7 +46,8 @@ options:
   name:
     description:
       - Name of the timezone for the system clock.
-        Default is to keep current setting.
+        Default is to keep current setting. B(At least one of name and
+        hwclock are required.)
     required: false
   hwclock:
     description:
@@ -54,6 +55,7 @@ options:
         Default is to keep current setting.
         Note that this option is recommended not to change and may fail
         to configure, especially on virtual environments such as AWS.
+        B(At least one of name and hwclock are required.)
     required: false
     aliases: ['rtc']
 author: "Shinichi TAMURA (@tmshn)"
