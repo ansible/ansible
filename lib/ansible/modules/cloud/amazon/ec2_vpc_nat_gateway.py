@@ -14,6 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+
+import datetime
+import random
+import re
+import time
+
+from dateutil.tz import tzutc
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -216,12 +228,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-import datetime
-import random
-import re
-import time
-
-from dateutil.tz import tzutc
 
 DRY_RUN_GATEWAYS = [
     {
@@ -1000,17 +1006,18 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        subnet_id=dict(type='str'),
-        eip_address=dict(type='str'),
-        allocation_id=dict(type='str'),
-        if_exist_do_not_create=dict(type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent']),
-        wait=dict(type='bool', default=False),
-        wait_timeout=dict(type='int', default=320, required=False),
-        release_eip=dict(type='bool', default=False),
-        nat_gateway_id=dict(type='str'),
-        client_token=dict(type='str'),
+    argument_spec.update(
+        dict(
+            subnet_id=dict(type='str'),
+            eip_address=dict(type='str'),
+            allocation_id=dict(type='str'),
+            if_exist_do_not_create=dict(type='bool', default=False),
+            state=dict(default='present', choices=['present', 'absent']),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(type='int', default=320, required=False),
+            release_eip=dict(type='bool', default=False),
+            nat_gateway_id=dict(type='str'),
+            client_token=dict(type='str'),
         )
     )
     module = AnsibleModule(
@@ -1085,9 +1092,6 @@ def main():
             msg=err_msg, success=success, changed=changed, **results
         )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
