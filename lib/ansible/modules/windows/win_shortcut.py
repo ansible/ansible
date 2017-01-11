@@ -29,6 +29,12 @@ short_description: Add Windows shortcut on windows hosts.
 description:
     - Uses .net Environment to add windows shortcut.
 options:
+ state:
+    description:
+      - Creates and deletes the Windows shortcut path.
+    required: true
+    default: no default
+	choices: [ present, absent ]
  src:
     description:
       - Path for a Windows shortcut.
@@ -39,9 +45,24 @@ options:
       - Path for a linking file and it should end with .lnk or .url.
     required: true
     default: no default
+ arguments:
+    description:
+      - valid arguments for shortcut/exe.
+    required: false
+    default: no default
+ directory:
+    description:
+      - Startin/Working directory for shortcut.
+    required: false
+    default: no default
  hotkey:
     description:
       - Shortcut Key for Windows Shortcut.
+    required: true
+    default: no default
+ desc:
+    description:
+      - Description for Windows Shortcut.
     required: true
     default: no default
  icon:
@@ -57,9 +78,13 @@ notes:
 EXAMPLES = '''
   # Creates shortcut for given exe
   win_shortcut:
+    state: present
     src: 'C:\Program Files\Mozilla Firefox\Firefox.exe'
     dest: 'D:\test\Mozilla Firefox\Firefox.lnk'
+	arguments: 'IPAddress'
+	directory: 'C:\Program Files\Mozilla Firefox'
     hotkey: 'CTRL+SHIFT+1'
+	desc: 'Creating shortcut using ansible'
     icon: 'C:\Windows\System32\Shell32.dll,18'
 '''
 
