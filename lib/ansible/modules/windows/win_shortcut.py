@@ -81,10 +81,10 @@ EXAMPLES = '''
     state: present
     src: 'C:\Program Files\Mozilla Firefox\Firefox.exe'
     dest: 'D:\test\Mozilla Firefox\Firefox.lnk'
-	arguments: 'IPAddress'
-	directory: 'C:\Program Files\Mozilla Firefox'
+    arguments: 'IPAddress'
+    directory: 'C:\Program Files\Mozilla Firefox'
     hotkey: 'CTRL+SHIFT+1'
-	desc: 'Creating shortcut using ansible'
+    desc: 'Creating shortcut using ansible'
     icon: 'C:\Windows\System32\Shell32.dll,18'
 '''
 
