@@ -22,7 +22,7 @@ $params = Parse-Args $args
 $TargetFile = Get-AnsibleParam -obj $params -name "src" -failifempty $true
 $ShortcutFile = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
 $Hotkey = Get-AnsibleParam -obj $params -name "hotkey" -failifempty $true
-$IconLocation = Get-AnsibleParam -obj $params -name "iconlocation" -failifempty $true
+$IconLocation = Get-AnsibleParam -obj $params -name "icon" -failifempty $true
 $result = New-Object psobject @{
     changed = $FALSE
 }
