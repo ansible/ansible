@@ -169,7 +169,7 @@ def core(module):
     status_code = response.status_code
     json = response.json
     if status_code == 200:
-        module.exit_json(changed=False, data=json)
+        module.exit_json(changed=False, ansible_facts=json)
     else:
         module.fail_json(msg="Error fecthing facts [{}: {}]".format(
             status_code, response.json["message"]))
