@@ -29,8 +29,7 @@ short_description: Manages virtual machines in vcenter
 description:
     - Create new virtual machines (from templates or not)
     - Power on/power off/restart a virtual machine
-    - Modify an existing virtual machine
-    - Remove a virtual machine
+    - Modify, rename or remove a virtual machine
 version_added: 2.2
 author:
     - James Tanner (@jctanner) <tanner.jc@gmail.com>
@@ -51,12 +50,6 @@ options:
         description:
             - Name of the VM to work with
         required: True
-   new_name:
-        description:
-            - Rename a VM
-            - New Name of the exising VM
-        required: False
-        version_added: "2.3"
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -185,6 +178,17 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
+# Gather facts only
+  - name: gather the VM facts
+    vmware_guest:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      validate_certs: no
+      esxi_hostname: 192.168.1.117
+      uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    register: facts
+
 # Create a VM from a template
   - name: create the VM
     vmware_guest:
@@ -214,32 +218,7 @@ EXAMPLES = '''
       wait_for_ip_address: yes
     register: deploy
 
-# Create a VM template
-  - name: create a VM template
-    vmware_guest:
-      hostname: 192.0.2.88
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      datacenter: datacenter1
-      cluster: vmware_cluster_esx
-      resource_pool: highperformance_pool
-      folder: testvms
-      name: testvm_6
-      is_template: yes
-      guest_id: debian6_64Guest
-      disk:
-      - size_gb: 10
-        type: thin
-        datastore: g73_datastore
-      hardware:
-        memory_mb: 512
-        num_cpus: 1
-        scsi: lsilogic
-      wait_for_ip_address: yes
-    register: deploy
-
-# Clone Template and customize
+# Clone a VM from Template and customize
   - name: Clone template and customize
     vmware_guest:
       hostname: 192.168.1.209
@@ -270,21 +249,52 @@ EXAMPLES = '''
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
 
-# Gather facts only
-  - name: gather the VM facts
+# Create a VM template
+  - name: create a VM template
     vmware_guest:
-      hostname: 192.168.1.209
+      hostname: 192.0.2.88
       username: administrator@vsphere.local
       password: vmware
       validate_certs: no
-      name: testvm_2
-      esxi_hostname: 192.168.1.117
-      state: gatherfacts
-    register: facts
+      datacenter: datacenter1
+      cluster: vmware_cluster_esx
+      resource_pool: highperformance_pool
+      folder: testvms
+      name: testvm_6
+      is_template: yes
+      guest_id: debian6_64Guest
+      disk:
+      - size_gb: 10
+        type: thin
+        datastore: g73_datastore
+      hardware:
+        memory_mb: 512
+        num_cpus: 1
+        scsi: lsilogic
+      wait_for_ip_address: yes
+    register: deploy
+
+# Rename a VM (requires the VM's uuid)
+  - vmware_guest:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      uuid: 421e4592-c069-924d-ce20-7e7533fab926
+      name: new_name
+      state: present
+
+# Remove a VM by uuid
+  - vmware_guest:
+      hostname: 192.168.1.209
+      username: administrator@vsphere.local
+      password: vmware
+      uuid: 421e4592-c069-924d-ce20-7e7533fab926
+      state: absent
 
 ### Snapshot Operations
-###
-### BEWARE: This functionality will move into vmware_guest_snapshot before release !
+
+# BEWARE: This functionality will move into vmware_guest_snapshot before release !
+
 # Create snapshot
   - vmware_guest:
       hostname: 192.168.1.209
@@ -1044,12 +1054,12 @@ class PyVmomiHelper(object):
 
             ident.identification = vim.vm.customization.Identification()
 
-            if self.params['customization'].get('password'):
+            if self.params['customization'].get('password', '') != '':
                 ident.guiUnattended.password = vim.vm.customization.Password()
                 ident.guiUnattended.password.value = str(self.params['customization']['password'])
                 ident.guiUnattended.password.plainText = True
             else:
-                self.module.fail_json(msg="A 'password' entry is mandatory in the 'customization' section.")
+                self.module.fail_json(msg="The 'customization' section requires 'password' entry, which cannot be empty.")
 
             if 'productid' in self.params['customization']:
                 ident.userData.orgName = str(self.params['customization']['productid'])
@@ -1372,7 +1382,7 @@ class PyVmomiHelper(object):
         if task.info.state == 'error':
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
-            return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+            return {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg}
         else:
             # set annotation
             vm = task.info.result
@@ -1421,26 +1431,26 @@ class PyVmomiHelper(object):
         if self.change_detected:
             task = self.current_vm_obj.ReconfigVM_Task(spec=self.configspec)
             self.wait_for_task(task)
+            change_applied = True
 
             if task.info.state == 'error':
                 # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
                 # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
-                return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+                return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
+        # Rename VM
+        if self.params['uuid'] and self.params['name'] and self.params['name'] != vm.config.name:
+            task = self.current_vm_obj.Rename_Task(self.params['name'])
+            self.wait_for_task(task)
             change_applied = True
+
+            if task.info.state == 'error':
+                return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Mark VM as Template
         if self.params['is_template']:
             task = self.current_vm_obj.MarkAsTemplate()
-            change_applied = True
-
-        # Rename VM
-        if self.params['new_name']:
-            task = self.current_vm_obj.Rename_Task(self.params['new_name'])
-
-            if task.info.state == 'error':
-                return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
-
+            self.wait_for_task(task)
             change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
@@ -1468,156 +1478,6 @@ class PyVmomiHelper(object):
                 thispoll += 1
 
         return facts
-
-    def fetch_file_from_guest(self, vm, username, password, src, dest):
-
-        """ Use VMWare's filemanager api to fetch a file over http """
-
-        result = {'failed': False}
-
-        tools_status = vm.guest.toolsStatus
-        if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-            result['failed'] = True
-            result['msg'] = "VMwareTools is not installed or is not running in the guest"
-            return result
-
-        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-        creds = vim.vm.guest.NamePasswordAuthentication(
-            username=username, password=password
-        )
-
-        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/FileManager/FileTransferInformation.rst
-        fti = self.content.guestOperationsManager.fileManager. \
-            InitiateFileTransferFromGuest(vm, creds, src)
-
-        result['size'] = fti.size
-        result['url'] = fti.url
-
-        # Use module_utils to fetch the remote url returned from the api
-        rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
-                              force=True, last_mod_time=None,
-                              timeout=10, headers=None)
-
-        # save all of the transfer data
-        for k, v in iteritems(info):
-            result[k] = v
-
-        # exit early if xfer failed
-        if info['status'] != 200:
-            result['failed'] = True
-            return result
-
-        # attempt to read the content and write it
-        try:
-            with open(dest, 'wb') as f:
-                f.write(rsp.read())
-        except Exception as e:
-            result['failed'] = True
-            result['msg'] = str(e)
-
-        return result
-
-    def push_file_to_guest(self, vm, username, password, src, dest, overwrite=True):
-
-        """ Use VMWare's filemanager api to fetch a file over http """
-
-        result = {'failed': False}
-
-        tools_status = vm.guest.toolsStatus
-        if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
-            result['failed'] = True
-            result['msg'] = "VMwareTools is not installed or is not running in the guest"
-            return result
-
-        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-        creds = vim.vm.guest.NamePasswordAuthentication(
-            username=username, password=password
-        )
-
-        # the api requires a filesize in bytes
-        fdata = None
-        try:
-            # filesize = os.path.getsize(src)
-            filesize = os.stat(src).st_size
-            with open(src, 'rb') as f:
-                fdata = f.read()
-            result['local_filesize'] = filesize
-        except Exception as e:
-            result['failed'] = True
-            result['msg'] = "Unable to read src file: %s" % str(e)
-            return result
-
-        # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.vm.guest.FileManager.html#initiateFileTransferToGuest
-        file_attribute = vim.vm.guest.FileManager.FileAttributes()
-        url = self.content.guestOperationsManager.fileManager. \
-            InitiateFileTransferToGuest(vm, creds, dest, file_attribute,
-                                        filesize, overwrite)
-
-        # PUT the filedata to the url ...
-        rsp, info = fetch_url(self.module, url, method="put", data=fdata,
-                              use_proxy=False, force=True, last_mod_time=None,
-                              timeout=10, headers=None)
-
-        result['msg'] = str(rsp.read())
-
-        # save all of the transfer data
-        for k, v in iteritems(info):
-            result[k] = v
-
-        return result
-
-    def run_command_in_guest(self, vm, username, password, program_path, program_args, program_cwd, program_env):
-
-        result = {'failed': False}
-
-        tools_status = vm.guest.toolsStatus
-        if (tools_status == 'toolsNotInstalled' or
-                    tools_status == 'toolsNotRunning'):
-            result['failed'] = True
-            result['msg'] = "VMwareTools is not installed or is not running in the guest"
-            return result
-
-        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
-        creds = vim.vm.guest.NamePasswordAuthentication(
-            username=username, password=password
-        )
-
-        try:
-            # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/ProcessManager.rst
-            pm = self.content.guestOperationsManager.processManager
-            # https://www.vmware.com/support/developer/converter-sdk/conv51_apireference/vim.vm.guest.ProcessManager.ProgramSpec.html
-            ps = vim.vm.guest.ProcessManager.ProgramSpec(
-                # programPath=program,
-                # arguments=args
-                programPath=program_path,
-                arguments=program_args,
-                workingDirectory=program_cwd,
-            )
-
-            res = pm.StartProgramInGuest(vm, creds, ps)
-            result['pid'] = res
-            pdata = pm.ListProcessesInGuest(vm, creds, [res])
-
-            # wait for pid to finish
-            while not pdata[0].endTime:
-                time.sleep(1)
-                pdata = pm.ListProcessesInGuest(vm, creds, [res])
-
-            result['owner'] = pdata[0].owner
-            result['startTime'] = pdata[0].startTime.isoformat()
-            result['endTime'] = pdata[0].endTime.isoformat()
-            result['exitCode'] = pdata[0].exitCode
-            if result['exitCode'] != 0:
-                result['failed'] = True
-                result['msg'] = "program exited non-zero"
-            else:
-                result['msg'] = "program completed successfully"
-
-        except Exception as e:
-            result['msg'] = str(e)
-            result['failed'] = True
-
-        return result
 
     def list_snapshots_recursively(self, snapshots):
         snapshot_data = []
@@ -1778,7 +1638,6 @@ def main():
             annotation=dict(required=False, type='str', aliases=['notes']),
             customvalues=dict(required=False, type='list', default=[]),
             name=dict(required=True, type='str'),
-            new_name=dict(required=False, type='str'),
             name_match=dict(required=False, type='str', default='first'),
             snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
