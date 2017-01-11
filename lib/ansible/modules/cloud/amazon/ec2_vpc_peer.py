@@ -272,6 +272,28 @@ def create_peer_connection(client, module):
         module.fail_json(msg=str(e))
 
 
+def remove_peer_connection(client, module):
+    pcx_id = module.params.get('peering_id')
+    params = dict()
+    if not pcx_id:
+        params['VpcId'] = module.params.get('vpc_id')
+        params['PeerVpcId'] = module.params.get('peer_vpc_id')
+        if module.params.get('peer_owner_id'):
+            params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
+        params['DryRun'] = module.check_mode
+        peering_conns = describe_peering_connections(params, client)
+        if not peering_conns:
+            module.exit_json(changed=False)
+        else:
+            pcx_id = peering_conns['VpcPeeringConnections'][0]['VpcPeeringConnectionId']
+    try:
+        params['VpcPeeringConnectionId'] = pcx_id
+        client.delete_vpc_peering_connection(**params)
+        module.exit_json(changed=True)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
+
+
 def peer_status(client, module):
     params = dict()
     params['VpcPeeringConnectionIds'] = [module.params.get('peering_id')]
@@ -279,19 +301,17 @@ def peer_status(client, module):
     return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
 
 
-def accept_reject_delete(state, client, module):
+def accept_reject(state, client, module):
     changed = False
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
     params['DryRun'] = module.check_mode
-    invocations = {
-        'accept': client.accept_vpc_peering_connection,
-        'reject': client.reject_vpc_peering_connection,
-        'absent': client.delete_vpc_peering_connection
-    }
-    if state == 'absent' or peer_status(client, module) != 'active':
+    if peer_status(client, module) != 'active':
         try:
-            invocations[state](**params)
+            if state == 'accept':
+                client.accept_vpc_peering_connection(**params)
+            else:
+                client.reject_vpc_peering_connection(**params)
             if module.params.get('tags'):
                 create_tags(params['VpcPeeringConnectionId'], client, module)
             changed = True
@@ -358,8 +378,10 @@ def main():
     if state == 'present':
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
+    elif state == 'absent':
+        remove_peer_connection(client, module)
     else:
-        (changed, results) = accept_reject_delete(state, client, module)
+        (changed, results) = accept_reject(state, client, module)
         module.exit_json(changed=changed, peering_id=results)
 
 
