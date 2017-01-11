@@ -34,7 +34,7 @@ options:
       - Creates and deletes the Windows shortcut path.
     required: true
     default: no default
-	choices: [ present, absent ]
+    choices: [ present, absent ]
  src:
     description:
       - Path for a Windows shortcut.
