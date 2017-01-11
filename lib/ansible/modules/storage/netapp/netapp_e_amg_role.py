@@ -27,7 +27,6 @@ module: netapp_e_amg_role
 short_description: Update the role of a storage array within an Asynchronous Mirror Group (AMG).
 extends_documentation_fragment:
     - netapp.santricity
-    - netapp.example_santricity
 description:
     - Update a storage array to become the primary or secondary instance in an asynchronous mirror group
 version_added: '2.2'
