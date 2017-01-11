@@ -622,11 +622,11 @@ Debugging Filters
 
 .. versionadded:: 2.3
 
-Use the ``type`` filter to display the underlying Python type of a variable.
+Use the ``type_debug`` filter to display the underlying Python type of a variable.
 This can be useful in debugging in situations where you may need to know the exact
 type of a variable::
 
-    {{ myvar | type }}
+    {{ myvar | type_debug }}
 
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
