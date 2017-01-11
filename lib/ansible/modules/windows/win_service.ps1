@@ -27,6 +27,7 @@ Set-Attr $result "changed" $false;
 $name = Get-Attr $params "name" -failifempty $true
 $state = Get-Attr $params "state" $false
 $startMode = Get-Attr $params "start_mode" $false
+$delayed = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "delayed" -default "false")
 
 If ($state) {
     $state = $state.ToString().ToLower()
@@ -99,6 +100,26 @@ If ($state) {
         Set-Attr $result "changed" $true;
     }
 }
+
+If ($startMode -eq "auto") {
+    $registryKey = "Registry::HKLM\System\CurrentControlSet\Services\$svcName"
+
+    Try {
+        $svcDelayed = Convert-To-Bool ((Get-ItemProperty -Path "$registryKey").DelayedAutostart)
+    } Catch [System.Management.Automation.PropertyNotFoundException] {
+        $svcDelayed = $false
+    }
+
+    If ($svcDelayed -ne $delayed) {
+        If ($delayed) {
+            Set-ItemProperty -Path "$registryKey" -Name "DelayedAutostart" -Value 1 -Type DWORD
+        } Else {
+            Set-ItemProperty -Path "$registryKey" -Name "DelayedAutostart" -Value 0 -Type DWORD
+        }
+        Set-Attr $result "changed" $true
+    }
+}
+
 $svc.Refresh()
 Set-Attr $result "state" $svc.Status.ToString().ToLower()
 
