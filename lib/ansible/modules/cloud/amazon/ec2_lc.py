@@ -67,6 +67,10 @@ options:
     description:
       - opaque blob of data which is made available to the ec2 instance
     required: false
+  user_data_path:
+    description:
+      - Path to the file that contains userdata for the ec2 instances
+    required: false
   kernel_id:
     description:
       - Kernel id for the EC2 instance
@@ -175,6 +179,7 @@ def create_launch_config(connection, module):
     key_name = module.params.get('key_name')
     security_groups = module.params['security_groups']
     user_data = module.params.get('user_data')
+    user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
     spot_price = module.params.get('spot_price')
@@ -187,6 +192,13 @@ def create_launch_config(connection, module):
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
+
+    if user_data_path:
+        try:
+            user_data_file = open(user_data_path, 'r')
+            user_data = user_data_file.read()
+        except IOError as e:
+            module.fail_json(msg=str(e))
 
     if volumes:
         for volume in volumes:
@@ -250,6 +262,8 @@ def create_launch_config(connection, module):
             if bdm.ebs is not None:
                 result['block_device_mappings'][-1]['ebs'] = dict(snapshot_id=bdm.ebs.snapshot_id, volume_size=bdm.ebs.volume_size)
 
+    if launch_configs[0].user_data is not None:
+        result['user_data'] = "hidden" # Otherwise, we dump binary to the user's terminal
 
     module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
                      image_id=result['image_id'], arn=result['launch_configuration_arn'],
@@ -277,6 +291,7 @@ def main():
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
             user_data=dict(type='str'),
+            user_data_path=dict(type='str'),
             kernel_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
@@ -293,7 +308,10 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive = [['user_data', 'user_data_path']]
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
