@@ -367,8 +367,12 @@ def main():
         )
     )
 
+    repository_url = module.params["repository_url"]
+    if not repository_url:
+        repository_url = "http://repo1.maven.org/maven2"
+
     try:
-        parsed_url = urlparse(module.params["repository_url"])
+        parsed_url = urlparse(repository_url)
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
@@ -380,14 +384,10 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
-    repository_url = module.params["repository_url"]
     repository_username = module.params["username"]
     repository_password = module.params["password"]
     state = module.params["state"]
     dest = module.params["dest"]
-
-    if not repository_url:
-        repository_url = "http://repo1.maven.org/maven2"
 
     #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
