@@ -534,5 +534,5 @@ class FilterModule(object):
             'skip'    : skipped,
 
             # debug
-            'type': lambda o: o.__class__.__name__,
+            'type_debug': lambda o: o.__class__.__name__,
         }
