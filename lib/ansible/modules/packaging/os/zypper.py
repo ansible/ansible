@@ -168,7 +168,14 @@ EXAMPLES = '''
 # Install specific version (possible comparisons: <, >, <=, >=, =)
 - zypper:
     name: 'docker>=1.10'
-    state: installed
+    state: present
+
+# Wait 20 seconds to acquire the lock before failing
+- zypper:
+    name: mosh
+    state: present
+  environment:
+    ZYPP_LOCK_TIMEOUT: 20
 '''
 
 
