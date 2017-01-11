@@ -331,8 +331,13 @@ class ActionModule(ActionBase):
         # Allow custom rsync path argument
         rsync_path = _tmp_args.get('rsync_path', None)
 
+        # backup original become as we are probably about to unset it
+        become = self._play_context.become
+
         if not dest_is_local:
-            if self._play_context.become and not rsync_path:
+            # don't escalate for docker. doing --rsync-path with docker exec fails
+            # and we can switch directly to the user via docker arguments
+            if self._play_context.become and not rsync_path and self._remote_transport != 'docker':
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
@@ -363,7 +368,9 @@ class ActionModule(ActionBase):
                 _tmp_args['rsync_opts'] = self._task.args.get('rsync_opts', '').split(' ')
             if '--blocking-io' not in _tmp_args['rsync_opts']:
                 _tmp_args['rsync_opts'].append('--blocking-io')
-            if user is not None:
+            if become and self._play_context.become_user:
+                _tmp_args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, self._play_context.become_user))
+            elif user is not None:
                 _tmp_args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, user))
             else:
                 _tmp_args['rsync_opts'].append("--rsh='%s exec -i'" % self._docker_cmd)
