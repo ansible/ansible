@@ -47,7 +47,7 @@ def main():
     variable_manager.set_inventory(inventory)
 
     # create play with tasks
-    play_source =  dict(
+    play_source = dict(
             name = "Ansible Play",
             hosts = host_list,
             gather_facts = 'no',
