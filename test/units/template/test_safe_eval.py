@@ -326,21 +326,6 @@ class TestSafeEvalIncludeExceptions(TestSafeEval):
         # adding the include_exceptions=True changes the type returned...
         res, exc = safe_eval(code, locals=_locals, include_exceptions=True)
 
-        #b = res()
-        #print('b: %s' % b)
-        #print('code: %s' % code)
-        #print('expected: %s' % expected)
-        #print('res: %s' % res)
-        #print('expected_type: %s' % expected_type)
-        #print('type: %s' % type(res))
-        #print('expected_exc_type: %s' % expected_exc_type)
-        #print('exception: %s' % exc)
-        #print('exception_type: %s' % type(exc))
-        #print('expected_exc_message: %s' % expected_exc_message)
-        #if exc:
-        #    print('exc.message: %s' % exc.message)
-        #print('_locals: %s' % locals)
-
         self.assertEquals(res, expected)
         self.assertIsInstance(res, expected_type)
         if expected_exc_type:
