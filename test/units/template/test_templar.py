@@ -66,6 +66,16 @@ class BaseTemplar(object):
         if isinstance(obj, AnsibleUnsafe):
             return True
 
+        if isinstance(obj, dict):
+            for key in obj.keys():
+                if self.is_unsafe(key) or self.is_unsafe(obj[key]):
+                    return True
+
+        if isinstance(obj, list):
+            for item in obj:
+                if self.is_unsafe(item):
+                    return True
+
         return False
 
 
