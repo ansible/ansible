@@ -65,12 +65,13 @@ options:
     required: false
   user_data:
     description:
-      - opaque blob of data which is made available to the ec2 instance
+      - opaque blob of data which is made available to the ec2 instance. Mutually exclusive with I(user_data_path).
     required: false
   user_data_path:
     description:
-      - Path to the file that contains userdata for the ec2 instances
+      - Path to the file that contains userdata for the ec2 instances. Mutually exclusive with I(user_data).
     required: false
+    version_added: "2.3"
   kernel_id:
     description:
       - Kernel id for the EC2 instance
@@ -291,7 +292,7 @@ def main():
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
             user_data=dict(type='str'),
-            user_data_path=dict(type='str'),
+            user_data_path=dict(type='path'),
             kernel_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
