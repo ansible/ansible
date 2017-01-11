@@ -27,8 +27,14 @@ version_added: "2.2"
 options:
   name:
     description:
-      - Tagged name identifying a network ACL.
-    required: true
+      - Tagged name identifying a network ACL. At least one of C(name) or C(nacl_id)
+        must be set when updating or removing a Network ACL
+    required: false
+  nacl_id:
+    description:
+      - Network ACL resource identifier. At least one of C(name) or C(nacl_id)
+        must be set when updating or removing a Network ACL
+    required: false
   vpc_id:
     description:
       - VPC id of the requesting VPC.
@@ -229,13 +235,13 @@ def nacls_changed(nacl, client, module):
     return changed
 
 
-def tags_changed(nacl_id, client, module):
+def tags_changed(nacl, client, module):
     changed = False
     tags = dict()
     if module.params.get('tags'):
         tags = module.params.get('tags')
-    tags['Name'] = module.params.get('name')
-    nacl = find_acl_by_id(nacl_id, client, module)
+    if module.params.get('name'):
+        tags['Name'] = module.params.get('name')
     if nacl['NetworkAcls']:
         nacl_values = [t.values() for t in nacl['NetworkAcls'][0]['Tags']]
         nacl_tags = [item for sublist in nacl_values for item in sublist]
@@ -332,7 +338,7 @@ def setup_network_acl(client, module):
         nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
         subnet_result = subnets_changed(nacl, client, module)
         nacl_result = nacls_changed(nacl, client, module)
-        tag_result = tags_changed(nacl_id, client, module)
+        tag_result = tags_changed(nacl, client, module)
         if subnet_result is True or nacl_result is True or tag_result is True:
             changed = True
             return(changed, nacl_id)
@@ -426,9 +432,14 @@ def describe_acl_associations(subnets, client, module):
 
 def describe_network_acl(client, module):
     try:
-        nacl = client.describe_network_acls(Filters=[
-            {'Name': 'tag:Name', 'Values': [module.params.get('name')]}
-        ])
+        filters = []
+        if module.params.get('name'):
+            filters.append({'Name': 'tag:Name', 'Values': [module.params.get('name')]})
+        elif module.params.get('nacl_id'):
+            filters.append({'Name': 'network-acl-id', 'Values': [module.params.get('nacl_id')]})
+        if not filters:
+            module.fail_json(msg="At least one of name or nacl_id must be set")
+        nacl = client.describe_network_acls(Filters=filters)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     return nacl
@@ -517,7 +528,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         vpc_id=dict(required=True),
-        name=dict(required=True),
+        name=dict(required=False),
+        nacl_id=dict(required=False),
         subnets=dict(required=False, type='list', default=list()),
         tags=dict(required=False, type='dict'),
         ingress=dict(required=False, type='list', default=list()),
