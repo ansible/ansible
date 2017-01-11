@@ -34,14 +34,14 @@ module: timezone
 short_description: Configure timezone setting
 description:
   - This module configures the timezone setting, both of the system clock
-    and of the hardware clock. I(Currently only Linux platform is supported.)
+    and of the hardware clock. I(Currently only the Linux platform is supported).
     It is recommended to restart C(crond) after changing the timezone,
     otherwise the jobs may run at the wrong time.
     It uses the C(timedatectl) command if available. Otherwise, it edits
     C(/etc/sysconfig/clock) or C(/etc/timezone) for the system clock,
     and uses the C(hwclock) command for the hardware clock.
     If you want to set up the NTP, use M(service) module.
-version_added: "2.2.0"
+version_added: "2.2"
 options:
   name:
     description:
@@ -233,7 +233,7 @@ class Timezone(object):
 
 
 class SystemdTimezone(Timezone):
-    """This is a Timezone manipulation class systemd-powered Linux.
+    """This is a Timezone manipulation class for systemd-powered Linux.
 
     It uses the `timedatectl` command to check/set all arguments.
     """
@@ -430,13 +430,12 @@ class NosystemdTimezone(Timezone):
 
 def main():
     # Construct 'module' and 'tz'
-    arg_spec = dict(
-        hwclock=dict(choices=['UTC', 'local'], aliases=['rtc']),
-        name   =dict(),
-    )
     module = AnsibleModule(
-        argument_spec=arg_spec,
-        required_one_of=[arg_spec.keys()],
+        argument_spec=dict(
+            hwclock=dict(default=None, choices=['UTC', 'local'], aliases=['rtc']),
+            name=dict(default=None),
+        ),
+        required_one_of=['hwclock', 'name'],
         supports_check_mode=True
     )
     tz = Timezone(module)
