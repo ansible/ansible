@@ -213,12 +213,16 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return
 
+        with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
+            winrm_config = winrm_config_fd.read()
+
         data = dict(
             config=dict(
                 platform=self.platform,
                 version=self.version,
                 public_key=self.ssh_key.pub_contents if self.ssh_key else None,
                 query=False,
+                winrm_config=winrm_config,
             )
         )
 
