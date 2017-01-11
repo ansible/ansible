@@ -276,7 +276,7 @@ class SnsTopicManager(object):
                 sub_key = (sub['Protocol'], sub['Endpoint'])
                 subscriptions_existing_list.append(sub_key)
                 if self.purge_subscriptions and sub_key not in desired_subscriptions and \
-                    sub['SubscriptionArn'] != 'PendingConfirmation':
+                    sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted'):
                     self.changed = True
                     self.subscriptions_deleted.append(sub_key)
                     if not self.check_mode:
@@ -294,7 +294,7 @@ class SnsTopicManager(object):
         # NOTE: subscriptions in 'PendingConfirmation' timeout in 3 days
         #       https://forums.aws.amazon.com/thread.jspa?threadID=85993
         for sub in self.subscriptions_existing:
-            if sub['SubscriptionArn'] != 'PendingConfirmation':
+            if sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted'):
                 self.subscriptions_deleted.append(sub['SubscriptionArn'])
                 self.changed = True
                 if not self.check_mode:
