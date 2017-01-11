@@ -26,5 +26,5 @@
   when: ansible_network_os == 'vyos'
 
 - name: junos Specific
-  include: vyos.yml
+  include: junos.yml
   when: ansible_network_os == 'junos'
