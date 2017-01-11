@@ -59,7 +59,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Add or change a subnet group
-- rds_subnet_group
+- rds_subnet_group:
     state: present
     name: norwegian-blue
     description: My Fancy Ex Parrot Subnet Group
