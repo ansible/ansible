@@ -54,7 +54,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         (
             ast.Add,
             ast.BinOp,
-            ast.Call,
+            #ast.Call,
             ast.Compare,
             ast.Dict,
             ast.Div,
