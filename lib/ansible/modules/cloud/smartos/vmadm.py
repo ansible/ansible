@@ -214,6 +214,24 @@ EXAMPLES = '''
     state: stopped
 '''
 
+RETURN = '''
+uuid:
+    description: UUID of the managed VM.
+    returned: always
+    type: string
+    sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
+alias:
+    description: Alias of the managed VM.
+    returned: when not using UUIDs.
+    type: string
+    sample: 'dns-zone'
+state:
+    description: state of the target, after execution
+    returned: success
+    type: string
+    sample: 'running'
+'''
+
 import os
 import re
 import tempfile
