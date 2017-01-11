@@ -30,25 +30,27 @@ author: "Peter Sprygada (@privateip)"
 short_description: Executes a common on a remote network device
 description:
   - This module will take the command and execute it on the remote
-    device in a CLI shell.  The command will outout will be returned
-    via the stdout return key.  If an error is detected, the command
+    device in a CLI shell. The command will output will be returned
+    via the stdout return key. If an error is detected, the command
     will return the error via the stderr key.
 options:
   free_form:
     description:
-      - A free form command to run on the remote host.  There is no
-        parameter actually named 'free_form'.  See the examples .
+      - A free form command to run on the remote host. There is no
+        parameter actually named 'free_form'. See the examples.
     required: true
 notes:
-  - This module requires setting the Ansible connection type to network_cli
+  - This module requires setting the Ansible C(connection) type to C(network_cli).
   - This module will always set the changed return key to C(True)
 """
 
 EXAMPLES = """
+# Note: These examples assume 'connection' has been set to 'network_cli'.
+
 - name: execute show version
   net_command: show version
 
-- name: run a series of commmands
+- name: run a series of commands
   net_command: "{{ item }}"
   with_items:
     - show interfaces
