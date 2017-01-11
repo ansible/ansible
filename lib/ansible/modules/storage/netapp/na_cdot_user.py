@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_users
 
 short_description: useradmin configuration and management
+extends_documentation_fragment:
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
@@ -67,8 +69,8 @@ options:
   set_password:
     required: false
     description:
-    - Password for the user account. 
-    -   This is ignored for creating snmp users. 
+    - Password for the user account.
+    -   This is ignored for creating snmp users.
     -   This is required for creating non-snmp users.
     -   For an existing user, this value will be used as the new password.
 
@@ -83,26 +85,11 @@ options:
     description:
     - vserver
 
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
-
 '''
 
 EXAMPLES = """
 
-    - name: Create User 
+    - name: Create User
       na_cdot_user:
         state: present
         name: SampleUser
@@ -387,5 +374,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-if __name__ == '__main__':                                                      
-    main() 
+if __name__ == '__main__':
+    main()

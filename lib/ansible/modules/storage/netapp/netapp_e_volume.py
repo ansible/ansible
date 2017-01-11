@@ -29,6 +29,8 @@ DOCUMENTATION = '''
 module: netapp_e_volume
 version_added: "2.2"
 short_description: Manage storage volumes (standard and thin)
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create or remove volumes (standard and thin) for NetApp E/EF-series storage arrays.
 options:

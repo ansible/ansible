@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_lun
 
 short_description: Manage  NetApp cDOT luns
+extends_documentation_fragment:
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
@@ -69,7 +71,7 @@ options:
   force_remove:
     required: false
     description:
-    - If "true", override checks that prevent a LUN from being destroyed if 
+    - If "true", override checks that prevent a LUN from being destroyed if
     - it is online and mapped. If "false", destroying an online and mapped LUN
     - will fail. The default if not specified is "false".
 
@@ -85,21 +87,6 @@ options:
     required: true
     description:
     - vserver
-
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
 
 '''
 
@@ -458,5 +445,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-if __name__ == '__main__':                                                      
-    main() 
+if __name__ == '__main__':
+    main()

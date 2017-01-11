@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_host
 short_description: manage eseries hosts
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create, update, remove hosts on NetApp E-series storage arrays
 version_added: '2.2'

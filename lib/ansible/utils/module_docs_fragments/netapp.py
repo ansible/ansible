@@ -492,3 +492,29 @@ example:
             api_password: "{{ netapp_api_password }}"
           when: amg_sync
 """
+
+    ONTAP = """
+options:
+  hostname:
+    required: true
+    description:
+    - hostname
+
+  username:
+    required: true
+    description:
+    - username
+
+  password:
+    required: true
+    description:
+    - password
+
+requirements:
+- A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
+- Ansible 2.2**
+- netapp-lib (2015.9.25) | Installation: "pip install netapp-lib"
+
+notes:
+- The modules prefixed with *netapp\_cdot* are built to support the Clustered Data ONTAP storage platform.
+"""

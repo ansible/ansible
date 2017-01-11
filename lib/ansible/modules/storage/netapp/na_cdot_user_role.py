@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_user_role
 
 short_description: useradmin configuration and management
+extends_documentation_fragment:
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
@@ -58,21 +60,6 @@ options:
     required: true
     description:
     - vserver
-
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
 
 '''
 
@@ -306,5 +293,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-if __name__ == '__main__':                                                      
-    main() 
+if __name__ == '__main__':
+    main()

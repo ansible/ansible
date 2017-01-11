@@ -23,12 +23,13 @@ DOCUMENTATION = '''
 module: na_cdot_aggregate
 
 short_description: Manage NetApp cDOT aggregates
+extends_documentation_fragment:
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
 - Create or destroy aggregates on NetApp cDOT
-    - auth_basic
 
 options:
 
@@ -53,21 +54,6 @@ options:
     notes: required when state == 'present'
     description:
     - Number of disks to place into the aggregate, including parity disks. The disks in this newly-created aggregate come from the spare disk pool. The smallest disks in this pool join the aggregate first, unless the "disk-size" argument is provided. Either "disk-count" or "disks" must be supplied. Range [0..2^31-1].
-
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
 
 '''
 
@@ -197,8 +183,9 @@ class NetAppCDOTAggregate(object):
         try:
             result = self.server.invoke_successfully(aggr_get_iter,
                                                      enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
             # Error 13040 denotes an aggregate not being found.
+            e = get_exception()
             if str(e.code) == "13040":
                 return False
             else:
@@ -220,7 +207,8 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error provisioning aggregate %s. Error code: '
                              '%s', self.name, str(e.code))
             raise
@@ -234,7 +222,8 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_destroy,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception('Error removing aggregate %s', self.name)
             raise
 
@@ -247,7 +236,8 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_rename,
                                             enable_tunneling=False)
-        except zapi.NaApiError, e:
+        except zapi.NaApiError:
+            e = get_exception()
             logger.exception(
                 'Error renaming aggregate %s. Error code: '
                 '%s', self.name, str(e.code))
@@ -308,8 +298,10 @@ def main():
 
     try:
         v.apply()
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-main()
+if __name__ == '__main__':
+    main()

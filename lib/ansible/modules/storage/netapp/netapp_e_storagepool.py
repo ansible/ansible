@@ -25,6 +25,8 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_storagepool
 short_description: Manage disk groups and disk pools
+extends_documentation_fragment:
+    - netapp.santricity
 version_added: '2.2'
 description:
     - Create or remove disk groups and disk pools for NetApp E-series storage arrays.

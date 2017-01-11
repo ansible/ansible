@@ -23,6 +23,8 @@ DOCUMENTATION = '''
 module: na_cdot_license
 
 short_description: Manage NetApp cDOT protocol and feature licenses
+extends_documentation_fragment:
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
@@ -30,21 +32,6 @@ description:
 - Add or remove licenses on NetApp cDOT
 
 options:
-
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
 
   remove_unused:
     required: false
@@ -69,7 +56,7 @@ options:
     required: false
     description:
     - List of licenses to add or remove.
-    
+
     - Please note that trying to remove a non-existent license will throw an error.
     valid_options:
         - base                : Cluster Base License,
@@ -342,5 +329,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(e))
         raise
 
-if __name__ == '__main__':                                                      
-    main() 
+if __name__ == '__main__':
+    main()

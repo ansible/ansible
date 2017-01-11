@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_group
 short_description: Manage snapshot groups
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create, update, delete snapshot groups for NetApp E-series storage arrays
 version_added: '2.2'
