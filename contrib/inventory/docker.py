@@ -444,7 +444,7 @@ class AnsibleDockerClient(Client):
             tls_config = TLSConfig(**kwargs)
             return tls_config
         except TLSParameterError as exc:
-           self.fail("TLS config error: %s" % exc)
+            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
         auth = self.auth_params

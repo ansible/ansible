@@ -129,7 +129,7 @@ if __name__ == '__main__':
             log_only = False
         else:
             display.display("to see the full traceback, use -vvv")
-            log_only = True 
+            log_only = True
         display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
         exit_code = 250
     finally:
