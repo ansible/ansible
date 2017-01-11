@@ -115,33 +115,54 @@ Set-Attr $result.win_robocopy "return_code" $rc
 Set-Attr $result.win_robocopy "output" $robocopy_output
 
 $cmd_msg = "Success"
-If ($rc -eq 0) {
-    $cmd_msg = "No files copied."
+$changed = $false
+switch ($rc)
+{
+    0 {
+        $cmd_msg = "No files copied."
+    }
+    1 {
+        $cmd_msg = "Files copied successfully!"
+        $changed = $true
+    }
+    2 {
+        $cmd_msg = "Some Extra files or directories were detected. No files were copied."
+        $changed = $true
+    }
+    3 {
+        $cmd_msg = "(2+1) Some files were copied. Additional files were present."
+        $changed = $true
+    }
+    4 {
+        $cmd_msg = "Some mismatched files or directories were detected. Housekeeping might be required!"
+        $changed = $true
+    }
+    5 {
+        $cmd_msg = "(4+1) Some files were copied. Some files were mismatched."
+        $changed = $true
+    }
+    6 {
+        $cmd_msg = "(4+2) Additional files and mismatched files exist. No files were copied."
+        $changed = $true
+    }
+    7 {
+        $cmd_msg = "(4+1+2) Files were copied, a file mismatch was present, and additional files were present."
+        $changed = $true
+    }
+    8 {
+        $error_msg = SearchForError $robocopy_output "Some files or directories could not be copied!"
+        Fail-Json $result $error_msg
+    }
+    { @(9, 10, 11, 12, 13, 14, 15) -contains $_ } {
+        $error_msg = SearchForError $robocopy_output "Fatal error. Check log message!"        
+        Fail-Json $result $error_msg
+    }
+    16 {
+        $error_msg = SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?"
+        Fail-Json $result $error_msg
+    }
 }
-ElseIf ($rc -eq 1) {
-    $cmd_msg = "Files copied successfully!"
-    $changed = $true
-}
-ElseIf ($rc -eq 2) {
-    $cmd_msg = "Extra files or directories were detected!"
-    $changed = $true
-}
-ElseIf ($rc -eq 4) {
-    $cmd_msg = "Some mismatched files or directories were detected!"
-    $changed = $true
-}
-ElseIf ($rc -eq 8) {
-    $error_msg = SearchForError $robocopy_output "Some files or directories could not be copied!"
-    Fail-Json $result $error_msg
-}
-ElseIf ($rc -eq 10) {
-    $error_msg = SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?"
-    Fail-Json $result $error_msg
-}
-ElseIf ($rc -eq 16) {
-    $error_msg = SearchForError $robocopy_output "Fatal Error!"
-    Fail-Json $result $error_msg
-}
+
 
 Set-Attr $result.win_robocopy "msg" $cmd_msg
 Set-Attr $result.win_robocopy "changed" $changed
