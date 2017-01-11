@@ -37,14 +37,16 @@ options:
   free_form:
     description:
       - A free form command to run on the remote host.  There is no
-        parameter actually named 'free_form'.  See the examples .
+        parameter actually named 'free_form'. See the examples.
     required: true
 notes:
-  - This module requires setting the Ansible connection type to network_cli
+  - This module requires setting the Ansible C(connection) type to C(network_cli).
   - This module will always set the changed return key to C(True)
 """
 
 EXAMPLES = """
+# Note: These examples assume 'connection' has been set to 'network_cli'.
+
 - name: execute show version
   net_command: show version
 
