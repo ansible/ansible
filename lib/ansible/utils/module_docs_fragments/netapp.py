@@ -20,11 +20,17 @@
 class ModuleDocFragment(object):
 
     DOCUMENTATION = """
+options:
+  - See respective platform section for more details
+requirements:
+  - See respective platform section for more details
 notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
 """
     # Documentation fragment including attributes for E-Series/SANtricity
     SANTRICITY = """
+options:
+  - See respective modules for more details
 requirements:
   - SANtricity Web Services Proxy*|1.4 or 2.0|
   - Ansible 2.2**
