@@ -36,33 +36,33 @@ options:
         required: false
         choices: [ yes, no ]
         description:
-        - Force a given operation (where supported by imgadm(1M)).
+          - Force a given operation (where supported by imgadm(1M)).
     pool:
         required: false
         default: zones
         description:
-        - zpool to import to or delete images from.
+          - zpool to import to or delete images from.
     source:
         required: false
         description:
-        - URI for the image source.
+          - URI for the image source.
     state:
         required: true
         choices: [ present, absent, deleted, imported, updated, vacuumed ]
         description:
-        - State the object operated on should be in. C(imported) is an alias for
-          for C(present) and C(deleted) for C(absent). When set to C(vacuumed)
-          and C(uuid) to C(*), it will remove all unused images.
+          - State the object operated on should be in. C(imported) is an alias for
+            for C(present) and C(deleted) for C(absent). When set to C(vacuumed)
+            and C(uuid) to C(*), it will remove all unused images.
     type:
         required: false
         choices: [ imgapi, docker, dsapi ]
         default: imgapi
         description:
-        - Type for image sources.
+          - Type for image sources.
     uuid:
         required: false
         description:
-        - Image UUID. Can either be a full UUID or C(*) for all images.
+          - Image UUID. Can either be a full UUID or C(*) for all images.
 requirements:
     - python >= 2.6
 '''
@@ -105,6 +105,25 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+source:
+    description: Source that is managed.
+    returned: When not managing an image.
+    type: string
+    sample: https://datasets.project-fifo.net
+uuid:
+    description: UUID for an image operated on.
+    returned: When not managing an image source.
+    type: string
+    sample: 70e3ae72-96b6-11e6-9056-9737fd4d0764
+state:
+    description: State of the target, after execution.
+    returned: success
+    type: string
+    sample: 'present'
+'''
+
+from ansible.module_utils.basic import AnsibleModule
 import re
 
 # Shortcut for the imgadm(1M) command. While imgadm(1M) supports a
@@ -113,6 +132,7 @@ import re
 # the stacktrace, which breaks the parsers.
 IMGADM = 'imgadm'
 
+
 # Helper method to massage stderr
 def errmsg(stderr):
     match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
@@ -120,6 +140,7 @@ def errmsg(stderr):
         return match.groups()[0]
     else:
         return 'Unexpected failure'
+
 
 def update_images(module):
     uuid = module.params['uuid']
@@ -134,6 +155,7 @@ def update_images(module):
     # was actually changed. So treat this as an 'always-changes' operation.
     # Note that 'imgadm -v' produces unparseable JSON...
     return rc, stdout, errmsg(stderr), True
+
 
 def manage_sources(module, present):
     force = module.params['force']
@@ -180,6 +202,7 @@ def manage_sources(module, present):
             changed = True
 
         return (rc, stdout, errmsg(stderr), changed)
+
 
 def manage_images(module, present):
     uuid = module.params['uuid']
@@ -236,6 +259,7 @@ def manage_images(module, present):
 
     return (rc, stdout, errmsg(stderr), changed)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -264,7 +288,7 @@ def main():
 
     stderr = stdout = ''
     rc = 0
-    result = { 'state': state }
+    result = {'state': state}
     changed = False
 
     # Perform basic UUID validation upfront.
@@ -298,7 +322,6 @@ def main():
 
     module.exit_json(**result)
 
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()
