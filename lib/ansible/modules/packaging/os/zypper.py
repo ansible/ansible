@@ -95,7 +95,7 @@ options:
     update_cache:
         version_added: "2.2"
         description:
-          - Run the equivalent of C(zypper refresh) before the operation.
+          - Run the equivalent of C(zypper refresh) before the operation. Disabled in check mode.
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -442,7 +442,7 @@ def main():
     name = filter(None, name)
 
     # Refresh repositories
-    if update_cache:
+    if update_cache and not module.check_mode:
         retvals = repo_refresh(module)
 
         if retvals['rc'] != 0:
