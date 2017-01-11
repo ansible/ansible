@@ -35,6 +35,11 @@ description:
 version_added: "2.0"
 author: Mathew Davies (@ThePixelDeveloper)
 options:
+    additional_params:
+        description:
+            - Additional params to be appended to the plugin install.
+        required: False
+        default: None
     name:
         description:
             - Name of the plugin to install. In ES 2.x, the name can be an url or file location
@@ -101,6 +106,13 @@ EXAMPLES = '''
 - elasticsearch_plugin:
     state: absent
     name: mobz/elasticsearch-head
+
+# Install plugin with arguments in batch mode
+- elasticsearch_plugin:
+    state: present
+    name: "x-pack"
+    timeout: ~
+    additional_params: "-Expack.security.enabled=false --batch"
 '''
 
 PACKAGE_STATE_MAP = dict(
@@ -136,7 +148,8 @@ def parse_error(string):
     except ValueError:
         return string
 
-def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout):
+
+def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, proxy_port, timeout, additional_params):
     cmd_args = [plugin_bin, PACKAGE_STATE_MAP["present"], plugin_name]
 
     if version:
@@ -150,6 +163,9 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
 
     if timeout:
         cmd_args.append("--timeout %s" % timeout)
+
+    if additional_params:
+        cmd_args.append(additional_params)
 
     cmd = " ".join(cmd_args)
 
@@ -183,6 +199,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            additional_params=dict(default=None),
             name=dict(required=True),
             state=dict(default="present", choices=PACKAGE_STATE_MAP.keys()),
             url=dict(default=None),
@@ -196,15 +213,16 @@ def main():
         supports_check_mode=True
     )
 
-    name        = module.params["name"]
-    state       = module.params["state"]
-    url         = module.params["url"]
-    timeout     = module.params["timeout"]
-    plugin_bin  = module.params["plugin_bin"]
-    plugin_dir  = module.params["plugin_dir"]
-    proxy_host  = module.params["proxy_host"]
-    proxy_port  = module.params["proxy_port"]
-    version     = module.params["version"]
+    name              = module.params["name"]
+    state             = module.params["state"]
+    url               = module.params["url"]
+    timeout           = module.params["timeout"]
+    plugin_bin        = module.params["plugin_bin"]
+    plugin_dir        = module.params["plugin_dir"]
+    proxy_host        = module.params["proxy_host"]
+    proxy_port        = module.params["proxy_port"]
+    version           = module.params["version"]
+    additional_params = module.params["additional_params"]
 
     present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
 
@@ -213,7 +231,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     if state == "present":
-        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, url, proxy_host, proxy_port, timeout)
+        changed, cmd, out, err = install_plugin(module, plugin_bin, name, version, url, proxy_host, proxy_port, timeout, additional_params)
 
     elif state == "absent":
         changed, cmd, out, err = remove_plugin(module, plugin_bin, name)
