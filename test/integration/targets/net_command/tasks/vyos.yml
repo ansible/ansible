@@ -20,11 +20,16 @@
 
 # This is a placeholder test, will be fleshed out by gundalow at a later point
 
+- name: Check we can communicate using net_command
+  net_command: show version
+  connection: network_cli
+  register: result
 
-- name: vyos Specific
-  include: vyos.yml
-  when: ansible_network_os == 'vyos'
+- debug:
+    msg: "{{ result.stdout }}"
 
-- name: junos Specific
-  include: vyos.yml
-  when: ansible_network_os == 'junos'
+- name: Ensure output is valid
+  assert:
+    that:
+      - result.changed == true
+      - "'VyOS' in result.stdout"
