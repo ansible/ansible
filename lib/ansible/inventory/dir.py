@@ -142,17 +142,17 @@ class InventoryDirectory(object):
                 # iterate on a copy of the lists, as those lists get changed in
                 # the loop
                 # list with group's child group objects:
-                for child in group.child_groups[:]:
+                for child in group.child_groups.copy():
                     if child != self.groups[child.name]:
                         group.child_groups.remove(child)
-                        group.child_groups.append(self.groups[child.name])
+                        group.child_groups.add(self.groups[child.name])
                 # list with group's parent group objects:
-                for parent in group.parent_groups[:]:
+                for parent in group.parent_groups.copy():
                     if parent != self.groups[parent.name]:
                         group.parent_groups.remove(parent)
                         group.parent_groups.append(self.groups[parent.name])
                 # list with group's host objects:
-                for host in group.hosts[:]:
+                for host in group.hosts.copy():
                     if host != self.hosts[host.name]:
                         group.hosts.remove(host)
                         group.hosts.append(self.hosts[host.name])
@@ -177,7 +177,7 @@ class InventoryDirectory(object):
         if 'all' in self.groups:
             allgroup = self.groups['all' ]
             # loop on a copy of all's  child groups, as we want to change that list
-            for group in allgroup.child_groups[:]:
+            for group in allgroup.child_groups.copy():
                 # groups might once have beeen added to all, and later be added
                 # to another group: we need to remove the link wit all then
                 if len(group.parent_groups) > 1 and allgroup in group.parent_groups:
