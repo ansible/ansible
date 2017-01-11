@@ -211,14 +211,19 @@ To automate the setup of WinRM, you can run `this PowerShell script <https://git
 
 The example script accepts a few arguments which Admins may choose to use to modify the default setup slightly, which might be appropriate in some cases.
 
-Pass the -CertValidityDays option to customize the expiration date of the generated certificate.
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -CertValidityDays 100
+Pass the -CertValidityDays option to customize the expiration date of the generated certificate::
 
-Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -CertValidityDays 100
 
-Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)
-  powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
+Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)::
+
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
+
+Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)::
+
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
+
+To troubleshoot the ``ConfigureRemotingForAnsible.ps1`` writes every change it makes to the Windows EventLog (useful when run unattendedly). Additionally the ``-Verbose`` option can be used to get more information on screen about what it is doing.
 
 .. note::
    On Windows 7 and Server 2008 R2 machines, due to a bug in Windows
