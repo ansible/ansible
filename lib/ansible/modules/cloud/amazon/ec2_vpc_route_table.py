@@ -462,6 +462,8 @@ def ensure_route_table_absent(connection, module):
     if route_table is None:
         return {'changed': False}
 
+    # disassociate subnets before deleting route table
+    ensure_subnet_associations(connection, vpc_id, route_table, [], module.check_mode)
     try:
         connection.delete_route_table(route_table.id, dry_run=module.check_mode)
     except EC2ResponseError as e:
