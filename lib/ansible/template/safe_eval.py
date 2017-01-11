@@ -105,6 +105,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             elif isinstance(node, ast.Call):
                 inside_call = True
             elif isinstance(node, ast.Name) and inside_call:
+                # Disallow calls to builtin functions that we have not vetted
+                # as safe.  Other functions are excluded by setting locals in
+                # the call to eval() later on
                 if hasattr(builtins, node.id) and node.id not in CALL_WHITELIST:
                     raise Exception("invalid function: %s" % node.id)
             # iterate over all child nodes
@@ -122,6 +125,9 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
+        # Note: passing our own globals and locals here constrains what
+        # callables (and other identifiers) are recognized.  this is in
+        # addition to the filtering of builtins done in CleansingNodeVisitor
         result = eval(compiled, JSON_TYPES, dict(locals))
 
         if include_exceptions:
