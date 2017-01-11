@@ -14,3 +14,4 @@ six
 unittest2
 mock
 nose
+pytest
