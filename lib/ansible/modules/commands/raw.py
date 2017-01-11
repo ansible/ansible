@@ -27,7 +27,7 @@ version_added: historical
 options:
   free_form:
     description:
-      - the raw module takes a free form command to run
+      - the raw module takes a free form command to run. There is no parameter actually named 'free form'; see the examples!
     required: true
   executable:
     description:
@@ -64,15 +64,17 @@ author:
 '''
 
 EXAMPLES = '''
-# Bootstrap a legacy python 2.4 host
-- raw: yum -y install python-simplejson
+- name: Bootstrap a legacy python 2.4 host
+  raw: yum -y install python-simplejson
 
-# Bootstrap a host without python2 installed
-- raw: dnf install -y python2 python2-dnf libselinux-python
+- name: Bootstrap a host without python2 installed
+  raw: dnf install -y python2 python2-dnf libselinux-python
 
-# Run a command that uses non-posix shell-isms (in this example /bin/sh
-# doesn't handle redirection and wildcards together but bash does)
-- raw: cat < /tmp/*txt
+- name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
+  raw: cat < /tmp/*txt
   args:
     executable: /bin/bash
+
+- name: safely use templated variables. Always use quote filter to avoid injection issues.
+  raw: {{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}
 '''

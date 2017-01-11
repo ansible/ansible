@@ -442,7 +442,7 @@ def main():
     end_state = existing
 
     args = ['route_name', 'vrf', 'pref', 'tag', 'next_hop', 'prefix']
-    proposed = dict((k, v) for k, v in module.params.iteritems() if v is not None and k in args)
+    proposed = dict((k, v) for k, v in module.params.items() if v is not None and k in args)
 
     if state == 'present' or (state == 'absent' and existing):
         candidate = CustomNetworkConfig(indent=3)

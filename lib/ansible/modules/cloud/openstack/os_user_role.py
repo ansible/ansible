@@ -58,7 +58,7 @@ options:
      default: null
    project:
      description:
-        - Name or ID of the project to scope the role assocation to.
+        - Name or ID of the project to scope the role association to.
           If you are using keystone version 2, then this value is required.
      required: false
      default: null

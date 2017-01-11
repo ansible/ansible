@@ -91,7 +91,7 @@ options:
     aliases: []
   parameters:
     description:
-      - Custom site Parameters from string where properties are seperated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
+      - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
     required: false
     default: null
     aliases: []
@@ -99,34 +99,8 @@ author: Henrik Wallström
 '''
 
 EXAMPLES = '''
-# This return information about an existing host
-$ ansible -i vagrant-inventory -m win_iis_website -a "name='Default Web Site'" window
-host | success >> {
-    "changed": false,
-    "site": {
-        "ApplicationPool": "DefaultAppPool",
-        "Bindings": [
-            "*:80:"
-        ],
-        "ID": 1,
-        "Name": "Default Web Site",
-        "PhysicalPath": "%SystemDrive%\\inetpub\\wwwroot",
-        "State": "Stopped"
-    }
-}
 
-# This stops an existing site.
-$ ansible -i hosts -m win_iis_website -a "name='Default Web Site' state=stopped" host
-
-# This creates a new site.
-$ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
-
-# Change logfile .
-$ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
-
-
-# Playbook example
----
+# Start a website
 
 - name: Acme IIS site
   win_iis_website:
@@ -140,4 +114,30 @@ $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acm
     parameters: 'logfile.directory:c:\\sites\\logs'
   register: website
 
+# Some commandline examples:
+
+# This return information about an existing host
+# $ ansible -i vagrant-inventory -m win_iis_website -a "name='Default Web Site'" window
+# host | success >> {
+#     "changed": false,
+#     "site": {
+#         "ApplicationPool": "DefaultAppPool",
+#         "Bindings": [
+#             "*:80:"
+#         ],
+#         "ID": 1,
+#         "Name": "Default Web Site",
+#         "PhysicalPath": "%SystemDrive%\\inetpub\\wwwroot",
+#         "State": "Stopped"
+#     }
+# }
+
+# This stops an existing site.
+# $ ansible -i hosts -m win_iis_website -a "name='Default Web Site' state=stopped" host
+
+# This creates a new site.
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
+
+# Change logfile.
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
 '''

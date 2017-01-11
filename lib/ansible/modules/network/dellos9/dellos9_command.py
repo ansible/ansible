@@ -78,7 +78,7 @@ notes:
 
   - This module requires to increase the ssh connection rate limit.
     Use the following command I(ip ssh connection-rate-limit 60) 
-    to configure the same. This can be done via M(dnos_config) module 
+    to configure the same. This can be done via M(dellos9_config) module 
     as well.
 
 """

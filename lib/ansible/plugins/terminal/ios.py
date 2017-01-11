@@ -80,9 +80,3 @@ class TerminalModule(TerminalBase):
             self._exec_cli_command('disable')
 
 
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Cisco IOS Software' in stdout.read():
-            return 'ios'
-

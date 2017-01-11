@@ -70,7 +70,7 @@ def stringc(text, color):
     """String in color."""
 
     if ANSIBLE_COLOR:
-        return u"\033[%sm%s\033[0m" % (codeCodes[color], text)
+        return "\n".join([u"\033[%sm%s\033[0m" % (codeCodes[color], t) for t in text.split('\n')])
     else:
         return text
 

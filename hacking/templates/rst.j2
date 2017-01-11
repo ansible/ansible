@@ -17,7 +17,7 @@
 
 .. contents::
    :local:
-   :depth: 1
+   :depth: 2
 
 {# ------------------------------------------
  #
@@ -30,7 +30,7 @@
 DEPRECATED
 ----------
 
-@{ deprecated }@
+@{ deprecated | convert_symbols_to_format }@
 {% endif %}
 
 Synopsis
@@ -169,26 +169,32 @@ Notes
 {% endif %}
 
 {% if not deprecated %}
-Module Status: @{ ','.join(metadata.status) }@
---------------------
+{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'committer': 'This module is supported mainly by the community and is curated by core committers', 'community': 'This module is community maintained without core committer oversight'} %}
+{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that the no backward incompatible interface changes will be made'} %}
 
-    {% if metadata.supported_by == 'core' %}
+{% if metadata %}
+{% if metadata.status %}
 
-This is a Core Module
----------------------
+Status
+~~~~~~
 
-For more information on what this means please read :doc:`modules_core`
-
-    {% else %}
-
-This is module is supported by: @{ metadata.supported_by }@
-------------------------
-
-For more information on what this means please read :doc:`modules_extra`
-
-    {% endif %}
+{% for cur_state in  metadata.status %}
+This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+{% endfor %}
 {% endif %}
 
-For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`developing_test_pr` and :doc:`developing_modules`.
+{% if metadata.supported_by %}
 
+Support
+~~~~~~~
+
+@{ support[metadata.supported_by] }@
+
+For more information on what this means please read :doc:`modules_support`
+
+{% endif %}
+{% endif %}
+{% endif %}
+
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
 

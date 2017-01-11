@@ -132,7 +132,7 @@ class CloudStackFacts(object):
         result = {}
         filter = module.params.get('filter')
         if not filter:
-            for key,path in self.fact_paths.iteritems():
+            for key,path in self.fact_paths.items():
                 result[key] = self._fetch(CS_METADATA_BASE_URL + "/" + path)
             result['cloudstack_user_data'] = self._get_user_data_json()
         else:

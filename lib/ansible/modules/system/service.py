@@ -45,7 +45,9 @@ options:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. B(At least one of state
-            and enabled are required.)
+            and enabled are required.) Note that reloaded will start the
+            service if it is not already started, even if your chosen init
+            system wouldn't normally.
     sleep:
         required: false
         version_added: "1.3"
@@ -623,11 +625,9 @@ class LinuxService(Service):
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
                 self.running = False
-            elif "run" in cleanout and "not" in cleanout:
-                self.running = False
-            elif "run" in cleanout and "not" not in cleanout:
-                self.running = True
-            elif "start" in cleanout and "not" not in cleanout:
+            elif "run" in cleanout:
+                self.running = not ("not " in cleanout)
+            elif "start" in cleanout and "not " not in cleanout:
                 self.running = True
             elif 'could not access pid file' in cleanout:
                 self.running = False

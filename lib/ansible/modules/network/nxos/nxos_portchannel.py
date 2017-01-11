@@ -475,7 +475,7 @@ def get_portchannel(module, netcfg=None):
 
         # Ensure each member have the same mode.
         modes = set()
-        for each, value in member_dictionary.iteritems():
+        for each, value in member_dictionary.items():
             modes.update([value['mode']])
         if len(modes) == 1:
             portchannel['mode'] = value['mode']
@@ -597,7 +597,7 @@ def get_commands_if_mode_change(proposed, existing, group, mode, module):
     members_to_remove = set(existing_members).difference(proposed_members)
     members_with_mode_change = []
     if members_dict:
-        for interface, values in members_dict.iteritems():
+        for interface, values in members_dict.items():
             if (interface in proposed_members and
                     (interface not in members_to_remove)):
                 if values['mode'] != mode:
@@ -683,7 +683,7 @@ def main():
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing
-    proposed = dict((k, v) for k, v in module.params.iteritems()
+    proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     result = {}

@@ -1,0 +1,35 @@
+---
+# Test code for the net_command module.
+# (c) 2017, Red Hat
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# This is a placeholder test, will be fleshed out by gundalow at a later point
+
+- name: Check we can communicate using net_command
+  net_command: show version
+  connection: network_cli
+  register: result
+
+- debug:
+    msg: "{{ result.stdout }}"
+
+- name: Ensure output is valid
+  assert:
+    that:
+      - result.changed == true
+      - "'VyOS' in result.stdout"

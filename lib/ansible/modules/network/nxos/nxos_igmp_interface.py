@@ -624,7 +624,7 @@ def config_igmp_interface(delta, found_both, found_prefix):
     commands = []
     command = None
 
-    for key, value in delta.iteritems():
+    for key, value in delta.items():
         if key == 'oif_source' or found_both or found_prefix:
             pass
         elif key == 'oif_prefix':
@@ -669,7 +669,7 @@ def get_igmp_interface_defaults():
                 group_timeout=group_timeout, report_llg=report_llg,
                 immediate_leave=immediate_leave)
 
-    default = dict((param, value) for (param, value) in args.iteritems()
+    default = dict((param, value) for (param, value) in args.items()
                    if value is not None)
 
     return default
@@ -678,7 +678,7 @@ def get_igmp_interface_defaults():
 def config_default_igmp_interface(existing, delta, found_both, found_prefix):
     commands = []
     proposed = get_igmp_interface_defaults()
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
     if delta:
         command = config_igmp_interface(delta, found_both, found_prefix)
 
@@ -816,7 +816,7 @@ def main():
 
     changed = False
     commands = []
-    proposed = dict((k, v) for k, v in module.params.iteritems()
+    proposed = dict((k, v) for k, v in module.params.items()
                      if v is not None and k in args)
 
     CANNOT_ABSENT = ['version', 'startup_query_interval',
@@ -833,7 +833,7 @@ def main():
                                      'state=absent')
 
     # delta check for all params except oif_prefix and oif_source
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
 
     # now check to see there is a delta for prefix and source command option
     found_both = False

@@ -74,6 +74,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
     '3.5',
+    '3.6',
 )
 
 COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
@@ -632,7 +633,10 @@ def command_sanity_code_smell(args, _):
         skip_tests = skip_fd.read().splitlines()
 
     tests = glob.glob('test/sanity/code-smell/*')
-    tests = sorted(p for p in tests if os.access(p, os.X_OK) and os.path.basename(p) not in skip_tests)
+    tests = sorted(p for p in tests
+                   if os.access(p, os.X_OK)
+                   and os.path.isfile(p)
+                   and os.path.basename(p) not in skip_tests)
 
     for test in tests:
         display.info('Code smell check using %s' % os.path.basename(test))
@@ -720,7 +724,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
     stdout, stderr = intercept_command(args, cmd, env=env, capture=True, python_version=python_version)
 
     if stderr:
-        # consider any output on stderr an error, even though the return code is zero
+        display.error('Output on stderr from ansible-doc is considered an error.')
         raise SubprocessError(cmd, stderr=stderr)
 
     if stdout:
@@ -924,8 +928,8 @@ def detect_changes_local(args):
 
 def docker_qualify_image(name):
     """
-    :type name: str | None
-    :rtype: str | None
+    :type name: str
+    :rtype: str
     """
     if not name or any((c in name) for c in ('/', ':')):
         return name
@@ -1102,7 +1106,10 @@ class EnvironmentConfig(CommonConfig):
         self.remote = args.remote  # type: str
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else None)  # type: str | None
+        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
+        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+
+        self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
         self.remote_stage = args.remote_stage  # type: str
 

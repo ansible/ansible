@@ -102,7 +102,7 @@ above it is used to build a path to lookup in the kv store where it expects to
 find a json dictionary of metadata entries. If found, each key/value pair in the
 dictionary is added to the metadata for the node. eg node 'nyc-web-1' in datacenter
 'nyc-dc1' and kv_metadata = 'ansible/metadata', then the key
-'ansible/groups/nyc-dc1/nyc-web-1' should contain '{"databse": "postgres"}'
+'ansible/metadata/nyc-dc1/nyc-web-1' should contain '{"databse": "postgres"}'
 
 'availability':
 

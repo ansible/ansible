@@ -376,11 +376,11 @@ def get_existing(module, args):
         parents = ['interface {0}'.format(interface_exist)]
         temp_config = netcfg.get_section(parents)
 
-        if 'associate-vrf' in temp_config:
+        if 'member vni {0} associate-vrf'.format(module.params['vni']) in temp_config:
             parents.append('member vni {0} associate-vrf'.format(
                                                     module.params['vni']))
             config = netcfg.get_section(parents)
-        elif 'member vni' in temp_config:
+        elif "member vni {0}".format(module.params['vni']) in temp_config:
             parents.append('member vni {0}'.format(module.params['vni']))
             config = netcfg.get_section(parents)
         else:
@@ -417,7 +417,7 @@ def state_present(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if key == 'associate-vrf':
             command = 'member vni {0} {1}'.format(module.params['vni'], key)
 
@@ -532,11 +532,11 @@ def main():
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key != 'interface':
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)

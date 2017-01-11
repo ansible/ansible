@@ -27,7 +27,7 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     get_dict_of_struct,
-    ovirt_full_argument_spec,
+    ovirt_facts_full_argument_spec,
     search_by_name,
 )
 
@@ -54,7 +54,7 @@ options:
     name:
         description:
             - "Name of the quota, can be used as glob expression."
-extends_documentation_fragment: ovirt
+extends_documentation_fragment: ovirt_facts
 '''
 
 EXAMPLES = '''
@@ -79,7 +79,7 @@ ovirt_quotas:
 
 
 def main():
-    argument_spec = ovirt_full_argument_spec(
+    argument_spec = ovirt_facts_full_argument_spec(
         datacenter=dict(required=True),
         name=dict(default=None),
     )
@@ -107,7 +107,12 @@ def main():
             changed=False,
             ansible_facts=dict(
                 ovirt_quotas=[
-                    get_dict_of_struct(c) for c in quotas
+                    get_dict_of_struct(
+                        struct=c,
+                        connection=connection,
+                        fetch_nested=module.params.get('fetch_nested'),
+                        attributes=module.params.get('nested_attributes'),
+                    ) for c in quotas
                 ],
             ),
         )

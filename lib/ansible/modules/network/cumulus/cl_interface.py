@@ -139,7 +139,7 @@ EXAMPLES = '''
 - name: Configure subinterface with an IP
   cl_interface:
     name: bond0.100
-    alias_name: 'my bond'
+    alias_name: my bond
     ipv4: 10.1.1.1/24
   notify: reload networking
 
@@ -148,50 +148,49 @@ EXAMPLES = '''
 # with just the options you want.
   - name: Create interfaces
     cl_interface:
-      name: "{{ item.key }}"
-      ipv4: "{{ item.value.ipv4 | default(omit) }}"
-      ipv6: "{{ item.value.ipv6 | default(omit) }}"
-      alias_name: "{{ item.value.alias_name | default(omit) }}"
-      addr_method: "{{ item.value.addr_method | default(omit) }}"
-      speed: "{{ item.value.link_speed | default(omit) }}"
-      mtu: "{{ item.value.mtu | default(omit) }}"
-      clagd_enable: "{{ item.value.clagd_enable | default(omit) }}"
-      clagd_peer_ip: "{{ item.value.clagd_peer_ip | default(omit) }}"
-      clagd_sys_mac: "{{ item.value.clagd_sys_mac | default(omit) }}"
-      clagd_priority: "{{ item.value.clagd_priority | default(omit) }}"
-      vids: "{{ item.value.vids | default(omit) }}"
-      virtual_ip: "{{ item.value.virtual_ip | default(omit) }}"
-      virtual_mac: "{{ item.value.virtual_mac | default(omit) }}"
+      name: '{{ item.key }}'
+      ipv4: '{{ item.value.ipv4 | default(omit) }}'
+      ipv6: '{{ item.value.ipv6 | default(omit) }}'
+      alias_name: '{{ item.value.alias_name | default(omit) }}'
+      addr_method: '{{ item.value.addr_method | default(omit) }}'
+      speed: '{{ item.value.link_speed | default(omit) }}'
+      mtu: '{{ item.value.mtu | default(omit) }}'
+      clagd_enable: '{{ item.value.clagd_enable | default(omit) }}'
+      clagd_peer_ip: '{{ item.value.clagd_peer_ip | default(omit) }}'
+      clagd_sys_mac: '{{ item.value.clagd_sys_mac | default(omit) }}'
+      clagd_priority: '{{ item.value.clagd_priority | default(omit) }}'
+      vids: '{{ item.value.vids | default(omit) }}'
+      virtual_ip: '{{ item.value.virtual_ip | default(omit) }}'
+      virtual_mac: '{{ item.value.virtual_mac | default(omit) }}'
       mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork | default('no') }}"
       mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge | default('no') }}"
       mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard | default('no') }}"
-    with_dict: "{{ cl_interfaces }}"
+    with_dict: '{{ cl_interfaces }}'
     notify: reload networking
-
 
 # In vars file
 # ============
 cl_interfaces:
-    swp1:
-        alias_name: 'uplink to isp'
-        ipv4: '10.1.1.1/24'
-    swp2:
-        alias_name: 'l2 trunk connection'
-        vids: [1, 50]
-    swp3:
-        speed: 1000
-        alias_name: 'connects to 1G link'
+  swp1:
+    alias_name: uplink to isp
+    ipv4: 10.1.1.1/24
+  swp2:
+    alias_name: l2 trunk connection
+    vids:
+      - 1
+      - 50
+  swp3:
+    speed: 1000
+    alias_name: connects to 1G link
 ##########
 #   br0 interface is configured by cl_bridge
 ##########
-    br0.100:
-        alias_name: 'SVI for vlan 100'
-        ipv4: '10.2.2.2/24'
-        ipv6: '10:2:2::2/127'
-        virtual_ip: '10.2.2.254'
-        virtual_mac: '00:00:5E:00:10:10'
-
-
+  br0.100:
+    alias_name: SVI for vlan 100
+    ipv4: 10.2.2.2/24
+    ipv6: '10:2:2::2/127'
+    virtual_ip: 10.2.2.254
+    virtual_mac: 00:00:5E:00:10:10
 '''
 
 RETURN = '''
@@ -422,7 +421,7 @@ def main():
     # checks all lists and removes it, so that functions expecting
     # an empty list, get this result. May upstream this fix into
     # the AnsibleModule code to have it check for this.
-    for k, _param in module.params.iteritems():
+    for k, _param in module.params.items():
         if isinstance(_param, list):
             module.params[k] = [x for x in _param if x]
 

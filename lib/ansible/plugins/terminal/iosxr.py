@@ -30,7 +30,8 @@ class TerminalModule(TerminalBase):
 
     terminal_prompts_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$"),
+        re.compile(r']]>]]>[\r\n]?')
     ]
 
     terminal_errors_re = [
@@ -51,11 +52,3 @@ class TerminalModule(TerminalBase):
                 self._connection.exec_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Cisco IOS XR' in stdout.read():
-            return 'iosxr'
-
-

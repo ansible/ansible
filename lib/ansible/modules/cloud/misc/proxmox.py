@@ -328,7 +328,7 @@ def node_check(proxmox, node):
 
 def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout, **kwargs):
   proxmox_node = proxmox.nodes(node)
-  kwargs = dict((k,v) for k, v in kwargs.iteritems() if v is not None)
+  kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
   if VZ_TYPE =='lxc':
       kwargs['cpulimit']=cpus
       kwargs['rootfs']=disk

@@ -233,6 +233,34 @@ result = connection.aws_call()
 module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 ```
 
+### Dealing with IAM JSON policy
+
+If your module accepts IAM JSON policies then set the type to 'json' in the module spec. For example"
+
+```python
+argument_spec.update(
+    dict(
+        policy=dict(required=False, default=None, type='json'),
+    )
+)
+```
+
+Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore, a helper
+function has been created to order policies before comparison.
+
+```python
+# Get the policy from AWS
+current_policy = aws_object.get_policy()
+
+# Compare the user submitted policy to the current policy but sort them first
+if sort_json_policy_dict(user_policy) == sort_json_policy_dict(current_policy):
+    # Nothing to do
+    pass
+else:
+    # Update the policy
+    aws_object.set_policy(user_policy)
+```
+
 ### Helper functions
 
 Along with the connection functions in Ansible ec2.py module_utils, there are some other useful functions detailed below.
@@ -262,3 +290,9 @@ Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts.
 Pass this function a list of security group names or combination of security group names and IDs and this function will
 return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
 across VPCs.
+
+### sort_json_policy_dict
+
+Pass any JSON policy dict to this function in order to sort any list contained therein. This is useful
+because AWS rarely return lists in the same order that they were submitted so without this function, comparison
+of identical policies returns false.

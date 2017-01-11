@@ -107,56 +107,56 @@ options:
 '''
 
 EXAMPLES = '''
-# Create and install a zone, but don't boot it
-- solaris_zone:
+- name: Create and install a zone, but don't boot it
+  solaris_zone:
     name: zone1
     state: present
     path: /zones/zone1
-    sparse: true
+    sparse: True
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Create and install a zone and boot it
-- solaris_zone:
+- name: Create and install a zone and boot it
+  solaris_zone:
     name: zone1
     state: running
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Boot an already installed zone
-- solaris_zone:
+- name: Boot an already installed zone
+  solaris_zone:
     name: zone1
     state: running
 
-# Stop a zone
-- solaris_zone:
+- name: Stop a zone
+  solaris_zone:
     name: zone1
     state: stopped
 
-# Destroy a zone
-- solaris_zone:
+- name: Destroy a zone
+  solaris_zone:
     name: zone1
     state: absent
 
-# Detach a zone
-- solaris_zone:
+- name: Detach a zone
+  solaris_zone:
     name: zone1
     state: detached
 
-# Configure a zone, ready to be attached
-- solaris_zone:
+- name: Configure a zone, ready to be attached
+  solaris_zone:
     name: zone1
     state: configured
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Attach a zone
-- solaris_zone:
+- name: Attach zone1
+  solaris_zone:
     name: zone1
     state: attached
-    attach_options=: -u
+    attach_options: -u
 '''
 
 class Zone(object):

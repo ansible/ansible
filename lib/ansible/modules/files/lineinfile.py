@@ -160,15 +160,16 @@ EXAMPLES = r"""
     line: '192.168.1.99 foo.lab.net foo'
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile: "
+- lineinfile:
     dest: /etc/sudoers
     state: present
-    regexp: '^%wheel'
+    regexp: '^%wheel\s'
     line: '%wheel ALL=(ALL) NOPASSWD: ALL'
 
+# Yaml requires escaping backslashes in double quotes but not in single quotes
 - lineinfile:
     dest: /opt/jboss-as/bin/standalone.conf
-    regexp: '^(.*)Xms(\d+)m(.*)$'
+    regexp: "^(.*)Xms(\\d+)m(.*)$"
     line: '\1Xms${xms}m\3'
     backrefs: yes
 

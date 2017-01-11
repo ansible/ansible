@@ -446,7 +446,7 @@ def get_portchannel_vpc_config(module, portchannel):
 
     mapping = get_existing_portchannel_to_vpc_mappings(module)
 
-    for existing_vpc, port_channel in mapping.iteritems():
+    for existing_vpc, port_channel in mapping.items():
         port_ch = str(port_channel[2:])
         if port_ch == portchannel:
             pc = port_ch
@@ -511,7 +511,7 @@ def main():
                                  "before trying to assign it here. ",
                              existing_portchannel=mapping[vpc])
 
-        for vpcid, existing_pc in mapping.iteritems():
+        for vpcid, existing_pc in mapping.items():
             if portchannel == existing_pc.strip('Po') and vpcid != vpc:
                 module.fail_json(msg="This portchannel already has another"
                                      " VPC configured.  Remove it first "
@@ -538,13 +538,13 @@ def main():
         config_value = 'peer-link'
 
 
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
     existing = get_portchannel_vpc_config(module, portchannel)
     end_state = existing
     commands = []
 
     if state == 'present':
-        delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+        delta = dict(set(proposed.items()).difference(existing.items()))
         if delta:
             command = get_commands_to_config_vpc_interface(
                 portchannel,

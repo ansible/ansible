@@ -4,14 +4,14 @@
 - name: setup
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
       - delete interfaces lo0
     provider: "{{ netconf }}"
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 
@@ -36,7 +36,7 @@
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 

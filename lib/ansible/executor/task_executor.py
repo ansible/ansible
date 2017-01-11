@@ -413,7 +413,7 @@ class TaskExecutor:
             # loop error takes precedence
             if self._loop_eval_error is not None:
                 raise self._loop_eval_error
-            # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
+            # skip conditional exception in the case of includes as the vars needed might not be available except in the included tasks or due to tags
             if self._task.action not in ['include', 'include_role']:
                 raise
 
@@ -762,7 +762,8 @@ class TaskExecutor:
                 raise AnsibleError("async mode is not supported with the %s module" % self._task.action)
             handler_name = self._task.action
         elif self._task.async == 0:
-            handler_name = 'normal'
+            pc_conn = self._shared_loader_obj.connection_loader.get(self._play_context.connection, class_only=True)
+            handler_name = getattr(pc_conn, 'action_handler', 'normal')
         else:
             handler_name = 'async'
 

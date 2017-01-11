@@ -525,13 +525,13 @@ def get_acl(module, acl_name, seq_number):
             options['time_range'] = each.get('timerange')
 
             options_no_null = {}
-            for key, value in options.iteritems():
+            for key, value in options.items():
                 if value is not None:
                     options_no_null[key] = value
 
             keep['options'] = options_no_null
 
-        for key, value in temp.iteritems():
+        for key, value in temp.items():
             if value:
                 keep[key] = value
         # ensure options is always in the dict
@@ -600,7 +600,7 @@ def config_acl_options(options):
         options.pop('time_range')
 
     command = ''
-    for option, value in options.iteritems():
+    for option, value in options.items():
         if option in ENABLE_ONLY:
             if value == 'enable':
                 command += ' ' + option
@@ -733,11 +733,11 @@ def main():
             'dest_port1', 'dest_port2', 'remark']
 
     proposed_core = dict((param, value) for (param, value) in
-                         module.params.iteritems()
+                         module.params.items()
                          if param in CORE and value is not None)
 
     proposed_options = dict((param, value) for (param, value) in
-                            module.params.iteritems()
+                            module.params.items()
                             if param in OPTIONS_NAMES and value is not None)
     proposed = {}
     proposed.update(proposed_core)
@@ -759,12 +759,12 @@ def main():
 
     if not existing_core.get('remark'):
         delta_core = dict(
-            set(proposed_core.iteritems()).difference(
-                existing_core.iteritems())
+            set(proposed_core.items()).difference(
+                existing_core.items())
             )
         delta_options = dict(
-            set(proposed_options.iteritems()).difference(
-                existing_options.iteritems())
+            set(proposed_options.items()).difference(
+                existing_options.items())
         )
 
     if state == 'present':

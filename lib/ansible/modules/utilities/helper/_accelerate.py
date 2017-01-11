@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 ---
 module: accelerate
 short_description: Enable accelerated mode on remote node
-deprecated: "in favor of SSH with ControlPersist"
+deprecated: "Use SSH with ControlPersist instead."
 description:
      - This modules launches an ephemeral I(accelerate) daemon on the remote node which
        Ansible can use to communicate with nodes at high speed.

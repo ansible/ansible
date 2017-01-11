@@ -82,28 +82,28 @@ author:
 '''
 
 EXAMPLES = '''
-# Execute the command in remote shell; stdout goes to the specified
-# file on the remote.
-- shell: somescript.sh >> somelog.txt
+- name: Execute the command in remote shell; stdout goes to the specified file on the remote.
+  shell: somescript.sh >> somelog.txt
 
-# Change the working directory to somedir/ before executing the command.
-- shell: somescript.sh >> somelog.txt
+- name: Change the working directory to somedir/ before executing the command.
+  shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
 
-# You can also use the 'args' form to provide the options. This command
-# will change the working directory to somedir/ and will only run when
-# somedir/somelog.txt doesn't exist.
-- shell: somescript.sh >> somelog.txt
+# You can also use the 'args' form to provide the options.
+- name: This command will change the working directory to somedir/ and will only run when somedir/somelog.txt doesn't exist.
+  shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
     creates: somelog.txt
 
-# Run a command that uses non-posix shell-isms (in this example /bin/sh
-# doesn't handle redirection and wildcards together but bash does)
-- shell: cat < /tmp/*txt
+- name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
+  shell: cat < /tmp/*txt
   args:
     executable: /bin/bash
+
+- name: Run a command using a templated variable (always use quote filter to avoid injection)
+  shell: cat {{ myfile|quote }}
 '''
 
 RETURN = '''

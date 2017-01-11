@@ -38,7 +38,7 @@ options:
         required: true
     architecture:
         description:
-          - The archiecture for the container (e.g. "x86_64" or "i686").
+          - The architecture for the container (e.g. "x86_64" or "i686").
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
     config:
@@ -141,7 +141,7 @@ notes:
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
   - You can copy a file from the host to the container
-    with the Ansible M(copy) and M(templater) module and the `lxd` connection plugin.
+    with the Ansible M(copy) and M(template) module and the `lxd` connection plugin.
     See the example below.
   - You can copy a file in the creatd container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
@@ -388,7 +388,7 @@ class LXDContainerManagement(object):
 
     @staticmethod
     def _has_all_ipv4_addresses(addresses):
-        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.itervalues()])
+        return len(addresses) > 0 and all([len(v) > 0 for v in addresses.values()])
 
     def _get_addresses(self):
         try:

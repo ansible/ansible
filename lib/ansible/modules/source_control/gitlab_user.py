@@ -110,27 +110,29 @@ options:
 '''
 
 EXAMPLES = '''
-- name: "Delete Gitlab User"
-  local_action: gitlab_user
-                server_url="http://gitlab.dj-wasabi.local"
-                validate_certs=false
-                login_token="WnUzDsxjy8230-Dy_k"
-                username=myusername
-                state=absent
+- name: Delete Gitlab User
+  gitlab_user:
+    server_url: http://gitlab.example.com
+    validate_certs: False
+    login_token: WnUzDsxjy8230-Dy_k
+    username: myusername
+    state: absent
+  delegate_to: localhost
 
-- name: "Create Gitlab User"
-  local_action: gitlab_user
-                server_url="https://gitlab.dj-wasabi.local"
-                validate_certs=true
-                login_user=dj-wasabi
-                login_password="MySecretPassword"
-                name=My Name
-                username=myusername
-                password=mysecretpassword
-                email=me@home.com
-                sshkey_name=MySSH
-                sshkey_file=ssh-rsa AAAAB3NzaC1yc...
-                state=present
+- name: Create Gitlab User
+  gitlab_user:
+    server_url: https://gitlab.dj-wasabi.local
+    validate_certs: True
+    login_user: dj-wasabi
+    login_password: MySecretPassword
+    name: My Name
+    username: myusername
+    password: mysecretpassword
+    email: me@example.com
+    sshkey_name: MySSH
+    sshkey_file: ssh-rsa AAAAB3NzaC1yc...
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''

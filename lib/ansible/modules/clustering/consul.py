@@ -56,7 +56,7 @@ options:
     service_name:
         description:
           - Unique name for the service on a node, must be unique per node,
-            required if registering a service. May be ommitted if registering
+            required if registering a service. May be omitted if registering
             a node level check
         required: false
     service_id:
@@ -172,59 +172,58 @@ options:
 """
 
 EXAMPLES = '''
-  - name: register nginx service with the local consul agent
-    consul:
-      service_name: nginx
-      service_port: 80
+- name: register nginx service with the local consul agent
+  consul:
+    service_name: nginx
+    service_port: 80
 
-  - name: register nginx service with curl check
-    consul:
-      service_name: nginx
-      service_port: 80
-      script: "curl http://localhost"
-      interval: 60s
+- name: register nginx service with curl check
+  consul:
+    service_name: nginx
+    service_port: 80
+    script: curl http://localhost
+    interval: 60s
 
-  - name: register nginx with an http check
-    consul:
-      service_name: nginx
-      service_port: 80
-      interval: 60s
-      http: "http://localhost:80/status"
+- name: register nginx with an http check
+  consul:
+    service_name: nginx
+    service_port: 80
+    interval: 60s
+    http: http://localhost:80/status
 
-  - name: register external service nginx available at 10.1.5.23
-    consul:
-      service_name: nginx
-      service_port: 80
-      service_address: 10.1.5.23
+- name: register external service nginx available at 10.1.5.23
+  consul:
+    service_name: nginx
+    service_port: 80
+    service_address: 10.1.5.23
 
-  - name: register nginx with some service tags
-    consul:
-      service_name: nginx
-      service_port: 80
-      tags:
-        - prod
-        - webservers
+- name: register nginx with some service tags
+  consul:
+    service_name: nginx
+    service_port: 80
+    tags:
+      - prod
+      - webservers
 
-  - name: remove nginx service
-    consul:
-      service_name: nginx
-      state: absent
+- name: remove nginx service
+  consul:
+    service_name: nginx
+    state: absent
 
-  - name: create a node level check to test disk usage
-    consul:
-      check_name: Disk usage
-      check_id: disk_usage
-      script: "/opt/disk_usage.py"
-      interval: 5m
+- name: create a node level check to test disk usage
+  consul:
+    check_name: Disk usage
+    check_id: disk_usage
+    script: /opt/disk_usage.py
+    interval: 5m
 
-  - name: register an http check against a service that's already registered
-    consul:
-      check_name: nginx-check2
-      check_id: nginx-check2
-      service_id: nginx
-      interval: 60s
-      http: "http://localhost:80/morestatus"
-
+- name: register an http check against a service that's already registered
+  consul:
+    check_name: nginx-check2
+    check_id: nginx-check2
+    service_id: nginx
+    interval: 60s
+    http: http://localhost:80/morestatus
 '''
 
 try:
@@ -353,7 +352,7 @@ def get_consul_api(module, token=None):
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
     ''' iterate the registered services and find one with the given id '''
-    for name, service in consul_api.agent.services().iteritems():
+    for name, service in consul_api.agent.services().items():
         if service['ID'] == service_id_or_name or service['Service'] == service_id_or_name:
             return ConsulService(loaded=service)
 

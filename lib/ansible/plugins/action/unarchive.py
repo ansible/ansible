@@ -22,6 +22,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.constants import mk_boolean as boolean
 
@@ -79,19 +80,21 @@ class ActionModule(ActionBase):
         if not remote_src:
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source))
-            except AnsibleError as e:
+            except AnsibleError:
                 result['failed'] = True
-                result['msg'] = to_native(e)
+                result['msg'] = to_native(get_exception())
                 self._remove_tmp_path(tmp)
                 return result
 
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars, follow=True)
-        if remote_checksum == '4':
+        try:
+            remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
+        except AnsibleError:
             result['failed'] = True
-            result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            result['msg'] = to_native(get_exception())
             self._remove_tmp_path(tmp)
             return result
-        elif remote_checksum != '3':
+
+        if not remote_stat['exists'] or not remote_stat['isdir']:
             result['failed'] = True
             result['msg'] = "dest '%s' must be an existing dir" % dest
             self._remove_tmp_path(tmp)

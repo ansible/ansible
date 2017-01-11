@@ -95,7 +95,7 @@ options:
     update_cache:
         version_added: "2.2"
         description:
-          - Run the equivalent of C(zypper refresh) before the operation.
+          - Run the equivalent of C(zypper refresh) before the operation. Disabled in check mode.
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -150,12 +150,12 @@ EXAMPLES = '''
 
 # Update all packages
 - zypper:
-    name: *
+    name: '*'
     state: latest
 
 # Apply all available patches
 - zypper:
-    name: *
+    name: '*'
     state: latest
     type: patch
 
@@ -168,7 +168,14 @@ EXAMPLES = '''
 # Install specific version (possible comparisons: <, >, <=, >=, =)
 - zypper:
     name: 'docker>=1.10'
-    state: installed
+    state: present
+
+# Wait 20 seconds to acquire the lock before failing
+- zypper:
+    name: mosh
+    state: present
+  environment:
+    ZYPP_LOCK_TIMEOUT: 20
 '''
 
 
@@ -442,7 +449,7 @@ def main():
     name = filter(None, name)
 
     # Refresh repositories
-    if update_cache:
+    if update_cache and not module.check_mode:
         retvals = repo_refresh(module)
 
         if retvals['rc'] != 0:

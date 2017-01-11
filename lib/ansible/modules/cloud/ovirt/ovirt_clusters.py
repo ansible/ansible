@@ -73,44 +73,44 @@ options:
             - "Management network of cluster to access cluster hosts."
     ballooning:
         description:
-            - "If (True) enable memory balloon optimization. Memory balloon is used to
+            - "If I(True) enable memory balloon optimization. Memory balloon is used to
                re-distribute / reclaim the host memory based on VM needs
                in a dynamic way."
     virt:
         description:
-            - "If (True), hosts in this cluster will be used to run virtual machines."
+            - "If I(True), hosts in this cluster will be used to run virtual machines."
     gluster:
         description:
-            - "If (True), hosts in this cluster will be used as Gluster Storage
+            - "If I(True), hosts in this cluster will be used as Gluster Storage
                server nodes, and not for running virtual machines."
             - "By default the cluster is created for virtual machine hosts."
     threads_as_cores:
         description:
-            - "If (True) the exposed host threads would be treated as cores
+            - "If I(True) the exposed host threads would be treated as cores
                which can be utilized by virtual machines."
     ksm:
         description:
-            - "I (True) MoM enables to run Kernel Same-page Merging (KSM) when
+            - "I I(True) MoM enables to run Kernel Same-page Merging I(KSM) when
                necessary and when it can yield a memory saving benefit that
                outweighs its CPU cost."
     ksm_numa:
         description:
-            - "If (True) enables KSM C(ksm) for best berformance inside NUMA nodes."
+            - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
     ha_reservation:
         description:
-            - "If (True) enable the oVirt to monitor cluster capacity for highly
+            - "If I(True) enable the oVirt to monitor cluster capacity for highly
                available virtual machines."
     trusted_service:
         description:
             - "If (True) enable integration with an OpenAttestation server."
     vm_reason:
         description:
-            - "If (True) enable an optional reason field when a virtual machine
+            - "If I(True) enable an optional reason field when a virtual machine
                is shut down from the Manager, allowing the administrator to
                provide an explanation for the maintenance."
     host_reason:
         description:
-            - "If (True) enable an optional reason field when a host is placed
+            - "If I(True) enable an optional reason field when a host is placed
                into maintenance mode from the Manager, allowing the administrator
                to provide an explanation for the maintenance."
     memory_policy:
@@ -129,15 +129,15 @@ options:
             - "The address must be in the following format: I(protocol://[host]:[port])"
     fence_enabled:
         description:
-            - "If (True) enables fencing on the cluster."
+            - "If I(True) enables fencing on the cluster."
             - "Fencing is enabled by default."
     fence_skip_if_sd_active:
         description:
-            - "If (True) any hosts in the cluster that are Non Responsive
+            - "If I(True) any hosts in the cluster that are Non Responsive
                and still connected to storage will not be fenced."
     fence_skip_if_connectivity_broken:
         description:
-            - "If (True) fencing will be temporarily disabled if the percentage
+            - "If I(True) fencing will be temporarily disabled if the percentage
                of hosts in the cluster that are experiencing connectivity issues
                is greater than or equal to the defined threshold."
             - "The threshold can be specified by C(fence_connectivity_threshold)."
@@ -166,7 +166,7 @@ options:
             - "This parameter is used only when C(migration_bandwidth) is I(custom)."
     migration_auto_converge:
         description:
-            - "If (True) auto-convergence is used during live migration of virtual machines."
+            - "If I(True) auto-convergence is used during live migration of virtual machines."
             - "Used only when C(migration_policy) is set to I(legacy)."
             - "Following options are supported:"
             - "C(true) - Override the global setting to I(true)."
@@ -175,7 +175,7 @@ options:
         choices: ['true', 'false', 'inherit']
     migration_compressed:
         description:
-            - "If (True) compression is used during live migration of the virtual machine."
+            - "If I(True) compression is used during live migration of the virtual machine."
             - "Used only when C(migration_policy) is set to I(legacy)."
             - "Following options are supported:"
             - "C(true) - Override the global setting to I(true)."
@@ -320,7 +320,7 @@ class ClustersModule(BaseModule):
 
     def _get_sched_policy(self):
         sched_policy = None
-        if self.param('serial_policy'):
+        if self.param('scheduling_policy'):
             sched_policies_service = self._connection.system_service().scheduling_policies_service()
             sched_policy = search_by_name(sched_policies_service, self.param('scheduling_policy'))
             if not sched_policy:
@@ -445,6 +445,8 @@ class ClustersModule(BaseModule):
         )
 
     def update_check(self, entity):
+        sched_policy = self._get_sched_policy()
+        migration_policy = getattr(entity.migration, 'policy', None)
         return (
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
@@ -470,10 +472,10 @@ class ClustersModule(BaseModule):
             equal(self.param('migration_bandwidth'), str(entity.migration.bandwidth.assignment_method)) and
             equal(self.param('migration_auto_converge'), str(entity.migration.auto_converge)) and
             equal(self.param('migration_compressed'), str(entity.migration.compressed)) and
-            equal(self.param('serial_policy'), str(entity.serial_number.policy)) and
-            equal(self.param('serial_policy_value'), entity.serial_number.value) and
-            equal(self.param('scheduling_policy'), self._get_sched_policy().name) and
-            equal(self._get_policy_id(), entity.migration.policy.id) and
+            equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
+            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
+            equal(self.param('scheduling_policy'), getattr(sched_policy, 'name', None)) and
+            equal(self._get_policy_id(), getattr(migration_policy, 'id', None)) and
             equal(self._get_memory_policy(), entity.memory_policy.over_commit.percent) and
             equal(self.__get_minor(self.param('compatibility_version')), self.__get_minor(entity.version)) and
             equal(self.__get_major(self.param('compatibility_version')), self.__get_major(entity.version)) and

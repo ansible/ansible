@@ -276,7 +276,7 @@ def load_tags(module):
     tags = []
 
     if module.params.get('tags'):
-        for name, value in module.params.get('tags').iteritems():
+        for name, value in module.params.get('tags').items():
             tags.append({'Key': name, 'Value': str(value)})
         tags.append({'Key': "Name", 'Value': module.params.get('name')})
     else:

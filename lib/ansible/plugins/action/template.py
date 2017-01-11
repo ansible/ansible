@@ -23,8 +23,10 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -43,8 +45,8 @@ class ActionModule(ActionBase):
                 dest = os.path.join(dest, base)
                 dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        except Exception as e:
-            return dict(failed=True, msg=to_bytes(e))
+        except AnsibleError:
+            return dict(failed=True, msg=to_native(get_exception()))
 
         return dest_stat['checksum']
 
@@ -69,9 +71,9 @@ class ActionModule(ActionBase):
         else:
             try:
                 source = self._find_needle('templates', source)
-            except AnsibleError as e:
+            except AnsibleError:
                 result['failed'] = True
-                result['msg'] = to_native(e)
+                result['msg'] = to_native(get_exception())
 
         if 'failed' in result:
             return result
@@ -115,13 +117,22 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(b_source))
             )
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                if C.DEFAULT_ROLES_PATH:
-                    searchpath[:0] = C.DEFAULT_ROLES_PATH
-                searchpath.insert(1, self._task._role._role_path)
+
+            searchpath = []
+            # set jinja2 internal search path for includes
+            if 'ansible_search_path' in task_vars:
+                searchpath = task_vars['ansible_search_path']
+                # our search paths aren't actually the proper ones for jinja includes.
+
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
 

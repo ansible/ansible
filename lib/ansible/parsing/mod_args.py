@@ -31,6 +31,7 @@ from ansible.template import Templar
 RAW_PARAM_MODULES = ([
     'command',
     'win_command',
+    'net_command',
     'shell',
     'win_shell',
     'script',
@@ -164,7 +165,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
+        if args and action not in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
@@ -195,7 +196,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+            check_raw = action in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -298,7 +299,7 @@ class ModuleArgsParser:
             if 'ping' not in module_loader:
                 raise AnsibleParserError("The requested action was not found in configured module paths. "
                         "Additionally, core modules are missing. If this is a checkout, "
-                        "run 'git submodule update --init --recursive' to correct this problem.",
+                        "run 'git pull --rebase' to correct this problem.",
                         obj=self._task_ds)
 
             else:

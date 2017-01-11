@@ -175,7 +175,7 @@ Try {
             Set-Attr $result "changed" $true;
         }
         Catch {
-            Fail-Json $result "an exception occured when adding the specified rule"
+            Fail-Json $result "an exception occurred when adding the specified rule"
         }
     }
     ElseIf ($state -eq "absent" -And $match -eq $true) {
@@ -185,7 +185,7 @@ Try {
             Set-Attr $result "changed" $true;
         }
         Catch {
-            Fail-Json $result "an exception occured when removing the specified rule"
+            Fail-Json $result "an exception occurred when removing the specified rule"
         }
     }
     Else {
@@ -200,7 +200,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
+    Fail-Json $result "an error occurred when attempting to $state $rights permission(s) on $path for $user"
 }
  
 Exit-Json $result
