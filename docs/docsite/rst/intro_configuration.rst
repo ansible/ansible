@@ -392,11 +392,12 @@ is very very conservative::
 fact_path
 =========
 
-This option allows you to globally configure a custom path for :ref:`_local_facts`::
+This option allows you to globally configure a custom path for :ref:`_local_facts`:: for the implied `setup` task when using implied fact gathering.
 
   fact_path = /home/centos/ansible_facts.d
 
 The default is to use the default from the `setup module  <https://docs.ansible.com/ansible/setup_module.html>`_: ``/etc/ansible/facts.d``
+This ONLY affects fact gathering triggered by a play when `gather_facts: True`.
 
 .. _gathering:
 
