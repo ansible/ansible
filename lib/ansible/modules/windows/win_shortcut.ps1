@@ -24,19 +24,26 @@ $TargetFile = Get-AnsibleParam -obj $params -name "src" -failifempty $true
 $ShortcutFile = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
 $Arguments = Get-AnsibleParam -obj $params -name "arguments" -failempty $true
 $Directory =  Get-AnsibleParam -obj $params -name "directory" -failempty $true
-$Hotkey = Get-AnsibleParam -obj $params -name "hotkey" -failifempty $true
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -failifempty $true
 $Description = Get-AnsibleParam -obj $params -name "desc" -failifempty $true
 $IconLocation = Get-AnsibleParam -obj $params -name "icon" -failifempty $true
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -default $null
 $result = New-Object psobject @{
     changed = $FALSE
 }
+$src = [System.Environment]::ExpandEnvironmentVariables($TargetFile)
+$dest = [System.Environment]::ExpandEnvironmentVariables($ShortcutFile)
+$arguments = [System.Environment]::ExpandEnvironmentVariables($Arguments)
+$directory = [System.Environment]::ExpandEnvironmentVariables($Directory)
+$icon = [System.Environment]::ExpandEnvironmentVariables($IconLocation)
+$description = [System.Environment]::ExpandEnvironmentVariables($Description)
 try
 {
  if ($State -eq "absent")
  {
-   if(Test-Path $ShortcutFile)
+   if(Test-Path $dest)
    {
-     Remove-Item -Path "$ShortcutFile";
+     Remove-Item -Path "$dest";
      $result.changed = $TRUE
    }
    else
@@ -46,33 +53,35 @@ try
   }
  elseif($State -eq "present")
  {
-  if(!(Test-Path $TargetFile))
-  {
-   Fail-Json (New-Object psobject) "missing required argument: Provide valid exe path to create Shortcut"
-  }
+ if(!(Test-Path $src))
+ {
+  Fail-Json (New-Object psobject) "missing required argument: Provide valid exe path to create Shortcut"
+ }
  $WScriptShell = New-Object -ComObject WScript.Shell
- $targetPath = $WScriptShell.CreateShortcut($ShortcutFile).TargetPath
- $ShortcutKey = $WScriptShell.CreateShortcut($ShortcutFile).HotKey
- $ShortcutIconloc = $WScriptShell.CreateShortcut($ShortcutFile).IconLocation
- $ShortcutDescription =  $WScriptShell.CreateShortcut($ShortcutFile).Description
- $ShortcutDirectory =  $WScriptShell.CreateShortcut($ShortcutFile).WorkingDirectory
- $ShortcutArguments = $WscriptShell.CreateShortcut($ShortcutFile).Arguments
- if(($targetPath -eq $TargetFile) -and ($ShortcutKey -eq $Hotkey) -and ($ShortcutIconloc -eq $IconLocation) -and ($ShortcutDescription -eq $Description) -and ($ShortcutDirectory -eq $Directory) -and ($ShortcutArguments -eq $Arguments))
-  {
-   $result.changed = $FALSE
-  }
-  else
-  {
-   $Shortcut = $WScriptShell.CreateShortcut($ShortcutFile)
-   $Shortcut.TargetPath = $TargetFile
-   $ShortCut.Arguments = $Arguments
-   $Shortcut.WorkingDirectory = $Directory
-   $Shortcut.HotKey = $Hotkey
-   $Shortcut.IconLocation = $IconLocation
-   $Shortcut.Description = $Description
-   $Shortcut.Save()
-   $result.changed = $TRUE
-  }
+ $targetPath = $WScriptShell.CreateShortcut($dest).TargetPath
+ $ShortcutKey = $WScriptShell.CreateShortcut($dest).HotKey
+ $ShortcutIconloc = $WScriptShell.CreateShortcut($dest).IconLocation
+ $ShortcutDescription =  $WScriptShell.CreateShortcut($dest).Description
+ $ShortcutDirectory =  $WScriptShell.CreateShortcut($dest).WorkingDirectory
+ $ShortcutArguments = $WscriptShell.CreateShortcut($dest).Arguments
+ $ShortcutWindowstyle = $WscriptShell.CreateShortcut($dest).WindowStyle
+ if(($targetPath -eq $src) -and ($ShortcutKey -eq $hotkey) -and ($ShortcutIconloc -eq $icon) -and ($ShortcutDescription -eq $description) -and ($ShortcutDirectory -eq $directory) -and ($ShortcutArguments -eq $arguments) -and ($ShortcutWindowstyle -eq $windowstyle))
+ {
+  $result.changed = $FALSE
+ }
+ else
+ {
+  $Shortcut = $WScriptShell.CreateShortcut($dest)
+  $Shortcut.TargetPath = $src
+  $ShortCut.Arguments = $arguments
+  $Shortcut.WorkingDirectory = $directory
+  $Shortcut.HotKey = $hotkey
+  $Shortcut.IconLocation = $icon
+  $Shortcut.Description = $description
+  $ShortCut.WindowStyle = $windowstyle
+  $Shortcut.Save()
+  $result.changed = $TRUE
+ }
  }
 else
  {
