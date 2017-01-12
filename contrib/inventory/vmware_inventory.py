@@ -86,6 +86,7 @@ class VMWareInventory(object):
     password = None
     validate_certs = True
     host_filters = []
+    skip_keys = []
     groupby_patterns = []
 
     if sys.version_info > (3, 0):
@@ -95,19 +96,13 @@ class VMWareInventory(object):
     iter_types = [dict, list]
 
     bad_types = ['Array', 'disabledMethod', 'declaredAlarmState']
-    skip_keys = ['declaredalarmstate',
-                 'disabledmethod',
-                 'dynamicproperty',
-                 'dynamictype',
-                 'environmentbrowser',
-                 'managedby',
-                 'parent',
-                 'childtype']
 
     vimTableMaxDepth = {
         "vim.HostSystem": 2,
         "vim.VirtualMachine": 2,
     }
+
+    custom_fields = {}
 
     # translation table for attributes to fetch for known vim types
     if not HAS_PYVMOMI:
@@ -178,12 +173,10 @@ class VMWareInventory(object):
 
         ''' Get instances and cache the data '''
 
-        instances = self.get_instances()
-        self.instances = instances
-        self.inventory = self.instances_to_inventory(instances)
-        self.write_to_cache(self.inventory, self.cache_path_cache)
+        self.inventory = self.instances_to_inventory(self.get_instances())
+        self.write_to_cache(self.inventory)
 
-    def write_to_cache(self, data, cache_path):
+    def write_to_cache(self, data):
 
         ''' Dump inventory to json file '''
 
@@ -218,11 +211,22 @@ class VMWareInventory(object):
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': 3600,
             'max_object_level': 1,
+            'skip_keys': 'declaredalarmstate,'
+                         'disabledmethod,'
+                         'dynamicproperty,'
+                         'dynamictype,'
+                         'environmentbrowser,'
+                         'managedby,'
+                         'parent,'
+                         'childtype,'
+                         'resourceconfig',
             'alias_pattern': '{{ config.name + "_" + config.uuid }}',
             'host_pattern': '{{ guest.ipaddress }}',
             'host_filters': '{{ guest.gueststate == "running" }}',
             'groupby_patterns': '{{ guest.guestid }},{{ "templates" if config.template else "guests"}}',
-            'lower_var_keys': True}
+            'lower_var_keys': True,
+            'custom_field_group_prefix': 'vmware_tag_',
+            'groupby_custom_field': False}
         }
 
         if six.PY3:
@@ -274,7 +278,8 @@ class VMWareInventory(object):
             else:
                 self.lowerkeys = False
         self.debugl('lower keys is %s' % self.lowerkeys)
-
+        self.skip_keys = list(config.get('vmware', 'skip_keys').split(','))
+        self.debugl('skip keys is %s' % self.skip_keys)
         self.host_filters = list(config.get('vmware', 'host_filters').split(','))
         self.debugl('host filters are %s' % self.host_filters)
         self.groupby_patterns = list(config.get('vmware', 'groupby_patterns').split(','))
@@ -321,8 +326,7 @@ class VMWareInventory(object):
             context.verify_mode = ssl.CERT_NONE
             kwargs['sslContext'] = context
 
-        instances = self._get_instances(kwargs)
-        return instances
+        return self._get_instances(kwargs)
 
     def _get_instances(self, inkwargs):
 
@@ -365,6 +369,13 @@ class VMWareInventory(object):
                 ifacts = self.facts_from_vobj(instance)
             instance_tuples.append((instance, ifacts))
         self.debugl('facts collected for all instances')
+
+        cfm = content.customFieldsManager
+        if cfm is not None and cfm.field:
+            for f in cfm.field:
+                if f.managedObjectType == vim.VirtualMachine:
+                    self.custom_fields[f.key] = f.name;
+            self.debugl('%d custom fieds collected' % len(self.custom_fields))
         return instance_tuples
 
     def instances_to_inventory(self, instances):
@@ -451,6 +462,33 @@ class VMWareInventory(object):
                     inventory[v]['hosts'] = []
                 if k not in inventory[v]['hosts']:
                     inventory[v]['hosts'].append(k)
+
+        if self.config.get('vmware', 'groupby_custom_field'):
+            for k, v in inventory['_meta']['hostvars'].items():
+                if 'customvalue' in v:
+                    for tv in v['customvalue']:
+                        if not isinstance(tv['value'], str) and not isinstance(tv['value'], unicode):
+                            continue
+
+                        newkey = None
+                        field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
+                        values = []
+                        keylist = map(lambda x: x.strip(), tv['value'].split(','))
+                        for kl in keylist:
+                            try:
+                                newkey = self.config.get('vmware', 'custom_field_group_prefix') + field_name + '_' + kl
+                                newkey = newkey.strip()
+                            except Exception as e:
+                                self.debugl(e)
+                            values.append(newkey)
+                        for tag in values:
+                            if not tag:
+                                continue
+                            if tag not in inventory:
+                                inventory[tag] = {}
+                                inventory[tag]['hosts'] = []
+                            if k not in inventory[tag]['hosts']:
+                                inventory[tag]['hosts'].append(k)
 
         return inventory
 
