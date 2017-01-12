@@ -680,6 +680,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
+    def _remove_internal_keys(self, data):
+        for key in list(data.keys()):
+            if key.startswith('_ansible_') or key in C.INTERNAL_RESULT_KEYS:
+                display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
+                del data[key]
+
     def _clean_returned_data(self, data):
         remove_keys = set()
         fact_keys = set(data.keys())
@@ -699,7 +705,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 pass
 
         # remove some KNOWN keys
-        for hard in ['ansible_rsync_path', 'ansible_playbook_python']:
+        for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
             if hard in fact_keys:
                 remove_keys.add(hard)
 
@@ -711,21 +717,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # then we remove them (except for ssh host keys)
         for r_key in remove_keys:
             if not r_key.startswith('ansible_ssh_host_key_'):
+                display.warning("Removed restricted key from module data: %s = %s" % (r_key, data[r_key]))
                 del data[r_key]
+
+        self._remove_internal_keys(data)
 
     def _parse_returned_data(self, res):
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''))
             for w in warnings:
                 display.warning(w)
+
             data = json.loads(filtered_output)
+            self._remove_internal_keys(data)
             data['_ansible_parsed'] = True
+
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
                 self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
-            if 'add_host' in data and isinstance(data['add_host'].get('host_vars', None), dict):
-                self._clean_returned_data(data['add_host']['host_vars'])
-                data['add_host'] = wrap_var(data['add_host'])
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
