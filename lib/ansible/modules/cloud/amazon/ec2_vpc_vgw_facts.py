@@ -122,7 +122,7 @@ def list_virtual_gateways(client, module):
 
     if module.params.get('filters'):
         params['Filters'] = []
-        for key, value in module.params.get('filters').iteritems():
+        for key, value in module.params.get('filters').items():
             temp_dict = dict()
             temp_dict['Name'] = key
             if isinstance(value, basestring):
