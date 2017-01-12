@@ -2086,8 +2086,8 @@ class AIX(Hardware):
         self.facts['mounts'] = []
         # AIX does not have mtab but mount command is only source of info (or to use
         # api calls to get same info)
-        mount_path = module.get_bin_path('mount')
-        rc, mount_out, err = module.run_command(mount_path)
+        mount_path = self.module.get_bin_path('mount')
+        rc, mount_out, err = self.module.run_command(mount_path)
         if mount_out:
             for line in mount_out.split('\n'):
                 fields = line.split()
