@@ -227,8 +227,5 @@
         - "'results' in yum_result"
 
 - name: uninstall sos
-  yum: name=sos installroot='/'
-  register: yum_result
-    installroot: '/'
-    state: removed
+  yum: name=sos installroot='/' state=removed
   register: yum_result
