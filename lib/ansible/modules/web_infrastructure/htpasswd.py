@@ -103,7 +103,7 @@ EXAMPLES = """
 
 import os
 import tempfile
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
@@ -137,7 +137,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         if check_mode:
             return ("Create %s" % dest, True)
         create_missing_directories(dest)
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme, context=context)
@@ -148,7 +148,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         ht.save()
         return ("Created %s and added %s" % (dest, username), True)
     else:
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, default=crypt_scheme, context=context)
@@ -175,7 +175,7 @@ def absent(dest, username, check_mode):
     """ Ensures user is absent
 
     Returns (msg, changed) """
-    if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+    if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
         ht = HtpasswdFile(dest, new=False)
     else:
         ht = HtpasswdFile(dest)
