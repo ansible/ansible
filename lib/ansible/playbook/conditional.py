@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import re
 
 from jinja2.exceptions import UndefinedError
@@ -28,10 +29,10 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.module_utils._text import to_native
-from ansible.vars.unsafe_proxy import wrap_var
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
+VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
 class Conditional:
 
@@ -117,23 +118,59 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and re.match("^[_A-Za-z][_a-zA-Z0-9]*$", conditional):
+        # pull the "bare" var out, which allows for nested conditionals
+        # and things like:
+        # - assert:
+        #     that:
+        #     - item
+        #   with_items:
+        #   - 1 == 1
+        if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 
         try:
-            conditional = templar.template(conditional)
+            # if the conditional is "unsafe", disable lookups
+            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
-            # a Jinja2 evaluation that results in something Python can eval!
-            disable_lookups = False
-            if hasattr(conditional, '__UNSAFE__'):
-                disable_lookups = True
+            # update the lookups flag, as the string returned above may now be unsafe
+            # and we don't want future templating calls to do unsafe things
+            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+
+            # now we generated the "presented" string, which is a jinja2 if/else block
+            # used to evaluate the conditional. First, we do some low-level jinja2 parsing
+            # involving the AST format of the statement to ensure we don't do anything
+            # unsafe (using the disable_lookup flag above)
+            e = templar.environment.overlay()
+            e.filters.update(templar._get_filters())
+            e.tests.update(templar._get_tests())
 
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            res = e._parse(presented, None, None)
+            res = e._generate(res, None, None, defer_init=True)
+            parsed = ast.parse(res, mode='exec')
+
+            class CleansingNodeVisitor(ast.NodeVisitor):
+                def generic_visit(self, node, inside_call=False):
+                    if isinstance(node, ast.Call):
+                        inside_call = True
+                    elif isinstance(node, ast.Str):
+                        # calling things with a dunder is generally bad at this point...
+                        if inside_call and disable_lookups and node.s.startswith("__"):
+                            raise AnsibleError("Invalid access found in the presented conditional: '%s'" % conditional)
+                    # iterate over all child nodes
+                    for child_node in ast.iter_child_nodes(node):
+                        self.generic_visit(child_node, inside_call=inside_call)
+
+            cnv = CleansingNodeVisitor()
+            cnv.visit(parsed)
+
+            # and finally we templated the presented string and look at the resulting string
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
