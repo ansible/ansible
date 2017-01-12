@@ -194,8 +194,10 @@ def snat_xml(m, snat_type, snat_address, snat_interface,
                         "for snat_type static-ip")
 
         exml = ["<source-translation>", "<static-ip>"]
-        exml.append('<bi-directional>%s</bi-directional>' %
-                    ('yes' if snat_bidirectional else 'no'))
+        if snat_bidirectional:
+            exml.append('<bi-directional>%s</bi-directional>' % 'yes')
+        else:
+            exml.append('<bi-directional>%s</bi-directional>' % 'no')
         exml.append('<translated-address>%s</translated-address>' %
                     snat_address)
         exml.append('</static-ip>')
