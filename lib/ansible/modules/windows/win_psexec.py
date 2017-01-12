@@ -75,7 +75,7 @@ EXAMPLES = r'''
     password: some_password
 
 - win_psexec:
-    commandline: E:\setup.exe
+    command: E:\setup.exe /i /IACCEPTEULA
     hostname: remote_server
     username: DOMAIN\Administrator
     password: some_password

@@ -27,7 +27,7 @@ $result = New-Object PSObject @{
     changed = $true
 }
 
-$commandline = Get-AnsibleParam -obj $params -name "commandline" -default "whoami.exe"
+$command = Get-AnsibleParam -obj $params -name "command" -default "whoami.exe"
 $executable = Get-AnsibleParam -obj $params -name "executable" -default "psexec.exe"
 $hostname = Get-AnsibleParam -obj $params -name "hostname"
 $username = Get-AnsibleParam -obj $params -name "username"
@@ -41,8 +41,8 @@ $extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -default @()
 $args = ""
 
 # Supports running on local system if not hostname is specified
-If ($hostname -Ne $Null) {
-  $args = "\\" + $hostname
+If ($hostname -ne $null) {
+  $args = " \\$hostname"
 }
 
 $pinfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -53,34 +53,34 @@ $pinfo.RedirectStandardOutput = $true
 $pinfo.UseShellExecute = $false
 
 # Username is optional
-If ($username -Ne $null) {
-    $args += " -u " + $username
+If ($username -ne $null) {
+    $args += ' -u "$username"'
 }
 
 # Password is required
-If ($password -Eq $null) {
-    Fail-Json @{msg="The 'password' parameter is a required parameter."}
+If ($password -eq $null) {
+    Fail-Json $result "The 'password' parameter is a required parameter."
 } Else {
-    $args += " -p " + $password
+    $args += ' -p "$password"'
 }
 
 If ($chdir -ne $null) {
-    $args += " -w " + $chdir
+    $args += ' -w "$chdir"'
 }
 
 If ($timeout -ne $null) {
-    $args += " -n " + $timeout
+    $args += ' -n "$timeout"'
 }
 
 $args += " -accepteula"
 
 # Add additional advanced options
 ForEach ($opt in $extra_opts){
-    $args += " " + $opt
+    $args += " $opt"
 }
 
-# Defaults to whoami.exe, but also accepts a script instead of commandline
-$args += " " + $commandline
+# Defaults to whoami.exe, but also accepts a script instead of command
+$args += " $command"
 
 # TODO: psexec has a limit to the argument length of 260 (?)
 $pinfo.Arguments = $args
@@ -93,13 +93,13 @@ $stderr = $p.StandardError.ReadToEnd()
 $p.WaitForExit()
 $rc = $p.ExitCode
 
-If ($rc -Eq 0) {
-    Set-Attr $result "failed" $False
+If ($rc -eq 0) {
+    Set-Attr $result "failed" $false
 } Else {
-    Set-Attr $result "failed" $True
+    Set-Attr $result "failed" $true
 }
 
-Set-Attr $result "cmd" ( $executable + " " + $args )
+Set-Attr $result "cmd" "$executable$args"
 Set-Attr $result "rc" $rc
 Set-Attr $result "stdout" $stdout
 Set-Attr $result "stderr" $stderr
