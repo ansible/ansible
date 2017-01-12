@@ -495,25 +495,18 @@ example:
     # Documentation fragment for ONTAP
     ONTAP = """
 options:
-  api_username:
+  hostname:
       required: true
       description:
-      - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
+      - Hostname
+  username:
       required: true
       description:
-      - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
+      - Username
+  password:
       required: true
       description:
-      - The url to the SANtricity WebServices Proxy or embedded REST API.
-      example:
-      - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
+      - Password
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3

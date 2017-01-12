@@ -24,7 +24,7 @@ module: na_cdot_aggregate
 
 short_description: Manage NetApp cDOT aggregates
 extends_documentation_fragment:
-    - netapp.santricity
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 

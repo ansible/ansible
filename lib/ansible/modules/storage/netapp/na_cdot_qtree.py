@@ -24,7 +24,7 @@ module: na_cdot_qtree
 
 short_description: Manage qtrees
 extends_documentation_fragment:
-    - netapp.santricity
+    - netapp.ontap
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
