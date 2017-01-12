@@ -131,6 +131,7 @@ from boto import rds
 from boto import elasticache
 from boto import route53
 import six
+from datetime import datetime
 
 from ansible.module_utils import ec2 as ec2_utils
 
@@ -1496,12 +1497,21 @@ class Ec2Inventory(object):
             regex += "\-"
         return re.sub(regex + "]", "_", word)
 
+    @classmethod
+    def json_serial(cls, obj):
+        """JSON serializer for objects not serializable by default json code"""
+
+        if isinstance(obj, datetime):
+            serial = obj.isoformat()
+            return serial
+        raise TypeError ("Type not serializable")
+
     def json_format_dict(self, data, pretty=False):
         ''' Converts a dict to a JSON object and dumps it as a formatted
         string '''
 
         if pretty:
-            return json.dumps(data, sort_keys=True, indent=2)
+            return json.dumps(data, sort_keys=True, indent=2, default=Ec2Inventory.json_serial)
         else:
             return json.dumps(data)
 
