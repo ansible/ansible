@@ -64,6 +64,7 @@ class Play(Base, Taggable, Become):
     _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
 
     # Connection
+    _fact_path           = FieldAttribute(isa='string', default=None)
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
     _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)

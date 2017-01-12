@@ -208,6 +208,11 @@ class PlayContext(Base):
     _step             = FieldAttribute(isa='bool', default=False)
     _diff             = FieldAttribute(isa='bool', default=False)
 
+    # Fact gathering settings
+    _gather_subset    = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
+    _gather_timeout   = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
+    _fact_path        = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
         super(PlayContext, self).__init__()
