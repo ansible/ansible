@@ -35,7 +35,7 @@ $password = Get-AnsibleParam -obj $params -name "password" -failifempty $true
 $chdir = Get-AnsibleParam -obj $params -name "chdir"
 $noprofile = Get-AnsibleParam -obj $params -name "noprofile"
 $elevated = Get-AnsibleParam -obj $params -name "elevated"
-$limted = Get-AnsibleParam -obj $params -name "limited"
+$limited = Get-AnsibleParam -obj $params -name "limited"
 $system = Get-AnsibleParam -obj $params -name "system"
 $priority = Get-AnsibleParam -obj $params -name "priority" -validateset "background","low","belownormal","abovenormal","high","realtime"
 $timeout = Get-AnsibleParam -obj $params -name "timeout"
@@ -57,53 +57,53 @@ $pinfo.UseShellExecute = $false
 
 # Username is optional
 If ($username -ne $null) {
-    $args += ' -u "$username"'
+    $args += " -u " + $username
 }
 
 # Password is required
 If ($password -eq $null) {
     Fail-Json $result "The 'password' parameter is a required parameter."
 } Else {
-    $args += ' -p "$password"'
+    $args += " -p " + $password
 }
 
 If ($chdir -ne $null) {
-    $args += ' -w "$chdir"'
+    $args += " -w " + $chdir
 }
 
 If ($noprofile -ne $null) {
-    $args += ' -e'
+    $args += " -e"
 }
 
 If ($elevated -ne $null) {
-    $args += ' -h'
+    $args += " -h"
 }
 
 If ($system -ne $null) {
-    $args += ' -s'
+    $args += " -s"
 }
 
 If ($limited -ne $null) {
-    $args += ' -l'
+    $args += " -l"
 }
 
 If ($priority -ne $null) {
-    $args += ' -$priority'
+    $args += " -" + $priority
 }
 
 If ($timeout -ne $null) {
-    $args += ' -n $timeout'
+    $args += " -n " + $timeout
 }
 
 $args += " -accepteula"
 
 # Add additional advanced options
-ForEach ($opt in $extra_opts){
-    $args += " $opt"
+ForEach ($opt in $extra_opts) {
+    $args += " " + $opt
 }
 
 # Defaults to whoami.exe, but also accepts a script instead of command
-$args += " $command"
+$args += " " + $command
 
 # TODO: psexec has a limit to the argument length of 260 (?)
 $pinfo.Arguments = $args
@@ -122,7 +122,7 @@ If ($rc -eq 0) {
     Set-Attr $result "failed" $true
 }
 
-Set-Attr $result "cmd" "$executable$args"
+Set-Attr $result "cmd" ($executable + $args)
 Set-Attr $result "rc" $rc
 Set-Attr $result "stdout" $stdout
 Set-Attr $result "stderr" $stderr
