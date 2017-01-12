@@ -48,7 +48,7 @@ options:
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
             system wouldn't normally. Status will return a boolean in regard
-            of the state of the services: true for running, false for stopped.
+            of the state of the services, true for running, false for stopped.
     sleep:
         required: false
         version_added: "1.3"
