@@ -2055,6 +2055,7 @@ class AIX(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_vgs_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -2163,6 +2164,34 @@ class AIX(Hardware):
                                       }
                             self.facts['vgs'][m.group(1)].append(pv_info)
 
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        # AIX does not have mtab but mount command is only source of info (or to use
+        # api calls to get same info)
+        mount_path = self.module.get_bin_path('mount')
+        rc, mount_out, err = self.module.run_command(mount_path)
+        if mount_out:
+            for line in mount_out.split('\n'):
+                fields = line.split()
+                if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
+                    if re.match('^/', fields[0]):
+                        # normal mount
+                        self.facts['mounts'].append({'mount': fields[1],
+                                                 'device': fields[0],
+                                                 'fstype' : fields[2],
+                                                 'options': fields[6],
+                                                 'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
+                    else:
+                        # nfs or cifs based mount
+                        # in case of nfs if no mount options are provided on command line
+                        # add into fields empty string...
+                        if len(fields) < 8: fields.append("")
+                        self.facts['mounts'].append({'mount': fields[2],
+                                                 'device': '%s:%s' % (fields[0], fields[1]),
+                                                 'fstype' : fields[3],
+                                                 'options': fields[7],
+                                                 'time': '%s %s %s' % ( fields[4], fields[5], fields[6])})
 
 class HPUX(Hardware):
     """
