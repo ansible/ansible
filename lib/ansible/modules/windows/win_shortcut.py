@@ -70,6 +70,12 @@ options:
       - Shortcut Icon location for a Windows shortcut.
     required: true
     default: no default
+ windowstyle:
+    description:
+      - Influences how the application is displayed when it is launched.
+        C(1) for default location and size
+        C(3) for maximized
+        C(7) minimized
 author: "SyedShabir, RajeshKumar"
 notes:
    - This module is helpful in deploying application which requires windows shortcut.
