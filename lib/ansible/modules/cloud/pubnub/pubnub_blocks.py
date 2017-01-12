@@ -80,10 +80,10 @@ options:
   event_handlers:
     description:
       - List of event handlers which should be updated for specified C(block).
-      - Each entry for new event handler should contain: C(name), C(src), C(channels), C(event). C(name) used as event \
+      - 'Each entry for new event handler should contain: C(name), C(src), C(channels), C(event). C(name) used as event' \
         handler name which can be used later to make changes to it. C(src) is full path to file with event handler \
         code. C(channels) is name of channel from which event handler is waiting for events. C(event) is type of event \
-        which is able to trigger event handler: I(js-before-publish), I(js-after-publish), I(js-after-presence).
+        'which is able to trigger event handler: I(js-before-publish), I(js-after-publish), I(js-after-presence).'
       - Each entry for existing handlers should contain C(name) (so target handler can be identified). Rest parameters \
         (C(src), C(channels) and C(event)) can be added if changes required for them.
       - It is possible to rename event handler by adding C(changes) key to event handler payload and pass dictionary, \
@@ -103,7 +103,7 @@ options:
         with certificates on it and this will cause problems to call PubNub REST API.
       - If check should be ignored C(False) should be passed to this parameter.
     required: false
-    defaulr: true
+    default: true
 '''
 
 EXAMPLES = '''
