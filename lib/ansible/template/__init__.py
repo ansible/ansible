@@ -426,16 +426,16 @@ class Templar:
             else:
                 return variable
 
-    def templatable(self, data):
+    def is_templatable(self, data):
         '''
-        returns True if the data can be templated w/o errors
+        returns True if the data can be templated w/o errors.
+        This is not as inefficient as it might seem as Jinja2 will cache
         '''
-        templatable = True
         try:
-            self.template(data)
+            result = self.template(data)
         except:
-           templatable = False
-        return templatable
+            result = data
+        return (result != data)
 
     def _contains_vars(self, data):
         '''

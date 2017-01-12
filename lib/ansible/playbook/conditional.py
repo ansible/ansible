@@ -124,9 +124,10 @@ class Conditional:
         templar.set_available_variables(variables=all_vars)
 
         try:
-            conditional = templar.template(conditional)
-            if not isinstance(conditional, text_type) or conditional == "":
-                return conditional
+            if templar.is_templatable(conditional):
+                conditional = templar.template(conditional)
+                if not isinstance(conditional, text_type) or conditional == "":
+                    return conditional
 
             # a Jinja2 evaluation that results in something Python can eval!
             disable_lookups = False
