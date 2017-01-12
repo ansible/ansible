@@ -24,7 +24,7 @@ module: na_cdot_users
 
 short_description: useradmin configuration and management
 extends_documentation_fragment:
-    - netapp.ontap
+    - netapp.santricity
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 

@@ -495,28 +495,33 @@ example:
     # Documentation fragment for ONTAP
     ONTAP = """
 options:
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
+  api_username:
+      required: true
+      description:
+      - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+  api_password:
+      required: true
+      description:
+      - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+  api_url:
+      required: true
+      description:
+      - The url to the SANtricity WebServices Proxy or embedded REST API.
+      example:
+      - https://prod-1.wahoo.acme.com/devmgr/v2
+  validate_certs:
+      required: false
+      default: true
+      description:
+      - Should https certificates be validated?
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
-  - Ansible 2.2**
-  - netapp-lib (2015.9.25) | Installation: "pip install netapp-lib"
+  - Ansible 2.2
+  - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
 
 notes:
-  - The modules prefixed with *netapp\_cdot* are built to support the Clustered Data ONTAP storage platform.
+  - The modules prefixed with *netapp\_cdot* are built to support the ONTAP storage platform.
 
 example:
     - name: NetApp Sample Playbook
