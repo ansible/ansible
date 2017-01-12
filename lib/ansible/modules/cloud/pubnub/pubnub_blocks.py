@@ -202,7 +202,7 @@ module_cache:
 
 PUBNUB_API_URL = "https://admin.pubnub.com/api"
 PN_BLOCK_STATE_CHECK_INTERVAL = 1
-PN_BLOCK_STATE_CHECK_MAX_COUNT = 10
+PN_BLOCK_STATE_CHECK_MAX_COUNT = 30
 # Import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import *
