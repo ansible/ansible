@@ -90,6 +90,7 @@ class ActionModule(ActionBase):
             return result
 
         src        = self._task.args.get('src', None)
+        src_files  = self._task.args.get('src_files', None)
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
@@ -97,9 +98,14 @@ class ActionModule(ActionBase):
         follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
 
-        if src is None or dest is None:
+        if src is None and src_files is None:
             result['failed'] = True
-            result['msg'] = "src and dest are required"
+            result['msg'] = "src or src_files is required"
+            return result
+
+        if dest is None:
+            result['failed'] = True
+            result['msg'] = "dest is required"
             return result
 
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
@@ -119,7 +125,7 @@ class ActionModule(ActionBase):
                 result['msg'] = to_native(e)
                 return result
 
-        if not os.path.isdir(src):
+        if not os.path.isdir(src) and src:
             result['failed'] = True
             result['msg'] = u"Source (%s) is not a directory" % src
             return result
