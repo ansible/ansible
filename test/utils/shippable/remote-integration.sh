@@ -32,6 +32,9 @@ if [ "${container}" = "freebsd" ]; then
     chmod +x bootstrap.sh
     ./bootstrap.sh pip -y -q
 
+    # limit jinja2 version until jinja2 issues are resolved
+    pip install 'jinja2<2.9'
+
     # tests require these packages
     # TODO: bootstrap.sh should be capable of installing these
     pkg install -y \
