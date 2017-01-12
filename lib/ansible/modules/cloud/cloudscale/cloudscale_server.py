@@ -320,7 +320,7 @@ class AnsibleCloudscaleServer(object):
                 return True
             sleep(1)
 
-        return False
+        self._module.fail_json(msg='Timeout while waiting for a state change on server %s' % self.info['name'])
 
 
     def create_server(self):
