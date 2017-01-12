@@ -620,3 +620,39 @@ def map_complex_type(complex_type, type_map):
     elif type_map:
         return globals()['__builtins__'][type_map](complex_type)
     return new_type
+
+
+def update_aws_tags(connection, resource_id, current_tags, desired_tags):
+
+    """ Update the tags associated with resource_id from current_tags
+    to desired_tags
+    Args:
+        connection: boto/boto3 connection
+        resource_id: AWS resource identifier to update
+        current_tags: list of existing tags in ansible dict format
+        desired_tags: list of desired tags in ansible dict format
+    Returns:
+        Bool: whether any changes were made
+    """
+
+    changed = False
+    current_keys = set(current_tags.keys())
+    desired_keys = set(desired_tags.keys())
+    to_add = desired_keys - current_keys
+    to_delete = current_keys - desired_keys
+
+    for k in desired_keys & current_keys:
+        if current_tags[k] != desired_tags[k]:
+            to_delete.append(k)
+            to_add.append(k)
+
+    if to_delete:
+        connection.delete_tags(Resources=[resource_id],
+                               Tags=[{'Key': k} for k in to_delete])
+        changed = True
+    if to_add:
+        connection.create_tags(Resources=[resource_id],
+                               Tags=[{'Key': k, 'Value': desired_tags[k]}
+                                     for k in to_add])
+        changed = True
+    return changed
