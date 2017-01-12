@@ -285,7 +285,7 @@ class AnsibleCloudscaleServer(object):
     def _transform_state(server):
         if 'status' in server:
             server['state'] = server['status']
-            server.pop('status')
+            del server['status']
         else:
             server['state'] = 'absent'
         return server
@@ -341,12 +341,12 @@ class AnsibleCloudscaleServer(object):
 
             # Remove items not relevant to the create server call
             if k in ('api_token', 'uuid', 'state'):
-                data.pop(k)
+                del data[k]
                 continue
 
             # Remove None values, these don't get correctly translated by urlencode
             if v is None:
-                data.pop(k)
+                del data[k]
                 continue
 
         self.info = self._transform_state(self._post('servers', data))
