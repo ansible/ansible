@@ -26,7 +26,8 @@ version_added: "2.3"
 short_description: Create or destroy snapshots for GCE storage volumes
 description:
   - Manages snapshots for GCE instances. This module manages snapshots for
-    the storage volumes of a GCE compute instance.
+    the storage volumes of a GCE compute instance. If there are multiple
+    volumes, each snapshot will be prepended with the disk name
 options:
   instance_name:
     description:
@@ -68,8 +69,8 @@ author: Rob Wagner (@robwagner33)
 EXAMPLES = '''
 - name: Create gce snapshot
   gce_snapshot:
-    instance_name: example_instance
-    snapshot_name: example_snapshot
+    instance_name: example-instance
+    snapshot_name: example-snapshot
     state: present
     service_account_email: project_name@appspot.gserviceaccount.com
     credentials_file: /path/to/credentials
@@ -78,21 +79,24 @@ EXAMPLES = '''
 
 - name: Delete gce snapshot
   gce_snapshot:
-    instance_name: example_instance
-    snapshot_name: example_snapshot
+    instance_name: example-instance
+    snapshot_name: example-snapshot
     state: absent
     service_account_email: project_name@appspot.gserviceaccount.com
     credentials_file: /path/to/credentials
     project_id: project_name
   delegate_to: localhost
 
+# This example creates snapshots for only two of the available disks as
+# disk0-example-snapshot and disk1-example-snapshot
 - name: Create snapshot of specific disk
   gce_snapshot:
-    instance_name: example_instance
-    snapshot_name: example_snapshot
+    instance_name: example-instance
+    snapshot_name: example-snapshot
     state: absent
     disks:
       - disk0
+      - disk1
     service_account_email: project_name@appspot.gserviceaccount.com
     credentials_file: /path/to/credentials
     project_id: project_name
@@ -155,21 +159,32 @@ def main():
     msg = ''
 
     instance = gce.ex_get_node(instance_name, 'all')
-    for disk in instance.extra['disks']:
-        if disks is None or disk['deviceName'] in disks:
-            volume_obj = gce.ex_get_volume(disk['deviceName'])
+    instance_disks = instance.extra['disks']
+
+    for instance_disk in instance_disks:
+        device_name = instance_disk['deviceName']
+        if disks is None or device_name in disks:
+            volume_obj = gce.ex_get_volume(device_name)
+
+            # If we have more than one disk to snapshot, prepend the disk name
+            if len(instance_disks) > 1:
+                snapshot_name = device_name + "-" + snapshot_name
+
             snapshot = find_snapshot(volume_obj, snapshot_name)
 
             if snapshot and state == 'present':
                 msg = snapshot_name + " already exists"
+
             elif snapshot and state == 'absent':
                 snapshot.destroy()
                 changed = True
                 msg = snapshot_name + " was deleted"
+
             elif not snapshot and state == 'present':
                 volume_obj.snapshot(snapshot_name)
                 changed = True
                 msg = snapshot_name + " created"
+
             elif not snapshot and state == 'absent':
                 msg = snapshot_name + " already absent"
 
