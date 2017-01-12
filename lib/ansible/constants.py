@@ -396,3 +396,6 @@ LOCALHOST                 = frozenset(['127.0.0.1', 'localhost', '::1'])
 # module search
 BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"]
+INTERNAL_RESULT_KEYS      = ['add_host', 'add_group']
+RESTRICTED_RESULT_KEYS    = ['ansible_rsync_path', 'ansible_playbook_python']
+
