@@ -47,7 +47,8 @@ options:
             service.  C(reloaded) will always reload. B(At least one of state
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
-            system wouldn't normally.
+            system wouldn't normally. Status will return a boolean in regard
+            of the state of the services: true for running, false for stopped.
     sleep:
         required: false
         version_added: "1.3"
@@ -125,6 +126,11 @@ EXAMPLES = '''
     name: network
     state: restarted
     args: eth0
+
+# Example action to get the status of the httpd service
+- service:
+    name: httpd
+    state: status
 
 '''
 
