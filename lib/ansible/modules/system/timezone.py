@@ -437,7 +437,7 @@ def main():
             hwclock=dict(default=None, choices=['UTC', 'local'], aliases=['rtc']),
             name=dict(default=None),
         ),
-        required_one_of=['hwclock', 'name'],
+        required_one_of=[['hwclock', 'name']],
         supports_check_mode=True
     )
     tz = Timezone(module)
