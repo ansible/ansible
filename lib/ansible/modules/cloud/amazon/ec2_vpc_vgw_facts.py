@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: ec2_vpc_vgw_facts
 short_description: Gather facts about virtual gateways in AWS
 description:
-    - Gather facts about virtual gateways in AWS
+    - Gather facts about virtual gateways in AWS.
 version_added: "2.3"
 requirements: [ boto3 ]
 options:
@@ -29,8 +29,7 @@ options:
     default: None
   VpnGatewayIds:
     description:
-      - Get details of specific Virtual Gateway ID
-      - Provide this value as a list
+      - Get details of a specific Virtual Gateway ID. This value should be provided as a list. 
     required: false
     default: None
 author: "Nick Aslanidis (@naslanidis)"
@@ -66,21 +65,41 @@ EXAMPLES = '''
 
 RETURN = '''
 virtual_gateways:
-    description: The virtual gateways for the account
+    description: The virtual gateways for the account.
     returned: always
     type: list
+    sample: [
+        {
+            "state": "available",
+            "tags": [
+                {
+                    "key": "Name",
+                    "value": "TEST-VGW"
+                }
+            ], 
+            "type": "ipsec.1",
+            "vpc_attachments": [
+                {
+                    "state": "attached",
+                    "vpc_id": "vpc-22a93c74"
+                }
+            ],
+            "vpn_gateway_id": "vgw-23e3d64e"
+        }
+    ]
 
 changed:
-    description: True if listing the virtual gateways succeeds
-    type: bool
+    description: True if listing the virtual gateways succeeds.
     returned: always
+    type: bool
+    sample: "false"
 '''
 
 import json
 
 try:
     import botocore
-    import boto3   
+    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -148,7 +167,7 @@ def main():
 
      # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required.')
+        module.fail_json(msg='json and boto3 is required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
