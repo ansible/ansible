@@ -89,11 +89,11 @@ EXAMPLES = '''
 
 # This example creates snapshots for only two of the available disks as
 # disk0-example-snapshot and disk1-example-snapshot
-- name: Create snapshot of specific disk
+- name: Create snapshots of specific disks
   gce_snapshot:
     instance_name: example-instance
     snapshot_name: example-snapshot
-    state: absent
+    state: present
     disks:
       - disk0
       - disk1
