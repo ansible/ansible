@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
             result.update(exc.result)
             for field in ('_ansible_notify',):
                 if field in result:
-                    results.pop(field)
+                    result.pop(field)
 
         except Exception as exc:
             if display.verbosity > 2:
