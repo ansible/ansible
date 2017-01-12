@@ -46,7 +46,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import connection_loader
+from ansible.plugins import ConnectionLoader
 from ansible.utils.path import unfrackpath, makedirs_safe
 
 
@@ -109,6 +109,7 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
+        connection_loader = ConnectionLoader()
         try:
             # FIXME: the connection loader here is created brand new,
             #        so it will not see any custom paths loaded (ie. via

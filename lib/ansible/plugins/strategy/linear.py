@@ -26,7 +26,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
-from ansible.plugins import action_loader
+from ansible.plugins.loaders import ActionLoader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
@@ -200,6 +200,7 @@ class StrategyModule(StrategyBase):
                     # will only send this task to the first host in the list.
 
                     try:
+                        action_loader = ActionLoader()
                         action = action_loader.get(task.action, class_only=True)
                     except KeyError:
                         # we don't care here, because the action may simply not have a

@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
-from ansible.plugins import lookup_loader
+from ansible.plugins.loaders import LookupLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -95,6 +95,8 @@ class Task(Base, Conditional, Taggable, Become):
             self._parent = task_include
         else:
             self._parent = block
+
+        self.lookup_loader = LookupLoader()
 
         super(Task, self).__init__()
 
@@ -209,7 +211,7 @@ class Task(Base, Conditional, Taggable, Become):
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
                 continue
-            elif k.replace("with_", "") in lookup_loader:
+            elif k.replace("with_", "") in self.lookup_loader:
                 self._preprocess_loop(ds, new_ds, k, v)
             else:
                 # pre-2.0 syntax allowed variables for include statements at the

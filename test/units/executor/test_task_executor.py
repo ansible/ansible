@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import action_loader, lookup_loader
+from ansible.plugins.loaders import ActionLoader, LookupLoader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
@@ -112,7 +112,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
-        mock_shared_loader.lookup_loader = lookup_loader
+        mock_shared_loader.lookup_loader = LookupLoader()
 
         new_stdin = None
         job_vars = dict()
@@ -443,7 +443,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_queue = MagicMock()
 
         shared_loader = MagicMock()
-        shared_loader.action_loader = action_loader
+        shared_loader.action_loader = ActionLoader()
 
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
@@ -468,7 +468,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         # testing with some bad values in the result passed to poll async,
         # and with a bad value returned from the mock action
-        with patch.object(action_loader, 'get', _get):
+        with patch('ansible.plugins.loaders.ActionLoader.get', _get):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(), templar=mock_templar)
             self.assertIn('failed', res)
@@ -481,7 +481,7 @@ class TestTaskExecutor(unittest.TestCase):
             return mock_action
 
         # now testing with good values
-        with patch.object(action_loader, 'get', _get):
+        with patch('ansible.plugins.loaders.ActionLoader.get', _get):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
             self.assertEqual(res, dict(finished=1))

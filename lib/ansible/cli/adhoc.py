@@ -31,7 +31,7 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loaders import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager

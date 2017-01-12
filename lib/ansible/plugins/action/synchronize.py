@@ -21,7 +21,7 @@ import os.path
 
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
+from ansible.plugins.loaders import ConnectionLoader
 from ansible import constants as C
 
 boolean = C.mk_boolean
@@ -273,6 +273,7 @@ class ActionModule(ActionBase):
                 localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
+            connection_loader = ConnectionLoader()
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             self._override_module_replaced_vars(task_vars)

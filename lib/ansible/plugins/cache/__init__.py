@@ -21,7 +21,7 @@ from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins import cache_loader
+from ansible.plugins.loaders import CacheLoader
 
 try:
     from __main__ import display
@@ -34,13 +34,13 @@ class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
 
+        cache_loader = CacheLoader()
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
         if not self._plugin:
             raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
-
 
     def __getitem__(self, key):
         if not self._plugin.contains(key):

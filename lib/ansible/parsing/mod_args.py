@@ -23,7 +23,7 @@ from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError,AnsibleError
 from ansible.module_utils._text import to_text
-from ansible.plugins import module_loader
+from ansible.plugins.loaders import ModuleLoader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
 
@@ -94,6 +94,8 @@ class ModuleArgsParser:
     def __init__(self, task_ds=dict()):
         assert isinstance(task_ds, dict)
         self._task_ds = task_ds
+
+        self._module_loader = ModuleLoader()
 
 
     def _split_module_string(self, module_string):
@@ -285,7 +287,7 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item in ['meta', 'include', 'include_role']:
+            if item in self._module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
@@ -296,7 +298,7 @@ class ModuleArgsParser:
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            if 'ping' not in module_loader:
+            if 'ping' not in self._module_loader:
                 raise AnsibleParserError("The requested action was not found in configured module paths. "
                         "Additionally, core modules are missing. If this is a checkout, "
                         "run 'git pull --rebase' to correct this problem.",

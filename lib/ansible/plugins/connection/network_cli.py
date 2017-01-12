@@ -26,7 +26,7 @@ import datetime
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
-from ansible.plugins import terminal_loader
+from ansible.plugins.loaders import TerminalLoader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 
@@ -53,6 +53,7 @@ class Connection(_Connection):
         self._matched_pattern = None
         self._last_response = None
         self._history = list()
+        self._terminal_loader = TerminalLoader()
 
     def update_play_context(self, play_context):
         """Updates the play context information for the connection"""
@@ -71,7 +72,7 @@ class Connection(_Connection):
 
         network_os = self._play_context.network_os
         if not network_os:
-            for cls in terminal_loader.all(class_only=True):
+            for cls in self._terminal_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self.ssh)
                 if network_os:
                     break
@@ -82,7 +83,7 @@ class Connection(_Connection):
                 'ansible_network_os value'
             )
 
-        self._terminal = terminal_loader.get(network_os, self)
+        self._terminal = self._terminal_loader.get(network_os, self)
         if not self._terminal:
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 

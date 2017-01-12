@@ -28,7 +28,7 @@ from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
-from ansible.plugins import PluginLoader
+from ansible.plugins.loaders import loader
 from ansible.utils import encrypt
 
 from units.mock.loader import DictDataLoader
@@ -364,7 +364,7 @@ class TestLookupModule(unittest.TestCase):
         password.os.path.exists = self.os_path_exists
         passlib.registry.register_crypt_handler(self.sha256, force=True)
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_no_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -377,7 +377,7 @@ class TestLookupModule(unittest.TestCase):
             self.assertEquals(len(result), password.DEFAULT_LENGTH)
             self.assertIsInstance(result, text_type)
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -405,7 +405,7 @@ class TestLookupModule(unittest.TestCase):
             self.assertEquals(int(str_parts[2]), crypt_parts['rounds'])
             self.assertIsInstance(result, text_type)
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -417,7 +417,7 @@ class TestLookupModule(unittest.TestCase):
         for result in results:
             self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_password_already_created_no_encrypt(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
@@ -430,7 +430,7 @@ class TestLookupModule(unittest.TestCase):
         for result in results:
             self.assertEqual(result, u'hunter42')
 
-    @patch.object(PluginLoader, '_get_paths')
+    @patch.object(loader.PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_only_a(self, mock_get_paths, mock_write_file):
         mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']

@@ -45,7 +45,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins import module_loader
+from ansible.plugins.loaders import ModuleLoader
 from ansible.utils import module_docs
 from ansible.utils.color import stringc
 from ansible.vars import VariableManager
@@ -75,6 +75,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.passwords = dict()
 
         self.modules = None
+        self._module_loader = ModuleLoader()
         cmd.Cmd.__init__(self)
 
     def parse(self):
@@ -125,9 +126,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
         modules = set()
         if self.options.module_path is not None:
             for i in self.options.module_path.split(os.pathsep):
-                module_loader.add_directory(i)
+                self._module_loader.add_directory(i)
 
-        module_paths = module_loader._get_paths()
+        module_paths = self._module_loader._get_paths()
         for path in module_paths:
             if path is not None:
                 modules.update(self._find_modules_in_path(path))
@@ -354,7 +355,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def helpdefault(self, module_name):
         if module_name in self.modules:
-            in_path = module_loader.find_plugin(module_name)
+            in_path = self._module_loader.find_plugin(module_name)
             if in_path:
                 oc, a, _, _ = module_docs.get_docstring(in_path)
                 if oc:
@@ -387,7 +388,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             return [s[offs:] + '=' for s in completions if s.startswith(mline)]
 
     def module_args(self, module_name):
-        in_path = module_loader.find_plugin(module_name)
+        in_path = self._module_loader.find_plugin(module_name)
         oc, a, _, _ = module_docs.get_docstring(in_path)
         return list(oc['options'].keys())
 

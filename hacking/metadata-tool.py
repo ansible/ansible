@@ -11,7 +11,7 @@ from pprint import pformat, pprint
 import yaml
 
 from ansible.module_utils._text import to_text
-from ansible.plugins import module_loader
+from ansible.plugins import ModuleLoader
 
 
 # There's a few files that are not new-style modules.  Have to blacklist them
@@ -461,7 +461,8 @@ def metadata_summary(plugins, version=None):
 # Subcommands
 #
 
-def add_from_csv(csv_file, version=None, overwrite=False):
+
+def add_from_csv(csv_file, module_loader, version=None, overwrite=False):
     """Implement the subcommand to add metadata from a csv file
     """
     # Add metadata for everything from the CSV file
@@ -484,7 +485,7 @@ def add_from_csv(csv_file, version=None, overwrite=False):
     return 0
 
 
-def add_default(version=None, overwrite=False):
+def add_default(module_loader, version=None, overwrite=False):
     """Implement the subcommand to add default metadata to modules
 
     Add the default metadata to any plugin which lacks it.
@@ -515,7 +516,7 @@ def add_default(version=None, overwrite=False):
     return 0
 
 
-def report(version=None):
+def report(module_loader, version=None):
     """Implement the report subcommand
 
     Print out all the modules that have metadata and all the ones that do not.
@@ -569,13 +570,15 @@ def report(version=None):
 if __name__ == '__main__':
     action, args = parse_args(sys.argv[1:])
 
+    module_loader = ModuleLoader()
     ### TODO: Implement upgrade metadata and upgrade metadata from csvfile
     if action == 'report':
-        rc = report(version=args['version'])
+        rc = report(version=args['version'], module_loader=module_loader)
     elif action == 'add':
-        rc = add_from_csv(args['csvfile'], version=args['version'], overwrite=args['overwrite'])
+        rc = add_from_csv(args['csvfile'], module_loader=module_loader,
+                          version=args['version'], overwrite=args['overwrite'])
     elif action == 'add-default':
-        rc = add_default(version=args['version'], overwrite=args['overwrite'])
+        rc = add_default(version=args['version'], overwrite=args['overwrite'],
+                         module_loader=module_loader)
 
     sys.exit(rc)
-

@@ -20,23 +20,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
-from ansible.errors import *
-from ansible.plugins import filter_loader, lookup_loader, module_loader
-from ansible.plugins.strategy import SharedPluginLoaderObj
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
+
 
 class TestTemplar(unittest.TestCase):
 
     def setUp(self):
         fake_loader = DictDataLoader({
-          "/path/to/my_file.txt": "foo\n",
+            "/path/to/my_file.txt": "foo\n",
         })
-        shared_loader = SharedPluginLoaderObj()
         variables = dict(
             foo="bar",
             bam="{{foo}}",
@@ -103,11 +100,10 @@ class TestTemplar(unittest.TestCase):
     def test_template_jinja2_extensions(self):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
-        
+
         old_exts = C.DEFAULT_JINJA2_EXTENSIONS
         try:
             C.DEFAULT_JINJA2_EXTENSIONS = "foo,bar"
             self.assertEqual(templar._get_extensions(), ['foo', 'bar'])
         finally:
             C.DEFAULT_JINJA2_EXTENSIONS = old_exts
-

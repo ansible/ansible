@@ -31,7 +31,7 @@ import time
 from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
 from ansible.module_utils._text import to_native
-from ansible.plugins import module_loader
+from ansible.plugins.loaders import ModuleLoader
 from ansible.utils.cmd_functions import run_cmd
 
 try:
@@ -175,6 +175,7 @@ class PullCLI(CLI):
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
 
+        module_loader = ModuleLoader()
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))

@@ -30,7 +30,7 @@ from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.compat.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import fragment_loader
+from ansible.plugins.loaders import FragmentLoader
 
 try:
     from __main__ import display
@@ -59,6 +59,8 @@ def get_docstring(filename, verbose=False):
     plainexamples = None
     returndocs = None
     metadata = None
+
+    fragment_loader = FragmentLoader()
 
     try:
         # Thank you, Habbie, for this bit of code :-)

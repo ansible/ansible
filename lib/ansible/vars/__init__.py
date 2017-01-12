@@ -37,7 +37,7 @@ from ansible.cli import CLI
 from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
-from ansible.plugins import lookup_loader
+from ansible.plugins.loaders import LookupLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -113,6 +113,8 @@ class VariableManager:
             display.warning(to_native(e))
             # fallback to a dict as in memory cache
             self._fact_cache = {}
+
+        self.lookup_loader = LookupLoader()
 
     def __getstate__(self):
         data = dict(
@@ -452,10 +454,10 @@ class VariableManager:
 
         items = []
         if task.loop is not None:
-            if task.loop in lookup_loader:
+            if task.loop in self.lookup_loader:
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                    items = self.lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
                 except AnsibleUndefinedVariable as e:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
