@@ -454,6 +454,7 @@ For instance, what if you want users to be able to control some aspect about how
 
 If a remotely managed system has an ``/etc/ansible/facts.d`` directory, any files in this directory
 ending in ``.fact``, can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+An alternate directory can be specified using the ``fact_path`` play directive.
 
 For instance assume a ``/etc/ansible/facts.d/preferences.fact``::
 
