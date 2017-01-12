@@ -103,13 +103,8 @@ class ActionModule(ActionBase):
             return result
 
         remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-        if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
-
         if boolean(remote_src):
-            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
-            self._remove_tmp_path(tmp)
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
         else:
             try:
@@ -118,6 +113,10 @@ class ActionModule(ActionBase):
                 result['failed'] = True
                 result['msg'] = to_native(e)
                 return result
+
+        if not tmp:
+            tmp = self._make_tmp_path(remote_user)
+            self._cleanup_remote_tmp = True
 
         if not os.path.isdir(src):
             result['failed'] = True
