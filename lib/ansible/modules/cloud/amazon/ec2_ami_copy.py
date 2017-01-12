@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
-    - Copies AMI from a source region to a destination region. This module has a dependency on boto3
+    - Copies AMI from a source region to a destination region. (Since version 2.3 this module depends on boto3)
 version_added: "2.0"
 options:
   source_region:
@@ -37,7 +37,7 @@ options:
     required: true
   name:
     description:
-      - The name of the new AMI to copy.
+      - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
     required: false
     default: "default"
   description:
@@ -65,7 +65,7 @@ options:
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. (Deprecated, no longer required. See boto3 Waiters)
+      - How long before wait gives up, in seconds. (As of 2.3 this option is deprecated. See boto3 Waiters)
     required: false
     default: 1200
   tags:
@@ -147,7 +147,7 @@ except ImportError:
 
 
 
-def copy_image(ec2, module):
+def copy_image(module, ec2):
     """
     Copies an AMI
 
@@ -217,7 +217,7 @@ def main():
     else:
         module.fail_json(msg='boto3 required for this module')
 
-    copy_image(ec2, module)
+    copy_image(module, ec2)
 
 
 if __name__ == '__main__':
