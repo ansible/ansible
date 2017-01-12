@@ -24,10 +24,7 @@ DOCUMENTATION = '''
 module: panos_nat_policy
 short_description: create a policy NAT rule
 description:
-    - Create a policy nat rule. Keep in mind that we can either end
-    up configuring source NAT, destination NAT, or both. Instead of
-    splitting it into two we will make a fair attempt to determine which
-    one the user wants.
+    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it into two we will make a fair attempt to determine which one the user wants.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -139,7 +136,7 @@ EXAMPLES = '''
       commit: False
 '''
 
-RETURN='''
+RETURN = '''
 # Default return values
 '''
 
@@ -153,12 +150,13 @@ from ansible.module_utils.basic import get_exception
 try:
     import pan.xapi
     from pan.xapi import PanXapiError
+
     HAS_LIB = True
 except ImportError:
     HAS_LIB = False
 
-_NAT_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
-             "/vsys/entry[@name='vsys1']" +\
+_NAT_XPATH = "/config/devices/entry[@name='localhost.localdomain']" + \
+             "/vsys/entry[@name='vsys1']" + \
              "/rulebase/nat/rules/entry[@name='%s']"
 
 
@@ -191,7 +189,7 @@ def snat_xml(m, snat_type, snat_address, snat_interface,
     if snat_type == 'static-ip':
         if snat_address is None:
             m.fail_json(msg="snat_address should be speicified "
-                        "for snat_type static-ip")
+                            "for snat_type static-ip")
 
         exml = ["<source-translation>", "<static-ip>"]
         if snat_bidirectional:
@@ -206,7 +204,7 @@ def snat_xml(m, snat_type, snat_address, snat_interface,
         exml = ["<source-translation>",
                 "<dynamic-ip-and-port>"]
         if snat_interface is not None:
-            exml = exml+[
+            exml = exml + [
                 "<interface-address>",
                 "<interface>%s</interface>" % snat_interface]
             if snat_interface_address is not None:
@@ -219,7 +217,7 @@ def snat_xml(m, snat_type, snat_address, snat_interface,
             exml.append("</translated-address>")
         else:
             m.fail_json(msg="no snat_interface or snat_address "
-                        "specified for snat_type dynamic-ip-and-port")
+                            "specified for snat_type dynamic-ip-and-port")
         exml.append('</dynamic-ip-and-port>')
         exml.append('</source-translation>')
     else:
@@ -239,15 +237,15 @@ def add_nat(xapi, module, rule_name, from_zone, to_zone,
     exml.append("<to><member>%s</member></to>" % to_zone)
 
     exml.append("<from>")
-    exml = exml+["<member>%s</member>" % e for e in from_zone]
+    exml = exml + ["<member>%s</member>" % e for e in from_zone]
     exml.append("</from>")
 
     exml.append("<source>")
-    exml = exml+["<member>%s</member>" % e for e in source]
+    exml = exml + ["<member>%s</member>" % e for e in source]
     exml.append("</source>")
 
     exml.append("<destination>")
-    exml = exml+["<member>%s</member>" % e for e in destination]
+    exml = exml + ["<member>%s</member>" % e for e in destination]
     exml.append("</destination>")
 
     exml.append("<service>%s</service>" % service)
@@ -341,6 +339,7 @@ def main():
     except PanXapiError:
         exc = get_exception()
         module.fail_json(msg=exc.message)
+
 
 if __name__ == '__main__':
     main()
