@@ -1447,10 +1447,13 @@ class AnsibleModule(object):
             return
         for (key, val, requirements) in spec:
             missing = []
+            max_missing_count = 0
+            
             # If requirements is of type tuple at least one must be
             # present, if it is of type list all must be present.
-            max_missing_count = len(requirements) \
-                if isinstance(requirements, tuple) else 0
+            if isinstance(requirements, tuple):
+                max_missing_count = len(requirements)
+
             if key in self.params and self.params[key] == val:
                 for check in requirements:
                     count = self._count_terms((check,))
