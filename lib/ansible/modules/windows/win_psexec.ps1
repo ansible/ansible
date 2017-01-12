@@ -29,20 +29,23 @@ $result = New-Object PSObject @{
 
 $command = Get-AnsibleParam -obj $params -name "command" -default "whoami.exe"
 $executable = Get-AnsibleParam -obj $params -name "executable" -default "psexec.exe"
-$hostname = Get-AnsibleParam -obj $params -name "hostname"
+$hostnames = Get-AnsibleParam -obj $params -name "hostnames"
 $username = Get-AnsibleParam -obj $params -name "username"
 $password = Get-AnsibleParam -obj $params -name "password" -failifempty $true
 $chdir = Get-AnsibleParam -obj $params -name "chdir"
+$noprofile = Get-AnsibleParam -obj $params -name "noprofile"
+$elevated = Get-AnsibleParam -obj $params -name "elevated"
+$limted = Get-AnsibleParam -obj $params -name "limited"
+$system = Get-AnsibleParam -obj $params -name "system"
+$priority = Get-AnsibleParam -obj $params -name "priority" -validateset "background","low","belownormal","abovenormal","high","realtime"
 $timeout = Get-AnsibleParam -obj $params -name "timeout"
-# TODO: Implement priority options
-#$priority = Get-AnsibleParam -obj $params -name "priority"
 $extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -default @()
 
 $args = ""
 
 # Supports running on local system if not hostname is specified
-If ($hostname -ne $null) {
-  $args = " \\$hostname"
+If ($hostnames -ne $null) {
+  $args = " \\" + $($hostnames | sort -Unique) -join ','
 }
 
 $pinfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -68,8 +71,28 @@ If ($chdir -ne $null) {
     $args += ' -w "$chdir"'
 }
 
+If ($noprofile -ne $null) {
+    $args += ' -e'
+}
+
+If ($elevated -ne $null) {
+    $args += ' -h'
+}
+
+If ($system -ne $null) {
+    $args += ' -s'
+}
+
+If ($limited -ne $null) {
+    $args += ' -l'
+}
+
+If ($priority -ne $null) {
+    $args += ' -$priority'
+}
+
 If ($timeout -ne $null) {
-    $args += ' -n "$timeout"'
+    $args += ' -n $timeout'
 }
 
 $args += " -accepteula"

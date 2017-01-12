@@ -35,17 +35,15 @@ options:
     description:
     - The command line to run through PsExec (limited to 260 characters).
     required: true
-    default whoami.exe
+    default: whoami.exe
   executable:
     description:
     - The location of the PsExec utility (in case it is not located in your PATH).
-    required: false
     default: psexec.exe
-  hostname:
+  hostnames:
     description:
-    - The hostname to run the command.
+    - The hostnames to run the command.
     - If not provided, the command is run locally.
-    required: false
   username:
     description:
     - The (remote) user to run the command as.
@@ -57,15 +55,32 @@ options:
     required: true
   chdir:
     description:
-    - The (remote) directory to work from.
-    required: false
+    - Run the command from this (remote) directory.
+  noprofile:
+    description:
+    - Run the command without loading the account's profile.
+  elevated:
+    description:
+    - Run the command with elevated privileges.
+  limited:
+    description:
+    - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
+  system:
+    description:
+    - Run the remote command in the System account.
+  priority:
+    description:
+    - Used to run the command at a different priority.
+    choices:
+    - background
+    - low
+    - belownormal
+    - abovenormal
+    - high
+    - realtime
   timeout:
     description:
     - The connection timeout in seconds
-    required: false
-  priority:
-    description:
-    - The priority to run the command as.
 author: Dag Wieers (@dagwieers)
 """
 
@@ -74,11 +89,23 @@ EXAMPLES = r'''
 - win_psexec:
     password: some_password
 
+# Run the setup.exe installer on multiple servers using the Domain Administrator
 - win_psexec:
     command: E:\setup.exe /i /IACCEPTEULA
-    hostname: remote_server
+    hostnames:
+    - remote_server1
+    - remote_server2
     username: DOMAIN\Administrator
     password: some_password
+    priority: high
+
+# Run PsExec from custom location C:\Program Files\sysinternals\
+- win_psexec:
+    command: netsh advfirewall set allprofiles state off
+    executable: C:\Program Files\sysinternals\psexec.exe
+    hostnames: [ remote_server ]
+    password: some_password
+    priority: low
 '''
 
 RETURN = '''
