@@ -136,4 +136,3 @@
       - server|success
       - not server|changed
       - server.state == 'absent'
-
