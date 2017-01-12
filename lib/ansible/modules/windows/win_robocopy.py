@@ -129,7 +129,7 @@ flags:
     returned: always
     type: string
     sample: "/e /purge"
-return_code:
+rc:
     description: The return code retuned by robocopy.
     returned: success
     type: int
