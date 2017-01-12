@@ -99,6 +99,7 @@ options:
             - "C(lun_id) - LUN id."
             - "C(username) - A CHAP user name for logging into a target."
             - "C(password) - A CHAP password for logging into a target."
+            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overriden before adding."
             - "Note that these parameters are not idempotent."
     posixfs:
         description:
@@ -255,6 +256,7 @@ class StorageDomainModule(BaseModule):
                         password=storage.get('password'),
                     ),
                 ] if storage_type in ['iscsi', 'fcp'] else None,
+                override_luns=storage.get('override_luns'),
                 mount_options=storage.get('mount_options'),
                 vfs_type='glusterfs' if storage_type in ['glusterfs'] else storage.get('vfs_type'),
                 address=storage.get('address'),
