@@ -33,7 +33,9 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
-extends_documentation_fragment: ios
+notes:
+  - Provider arguments are no longer supported.  Network tasks should now
+    specify connection plugin network_cli instead.
 options:
   lines:
     description:
@@ -202,6 +204,21 @@ backup_path:
   returned: when backup is yes
   type: path
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 import re
 import time
