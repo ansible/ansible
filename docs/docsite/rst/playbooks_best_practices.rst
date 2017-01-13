@@ -61,6 +61,8 @@ The top level of the directory would contain files and directories like so::
                 main.yml      #  <-- default lower priority variables for this role
             meta/             #
                 main.yml      #  <-- role dependencies
+            library/          # roles can also include custom modules
+            lookup_plugins/   # or other types of plugins, like lookup in this case
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
