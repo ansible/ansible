@@ -3,7 +3,7 @@
 set -o pipefail
 
 add-apt-repository 'ppa:ubuntu-toolchain-r/test'
-add-apt-repository 'ppa:jonathonf/python-3.6'
+add-apt-repository 'ppa:fkrull/deadsnakes'
 
 apt-get update -qq
 apt-get install -qq \
