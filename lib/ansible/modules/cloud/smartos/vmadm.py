@@ -432,11 +432,16 @@ def is_valid_uuid(uuid):
 
 def validate_uuids(module):
     # Perform basic UUID validation.
+    failed = []
+
     for u in [['uuid', module.params['uuid']],
               ['image_uuid', module.params['image_uuid']]]:
         if u[1] and u[1] != '*':
             if not is_valid_uuid(u[1]):
-                module.fail_json(msg='{0} is not a valid UUID for {1}'.format(u[1], u[0]))
+                failed.append(u[1])
+
+    if len(failed) > 0:
+        module.fail_json(msg='No valid UUID(s) found for: {0}'.format(", ".join(failed)))
 
 
 def manage_all_vms(module, vm_state, changed):
