@@ -1447,12 +1447,19 @@ class AnsibleModule(object):
             return
         for (key, val, requirements) in spec:
             missing = []
+            max_missing_count = 0
+
+            # If requirements is of type tuple at least one must be
+            # present, if it is of type list all must be present.
+            if isinstance(requirements, tuple):
+                max_missing_count = len(requirements)
+
             if key in self.params and self.params[key] == val:
                 for check in requirements:
                     count = self._count_terms((check,))
                     if count == 0:
                         missing.append(check)
-            if len(missing) > 0:
+            if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
     def _check_argument_values(self):
