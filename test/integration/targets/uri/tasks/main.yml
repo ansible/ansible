@@ -281,7 +281,7 @@
     method: POST
     body: foo
 
-- name: Validate body_format json does not override content-type
+- name: Validate body_format json does not override content-type in 2.3 or newer
   uri:
     url: "https://{{ httpbin_host }}/post"
     method: POST
