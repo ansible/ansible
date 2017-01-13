@@ -86,6 +86,14 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
+  installroot:
+    description:
+      - Specifies an alternative installroot, relative to which all packages
+        will be installed.
+    required: false
+    version_added: "2.3"
+    default: "/"
+
 notes: []
 # informational: requirements for nodes
 requirements:
@@ -94,6 +102,7 @@ requirements:
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
+  - "Berend De Schouwer (github.com/berenddeschouwer)"
 '''
 
 EXAMPLES = '''
@@ -115,7 +124,7 @@ EXAMPLES = '''
 
 - name: upgrade all packages
   dnf:
-    name: *
+    name: "*"
     state: latest
 
 - name: install the nginx rpm from a remote repo
@@ -176,7 +185,7 @@ def _ensure_dnf(module):
                     " Please install `{0}` package.".format(package))
 
 
-def _configure_base(module, base, conf_file, disable_gpg_check):
+def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/'):
     """Configure the dnf Base object."""
     conf = base.conf
 
@@ -188,6 +197,9 @@ def _configure_base(module, base, conf_file, disable_gpg_check):
 
     # Don't prompt for user confirmations
     conf.assumeyes = True
+
+    # Set installroot
+    conf.installroot = installroot
 
     # Change the configuration file path if provided
     if conf_file:
@@ -218,10 +230,10 @@ def _specify_repositories(base, disablerepo, enablerepo):
             repo.enable()
 
 
-def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo):
+def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
     """Return a fully configured dnf Base object."""
     base = dnf.Base()
-    _configure_base(module, base, conf_file, disable_gpg_check)
+    _configure_base(module, base, conf_file, disable_gpg_check, installroot)
     _specify_repositories(base, disablerepo, enablerepo)
     base.fill_sack(load_system_repo='auto')
     return base
@@ -450,6 +462,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
+            installroot=dict(default='/', type='path'),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -461,7 +474,7 @@ def main():
     if params['list']:
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'])
+            params['disablerepo'], params['enablerepo'], params['installroot'])
         list_items(module, base, params['list'])
     else:
         # Note: base takes a long time to run so we want to check for failure
@@ -470,7 +483,7 @@ def main():
             module.fail_json(msg="This command has to be run under the root user.")
         base = _base(
             module, params['conf_file'], params['disable_gpg_check'],
-            params['disablerepo'], params['enablerepo'])
+            params['disablerepo'], params['enablerepo'], params['installroot'])
 
         ensure(module, base, params['state'], params['name'])
 

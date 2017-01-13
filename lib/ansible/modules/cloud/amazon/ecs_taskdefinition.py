@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: ecs_taskdefinition
 short_description: register a task definition in ecs
 description:
-    - Creates or terminates task definitions
+    - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
 requirements: [ json, boto, botocore, boto3 ]
@@ -51,6 +51,18 @@ options:
             - A list of containers definitions
         required: False
         type: list of dicts with container definitions
+    network_mode:
+        description:
+            - The Docker networking mode to use for the containers in the task.
+        required: false
+        default: bridge
+        choices: [ 'bridge', 'host', 'none' ]
+        version_added: 2.3
+    task_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role.
+        required: false
+        version_added: 2.3
     volumes:
         description:
             - A list of names of volumes to be attached
@@ -62,7 +74,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: "Create task definition"
+- name: Create task definition
   ecs_taskdefinition:
     containers:
     - name: simple-app
@@ -113,8 +125,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -137,7 +148,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, container_definitions, volumes):
+    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -154,8 +165,15 @@ class EcsTaskManager:
 
             validated_containers.append(container)
 
-        response = self.ecs.register_task_definition(family=family,
-            containerDefinitions=validated_containers, volumes=volumes)
+        try:
+            response = self.ecs.register_task_definition(family=family,
+                                                         taskRoleArn=task_role_arn,
+                                                         networkMode=network_mode,
+                                                         containerDefinitions=container_definitions,
+                                                         volumes=volumes)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+
         return response['taskDefinition']
 
     def describe_task_definitions(self, family):
@@ -189,6 +207,7 @@ class EcsTaskManager:
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
         return response['taskDefinition']
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
@@ -198,8 +217,9 @@ def main():
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
         containers=dict(required=False, type='list'),
-        volumes=dict(required=False, type='list')
-    ))
+        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
+        task_role_arn=dict(required=False, default='', type='str'),
+        volumes=dict(required=False, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
@@ -244,7 +264,7 @@ def main():
 
             def _right_has_values_of_left(left, right):
                 # Make sure the values are equivalent for everything left has
-                for k, v in left.iteritems():
+                for k, v in left.items():
                     if not ((not v and (k not in right or not right[k])) or (k in right and v == right[k])):
                         # We don't care about list ordering because ECS can change things
                         if isinstance(v, list) and k in right:
@@ -261,7 +281,7 @@ def main():
                             return False
 
                 # Make sure right doesn't have anything that left doesn't
-                for k, v in right.iteritems():
+                for k, v in right.items():
                     if v and k not in left:
                         return False
 
@@ -325,7 +345,10 @@ def main():
                 # Doesn't exist. create it.
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
-                                                                   module.params['containers'], volumes)
+                                                                   module.params['task_role_arn'],
+                                                                   module.params['network_mode'],
+                                                                   module.params['containers'],
+                                                                   volumes)
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
@@ -354,7 +377,6 @@ def main():
                 results['changed'] = True
 
     module.exit_json(**results)
-
 
 if __name__ == '__main__':
     main()

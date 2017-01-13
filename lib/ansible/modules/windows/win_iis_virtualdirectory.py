@@ -59,13 +59,25 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
-# This creates a virtual directory if it doesn't exist.
-$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite state=present physical_path=c:\\virtualdirectory\\some" host
+EXAMPLES = r'''
+- name: Create a virtual directory if it does not exist
+  win_iis_virtualdirectory:
+    name: somedirectory
+    site: somesite
+    state: present
+    physical_path: c:\virtualdirectory\some
 
-# This removes a virtual directory if it exists.
-$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite state=absent" host
+- name: Remove a virtual directory if it exists
+  win_iis_virtualdirectory:
+    name: somedirectory
+    site: somesite
+    state: absent
 
-# This creates a virtual directory on an application if it doesn't exist.
-$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite application=someapp state=present physical_path=c:\\virtualdirectory\\some" host
+- name: Create a virtual directory on an application if it does not exist
+  win_iis_virtualdirectory:
+    name: somedirectory
+    site: somesite
+    application: someapp
+    state: present
+    physical_path: c:\virtualdirectory\some
 '''

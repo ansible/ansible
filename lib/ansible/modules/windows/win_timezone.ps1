@@ -31,7 +31,7 @@ $timezone = Get-Attr -obj $params -name timezone -failifempty $true -resultobj $
 Try {
     # Get the current timezone set
     $currentTZ = $(tzutil.exe /g)
-    If ($LASTEXITCODE -ne 0) { Throw "An error occured when getting the current machine's timezone setting." }
+    If ($LASTEXITCODE -ne 0) { Throw "An error occurred when getting the current machine's timezone setting." /
 
     If ( $currentTZ -eq $timezone ) {
         Exit-Json $result "$timezone is already set on this machine"
@@ -40,7 +40,7 @@ Try {
         $tzExists = $false
         #Check that timezone can even be set (if it is listed from tzutil as an available timezone to the machine)
         $tzList = $(tzutil.exe /l)
-        If ($LASTEXITCODE -ne 0) { Throw "An error occured when listing the available timezones." }
+        If ($LASTEXITCODE -ne 0) { Throw "An error occurred when listing the available timezones." }
         ForEach ($tz in $tzList) {
             If ( $tz -eq $timezone ) {
                 $tzExists = $true
@@ -50,9 +50,9 @@ Try {
 
         If ( $tzExists ) {
             tzutil.exe /s "$timezone"
-            If ($LASTEXITCODE -ne 0) { Throw "An error occured when setting the specified timezone with tzutil." }
+            If ($LASTEXITCODE -ne 0) { Throw "An error occurred when setting the specified timezone with tzutil." }
             $newTZ = $(tzutil.exe /g)
-            If ($LASTEXITCODE -ne 0) { Throw "An error occured when getting the current machine's timezone setting." }
+            If ($LASTEXITCODE -ne 0) { Throw "An error occurred when getting the current machine's timezone setting." }
 
             If ( $timezone -eq $newTZ ) {
                 $result.changed = $true

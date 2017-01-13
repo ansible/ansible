@@ -330,7 +330,7 @@ def get_existing(module, args):
                 else:
                     existing[arg] = get_route_target_value(arg, config, module)
 
-        existing_fix = dict((k, v) for k, v in existing.iteritems() if v)
+        existing_fix = dict((k, v) for k, v in existing.items() if v)
         if existing_fix:
             existing['vni'] = module.params['vni']
         else:
@@ -358,7 +358,7 @@ def state_present(module, existing, proposed):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
-    for key, value in proposed_commands.iteritems():
+    for key, value in proposed_commands.items():
         if key.startswith('route-target'):
             if value == ['default']:
                 existing_value = existing_commands.get(key)
@@ -434,11 +434,11 @@ def main():
 
     existing = invoke('get_existing', module, args)
     end_state = existing
-    proposed_args = dict((k, v) for k, v in module.params.iteritems()
+    proposed_args = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
     proposed = {}
-    for key, value in proposed_args.iteritems():
+    for key, value in proposed_args.items():
         if key != 'vni':
             if value == 'true':
                 value = True

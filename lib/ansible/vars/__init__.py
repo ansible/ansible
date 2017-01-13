@@ -43,6 +43,7 @@ from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.unsafe_proxy import wrap_var
+from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
@@ -95,7 +96,6 @@ class VariableManager:
 
     def __init__(self):
 
-        self._fact_cache = FactCache()
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -105,6 +105,14 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+
+        # bad cache plugin is not fatal error
+        try:
+            self._fact_cache = FactCache()
+        except AnsibleError as e:
+            display.warning(to_native(e))
+            # fallback to a dict as in memory cache
+            self._fact_cache = {}
 
     def __getstate__(self):
         data = dict(
@@ -575,8 +583,13 @@ class VariableManager:
 
         rval = AnsibleInventoryVarsData()
         rval.path = path
+
         if data is not None:
-            rval.update(data)
+            if not isinstance(data, dict):
+                raise AnsibleError("Problem parsing file '%s': line %d, column %d" % data.ansible_pos)
+            else:
+                rval.update(data)
+
         return rval
 
     def add_host_vars_file(self, path, loader):

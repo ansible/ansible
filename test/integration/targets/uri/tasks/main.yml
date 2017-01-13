@@ -175,6 +175,13 @@
     user: user
     password: passwd
 
+- name: test digest auth
+  uri:
+    url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: passwd
+    HEADER_Cookie: "fake=fake_value"
+
 - name: test PUT
   uri:
     url: 'http://{{ httpbin_host }}/put'
@@ -198,10 +205,6 @@
   set_fact:
     is_ubuntu_precise: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'precise' }}"
 
-# These tests are just side effects of how the site is hosted.  It's not
-# specifically a test site.  So the tests may break due to the hosting
-# changing.  Eventually we need to standup a webserver with SNI as part of the
-# test run.
 - name: Test that SNI succeeds on python versions that have SNI
   uri:
     url: 'https://{{ sni_host }}/'
@@ -213,7 +216,7 @@
   assert:
     that:
       - result|success
-      - 'sni_host == result.content'
+      - 'sni_host in result.content'
   when: ansible_python.has_sslcontext
 
 - name: Verify SNI verification fails on old python without urllib3 contrib
@@ -253,7 +256,7 @@
   assert:
     that:
       - result|success
-      - 'sni_host == result.content'
+      - 'sni_host in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: Uninstall ndg-httpsclient and urllib3
@@ -277,3 +280,16 @@
     status_code: 202
     method: POST
     body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'

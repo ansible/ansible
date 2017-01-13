@@ -1,8 +1,4 @@
-prune v2
-prune docsite
 prune ticket_stubs
-prune packaging
-prune test
 prune hacking
 include README.md COPYING
 include examples/hosts
@@ -11,14 +7,14 @@ include lib/ansible/module_utils/powershell.ps1
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
+include hacking/module_formatter.py
+include hacking/dump_playbook_attributes.py
+recursive-include hacking/templates *
 recursive-include packaging *
+recursive-include test *
 include Makefile
 include VERSION
 include MANIFEST.in
 include CHANGELOG.md
 include contrib/README.md
 recursive-include contrib/inventory *
-exclude lib/ansible/modules/core/.git*
-exclude lib/ansible/modules/extras/.git*
-prune lib/ansible/modules/core/.git
-prune lib/ansible/modules/extras/.git

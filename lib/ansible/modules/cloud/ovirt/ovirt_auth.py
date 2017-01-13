@@ -19,10 +19,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import traceback
+
 try:
     import ovirtsdk4 as sdk
 except ImportError:
     pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import check_sdk
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -32,7 +37,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: ovirt_auth
-short_description: "Module to manage authentication to oVirt."
+short_description: "Module to manage authentication to oVirt"
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.2"
 description:
@@ -222,13 +227,11 @@ def main():
             )
         )
     except Exception as e:
-        module.fail_json(msg="Error: %s" % e)
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
         # Close the connection, but don't revoke token
         connection.close(logout=state == 'absent')
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ovirt import *
 if __name__ == "__main__":
     main()

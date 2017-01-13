@@ -141,7 +141,7 @@ def create_tags_container(tags):
 
     tag_set = TagSet()
     tags_obj = Tags()
-    for key, val in tags.iteritems():
+    for key, val in tags.items():
         tag_set.add_tag(key, val)
 
     tags_obj.add_tag_set(tag_set)
@@ -213,7 +213,7 @@ def _create_or_update_bucket(connection, module, location):
             # only show changed if there was already a policy
             changed = bool(current_policy)
 
-        elif current_policy != policy:
+        elif sort_json_policy_dict(current_policy) != sort_json_policy_dict(policy):
             try:
                 bucket.set_policy(json.dumps(policy))
                 changed = True

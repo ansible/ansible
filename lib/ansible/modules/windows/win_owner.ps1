@@ -130,7 +130,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to change owner on $path for $user"
+    Fail-Json $result "an error occurred when attempting to change owner on $path for $user"
 }
 
 Exit-Json $result

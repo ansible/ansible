@@ -69,34 +69,39 @@ notes:
     - Works on Windows 7, Windows 8, Windows Server 2k8, and Windows Server 2k12
 """
 
-EXAMPLES = """
-# Syncs the contents of one diretory to another.
-$ ansible -i hosts all -m win_robocopy -a "src=C:\\DirectoryOne dest=C:\\DirectoryTwo"
-
-# Sync the contents of one directory to another, including subdirectories.
-$ ansible -i hosts all -m win_robocopy -a "src=C:\\DirectoryOne dest=C:\\DirectoryTwo recurse=true"
-
-# Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source.
-$ ansible -i hosts all -m win_robocopy -a "src=C:\\DirectoryOne dest=C:\\DirectoryTwo purge=true"
-
-# Sample sync
----
-- name: Sync Two Directories
+EXAMPLES = r'''
+- name: Sync the contents of one directory to another
   win_robocopy:
-    src: "C:\\DirectoryOne
-    dest: "C:\\DirectoryTwo"
-    recurse: true
-    purge: true
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
 
----
-- name: Sync Two Directories
+- name: Sync the contents of one directory to another, including subdirectories
   win_robocopy:
-    src: "C:\\DirectoryOne
-    dest: "C:\\DirectoryTwo"
-    recurse: true
-    purge: true
-    flags: '/XD SOME_DIR /XF SOME_FILE /MT:32'
-"""
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
+    recurse: True
+
+- name: Sync the contents of one directory to another, and remove any files/directories found in destination that do not exist in the source
+  win_robocopy:
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
+    purge: True
+
+- name: Sync content in recursive mode, removing any files/directories found in destination that do not exist in the source
+  win_robocopy:
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
+    recurse: True
+    purge: True
+
+- name: Sync Two Directories in recursive and purging mode, specifying additional special flags
+  win_robocopy:
+    src: C:\DirectoryOne
+    dest: C:\DirectoryTwo
+    recurse: True
+    purge: True
+    flags: /XD SOME_DIR /XF SOME_FILE /MT:32
+'''
 
 RETURN = '''
 src:
@@ -124,7 +129,7 @@ flags:
     returned: always
     type: string
     sample: "/e /purge"
-return_code:
+rc:
     description: The return code retuned by robocopy.
     returned: success
     type: int

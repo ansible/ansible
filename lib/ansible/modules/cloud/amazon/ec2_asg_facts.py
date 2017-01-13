@@ -206,7 +206,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 def match_asg_tags(tags_to_match, asg):
-    for key, value in tags_to_match.iteritems():
+    for key, value in tags_to_match.items():
         for tag in asg['Tags']:
             if key == tag['Key'] and value == tag['Value']:
                 break
@@ -298,7 +298,8 @@ def find_asgs(conn, module, name=None, tags=None):
     """
 
     try:
-        asgs = conn.describe_auto_scaling_groups()
+        asgs_paginator = conn.get_paginator('describe_auto_scaling_groups')
+        asgs = asgs_paginator.paginate().build_full_result()
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 

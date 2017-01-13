@@ -215,6 +215,7 @@ EXAMPLES = '''
     path: ./sinatra
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
+    push: yes
 
 - name: Archive image
   docker_image:
@@ -509,7 +510,7 @@ class ImageManager(DockerBaseClass):
         if self.container_limits:
             params['container_limits'] = self.container_limits
         if self.buildargs:
-            for key, value in self.buildargs.iteritems():
+            for key, value in self.buildargs.items():
                 if not isinstance(value, basestring):
                     self.buildargs[key] = str(value)
             params['buildargs'] = self.buildargs

@@ -1,7 +1,7 @@
 <!---
-Please verify first that your issue/request is not already reported in GitHub
+Verify first that your issue/request is not already reported on GitHub.
+Also test if the latest release, and master branch are affected too.
 -->
-
 
 ##### ISSUE TYPE
 <!--- Pick one below and delete the rest: -->
@@ -35,12 +35,12 @@ managing, or say “N/A” for anything that is not platform-specific.
 
 ##### STEPS TO REPRODUCE
 <!---
-For bugs, show exactly how to reproduce the problem.
+For bugs, show exactly how to reproduce the problem, using a minimal test-case.
 For new features, show how the feature would be used.
 -->
 
 <!--- Paste example playbooks or commands between quotes below -->
-```
+```yaml
 
 ```
 

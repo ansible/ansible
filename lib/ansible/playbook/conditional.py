@@ -28,8 +28,10 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.module_utils._text import to_native
+from ansible.vars.unsafe_proxy import wrap_var
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
+LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 
 class Conditional:
 
@@ -115,7 +117,7 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
+        if conditional in all_vars and re.match("^[_A-Za-z][_a-zA-Z0-9]*$", conditional):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
@@ -127,9 +129,12 @@ class Conditional:
                 return conditional
 
             # a Jinja2 evaluation that results in something Python can eval!
+            disable_lookups = False
+            if hasattr(conditional, '__UNSAFE__'):
+                disable_lookups = True
+
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            conditional = templar.template(presented)
-            val = conditional.strip()
+            val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
             elif val == "False":

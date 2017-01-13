@@ -50,12 +50,14 @@ EXAMPLES = '''
   with_items: "{{ xs_vms.keys() }}"
   when: xs_vms[item]['power_state'] == "Running"
 
-TASK: [Print running VMs] ***********************************************************
-skipping: [10.13.0.22] => (item=CentOS 4.7 (32-bit))
-ok: [10.13.0.22] => (item=Control domain on host: 10.0.13.22) => {
-    "item": "Control domain on host: 10.0.13.22",
-    "msg": "Control domain on host: 10.0.13.22"
-}
+# Which will print:
+#
+# TASK: [Print running VMs] ***********************************************************
+# skipping: [10.13.0.22] => (item=CentOS 4.7 (32-bit))
+# ok: [10.13.0.22] => (item=Control domain on host: 10.0.13.22) => {
+#     "item": "Control domain on host: 10.0.13.22",
+#     "msg": "Control domain on host: 10.0.13.22"
+# }
 '''
 
 class XenServerFacts:
@@ -94,7 +96,7 @@ def get_networks(session):
     recs = session.xenapi.network.get_all_records()
     xs_networks = {}
     networks = change_keys(recs, key='uuid')
-    for network in networks.itervalues():
+    for network in networks.values():
         xs_networks[network['name_label']] = network
     return xs_networks
 
@@ -104,7 +106,7 @@ def get_pifs(session):
     pifs = change_keys(recs, key='uuid')
     xs_pifs = {}
     devicenums = range(0, 7)
-    for pif in pifs.itervalues():
+    for pif in pifs.values():
         for eth in devicenums:
             interface_name = "eth%s" % (eth)
             bond_name = interface_name.replace('eth', 'bond')
@@ -129,7 +131,7 @@ def change_keys(recs, key='uuid', filter_func=None):
     """
     new_recs = {}
 
-    for ref, rec in recs.iteritems():
+    for ref, rec in recs.items():
         if filter_func is not None and not filter_func(rec):
             continue
 
@@ -151,7 +153,7 @@ def get_vms(session):
         return None
 
     vms = change_keys(recs, key='uuid')
-    for vm in vms.itervalues():
+    for vm in vms.values():
        xs_vms[vm['name_label']] = vm
     return xs_vms
 
@@ -162,7 +164,7 @@ def get_srs(session):
     if not recs:
         return None
     srs = change_keys(recs, key='uuid')
-    for sr in srs.itervalues():
+    for sr in srs.values():
        xs_srs[sr['name_label']] = sr
     return xs_srs
 

@@ -194,6 +194,11 @@ def parse_args():
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
 
+    network_integration.add_argument('--platform',
+                                     metavar='PLATFORM',
+                                     action='append',
+                                     help='network platform/version').completer = complete_network_platform
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -205,7 +210,7 @@ def parse_args():
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
                                      action='append',
-                                     help='windows version')
+                                     help='windows version').completer = complete_windows
 
     units = subparsers.add_parser('units',
                                   parents=[test],
@@ -224,6 +229,8 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    add_extra_docker_options(units, integration=False)
+
     compiler = subparsers.add_parser('compile',
                                      parents=[test],
                                      help='compile tests')
@@ -236,6 +243,8 @@ def parse_args():
                           metavar='VERSION',
                           choices=COMPILE_PYTHON_VERSIONS,
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
+
+    add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
                                    parents=[test],
@@ -265,6 +274,8 @@ def parse_args():
                         metavar='VERSION',
                         choices=SUPPORTED_PYTHON_VERSIONS,
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+
+    add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',
                                   parents=[common],
@@ -387,6 +398,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                                   action='store_true',
                                   help='run from a tox virtualenv')
 
+    tox = parser.add_argument_group(title='tox arguments')
+
+    tox.add_argument('--tox-sitepackages',
+                     action='store_true',
+                     help='allow access to globally installed packages')
+
     if tox_only:
         environments.set_defaults(
             docker=None,
@@ -401,12 +418,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               nargs='?',
                               default=None,
                               const='ubuntu1604',
-                              help='run from a docker container')
+                              help='run from a docker container').completer = complete_docker
 
     environments.add_argument('--remote',
                               metavar='PLATFORM',
                               default=None,
-                              help='run from a remote instance')
+                              help='run from a remote instance').completer = complete_remote
 
     remote = parser.add_argument_group(title='remote arguments')
 
@@ -417,11 +434,20 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         default='prod')
 
 
-def add_extra_docker_options(parser):
+def add_extra_docker_options(parser, integration=True):
     """
     :type parser: argparse.ArgumentParser
+    :type integration: bool
     """
     docker = parser.add_argument_group(title='docker arguments')
+
+    docker.add_argument('--docker-no-pull',
+                        action='store_false',
+                        dest='docker_pull',
+                        help='do not explicitly pull the latest docker images')
+
+    if not integration:
+        return
 
     docker.add_argument('--docker-util',
                         metavar='IMAGE',
@@ -440,6 +466,58 @@ def complete_target(prefix, parsed_args, **_):
     :rtype: list[str]
     """
     return find_target_completion(parsed_args.targets, prefix)
+
+
+def complete_remote(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    with open('test/runner/completion/remote.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_docker(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    with open('test/runner/completion/docker.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix)]
+
+
+def complete_windows(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    with open('test/runner/completion/windows.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
+
+
+def complete_network_platform(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    with open('test/runner/completion/network.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
 
 if __name__ == '__main__':

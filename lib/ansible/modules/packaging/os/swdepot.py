@@ -82,7 +82,7 @@ def compare_package(version1, version2):
         Return values:
         -1 first minor
         0 equal
-        1 fisrt greater """
+        1 first greater """
 
     def normalize(v):
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
@@ -178,7 +178,7 @@ def main():
                 rc, output = install_package(module, depot, name)
 
                 if not rc:
-                    msg = "Packge upgraded, Before " + version_installed + " Now " + version_depot
+                    msg = "Package upgraded, Before " + version_installed + " Now " + version_depot
                     changed = True
 
                 else:

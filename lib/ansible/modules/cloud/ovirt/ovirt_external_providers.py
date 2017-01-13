@@ -64,11 +64,11 @@ options:
     type:
         description:
             - "Type of the external provider."
-        choices: ['os_image', 'os_network', 'os_volume', 'foreman']
+        choices: ['os_image', 'network', 'os_volume', 'foreman']
     url:
         description:
             - "URL where external provider is hosted."
-            - "Applicable for those types: I(os_image), I(os_volume), I(os_network) and I(foreman)."
+            - "Applicable for those types: I(os_image), I(os_volume), I(network) and I(foreman)."
     username:
         description:
             - "Username to be used for login to external provider."
@@ -80,17 +80,27 @@ options:
     tenant_name:
         description:
             - "Name of the tenant."
-            - "Applicable for those types: I(os_image), I(os_volume) and I(os_network)."
+            - "Applicable for those types: I(os_image), I(os_volume) and I(network)."
         aliases: ['tenant']
     authentication_url:
         description:
             - "Keystone authentication URL of the openstack provider."
-            - "Applicable for those types: I(os_image), I(os_volume) and I(os_network)."
+            - "Applicable for those types: I(os_image), I(os_volume) and I(network)."
         aliases: ['auth_url']
     data_center:
         description:
             - "Name of the data center where provider should be attached."
             - "Applicable for those type: I(os_volume)."
+    read_only:
+        description:
+            - "Specify if the network should be read only."
+            - "Applicable if C(type) is I(network)."
+    network_type:
+        description:
+            - "Type of the external network provider either external (for example OVN) or neutron."
+            - "Applicable if C(type) is I(network)."
+        choices: ['external', 'neutron']
+        default: ['external']
 extends_documentation_fragment: ovirt
 '''
 
@@ -115,6 +125,13 @@ EXAMPLES = '''
     url: https://foreman.example.com
     username: admin
     password: 123456
+
+# Add external network provider for OVN:
+- ovirt_external_providers:
+    name: ovn_provider
+    type: network
+    network_type: external
+    url: http://1.2.3.4:9696
 
 # Remove image external provider:
 - ovirt_external_providers:
@@ -147,7 +164,7 @@ openstack_volume_provider:
 openstack_network_provider:
     description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_network_provider."
-    returned: "On success and if parameter 'type: os_network' is used."
+    returned: "On success and if parameter 'type: network' is used."
     type: dictionary
 '''
 
@@ -159,8 +176,15 @@ class ExternalProviderModule(BaseModule):
 
     def build_entity(self):
         provider_type = self._provider_type(
-            requires_authentication='username' in self._module.params,
+            requires_authentication=self._module.params.get('username') is not None,
         )
+        if self._module.params.pop('type') == 'network':
+            setattr(
+                provider_type,
+                'type',
+                otypes.OpenStackNetworkProviderType(self._module.params.pop('network_type'))
+            )
+
         for key, value in self._module.params.items():
             if hasattr(provider_type, key):
                 setattr(provider_type, key, value)
@@ -180,7 +204,7 @@ class ExternalProviderModule(BaseModule):
 def _external_provider_service(provider_type, system_service):
     if provider_type == 'os_image':
         return otypes.OpenStackImageProvider, system_service.openstack_image_providers_service()
-    elif provider_type == 'os_network':
+    elif provider_type == 'network':
         return otypes.OpenStackNetworkProvider, system_service.openstack_network_providers_service()
     elif provider_type == 'os_volume':
         return otypes.OpenStackVolumeProvider, system_service.openstack_volume_providers_service()
@@ -200,7 +224,7 @@ def main():
             default=None,
             required=True,
             choices=[
-                'os_image', 'os_network', 'os_volume',  'foreman',
+                'os_image', 'network', 'os_volume', 'foreman',
             ],
             aliases=['provider'],
         ),
@@ -210,6 +234,11 @@ def main():
         tenant_name=dict(default=None, aliases=['tenant']),
         authentication_url=dict(default=None, aliases=['auth_url']),
         data_center=dict(default=None, aliases=['data_center']),
+        read_only=dict(default=None, type='bool'),
+        network_type=dict(
+            default='external',
+            choices=['external', 'neutron'],
+        ),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -221,7 +250,7 @@ def main():
     try:
         connection = create_connection(module.params.pop('auth'))
         provider_type, external_providers_service = _external_provider_service(
-            provider_type=module.params.pop('type'),
+            provider_type=module.params.get('type'),
             system_service=connection.system_service(),
         )
         external_providers_module = ExternalProviderModule(

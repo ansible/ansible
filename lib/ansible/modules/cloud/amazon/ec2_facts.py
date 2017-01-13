@@ -67,16 +67,19 @@ class Ec2Metadata(object):
 
     AWS_REGIONS = ('ap-northeast-1',
                    'ap-northeast-2',
+                   'ap-south-1',
                    'ap-southeast-1',
                    'ap-southeast-2',
-                   'ap-south-1',
+                   'ca-central-1',
                    'eu-central-1',
                    'eu-west-1',
+                   'eu-west-2',
                    'sa-east-1',
                    'us-east-1',
+                   'us-east-2',
                    'us-west-1',
                    'us-west-2',
-                   'us-gov-west-1'
+                   'us-gov-west-1',
                    )
 
     def __init__(self, module, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None):
@@ -97,7 +100,7 @@ class Ec2Metadata(object):
 
     def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
         new_fields = {}
-        for key, value in fields.iteritems():
+        for key, value in fields.items():
             split_fields = key[len(uri):].split('/')
             if len(split_fields) > 1 and split_fields[1]:
                 new_key = "-".join(split_fields)

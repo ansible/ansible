@@ -87,7 +87,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
+            result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars))
             return result
         else:  # find in expected paths
             try:

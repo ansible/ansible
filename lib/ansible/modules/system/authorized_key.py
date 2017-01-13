@@ -95,28 +95,27 @@ author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-# Example using key data from a local file on the management machine
-- authorized_key:
+- name: Set authorized key took from file
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-# Using github url as key source
-- authorized_key:
+- name: Set authorized key took from url
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/charlie.keys
 
-# Using alternate directory locations:
-- authorized_key:
+- name: Set authorized key in alternate location
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     path: /etc/ssh/authorized_keys/charlie
-    manage_dir: no
+    manage_dir: False
 
-# Using with_file
-- name: Set up authorized_keys for the deploy user
+- name: Set up multiple authorized keys
   authorized_key:
     user: deploy
     state: present
@@ -125,35 +124,87 @@ EXAMPLES = '''
     - public_keys/doe-jane
     - public_keys/doe-john
 
-# Using key_options:
-- authorized_key:
+- name: Set authorized key defining key options
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
-# Using validate_certs:
-- authorized_key:
+- name: Set authorized key without validating the TLS/SSL certificates
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/user.keys
-    validate_certs: no
+    validate_certs: False
 
-# Set up authorized_keys exclusively with one key
-- authorized_key:
+- name: Set authorized key, removing all the authorized key already set
+  authorized_key:
     user: root
     key: '{{ item }}'
     state: present
-    exclusive: yes
+    exclusive: True
   with_file:
     - public_keys/doe-jane
 
-# Copies the key from the user who is running ansible to the remote machine user ubuntu
-- authorized_key:
+- name: Set authorized key for user ubuntu copying it from current user
+  authorized_key:
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-  become: yes
+'''
+
+RETURN = '''
+exclusive:
+  description: If the key has been forced to be exclusive or not.
+  returned: success
+  type: boolean
+  sample: False
+key:
+  description: The key that the module was running against.
+  returned: success
+  type: string
+  sample: https://github.com/user.keys
+key_option:
+  description: Key options related to the key.
+  returned: success
+  type: string
+  sameple: null
+keyfile:
+  description: Path for authorzied key file.
+  returned: success
+  type: string
+  sameple: /home/user/.ssh/authorized_keys
+manage_dir:
+  description: Whether this module managed the directory of the authorized key file.
+  returned: success
+  type: boolean
+  sameple: True
+path:
+  description: Alternate path to the authorized_keys file
+  returned: success
+  type: string
+  sameple: null
+state:
+  description: Whether the given key (with the given key_options) should or should not be in the file
+  returned: success
+  type: string
+  sameple: present
+unique:
+  description: Whether the key is unique
+  returned: success
+  type: boolean
+  sameple: false
+user:
+  description: The username on the remote host whose authorized_keys file will be modified
+  returned: success
+  type: string
+  sameple: user
+validate_certs:
+  description: This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
+  returned: success
+  type: boolean
+  sameple: true
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -176,6 +227,7 @@ import re
 import shlex
 from operator import itemgetter
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
@@ -233,16 +285,16 @@ class keydict(dict):
             yield key, self[key][indexes[key]]
 
     def iteritems(self):
-        return self._item_generator()
+        raise NotImplementedError("Do not use this as it's not available on py3")
 
     def items(self):
-        return list(self.iteritems())
+        return list(self._item_generator())
 
     def itervalues(self):
-        return (item[1] for item in self.iteritems())
+        raise NotImplementedError("Do not use this as it's not available on py3")
 
     def values(self):
-        return list(self.itervalues())
+        return [item[1] for item in self.items()]
 
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
@@ -390,14 +442,20 @@ def parsekey(module, raw_key, rank=None):
 
     return (key, key_type, options, comment, rank)
 
-def readkeys(module, filename):
+def readfile(filename):
 
     if not os.path.isfile(filename):
-        return {}
+        return ''
 
-    keys = {}
     f = open(filename)
-    for rank_index, line in enumerate(f.readlines()):
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+def parsekeys(module, lines):
+    keys = {}
+    for rank_index, line in enumerate(lines.splitlines(True)):
         key_data = parsekey(module, line, rank=rank_index)
         if key_data:
             # use key as identifier
@@ -406,51 +464,54 @@ def readkeys(module, filename):
             # for an invalid line, just set the line
             # dict key to the line so it will be re-output later
             keys[line] = (line, 'skipped', None, None, rank_index)
-    f.close()
     return keys
 
-def writekeys(module, filename, keys):
+def writefile(module, filename, content):
 
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
 
-    # FIXME: only the f.writelines() needs to be in try clause
     try:
-        new_keys = keys.values()
-        # order the new_keys by their original ordering, via the rank item in the tuple
-        ordered_new_keys = sorted(new_keys, key=itemgetter(4))
-
-        for key in ordered_new_keys:
-            try:
-                (keyhash, key_type, options, comment, rank) = key
-
-                option_str = ""
-                if options:
-                    option_strings = []
-                    for option_key, value in options.items():
-                        if value is None:
-                            option_strings.append("%s" % option_key)
-                        else:
-                            option_strings.append("%s=%s" % (option_key, value))
-                    option_str = ",".join(option_strings)
-                    option_str += " "
-
-                # comment line or invalid line, just leave it
-                if not key_type:
-                    key_line = key
-
-                if key_type == 'skipped':
-                    key_line = key[0]
-                else:
-                    key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
-            except:
-                key_line = key
-            f.writelines(key_line)
+        f.write(content)
     except IOError:
         e = get_exception()
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
+
+def serialize(keys):
+    lines = []
+    new_keys = keys.values()
+    # order the new_keys by their original ordering, via the rank item in the tuple
+    ordered_new_keys = sorted(new_keys, key=itemgetter(4))
+
+    for key in ordered_new_keys:
+        try:
+            (keyhash, key_type, options, comment, rank) = key
+
+            option_str = ""
+            if options:
+                option_strings = []
+                for option_key, value in options.items():
+                    if value is None:
+                        option_strings.append("%s" % option_key)
+                    else:
+                        option_strings.append("%s=%s" % (option_key, value))
+                option_str = ",".join(option_strings)
+                option_str += " "
+
+            # comment line or invalid line, just leave it
+            if not key_type:
+                key_line = key
+
+            if key_type == 'skipped':
+                key_line = key[0]
+            else:
+                key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
+        except:
+            key_line = key
+        lines.append(key_line)
+    return ''.join(lines)
 
 def enforce_state(module, params):
     """
@@ -477,13 +538,18 @@ def enforce_state(module, params):
         except Exception:
             module.fail_json(msg=error_msg % key)
 
+        # resp.read gives bytes on python3, convert to native string type
+        key = to_native(key, errors='surrogate_or_strict')
+
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]
 
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
-    existing_keys = readkeys(module, params["keyfile"])
+    existing_content = readfile(params["keyfile"])
+    existing_keys = parsekeys(module, existing_content)
+
     # Add a place holder for keys that should exist in the state=present and
     # exclusive=true case
     keys_to_exist = []
@@ -551,10 +617,19 @@ def enforce_state(module, params):
             do_write = True
 
     if do_write:
+        filename = keyfile(module, user, do_write, path, manage_dir)
+        new_content = serialize(existing_keys)
+        diff = {
+            'before_header': params['keyfile'],
+            'after_header': filename,
+            'before': existing_content,
+            'after': new_content,
+        }
         if module.check_mode:
-            module.exit_json(changed=True)
-        writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
+            module.exit_json(changed=True, diff=diff)
+        writefile(module, filename, new_content)
         params['changed'] = True
+        params['diff'] = diff
     else:
         if module.check_mode:
             module.exit_json(changed=False)

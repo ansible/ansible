@@ -65,7 +65,7 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix       
   register: vpc_peer
@@ -85,7 +85,7 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix           
   register: vpc_peer
@@ -106,7 +106,7 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix         
   register: vpc_peer
@@ -127,7 +127,7 @@ EXAMPLES = '''
     peer_vpc_id: vpc-87654321
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix          
   register: vpc_peer
@@ -147,7 +147,7 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix        
   register: vpc_peer
@@ -159,7 +159,7 @@ EXAMPLES = '''
     profile: bot03_profile_for_cross_account
     state: accept
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix
 
@@ -172,7 +172,7 @@ EXAMPLES = '''
     peer_owner_id: 123456789102
     state: present
     tags:
-      Name: Peering conenction for VPC 21 to VPC 22
+      Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
       Project: phoenix         
   register: vpc_peer
@@ -210,7 +210,7 @@ def tags_changed(pcx_id, client, module):
     if pcx['VpcPeeringConnections']:
         pcx_values = [t.values() for t in pcx['VpcPeeringConnections'][0]['Tags']]
         pcx_tags = [item for sublist in pcx_values for item in sublist]
-        tag_values = [[key, str(value)] for key, value in tags.iteritems()]
+        tag_values = [[key, str(value)] for key, value in tags.items()]
         tags = [item for sublist in tag_values for item in sublist]
         if sorted(pcx_tags) == sorted(tags):
             changed = False
@@ -305,7 +305,7 @@ def accept_reject_delete(state, client, module):
 def load_tags(module):
     tags = []
     if module.params.get('tags'):
-        for name, value in module.params.get('tags').iteritems():
+        for name, value in module.params.get('tags').items():
             tags.append({'Key': name, 'Value': str(value)})
     return tags
 

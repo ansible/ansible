@@ -57,7 +57,7 @@ class CallbackModule(CallbackBase):
     def runner_on_unreachable(self, host, res):
         self.logger.error('%s ansible-command: task execution UNREACHABLE; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
 
-    def runner_on_async_failed(self, host, res):
+    def runner_on_async_failed(self, host, res, jid):
         self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
 
     def playbook_on_import_for_host(self, host, imported_file):

@@ -46,10 +46,12 @@ else
 GITINFO = ""
 endif
 
-ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+CPUS := $(shell sysctl hw.ncpu|awk '{print $2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
+CPUS := $(shell nproc)
 endif
 
 # DEB build parameters
@@ -96,22 +98,30 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 MOCK_BIN ?= mock
 MOCK_CFG ?=
 
-NOSETESTS ?= nosetests
+# ansible-test parameters
+ANSIBLE_TEST ?= test/runner/ansible-test
+TEST_FLAGS ?=
 
-NOSETESTS3 ?= nosetests-3.5
+# ansible-test units parameters (make test / make test-py3)
+PYTHON_VERSION ?= $(shell python2 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
+PYTHON3_VERSION ?= $(shell python3 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
+
+# ansible-test integration parameters (make integration)
+IMAGE ?= centos7
+TARGET ?=
 
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
+	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
 tests-py3:
-	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches --cover-erase -e test_os_server
+	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
 
 integration:
-	test/utils/shippable/integration.sh
+	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
 authors:
 	sh hacking/authors.sh
@@ -165,6 +175,9 @@ clean:
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
 	find . -type f -name '*.pyc' -delete
+	@echo "Cleaning up docsite"
+	$(MAKE) -C docs/docsite clean
+	$(MAKE) -C docs/api clean
 
 python:
 	$(PYTHON) setup.py build
@@ -286,7 +299,7 @@ deb-src-upload: deb-src
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 webdocs:
-	(cd docsite/; make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
 docs: $(MANPAGES)
 

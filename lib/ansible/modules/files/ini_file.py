@@ -45,17 +45,19 @@ options:
     description:
       - Section name in INI file. This is added if C(state=present) automatically when
         a single value is being set.
+      - If left empty or set to `null`, the I(option) will be placed before the first I(section).
+        Using `null` is also required if the config format does not support sections.
     required: true
     default: null
   option:
     description:
-      - if set (required for changing a I(value)), this is the name of the option.
+      - If set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
     required: false
     default: null
   value:
     description:
-     - the string value to be associated with an I(option). May be omitted when removing an I(option).
+     - The string value to be associated with an I(option). May be omitted when removing an I(option).
     required: false
     default: null
   backup:
@@ -67,7 +69,7 @@ options:
     choices: [ "yes", "no" ]
   others:
      description:
-       - all arguments accepted by the M(file) module also work here
+       - All arguments accepted by the M(file) module also work here
      required: false
   state:
      description:
@@ -77,7 +79,7 @@ options:
      choices: [ "present", "absent" ]
   no_extra_spaces:
      description:
-       - do not insert spaces before and after '=' symbol
+       - Do not insert spaces before and after '=' symbol
      required: false
      default: false
      version_added: "2.1"

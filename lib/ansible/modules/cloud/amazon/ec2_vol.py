@@ -582,7 +582,7 @@ def main():
         elif inst is not None:
             volume, changed = attach_volume(module, ec2, volume, inst)
 
-        # Add device, volume_id and volume_type parameters separately to maintain backward compatability
+        # Add device, volume_id and volume_type parameters separately to maintain backward compatibility
         volume_info = get_volume_info(volume, state)
         module.exit_json(changed=changed, volume=volume_info, device=volume_info['attachment_set']['device'], volume_id=volume_info['id'], volume_type=volume_info['type'])
     elif state == 'absent':

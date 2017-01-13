@@ -175,7 +175,7 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the instance shoud be deployed.
+      - Name of the zone in which the instance should be deployed.
       - If not set, default zone is used.
     required: false
     default: null
@@ -621,7 +621,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             instance = self.recover_instance(instance=instance)
             instance = self.update_instance(instance=instance, start_vm=start_vm)
 
-        # In check mode, we do not necessarely have an instance
+        # In check mode, we do not necessarily have an instance
         if instance:
             instance = self.ensure_tags(resource=instance, resource_type='UserVm')
             # refresh instance data

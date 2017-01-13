@@ -468,13 +468,13 @@ def main():
     args = dict(master=master, stratum=stratum, logging=logging)
 
     changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     if master is False:
         proposed['stratum'] = None
         stratum = None
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    delta = dict(set(proposed.items()).difference(existing.items()))
     delta_stratum = delta.get('stratum')
 
     if delta_stratum:
@@ -488,8 +488,8 @@ def main():
                 commands.append(command)
     elif state == 'absent':
         if existing:
-            isection = dict(set(proposed.iteritems()).intersection(
-                existing.iteritems()))
+            isection = dict(set(proposed.items()).intersection(
+                existing.items()))
             command = config_ntp_options(isection, flip=True)
             if command:
                 commands.append(command)

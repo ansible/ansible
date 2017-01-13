@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -31,7 +33,9 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
-extends_documentation_fragment: ios
+notes:
+  - Provider arguments are no longer supported.  Network tasks should now
+    specify connection plugin network_cli instead.
 options:
   lines:
     description:
@@ -104,10 +108,10 @@ options:
     choices: ['line', 'block']
   multiline_delimiter:
     description:
-      - This arugment is used when pushing a multiline configuration
+      - This argument is used when pushing a multiline configuration
         element to the IOS device.  It specifies the character to use
         as the delimiting character.  This only applies to the
-        configuration action
+        configuration action.
     required: false
     default: "@"
     version_added: "2.3"
@@ -165,19 +169,9 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 - name: configure top level configuration
   ios_config:
     lines: hostname {{ inventory_hostname }}
-    provider: "{{ cli }}"
 
 - name: configure interface settings
   ios_config:
@@ -185,7 +179,6 @@ vars:
       - description test interface
       - ip address 172.31.1.1 255.255.255.0
     parents: interface Ethernet1
-    provider: "{{ cli }}"
 
 - name: load new acl into device
   ios_config:
@@ -198,8 +191,6 @@ vars:
     parents: ip access-list extended test
     before: no ip access-list extended test
     match: exact
-    provider: "{{ cli }}"
-
 """
 
 RETURN = """
@@ -213,15 +204,30 @@ backup_path:
   returned: when backup is yes
   type: path
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 import re
 import time
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.six  import iteritems
-from ansible.module_utils.ios import NetworkModule, NetworkError
+from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.ios import load_config, get_config, run_commands
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
+from ansible.module_utils.six  import iteritems
+from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
 
 def check_args(module, warnings):
@@ -230,9 +236,17 @@ def check_args(module, warnings):
             module.fail_json(msg='multiline_delimiter value can only be a '
                                  'single character')
     if module.params['force']:
-        warnings.append('The force argument is deprecated, please use '
-                        'match=none instead.  This argument will be '
-                        'removed in the future')
+        warnings.append('The force argument is deprecated as of Ansible 2.2, '
+                        'please use match=none instead.  This argument will '
+                        'be removed in the future')
+
+    for key in NET_TRANSPORT_ARGS:
+        if module.params[key]:
+            warnings.append(
+                'network provider arguments are no longer supported.  Please '
+                'use connection: network_cli for the task'
+            )
+            break
 
 def extract_banners(config):
     banners = {}
@@ -265,17 +279,18 @@ def load_banners(module, banners):
     for key, value in iteritems(banners):
         key += ' %s' % delimiter
         for cmd in ['config terminal', key, value, delimiter, 'end']:
-            cmd += '\r'
-            module.connection.shell.shell.sendall(cmd)
-        time.sleep(1)
-        module.connection.shell.receive()
+            obj = {'command': cmd, 'sendonly': True}
+            run_commands(module, [cmd])
+        time.sleep(0.1)
+        run_commands(module, ['\n'])
 
-def get_config(module, result):
+def get_running_config(module):
     contents = module.params['config']
     if not contents:
-        defaults = module.params['defaults']
-        contents = module.config.get_config(include_defaults=defaults)
-
+        flags = []
+        if module.params['defaults']:
+            flags.append('all')
+        contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
 
@@ -293,56 +308,9 @@ def get_candidate(module):
 
     return candidate, banners
 
-def run(module, result):
-    match = module.params['match']
-    replace = module.params['replace']
-    path = module.params['parents']
-
-    candidate, want_banners = get_candidate(module)
-
-    if match != 'none':
-        config, have_banners = get_config(module, result)
-        path = module.params['parents']
-        configobjs = candidate.difference(config, path=path,match=match,
-                                          replace=replace)
-    else:
-        configobjs = candidate.items
-        have_banners = {}
-
-    banners = diff_banners(want_banners, have_banners)
-
-    if configobjs or banners:
-        commands = dumps(configobjs, 'commands').split('\n')
-
-        if module.params['lines']:
-            if module.params['before']:
-                commands[:0] = module.params['before']
-
-            if module.params['after']:
-                commands.extend(module.params['after'])
-
-        result['updates'] = commands
-        result['banners'] = banners
-
-        # send the configuration commands to the device and merge
-        # them with the current running config
-        if not module.check_mode:
-            if commands:
-                module.config(commands)
-            if banners:
-                load_banners(module, banners)
-
-        result['changed'] = True
-
-    if module.params['save']:
-        if not module.check_mode:
-            module.config.save_config()
-        result['changed'] = True
-
 def main():
     """ main entry point for module execution
     """
-
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -356,7 +324,7 @@ def main():
         replace=dict(default='line', choices=['line', 'block']),
         multiline_delimiter=dict(default='@'),
 
-        # this argument is deprecated in favor of setting match: none
+        # this argument is deprecated (2.2) in favor of setting match: none
         # it will be removed in a future version
         force=dict(default=False, type='bool'),
 
@@ -364,8 +332,10 @@ def main():
         defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
-        save=dict(default=False, type='bool'),
+        save=dict(type='bool', default=False),
     )
+
+    argument_spec.update(_transitional_argument_spec())
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -373,11 +343,10 @@ def main():
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
-                           mutually_exclusive=mutually_exclusive,
-                           required_if=required_if,
-                           supports_check_mode=True)
+    module = LocalAnsibleModule(argument_spec=argument_spec,
+                                mutually_exclusive=mutually_exclusive,
+                                required_if=required_if,
+                                supports_check_mode=True)
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -385,19 +354,57 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = dict(changed=False, warnings=warnings)
+    result = {'changed': False, 'warnings': warnings}
+
+    if any((module.params['lines'], module.params['src'])):
+        match = module.params['match']
+        replace = module.params['replace']
+        path = module.params['parents']
+
+        candidate, want_banners = get_candidate(module)
+
+        if match != 'none':
+            config, have_banners = get_running_config(module)
+            path = module.params['parents']
+            configobjs = candidate.difference(config, path=path,match=match,
+                                            replace=replace)
+        else:
+            configobjs = candidate.items
+            have_banners = {}
+
+        banners = diff_banners(want_banners, have_banners)
+
+        if configobjs or banners:
+            commands = dumps(configobjs, 'commands').split('\n')
+
+            if module.params['lines']:
+                if module.params['before']:
+                    commands[:0] = module.params['before']
+
+                if module.params['after']:
+                    commands.extend(module.params['after'])
+
+            result['updates'] = commands
+            result['banners'] = banners
+
+            # send the configuration commands to the device and merge
+            # them with the current running config
+            if not module.check_mode:
+                if commands:
+                    load_config(module, commands)
+                if banners:
+                    load_banners(module, banners)
+
+            result['changed'] = True
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config()
 
-    try:
-        run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.disconnect()
-        module.fail_json(msg=str(exc))
+    if module.params['save']:
+        if not module.check_mode:
+            run_commands(module, ['copy running-config startup-config'])
+        result['changed'] = True
 
-    module.disconnect()
     module.exit_json(**result)
 
 

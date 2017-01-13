@@ -35,7 +35,7 @@ options:
   domain:
     description:
       - Slack (sub)domain for your environment without protocol. (i.e.
-        C(future500.slack.com)) In 1.8 and beyond, this is deprecated and may
+        C(example.slack.com)) In 1.8 and beyond, this is deprecated and may
         be ignored.  See token documentation for information.
     required: false
     default: None
@@ -48,7 +48,13 @@ options:
         are in the new format then slack will ignore any value of domain.  If
         the token is in the old format the domain is required.  Ansible has no
         control of when slack will get rid of the old API.  When slack does
-        that the old format will stop working.
+        that the old format will stop working.  ** Please keep in mind the tokens
+        are not the API tokens but are the webhook tokens.  In slack these are
+        found in the webhook URL which are obtained under the apps and integrations.
+        The incoming webhooks can be added in that area.  In some cases this may
+        be locked by your Slack admin and you must request access.  It is there
+        that the incoming webhooks can be added.  The key is on the end of the
+        URL given to you in that section.
     required: true
   msg:
     description:
@@ -120,14 +126,13 @@ options:
 
 EXAMPLES = """
 - name: Send notification message via Slack
-  local_action:
-    module: slack
+  slack:
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
+  delegate_to: localhost
 
 - name: Send notification message via Slack all options
-  local_action:
-    module: slack
+  slack:
     token: thetoken/generatedby/slack
     msg: '{{ inventory_hostname }} completed'
     channel: #ansible
@@ -135,6 +140,7 @@ EXAMPLES = """
     icon_url: http://www.example.com/some-image-file.png
     link_names: 0
     parse: 'none'
+  delegate_to: localhost
 
 - name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in Slack
   slack:
@@ -158,14 +164,6 @@ EXAMPLES = """
           - title: System B
             value: 'load average: 5,16, 4,64, 2,43'
             short: True
-
-- name: Send notification message via Slack (deprecated API using domain)
-  local_action:
-    module: slack
-    domain: example.slack.com
-    token: thetokengeneratedbyslack
-    msg: '{{ inventory_hostname }} completed'
-
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
@@ -190,7 +188,7 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     if color == "normal" and text is not None:
         payload = dict(text=html_escape(text))
     elif text is not None:
-        # With a custom color we have to set the message as attachment, and explicitely turn markdown parsing on for it.
+        # With a custom color we have to set the message as attachment, and explicitly turn markdown parsing on for it.
         payload = dict(attachments=[dict(text=html_escape(text), color=color, mrkdwn_in=["text"])])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):

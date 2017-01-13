@@ -42,14 +42,14 @@ description:
    - "To use this module, it has to be executed at least twice. Either as two
       different tasks in the same run or during multiple runs."
    - "Between these two tasks you have to fulfill the required steps for the
-      choosen challenge by whatever means necessary. For http-01 that means
+      chosen challenge by whatever means necessary. For http-01 that means
       creating the necessary challenge file on the destination webserver. For
       dns-01 the necessary dns record has to be created. tls-sni-02 requires
       you to create a SSL certificate with the appropriate subjectAlternativeNames.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
       U(https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7)"
-   - "Although the defaults are choosen so that the module can be used with
+   - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       protocol."
 requirements:
@@ -109,7 +109,7 @@ options:
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
-         If C(remaining_days < cert_days), then it will be renewed.
+         If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."         
     required: false
@@ -293,7 +293,7 @@ class ACMEDirectory(object):
 class ACMEAccount(object):
     '''
     ACME account object. Handles the authorized communication with the
-    ACME server. Provides access to accound bound information like
+    ACME server. Provides access to account bound information like
     the currently active authorizations and valid certificates
     '''
     def __init__(self,module):
@@ -607,7 +607,7 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             # NOTE: tls-sni-01 is not supported by choice
-            # too complex to be usefull and tls-sni-02 is an alternative
+            # too complex to be useful and tls-sni-02 is an alternative
             # as soon as it is implemented server side
             if type == 'http-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-7.2
@@ -637,7 +637,7 @@ class ACMEClient(object):
     def _validate_challenges(self,auth):
         '''
         Validate the authorization provided in the auth dict. Returns True
-        when the validation was successfull and False when it was not.
+        when the validation was successful and False when it was not.
         '''
         for challenge in auth['challenges']:
             if self.challenge != challenge['type']:
@@ -716,7 +716,7 @@ class ACMEClient(object):
     def do_challenges(self):
         '''
         Create new authorizations for all domains of the CSR and return
-        the challenge details for the choosen challenge type.
+        the challenge details for the chosen challenge type.
         '''
         data = {}
         for domain in self.domains:

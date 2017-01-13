@@ -676,7 +676,7 @@ class Ec2Inventory(object):
 
         try:
             # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that wo can't make use of the get_list
+            # CacheNodes. Because of that we can't make use of the get_list
             # method in the AWSQueryConnection. Let's do the work manually
             clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
 
@@ -710,7 +710,7 @@ class Ec2Inventory(object):
 
         try:
             # Boto also doesn't provide wrapper classes to ReplicationGroups
-            # Because of that wo can't make use of the get_list method in the
+            # Because of that we can't make use of the get_list method in the
             # AWSQueryConnection. Let's do the work manually
             replication_groups = response['DescribeReplicationGroupsResponse']['DescribeReplicationGroupsResult']['ReplicationGroups']
 

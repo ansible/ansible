@@ -291,7 +291,7 @@ EXAMPLES = '''
   hw_guest_id: "rhel6_64Guest"
   hw_memtotal_mb: 2048
   hw_name: "centos64Guest"
-  hw_power_status: "POWERED ON",
+  hw_power_status: "POWERED ON"
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 
@@ -863,7 +863,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     if vm_extra_config:
         spec = spec_singleton(spec, request, vm)
         extra_config = []
-        for k,v in vm_extra_config.iteritems():
+        for k,v in vm_extra_config.items():
             ec = spec.new_extraConfig()
             ec.set_element_key(str(k))
             ec.set_element_value(str(v))
@@ -1085,7 +1085,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
             module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
         dcprops = VIProperty(vsphere_client, dcmor)
         nfmor = dcprops.networkFolder._obj
-        for k,v in vm_nic.iteritems():
+        for k,v in vm_nic.items():
             nicNum = k[len(k) -1]
             if vm_nic[k]['network_type'] == 'dvs':
                 portgroupKey = find_portgroup_key(module, s, nfmor, vm_nic[k]['network'])
@@ -1116,7 +1116,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                             module.exit_json()
 
         if len(nics) > 0:
-            for nic, obj in nics.iteritems():
+            for nic, obj in nics.items():
                 """
                 1,2 and 3 are used to mark which action should be taken
                 1 = from a distributed switch to a distributed switch
@@ -1145,7 +1145,7 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
                         "nic_backing").pyclass()
                     nic_backing.set_element_deviceName(vm_nic[nic]['network'])
                     dev._obj.set_element_backing(nic_backing)
-            for nic, obj in nics.iteritems():
+            for nic, obj in nics.items():
                 dev = obj[0]
                 spec = request.new_spec()
                 nic_change = spec.new_deviceChange()
@@ -1178,7 +1178,7 @@ def _build_folder_tree(nodes, parent):
 
 
 def _find_path_in_tree(tree, path):
-    for name, o in tree.iteritems():
+    for name, o in tree.items():
         if name == path[0]:
             if len(path) == 1:
                 return o
@@ -1231,7 +1231,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
 
         # try the legacy behaviour of just matching the folder name, so 'lamp' alone matches 'production/customerA/lamp'
         if vmfmor is None:
-            for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
+            for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).items():
                 if name == vm_extra_config['folder']:
                     vmfmor = mor
 

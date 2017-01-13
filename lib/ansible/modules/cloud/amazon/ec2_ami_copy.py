@@ -24,22 +24,22 @@ DOCUMENTATION = '''
 module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
-    - Copies AMI from a source region to a destination region. This module has a dependency on python-boto >= 2.5
+    - Copies AMI from a source region to a destination region. B(Since version 2.3 this module depends on boto3.)
 version_added: "2.0"
 options:
   source_region:
     description:
-      - the source region that AMI should be copied from
+      - The source region the AMI should be copied from.
     required: true
   source_image_id:
     description:
-      - the id of the image in source region that should be copied
+      - The ID of the AMI in source region that should be copied.
     required: true
   name:
     description:
-      - The name of the new image to copy
+      - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
     required: false
-    default: null
+    default: "default"
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
@@ -47,7 +47,7 @@ options:
     default: null
   encrypted:
     description:
-      - Whether or not to encrypt the target image
+      - Whether or not the destination snapshots of the copied AMI should be encrypted.
     required: false
     default: null
     version_added: "2.2"
@@ -59,25 +59,26 @@ options:
     version_added: "2.2"
   wait:
     description:
-      - wait for the copied AMI to be in state 'available' before returning.
+      - Wait for the copied AMI to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds. (As of 2.3 this option is deprecated. See boto3 Waiters)
     required: false
     default: 1200
   tags:
     description:
-      - a hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
-
-author: Amir Moulavi <amir.moulavi@gmail.com>
+author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto3
 '''
 
 EXAMPLES = '''
@@ -128,7 +129,8 @@ EXAMPLES = '''
     kms_key_id: arn:aws:kms:us-east-1:XXXXXXXXXXXX:key/746de6ea-50a4-4bcb-8fbc-e3b29f2d367b
 '''
 
-import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
 
 try:
     import boto
@@ -137,8 +139,13 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect, get_aws_connection_info
+try:
+    import boto3
+    from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError, WaiterError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 
 
 def copy_image(module, ec2):
@@ -146,78 +153,39 @@ def copy_image(module, ec2):
     Copies an AMI
 
     module : AnsibleModule object
-    ec2: authenticated ec2 connection object
+    ec2: ec2 connection object
     """
 
-    source_region = module.params.get('source_region')
-    source_image_id = module.params.get('source_image_id')
-    name = module.params.get('name')
-    description = module.params.get('description')
-    encrypted = module.params.get('encrypted')
-    kms_key_id = module.params.get('kms_key_id')
     tags = module.params.get('tags')
-    wait_timeout = int(module.params.get('wait_timeout'))
-    wait = module.params.get('wait')
+
+    params = {'SourceRegion': module.params.get('source_region'),
+              'SourceImageId': module.params.get('source_image_id'),
+              'Name': module.params.get('name'),
+              'Description': module.params.get('description'),
+              'Encrypted': module.params.get('encrypted'),
+              }
+    if module.params.get('kms_key_id'):
+        params['KmsKeyId'] = module.params.get('kms_key_id')
 
     try:
-        params = {'source_region': source_region,
-                  'source_image_id': source_image_id,
-                  'name': name,
-                  'description': description,
-                  'encrypted': encrypted,
-                  'kms_key_id': kms_key_id
-        }
+        image_id = ec2.copy_image(**params)['ImageId']
+        if module.params.get('wait'):
+            ec2.get_waiter('image_available').wait(ImageIds=[image_id])
+        if module.params.get('tags'):
+            ec2.create_tags(
+                    Resources=[image_id],
+                    Tags=[{'Key' : k, 'Value': v} for k,v in module.params.get('tags').items()]
+                    )
 
-        image_id = ec2.copy_image(**params).image_id
-    except boto.exception.BotoServerError as e:
-        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
-
-    img = wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait)
-
-    img = wait_until_image_is_copied(module, ec2, wait_timeout, img, image_id, wait)
-
-    register_tags_if_any(module, ec2, tags, image_id)
-
-    module.exit_json(msg="AMI copy operation complete", image_id=image_id, state=img.state, changed=True)
-
-
-# register tags to the copied AMI
-def register_tags_if_any(module, ec2, tags, image_id):
-    if tags:
-        try:
-            ec2.create_tags([image_id], tags)
-        except Exception as e:
-            module.fail_json(msg=str(e))
-
-
-# wait here until the image is copied (i.e. the state becomes available
-def wait_until_image_is_copied(module, ec2, wait_timeout, img, image_id, wait):
-    wait_timeout = time.time() + wait_timeout
-    while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
-        img = ec2.get_image(image_id)
-        time.sleep(3)
-    if wait and wait_timeout <= time.time():
-        # waiting took too long
-        module.fail_json(msg="timed out waiting for image to be copied")
-    return img
-
-
-# wait until the image is recognized.
-def wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait):
-    for i in range(wait_timeout):
-        try:
-            return ec2.get_image(image_id)
-        except boto.exception.EC2ResponseError as e:
-            # This exception we expect initially right after registering the copy with EC2 API
-            if 'InvalidAMIID.NotFound' in e.error_code and wait:
-                time.sleep(1)
-            else:
-                # On any other exception we should fail
-                module.fail_json(
-                    msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help: " + str(
-                        e))
-    else:
-        module.fail_json(msg="timed out waiting for image to be recognized")
+        module.exit_json(changed=True, image_id=image_id)
+    except WaiterError as we:
+        module.fail_json(msg='An error occured waiting for the image to become available. (%s)' %  we.reason)
+    except ClientError as ce:
+        module.fail_json(msg=ce.message)
+    except NoCredentialsError:
+        module.fail_json(msg='Unable to authenticate, AWS credentials are invalid.')
+    except Exception as e:
+        module.fail_json(msg='Unhandled exception. (%s)' % str(e))
 
 
 def main():
@@ -225,8 +193,8 @@ def main():
     argument_spec.update(dict(
         source_region=dict(required=True),
         source_image_id=dict(required=True),
-        name=dict(),
-        description=dict(default=""),
+        name=dict(default='default'),
+        description=dict(default=''),
         encrypted=dict(type='bool', required=False),
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
@@ -237,23 +205,21 @@ def main():
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
+    # TODO: Check botocore version
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    try:
-        ec2 = ec2_connect(module)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
+    if HAS_BOTO3:
 
-    try:
-        region, ec2_url, boto_params = get_aws_connection_info(module)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
-
-    if not region:
-        module.fail_json(msg="region must be specified")
+        try:
+            ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url,
+                             **aws_connect_params)
+        except NoRegionError:
+            module.fail_json(msg='AWS Region is required')
+    else:
+        module.fail_json(msg='boto3 required for this module')
 
     copy_image(module, ec2)
 
 
 if __name__ == '__main__':
     main()
-

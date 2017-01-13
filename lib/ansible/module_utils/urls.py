@@ -115,7 +115,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     # python3
@@ -309,7 +309,7 @@ if not HAS_MATCH_HOSTNAME:
 # ca cert, regardless of validity, for Python on Mac OS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
-DUMMY_CA_CERT = """-----BEGIN CERTIFICATE-----
+b_DUMMY_CA_CERT = b("""-----BEGIN CERTIFICATE-----
 MIICvDCCAiWgAwIBAgIJAO8E12S7/qEpMA0GCSqGSIb3DQEBBQUAMEkxCzAJBgNV
 BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
 MRAwDgYDVQQKEwdBbnNpYmxlMB4XDTE0MDMxODIyMDAyMloXDTI0MDMxNTIyMDAy
@@ -326,7 +326,7 @@ MUB80IR6knq9K/tY+hvPsZer6eFMzO3JGkRFBh2kn6JdMDnhYGX7AXVHGflrwNQH
 qFy+aenWXsC0ZvrikFxbQnX8GVtDADtVznxOi7XzFw7JOxdsVrpXgSN0eh0aMzvV
 zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
-"""
+""")
 
 #
 # Exceptions
@@ -512,9 +512,15 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
                 newheaders = dict((k,v) for k,v in req.headers.items()
                                   if k.lower() not in ("content-length", "content-type")
                                  )
+                try:
+                    # Python 2-3.3
+                    origin_req_host = req.get_origin_req_host()
+                except AttributeError:
+                    # Python 3.4+
+                    origin_req_host = req.origin_req_host
                 return urllib_request.Request(newurl,
                                headers=newheaders,
-                               origin_req_host=req.get_origin_req_host(),
+                               origin_req_host=origin_req_host,
                                unverifiable=True)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
@@ -522,7 +528,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     return RedirectHandler
 
 
-def build_ssl_validation_error(hostname, port, paths):
+def build_ssl_validation_error(hostname, port, paths, exc=None):
     '''Inteligently build out the SSLValidationError based on what support
     you have installed
     '''
@@ -544,7 +550,10 @@ def build_ssl_validation_error(hostname, port, paths):
     msg.append('You can use validate_certs=False if you do'
                ' not need to confirm the servers identity but this is'
                ' unsafe and not recommended.'
-               ' Paths checked for this platform: %s')
+               ' Paths checked for this platform: %s.')
+
+    if exc:
+        msg.append('The exception msg was: %s.' % to_native(exc))
 
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
@@ -597,7 +606,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
-            os.write(tmp_fd, DUMMY_CA_CERT)
+            os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
@@ -715,15 +724,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error):
+        except (ssl.SSLError, CertificateError):
             e = get_exception()
-            # fail if we tried all of the certs but none worked
-            if 'connection refused' in str(e).lower():
-                raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
-            else:
-                build_ssl_validation_error(self.hostname, self.port, paths_checked)
-        except CertificateError:
-            build_ssl_validation_error(self.hostname, self.port, paths_checked)
+            build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
+        except socket.error:
+            e = get_exception()
+            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
             # cleanup the temp file created, don't worry
@@ -819,9 +825,11 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # use this username/password combination for  urls
             # for which `theurl` is a super-url
             authhandler = urllib_request.HTTPBasicAuthHandler(passman)
+            digest_authhandler = urllib_request.HTTPDigestAuthHandler(passman)
 
             # create the AuthHandler
             handlers.append(authhandler)
+            handlers.append(digest_authhandler)
 
         elif username and force_basic_auth:
             headers["Authorization"] = basic_auth_header(username, password)
@@ -862,6 +870,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     opener = urllib_request.build_opener(*handlers)
     urllib_request.install_opener(opener)
 
+    data = to_bytes(data, nonstring='passthru')
     if method:
         if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())

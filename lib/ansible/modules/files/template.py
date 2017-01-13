@@ -101,4 +101,14 @@ EXAMPLES = '''
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: 'visudo -cf %s'
+
+# Update SSH configuration safely (avoid shutting yourself out)
+- template:
+    src: etc/ssh/sshd_config.j2
+    dest: /etc/ssh/sshd_config.j2
+    owner: root
+    group: root
+    mode: '0600'
+    validate: /usr/sbin/sshd -t %s
+    backup: yes
 '''

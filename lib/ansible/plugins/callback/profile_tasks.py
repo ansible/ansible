@@ -124,7 +124,7 @@ class CallbackModule(CallbackBase):
         # Sort the tasks by the specified sort
         if self.sort_order != 'none':
             results = sorted(
-                self.stats.iteritems(),
+                self.stats.items(),
                 key=lambda x:x[1]['time'],
                 reverse=self.sort_order,
             )

@@ -48,7 +48,7 @@ options:
         required: true
     direction:
         description:
-            - is this rule for inbound or outbound trafic
+            - is this rule for inbound or outbound traffic
         default: null
         required: true
         choices: ['in', 'out']

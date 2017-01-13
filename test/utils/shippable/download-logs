@@ -71,7 +71,7 @@ def main():
         job_id = j['id']
         job_number = j['jobNumber']
         path = os.path.join(output_dir, '%s.log' % job_number)
-        url = 'https://api.shippable.com/jobConsoles?jobIds=%s&download=true' % job_id
+        url = 'https://api.shippable.com/jobs/%s/consoles?download=true' % job_id
 
         if args.verbose or args.test:
             print('%s' % path)

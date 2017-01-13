@@ -131,7 +131,7 @@ Purge the checkout after the playbook is run.
 
 *-s* 'SLEEP', *--sleep=*'SLEEP'::
 
-Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way ot disperse git requests.
+Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way to disperse git requests.
 
 *--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
 

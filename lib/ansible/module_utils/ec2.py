@@ -343,7 +343,7 @@ def camel_dict_to_snake_dict(camel_dict):
 
 
     snake_dict = {}
-    for k, v in camel_dict.iteritems():
+    for k, v in camel_dict.items():
         if isinstance(v, dict):
             snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
         elif isinstance(v, list):
@@ -378,7 +378,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     """
 
     filters_list = []
-    for k,v in filters_dict.iteritems():
+    for k,v in filters_dict.items():
         filter_dict = {'Name': k}
         if isinstance(v, string_types):
             filter_dict['Values'] = [v]
@@ -443,7 +443,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
     """
 
     tags_list = []
-    for k,v in tags_dict.iteritems():
+    for k,v in tags_dict.items():
         tags_list.append({'Key': k, 'Value': v})
 
     return tags_list
@@ -471,7 +471,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             return sg['GroupId']
         else:
             return sg.id
-
 
     sec_group_id_list = []
 
@@ -514,3 +513,46 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     return sec_group_id_list
 
+
+def sort_json_policy_dict(policy_dict):
+
+    """ Sort any lists in an IAM JSON policy so that comparison of two policies with identical values but
+    different orders will return true
+    Args:
+        policy_dict (dict): Dict representing IAM JSON policy.
+    Basic Usage:
+        >>> my_iam_policy = {'Principle': {'AWS':["31","7","14","101"]}
+        >>> sort_json_policy_dict(my_iam_policy)
+    Returns:
+        Dict: Will return a copy of the policy as a Dict but any List will be sorted
+        {
+            'Principle': {
+                'AWS': [ '7', '14', '31', '101' ]
+            }
+        }
+    """
+
+    def value_is_list(my_list):
+
+        checked_list = []
+        for item in my_list:
+            if isinstance(item, dict):
+                checked_list.append(sort_json_policy_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+
+        checked_list.sort()
+        return checked_list
+
+    ordered_policy_dict = {}
+    for key, value in policy_dict.items():
+        if isinstance(value, dict):
+            ordered_policy_dict[key] = sort_json_policy_dict(value)
+        elif isinstance(value, list):
+            ordered_policy_dict[key] = value_is_list(value)
+        else:
+            ordered_policy_dict[key] = value
+
+    return ordered_policy_dict

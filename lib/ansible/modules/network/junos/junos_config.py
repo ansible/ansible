@@ -101,8 +101,9 @@ options:
         in the corresponding hierarchy of the source configuration loaded
         from this module.
       - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the I(update) argument to C(replace).  This argument
-        will be removed in a future release.
+        the equivalent, set the I(update) argument to C(replace). This argument
+        will be removed in a future release. The C(replace) and C(update) argument
+        is mutually exclusive.
     required: false
     choices: ['yes', 'no']
     default: false
@@ -117,6 +118,24 @@ options:
     default: no
     choices: ['yes', 'no']
     version_added: "2.2"
+  update:
+    description:
+      - This argument will decide how to load the configuration
+        data particulary when the candidate configuration and loaded
+        configuration contain conflicting statements. Following are
+        accepted values.
+        C(merge) combines the data in the loaded configuration with the
+        candidate configuration. If statements in the loaded configuration
+        conflict with statements in the candidate configuration, the loaded
+        statements replace the candidate ones.
+        C(overwrite) discards the entire candidate configuration and replaces
+        it with the loaded configuration.
+        C(replace) substitutes each hierarchy level in the loaded configuration
+        for the corresponding level.
+    required: false
+    default: merge
+    choices: ['merge', 'overwrite', 'replace']
+    version_added: "2.3"
 requirements:
   - junos-eznc
 notes:
@@ -242,8 +261,9 @@ def load_config(module, result):
     kwargs = dict()
     kwargs['comment'] = module.params['comment']
     kwargs['confirm'] = module.params['confirm']
-    kwargs['replace'] = module.params['replace']
+    kwargs[module.params['update']] = True
     kwargs['commit'] = not module.check_mode
+    kwargs['replace'] = module.params['replace']
 
     if module.params['src']:
         config_format = module.params['src_format'] or guess_format(str(candidate))
@@ -267,7 +287,7 @@ def load_config(module, result):
 def rollback_config(module, result):
     rollback = module.params['rollback']
 
-    kwargs = dict(comment=module.param['comment'],
+    kwargs = dict(comment=module.params['comment'],
                   commit=not module.check_mode)
 
     diff = module.connection.rollback_config(rollback, **kwargs)
@@ -278,7 +298,7 @@ def rollback_config(module, result):
 
 def zeroize_config(module, result):
     if not module.check_mode:
-        module.cli.run_commands('request system zeroize')
+        module.connection.cli('request system zeroize')
     result['changed'] = True
 
 def confirm_config(module, result):
@@ -306,7 +326,9 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
+        update=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
         replace=dict(default=False, type='bool'),
+
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
 
@@ -320,9 +342,13 @@ def main():
 
     mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
                           ('rollback', 'zeroize'), ('lines', 'src'),
-                          ('src', 'zeroize'), ('src', 'rollback')]
+                          ('src', 'zeroize'), ('src', 'rollback'),
+                          ('update', 'replace')]
 
-    required_if = [('replace', True, ['src'])]
+    required_if = [('replace', True, ['src']),
+                   ('update', 'merge', ['src']),
+                   ('update', 'overwrite', ['src']),
+                   ('update', 'replace', ['src'])]
 
     module = NetworkModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
