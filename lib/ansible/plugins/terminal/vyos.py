@@ -47,6 +47,6 @@ class TerminalModule(TerminalBase):
     @staticmethod
     def guess_network_os(conn):
         stdin, stdout, stderr = conn.exec_command('cat /etc/issue')
-        if 'vyos' in stdout.read():
-            return 'VyOS'
+        if 'VyOS' in stdout.read():
+            return 'vyos'
 
