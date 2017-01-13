@@ -1,7 +1,7 @@
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../../hacking/module_formatter.py
 DUMPER=../../hacking/dump_playbook_attributes.py
-CPUS ?= 1
+CPUS := $(shell nproc)
 
 all: clean docs
 
