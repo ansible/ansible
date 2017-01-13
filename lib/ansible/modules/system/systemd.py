@@ -370,8 +370,11 @@ def main():
         if rc == 0:
             enabled = True
         elif rc == 1:
-            # if both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-            if is_initd and (not out.startswith('disabled') or sysv_is_enabled(unit)):
+            # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
+            if not module.params['user'] and \
+               is_initd and \
+               (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+
                 enabled = True
 
         # default to current state
