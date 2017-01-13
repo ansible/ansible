@@ -35,7 +35,7 @@ author:
     - "(@cove)"
     - "Tony Minfei Ding"
     - "Harrison Gu (@harrisongu)"
-    - "Werner Dijkerman"
+    - "Werner Dijkerman (@dj-wasabi)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
