@@ -183,6 +183,7 @@ notes:
    - rsync daemon must be up and running with correct permission when using
      rsync protocol in source or destination path.
    - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - You cannot use this module when accessing a host via docker. Because rsync needs to connect to the remote host via ssh or a direct filesystem copy
 
 author: "Timothy Appnel (@tima)"
 '''
