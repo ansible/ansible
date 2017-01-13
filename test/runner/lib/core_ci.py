@@ -248,10 +248,23 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+        tries = 2
+        sleep = 10
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+        while True:
+            tries -= 1
+            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         self.started = True
         self._save()
