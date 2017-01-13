@@ -72,15 +72,23 @@ class Connection(_Connection):
         network_os = self._play_context.network_os
         if not network_os:
             for cls in terminal_loader.all(class_only=True):
-                network_os = cls.guess_network_os(self.ssh)
-                if network_os:
-                    break
+                try:
+                    network_os = cls.guess_network_os(self.ssh)
+                    if network_os:
+                        break
+                except:
+                    raise AnsibleConnectionFailure(
+                        'Unable to automatically determine host network os. '
+                        'Please manually configure ansible_network_os value '
+                        'for this host'
+                    )
 
         if not network_os:
             raise AnsibleConnectionFailure(
-                'unable to determine device network os.  Please configure '
-                'ansible_network_os value'
+                'Unable to automatically determine host network os. Please '
+                'manually configure ansible_network_os value for this host'
             )
+
 
         self._terminal = terminal_loader.get(network_os, self)
         if not self._terminal:
