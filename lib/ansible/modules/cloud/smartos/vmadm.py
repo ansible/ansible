@@ -259,7 +259,8 @@ def get_vm_prop(module, uuid, prop):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg=stderr)
+        module.fail_json(msg='Could not perform lookup of {0} on {1}: {2}'.
+                         format(prop, uuid, stderr))
 
     try:
         return json.loads(stdout)[0][prop]
@@ -275,7 +276,7 @@ def get_vm_uuid(module, alias):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg=stderr)
+        module.fail_json(msg='Could not retrieve UUID of {0}: {1}'.format(alias, stderr))
 
     try:
         return json.loads(stdout)[0]['uuid']
@@ -290,7 +291,7 @@ def get_all_vm_uuids(module):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg=stderr)
+        module.fail_json(msg='Failed to get VMs list: {0}'.format(stderr))
 
     try:
         output = json.loads(stdout)
