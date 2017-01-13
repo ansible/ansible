@@ -1,7 +1,11 @@
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../../hacking/module_formatter.py
 DUMPER=../../hacking/dump_playbook_attributes.py
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
+CPUS := $(shell sysctl hw.ncpu|awk '{print $2}')
+else
 CPUS := $(shell nproc)
+endif
 
 all: clean docs
 
