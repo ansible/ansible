@@ -558,7 +558,7 @@ class ZipArchive(object):
         cmd = [ self.cmd_path, '-o' ]
         if self.opts:
             cmd.extend(self.opts)
-        cmd.extend([ self.src ])
+        cmd.append(self.src)
          # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
 #        if self.includes:
             # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
