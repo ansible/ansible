@@ -13,8 +13,8 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 RSTDIR        = rst
-MODULES_PATH  = ../lib
-EXCLUDE_PATHS = ../lib/ansible/modules ../lib/ansible/utils/module_docs_fragments ../lib/ansible/compat/six ../lib/ansible/module_utils/six.py
+MODULES_PATH  = ../../lib
+EXCLUDE_PATHS = ../../lib/ansible/modules ../../lib/ansible/utils/module_docs_fragments ../../lib/ansible/compat/six ../../lib/ansible/module_utils/six.py
 DOC_PROJECTS  = "Ansible API"
 
 # User-friendly check for sphinx-build
@@ -74,6 +74,9 @@ html:
 
 .PHONY: docs
 docs: clean apidoc html
+
+.PHONY: webdocs
+webdocs: clean apidoc html
 
 .PHONY: dirhtml
 dirhtml:
