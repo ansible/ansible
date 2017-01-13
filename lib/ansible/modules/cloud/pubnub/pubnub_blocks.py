@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: pubnub_blocks
-version_added: '1.0'
+version_added: '2.2'
 short_description: PubNub blocks management module.
 description:
   - This module allow to manage existing blocks by managing event handlers and starting/stopping block.
@@ -49,8 +49,7 @@ options:
     required: false
   cache:
     description:
-      - In case if single play use blocks management module few times it is preferred to enabled 'caching' by making \
-        previous module to share gathered artifacts and pass them to this parameter.
+      - In case if single play use blocks management module few times it is preferred to enabled 'caching' by making previous module to share gathered artifacts and pass them to this parameter.
     required: false
     default: {}
   application:
@@ -73,21 +72,18 @@ options:
     required: true
   description:
     description:
-      - Short block description which will be later visible on admin.pubnub.com. Used only if block doesn't exists and \
-        won't change description for existing block.
+      - Short block description which will be later visible on admin.pubnub.com. Used only if block doesn't exists and won't change description for existing block.
     required: false
     default: 'New block'
   event_handlers:
     description:
       - List of event handlers which should be updated for specified C(block).
-      - 'Each entry for new event handler should contain: C(name), C(src), C(channels), C(event). C(name) used as event' \
-        handler name which can be used later to make changes to it. C(src) is full path to file with event handler \
-        code. C(channels) is name of channel from which event handler is waiting for events. C(event) is type of event \
-        'which is able to trigger event handler: I(js-before-publish), I(js-after-publish), I(js-after-presence).'
-      - Each entry for existing handlers should contain C(name) (so target handler can be identified). Rest parameters \
-        (C(src), C(channels) and C(event)) can be added if changes required for them.
-      - It is possible to rename event handler by adding C(changes) key to event handler payload and pass dictionary, \
-        which will contain single key C(name), where new name should be passed.
+      - "Each entry for new event handler should contain: C(name), C(src), C(channels), C(event). C(name) used as event handler name which can be used later to make changes to it."
+      - C(src) is full path to file with event handler code.
+      - C(channels) is name of channel from which event handler is waiting for events.
+      - "C(event) is type of event which is able to trigger event handler: I(js-before-publish), I(js-after-publish), I(js-after-presence)."
+      - Each entry for existing handlers should contain C(name) (so target handler can be identified). Rest parameters (C(src), C(channels) and C(event)) can be added if changes required for them.
+      - It is possible to rename event handler by adding C(changes) key to event handler payload and pass dictionary, which will contain single key C(name), where new name should be passed.
       - To remove particular event handler it is possible to set C(state) for it to C(absent) and it will be removed.
     required: false
     default: []
@@ -99,8 +95,7 @@ options:
     default: {}
   validate_certs:
     description:
-      - This key allow to try skip certificates check when performing REST API calls. Sometimes host may have issues \
-        with certificates on it and this will cause problems to call PubNub REST API.
+      - This key allow to try skip certificates check when performing REST API calls. Sometimes host may have issues with certificates on it and this will cause problems to call PubNub REST API.
       - If check should be ignored C(False) should be passed to this parameter.
     required: false
     default: true
