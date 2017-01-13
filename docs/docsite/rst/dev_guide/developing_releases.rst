@@ -4,9 +4,19 @@ Releases
 .. contents:: Topics
    :local:
 
+.. _support_life:
+
+Support for older releases
+``````````````````````````
+
+Ansible supports the two most recent major, stable releases. Security- and bug-related fixes may be implemented in older versions, but this
+support is not guaranteed.
+
+If you are on a release older than the last two major, stable releases, please see our `Porting Guide <http://docs.ansible.com/ansible/porting_guide_2.0.html>`_.
+
 .. _schedule:
 
-Release Schedule
+Release schedule
 ````````````````
 Ansible is on a 'flexible' 4 month release schedule, sometimes this can be extended if there is a major change that requires a longer cycle (i.e. 2.0 core rewrite).
 Currently modules get released at the same time as the main Ansible repo, even though they are separated into ansible-modules-core and ansible-modules-extras.
