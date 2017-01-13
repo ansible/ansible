@@ -401,7 +401,7 @@ def main():
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
-        if not isinstance(body, basestring):
+        if not isinstance(body, six.string_types):
             body = json.dumps(body)
         lower_header_keys = [key.lower() for key in dict_headers]
         if 'content-type' not in lower_header_keys:
