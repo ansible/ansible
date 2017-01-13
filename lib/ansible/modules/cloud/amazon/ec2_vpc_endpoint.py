@@ -14,6 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import json
+import time
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3
+
+
 DOCUMENTATION = '''
 module: ec2_vpc_endpoint
 short_description: Create and delete AWS VPC Endpoints.
@@ -21,7 +30,7 @@ description:
   - Creates AWS VPC endpoints.
   - Deletes AWS VPC endpoints.
   - This module support check mode.
-version_added: "2.2"
+version_added: "2.3"
 requirements: [ boto3 ]
 options:
   vpc_id:
@@ -134,15 +143,9 @@ result:
 '''
 
 try:
-    import json
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
-import time
-import datetime
+    pass  # will be picked up by imported HAS_BOTO3
 
 
 def date_handler(obj):
@@ -290,16 +293,17 @@ def setup_removal(client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        vpc_id=dict(),
-        service=dict(),
-        policy=dict(),
-        state=dict(default='present', choices=['present', 'absent']),
-        wait=dict(type='bool', default=False),
-        wait_timeout=dict(type='int', default=320, required=False),
-        route_table_ids=dict(type='list'),
-        vpc_endpoint_id=dict(),
-        client_token=dict(),
+    argument_spec.update(
+        dict(
+            vpc_id=dict(),
+            service=dict(),
+            policy=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(type='int', default=320, required=False),
+            route_table_ids=dict(type='list'),
+            vpc_endpoint_id=dict(),
+            client_token=dict(),
         )
     )
     module = AnsibleModule(
@@ -309,9 +313,9 @@ def main():
 
     # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required for removal')
+        module.fail_json(msg='botocore and boto3 are required for removal')
 
-    state = module.params.get('state').lower()
+    state = module.params.get('state')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -322,15 +326,15 @@ def main():
             if not module.params['region']:
                 module.fail_json(msg="Error - no region provided")
         else:
-            module.fail_json(msg="Can't retrieve connection information - "+str(e))
+            module.fail_json(msg="Can't retrieve connection information - " + str(e))
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
-    #Ensure resource is present
+    # Ensure resource is present
     if state == 'present':
         (changed, results) = setup_creation(ec2, module)
     else:
@@ -338,10 +342,6 @@ def main():
 
     module.exit_json(changed=changed, result=results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
