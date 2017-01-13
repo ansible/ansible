@@ -6,7 +6,6 @@ CPUS ?= 1
 all: clean docs
 
 docs: clean directives modules htmldocs
-	make -f Makefile.sphinx html
 	-(cp *.ico htmlout/)
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
@@ -16,12 +15,13 @@ variables:
 	dot variables.dot -Tpng -o htmlout/variables.png
 
 htmldocs: directives modules staticmin
-	$(MAKE) -f Makefile.sphinx html
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: htmldocs
 
 clean:
 	-rm -rf htmlout
+	-rm -rf _build
 	-rm -f .buildinfo
 	-rm -f *.inv
 	-rm -rf *.doctrees
