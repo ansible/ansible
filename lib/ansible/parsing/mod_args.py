@@ -73,7 +73,7 @@ class ModuleArgsParser:
           src: a
           dest: b
 
-    # extra gross, but also legal. in this case, the args specified
+    # Standard YAML form for command-type modules. In this case, the args specified
     # will act as 'defaults' and will be overridden by any args specified
     # in one of the other formats (complex args under the action, or
     # parsed from the k=v string
@@ -181,21 +181,21 @@ class ModuleArgsParser:
     def _normalize_new_style_args(self, thing, action):
         '''
         deals with fuzziness in new style module invocations
-        accepting key=value pairs and dictionaries, and always returning dictionaries
-        returns tuple of (module_name, dictionary_args)
+        accepting key=value pairs and dictionaries, and returns
+        a dictionary of arguments
 
         possible example inputs:
             'echo hi', 'shell'
             {'region': 'xyz'}, 'ec2'
         standardized outputs like:
-            ( 'command', { _raw_params: 'echo hi', _uses_shell: True }
+            { _raw_params: 'echo hi', _uses_shell: True }
         '''
 
         if isinstance(thing, dict):
-            # form is like: local_action: { module: 'xyz', x: 2, y: 3 } ... uncommon!
+            # form is like: { xyz: { x: 2, y: 3 } }
             args = thing
         elif isinstance(thing, string_types):
-            # form is like: local_action: copy src=a dest=b ... pretty common
+            # form is like: copy: src=a dest=b
             check_raw = action in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
@@ -223,7 +223,7 @@ class ModuleArgsParser:
 
         actions_allowing_raw = ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         if isinstance(thing, dict):
-            # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
+            # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
@@ -233,7 +233,7 @@ class ModuleArgsParser:
                 del args['module']
 
         elif isinstance(thing, string_types):
-            # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
+            # form is like:  action: copy src=a dest=b
             (action, args) = self._split_module_string(thing)
             check_raw = action in actions_allowing_raw
             args = parse_kv(args, check_raw=check_raw)
@@ -258,7 +258,7 @@ class ModuleArgsParser:
         args        = dict()
 
 
-        # this is the 'extra gross' scenario detailed above, so we grab
+        # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
         additional_args = self._task_ds.get('args', dict())
