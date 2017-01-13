@@ -21,20 +21,6 @@
 #   - Bert Diwa      <Lamberto.Diwa@dimensiondata.com>
 #   - Adam Friedman  <tintoy@tintoy.io>
 #
-from ansible.module_utils.basic import *
-from ansible.module_utils.dimensiondata import *
-from ansible.module_utils.pycompat24 import get_exception
-try:
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
-    from libcloud.compute.base import NodeLocation
-    import libcloud.security
-    HAS_LIBCLOUD = True
-except:
-    HAS_LIBCLOUD = False
-
-# Get regions early to use in docs etc.
-dd_regions = get_dd_regions()
 
 DOCUMENTATION = '''
 ---
@@ -48,11 +34,10 @@ options:
   region:
     description:
       - The target region.
-    choices:
-      - Regions choices are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - Regions choices are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
-      - Note that the region values are available as list from dd_regions().
-      - Note that the default value "na" stands for "North America".  The code prepends 'dd-' to the region choice.
+      - Valid regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
+      - Regions are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
+      - Note that the default value "na" stands for "North America".
+      - The module prepends 'dd-' to the region.
     default: na
   mcp_user:
     description:
@@ -169,6 +154,19 @@ network:
 '''
 
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.dimensiondata import get_credentials, DimensionDataAPIException, LibcloudNotFound
+from ansible.module_utils.pycompat24 import get_exception
+try:
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
+    from libcloud.compute.base import NodeLocation
+    import libcloud.security
+    HAS_LIBCLOUD = True
+except ImportError:
+    HAS_LIBCLOUD = False
+
+
 def network_obj_to_dict(network, version):
     network_dict = dict(id=network.id, name=network.name,
                         description=network.description)
@@ -218,10 +216,12 @@ def create_network(module, driver, mcp_version, location,
         e = get_exception()
 
         module.fail_json(msg="Failed to create new network: %s" % str(e))
+
     if module.params['wait'] is True:
         wait_for_network_state(module, driver, res.id, 'NORMAL')
     msg = "Created network %s in %s" % (name, location)
     network = network_obj_to_dict(res, mcp_version)
+
     module.exit_json(changed=True, msg=msg, network=network)
 
 
@@ -235,6 +235,7 @@ def delete_network(module, driver, matched_network, mcp_version):
             module.exit_json(changed=True,
                              msg="Deleted network with id %s" %
                              matched_network[0].id)
+
         module.fail_json("Unexpected failure deleting network with " +
                          "id %s", matched_network[0].id)
     except DimensionDataAPIException:
@@ -254,13 +255,13 @@ def wait_for_network_state(module, driver, net_id, state_to_wait_for):
         e = get_exception()
 
         module.fail_json(msg='Network did not reach % state in time: %s'
-                         % (state, e.msg))
+                         % (state_to_wait_for, e.msg))
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            region=dict(default='na', choices=dd_regions),
+            region=dict(default='na'),
             mcp_user=dict(required=False, type='str'),
             mcp_password=dict(required=False, type='str'),
             location=dict(required=True, type='str'),
@@ -277,7 +278,7 @@ def main():
     )
 
     try:
-        credentials = get_configured_credentials(module) or get_credentials()
+        credentials = get_credentials(module)
     except LibcloudNotFound:
         module.fail_json(msg='libcloud is required for this module.')
 
@@ -307,7 +308,7 @@ def main():
         networks = driver.list_networks(location=location)
     else:
         networks = driver.ex_list_network_domains(location=location)
-    matched_network = filter(lambda x: x.name == name, networks)
+    matched_network = [network for network in networks if network.name == name]
 
     # Ensure network state
     if state == 'present':
@@ -327,8 +328,8 @@ def main():
         else:
             module.exit_json(changed=False, msg="Network does not exist")
     else:
-        fail_json(msg="Requested state was " +
-                  "'%s'. State must be 'absent' or 'present'" % state)
+        module.fail_json(msg="Requested state was " +
+                             "'%s'. State must be 'absent' or 'present'" % state)
 
 if __name__ == '__main__':
     main()
