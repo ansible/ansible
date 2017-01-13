@@ -13,18 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+
+
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_igw_facts
 short_description: Gather facts about internet gateways in AWS
 description:
     - Gather facts about internet gateways in AWS
-version_added: "2.2"
+version_added: "2.3"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: null
   InternetGatewayIds:
@@ -59,7 +66,7 @@ EXAMPLES = '''
   ec2_vpc_igw_facts:
     region: ap-southeast-2
     profile: production
-    InternetGatewayIds: igw-c123f6a7 
+    InternetGatewayIds: igw-c123f6a7
   register: igw_facts
 '''
 
@@ -75,11 +82,9 @@ changed:
     returned: always
 '''
 
-import json
-
-try:    
+try:
     import botocore
-    import boto3   
+    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -88,19 +93,17 @@ except ImportError:
 def get_internet_gateway_info(internet_gateway):
     internet_gateway_info = {'InternetGatewayId': internet_gateway['InternetGatewayId'],
                              'Attachments': internet_gateway['Attachments'],
-                             'Tags': internet_gateway['Tags']
-               }
+                             'Tags': internet_gateway['Tags'] }
     return internet_gateway_info
 
 
 def list_internet_gateways(client, module):
-    dryrun = module.params.get("DryRun")
     all_internet_gateways_array = []
     params = dict()
 
     if module.params.get('filters'):
         params['Filters'] = []
-        for key, value in module.params.get('filters').iteritems():
+        for key, value in module.params.get('filters').items():
             temp_dict = dict()
             temp_dict['Name'] = key
             if isinstance(value, basestring):
@@ -109,8 +112,9 @@ def list_internet_gateways(client, module):
                 temp_dict['Values'] = value
             params['Filters'].append(temp_dict)
 
-    if module.params.get("DryRun"):
-        params['DryRun'] = module.params.get("DryRun")
+    dryrun = module.params.get("DryRun")
+    if dryrun:
+        params['DryRun'] = dryrun
 
     if module.params.get("InternetGatewayIds"):
         params['InternetGatewayIds'] = module.params.get("InternetGatewayIds")
@@ -123,11 +127,11 @@ def list_internet_gateways(client, module):
     for internet_gateway in all_internet_gateways['InternetGateways']:
         all_internet_gateways_array.append(get_internet_gateway_info(internet_gateway))
 
-    #Turn the boto3 result in to ansible_friendly_snaked_names
+    # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_internet_gateways_array = []
     for igw in all_internet_gateways_array:
         snaked_internet_gateways_array.append(camel_dict_to_snake_dict(igw))
-    
+
     module.exit_json(internet_gateways=snaked_internet_gateways_array)
 
 
@@ -143,24 +147,21 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-     # Validate Requirements
+    # Validate Requirements
     if not HAS_BOTO3:
         module.fail_json(msg='json and botocore/boto3 is required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json(msg="Can't authorize connection - " + str(e))
 
     # call your function here
     results = list_internet_gateways(connection, module)
-    
+
     module.exit_json(result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
