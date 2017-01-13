@@ -44,8 +44,12 @@ options:
         required: true
         choices: [ present, absent, stopped, restarted ]
         description:
-          - States for the VM to be in. Please note that C(present) means that the VM is created
-            and in a running state. And that C(absent) will shutdown the zone before removing it.
+          - States for the VM to be in. Please note that C(present), C(stopped) and C(restarted)
+            operate on a VM that is currently provisioned. C(present) means that the VM will be
+            created if it was absent, and that it will be in a running state. C(absent) will
+            shutdown the zone before removing it.
+            C(stopped) means the zone will be created if it doesn't exist already, before shutting
+            it down.
     alias:
         required: false
         description:
