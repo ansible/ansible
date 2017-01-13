@@ -411,8 +411,12 @@ def main():
 
     # Grab all the http headers. Need this hack since passing multi-values is
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
+    warnings = set()
     for key, value in six.iteritems(module.params):
         if key.startswith("HEADER_"):
+            warnings.add('Supplying headers via HEADER_* is deprecated and '
+                         'will be removed in a future version. Please use '
+                         '`headers` to supply headers for the request')
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
 
@@ -460,6 +464,9 @@ def main():
     for key, value in six.iteritems(resp):
         ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
+
+    if warnings:
+        uresp['warnings'] = list(warnings)
 
     try:
         uresp['location'] = absolute_location(url, uresp['location'])

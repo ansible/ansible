@@ -180,7 +180,8 @@
     url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
     user: user
     password: passwd
-    HEADER_Cookie: "fake=fake_value"
+    headers:
+      Cookie: "fake=fake_value"
 
 - name: test PUT
   uri:
@@ -293,3 +294,11 @@
     return_content: true
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Test using HEADER_ generates a warning
+  uri:
+    url: "https://{{ httpbin_host }}/get"
+    HEADER_Foo: bar
+    return_content: true
+  register: result
+  failed_when: '"HEADER_*" not in result.warnings|default([""])|join("")'
