@@ -28,7 +28,10 @@ module: user
 author: "Stephen Fromm (@sfromm)"
 version_added: "0.2"
 short_description: Manage user accounts
-requirements: [ useradd, userdel, usermod ]
+notes:
+  - There are specific requirements per platform on user management utilities. However
+    they generally come pre-installed with the system and Ansible will require they
+    are present at runtime. If they are not, a descriptive error message will be shown.
 description:
     - Manage user accounts and user attributes.
 options:
