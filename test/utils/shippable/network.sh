@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+pip install tox --disable-pip-version-check
+
 ansible-test network-integration --explain 2>&1 | { grep ' network-integration: .* (targeted)$' || true; } > /tmp/network.txt
 
 target="network/ci/"
@@ -12,13 +14,13 @@ if [ -s /tmp/network.txt ]; then
 
     echo "Running network integration tests for multiple platforms concurrently."
 
-    ansible-test network-integration --color -v --retry-on-error "${target}" --requirements \
+    ansible-test network-integration --color -v --retry-on-error "${target}" --tox --python 2.7 \
         --platform vyos/1.1.0 \
 
 else
     echo "No changes requiring integration tests specific to networking were detected."
     echo "Running network integration tests for a single platform only."
 
-    ansible-test network-integration --color -v --retry-on-error "${target}" --requirements \
+    ansible-test network-integration --color -v --retry-on-error "${target}" --tox --python 2.7 \
         --platform vyos/1.1.0
 fi
