@@ -1,7 +1,5 @@
 #!/usr/bin/python
 #
-# Copyright 2016 Red Hat | Ansible
-#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -29,9 +27,9 @@ short_description: run command in a docker containers
 
 description:
   - Run commands in docker containers.
-  - Does not supports check mode
+  - Does not support check mode
 
-version_added: "2.3.0"
+version_added: "2.3"
 
 options:
   command:
