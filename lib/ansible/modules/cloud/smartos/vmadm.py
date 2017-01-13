@@ -32,7 +32,7 @@ description:
 version_added: "2.3"
 author: Jasper Lievisse Adriaanse (@jasperla)
 options:
-    debug:
+    save_payload:
         required: false
         description:
           - Don't delete the JSON payload used to generated a VM.
@@ -240,6 +240,7 @@ from ansible.module_utils.basic import AnsibleModule
 import os
 import re
 import tempfile
+import time
 try:
     import json
 except ImportError:
@@ -249,12 +250,12 @@ except ImportError:
 # generated JSON does not play well with the JSON parsers of Python.
 # The returned message contains '\n' as part of the stacktrace,
 # which breaks the parsers.
-
+VMADM = '/usr/sbin/vmadm'
 
 def get_vm_prop(module, uuid, prop):
     """Lookup a property for the given VM.
     Returns the property, or None if not found."""
-    cmd = 'vmadm lookup -j -o {0} uuid={1}'.format(prop, uuid)
+    cmd = '{0} lookup -j -o {1} uuid={2}'.format(VMADM, prop, uuid)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -271,7 +272,7 @@ def get_vm_prop(module, uuid, prop):
 def get_vm_uuid(module, alias):
     """Lookup the uuid that goes with the given alias.
     Returns the uuid or '' if not found."""
-    cmd = 'vmadm lookup -j -o uuid alias={0}'.format(alias)
+    cmd = '{0} lookup -j -o uuid alias={1}'.format(VMADM, alias)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -286,7 +287,7 @@ def get_vm_uuid(module, alias):
 
 def get_all_vm_uuids(module):
     """Retrieve the UUIDs for all VMs"""
-    cmd = 'vmadm lookup -j -o uuid'
+    cmd = '{0} lookup -j -o uuid'.format(VMADM)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -325,7 +326,7 @@ def new_vm(module, uuid, vm_state):
             if not ret:
                 module.fail_json(msg='Could not set VM {0} to state {1}'.format(vm_uuid, vm_state))
 
-    if not module.params['debug']:
+    if not module.params['save_payload']:
         try:
             os.unlink(payload_file)
         except Exception as e:
@@ -339,7 +340,7 @@ def new_vm(module, uuid, vm_state):
 
 def vmadm_create_vm(module, payload_file):
     """Create a new VM using the provided payload."""
-    cmd = 'vmadm create -f {0}'.format(payload_file)
+    cmd = '{0} create -f {1}'.format(VMADM, payload_file)
 
     return module.run_command(cmd)
 
@@ -400,6 +401,9 @@ def create_payload(module, uuid):
     # Create the temporary file that contains our payload, and set tight
     # permissions for it may container sensitive information.
     try:
+        # XXX: When there's a way to get the current ansible temporary directory
+        # drop the mkstemp call and rely on ANSIBLE_KEEP_REMOTE_FILES to retain
+        # the payload (thus removing the `save_payload` option).
         fname = tempfile.mkstemp(uuid)[1]
         fh = open(fname, 'w')
         os.chmod(fname, 0o400)
