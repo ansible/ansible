@@ -99,13 +99,15 @@ case "${test_platform}" in
         inventory_template="${source_root}/test/integration/inventory.winrm.template"
         inventory_file="${source_root}/test/integration/inventory.winrm"
         ping_module="win_ping"
+        ping_args=""
         ping_host="windows"
         test_function="test_windows"
         ;;
     *)
         inventory_template="${source_root}/test/integration/inventory.remote.template"
         inventory_file="${source_root}/test/integration/inventory.remote"
-        ping_module="ping"
+        ping_module="raw"
+        ping_args="id"
         ping_host="remote"
         test_function="test_remote"
         ;;
@@ -124,7 +126,7 @@ for i in $(seq 1 ${n}); do
         ANSIBLE_SSH_ARGS='' \
         ANSIBLE_HOST_KEY_CHECKING=False \
         ANSIBLE_FORCE_COLOR="${force_color}" \
-        ansible -m "${ping_module}" -i "${inventory_file}" "${ping_host}"; then
+        ansible -m "${ping_module}" -a "${ping_args}" -i "${inventory_file}" "${ping_host}"; then
         break
     fi
     sleep 5
