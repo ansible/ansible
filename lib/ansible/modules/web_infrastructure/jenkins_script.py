@@ -148,10 +148,19 @@ def main():
     else:
         script_contents = module.params['script']
 
+    headers = None
+    resp, info = fetch_url(module, module.params['url'] + "/crumbIssuer/api/json")
+
+    if info['status'] == 200:
+        crumb_info = module.from_json(resp.read())
+        headers = {crumb_info['crumbRequestField']: crumb_info['crumb']}
+    elif info['status'] != 404:
+        module.fail_json(msg="HTTP error " + str(info['status']) + " " + info['msg'])
 
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
+                           headers=headers,
                            method="POST")
 
     if info["status"] != 200:
