@@ -336,7 +336,7 @@ class Facts(object):
             proc_1 = to_native(proc_1)
             proc_1 = proc_1.strip()
 
-        if proc_1 == 'init' or proc_1.endswith('sh'):
+        if proc_1 is not None and (proc_1 == 'init' or proc_1.endswith('sh')):
             # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
             proc_1 = None
 
