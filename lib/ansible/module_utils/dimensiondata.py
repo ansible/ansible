@@ -64,7 +64,7 @@ def check_libcloud_or_fail():
 def get_credentials(module):
     """
     Get user_id and key from module configuration, environment, or dotfile.
-    Order of priority is environment, dotfile, module.
+    Order of priority is module, environment, dotfile.
 
     To set in environment:
 
@@ -84,11 +84,28 @@ def get_credentials(module):
 
         return None
 
-    # First try the environment.
-    user_id = os.environ.get('MCP_USER', None)
-    key = os.environ.get('MCP_PASSWORD', None)
+    user_id = None
+    key = None
 
-    # Environment failed, try '~/.dimensiondata'.
+    # First, try the module configuration
+    if 'mcp_user' in module.params:
+        if 'mcp_password' not in module.params:
+            module.fail_json(
+                '"mcp_user" parameter was specified, but not "mcp_password" ' +
+                '(either both must be specified, or neither).'
+            )
+
+            return None
+
+        user_id = module.params['mcp_user']
+        key = module.params['mcp_password']
+
+    # Fall back to environment
+    if not user_id or not key:
+        user_id = os.environ.get('MCP_USER', None)
+        key = os.environ.get('MCP_PASSWORD', None)
+
+    # Finally, try dotfile (~/.dimensiondata)
     if not user_id or not key:
         home = expanduser('~')
         config = ConfigParser.RawConfigParser()
@@ -99,19 +116,6 @@ def get_credentials(module):
             key = config.get("dimensiondatacloud", "MCP_PASSWORD")
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             pass
-
-    if 'mcp_user' in module.params:
-        if 'mcp_password' not in module.params:
-            module.fail_json(
-                '"mcp_user" parameter was specified, but not "mcp_password" ' +
-                '(either both must be specified, or neither).'
-            )
-
-            return None
-
-        # Finally, fall back to module configuration.
-        user_id = user_id or module.params['mcp_user']
-        key = key or module.params['mcp_password']
 
     # One or more credentials not found. Function can't recover from this
     # so it has to raise an error instead of fail silently.
