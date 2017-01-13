@@ -19,18 +19,18 @@
 
 $ErrorActionPreference = "Stop"
 $params = Parse-Args $args
-$State = Get-AnsibleParam -obj $params -name "state" -failifempty $true
+$result = New-Object PSObject;
+Set-Attr $result "changed" $false;
+$State = Get-AnsibleParam -obj $params -name "state" -default "present" -ValidateSet "present","absent" -resultobj $result -failifempty $true
 $TargetFile = Get-AnsibleParam -obj $params -name "src" -failifempty $true
 $ShortcutFile = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
-$Arguments = Get-AnsibleParam -obj $params -name "arguments" -failempty $true
-$Directory =  Get-AnsibleParam -obj $params -name "directory" -failempty $true
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -failifempty $true
-$Description = Get-AnsibleParam -obj $params -name "desc" -failifempty $true
-$IconLocation = Get-AnsibleParam -obj $params -name "icon" -failifempty $true
+$Arguments = Get-AnsibleParam -obj $params -name "arguments" -default $null
+$Directory =  Get-AnsibleParam -obj $params -name "directory" -default $null
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -default $null
+$Description = Get-AnsibleParam -obj $params -name "desc" -default $null
+$IconLocation = Get-AnsibleParam -obj $params -name "icon" -default $null
 $windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -default $null
-$result = New-Object psobject @{
-    changed = $FALSE
-}
+#Expands variable
 $src = [System.Environment]::ExpandEnvironmentVariables($TargetFile)
 $dest = [System.Environment]::ExpandEnvironmentVariables($ShortcutFile)
 $arguments = [System.Environment]::ExpandEnvironmentVariables($Arguments)
@@ -51,7 +51,7 @@ try
      Fail-Json (New-Object psobject) "missing required argument: Provide valid shortcut path to remove"
     }
   }
- elseif($State -eq "present")
+ else
  {
  if(!(Test-Path $src))
  {
@@ -82,10 +82,6 @@ try
   $Shortcut.Save()
   $result.changed = $TRUE
  }
- }
-else
- {
-  Fail-Json (New-Object psobject) "missing required argument: Provide state either :present or absent"
  }
 }
 catch
