@@ -42,10 +42,10 @@ options:
           - Force a particular action (i.e. stop or delete a VM).
     state:
         required: true
-        choices: [ present, absent, created, deleted, running, stopped, rebooted ]
+        choices: [ present, absent, stopped, restarted ]
         description:
-          - States for the VM to be in. There are various aliases defined,
-            C(present) for C(running), C(absent) for C(deleted) and C(created) for C(stopped).
+          - States for the VM to be in. Please note that C(present) means that the VM is created
+            and in a running state. And that C(absent) will shutdown the zone before removing it.
     alias:
         required: false
         description:
@@ -487,7 +487,7 @@ def main():
         state=dict(
             default='running',
             type='str',
-            choices=['present', 'absent', 'created', 'deleted', 'running', 'stopped', 'rebooted']
+            choices=['present', 'running', 'absent', 'deleted', 'stopped', 'created', 'restarted', 'rebooted']
         ),
         alias=dict(
             default=None, type='str',
@@ -519,11 +519,11 @@ def main():
     # Translate the state paramter into something we can use later on.
     if state in ['present', 'running']:
         vm_state = 'running'
-    elif state in ['created', 'stopped']:
+    elif state in ['stopped', 'created']:
         vm_state = 'stopped'
     elif state in ['absent', 'deleted']:
         vm_state = 'deleted'
-    elif state == 'rebooted':
+    elif state in ['restarted', 'rebooted']:
         vm_state = 'rebooted'
 
     result = {'state': state}
