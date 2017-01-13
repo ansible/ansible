@@ -98,17 +98,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -149,18 +144,10 @@ class NetAppCDOTAggregate(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password)
 
     def get_aggr(self):
         """
@@ -172,18 +159,18 @@ class NetAppCDOTAggregate(object):
         :rtype: bool
         """
 
-        aggr_get_iter = zapi.NaElement('aggr-get-iter')
-        query_details = zapi.NaElement.create_node_with_children(
+        aggr_get_iter = netapp_utils.zapi.NaElement('aggr-get-iter')
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'aggr-attributes', **{'aggregate-name': self.name})
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         aggr_get_iter.add_child_elem(query)
 
         try:
             result = self.server.invoke_successfully(aggr_get_iter,
                                                      enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             # Error 13040 denotes an aggregate not being found.
             e = get_exception()
             if str(e.code) == "13040":
@@ -200,14 +187,14 @@ class NetAppCDOTAggregate(object):
     def create_aggr(self):
         logger.debug('Creating aggregate %s', self.name)
 
-        aggr_create = zapi.NaElement.create_node_with_children(
+        aggr_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'aggr-create', **{'aggregate': self.name,
                               'disk-count': str(self.disk_count)})
 
         try:
             self.server.invoke_successfully(aggr_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error provisioning aggregate %s. Error code: '
                              '%s', self.name, str(e.code))
@@ -216,19 +203,19 @@ class NetAppCDOTAggregate(object):
     def delete_aggr(self):
         logger.debug('Removing aggregate %s', self.name)
 
-        aggr_destroy = zapi.NaElement.create_node_with_children(
+        aggr_destroy = netapp_utils.zapi.NaElement.create_node_with_children(
             'aggr-destroy', **{'aggregate': self.name})
 
         try:
             self.server.invoke_successfully(aggr_destroy,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error removing aggregate %s', self.name)
             raise
 
     def rename_aggregate(self):
-        aggr_rename = zapi.NaElement.create_node_with_children(
+        aggr_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'aggr-rename', **{'aggregate': self.name,
                               'new-aggregate-name':
                                   self.new_name})
@@ -236,7 +223,7 @@ class NetAppCDOTAggregate(object):
         try:
             self.server.invoke_successfully(aggr_rename,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception(
                 'Error renaming aggregate %s. Error code: '

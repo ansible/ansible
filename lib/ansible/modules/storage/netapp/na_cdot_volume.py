@@ -147,17 +147,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -225,18 +220,10 @@ class NetAppCDOTVolume(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password, vserver=self.vserver)
 
     def get_volume(self):
         """
@@ -247,13 +234,13 @@ class NetAppCDOTVolume(object):
         :return: Details about the volume. None if not found.
         :rtype: dict
         """
-        volume_info = zapi.NaElement('volume-get-iter')
-        volume_attributes = zapi.NaElement('volume-attributes')
-        volume_id_attributes = zapi.NaElement('volume-id-attributes')
+        volume_info = netapp_utils.zapi.NaElement('volume-get-iter')
+        volume_attributes = netapp_utils.zapi.NaElement('volume-attributes')
+        volume_id_attributes = netapp_utils.zapi.NaElement('volume-id-attributes')
         volume_id_attributes.add_new_child('name', self.name)
         volume_attributes.add_child_elem(volume_id_attributes)
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(volume_attributes)
 
         volume_info.add_child_elem(query)
@@ -296,7 +283,7 @@ class NetAppCDOTVolume(object):
     def create_volume(self):
         logger.debug('Creating volume %s of size %s', self.name, self.size)
 
-        volume_create = zapi.NaElement.create_node_with_children(
+        volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **{'volume': self.name,
                                 'containing-aggr-name': self.aggregate_name,
                                 'size': str(self.size)})
@@ -304,7 +291,7 @@ class NetAppCDOTVolume(object):
         try:
             self.server.invoke_successfully(volume_create,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error provisioning volume %s of size %s',
                              self.name, self.size)
             raise
@@ -313,17 +300,17 @@ class NetAppCDOTVolume(object):
         logger.debug('Deleting volume %s', self.name)
 
         if self.is_infinite:
-            volume_delete = zapi.NaElement.create_node_with_children(
+            volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy-async', **{'volume-name': self.name})
         else:
-            volume_delete = zapi.NaElement.create_node_with_children(
+            volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy', **{'name': self.name, 'unmount-and-offline':
                     'true'})
 
         try:
             self.server.invoke_successfully(volume_delete,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error deleting volume %s', self.name)
             raise
 
@@ -337,18 +324,18 @@ class NetAppCDOTVolume(object):
         logger.debug('Renaming volume %s', self.name)
 
         if self.is_infinite:
-            volume_rename = zapi.NaElement.create_node_with_children(
+            volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename-async',
                 **{'volume-name': self.name, 'new-volume-name': str(
                     self.new_name)})
         else:
-            volume_rename = zapi.NaElement.create_node_with_children(
+            volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename', **{'volume': self.name, 'new-volume-name': str(
                     self.new_name)})
         try:
             self.server.invoke_successfully(volume_rename,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error renaming volume %s', self.name)
             raise
 
@@ -362,18 +349,18 @@ class NetAppCDOTVolume(object):
         logger.debug('Re-sizing volume %s', self.name)
 
         if self.is_infinite:
-            volume_resize = zapi.NaElement.create_node_with_children(
+            volume_resize = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-size-async',
                 **{'volume-name': self.name, 'new-size': str(
                     self.size)})
         else:
-            volume_resize = zapi.NaElement.create_node_with_children(
+            volume_resize = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-size', **{'volume': self.name, 'new-size': str(
                     self.size)})
         try:
             self.server.invoke_successfully(volume_resize,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error re-sizing volume %s', self.name)
             raise
 
@@ -390,28 +377,28 @@ class NetAppCDOTVolume(object):
             # Requested state is 'online'.
             state_requested = "online"
             if self.is_infinite:
-                volume_change_state = zapi.NaElement.create_node_with_children(
+                volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
                     'volume-online-async',
                     **{'volume-name': self.name})
             else:
-                volume_change_state = zapi.NaElement.create_node_with_children(
+                volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
                     'volume-online',
                     **{'name': self.name})
         else:
             # Requested state is 'offline'.
             state_requested = "offline"
             if self.is_infinite:
-                volume_change_state = zapi.NaElement.create_node_with_children(
+                volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
                     'volume-offline-async',
                     **{'volume-name': self.name})
             else:
-                volume_change_state = zapi.NaElement.create_node_with_children(
+                volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
                     'volume-offline',
                     **{'name': self.name})
         try:
             self.server.invoke_successfully(volume_change_state,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error changing the state of volume %s to %s',
                              self.name, state_requested)
             raise

@@ -115,17 +115,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -167,18 +162,10 @@ class NetAppCDOTQTree(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password, vserver=self.vserver)
 
     def get_qtree(self):
         """
@@ -190,13 +177,13 @@ class NetAppCDOTQTree(object):
         :rtype: bool
         """
 
-        qtree_list_iter = zapi.NaElement('qtree-list-iter')
-        query_details = zapi.NaElement.create_node_with_children(
+        qtree_list_iter = netapp_utils.zapi.NaElement('qtree-list-iter')
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-info', **{'vserver': self.vserver,
                              'volume':self.flexvol_name,
                              'qtree': self.name})
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         qtree_list_iter.add_child_elem(query)
 
@@ -212,14 +199,14 @@ class NetAppCDOTQTree(object):
     def create_qtree(self):
         logger.debug('Creating qtree %s', self.name)
 
-        qtree_create = zapi.NaElement.create_node_with_children(
+        qtree_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-create', **{'volume': self.flexvol_name,
                                'qtree': self.name})
 
         try:
             self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error provisioning qtree %s. Error code: %s',
                              self.name, str(e))
@@ -228,13 +215,13 @@ class NetAppCDOTQTree(object):
     def delete_qtree(self):
         logger.debug('Deleting qtree %s', self.name)
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        qtree_delete = zapi.NaElement.create_node_with_children(
+        qtree_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-delete', **{'qtree': path})
 
         try:
             self.server.invoke_successfully(qtree_delete,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error deleting qtree %s', path)
             raise
 
@@ -242,14 +229,14 @@ class NetAppCDOTQTree(object):
         logger.debug('Renaming qtree %s', self.name)
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         new_path = '/vol/%s/%s' % (self.flexvol_name, self.new_name)
-        qtree_rename = zapi.NaElement.create_node_with_children(
+        qtree_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-rename', **{'qtree': path,
                                'new-qtree-name': new_path})
 
         try:
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error renaming qtree %s. Error code: %s',
                              self.name, str(e))

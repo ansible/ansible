@@ -133,17 +133,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -201,18 +196,10 @@ class NetAppCDOTUser(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password)
 
     def get_user(self):
         """
@@ -224,22 +211,22 @@ class NetAppCDOTUser(object):
         :rtype: bool
         """
 
-        security_login_get_iter = zapi.NaElement('security-login-get-iter')
-        query_details = zapi.NaElement.create_node_with_children(
+        security_login_get_iter = netapp_utils.zapi.NaElement('security-login-get-iter')
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-account-info', **{'vserver': self.vserver,
                                               'user-name':self.name,
                                               'application': self.application,
                                               'authentication-method':
                                                   self.authentication_method})
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         security_login_get_iter.add_child_elem(query)
 
         try:
             result = self.server.invoke_successfully(security_login_get_iter,
                                                      enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             # Error 16034 denotes a user not being found.
             if str(e.code) == "16034":
@@ -256,7 +243,7 @@ class NetAppCDOTUser(object):
     def create_user(self):
         logger.debug('Creating user %s', self.name)
 
-        user_create = zapi.NaElement.create_node_with_children(
+        user_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-create', **{'vserver': self.vserver,
                                         'user-name': self.name,
                                         'application': self.application,
@@ -269,7 +256,7 @@ class NetAppCDOTUser(object):
         try:
             self.server.invoke_successfully(user_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error creating user %s. Error code: '
                              '%s', self.name, str(e))
@@ -278,7 +265,7 @@ class NetAppCDOTUser(object):
     def delete_user(self):
         logger.debug('Removing user %s', self.name)
 
-        user_delete = zapi.NaElement.create_node_with_children(
+        user_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-delete', **{'vserver': self.vserver,
                                         'user-name': self.name,
                                         'application': self.application,
@@ -288,7 +275,7 @@ class NetAppCDOTUser(object):
         try:
             self.server.invoke_successfully(user_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error removing user %s. Error code: %s ',
                              self.name, str(e))
@@ -304,14 +291,14 @@ class NetAppCDOTUser(object):
         :rtype: bool
         """
         self.server.set_vserver(self.vserver)
-        modify_password = zapi.NaElement.create_node_with_children(
+        modify_password = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-modify-password', **{
                 'new-password': str(self.set_password),
                 'user-name': self.name})
         try:
             self.server.invoke_successfully(modify_password,
                                             enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             if str(e.code) == '13114':
                 return False

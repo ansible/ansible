@@ -133,17 +133,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -194,18 +189,10 @@ class NetAppCDOTSVM(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password)
 
     def get_vserver(self):
         """
@@ -217,11 +204,11 @@ class NetAppCDOTSVM(object):
         :rtype: bool
         """
 
-        vserver_info = zapi.NaElement('vserver-get-iter')
-        query_details = zapi.NaElement.create_node_with_children(
+        vserver_info = netapp_utils.zapi.NaElement('vserver-get-iter')
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-info', **{'vserver-name': self.name})
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         vserver_info.add_child_elem(query)
 
@@ -245,7 +232,7 @@ class NetAppCDOTSVM(object):
                      'aggregate %s', self.name, self.root_volume,
                      self.root_volume_aggregate)
 
-        vserver_create = zapi.NaElement.create_node_with_children(
+        vserver_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-create', **{'vserver-name': self.name,
                                  'root-volume': self.root_volume,
                                  'root-volume-aggregate':
@@ -257,7 +244,7 @@ class NetAppCDOTSVM(object):
         try:
             self.server.invoke_successfully(vserver_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error provisioning vserver %s with root volume '
                              '%s on root aggregate %s', self.name,
                              self.root_volume, self.root_volume_aggregate)
@@ -268,13 +255,13 @@ class NetAppCDOTSVM(object):
                      'aggregate %s', self.name, self.root_volume,
                      self.root_volume_aggregate)
 
-        vserver_delete = zapi.NaElement.create_node_with_children(
+        vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-destroy', **{'vserver-name': self.name})
 
         try:
             self.server.invoke_successfully(vserver_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error deleting vserver %s with root volume %s '
                              'on root aggregate %s', self.name,
                              self.root_volume, self.root_volume_aggregate)
@@ -283,14 +270,14 @@ class NetAppCDOTSVM(object):
     def rename_vserver(self):
         logger.debug('Renaming svm %s', self.name)
 
-        vserver_rename = zapi.NaElement.create_node_with_children(
+        vserver_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-rename', **{'vserver-name': self.name,
                                  'new-name': self.new_name})
 
         try:
             self.server.invoke_successfully(vserver_rename,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error renaming SVM %s. Error : %s',
                              self.name, str(e))

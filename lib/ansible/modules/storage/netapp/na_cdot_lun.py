@@ -146,17 +146,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -223,18 +218,10 @@ class NetAppCDOTLUN(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password, vserver=self.vserver)
 
     def get_lun(self):
         """
@@ -247,15 +234,15 @@ class NetAppCDOTLUN(object):
         luns = []
         tag = None
         while True:
-            lun_info = zapi.NaElement('lun-get-iter')
+            lun_info = netapp_utils.zapi.NaElement('lun-get-iter')
             if tag:
                 lun_info.add_new_child('tag', tag, True)
 
-            query_details = zapi.NaElement('lun-info')
+            query_details = netapp_utils.zapi.NaElement('lun-info')
             query_details.add_new_child('vserver', self.vserver)
             query_details.add_new_child('volume', self.flexvol_name)
 
-            query = zapi.NaElement('query')
+            query = netapp_utils.zapi.NaElement('query')
             query.add_child_elem(query_details)
 
             lun_info.add_child_elem(query)
@@ -285,7 +272,7 @@ class NetAppCDOTLUN(object):
                 attached_to = None
                 lun_id = None
                 if lun.get_child_content('mapped') == 'true':
-                    lun_map_list = zapi.NaElement.create_node_with_children(
+                    lun_map_list = netapp_utils.zapi.NaElement.create_node_with_children(
                         'lun-map-list-info', **{'path': path})
 
                     result = self.server.invoke_successfully(
@@ -317,14 +304,14 @@ class NetAppCDOTLUN(object):
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         logger.debug('Creating lun %s of size %s', path, self.size)
 
-        lun_create = zapi.NaElement.create_node_with_children(
+        lun_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'lun-create-by-size', **{'path': path,
                                      'size': str(self.size),
                                      'ostype': 'linux'})
 
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error provisioning lun %s of size %s. Error '
                              'code: %s', self.name, self.size, str(e))
@@ -337,7 +324,7 @@ class NetAppCDOTLUN(object):
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         logger.debug('Deleting lun %s', path)
 
-        lun_delete = zapi.NaElement.create_node_with_children(
+        lun_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'lun-destroy', **{'path': path,
                               'force': str(self.force_remove),
                               'destroy-fenced-lun':
@@ -345,7 +332,7 @@ class NetAppCDOTLUN(object):
 
         try:
             self.server.invoke_successfully(lun_delete, enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             logger.exception('Error deleting lun %s', path)
             raise
 
@@ -358,13 +345,13 @@ class NetAppCDOTLUN(object):
         """
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
 
-        lun_resize = zapi.NaElement.create_node_with_children(
+        lun_resize = netapp_utils.zapi.NaElement.create_node_with_children(
             'lun-resize', **{'path': path,
                              'size': str(self.size),
                              'force': str(self.force_resize)})
         try:
             self.server.invoke_successfully(lun_resize, enable_tunneling=True)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             if str(e.code) == "9042":
                 # Error 9042 denotes the new LUN size being the same as the

@@ -98,17 +98,12 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-HAS_NETAPP_LIB = False
-try:
-    from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
-    HAS_NETAPP_LIB = True
-except:
-    HAS_NETAPP_LIB = False
+HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -153,18 +148,10 @@ class NetAppCDOTUserRole(object):
         self.password = p['password']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import NetApp-Lib")
+            self.module.fail_json("Unable to import the NetApp-Lib module")
         else:
-            # set up zapi
-            self.server = zapi.NaServer(self.hostname)
-            self.server.set_username(self.username)
-            self.server.set_password(self.password)
-            # Todo : Remove hardcoded values.
-            self.server.set_api_version(major=1,
-                                        minor=21)
-            self.server.set_port(80)
-            self.server.set_server_type('FILER')
-            self.server.set_transport_type('HTTP')
+            self.server = netapp_utils.setup_ontap_zapi(hostname=self.hostname, username=self.username,
+                                                        password=self.password)
 
     def get_role(self):
         """
@@ -176,22 +163,22 @@ class NetAppCDOTUserRole(object):
         :rtype: bool
         """
 
-        security_login_role_get_iter = zapi.NaElement(
+        security_login_role_get_iter = netapp_utils.zapi.NaElement(
             'security-login-role-get-iter')
-        query_details = zapi.NaElement.create_node_with_children(
+        query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-role-info', **{'vserver': self.vserver,
                                            'role-name': self.name,
                                            'command-directory-name':
                                                self.command_directory_name})
 
-        query = zapi.NaElement('query')
+        query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         security_login_role_get_iter.add_child_elem(query)
 
         try:
             result = self.server.invoke_successfully(
                 security_login_role_get_iter, enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             # Error 16031 denotes a role not being found.
             if str(e.code) == "16031":
@@ -208,7 +195,7 @@ class NetAppCDOTUserRole(object):
     def create_role(self):
         logger.debug('Creating role %s', self.name)
 
-        role_create = zapi.NaElement.create_node_with_children(
+        role_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-role-create', **{'vserver': self.vserver,
                                              'role-name': self.name,
                                              'command-directory-name':
@@ -219,7 +206,7 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_create,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error creating role %s. Error: '
                              '%s', self.name, str(e))
@@ -228,7 +215,7 @@ class NetAppCDOTUserRole(object):
     def delete_role(self):
         logger.debug('Removing role %s', self.name)
 
-        role_delete = zapi.NaElement.create_node_with_children(
+        role_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-role-delete', **{'vserver': self.vserver,
                                              'role-name': self.name,
                                              'command-directory-name':
@@ -237,7 +224,7 @@ class NetAppCDOTUserRole(object):
         try:
             self.server.invoke_successfully(role_delete,
                                             enable_tunneling=False)
-        except zapi.NaApiError:
+        except netapp_utils.zapi.NaApiError:
             e = get_exception()
             logger.exception('Error removing role %s. Error: %s ',
                              self.name, str(e))
