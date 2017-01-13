@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
-    - Copies AMI from a source region to a destination region. (Since version 2.3 this module depends on boto3)
+    - Copies AMI from a source region to a destination region. B(Since version 2.3 this module depends on boto3.)
 version_added: "2.0"
 options:
   source_region:
@@ -73,11 +73,12 @@ options:
       - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: false
     default: null
-
 author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+    - boto3
 '''
 
 EXAMPLES = '''
