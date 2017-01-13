@@ -73,9 +73,7 @@ options:
  windowstyle:
     description:
       - Influences how the application is displayed when it is launched.
-        C(1) for default location and size
-        C(3) for maximized
-        C(7) minimized
+    choices: [ default location and size(1), maximized(3),  minimized(7)]    
 author: "SyedShabir, RajeshKumar"
 notes:
    - This module is helpful in deploying application which requires windows shortcut.
