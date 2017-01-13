@@ -1,0 +1,5 @@
+jinja2
+junit-xml
+paramiko
+pycrypto
+pyyaml
