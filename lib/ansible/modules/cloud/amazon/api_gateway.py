@@ -42,6 +42,10 @@ options:
     description:
       - JSON or YAML file containing swagger definitions for API
     required: true
+  stage:
+    description:
+      - stage API should be deployed to
+    required: false
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -50,13 +54,23 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Update an API
+# Update API resources for development
 tasks:
-- name: update API with latest changes
+- name: update API
   lambda:
     api_id: 'abc123321cba'
     state: present
     api_file: my_api.yml
+
+# update definitions and deploy API to production
+tasks:
+- name: deploy API
+  lambda:
+    api_id: 'abc123321cba'
+    state: present
+    api_file: my_api.yml
+    stage: production
+    deploy_desc: Make auth fix available.
 '''
 
 RETURN = '''
@@ -87,13 +101,14 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         api_id=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         api_file=dict(type='str', default=None, aliases=['src']),
+        stage=dict(type='str', default=None),
+        deploy_desc=dict(type='str', default=None),
         )
     )
 
@@ -103,6 +118,8 @@ def main():
     api_id = module.params.get('api_id')
     state = module.params.get('state').lower()
     api_file = module.params.get('api_file')
+    stage= module.params.get('stage')
+    deploy_desc= module.params.get('deploy_desc')
 
 #    check_mode = module.check_mode
     changed = False
@@ -125,11 +142,17 @@ def main():
 
     with open(api_file) as f:
             apidata=f.read()
+
     response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
+
+    if deploy_desc == None:
+        deploy_desc = "Automatic deployment."
+    if stage: 
+        deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
+                                                 description=deploy_desc)
+        response=deploy_response
     changed=True
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
-
-         
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
