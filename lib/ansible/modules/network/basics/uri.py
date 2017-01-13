@@ -399,7 +399,9 @@ def main():
         # Encode the body unless its a string, then assume it is pre-formatted JSON
         if not isinstance(body, basestring):
             body = json.dumps(body)
-        dict_headers['Content-Type'] = 'application/json'
+        lower_header_keys = [key.lower() for key in dict_headers]
+        if 'content-type' not in lower_header_keys:
+             dict_headers['Content-Type'] = 'application/json'
 
     # Grab all the http headers. Need this hack since passing multi-values is
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')

@@ -280,3 +280,16 @@
     status_code: 202
     method: POST
     body: foo
+
+- name: Validate body_format json does not override content-type
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'
