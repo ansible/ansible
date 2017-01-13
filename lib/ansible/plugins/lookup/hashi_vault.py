@@ -17,6 +17,12 @@
 #
 # USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
 #
+# To authenticate with a username/password against the LDAP auth backend in Vault:
+#
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=thisdougb password=mypassword url=http://myvault:8200')}}
+#
+# The mount_point param defaults to ldap, so is only required if you have a custom mount point.
+#
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
 #
@@ -48,11 +54,15 @@ class HashiVault:
             raise AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+<<<<<<< HEAD
 
         self.token = kwargs.get('token')
         if self.token is None:
             raise AnsibleError("No Vault Token specified")
 
+=======
+        
+>>>>>>> added ldap authentication capability
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
@@ -65,15 +75,35 @@ class HashiVault:
         else:
             self.secret_field = 'value'
 
-        self.client = hvac.Client(url=self.url, token=self.token)
+        # if a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
+        # token auth.   this means if a particular auth backend is requested and a token is also given, then we
+        # ignore the token and attempt authentication against the specified backend.
+        #
+        # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
+        #
+        self.auth_method = kwargs.get('auth_method')
+        if self.auth_method:
+            try:
+                self.client = hvac.Client(url=self.url)
+                # prefixing with auth_ to limit which methods can be accessed
+                getattr(self, 'auth_' + self.auth_method)(**kwargs)
+            except AttributeError:
+                raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
+        else:
+            self.token = kwargs.get('token')
+            if self.token==None:
+                raise AnsibleError("No Vault Token specified")
+
+            self.client = hvac.Client(url=self.url, token=self.token)
 
         if self.client.is_authenticated():
             pass
         else:
-            raise AnsibleError("Invalid Hashicorp Vault Token Specified")
+            raise AnsibleError("Invalid authentication credentials specified")
 
     def get(self):
         data = self.client.read(self.secret)
+
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
 
@@ -84,6 +114,21 @@ class HashiVault:
             raise AnsibleError("The secret %s does not contain the field '%s'. " % (self.secret, self.secret_field))
 
         return data['data'][self.secret_field]
+
+    def auth_ldap(self, **kwargs):
+        username = kwargs.get('username')
+        if username==None:
+            raise AnsibleError("Authentication method ldap requires a username")
+
+        password = kwargs.get('password')
+        if password==None:
+            raise AnsibleError("Authentication method ldap requires a password")
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point==None:
+            mount_point = 'ldap'
+
+        self.client.auth_ldap(username, password, mount_point)
 
 
 class LookupModule(LookupBase):
