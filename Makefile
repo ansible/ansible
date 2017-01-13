@@ -177,6 +177,7 @@ clean:
 	find . -type f -name '*.pyc' -delete
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
+	$(MAKE) -C docs/api clean
 
 python:
 	$(PYTHON) setup.py build
@@ -298,7 +299,7 @@ deb-src-upload: deb-src
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 webdocs:
-	(cd docs/docsite/; make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
 docs: $(MANPAGES)
 
