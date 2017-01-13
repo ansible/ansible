@@ -14,12 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+
 DOCUMENTATION = '''
 module: ec2_vpc_nat_gateway_facts
 short_description: Retrieves AWS VPC Managed Nat Gateway details using AWS methods.
 description:
   - Gets various details related to AWS VPC Managed Nat Gateways
-version_added: "2.2"
+version_added: "2.3"
 requirements: [ boto3 ]
 options:
   nat_gateway_ids:
@@ -85,13 +92,8 @@ result:
 
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
-import time
-import json
+    pass  # will be detected by imported HAS_BOTO3
 
 
 def date_handler(obj):
@@ -101,18 +103,8 @@ def date_handler(obj):
 def get_nat_gateways(client, module, nat_gateway_id=None):
     params = dict()
 
-    if module.params.get('filters'):
-        params['Filter'] = []
-        for key, value in module.params.get('filters').iteritems():
-            temp_dict = dict()
-            temp_dict['Name'] = key
-            if isinstance(value, basestring):
-                temp_dict['Values'] = [value]
-            else:
-                temp_dict['Values'] = value
-            params['Filter'].append(temp_dict)
-    if module.params.get('nat_gateway_ids'):
-        params['NatGatewayIds'] = module.params.get('nat_gateway_ids')
+    params['Filter'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
+    params['NatGatewayIds'] = module.params.get('nat_gateway_ids')
 
     try:
         result = json.loads(json.dumps(client.describe_nat_gateways(**params), default=date_handler))
@@ -124,9 +116,10 @@ def get_nat_gateways(client, module, nat_gateway_id=None):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        filters=dict(default=None, type='dict'),
-        nat_gateway_ids=dict(default=None, type='list'),
+    argument_spec.update(
+        dict(
+            filters=dict(default={}, type='dict'),
+            nat_gateway_ids=dict(default=[], type='list'),
         )
     )
 
@@ -142,16 +135,13 @@ def main():
             connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
         else:
             module.fail_json(msg="region must be specified")
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
     results = get_nat_gateways(connection, module)
 
     module.exit_json(result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
