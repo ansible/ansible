@@ -171,10 +171,23 @@ class AnsibleCoreCI(object):
         if self.connection and self.connection.running:
             return self.connection
 
-        response = self.client.get(self._uri)
+        tries = 2
+        sleep = 10
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+        while True:
+            tries -= 1
+            response = self.client.get(self._uri)
+
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         if self.args.explain:
             self.connection = InstanceConnection(
