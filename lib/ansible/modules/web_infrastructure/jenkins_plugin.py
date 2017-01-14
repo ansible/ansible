@@ -128,6 +128,7 @@ options:
     default: 'yes'
     description:
       - Defines whether to install plugin dependencies.
+      - This option takes effect only if the I(version) is not defined.
 
 notes:
   - Plugin installation should be run under root or the same user which owns

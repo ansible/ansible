@@ -24,6 +24,7 @@ import fnmatch
 from ansible.compat.six import iteritems
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import cmp
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.role_include import IncludeRole
@@ -48,6 +49,7 @@ class HostState:
         self.cur_rescue_task    = 0
         self.cur_always_task    = 0
         self.cur_role           = None
+        self.cur_role_task      = None
         self.cur_dep_chain      = None
         self.run_state          = PlayIterator.ITERATING_SETUP
         self.fail_state         = PlayIterator.FAILED_NONE
@@ -120,6 +122,8 @@ class HostState:
         new_state.cur_rescue_task = self.cur_rescue_task
         new_state.cur_always_task = self.cur_always_task
         new_state.cur_role = self.cur_role
+        if self.cur_role_task:
+            new_state.cur_role_task = self.cur_role_task[:]
         new_state.run_state = self.run_state
         new_state.fail_state = self.fail_state
         new_state.pending_setup = self.pending_setup
@@ -159,8 +163,9 @@ class PlayIterator:
         self._task_uuid_cache = dict()
 
         # Default options to gather
-        gather_subset = C.DEFAULT_GATHER_SUBSET
-        gather_timeout = C.DEFAULT_GATHER_TIMEOUT
+        gather_subset = play_context.gather_subset
+        gather_timeout = play_context.gather_timeout
+        fact_path = play_context.fact_path
 
         # Retrieve subset to gather
         if self._play.gather_subset is not None:
@@ -168,6 +173,9 @@ class PlayIterator:
         # Retrieve timeout for gather
         if self._play.gather_timeout is not None:
             gather_timeout = self._play.gather_timeout
+        # Retrieve fact_path
+        if self._play.fact_path is not None:
+            fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
@@ -179,6 +187,8 @@ class PlayIterator:
         }
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
+        if fact_path:
+            setup_task.args['fact_path'] = fact_path
         setup_task.set_loader(self._play._loader)
         setup_block.block = [setup_task]
 
@@ -201,7 +211,7 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if the host's name is in the variable manager's fact cache, then set
             # its _gathered_facts flag to true for smart gathering tests later
-            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get('module_setup', False):
+            if host.name in variable_manager._fact_cache and variable_manager._fact_cache.get(host.name).get('module_setup', False):
                 host._gathered_facts = True
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -276,12 +286,76 @@ class PlayIterator:
                 parent = parent._parent
             return False
 
+        def _get_cur_task(s, depth=0):
+            res = [s.run_state, depth, s.cur_block, -1]
+            if s.run_state == self.ITERATING_TASKS:
+                if s.tasks_child_state:
+                    res[-1] = [s.cur_regular_task, _get_cur_task(s.tasks_child_state, depth=depth+1)]
+                else:
+                    res[-1] = s.cur_regular_task
+            elif s.run_state == self.ITERATING_RESCUE:
+                if s.rescue_child_state:
+                    res[-1] = [s.cur_rescue_task, _get_cur_task(s.rescue_child_state, depth=depth+1)]
+                else:
+                    res[-1] = s.cur_rescue_task
+            elif s.run_state == self.ITERATING_ALWAYS:
+                if s.always_child_state:
+                    res[-1] = [s.cur_always_task, _get_cur_task(s.always_child_state, depth=depth+1)]
+                else:
+                    res[-1] = s.cur_always_task
+            return res
+
+        def _do_task_cmp(a, b):
+            '''
+            Does the heavy lifting for _role_task_cmp() of comparing task state objects
+            returned by _get_cur_task() above.
+            '''
+            res = cmp(a[0], b[0])
+            if res == 0:
+                res = cmp(a[1], b[1])
+                if res == 0:
+                    res = cmp(a[2], b[2])
+                    if res == 0:
+                        # if there were child states, the last value in the list may be
+                        # a list itself representing the current task position plus a new
+                        # list representing the child state. So here we normalize that so
+                        # we can call this method recursively when all else is equal.
+                        if isinstance(a[3], list):
+                            a_i, a_il = a[3]
+                        else:
+                            a_i = a[3]
+                            a_il = [-1, -1, -1, -1]
+                        if isinstance(b[3], list):
+                            b_i, b_il = b[3]
+                        else:
+                            b_i = b[3]
+                            b_il = [-1, -1, -1, -1]
+
+                        res = cmp(a_i, b_i)
+                        if res == 0:
+                            res = _do_task_cmp(a_il, b_il)
+            return res
+
+        def _role_task_cmp(s):
+            '''
+            Compares the given state against the stored state from the previous role task.
+            '''
+            if not s.cur_role_task:
+                return 1
+            cur_task = _get_cur_task(s)
+            return _do_task_cmp(cur_task, s.cur_role_task)
+
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and \
-               not _role_is_child(s.cur_role) and not peek:
-                s.cur_role._completed[host.name] = True
+            if s.cur_role:
+                role_diff  = _roles_are_different(task._role, s.cur_role)
+                role_child = _role_is_child(s.cur_role)
+                tasks_cmp  = _role_task_cmp(s)
+                host_done  = host.name in s.cur_role._had_task_run
+                if (role_diff or (not role_diff and tasks_cmp <= 0)) and host_done and not role_child and not peek:
+                    s.cur_role._completed[host.name] = True
             s.cur_role = task._role
+            s.cur_role_task = _get_cur_task(s)
             s.cur_dep_chain = task.get_dep_chain()
 
         if not peek:

@@ -291,7 +291,7 @@ EXAMPLES = '''
   hw_guest_id: "rhel6_64Guest"
   hw_memtotal_mb: 2048
   hw_name: "centos64Guest"
-  hw_power_status: "POWERED ON",
+  hw_power_status: "POWERED ON"
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 

@@ -16,7 +16,7 @@
 - name: configure multiple invalid command
   junos_config:
     lines:
-      - 'set system host-name {{ inventory_hostname }}'
+      - 'set system host-name {{ inventory_hostname_short }}'
       - 'set system foo'
     provider: "{{ netconf }}"
   register: result

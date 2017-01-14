@@ -4,7 +4,7 @@
 - name: setup
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
       - delete interfaces lo0
     provider: "{{ netconf }}"
 

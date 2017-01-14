@@ -229,6 +229,13 @@ class StrategyBase:
             return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
+    def get_task_hosts(self, iterator, task_host, task):
+        if task.run_once:
+            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+        else:
+            host_list = [task_host]
+        return host_list
+
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
         Reads results off the final queue and takes appropriate action
@@ -348,10 +355,7 @@ class StrategyBase:
 
             run_once = templar.template(original_task.run_once)
             if original_task.register:
-                if run_once:
-                    host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                else:
-                    host_list = [original_host]
+                host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                 clean_copy = strip_internal_keys(task_result._result)
                 if 'invocation' in clean_copy:
@@ -477,7 +481,7 @@ class StrategyBase:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
 
-                    elif 'ansible_facts' in result_item:
+                    if 'ansible_facts' in result_item:
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
@@ -491,29 +495,36 @@ class StrategyBase:
                         else:
                             actual_host = original_host
 
+                        host_list = self.get_task_hosts(iterator, actual_host, original_task)
                         if original_task.action == 'include_vars':
+
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
-
-                                if run_once:
-                                    host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                                else:
-                                    host_list = [actual_host]
-
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
-                            if run_once:
-                                host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                            else:
-                                host_list = [actual_host]
-
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
                                 else:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+
+                    if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
+
+                        if 'per_host' not in result_item['ansible_stats'] or result_item['ansible_stats']['per_host']:
+                            host_list = self.get_task_hosts(iterator, original_host, original_task)
+                        else:
+                            host_list = [None]
+
+                        data = result_item['ansible_stats']['data']
+                        aggregate = 'aggregate' in result_item['ansible_stats'] and result_item['ansible_stats']['aggregate']
+                        for myhost in host_list:
+                            for k in data.keys():
+                                if aggregate:
+                                    self._tqm._stats.update_custom_stats(k, data[k], myhost)
+                                else:
+                                    self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
                 if 'diff' in task_result._result:
                     if self._diff:
@@ -843,7 +854,7 @@ class StrategyBase:
 
         return ret
 
-    def _execute_meta(self, task, play_context, iterator, target_host=None):
+    def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
@@ -854,52 +865,52 @@ class StrategyBase:
         #   on a meta task that doesn't support them
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=h, task=task)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
-        if target_host:
-            host_list = [target_host]
-        else:
-            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-
-        results = []
-        for host in host_list:
-            result = None
-            if meta_action == 'noop':
-                # FIXME: issue a callback for the noop here?
-                result = TaskResult(host, task, dict(changed=False, msg="noop"))
-            elif meta_action == 'flush_handlers':
-                self.run_handlers(iterator, play_context)
-            elif meta_action == 'refresh_inventory':
-                self._inventory.refresh_inventory()
-                result = TaskResult(host, task, dict(changed=False, msg="inventory successfully refreshed"))
-            elif meta_action == 'clear_facts':
-                if _evaluate_conditional(host):
-                    self._variable_manager.clear_facts(target_host)
-                    result = TaskResult(host, task, dict(changed=True, msg="inventory successfully refreshed"))
-                else:
-                    result = TaskResult(host, task, dict(changed=False, skipped=True))
-            elif meta_action == 'clear_host_errors':
-                if _evaluate_conditional(host):
+        skipped = False
+        msg = ''
+        if meta_action == 'noop':
+            # FIXME: issue a callback for the noop here?
+            msg="noop"
+        elif meta_action == 'flush_handlers':
+            self.run_handlers(iterator, play_context)
+            msg = "ran handlers"
+        elif meta_action == 'refresh_inventory':
+            self._inventory.refresh_inventory()
+            msg = "inventory successfully refreshed"
+        elif meta_action == 'clear_facts':
+            if _evaluate_conditional(target_host):
+                for host in self._inventory.get_hosts(iterator._play.hosts):
+                    self._variable_manager.clear_facts(host)
+                msg = "facts cleared"
+            else:
+                skipped = True
+        elif meta_action == 'clear_host_errors':
+            if _evaluate_conditional(target_host):
+                for host in self._inventory.get_hosts(iterator._play.hosts):
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator._host_states[host.name].fail_state = iterator.FAILED_NONE
-                    result = TaskResult(host, task, dict(changed=True, msg="successfully cleared host errors"))
-                else:
-                    result = TaskResult(host, task, dict(changed=False, skipped=True))
-            elif meta_action == 'end_play':
-                if _evaluate_conditional(host):
-                    iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
-                    result = TaskResult(host, task, dict(changed=True, msg="ending play"))
-                else:
-                    result = TaskResult(host, task, dict(changed=False, skipped=True))
-            #elif meta_action == 'reset_connection':
-            #    connection_info.connection.close()
+                msg="cleared host errors"
             else:
-                raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
+                skipped = True
+        elif meta_action == 'end_play':
+            if _evaluate_conditional(target_host):
+                for host in self._inventory.get_hosts(iterator._play.hosts):
+                    if not host.name in  self._tqm._unreachable_hosts:
+                        iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+                msg="ending play"
+        #elif meta_action == 'reset_connection':
+        #    connection_info.connection.close()
+        else:
+            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-            if result is not None:
-                results.append(result)
+        result = { 'msg': msg }
+        if skipped:
+            result['skipped'] = True
+        else:
+            result['changed'] = False
 
-        return results
+        return [TaskResult(target_host, task, result)]

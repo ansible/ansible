@@ -22,10 +22,8 @@
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
-    win_robocopy = New-Object psobject @{
-        recurse         = $false
-        purge           = $false
-    }
+    recurse = $false
+    purge = $false
     changed = $false
 }
 
@@ -70,10 +68,10 @@ if (-Not (Test-Path $src)) {
 }
 
 $robocopy_opts += $src
-Set-Attr $result.win_robocopy "src" $src
+Set-Attr $result "src" $src
 
 $robocopy_opts += $dest
-Set-Attr $result.win_robocopy "dest" $dest
+Set-Attr $result "dest" $dest
 
 if ($flags -eq $null) {
     if ($purge) {
@@ -85,12 +83,14 @@ if ($flags -eq $null) {
     }
 }
 Else {
-    $robocopy_opts += $flags
+    ForEach ($f in $flags.split(" ")) {
+        $robocopy_opts += $f
+    }
 }
 
-Set-Attr $result.win_robocopy "purge" $purge
-Set-Attr $result.win_robocopy "recurse" $recurse
-Set-Attr $result.win_robocopy "flags" $flags
+Set-Attr $result "purge" $purge
+Set-Attr $result "recurse" $recurse
+Set-Attr $result "flags" $flags
 
 $robocopy_output = ""
 $rc = 0
@@ -109,39 +109,59 @@ Else {
     }
 }
 
-Set-Attr $result.win_robocopy "return_code" $rc
-Set-Attr $result.win_robocopy "output" $robocopy_output
+Set-Attr $result "return_code" $rc
+Set-Attr $result "output" $robocopy_output
 
 $cmd_msg = "Success"
-If ($rc -eq 0) {
-    $cmd_msg = "No files copied."
-}
-ElseIf ($rc -eq 1) {
-    $cmd_msg = "Files copied successfully!"
-    $changed = $true
-}
-ElseIf ($rc -eq 2) {
-    $cmd_msg = "Extra files or directories were detected!"
-    $changed = $true
-}
-ElseIf ($rc -eq 4) {
-    $cmd_msg = "Some mismatched files or directories were detected!"
-    $changed = $true
-}
-ElseIf ($rc -eq 8) {
-    $error_msg = SearchForError $robocopy_output "Some files or directories could not be copied!"
-    Fail-Json $result $error_msg
-}
-ElseIf ($rc -eq 10) {
-    $error_msg = SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?"
-    Fail-Json $result $error_msg
-}
-ElseIf ($rc -eq 16) {
-    $error_msg = SearchForError $robocopy_output "Fatal Error!"
-    Fail-Json $result $error_msg
+$changed = $false
+switch ($rc)
+{
+    0 {
+        $cmd_msg = "No files copied."
+    }
+    1 {
+        $cmd_msg = "Files copied successfully!"
+        $changed = $true
+    }
+    2 {
+        $cmd_msg = "Some Extra files or directories were detected. No files were copied."
+        $changed = $true
+    }
+    3 {
+        $cmd_msg = "(2+1) Some files were copied. Additional files were present."
+        $changed = $true
+    }
+    4 {
+        $cmd_msg = "Some mismatched files or directories were detected. Housekeeping might be required!"
+        $changed = $true
+    }
+    5 {
+        $cmd_msg = "(4+1) Some files were copied. Some files were mismatched."
+        $changed = $true
+    }
+    6 {
+        $cmd_msg = "(4+2) Additional files and mismatched files exist. No files were copied."
+        $changed = $true
+    }
+    7 {
+        $cmd_msg = "(4+1+2) Files were copied, a file mismatch was present, and additional files were present."
+        $changed = $true
+    }
+    8 {
+        $error_msg = SearchForError $robocopy_output "Some files or directories could not be copied!"
+        Fail-Json $result $error_msg
+    }
+    { @(9, 10, 11, 12, 13, 14, 15) -contains $_ } {
+        $error_msg = SearchForError $robocopy_output "Fatal error. Check log message!"        
+        Fail-Json $result $error_msg
+    }
+    16 {
+        $error_msg = SearchForError $robocopy_output "Serious Error! No files were copied! Do you have permissions to access $src and $dest?"
+        Fail-Json $result $error_msg
+    }
 }
 
-Set-Attr $result.win_robocopy "msg" $cmd_msg
-Set-Attr $result.win_robocopy "changed" $changed
+Set-Attr $result "msg" $cmd_msg
+Set-Attr $result "changed" $changed
 
 Exit-Json $result

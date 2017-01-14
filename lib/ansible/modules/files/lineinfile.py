@@ -42,11 +42,12 @@ description:
     For other cases, see the M(copy) or M(template) modules.
 version_added: "0.7"
 options:
-  dest:
+  path:
     required: true
-    aliases: [ name, destfile ]
+    aliases: [ 'dest', 'destfile', 'name' ]
     description:
       - The file to modify.
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   regexp:
     required: false
     version_added: 1.7
@@ -121,21 +122,24 @@ options:
      description:
        - All arguments accepted by the M(file) module also work here.
      required: false
+notes:
+  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
 
 EXAMPLES = r"""
+# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - lineinfile:
-    dest: /etc/selinux/config
+    path: /etc/selinux/config
     regexp: '^SELINUX='
     line: 'SELINUX=enforcing'
 
 - lineinfile:
-    dest: /etc/sudoers
+    path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
 - lineinfile:
-    dest: /etc/hosts
+    path: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: '127.0.0.1 localhost'
     owner: root
@@ -143,38 +147,39 @@ EXAMPLES = r"""
     mode: 0644
 
 - lineinfile:
-    dest: /etc/httpd/conf/httpd.conf
+    path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: 'Listen 8080'
 
 - lineinfile:
-    dest: /etc/services
+    path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
 # Add a line to a file if it does not exist, without passing regexp
 - lineinfile:
-    dest: /tmp/testfile
+    path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile: "
-    dest: /etc/sudoers
+    path: /etc/sudoers
     state: present
-    regexp: '^%wheel'
+    regexp: '^%wheel\s'
     line: '%wheel ALL=(ALL) NOPASSWD: ALL'
 
+# Yaml requires escaping backslashes in double quotes but not in single quotes
 - lineinfile:
-    dest: /opt/jboss-as/bin/standalone.conf
-    regexp: '^(.*)Xms(\d+)m(.*)$'
+    path: /opt/jboss-as/bin/standalone.conf
+    regexp: '^(.*)Xms(\\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
     backrefs: yes
 
 # Validate the sudoers file before saving
 - lineinfile:
-    dest: /etc/sudoers
+    path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
@@ -411,7 +416,7 @@ def absent(module, dest, regexp, line, backup):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, aliases=['name', 'destfile'], type='path'),
+            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
             state=dict(default='present', choices=['absent', 'present']),
             regexp=dict(default=None),
             line=dict(aliases=['value']),
@@ -431,11 +436,11 @@ def main():
     create = params['create']
     backup = params['backup']
     backrefs = params['backrefs']
-    dest = params['dest']
+    path = params['path']
 
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
-    if os.path.isdir(b_dest):
-        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if os.path.isdir(b_path):
+        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
     if params['state'] == 'present':
         if backrefs and params['regexp'] is None:
@@ -452,13 +457,13 @@ def main():
 
         line = params['line']
 
-        present(module, dest, params['regexp'], line,
+        present(module, path, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
-        absent(module, dest, params['regexp'], params.get('line', None), backup)
+        absent(module, path, params['regexp'], params.get('line', None), backup)
 
 if __name__ == '__main__':
     main()

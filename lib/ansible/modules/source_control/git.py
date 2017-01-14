@@ -229,6 +229,29 @@ EXAMPLES = '''
     refspec: '+refs/pull/*:refs/heads/*'
 '''
 
+RETURN = '''
+after:
+    description: last commit revision of the repository retrived during the update
+    returned: success
+    type: string
+    sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
+before:
+    description: commit revision before the repository was updated, "null" for new repository
+    returned: success
+    type: string
+    sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
+remote_url_changed:
+    description: Contains True or False whether or not the remote URL was changed.
+    returned: success
+    type: boolean
+    sample: True
+warnings:
+    description: List of warnings if requested features were not available due to a too old git version.
+    returned: error
+    type: string
+    sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+'''
+
 import os
 import re
 import shlex
@@ -314,7 +337,7 @@ def write_ssh_wrapper():
     except (IOError, OSError):
         fd, wrapper_path = tempfile.mkstemp()
     fh = os.fdopen(fd, 'w+b')
-    template = """#!/bin/sh
+    template = b("""#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
     BASEOPTS=""
 else
@@ -326,7 +349,7 @@ if [ -z "$GIT_KEY" ]; then
 else
     ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
 fi
-"""
+""")
     fh.write(template)
     fh.close()
     st = os.stat(wrapper_path)
