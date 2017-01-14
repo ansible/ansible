@@ -37,30 +37,30 @@ options:
     required: true
   policy_description:
     description:
-    - description of policy.
+     - description of policy.
   action:
     description:
      - Forward matching packets to delivery interface(s). Drop is for measure rate of matching packets,
        but do not forward to delivery interface(s). Capture packets and write to a PCAP file. Or enable NetFlow generation.
-     required: true
-     default: forward
-     choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
+    required: true
+    default: forward
+    choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
   priority:
     description:
-    - A priority associated with this policy. The higher priority policy takes precedence over a lower priority.
+     - A priority associated with this policy. The higher priority policy takes precedence over a lower priority.
     default: 100
   duration:
     description:
-    - Run policy for duration duration or until delivery_packet_count packets are delivered, 
-    whichever comes first.
+     - Run policy for duration duration or until delivery_packet_count packets are delivered, 
+       whichever comes first.
     default: 0
   start_time:
     description:
-    - Date the policy becomes active
+     - Date the policy becomes active
     default: ansible_date_time.iso8601
   delivery_packet_count:
     description:
-    - Run policy until delivery_packet_count packets are delivered.
+     - Run policy until delivery_packet_count packets are delivered.
     default: 0
   state:
     description:
@@ -73,8 +73,8 @@ options:
     required: true
   validate_certs:
     description:
-      - If C(false), SSL certificates will not be validated. This should only be used
-        on personally controlled devices using self-signed certificates.
+     - If C(false), SSL certificates will not be validated. This should only be used
+       on personally controlled devices using self-signed certificates.
     required: false
     default: true
     choices: [true, false]
