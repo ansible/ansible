@@ -18,8 +18,11 @@
 
 # WANT_JSON
 # POWERSHELL_COMMON
-#
+
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
+
+# TODO: Add debug information with what has changed using windows functions
+# TODO: Ensure that by default variables default to $null automatically (so that they can be tested)
 
 $ErrorActionPreference = "Stop"
 
@@ -27,25 +30,25 @@ $params = Parse-Args $args -supports_check_mode $true;
 
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
-$orig_src = Get-AnsibleParam -obj $params -name "src"
-$orig_dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -default "present"
-$orig_args = Get-AnsibleParam -obj $params -name "args"
-$orig_directory = Get-AnsibleParam -obj $params -name "directory"
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey"
-$orig_icon = Get-AnsibleParam -obj $params -name "icon"
-$orig_description = Get-AnsibleParam -obj $params -name "description"
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -validateset "default","maximized","minimized"
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -default $null
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present"
+$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string" -default $null
+$directory = Get-AnsibleParam -obj $params -name "directory" -type "path" -default $null
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string" -default $null
+$icon = Get-AnsibleParam -obj $params -name "icon" -type "path" -default $null
+$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string" -default $null
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "default","maximized","minimized" -default $null
 
-# Expand environment variables (Beware: turns $null into "")
-$src = [System.Environment]::ExpandEnvironmentVariables($orig_src)
-$dest = [System.Environment]::ExpandEnvironmentVariables($orig_dest)
-$args = [System.Environment]::ExpandEnvironmentVariables($orig_args)
-$directory = [System.Environment]::ExpandEnvironmentVariables($orig_directory)
-$icon = [System.Environment]::ExpandEnvironmentVariables($orig_icon)
-$description = [System.Environment]::ExpandEnvironmentVariables($orig_description)
+# Expand environment variables on non-path types (Beware: turns $null into "")
+#$src = [System.Environment]::ExpandEnvironmentVariables($orig_src)
+#$dest = [System.Environment]::ExpandEnvironmentVariables($orig_dest)
+$args = Expand-Environment($orig_args)
+#$directory = [System.Environment]::ExpandEnvironmentVariables($orig_directory)
+#$icon = [System.Environment]::ExpandEnvironmentVariables($orig_icon)
+$description = Expand-Environment($orig_description)
 
-$result = New-Object PSObject @{
+$result = @{
     changed = $false
     dest = $dest
     state = $state
@@ -61,7 +64,7 @@ If ($state -eq "absent") {
             Fail-Json $result "Failed to remove shortcut $dest. ($($_.Exception.Message))"
         }
         # Report removal success
-        Set-Attr $result "changed" $true
+        $result.changed = $true
     } Else {
         # Nothing to report, everything is fine already
     }
@@ -72,11 +75,11 @@ If ($state -eq "absent") {
 
     # Compare existing values with new values, report as changed if required
 
-    If ($orig_src -ne $null -and $ShortCut.TargetPath -ne $src) {
-        Set-Attr $result "changed" $true
+    If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
+        $result.changed = $true
         $ShortCut.TargetPath = $src
     }
-    Set-Attr $result "src" $ShortCut.TargetPath
+    $result.src = $ShortCut.TargetPath
 
     # Determine if we have a WshShortcut or WshUrlShortcut by checking the Arguments property
     # A WshUrlShortcut objects only consists of a TargetPath property
@@ -86,37 +89,38 @@ If ($state -eq "absent") {
 
         # This is a full-featured application shortcut !
         If ($orig_args -ne $null -and $ShortCut.Arguments -ne $args) {
-            Set-Attr $result "changed" $true
+            $result.changed = $true
             $ShortCut.Arguments = $args
         }
-        Set-Attr $result "args" $ShortCut.Arguments
+        $result.args = $ShortCut.Arguments
 
-        If ($orig_directory -ne $null -and $ShortCut.WorkingDirectory -ne $directory) {
-            Set-Attr $result "changed" $true
+        If ($directory -ne $null -and $ShortCut.WorkingDirectory -ne $directory) {
+            $result.changed = $true
             $ShortCut.WorkingDirectory = $directory
         }
-        Set-Attr $result "directory" $ShortCut.WorkingDirectory
+        $result.directory = $ShortCut.WorkingDirectory
 
+        # FIXME: Not all values are accepted here !
         If ($hotkey -ne $null -and $ShortCut.Hotkey -ne $hotkey) {
-            Set-Attr $result "changed" $true
+            $result.changed = $true
             $ShortCut.Hotkey = $hotkey
         }
-        Set-Attr $result "hotkey" $ShortCut.Hotkey
+        $result.hotkey = $ShortCut.Hotkey
 
-        If ($orig_icon -ne $null -and $ShortCut.IconLocation -ne $icon) {
-            Set-Attr $result "changed" $true
+        If ($icon -ne $null -and $ShortCut.IconLocation -ne $icon) {
+            $result.changed = $true
             $ShortCut.IconLocation = $icon
         }
-        Set-Attr $result "icon" $ShortCut.IconLocation
+        $result.icon = $ShortCut.IconLocation
 
         If ($orig_description -ne $null -and $ShortCut.Description -ne $description) {
-            Set-Attr $result "changed" $true
+            $result.changed = $true
             $ShortCut.Description = $description
         }
-        Set-Attr $result "description" $ShortCut.Description
+        $result.description = $ShortCut.Description
 
         If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyle) {
-            Set-Attr $result "changed" $true
+            $result.changed = $true
             switch ($windowstyle) {
                 "default" { $windowstyle_id = 1 }
                 "maximized" { $windowstyle_id = 3 }
@@ -125,10 +129,10 @@ If ($state -eq "absent") {
             }
             $ShortCut.WindowStyle = $windowstyle_id
         }
-        Set-Attr $result "windowstyle" $ShortCut.WindowStyle
+        $result.windowstyle = $ShortCut.WindowStyle
     }
 
-    If ($result["changed"] -eq $true -and $_ansible_check_mode -ne $true) {
+    If ($result.changed -eq $true -and $_ansible_check_mode -ne $true) {
         Try {
             $ShortCut.Save()
         } Catch {
