@@ -40,9 +40,8 @@ options:
     - description of policy.
   action:
     description:
-     - Forward matching packets to delivery interface(s). Drop: Measure rate of matching packets,
-       but do not forward to delivery interface(s). Capture packets and write to a PCAP file. Or,
-       enable NetFlow generation.
+     - Forward matching packets to delivery interface(s). Drop is for measure rate of matching packets,
+       but do not forward to delivery interface(s). Capture packets and write to a PCAP file. Or enable NetFlow generation.
      required: true
      default: forward
      choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
