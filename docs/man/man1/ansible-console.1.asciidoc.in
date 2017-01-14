@@ -12,7 +12,7 @@ ansible-console - a REPL for ad-hoc ansible tasks
 
 SYNOPSIS
 --------
-ansible-console <host-pattern> [-m module_name] [-a args] [options]
+ansible-console [-m module_name] [-a args] [options] [host-pattern]
 
 
 DESCRIPTION
