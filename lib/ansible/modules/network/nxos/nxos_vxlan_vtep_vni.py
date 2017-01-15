@@ -233,7 +233,7 @@ class CustomNetworkConfig(NetworkConfig):
 
                 except ValueError:
                     # add parent to config
-                    offset = index * self._indent
+                    offset = index * self.indent
                     obj = ConfigLine(p)
                     obj.raw = p.rjust(len(p) + offset)
                     if ancestors:
@@ -249,10 +249,10 @@ class CustomNetworkConfig(NetworkConfig):
                     if child.text == line:
                         break
                 else:
-                    offset = len(parents) * self._indent
+                    offset = len(parents) * self.indent
                     item = ConfigLine(line)
                     item.raw = line.rjust(len(line) + offset)
-                    item._parents = ancestors
+                    item.parents = ancestors
                     ancestors[-1].children.append(item)
                     self.items.append(item)
 

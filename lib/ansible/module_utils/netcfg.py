@@ -69,6 +69,10 @@ class ConfigLine(object):
     def parents(self):
         return _obj_to_text(self._parents)
 
+    @parents.setter
+    def parents(self, p):
+        self._parents = p
+
     @property
     def path(self):
         config = _obj_to_raw(self._parents)
@@ -139,6 +143,10 @@ class NetworkConfig(object):
     @property
     def items(self):
         return self._items
+
+    @property
+    def indent(self):
+        return self._indent
 
     def __getitem__(self, key):
         for line in self:
