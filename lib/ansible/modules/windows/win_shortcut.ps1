@@ -54,6 +54,16 @@ $result = @{
     state = $state
 }
 
+# Convert from window style name to window style id
+$windowstyles = @{
+    default = 1
+    maximized = 3
+    minimized = 7
+}
+
+# Convert from window style id to window style name
+$windowstyleids = @( "", "default", "", "maximized", "", "", "", "minimized" )
+
 If ($state -eq "absent") {
     If (Test-Path "$dest") {
         # If the shortcut exists, try to remove it
@@ -61,7 +71,7 @@ If ($state -eq "absent") {
             Remove-Item -Path "$dest";
         } Catch {
             # Report removal failure
-            Fail-Json $result "Failed to remove shortcut $dest. ($($_.Exception.Message))"
+            Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
         }
         # Report removal success
         $result.changed = $true
@@ -119,24 +129,18 @@ If ($state -eq "absent") {
         }
         $result.description = $ShortCut.Description
 
-        If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyle) {
+        If ($windowstyle -ne $null -and $ShortCut.WindowStyle -ne $windowstyles.$windowstyle) {
             $result.changed = $true
-            switch ($windowstyle) {
-                "default" { $windowstyle_id = 1 }
-                "maximized" { $windowstyle_id = 3 }
-                "minimized" { $windowstyle_id = 7 }
-                default { $windowstyle_id = 1 }
-            }
-            $ShortCut.WindowStyle = $windowstyle_id
+            $ShortCut.WindowStyle = $windowstyles.$windowstyle
         }
-        $result.windowstyle = $ShortCut.WindowStyle
+        $result.windowstyle = $windowstyleids[$ShortCut.WindowStyle]
     }
 
     If ($result.changed -eq $true -and $_ansible_check_mode -ne $true) {
         Try {
             $ShortCut.Save()
         } Catch {
-            Fail-Json $result "Failed to create shortcut $dest. ($($_.Exception.Message))"
+            Fail-Json $result "Failed to create shortcut $dest. (" + $_.Exception.Message + ")"
         }
     }
 }

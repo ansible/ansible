@@ -158,7 +158,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
     }
 
     # Expand environment variables on path-type (Beware: turns $null into "")
-    If ($value -ne $null -and $type -eq 'path') {
+    If ($value -ne $null -and $type -eq "path") {
         $value = Expand-Environment($value)
     }
 
