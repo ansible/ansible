@@ -20,7 +20,7 @@ module: rds_option_group
 short_description: Manages RDS Option Groups
 description:
   -Manages the creation, modification, deletion of RDS option groups.
-version_added: "2.2"
+version_added: "2.3"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   option_group_name:
@@ -190,7 +190,7 @@ def create_option_group_options(client, module):
 def remove_option_group_options(client, module, options_to_remove):
     changed = True
     params = dict()
-    params['OptionGroupName'] = module.params.get('name')
+    params['OptionGroupName'] = module.params.get('option_group_name')
     params['OptionsToRemove'] = options_to_remove
 
     if module.params.get('apply_immediately'):
