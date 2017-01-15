@@ -442,7 +442,7 @@ def validate_uuids(module):
               ['image_uuid', module.params['image_uuid']]]:
         if u[1] and u[1] != '*':
             if not is_valid_uuid(u[1]):
-                failed.append(u[1])
+                failed.append(u[0])
 
     if len(failed) > 0:
         module.fail_json(msg='No valid UUID(s) found for: {0}'.format(", ".join(failed)))
