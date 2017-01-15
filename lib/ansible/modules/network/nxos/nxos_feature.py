@@ -336,7 +336,7 @@ def get_available_features(feature, module):
 
     body = execute_show_command(command, module, command_type='cli_show_ascii')
     split_body = body[0].splitlines()
-    #module.exit_json(c=split_body)
+
     for line in split_body:
         try:
             match_feature = re.match(feature_regex, line, re.DOTALL)
