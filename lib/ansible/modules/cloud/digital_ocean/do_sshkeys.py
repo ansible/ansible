@@ -37,7 +37,7 @@ options:
     choices: ['present', 'absent']
   fingerprint:
     description:
-     - This is a unique identified for the SSH key used to delete a key
+     - This is a unique identifier for the SSH key used to delete a key
     required: false
     default: None
   name:

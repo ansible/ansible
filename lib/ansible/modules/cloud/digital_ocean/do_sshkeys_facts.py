@@ -50,9 +50,9 @@ EXAMPLES = '''
 
 
 RETURN = '''
-# Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#floating-ips
+# Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#list-all-keys
 data:
-    description: a DigitalOcean Floating IP resource
+    description: List of SSH keys on DigitalOcean
     returned: success and no resource constraint
     type: dict
     sample: {
@@ -73,7 +73,6 @@ data:
 '''
 
 import json
-import os
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.basic import AnsibleModule
