@@ -274,24 +274,6 @@ def execute_config_command(commands, module):
                              error=str(clie), commands=commands)
 
 
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet.
-    """
-    if 'xml' in response[0]:
-        body = []
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
 def execute_show(cmds, module, command_type=None):
     command_type_map = {
         'cli_show': 'json',
@@ -325,10 +307,8 @@ def execute_show(cmds, module, command_type=None):
 
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
-        command += ' | json'
         cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
+        body = execute_show(cmds, module)
     elif module.params['transport'] == 'nxapi':
         cmds = [command]
         body = execute_show(cmds, module, command_type=command_type)
@@ -356,7 +336,7 @@ def get_available_features(feature, module):
 
     body = execute_show_command(command, module, command_type='cli_show_ascii')
     split_body = body[0].splitlines()
-
+    #module.exit_json(c=split_body)
     for line in split_body:
         try:
             match_feature = re.match(feature_regex, line, re.DOTALL)
