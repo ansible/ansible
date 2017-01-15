@@ -117,7 +117,14 @@ class Timezone(object):
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
         elif re.match('^joyent_.*Z', platform.version()):
             # get_platform() returns SunOS, which is too broad. So look at the
-            # platform version instead.
+            # platform version instead. However we have to ensure that we're not
+            # running in the global zone where changing the timezone has no effect.
+            zonename_cmd = module.get_bin_path('zonename')
+            if zonename_cmd is not None:
+                (rc, stdout, _ ) = module.run_command(zonename_cmd)
+                if rc == 0 and stdout.strip() == 'global':
+                    module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
+
             return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
         elif re.match('^OpenBSD', platform.platform()):
             # This might be too specific for now, however it can then serve as
@@ -460,7 +467,9 @@ class SmartOSTimezone(Timezone):
 
     def __init__(self, module):
         super(SmartOSTimezone, self).__init__(module)
-        self.settimezone = self.module.get_bin_path('sm-set-timezone', required=True)
+        self.settimezone = self.module.get_bin_path('sm-set-timezone', required=False)
+        if not self.settimezone:
+            module.fail_json(msg='sm-set-timezone not found. Make sure the smtools package is installed.')
 
     def get(self, key, phase):
         """Lookup the current timezone name in `/etc/default/init`. If anything else
