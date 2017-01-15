@@ -18,8 +18,8 @@ DOCUMENTATION = '''
 module: ec2_vpc_igw_facts
 short_description: Gather facts about internet gateways in AWS
 description:
-    - Gather facts about internet gateways in AWS
-version_added: "2.2"
+    - Gather facts about internet gateways in AWS.
+version_added: "2.3"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
@@ -29,8 +29,7 @@ options:
     default: null
   InternetGatewayIds:
     description:
-      - Get details of specific Internet Gateway ID
-      - Provide this value as a list
+      - Get details of specific Internet Gateway ID. Provide this value as a list.
     required: false
     default: None
 extends_documentation_fragment:
@@ -65,14 +64,32 @@ EXAMPLES = '''
 
 RETURN = '''
 internet_gateways:
-    description: The internet gateways for the account
+    description: The internet gateways for the account.
     returned: always
     type: list
+    sample: [
+        {
+            "attachments": [
+                {
+                    "state": "available",
+                    "vpc_id": "vpc-02123b67"
+                }
+            ],
+            "internet_gateway_id": "igw-2123634d",
+            "tags": [
+                {
+                    "key": "Name",
+                    "value": "test-vpc-20-igw"
+                }
+            ]
+        }
+    ]
 
 changed:
-    description: True if listing the internet gateways succeeds
+    description: True if listing the internet gateways succeeds.
     type: bool
     returned: always
+    sample: "false"
 '''
 
 import json
@@ -100,7 +117,7 @@ def list_internet_gateways(client, module):
 
     if module.params.get('filters'):
         params['Filters'] = []
-        for key, value in module.params.get('filters').iteritems():
+        for key, value in module.params.get('filters').items():
             temp_dict = dict()
             temp_dict['Name'] = key
             if isinstance(value, basestring):
@@ -145,12 +162,12 @@ def main():
 
      # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required.')
+        module.fail_json(msg='json and boto3 is required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
     # call your function here
