@@ -29,7 +29,7 @@
 
 - name: Display result
   debug:
-    msg: "{{ result.stdout }}"
+    msg: "{{ result }}"
 
 - name: Ensure output is valid
   assert:
@@ -46,6 +46,7 @@
       - "'VyOS' in result.stdout"
       - "'Version' in result.stdout_lines[0]"
 
+
 #########################################
 # Positive: stdout and stderr with rc:0
 #
@@ -53,7 +54,6 @@
   net_command: python -c 'import os; os.write(2, "Oh no, this is an error\n"); os.write(1, "This is stdout\n") '
   connection: network_cli
   register: result
-  ignore_errors: true
 
 - name: Display result
   debug:
@@ -127,8 +127,6 @@
       - result|failed
       - result.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
       - result.rc == 1
-      # FIXME BUG: https://github.com/ansible/ansible/issues/20294
-      - "'Invalid command:' in result.stderr"
       # Check for platform specific string in output
       - result.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
       - result.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -144,9 +142,9 @@
 # Negative test cases
 # Failure
 #
+# Multiple commands, mix of successfull and unsuccessful
 #
 # Run a command that returns stdout and stderr
-# No command: check for msg='no command given'
 # Quoting and escape tests - look at command/shell test cases
 #
 #
