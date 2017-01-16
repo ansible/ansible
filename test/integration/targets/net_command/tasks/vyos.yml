@@ -135,11 +135,6 @@
       - "'Invalid command:' in result.stderr"
   ignore_errors: true
 
-
-
-
-
-
 # Quoting and escape tests - look at command/shell test cases
 #
 #
