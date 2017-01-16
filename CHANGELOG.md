@@ -79,6 +79,7 @@ Ansible Changes By Release
   * jenkins_script
 - windows:
   * win_say
+  * win_shortcut
 - openstack
   * os_quota
 - zfs:
