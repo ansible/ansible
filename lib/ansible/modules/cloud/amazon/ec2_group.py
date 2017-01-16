@@ -34,7 +34,7 @@ options:
     required: true
   description:
     description:
-      - Description of the security group. Required for present state.
+      - Description of the security group. Required when C(state) is C(present).
     required: false
   vpc_id:
     description:
