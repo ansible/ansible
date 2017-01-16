@@ -66,7 +66,7 @@ EXAMPLES = '''
   ec2_vpc_igw_facts:
     region: ap-southeast-2
     profile: production
-    internet_gateway_ids: igw-c123f6a7
+    internet_gateway_ids: igw-c1231234
   register: igw_facts
 '''
 
