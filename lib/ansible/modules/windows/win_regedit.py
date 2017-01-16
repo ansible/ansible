@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_regedit
 version_added: "2.0"
@@ -80,7 +80,7 @@ EXAMPLES = r'''
 - name: Create Registry Key called MyCompany
   win_regedit:
     key: HKCU:\Software\MyCompany
-    
+
 - name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "world".
   win_regedit:
     key: HKCU:\Software\MyCompany
@@ -124,7 +124,7 @@ EXAMPLES = r'''
     key: HKCU:\Software\My Company
 '''
 
-RETURN = '''
+RETURN = r'''
 data_changed:
     description: whether this invocation changed the data in the registry value 
     returned: success

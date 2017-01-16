@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_say
 version_added: "2.3"
@@ -74,7 +74,7 @@ notes:
    - Speech can be surprisingly slow, so its best to keep message text short.   
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Warn of impending deployment
 - win_say:
     msg: Warning, deployment commencing in 5 minutes, please log out.
@@ -94,7 +94,7 @@ EXAMPLES = '''
     msg_file: AppData\Local\Temp\morning_report.txt
     end_sound_path: 'C:\Windows\Media\chimes.wav'
 '''
-RETURN = '''
+RETURN = r'''
 message_text:
     description: the text that the module attempted to speak
     returned: success

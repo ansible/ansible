@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_acl_inheritance
 version_added: "2.1"
@@ -76,6 +76,6 @@ EXAMPLES = r'''
     reorganize: True
 '''
 
-RETURN = '''
+RETURN = r'''
 
 '''

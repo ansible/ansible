@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_shell
 short_description: Execute shell commands on target hosts.
@@ -61,21 +61,21 @@ author:
     - Matt Davis
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Execute a command in the remote shell; stdout goes to the specified
 # file on the remote.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt
 
 # Change the working directory to somedir/ before executing the command.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt chdir=c:\\somedir
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt chdir=c:\somedir
 
 # You can also use the 'args' form to provide the options. This command
 # will change the working directory to somedir/ and will only run when
 # somedir/somelog.txt doesn't exist.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt
   args:
-    chdir: c:\\somedir
-    creates: c:\\somelog.txt
+    chdir: c:\somedir
+    creates: c:\somelog.txt
 
 # Run a command under a non-Powershell interpreter (cmd in this case)
 - win_shell: echo %HOMEDIR%
@@ -84,7 +84,7 @@ EXAMPLES = '''
   register: homedir_out
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
     description: changed
     returned: always
