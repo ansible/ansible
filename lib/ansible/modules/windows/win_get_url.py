@@ -92,7 +92,7 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Download earthrise.jpg to specified path 
+- name: Download earthrise.jpg to specified path
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg

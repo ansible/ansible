@@ -66,7 +66,7 @@ dest:
     description: destination file/path
     returned: changed
     type: string
-    sample: 'c:\temp'
+    sample: c:\temp
 src:
     description: source file used for the copy on the target machine
     returned: changed

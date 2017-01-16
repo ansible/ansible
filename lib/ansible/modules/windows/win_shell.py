@@ -57,7 +57,7 @@ notes:
       explicitly required. When running ad-hoc commands, use your best judgement.
    -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
-author: 
+author:
     - Matt Davis
 '''
 

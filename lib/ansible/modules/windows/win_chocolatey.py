@@ -75,7 +75,7 @@ options:
     version_added: '2.1'
   allow_empty_checksums:
     description:
-      - Allow empty Checksums to be used 
+      - Allow empty Checksums to be used
     require: false
     default: false
     version_added: '2.2'

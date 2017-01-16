@@ -47,7 +47,7 @@ options:
     aliases: []
   data:
     description:
-      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional. 
+      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional.
     required: false
     default: null
     aliases: []
@@ -112,7 +112,7 @@ EXAMPLES = r'''
   win_regedit:
     key: HKCU:\Software\MyCompany
     state: absent
-    
+
 - name: Delete Registry Value "hello" from MyCompany Key
   win_regedit:
     key: HKCU:\Software\MyCompany
@@ -126,12 +126,12 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data_changed:
-    description: whether this invocation changed the data in the registry value 
+    description: whether this invocation changed the data in the registry value
     returned: success
     type: boolean
     sample: False
 data_type_changed:
-    description: whether this invocation changed the datatype of the registry value 
+    description: whether this invocation changed the datatype of the registry value
     returned: success
     type: boolean
     sample: True

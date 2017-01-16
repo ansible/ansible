@@ -108,12 +108,12 @@ src:
     description: The Source file/directory of the sync.
     returned: always
     type: string
-    sample: "c:\Some\Path"
+    sample: c:\Some\Path
 dest:
     description: The Destination file/directory of the sync.
     returned: always
     type: string
-    sample: "c:\Some\Path"
+    sample: c:\Some\Path
 recurse:
     description: Whether or not the recurse flag was toggled.
     returned: always

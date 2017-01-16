@@ -110,8 +110,8 @@ EXAMPLES = r'''
     ip: 127.0.0.1
     hostname: acme.local
     application_pool: "acme"
-    physical_path: 'c:\sites\acme'
-    parameters: 'logfile.directory:c:\\sites\\logs'
+    physical_path: c:\sites\acme
+    parameters: logfile.directory:c:\sites\logs
   register: website
 
 # Some commandline examples:

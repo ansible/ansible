@@ -64,14 +64,14 @@ options:
     required: false
     default: null
 author: "Jon Hawkesworth (@jhawkesworth)"
-notes: 
+notes:
    - Needs speakers or headphones to do anything useful.
    - To find which voices are installed, run the following powershell
      Add-Type -AssemblyName System.Speech
      $speech = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
      $speech.GetInstalledVoices() | ForEach-Object { $_.VoiceInfo }
      $speech.Dispose()
-   - Speech can be surprisingly slow, so its best to keep message text short.   
+   - Speech can be surprisingly slow, so its best to keep message text short.
 '''
 
 EXAMPLES = r'''
@@ -80,19 +80,19 @@ EXAMPLES = r'''
     msg: Warning, deployment commencing in 5 minutes, please log out.
   # Using a different voice and a start sound
 - win_say:
-    start_sound_path: 'C:\Windows\Media\ding.wav'
+    start_sound_path: C:\Windows\Media\ding.wav
     msg: Warning, deployment commencing in 5 minutes, please log out.
     voice: Microsoft Hazel Desktop
   # example with start and end sound
 - win_say:
-    start_sound_path: 'C:\Windows\Media\Windows Balloon.wav'
-    msg: "New software installed"
-    end_sound_path: 'C:\Windows\Media\chimes.wav'
+    start_sound_path: C:\Windows\Media\Windows Balloon.wav
+    msg: New software installed
+    end_sound_path: C:\Windows\Media\chimes.wav
   # text from file example
 - win_say:
-    start_sound_path: 'C:\Windows\Media\Windows Balloon.wav'
+    start_sound_path: C:\Windows\Media\Windows Balloon.wav
     msg_file: AppData\Local\Temp\morning_report.txt
-    end_sound_path: 'C:\Windows\Media\chimes.wav'
+    end_sound_path: C:\Windows\Media\chimes.wav
 '''
 RETURN = r'''
 message_text:

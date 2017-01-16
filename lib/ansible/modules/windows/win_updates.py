@@ -99,11 +99,11 @@ reboot_required:
     sample: True
 
 updates:
-    description: List of updates that were found/installed 
+    description: List of updates that were found/installed
     returned: success
     type: dictionary
-    sample: 
-    contains: 
+    sample:
+    contains:
         title:
             description: Display name
             returned: always
