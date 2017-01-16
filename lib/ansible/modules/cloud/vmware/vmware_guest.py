@@ -213,7 +213,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: paravirtual
       networks:
-      - network: VM Network
+      - name: VM Network
         ip: 192.168.1.100
         netmask: 255.255.255.0
         mac: 'aa:bb:dd:aa:00:14'
