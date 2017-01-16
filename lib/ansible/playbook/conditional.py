@@ -30,6 +30,12 @@ from ansible.template import Templar
 from ansible.module_utils._text import to_native
 from ansible.vars.unsafe_proxy import wrap_var
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 
@@ -119,6 +125,12 @@ class Conditional:
 
         if conditional in all_vars and re.match("^[_A-Za-z][_a-zA-Z0-9]*$", conditional):
             conditional = all_vars[conditional]
+
+        delimiters = re.search('({{.*}}|{%.*%})', conditional)
+        if delimiters:
+            display.warning('when statements should not include jinja2 '
+                            'templating delimiters such as {{ }} or {%% %%}. '
+                            'Found: %s' % ', '.join(delimiters.groups()))
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
