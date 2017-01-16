@@ -50,6 +50,7 @@ class AnsibleCoreCI(object):
             'freebsd',
             'vyos',
             'junos',
+            'ios',
         )
 
         osx_platforms = (
