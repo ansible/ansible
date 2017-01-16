@@ -171,6 +171,12 @@ options:
         (requires libcloud >= 0.20.0)
     required: false
     default: "false"
+  disk_size:
+    description:
+      - The size of the boot disk created for this instance (in GB)
+    required: false
+    default: 10
+    version_added: "2.3"
 
 requirements:
     - "python >= 2.6"
@@ -197,6 +203,7 @@ EXAMPLES = '''
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
+      disk_size: 32
 
 # Create a single Debian 8 instance in the us-central1-a Zone
 # Use existing disks, custom network/subnetwork, set service account permissions
@@ -384,6 +391,7 @@ def create_instances(module, gce, instance_names, number):
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
     preemptible = module.params.get('preemptible')
+    disk_size = module.params.get('disk_size')
     service_account_permissions = module.params.get('service_account_permissions')
     service_account_email = module.params.get('service_account_email')
 
@@ -505,7 +513,7 @@ def create_instances(module, gce, instance_names, number):
                 try:
                     pd = gce.ex_get_volume("%s" % instance, lc_zone)
                 except ResourceNotFoundError:
-                    pd = gce.create_volume(None, "%s" % instance, image=lc_image())
+                    pd = gce.create_volume(disk_size, "%s" % instance, image=lc_image())
             gce_args['ex_boot_disk'] = pd
 
             inst = None
@@ -629,12 +637,13 @@ def main():
             zone = dict(default='us-central1-a'),
             service_account_email = dict(),
             service_account_permissions = dict(type='list'),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
             ip_forward = dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
+            disk_size = dict(type='int', default=10),
             preemptible = dict(type='bool', default=None),
         ),
         mutually_exclusive=[('instance_names', 'name')]

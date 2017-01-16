@@ -99,6 +99,7 @@ options:
             - "C(lun_id) - LUN id."
             - "C(username) - A CHAP user name for logging into a target."
             - "C(password) - A CHAP password for logging into a target."
+            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overriden before adding."
             - "Note that these parameters are not idempotent."
     posixfs:
         description:
@@ -154,6 +155,15 @@ EXAMPLES = '''
       target: iqn.2016-08-09.domain-01:nickname
       lun_id: 1IET_000d0002
       address: 10.34.63.204
+
+# Add data glusterfs storage domain
+-  ovirt_storage_domains:
+    name: glusterfs_1
+    host: myhost
+    data_center: mydatacenter
+    glusterfs:
+      address: 10.10.10.10
+      path: /path/data
 
 # Import export NFS storage domain:
 - ovirt_storage_domains:
@@ -246,8 +256,9 @@ class StorageDomainModule(BaseModule):
                         password=storage.get('password'),
                     ),
                 ] if storage_type in ['iscsi', 'fcp'] else None,
+                override_luns=storage.get('override_luns'),
                 mount_options=storage.get('mount_options'),
-                vfs_type=storage.get('vfs_type'),
+                vfs_type='glusterfs' if storage_type in ['glusterfs'] else storage.get('vfs_type'),
                 address=storage.get('address'),
                 path=storage.get('path'),
                 nfs_retrans=storage.get('retrans'),

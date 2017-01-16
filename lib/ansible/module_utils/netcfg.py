@@ -224,6 +224,10 @@ class NetworkConfig(object):
             raise ValueError('path does not exist in config')
         return self._expand_block(obj)
 
+    def get_block_config(self, path):
+        block = self.get_block(path)
+        return dumps(block, 'config')
+
     def _expand_block(self, configobj, S=None):
         if S is None:
             S = list()

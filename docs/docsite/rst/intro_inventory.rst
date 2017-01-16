@@ -310,7 +310,8 @@ ansible_docker_extra_args
 Here is an example of how to instantly deploy to created containers::
 
   - name: create jenkins container
-    docker:
+    docker_container:
+      docker_host: myserver.net:4243
       name: my_jenkins
       image: jenkins
 

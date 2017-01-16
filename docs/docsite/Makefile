@@ -1,12 +1,15 @@
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 FORMATTER=../../hacking/module_formatter.py
 DUMPER=../../hacking/dump_playbook_attributes.py
-CPUS ?= 1
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
+CPUS := $(shell sysctl hw.ncpu|awk '{print $2}')
+else
+CPUS := $(shell nproc)
+endif
 
 all: clean docs
 
-docs: clean directives modules staticmin
-	./build-site.py -j $(CPUS)
+docs: clean directives modules htmldocs
 	-(cp *.ico htmlout/)
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
@@ -15,16 +18,14 @@ variables:
 	(mkdir -p htmlout/)
 	dot variables.dot -Tpng -o htmlout/variables.png
 
-viewdocs: clean staticmin
-	./build-site.py -j $(CPUS) view
-
-htmldocs: staticmin
-	./build-site.py -j $(CPUS) rst
+htmldocs: directives modules staticmin
+	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: htmldocs
 
 clean:
 	-rm -rf htmlout
+	-rm -rf _build
 	-rm -f .buildinfo
 	-rm -f *.inv
 	-rm -rf *.doctrees

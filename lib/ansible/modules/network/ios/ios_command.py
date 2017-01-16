@@ -35,7 +35,9 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
-extends_documentation_fragment: ios
+notes:
+  - Provider arguments are no longer supported.  Network tasks should now
+    specify connection plugin network_cli instead.
 options:
   commands:
     description:
@@ -87,33 +89,21 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 tasks:
   - name: run show version on remote devices
     ios_command:
       commands: show version
-      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains IOS
     ios_command:
       commands: show version
       wait_for: result[0] contains IOS
-      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
      ios_command:
       commands:
         - show version
         - show interfaces
-      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     ios_command:
@@ -123,7 +113,6 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
-      provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -132,18 +121,31 @@ stdout:
   returned: always
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
   returned: always
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
   description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 import time
 

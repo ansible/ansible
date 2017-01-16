@@ -240,11 +240,11 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
                                      'Upgrade to libcloud>=0.17.0.')
             return True
     except IOError as e:
-        module.fail_json(msg='GCP Credentials File %s not found.', changed=False)
+        module.fail_json(msg='GCP Credentials File %s not found.' % credentials_file, changed=False)
         return False
     except ValueError as e:
         if require_valid_json:
-            module.fail_json(msg='GCP Credentials File %s invalid.  Must be valid JSON.', changed=False)
+            module.fail_json(msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
         else:
             display.deprecated(msg=("Non-JSON credentials file provided. This format is deprecated. "
                                     " Please generate a new JSON key from the Google Cloud console"),

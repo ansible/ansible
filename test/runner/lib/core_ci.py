@@ -45,17 +45,30 @@ class AnsibleCoreCI(object):
         self.instance_id = None
         self.name = name if name else '%s-%s' % (self.platform, self.version)
 
-        if self.platform == 'windows':
-            self.ssh_key = None
+        aws_platforms = (
+            'windows',
+            'freebsd',
+            'vyos',
+            'junos',
+        )
+
+        osx_platforms = (
+            'osx',
+        )
+
+        if self.platform in aws_platforms:
             self.endpoint = 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com'
-            self.port = 5986
-        elif self.platform == 'freebsd':
-            self.ssh_key = SshKey(args)
-            self.endpoint = 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com'
-            self.port = 22
-        elif self.platform == 'osx':
-            self.ssh_key = SshKey(args)
+
+            if self.platform == 'windows':
+                self.ssh_key = None
+                self.port = 5986
+            else:
+                self.ssh_key = SshKey(args)
+                self.port = 22
+        elif self.platform in osx_platforms:
             self.endpoint = 'https://osx.testing.ansible.com'
+
+            self.ssh_key = SshKey(args)
             self.port = None
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
@@ -158,10 +171,23 @@ class AnsibleCoreCI(object):
         if self.connection and self.connection.running:
             return self.connection
 
-        response = self.client.get(self._uri)
+        tries = 2
+        sleep = 10
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+        while True:
+            tries -= 1
+            response = self.client.get(self._uri)
+
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         if self.args.explain:
             self.connection = InstanceConnection(
@@ -213,8 +239,11 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return
 
-        with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
-            winrm_config = winrm_config_fd.read()
+        if self.platform == 'windows':
+            with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
+                winrm_config = winrm_config_fd.read()
+        else:
+            winrm_config = None
 
         data = dict(
             config=dict(
@@ -232,10 +261,23 @@ class AnsibleCoreCI(object):
             'Content-Type': 'application/json',
         }
 
-        response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+        tries = 2
+        sleep = 10
 
-        if response.status_code != 200:
-            raise self._create_http_error(response)
+        while True:
+            tries -= 1
+            response = self.client.put(self._uri, data=json.dumps(data), headers=headers)
+
+            if response.status_code == 200:
+                break
+
+            error = self._create_http_error(response)
+
+            if not tries:
+                raise error
+
+            display.warning('%s. Trying again after %d seconds.' % (error, sleep))
+            time.sleep(sleep)
 
         self.started = True
         self._save()

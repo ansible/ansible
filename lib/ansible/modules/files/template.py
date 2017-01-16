@@ -109,6 +109,6 @@ EXAMPLES = '''
     owner: root
     group: root
     mode: '0600'
-    validate: /usr/sbin/sshd -t %s
+    validate: /usr/sbin/sshd -t -f %s
     backup: yes
 '''
