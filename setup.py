@@ -22,7 +22,7 @@ setup(name='ansible',
       license='GPLv3',
       # Ansible will also make use of a system copy of python-six if installed but use a
       # Bundled copy if it's not.
-      install_requires=['paramiko', 'jinja2 < 2.9', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
+      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
