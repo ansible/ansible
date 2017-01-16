@@ -24,10 +24,14 @@
 # Check if  ansible_network_os being undef or incorrect
 # Without this we wouldn't run any tests, and not actually test Ansible
 
+# FIXME One we can get ansible_network_os from env remove it from 
+# test/runner/johnb@x260:~/git/ansible-inc/ansible/test/runner/lib/executor.py
+#
+
 - name: Check for acceptable ansible_network_os
   fail:
       msg: "ansible_network_os is undefined or not an acceptable platform: '{{ ansible_network_os }}'"
-  when: ansible_network_os not in [ 'vyos', 'junos' ]
+  when: ansible_network_os not in [ 'vyos', 'junos', 'ios' ]
 
 - name: vyos Specific includes
   include: vyos.yml
@@ -36,3 +40,7 @@
 - name: junos Specific includes
   include: junos.yml
   when: ansible_network_os == 'junos'
+
+- name: ios Specific includes
+  include: ios.yml
+  when: ansible_network_os == 'ios'
