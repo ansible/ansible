@@ -27,6 +27,7 @@ RUN apt-get update -y && \
     python-coverage \
     python-dev \
     python-httplib2 \
+    python-jinja2 \
     python-keyczar \
     python-mock \
     python-mysqldb \
@@ -49,7 +50,7 @@ RUN apt-get update -y && \
     && \
     apt-get clean
 
-RUN pip install --upgrade jinja2 pycrypto
+RUN pip install --upgrade pycrypto
 
 # helpful things taken from the ubuntu-upstart Dockerfile:
 # https://github.com/tianon/dockerfiles/blob/4d24a12b54b75b3e0904d8a285900d88d3326361/sbin-init/ubuntu/upstart/14.04/Dockerfile
