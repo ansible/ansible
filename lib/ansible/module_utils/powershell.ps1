@@ -98,6 +98,11 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
+Function Expand-Environment($value)
+{
+    [System.Environment]::ExpandEnvironmentVariables($value)
+}
+
 # Helper function to get an "attribute" from a psobject instance in powershell.
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
@@ -105,7 +110,7 @@ Function Fail-Json($obj, $message = $null)
 #Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
 #Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
+Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, $type=$null)
 {
     # Check if the provided Member $name exists in $obj and return it or the default. 
     Try
@@ -119,7 +124,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
         {
             if ($ValidateSet -contains ($obj.$name))
             {
-                $obj.$name    
+                $value = $obj.$name
             }
             Else
             {
@@ -133,15 +138,14 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
         }
         Else
         {
-            $obj.$name
+            $value = $obj.$name
         }
-        
     }
     Catch
     {
         If ($failifempty -eq $false)
         {
-            $default
+            $value = $default
         }
         Else
         {
@@ -152,6 +156,13 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
     }
+
+    # Expand environment variables on path-type (Beware: turns $null into "")
+    If ($value -ne $null -and $type -eq "path") {
+        $value = Expand-Environment($value)
+    }
+
+    $value
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts

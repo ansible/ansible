@@ -22,6 +22,7 @@ __metaclass__ = type
 import ast
 import re
 
+from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
 from ansible.compat.six import text_type
@@ -152,7 +153,7 @@ class Conditional:
 
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             res = e._parse(presented, None, None)
-            res = e._generate(res, None, None, defer_init=True)
+            res = generate(res, e, None, None)
             parsed = ast.parse(res, mode='exec')
 
             class CleansingNodeVisitor(ast.NodeVisitor):
