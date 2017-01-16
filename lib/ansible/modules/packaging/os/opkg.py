@@ -69,6 +69,10 @@ EXAMPLES = '''
     state: present
 
 - opkg:
+    ipk: foo_123-r0_all.ipk
+    state: present
+
+- opkg:
     name: foo
     state: present
     update_cache: yes
