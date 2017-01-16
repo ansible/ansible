@@ -1,7 +1,13 @@
 Ansible Changes By Release
 ==========================
 
-## 2.1.3 "The Song Remains the Same" - TBD
+## 2.1.4 "The Song Remains the Same" - 01-16-2017
+
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+* Fixed a bug with conditionals in loops, where undefined variables and other errors will defer raising the error until the conditional has been evaluated.
+* Added a version check for jinja2-2.9, which does not fully work with Ansible currently.
+
+## 2.1.3 "The Song Remains the Same" - 11-04-2016
 
 * Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
 * Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
