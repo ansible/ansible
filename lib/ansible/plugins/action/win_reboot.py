@@ -82,13 +82,14 @@ class ActionModule(ActionBase):
         winrm_port = self._connection._winrm_port
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        result['warnings'] = []
 
         # Initiate reboot
         (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay_sec, msg))
 
         # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
         if rc == 1190:
-            result['warnings'] = ( 'A scheduled reboot was pre-empted by Ansible.' )
+            result['warnings'].append('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
             (rc, stdout1, stderr1) = self._connection.exec_command('shutdown /a')
