@@ -44,7 +44,7 @@ $result = New-Object psobject @{
 };
 
 # failifempty = $false is default and thus implied
-$factpath = Get-AnsibleParam -obj $params -name fact_path
+$factpath = Get-AnsibleParam -obj $params -name fact_path -type "path"
 if ($factpath -ne $null) {
   # Get any custom facts
   Get-CustomFacts -factpath $factpath
