@@ -155,13 +155,16 @@ def main():
             params = module.params.copy()
             job = tower_cli.get_resource('job')
 
-            try:
-                jt_name = params.pop('job_template')
-                jt = tower_cli.get_resource('job_template').get(name=jt_name)
-            except exc.NotFound as excinfo:
-                module.fail_json(msg='{} job_template: {}'.format(excinfo, jt_name), changed=False)
+            lookup_fields = ('job_template', 'inventory', 'credential')
+            for field in lookup_fields:
+                try:
+                    name = params.pop(field)
+                    result = tower_cli.get_resource(field).get(name=name)
+                    params[field] = result['id']
+                except exc.NotFound as excinfo:
+                    module.fail_json(msg='{} {}: {}'.format(excinfo, field, name), changed=False)
 
-            result = job.launch(jt['id'], no_input=True, **params)
+            result = job.launch(no_input=True, **params)
             json_output['id'] = result['id']
             json_output['status'] = result['status']
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
