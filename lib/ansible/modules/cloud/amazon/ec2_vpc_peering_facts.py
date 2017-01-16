@@ -14,12 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+
 DOCUMENTATION = '''
 module: ec2_vpc_peering_facts
 short_description: Retrieves AWS VPC Peering details using AWS methods.
 description:
   - Gets various details related to AWS VPC Peers
-version_added: "2.2"
+version_added: "2.3"
 requirements: [ boto3 ]
 options:
   peer_connection_ids:
@@ -73,14 +81,9 @@ result:
 '''
 
 try:
-    import json
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
-import time
+    pass  # will be picked up by imported HAS_BOTO3
 
 
 def date_handler(obj):
@@ -89,16 +92,7 @@ def date_handler(obj):
 
 def get_vpc_peers(client, module):
     params = dict()
-    if module.params.get('filters'):
-        params['Filters'] = []
-        for key, value in module.params.get('filters').iteritems():
-            temp_dict = dict()
-            temp_dict['Name'] = key
-            if isinstance(value, basestring):
-                temp_dict['Values'] = [value]
-            else:
-                temp_dict['Values'] = value
-            params['Filters'].append(temp_dict)
+    params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
     if module.params.get('peer_connection_ids'):
         params['VpcPeeringConnectionIds'] = module.params.get('peer_connection_ids')
     try:
@@ -111,9 +105,10 @@ def get_vpc_peers(client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        filters=dict(default=None, type='dict'),
-        peer_connection_ids=dict(default=None, type='list'),
+    argument_spec.update(
+        dict(
+            filters=dict(default=dict(), type='dict'),
+            peer_connection_ids=dict(default=None, type='list'),
         )
     )
 
@@ -121,7 +116,7 @@ def main():
 
     # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required.')
+        module.fail_json(msg='botocore and boto3 are required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -137,16 +132,13 @@ def main():
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
-    results = get_vpc_peers(ec2, module)
+    results = [camel_dict_to_snake_dict(peer) for peer in get_vpc_peers(ec2, module)]
 
     module.exit_json(result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
