@@ -205,6 +205,10 @@ from ansible.module_utils.urls import fetch_url
 
 API_URL      = 'https://api.cloudscale.ch/v1/'
 TIMEOUT_WAIT = 30
+ALLOWED_STATES = ('running',
+                  'stopped',
+                  'absent',
+                  )
 
 class AnsibleCloudscaleServer(object):
 
@@ -312,15 +316,16 @@ class AnsibleCloudscaleServer(object):
                                        'update_info: %s' % info['body'])
 
 
-    def wait_for_state(self, state):
+    def wait_for_state(self, states):
         start = datetime.now()
         while datetime.now() - start < timedelta(TIMEOUT_WAIT):
             self.update_info()
-            if self.info['state'] == state:
+            if self.info['state'] in states:
                 return True
             sleep(1)
 
-        self._module.fail_json(msg='Timeout while waiting for a state change on server %s' % self.info['name'])
+        self._module.fail_json(msg='Timeout while waiting for a state change on server %s to states %s. Current state is %s'
+                               % (self.info['name'], states, self.info['state']))
 
 
     def create_server(self):
@@ -350,22 +355,22 @@ class AnsibleCloudscaleServer(object):
                 continue
 
         self.info = self._transform_state(self._post('servers', data))
-        self.wait_for_state('running')
+        self.wait_for_state(('running', ))
 
 
     def delete_server(self):
         self._delete('servers/%s' % self.info['uuid'])
-        self.wait_for_state('absent')
+        self.wait_for_state(('absent', ))
 
 
     def start_server(self):
         self._post('servers/%s/start' % self.info['uuid'])
-        self.wait_for_state('running')
+        self.wait_for_state(('running', ))
 
 
     def stop_server(self):
         self._post('servers/%s/stop' % self.info['uuid'])
-        self.wait_for_state('stopped')
+        self.wait_for_state(('stopped', ))
 
 
     def list_servers(self):
@@ -376,10 +381,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state               = dict(default='running',
-                                       choices=['running',
-                                                'stopped',
-                                                'absent',
-                                       ]),
+                                       choices=ALLOWED_STATES),
             name                = dict(),
             uuid                = dict(),
             flavor              = dict(),
@@ -407,6 +409,11 @@ def main():
 
     target_state = module.params['state']
     server = AnsibleCloudscaleServer(module, api_token)
+    # The server could be in a changeing or error state.
+    # Wait for one of the allowed states before doing anything.
+    # If an allowed state can't be reached, this module fails.
+    if not server.info['state'] in ALLOWED_STATES:
+        server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 
     if module.check_mode:
