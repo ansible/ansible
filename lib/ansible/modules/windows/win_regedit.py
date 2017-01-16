@@ -37,24 +37,17 @@ options:
     description:
       - Name of Registry Key
     required: true
-    default: null
-    aliases: []
   value:
     description:
       - Name of Registry Value
-    required: true
-    default: null
-    aliases: []
+      - When left out, the default entry for that key is being used.
+    default: '(default)'
   data:
     description:
-      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional. 
-    required: false
-    default: null
-    aliases: []
+      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional.
   datatype:
     description:
       - Registry Value Data Type
-    required: false
     choices:
       - binary
       - dword
@@ -63,16 +56,13 @@ options:
       - string
       - qword
     default: string
-    aliases: []
   state:
     description:
       - State of Registry Value
-    required: false
     choices:
       - present
       - absent
     default: present
-    aliases: []
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
@@ -80,7 +70,12 @@ EXAMPLES = r'''
 - name: Create Registry Key called MyCompany
   win_regedit:
     key: HKCU:\Software\MyCompany
-    
+
+- name: Create Registry Key called MyCompany with default value "Ansible"
+  win_regedit:
+    key: HKCU:\Software\MyCompany
+    data: Ansible
+
 - name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "world".
   win_regedit:
     key: HKCU:\Software\MyCompany
@@ -112,16 +107,12 @@ EXAMPLES = r'''
   win_regedit:
     key: HKCU:\Software\MyCompany
     state: absent
-    
+
 - name: Delete Registry Value "hello" from MyCompany Key
   win_regedit:
     key: HKCU:\Software\MyCompany
     value: hello
     state: absent
-
-- name: Creates Registry Key called 'My Company'
-  win_regedit:
-    key: HKCU:\Software\My Company
 '''
 
 RETURN = '''
