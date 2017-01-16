@@ -20,13 +20,13 @@
 
 # This is a placeholder test, will be fleshed out by gundalow at a later point
 
-
 - name: Check we can communicate using net_command
   net_command: show version
   connection: network_cli
   register: result
 
-- debug:
+- name: Display result
+  debug:
     msg: "{{ result.stdout }}"
 
 - name: Ensure output is valid
