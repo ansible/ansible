@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2.1 "The Battle of Evermore" - TBD
+## 2.2.1 "The Battle of Evermore" - 01-16-2017
 
 ### Major Changes:
 
