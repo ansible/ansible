@@ -3,9 +3,15 @@ Ansible Changes By Release
 
 ## 2.2.1 "The Battle of Evermore" - TBD
 
+### Major Changes:
+
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+
 ### Minor Changes:
 
 * Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
+* Fixed a bug related to roles where in certain situations a role may be run more than once despite not allowing duplicates.
+* Fixed some additional bugs related to atomic_move for modules.
 * Fixes multiple bugs related to field/attribute inheritance in nested blocks and includes, as well as task iteration logic during failures.
 * Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
 * Fixed dnf on systems with dnf-2.0.x (some changes in the API).
@@ -22,6 +28,7 @@ Ansible Changes By Release
 * Fixed Windows async to avoid blocking due to handle inheritance.
 * Fixed bugs in the mount module on older Linux kernels and *BSDs
 * Various minor fixes for Python 3
+* Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
 
 ## 2.2 "The Battle of Evermore" - 11-01-2016
 
