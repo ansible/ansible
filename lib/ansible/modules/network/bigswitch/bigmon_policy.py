@@ -42,7 +42,6 @@ options:
     description:
      - Forward matching packets to delivery interfaces, Drop is for measure rate of matching packets,
        but do not forward to delivery interfaces, capture packets and write to a PCAP file, or enable NetFlow generation.
-    required: true
     default: forward
     choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
   priority:
@@ -213,4 +212,8 @@ def main():
         module.fail_json(msg=str(e))
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> 64b364a3ed58dacd8cc117a79296b58bdbae5d09
