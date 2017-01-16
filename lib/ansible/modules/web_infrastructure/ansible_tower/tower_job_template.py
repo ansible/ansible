@@ -162,7 +162,6 @@ EXAMPLES = '''
     tower_job_template:
         name: Team Name
         description: Team Description
-        organization: test-org
         state: present
         config_file: "~/tower_cli.cfg"
 '''
@@ -220,9 +219,6 @@ def update_resources(module, p):
     params = p.copy()
     identity_map = {
         'project': 'name',
-        'machine_credential': 'name',
-        'network_credential': 'name',
-        'cloud_credential': 'name',
         'inventory': 'name',
     }
     for k,v in identity_map.items():
