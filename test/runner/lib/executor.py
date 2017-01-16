@@ -238,12 +238,18 @@ def network_inventory(remotes):
     groups = dict([(remote.platform, []) for remote in remotes])
 
     for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_connection='network_cli',
+            ansible_ssh_private_key_file=remote.ssh_key.key,
+            ansible_network_os=remote.platform,
+        )
+
         groups[remote.platform].append(
-            '%s ansible_host=%s ansible_user=%s ansible_connection=network_cli ansible_ssh_private_key_file=%s' % (
+            '%s %s' % (
                 remote.name.replace('.', '_'),
-                remote.connection.hostname,
-                remote.connection.username,
-                remote.ssh_key.key,
+                ' '.join('%s=%s' % (k, options[k]) for k in sorted(options)),
             )
         )
 
@@ -319,15 +325,22 @@ def windows_inventory(remotes):
     :type remotes: list[AnsibleCoreCI]
     :rtype: str
     """
-    hosts = ['%s ansible_host=%s ansible_user=%s ansible_password="%s" ansible_port=%s' %
-             (
-                 remote.name.replace('/', '_'),
-                 remote.connection.hostname,
-                 remote.connection.username,
-                 remote.connection.password,
-                 remote.connection.port,
-             )
-             for remote in remotes]
+    hosts = []
+
+    for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_password=remote.connection.password,
+            ansible_port=remote.connection.port,
+        )
+
+        hosts.append(
+            '%s %s' % (
+                remote.name.replace('/', '_'),
+                ' '.join('%s=%s' % (k, options[k]) for k in sorted(options)),
+            )
+        )
 
     template = """
     [windows]
