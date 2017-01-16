@@ -212,8 +212,4 @@ def main():
         module.fail_json(msg=str(e))
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     main()
-=======
-    main()
->>>>>>> 64b364a3ed58dacd8cc117a79296b58bdbae5d09
