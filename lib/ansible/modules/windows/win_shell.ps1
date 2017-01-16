@@ -63,10 +63,10 @@ namespace Ansible.Shell
 $parsed_args = Parse-Args $args $false
 
 $raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
-$chdir = Get-AnsibleParam $parsed_args "chdir"
-$executable = Get-AnsibleParam $parsed_args "executable"
-$creates = Get-AnsibleParam $parsed_args "creates"
-$removes = Get-AnsibleParam $parsed_args "removes"
+$chdir = Get-AnsibleParam $parsed_args "chdir" -type "path"
+$executable = Get-AnsibleParam $parsed_args "executable" -type "path"
+$creates = Get-AnsibleParam $parsed_args "creates" -type "path"
+$removes = Get-AnsibleParam $parsed_args "removes" -type "path"
 
 $result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
 

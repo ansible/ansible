@@ -27,7 +27,7 @@ $result = New-Object psobject @{
 }
 
 $url = Get-AnsibleParam $params -name "url" -failifempty $true
-$dest = Get-AnsibleParam $params -name "dest" -failifempty $true
+$dest = Get-AnsibleParam $params -name "dest" -type "path" -failifempty $true
 
 $skip_certificate_validation = Get-AnsibleParam $params -name "skip_certificate_validation" -default $false
 $skip_certificate_validation = $skip_certificate_validation | ConvertTo-Bool

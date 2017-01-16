@@ -27,8 +27,8 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-$src = Get-AnsibleParam -obj $params -name "src" -failifempty $true
-$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $purge = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "purge" -default $false)
 $recurse = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "recurse" -default $false)
 $flags = Get-AnsibleParam -obj $params -name "flags" -default $null

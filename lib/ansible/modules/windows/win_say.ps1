@@ -22,9 +22,9 @@
 $params = Parse-Args $args;
 $result = New-Object PSObject;
 $msg = Get-AnsibleParam -obj $params -name "msg"
-$msg_file = Get-AnsibleParam -obj $params -name "msg_file"
-$start_sound_path = Get-AnsibleParam -obj $params -name "start_sound_path"
-$end_sound_path = Get-AnsibleParam -obj $params -name "end_sound_path"
+$msg_file = Get-AnsibleParam -obj $params -name "msg_file" -type "path"
+$start_sound_path = Get-AnsibleParam -obj $params -name "start_sound_path" -type "path"
+$end_sound_path = Get-AnsibleParam -obj $params -name "end_sound_path" -type "path"
 $voice = Get-AnsibleParam -obj $params -name "voice"
 $speech_speed = Get-AnsibleParam -obj $params -name "speech_speed"
 $speed = 0

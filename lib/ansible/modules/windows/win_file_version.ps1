@@ -26,7 +26,7 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-$path = Get-AnsibleParam $params "path" -failifempty $true -resultobj $result
+$path = Get-AnsibleParam $params "path" -type "path" -failifempty $true -resultobj $result
 
 If (-Not (Test-Path -Path $path -PathType Leaf)){
     Fail-Json $result "Specfied path $path does exist or is not a file."

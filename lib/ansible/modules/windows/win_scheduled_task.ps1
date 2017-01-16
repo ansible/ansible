@@ -28,7 +28,7 @@ $days_of_week = Get-AnsibleParam $params -name "days_of_week"
 $enabled = Get-AnsibleParam $params -name "enabled" -default $true
 $enabled = $enabled | ConvertTo-Bool
 $description = Get-AnsibleParam $params -name "description" -default " "
-$path = Get-AnsibleParam $params -name "path"
+$path = Get-AnsibleParam $params -name "path" -type "path"
 $argument = Get-AnsibleParam $params -name "argument"
 
 $result = New-Object PSObject;
