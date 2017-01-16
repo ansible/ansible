@@ -23,16 +23,12 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object PSObject @{
-    changed = $true
-}
-
 $command = Get-AnsibleParam -obj $params -name "command" -default "whoami.exe"
 $executable = Get-AnsibleParam -obj $params -name "executable" -default "psexec.exe"
 $hostnames = Get-AnsibleParam -obj $params -name "hostnames"
 $username = Get-AnsibleParam -obj $params -name "username"
 $password = Get-AnsibleParam -obj $params -name "password" -failifempty $true
-$chdir = Get-AnsibleParam -obj $params -name "chdir"
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $noprofile = Get-AnsibleParam -obj $params -name "noprofile"
 $elevated = Get-AnsibleParam -obj $params -name "elevated"
 $limited = Get-AnsibleParam -obj $params -name "limited"
@@ -41,90 +37,88 @@ $priority = Get-AnsibleParam -obj $params -name "priority" -validateset "backgro
 $timeout = Get-AnsibleParam -obj $params -name "timeout"
 $extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -default @()
 
-$args = ""
+$result = @{
+    changed = $true
+}
+
+$extra_args = ""
 
 # Supports running on local system if not hostname is specified
 If ($hostnames -ne $null) {
-  $args = " \\" + $($hostnames | sort -Unique) -join ','
+  $extra_args = " \\" + $($hostnames | sort -Unique) -join ','
 }
-
-$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-
-$pinfo.FileName = $executable
-$pinfo.RedirectStandardError = $true
-$pinfo.RedirectStandardOutput = $true
-$pinfo.UseShellExecute = $false
 
 # Username is optional
 If ($username -ne $null) {
-    $args += " -u " + $username
+    $extra_args += " -u " + $username
 }
 
 # Password is required
 If ($password -eq $null) {
     Fail-Json $result "The 'password' parameter is a required parameter."
 } Else {
-    $args += " -p " + $password
+    $extra_args += " -p " + $password
 }
 
 If ($chdir -ne $null) {
-    $args += " -w " + $chdir
+    $extra_args += " -w " + $chdir
 }
 
 If ($noprofile -ne $null) {
-    $args += " -e"
+    $extra_args += " -e"
 }
 
 If ($elevated -ne $null) {
-    $args += " -h"
+    $extra_args += " -h"
 }
 
 If ($system -ne $null) {
-    $args += " -s"
+    $extra_args += " -s"
 }
 
 If ($limited -ne $null) {
-    $args += " -l"
+    $extra_args += " -l"
 }
 
 If ($priority -ne $null) {
-    $args += " -" + $priority
+    $extra_args += " -" + $priority
 }
 
 If ($timeout -ne $null) {
-    $args += " -n " + $timeout
+    $extra_args += " -n " + $timeout
 }
 
-$args += " -accepteula"
+$extra_args += " -accepteula"
 
 # Add additional advanced options
 ForEach ($opt in $extra_opts) {
-    $args += " " + $opt
+    $extra_args += " " + $opt
 }
 
-# Defaults to whoami.exe, but also accepts a script instead of command
-$args += " " + $command
+$extra_args += " " + $command
 
+$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+$pinfo.FileName = $executable
+$pinfo.RedirectStandardError = $true
+$pinfo.RedirectStandardOutput = $true
+$pinfo.UseShellExecute = $false
 # TODO: psexec has a limit to the argument length of 260 (?)
-$pinfo.Arguments = $args
+$pinfo.Arguments = $extra_args
+
+$result.psexec_command = ($executable + $extra_args)
 
 $p = New-Object System.Diagnostics.Process
 $p.StartInfo = $pinfo
 $p.Start() | Out-Null
-$stdout = $p.StandardOutput.ReadToEnd()
-$stderr = $p.StandardError.ReadToEnd()
+$result.stdout = $p.StandardOutput.ReadToEnd()
+$result.stderr = $p.StandardError.ReadToEnd()
 $p.WaitForExit()
-$rc = $p.ExitCode
+$result.rc = $p.ExitCode
 
-If ($rc -eq 0) {
-    Set-Attr $result "failed" $false
+If ($result.rc -eq 0) {
+    $result.failed = $false
 } Else {
-    Set-Attr $result "failed" $true
+    $result.failed = $true
 }
-
-Set-Attr $result "cmd" ($executable + $args)
-Set-Attr $result "rc" $rc
-Set-Attr $result "stdout" $stdout
-Set-Attr $result "stderr" $stderr
 
 Exit-Json $result
