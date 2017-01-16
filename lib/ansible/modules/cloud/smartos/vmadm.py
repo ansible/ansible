@@ -32,10 +32,11 @@ description:
 version_added: "2.3"
 author: Jasper Lievisse Adriaanse (@jasperla)
 options:
-    save_payload:
+    name:
         required: false
+        aliases: [ alias ]
         description:
-          - Don't delete the JSON payload used to generated a VM.
+          - Name of the VM. vmadm(1M) uses this as an optional name.
     force:
         required: false
         description:
@@ -50,10 +51,6 @@ options:
             shutdown the zone before removing it.
             C(stopped) means the zone will be created if it doesn't exist already, before shutting
             it down.
-    alias:
-        required: false
-        description:
-          - Name of the VM. vmadm(1M) uses this as an optional name.
     autoboot:
         required: false
         description:
@@ -250,12 +247,11 @@ except ImportError:
 # generated JSON does not play well with the JSON parsers of Python.
 # The returned message contains '\n' as part of the stacktrace,
 # which breaks the parsers.
-VMADM = '/usr/sbin/vmadm'
 
 def get_vm_prop(module, uuid, prop):
     """Lookup a property for the given VM.
     Returns the property, or None if not found."""
-    cmd = '{0} lookup -j -o {1} uuid={2}'.format(VMADM, prop, uuid)
+    cmd = '{0} lookup -j -o {1} uuid={2}'.format(module.vmadm, prop, uuid)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -272,7 +268,7 @@ def get_vm_prop(module, uuid, prop):
 def get_vm_uuid(module, alias):
     """Lookup the uuid that goes with the given alias.
     Returns the uuid or '' if not found."""
-    cmd = '{0} lookup -j -o uuid alias={1}'.format(VMADM, alias)
+    cmd = '{0} lookup -j -o uuid alias={1}'.format(module.vmadm, alias)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -287,7 +283,7 @@ def get_vm_uuid(module, alias):
 
 def get_all_vm_uuids(module):
     """Retrieve the UUIDs for all VMs"""
-    cmd = '{0} lookup -j -o uuid'.format(VMADM)
+    cmd = '{0} lookup -j -o uuid'.format(module.vmadm)
 
     (rc, stdout, stderr) = module.run_command(cmd)
 
@@ -326,21 +322,20 @@ def new_vm(module, uuid, vm_state):
             if not ret:
                 module.fail_json(msg='Could not set VM {0} to state {1}'.format(vm_uuid, vm_state))
 
-    if not module.params['save_payload']:
-        try:
-            os.unlink(payload_file)
-        except Exception as e:
-            # Since the payload may contain sensitive information, fail hard
-            # if we cannot remove the file so the operator knows about it.
-            module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.
-                             format(payload_file, e))
+    try:
+        os.unlink(payload_file)
+    except Exception as e:
+        # Since the payload may contain sensitive information, fail hard
+        # if we cannot remove the file so the operator knows about it.
+        module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.
+                         format(payload_file, e))
 
     return changed, vm_uuid
 
 
 def vmadm_create_vm(module, payload_file):
     """Create a new VM using the provided payload."""
-    cmd = '{0} create -f {1}'.format(VMADM, payload_file)
+    cmd = '{0} create -f {1}'.format(module.vmadm, payload_file)
 
     return module.run_command(cmd)
 
@@ -503,9 +498,9 @@ def main():
             type='str',
             choices=['present', 'running', 'absent', 'deleted', 'stopped', 'created', 'restarted', 'rebooted']
         ),
-        alias=dict(
+        name=dict(
             default=None, type='str',
-            aliases=['name']
+            aliases=['alias']
         ),
         brand=dict(
             default='joyent',
@@ -523,8 +518,10 @@ def main():
     module = AnsibleModule(
         argument_spec=options,
         supports_check_mode=True,
-        required_one_of=[['alias', 'uuid']]
+        required_one_of=[['name', 'uuid']]
     )
+
+    module.vmadm = module.get_bin_path('vmadm', required=True)
 
     p = module.params
     uuid = p['uuid']
@@ -547,20 +544,20 @@ def main():
     # to operate on VMs by their UUID. So if we're not given a `uuid`, look
     # it up.
     if not uuid:
-        uuid = get_vm_uuid(module, p['alias'])
+        uuid = get_vm_uuid(module, p['name'])
         # Bit of a chicken and egg problem here for VMs with state == deleted.
         # If they're going to be removed in this play, we have to lookup the
         # uuid. If they're already deleted there's nothing to looup.
         # So if state == deleted and get_vm_uuid() returned '', the VM is already
         # deleted and there's nothing else to do.
         if uuid == '' and vm_state == 'deleted':
-            result['alias'] = p['alias']
+            result['name'] = p['name']
             module.exit_json(**result)
 
     validate_uuids(module)
 
-    if p['alias']:
-        result['alias'] = p['alias']
+    if p['name']:
+        result['name'] = p['name']
     result['uuid'] = uuid
 
     if uuid == '*':
