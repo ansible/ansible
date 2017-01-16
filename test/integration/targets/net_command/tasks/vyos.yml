@@ -89,7 +89,7 @@
 
 - name: Display result
   debug:
-    msg: "{{ result.stdout }}"
+    msg: "{{ result }}"
 
 - name: Check we failed
   assert:
