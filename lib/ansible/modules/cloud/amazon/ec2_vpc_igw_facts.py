@@ -17,6 +17,7 @@
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
 
 
 DOCUMENTATION = '''
@@ -34,7 +35,7 @@ options:
          See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: null
-  InternetGatewayIds:
+  internet_gateway_ids:
     description:
       - Get details of specific Internet Gateway ID
       - Provide this value as a list
@@ -84,10 +85,8 @@ changed:
 
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # will be captured by imported HAS_BOTO3
 
 
 def get_internet_gateway_info(internet_gateway):
@@ -98,58 +97,39 @@ def get_internet_gateway_info(internet_gateway):
 
 
 def list_internet_gateways(client, module):
-    all_internet_gateways_array = []
     params = dict()
 
-    if module.params.get('filters'):
-        params['Filters'] = []
-        for key, value in module.params.get('filters').items():
-            temp_dict = dict()
-            temp_dict['Name'] = key
-            if isinstance(value, basestring):
-                temp_dict['Values'] = [value]
-            else:
-                temp_dict['Values'] = value
-            params['Filters'].append(temp_dict)
+    params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
+    params['DryRun'] = module.check_mode
 
-    dryrun = module.params.get("DryRun")
-    if dryrun:
-        params['DryRun'] = dryrun
-
-    if module.params.get("InternetGatewayIds"):
-        params['InternetGatewayIds'] = module.params.get("InternetGatewayIds")
+    if module.params.get("internet_gateway_ids"):
+        params['InternetGatewayIds'] = module.params.get("internet_gateway_ids")
 
     try:
         all_internet_gateways = client.describe_internet_gateways(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
-    for internet_gateway in all_internet_gateways['InternetGateways']:
-        all_internet_gateways_array.append(get_internet_gateway_info(internet_gateway))
+    snaked_internet_gateways = [camel_dict_to_snake_dict(get_internet_gateway_info(igw))
+                                for igw in all_internet_gateways['InternetGateways']]
 
-    # Turn the boto3 result in to ansible_friendly_snaked_names
-    snaked_internet_gateways_array = []
-    for igw in all_internet_gateways_array:
-        snaked_internet_gateways_array.append(camel_dict_to_snake_dict(igw))
-
-    module.exit_json(internet_gateways=snaked_internet_gateways_array)
+    module.exit_json(internet_gateways=snaked_internet_gateways)
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(type='dict', default=None, ),
-            DryRun = dict(type='bool', default=False),
-            InternetGatewayIds = dict(type='list', default=None)
+            filters = dict(type='dict', default=dict()),
+            internet_gateway_ids = dict(type='list', default=None)
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required.')
+        module.fail_json(msg='botocore and boto3 are required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
