@@ -249,7 +249,7 @@ def network_inventory(remotes):
         groups[remote.platform].append(
             '%s %s' % (
                 remote.name.replace('.', '_'),
-                ' '.join('%s=%s' % (k, options[k]) for k in sorted(options)),
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
 
@@ -338,7 +338,7 @@ def windows_inventory(remotes):
         hosts.append(
             '%s %s' % (
                 remote.name.replace('/', '_'),
-                ' '.join('%s=%s' % (k, options[k]) for k in sorted(options)),
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
 
