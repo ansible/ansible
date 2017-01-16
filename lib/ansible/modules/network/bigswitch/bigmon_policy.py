@@ -40,9 +40,8 @@ options:
      - description of policy.
   action:
     description:
-     - Forward matching packets to delivery interface(s). Drop is for measure rate of matching packets,
-       but do not forward to delivery interface(s). Capture packets and write to a PCAP file. Or enable NetFlow generation.
-    required: true
+     - Forward matching packets to delivery interfaces, Drop is for measure rate of matching packets,
+       but do not forward to delivery interfaces, capture packets and write to a PCAP file, or enable NetFlow generation.
     default: forward
     choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
   priority:
@@ -84,7 +83,7 @@ options:
 
 notes:
   - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
-'''
+''' 
 
 EXAMPLES = '''
    - name: policy to aggregate filter and deliver data center (DC) 1 traffic
@@ -115,6 +114,7 @@ RETURN = '''
         },
         "module_name": "bigmon_policy"
     }
+}
 '''
 
 import os
@@ -193,7 +193,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             policy_description=dict(type='str', default=''),
-            action=dict(choices=['forward', 'drop', 'capture', 'flow-gen'], required=True),
+            action=dict(choices=['forward', 'drop', 'capture', 'flow-gen'], default='forward'),
             priority=dict(type='int', default=100),
             duration=dict(type='int', default=0),
             start_time=dict(type='str', default=datetime.datetime.now().isoformat()+'+00:00'),
