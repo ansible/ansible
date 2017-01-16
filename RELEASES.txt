@@ -4,8 +4,10 @@ Ansible Releases at a Glance
 VERSION  RELEASE     CODE NAME
 ++++++++++++++++++++++++++++++
 
+2.2.1    01-16-2017  "The Battle of Evermore"
 2.2.0    11-01-2016  "The Battle of Evermore"
-2.1.3    TBD         "The Song Remains the Same"
+2.1.4    01-16-2017  "The Song Remains the Same"
+2.1.3    11-04-2016  "The Song Remains the Same"
 2.1.2    09-29-2016  "The Song Remains the Same"
 2.1.1    07-28-2016  "The Song Remains the Same"
 2.1.0    05-25-2016  "The Song Remains the Same"
@@ -23,7 +25,7 @@ VERSION  RELEASE     CODE NAME
 1.8.3    02-17-2015  "You Really Got Me"
 1.8.2    12-04-2014  "You Really Got Me"
 1.8.1    11-26-2014  "You Really Got Me"
-1.8.0    ?           "You Really Got Me"
+1.8.0    11-25-2014  "You Really Got Me"
 1.7.2    09-24-2014  "Summer Nights"
 1.7.1    08-14-2014  "Summer Nights"
 1.7.0    08-06-2014  "Summer Nights"
