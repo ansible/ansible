@@ -139,12 +139,7 @@
 
 
 
-# Negative test cases
-# Failure
-#
-# Multiple commands, mix of successfull and unsuccessful
-#
-# Run a command that returns stdout and stderr
+
 # Quoting and escape tests - look at command/shell test cases
 #
 #
