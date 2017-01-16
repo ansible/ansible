@@ -24,7 +24,6 @@ import json
 import signal
 import datetime
 
-from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
 from ansible.plugins import terminal_loader
@@ -247,7 +246,7 @@ class Connection(_Connection):
             if not signal.getsignal(signal.SIGALRM):
                 display.debug('setting alarm handler in network_cli')
                 signal.signal(signal.SIGALRM, self.alarm_handler)
-            signal.alarm(C.DEFAULT_TIMEOUT)
+            signal.alarm(self._play_context.timeout)
             out = self.send(obj)
             signal.alarm(0)
             return (0, out, '')
