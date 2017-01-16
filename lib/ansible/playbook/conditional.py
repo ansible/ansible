@@ -126,11 +126,10 @@ class Conditional:
         if conditional in all_vars and re.match("^[_A-Za-z][_a-zA-Z0-9]*$", conditional):
             conditional = all_vars[conditional]
 
-        delimiters = re.search('({{.*}}|{%.*%})', conditional)
-        if delimiters:
+        if templar._clean_data(conditional) != conditional:
             display.warning('when statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
-                            'Found: %s' % ', '.join(delimiters.groups()))
+                            'Found: %s' % conditional)
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
