@@ -462,13 +462,13 @@ class PyVmomiDeviceHelper(object):
             nic.device = vim.vm.device.VirtualSriovEthernetCard()
         else:
             self.module.fail_json(msg="Invalid device_type '%s' for network %s" %
-                                      (device_type, device_infos['network']))
+                                      (device_type, device_infos['name']))
 
         nic.device.wakeOnLanEnabled = True
         nic.device.addressType = 'assigned'
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
-        nic.device.deviceInfo.summary = device_infos['network']
+        nic.device.deviceInfo.summary = device_infos['name']
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         nic.device.connectable.startConnected = True
         nic.device.connectable.allowGuestControl = True
@@ -886,8 +886,8 @@ class PyVmomiHelper(object):
         network_devices = list()
         for network in self.params['networks']:
             if 'ip' in network or 'netmask' in network:
-                if 'ip' in network and 'netmask' in network:
-                    self.module.fail_json(msg="Both 'ip' and 'network' are required together.")
+                if 'ip' not in network or not 'netmask' in network:
+                    self.module.fail_json(msg="Both 'ip' and 'netmask' are required together.")
 
             if 'name' in network:
                 if get_obj(self.content, [vim.Network], network['name']) is None:
