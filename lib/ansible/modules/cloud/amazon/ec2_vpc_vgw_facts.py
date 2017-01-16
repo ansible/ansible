@@ -13,6 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+
+
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_vgw_facts
@@ -95,14 +102,10 @@ changed:
     sample: "false"
 '''
 
-import json
-
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # will be captured by imported HAS_BOTO3
 
 
 def get_virtual_gateway_info(virtual_gateway):
@@ -110,60 +113,40 @@ def get_virtual_gateway_info(virtual_gateway):
                              'State': virtual_gateway['State'],
                              'Type': virtual_gateway['Type'],
                              'VpcAttachments': virtual_gateway['VpcAttachments'],
-                             'Tags': virtual_gateway['Tags']                                                              
-               }
+                             'Tags': virtual_gateway['Tags']}
     return virtual_gateway_info
 
 
 def list_virtual_gateways(client, module):
-    dryrun = module.params.get("DryRun")
-    all_virtual_gateways_array = []
     params = dict()
 
-    if module.params.get('filters'):
-        params['Filters'] = []
-        for key, value in module.params.get('filters').items():
-            temp_dict = dict()
-            temp_dict['Name'] = key
-            if isinstance(value, basestring):
-                temp_dict['Values'] = [value]
-            else:
-                temp_dict['Values'] = value
-            params['Filters'].append(temp_dict)
+    params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
+    params['DryRun'] = module.check_mode
 
-    if module.params.get("DryRun"):
-        params['DryRun'] = module.params.get("DryRun")
-
-    if module.params.get("VpnGatewayIds"):
-        params['VpnGatewayIds'] = module.params.get("VpnGatewayIds")
+    if module.params.get("vpn_gateway_ids"):
+        params['VpnGatewayIds'] = module.params.get("vpn_gateway_ids")
 
     try:
         all_virtual_gateways = client.describe_vpn_gateways(**params)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
-    for virtual_gateway in all_virtual_gateways['VpnGateways']:
-        all_virtual_gateways_array.append(get_virtual_gateway_info(virtual_gateway))
-
-    #Turn the boto3 result in to ansible_friendly_snaked_names
-    snaked_vgw_array = []
-    for vgw in all_virtual_gateways_array:
-        snaked_vgw_array.append(camel_dict_to_snake_dict(vgw))
+    snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
+                                for vgw in all_virtual_gateways['VpnGateways']]
     
-    module.exit_json(virtual_gateways=snaked_vgw_array)
+    module.exit_json(virtual_gateways=snaked_vgws)
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(type='dict', default=None, ),
-            DryRun = dict(type='bool', default=False),
-            VpnGatewayIds = dict(type='list', default=None)
+            filters = dict(type='dict', default=dict()),
+            vpn_gateway_ids = dict(type='list', default=None)
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
      # Validate Requirements
     if not HAS_BOTO3:
@@ -180,9 +163,6 @@ def main():
     
     module.exit_json(result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
