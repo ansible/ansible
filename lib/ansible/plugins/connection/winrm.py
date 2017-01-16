@@ -352,7 +352,7 @@ class Connection(ConnectionBase):
         '''
 
         script = script_template.format(self._shell._escape(out_path))
-        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
+        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
         # TODO: improve error handling
@@ -404,7 +404,7 @@ class Connection(ConnectionBase):
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
-                    cmd_parts = self._shell._encode_script(script, as_list=True)
+                    cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise IOError(to_native(result.std_err))
