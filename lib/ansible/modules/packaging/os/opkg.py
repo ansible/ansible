@@ -88,6 +88,7 @@ EXAMPLES = '''
 '''
 
 import pipes
+import os
 
 from ansible.module_utils.urls import fetch_url
 
@@ -200,21 +201,35 @@ def install_packages(module, opkg_path, packages, ipk_install=False):
     install_c = 0
 
     for package in packages:
+        desired_version = None
         if ipk_install:
             if '://' in package:
                 package = download(module, package)
 
-            package_metadata = query_ipk_info(module, opkg_path, package)
-            package_name = package_metadata['Package']
+            if not (module.check_mode and not os.path.exists(package)):
+                package_metadata = query_ipk_info(module, opkg_path, package)
+                package_name = package_metadata['Package']
+                desired_version = package_metadata['Version']
+            else:
+                package_name = package.split('/')[-1].split('_')[0]
         else:
             package_name = package
         if query_package(module, opkg_path, package_name):
-            continue
+            if desired_version:
+                package_metadata = query_ipk_info(module, opkg_path, package_name)
+                if package_metadata['Version'] == desired_version:
+                    continue
+            else:
+                continue
 
         rc, out, err = module.run_command("%s install %s %s %s" % (opkg_path, force, check_arg, package))
 
         if not query_package(module, opkg_path, package_name) and not module.check_mode:
-            module.fail_json(msg="failed to install %s: %s" % (package_name, out))
+            module.fail_json(msg="failed to install %s: %s %s" % (package_name, out, err))
+        if desired_version:
+            package_metadata = query_ipk_info(module, opkg_path, package_name)
+            if package_metadata['Version'] != desired_version:
+                module.fail_json(msg="failed to install %s: %s %s" % (package_name, out, err))
 
         install_c += 1
 
