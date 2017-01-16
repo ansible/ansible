@@ -19,13 +19,13 @@
 
 $params = Parse-Args $args
 
-$src= Get-Attr $params "src" $FALSE
+$src = Get-Attr $params "src" $FALSE -type "path"
 If ($src -eq $FALSE)
 {
     Fail-Json (New-Object psobject) "missing required argument: src"
 }
 
-$dest= Get-Attr $params "dest" $FALSE
+$dest = Get-Attr $params "dest" $FALSE -type "path"
 If ($dest -eq $FALSE)
 {
     Fail-Json (New-Object psobject) "missing required argument: dest"
