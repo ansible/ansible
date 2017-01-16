@@ -318,7 +318,7 @@ class AnsibleCloudscaleServer(object):
 
     def wait_for_state(self, states):
         start = datetime.now()
-        while datetime.now() - start < timedelta(TIMEOUT_WAIT):
+        while datetime.now() - start < timedelta(seconds=TIMEOUT_WAIT):
             self.update_info()
             if self.info['state'] in states:
                 return True
