@@ -34,7 +34,7 @@ options:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: None
-  VpnGatewayIds:
+  vpn_gateway_ids:
     description:
       - Get details of a specific Virtual Gateway ID. This value should be provided as a list. 
     required: false
@@ -66,7 +66,7 @@ EXAMPLES = '''
   ec2_vpc_vgw_facts:
     region: ap-southeast-2
     profile: production
-    VpnGatewayIds: vgw-c432f6a7 
+    vpn_gateway_ids: vgw-c432f6a7 
   register: vgw_facts
 '''
 
