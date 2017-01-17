@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2017, Steve Pletcher <steve@steve-pletcher.com>
 # (c) 2016, René Moser <mail@renemoser.net>
 # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
@@ -58,7 +59,9 @@ options:
     required: true
   msg:
     description:
-      - Message to send.
+      - Message to send. Note that the module does not handle escaping characters.
+        Plain-text angle brackets and ampersands should be converted to HTML entities (e.g. & to &amp;) before sending.
+        See Slack's documentation (U(https://api.slack.com/docs/message-formatting)) for more.
     required: false
     default: None
   channel:
@@ -164,32 +167,39 @@ EXAMPLES = """
           - title: System B
             value: 'load average: 5,16, 4,64, 2,43'
             short: True
+
+- name: Send a message with a link using Slack markup
+  slack:
+    token: thetoken/generatedby/slack
+    msg: We sent this message using <https://www.ansible.com|Ansible>!
+
+- name: Send a message with angle brackets and ampersands
+  slack:
+    token: thetoken/generatedby/slack
+    msg: This message has &lt;brackets&gt; &amp; ampersands in plain text.
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
-# See https://api.slack.com/docs/message-formatting#how_to_escape_characters
-# Escaping quotes and apostrophe however is related to how Ansible handles them.
-html_escape_table = {
-    '&': "&amp;",
-    '>': "&gt;",
-    '<': "&lt;",
+# Escaping quotes and apostrophes to avoid ending string prematurely in ansible call.
+# We do not escape other characters used as Slack metacharacters (e.g. &, <, >).
+escape_table = {
     '"': "\"",
     "'": "\'",
 }
 
-def html_escape(text):
-    '''Produce entities within text.'''
-    return "".join(html_escape_table.get(c,c) for c in text)
+def escape_quotes(text):
+    '''Backslash any quotes within text.'''
+    return "".join(escape_table.get(c,c) for c in text)
 
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
     payload = {}
     if color == "normal" and text is not None:
-        payload = dict(text=html_escape(text))
+        payload = dict(text=escape_quotes(text))
     elif text is not None:
         # With a custom color we have to set the message as attachment, and explicitly turn markdown parsing on for it.
-        payload = dict(attachments=[dict(text=html_escape(text), color=color, mrkdwn_in=["text"])])
+        payload = dict(attachments=[dict(text=escape_quotes(text), color=color, mrkdwn_in=["text"])])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
@@ -221,7 +231,7 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
         for attachment in attachments:
             for key in keys_to_escape:
                 if key in attachment:
-                    attachment[key] = html_escape(attachment[key])
+                    attachment[key] = escape_quotes(attachment[key])
 
             if 'fallback' not in attachment:
                 attachment['fallback'] = attachment['text']
