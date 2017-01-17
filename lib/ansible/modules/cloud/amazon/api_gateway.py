@@ -33,7 +33,7 @@ description:
        you can call API Gateway's REST API.  You may need to patch
        your boto.  See https://github.com/boto/boto3/issues/876
        and discuss with your AWS rep.
-version_added: '2.2'
+version_added: '2.3'
 requirements: [ boto3 ]
 options:
   api_id:
@@ -46,10 +46,14 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
-  api_file:
+  swagger_file:
     description:
       - JSON or YAML file containing swagger definitions for API
-    required: true
+    required: false
+  swagger:
+    description:
+      - Swagger definitions for API in JSON or YAML as a string direct from playbook
+    required: false
   stage:
     description:
       - stage API should be deployed to
@@ -71,18 +75,18 @@ EXAMPLES = '''
 # Update API resources for development
 tasks:
 - name: update API
-  lambda:
+  api_gateway:
     api_id: 'abc123321cba'
     state: present
-    api_file: my_api.yml
+    swagger_file: my_api.yml
 
 # update definitions and deploy API to production
 tasks:
 - name: deploy API
-  lambda:
+  api_gateway:
     api_id: 'abc123321cba'
     state: present
-    api_file: my_api.yml
+    swagger_file: my_api.yml
     stage: production
     deploy_desc: Make auth fix available.
 '''
@@ -122,18 +126,22 @@ def main():
         dict(
             api_id=dict(type='str', required=False),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            api_file=dict(type='str', default=None, aliases=['src']),
+            swagger_file=dict(type='str', default=None, aliases=['src', 'api_file']),
+            swagger=dict(type='str', default=None),
             stage=dict(type='str', default=None),
             deploy_desc=dict(type='str', default=None),
         )
     )
+
+    mutually_exclusive = [['swagger_file', 'swagger']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,  )   # TODO !!!`
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')
-    api_file = os.path.expanduser(module.params.get('api_file'))
+    swagger_file = os.path.expanduser(module.params.get('swagger_file'))
+    swagger = module.params.get('swagger')
     stage= module.params.get('stage')
     deploy_desc= module.params.get('deploy_desc')
 
@@ -161,10 +169,24 @@ def main():
         awsret=client.create_rest_api(name="ansible-temp-api", description=desc)
         api_id=awsret["id"]
 
-    with open(api_file) as f:
-        apidata=f.read()
+    apidata=None
+    if swagger_file:
+        try:
+            with open(swagger_file) as f:
+                apidata=f.read()
+        except Exception as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    if swagger:
+        apidata=swagger
 
-    create_response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
+    if apidata is None:
+        module.fail_json(msg='module error - failed to get API data')
+
+    try:
+        create_response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
+    except Exception as e:
+        module.fail_json(msg=str(e) + ": trying to create api {}".format(api_id),
+                         exception=traceback.format_exc())
 
     if deploy_desc is None:
         deploy_desc = "Automatic deployment."
