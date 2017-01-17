@@ -81,7 +81,7 @@ class AnsibleCoreCI(object):
                 display.info('Checking existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                              verbosity=1)
 
-                self.connection = self.get()
+                self.connection = self.get(always_raise_on=[404])
 
                 display.info('Loaded existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                              verbosity=1)
@@ -159,9 +159,12 @@ class AnsibleCoreCI(object):
 
         raise self._create_http_error(response)
 
-    def get(self):
+    def get(self, tries=2, sleep=10, always_raise_on=None):
         """
         Get instance connection information.
+        :type tries: int
+        :type sleep: int
+        :type always_raise_on: list[int] | None
         :rtype: InstanceConnection
         """
         if not self.started:
@@ -169,11 +172,11 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return None
 
+        if not always_raise_on:
+            always_raise_on = []
+
         if self.connection and self.connection.running:
             return self.connection
-
-        tries = 2
-        sleep = 10
 
         while True:
             tries -= 1
@@ -184,7 +187,7 @@ class AnsibleCoreCI(object):
 
             error = self._create_http_error(response)
 
-            if not tries:
+            if not tries or response.status_code in always_raise_on:
                 raise error
 
             display.warning('%s. Trying again after %d seconds.' % (error, sleep))
