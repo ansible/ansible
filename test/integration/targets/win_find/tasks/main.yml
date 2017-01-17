@@ -1,0 +1,574 @@
+---
+- name: template out setup script
+  win_template:
+    src: templates/setup_script.ps1.tmpl
+    dest: "{{win_output_dir}}\\setup_script.ps1"
+
+- name: run setup script
+  win_command: powershell "{{win_output_dir}}\\setup_script.ps1"
+
+- name: expect failure when not setting paths
+  win_find:
+    patterns: a
+  register: actual
+  failed_when: "actual.msg != 'Missing required argument: paths'"
+
+- name: expect failure when setting paths to a file
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single\\large.ps1"
+  register: actual
+  failed_when: "actual.msg != 'Argument path {{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\win_find\\single\\large.ps1 is a file not a directory'"
+
+- name: expect failure whe path is set to a non existant folder
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\thisisafakefolder"
+  register: actual
+  failed_when: "actual.msg != 'Argument path {{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\win_find\\\\thisisafakefolder does not exist cannot get information on'"
+
+- name: get files in single directory
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single"
+  register: actual
+
+- name: set expected value for files in a single directory
+  set_fact:
+    expected:
+      changed: False
+      examined: 5
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: large.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\large.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 260002 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .log,
+          filename: out_20161101-091005.log,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\out_20161101-091005.log",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 764c16af46dd4f15edb05ecc5595b50cbe3714ea,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: small.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\small.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 3 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\test.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      matched: 4
+
+- name: assert actual == expected
+  assert:
+    that: "actual == expected"
+
+- name: find hidden files
+  win_find:
+    paths: ['{{win_output_dir}}\\win_find\\single', '{{win_output_dir}}\\win_find\\nested']
+    hidden: True
+  register: actual
+
+- name: set fact for hidden files
+  set_fact:
+    expected:
+      changed: False
+      examined: 11
+      files:
+      - { isarchive: True,
+          attributes: "Hidden, Archive",
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: hidden.ps1,
+          ishidden: True,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\hidden.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      matched: 1
+
+- name: assert actual == expected
+  assert:
+    that: "actual == expected"
+
+- name: find file based on pattern
+  win_find:
+    paths: '{{win_output_dir}}\\win_find\\single'
+    patterns: ['*.log', 'out_*']
+  register: actual_pattern
+
+- name: find file based on pattern regex
+  win_find:
+    paths: '{{win_output_dir}}\\win_find\\single'
+    patterns: "out_\\d{8}-\\d{6}.log"
+    use_regex: True
+  register: actual_regex
+
+- name: set fact for pattern files
+  set_fact:
+    expected:
+      changed: False
+      examined: 5
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .log,
+          filename: out_20161101-091005.log,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\out_20161101-091005.log",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      matched: 1
+
+- name: assert actual == expected
+  assert:
+    that: 
+    - "actual_pattern == expected"
+    - "actual_regex == expected"
+
+- name: find files with recurse set
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\nested"
+    recurse: True
+    patterns: "*.ps1"
+  register: actual
+
+- name: set expected value for files in a nested directory
+  set_fact:
+    expected:
+      changed: False
+      examined: 8
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\sub-nest\\test.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: file.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\file.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\test.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      matched: 3
+
+- name: assert actual == expected
+  assert:
+    that: "actual == expected"
+
+- name: find files with recurse set and follow links
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\nested"
+    recurse: True
+    follow: True
+    patterns: "*.ps1"
+  register: actual
+
+- name: set expected value for files in a nested directory while following links
+  set_fact:
+    expected:
+      changed: False
+      examined: 10
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: link.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\link\\link.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\sub-nest\\test.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: file.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\file.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 09cb79e8fc7453c84a07f644e441fd81623b7f98,
+          creationtime: 1477984205,
+          extension: .ps1,
+          filename: test.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\nested\\test.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 23 }
+      matched: 4
+
+- name: assert actual == expected
+  assert:
+    that: "actual == expected"
+
+- name: find directories
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\link-dest"
+    file_type: directory
+  register: actual
+
+- name : set expected fact for directories with recurse and follow
+  set_fact:
+    expected:
+      changed: False
+      examined: 2
+      files:
+      - { isarchive: False,
+          attributes: Directory,
+          checksum: Null,
+          creationtime: 1477984205,
+          extension: "",
+          filename: sub-link,
+          ishidden: False,
+          isdir: True,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\link-dest\\sub-link",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 0 }
+      matched: 1
+
+- name: assert actual == expected
+  assert:
+    that: "actual == expected"
+
+- name: find directories recurse and follow with a broken link
+  win_find:
+    paths: "{{win_output_dir}}\\win_find"
+    file_type: directory
+    recurse: True
+    follow: True
+  register: actual
+
+- name: check directory count with recurse and follow is correct
+  assert:
+    that:
+    - "actual.examined == 33"
+    - "actual.matched == 13"
+    - "actual.files[0].filename == 'broken-link'"
+    - "actual.files[0].islink == True"
+    - "actual.files[2].filename == 'junction-link'"
+    - "actual.files[2].islink == True"
+    - "actual.files[7].filename == 'link'"
+    - "actual.files[7].islink == True"
+    - "actual.files[11].filename == 'folder'"
+    - "actual.files[11].islink == False"
+    - "actual.files[11].isshared == True"
+    - "actual.files[11].sharename == 'folder-share'"
+
+- name: filter files by size without byte specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single"
+    size: 260002
+  register: actual_without_byte
+
+- name: filter files by size with byte specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single"
+    size: 253k
+  register: actual_with_byte
+
+- name: set expected fact for files by size
+  set_fact:
+    expected:
+      changed: False
+      examined: 5
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af,
+          creationtime: 1477984205,
+          extension: ".ps1",
+          filename: large.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\large.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 260002 }
+      matched: 1
+
+- name: assert actual == expected
+  assert:
+    that: 
+    - "actual_without_byte == expected"
+    - "actual_with_byte == expected"
+
+- name: filter files by size (less than) without byte specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single"
+    size: -4
+  register: actual_without_byte
+
+- name: filter files by size (less than) with byte specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\single"
+    size: -4b
+  register: actual_with_byte
+
+- name: set expected fact for files by size (less than)
+  set_fact:
+    expected:
+      changed: False
+      examined: 5
+      files:
+      - { isarchive: True,
+          attributes: Archive,
+          checksum: 764c16af46dd4f15edb05ecc5595b50cbe3714ea,
+          creationtime: 1477984205,
+          extension: ".ps1",
+          filename: small.ps1,
+          ishidden: False,
+          isdir: False,
+          islink: False,
+          lastaccesstime: 1477984205,
+          lastwritetime: 1477984205,
+          owner: BUILTIN\Administrators,
+          path: "{{win_output_dir}}\\win_find\\single\\small.ps1",
+          isreadonly: False,
+          isshared: False,
+          sharename: '',
+          size: 3 }
+      matched: 1
+
+- name: assert actual == expected
+  assert:
+    that: 
+    - "actual_without_byte == expected"
+    - "actual_with_byte == expected"
+
+# For dates we cannot assert against expected as the times change, this is a poor mans attempt at testing
+- name: filter files by age without unit specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\date"
+    age: 3600
+  register: actual_without_unit
+
+- name: filter files by age with unit specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\date"
+    age: 1h
+  register: actual_with_unit
+
+- name: assert dates match each other
+  assert:
+    that:
+    - "actual_without_unit == actual_with_unit"
+    - "actual_without_unit.matched == 1"
+    - "actual_without_unit.files[0].checksum == 'eb9cd0d07cc33a8b7b5d87671cb4bee598a41235'"
+    - "actual_without_unit.files[0].path == '{{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\win_find\\\\date\\\\new.ps1'"
+
+- name: filter files by age (older than) without unit specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\date"
+    age: -1
+  register: actual_without_unit
+
+- name: filter files by age (older than) without unit specified
+  win_find:
+    paths: "{{win_output_dir}}\\win_find\\date"
+    age: -1s
+  register: actual_with_unit
+
+- name: assert dates match each other
+  assert:
+    that:
+    - "actual_without_unit == actual_with_unit"
+    - "actual_without_unit.matched == 2"
+    - "actual_without_unit.files[0].checksum == 'eb9cd0d07cc33a8b7b5d87671cb4bee598a41235'"
+    - "actual_without_unit.files[0].path == '{{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\win_find\\\\date\\\\new.ps1'"
+    - "actual_without_unit.files[1].checksum == 'fda915650c1bf8ca292bff03c85717f461e45c1b'"
+    - "actual_without_unit.files[1].path == '{{win_output_dir|regex_replace('\\\\', '\\\\\\\\')}}\\\\win_find\\\\date\\\\old.ps1'"
+
+- name: check if broken symbolic link exists
+  win_stat:
+    path: "{{win_output_dir}}\\win_find\\broken-link"
+  register: broken_link_exists
+
+- name: delete broken symbolic link if it exists
+  win_shell: rmdir {{win_output_dir}}\win_find\broken-link
+  args:
+    executable: cmd
+  when: broken_link_exists.stat.exists
+
+- name: check if junction symbolic link exists
+  win_stat:
+    path: "{{win_output_dir}}\\win_find\\junction-link"
+  register: junction_link_exists
+
+- name: delete junction symbolic link if it exists
+  win_shell: rmdir {{win_output_dir}}\win_find\junction-link
+  args:
+    executable: cmd
+  when: junction_link_exists.stat.exists
+
+- name: check if nested symbolic link exists
+  win_stat:
+    path: "{{win_output_dir}}\\win_find\\nested\\link"
+  register: nested_link_exists
+
+- name: delete nested symbolic link if it exists
+  win_shell: rmdir {{win_output_dir}}\win_find\nested\link
+  args:
+    executable: cmd
+  when: nested_link_exists.stat.exists
+
+- name: remove testing folder
+  win_file:
+    path: "{{win_output_dir}}\\win_find"
+    state: absent
