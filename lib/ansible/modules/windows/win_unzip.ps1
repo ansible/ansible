@@ -61,8 +61,8 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
         $shell = New-Object -ComObject Shell.Application
         $zipPkg = $shell.NameSpace([IO.Path]::GetFullPath($src))
         $destPath = $shell.NameSpace([IO.Path]::GetFullPath($dest))
-        # 20 means do not display any dialog (4) and overwrite any file (16)
-        $destPath.CopyHere($zipPkg.Items(), 20)
+        # 1044 means do not display any error dialog (1024), progress dialog (4) and overwrite any file (16)
+        $destPath.CopyHere($zipPkg.Items(), 1044)
         $result.changed = $true
     }
     Catch {
