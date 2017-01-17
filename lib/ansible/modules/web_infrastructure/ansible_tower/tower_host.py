@@ -62,6 +62,7 @@ options:
 
 
 requirements:
+  - "python >= 2.6"
   - "ansible-tower-cli >= 3.0.3"
 
 notes:
