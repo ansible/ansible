@@ -269,12 +269,12 @@ def network_inventory(remotes):
     for group in groups:
         hosts = '\n'.join(groups[group])
 
-        template += """
+        template += textwrap.dedent("""
         [%s]
         %s
-        """ % (group, hosts)
+        """) % (group, hosts)
 
-    inventory = textwrap.dedent(template)
+    inventory = template
 
     return inventory
 
