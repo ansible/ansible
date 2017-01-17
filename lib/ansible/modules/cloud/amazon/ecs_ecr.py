@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: ecr
+module: ecs_ecr
 version_added: "2.3"
 short_description: Manage Elastic Container Registry repositories
 description:
@@ -47,15 +47,21 @@ options:
         description:
             - the name of the repository
         required: true
+    registry_id:
+        description:
+            - AWS account id associated with the registry.
+            - If not specified, the default registry is assumed.
+        required: false
     policy:
         description:
-            - dict that gets JSONified for policy_text
+            - JSON or dict that represents the new policy
         required: false
-    policy_text:
+    force_set_policy:
         description:
-            - string for new policy text
-            - setting to an empty string removes the repository's policy
+            - if no, prevents setting a policy that would prevent you from
+              setting another policy in the future.
         required: false
+        default: false
     delete_policy:
         description:
             - if yes, remove the policy from the repository
@@ -73,17 +79,20 @@ extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Since neither policy nor policy_text are specified, existing policies on the
-# repository are unchanged
+# If the repository does not exist, it is created. If it does exist, would not
+# affect any policies already on it.
 - name: ecr-repo
-  ecr: name=super/cool
+  ecs_ecr: name=super/cool
 
 - name: destroy-ecr-repo
-  ecr: name=old/busted state=absent
+  ecs_ecr: name=old/busted state=absent
 
-- name: set-policy
-  ecr:
-    name: needs-policy
+- name: Cross account ecr-repo
+  ecs_ecr: registry_id=999999999999 name=cross/account
+
+- name: set-policy as object
+  ecs_ecr:
+    name: needs-policy-object
     policy:
       Version: '2008-10-17'
       Statement:
@@ -96,28 +105,67 @@ EXAMPLES = '''
             - ecr:BatchGetImage
             - ecr:BatchCheckLayerAvailability
 
-- name: set-policy-text
-  ecr:
-    name: needs-policy
-    policy_text: "{{ lookup('template', 'policy.json.j2') }}"
+- name: set-policy as string
+  ecs_ecr:
+    name: needs-policy-string
+    policy: "{{ lookup('template', 'policy.json.j2') }}"
+
+- name: delete-policy
+  ecs_ecr:
+    name: needs-no-policy
+    delete_policy: yes
 '''
 
 RETURN = '''
+state:
+    type: string
+    description: The asserted state of the repository (present, absent)
 created:
     type: boolean
     description: If true, the repository was created
-    returned: "when state == 'present'"
+name:
+    type: string
+    description: The name of the repository
+    returned: "when state == 'absent'"
 repository:
     type: dict
     description: The created or updated repository
     returned: "when state == 'present'"
     sample:
-        - createdAt: xxx
-
+        createdAt: '2017-01-17T08:41:32-06:00'
+        registryId: '999999999999'
+        repositoryArn: arn:aws:ecr:us-east-1:999999999999:repository/ecr-test-1484664090
+        repositoryName: ecr-test-1484664090
+        repositoryUri: 999999999999.dkr.ecr.us-east-1.amazonaws.com/ecr-test-1484664090
 '''
 
 
-class ECR:
+def boto_exception(err):
+    '''boto error message handler'''
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = err.message
+    else:
+        error = '%s: %s' % (Exception, err)
+
+    return error
+
+
+def build_kwargs(registry_id):
+    """
+    Builds a kwargs dict which may contain the optional registryId.
+
+    :param registry_id: Optional string containing the registryId.
+    :return: kwargs dict with registryId, if given
+    """
+    if not registry_id:
+        return dict()
+    else:
+        return dict(registryId=registry_id)
+
+
+class EcsEcr:
     def __init__(self, module):
         region, ec2_url, aws_connect_kwargs = \
             get_aws_connection_info(module, boto3=True)
@@ -129,9 +177,10 @@ class ECR:
         self.changed = False
         self.skipped = False
 
-    def get_repository(self, name):
+    def get_repository(self, registry_id, name):
         try:
-            res = self.ecr.describe_repositories(repositoryNames=[name])
+            res = self.ecr.describe_repositories(
+                repositoryNames=[name], **build_kwargs(registry_id))
             repos = res.get('repositories')
             return repos and repos[0]
         except ClientError as err:
@@ -140,9 +189,10 @@ class ECR:
                 return None
             raise
 
-    def get_repository_policy(self, name):
+    def get_repository_policy(self, registry_id, name):
         try:
-            res = self.ecr.get_repository_policy(repositoryName=name)
+            res = self.ecr.get_repository_policy(
+                repositoryName=name, **build_kwargs(registry_id))
             text = res.get('policyText')
             return text and json.loads(text)
         except ClientError as err:
@@ -151,89 +201,92 @@ class ECR:
                 return None
             raise
 
-    def create_repository(self, name):
+    def create_repository(self, registry_id, name):
         if not self.check_mode:
-            repo = self.ecr.create_repository(repositoryName=name).get(
+            repo = self.ecr.create_repository(
+                repositoryName=name, **build_kwargs(registry_id)).get(
                 'repository')
             self.changed = True
             return repo
+        else:
+            self.skipped = True
+            return dict(repositoryName=name)
 
-        self.skipped = True
-        return dict(repositoryName=name)
-
-    def set_repository_policy(self, name, policy_text):
+    def set_repository_policy(self, registry_id, name, policy_text, force):
         if not self.check_mode:
-            policy = self.ecr.set_repository_policy(repositoryName=name,
-                                                    policyText=policy_text)
+            policy = self.ecr.set_repository_policy(
+                repositoryName=name,
+                policyText=policy_text,
+                force=force,
+                **build_kwargs(registry_id))
             self.changed = True
             return policy
+        else:
+            self.skipped = True
+            if self.get_repository(registry_id, name) is None:
+                printable = name
+                if registry_id:
+                    printable = '{}:{}'.format(registry_id, name)
+                raise Exception(
+                    'could not find repository {}'.format(printable))
+            return
 
-        self.skipped = True
-        if self.get_repository(name) is None:
-            # TODO: if does not exists, fail gracefully
-            raise Error('TODO: handle this case')
-        return
-
-    def delete_repository(self, name):
+    def delete_repository(self, registry_id, name):
         if not self.check_mode:
-            repo = self.ecr.delete_repository(repositoryName=name)
+            repo = self.ecr.delete_repository(
+                repositoryName=name, **build_kwargs(registry_id))
             self.changed = True
             return repo
+        else:
+            repo = self.get_repository(registry_id, name)
+            if repo:
+                self.skipped = True
+                return repo
+            return None
 
-        repo = self.get_repository(name)
-        if repo:
-            self.skipped = True
-            return repo
-        return None
-
-    def delete_repository_policy(self, name):
+    def delete_repository_policy(self, registry_id, name):
         if not self.check_mode:
-            policy = self.ecr.delete_repository_policy(repositoryName=name)
+            policy = self.ecr.delete_repository_policy(
+                repositoryName=name, **build_kwargs(registry_id))
             self.changed = True
             return policy
-
-        policy = self.get_repository_policy(name)
-        if policy:
-            self.skipped = True
-            return policy
-        return None
+        else:
+            policy = self.get_repository_policy(registry_id, name)
+            if policy:
+                self.skipped = True
+                return policy
+            return None
 
 
 def run(ecr, params, verbosity):
+    # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
     result = {}
     try:
         name = params['name']
         state = params['state']
-        policy = params['policy']
-        policy_text = params['policy_text']
+        policy_text = params['policy']
         delete_policy = params['delete_policy']
+        registry_id = params['registry_id']
+        force_set_policy = params['force_set_policy']
 
-        try:
-            if policy_text is not None:
-                # policy_text given; parse it
-                policy = json.loads(policy_text)
-            elif policy is not None:
-                # policy given; dump it
-                policy_text = json.dumps(policy)
-        except ValueError:
-            result['msg'] = 'Invalid JSON given for policy_text'
-            return False, result
+        # If a policy was given, parse it
+        policy = policy_text and json.loads(policy_text)
 
         result['state'] = state
         result['created'] = False
 
-        repo = ecr.get_repository(name)
+        repo = ecr.get_repository(registry_id, name)
 
         if state == 'present':
             result['created'] = False
             if not repo:
-                repo = ecr.create_repository(name)
+                repo = ecr.create_repository(registry_id, name)
                 result['changed'] = True
                 result['created'] = True
             result['repository'] = repo
 
             if delete_policy:
-                original_policy = ecr.get_repository_policy(name)
+                original_policy = ecr.get_repository_policy(registry_id, name)
 
                 if verbosity >= 2:
                     result['policy'] = None
@@ -242,19 +295,26 @@ def run(ecr, params, verbosity):
                     result['original_policy'] = original_policy
 
                 if original_policy:
-                    ecr.delete_repository_policy(name)
+                    ecr.delete_repository_policy(registry_id, name)
                     result['changed'] = True
 
-            elif policy is not None:
+            elif policy_text is not None:
                 try:
+                    policy = sort_json_policy_dict(policy)
                     if verbosity >= 2:
                         result['policy'] = policy
-                    original_policy = ecr.get_repository_policy(name)
+                    original_policy = ecr.get_repository_policy(
+                        registry_id, name)
+
+                    if original_policy:
+                        original_policy = sort_json_policy_dict(original_policy)
+
                     if verbosity >= 3:
                         result['original_policy'] = original_policy
 
                     if original_policy != policy:
-                        ecr.set_repository_policy(name, policy_text)
+                        ecr.set_repository_policy(
+                            registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
                 except:
                     # Some failure w/ the policy. It's helpful to know what the
@@ -265,7 +325,7 @@ def run(ecr, params, verbosity):
         elif state == 'absent':
             result['name'] = name
             if repo:
-                ecr.delete_repository(name)
+                ecr.delete_repository(registry_id, name)
                 result['changed'] = True
 
     except Exception as err:
@@ -289,21 +349,22 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
+        registry_id=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'],
                    default='present'),
-        policy=dict(required=False, type='dict'),
-        policy_text=dict(required=False)),
-        delete_policy=dict(required=False, type='bool'))
+        force_set_policy=dict(required=False, type='bool', default=False),
+        policy=dict(required=False, type='json'),
+        delete_policy=dict(required=False, type='bool')))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=[
-                               ['policy', 'policy_text', 'delete_policy']])
+                               ['policy', 'delete_policy']])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    ecr = ECR(module)
+    ecr = EcsEcr(module)
     passed, result = run(ecr, module.params, module._verbosity)
 
     if passed:

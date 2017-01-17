@@ -4,7 +4,7 @@
 
 - block:
     - name: When creating with check mode
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
       register: result
       check_mode: yes
 
@@ -16,8 +16,20 @@
           - result.created
 
 
+    - name: When specifying a registry that is inaccessible
+      ecs_ecr: registry_id=999999999999 name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail with an AccessDeniedException
+      assert:
+        that:
+          - result|failed
+          - '"AccessDeniedException" in result.msg'
+
+
     - name: When creating a repository
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
       register: result
 
     - name: it should change and create
@@ -28,7 +40,7 @@
 
 
     - name: When creating a repository that already exists in check mode
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
       register: result
       check_mode: yes
 
@@ -40,7 +52,7 @@
 
 
     - name: When creating a repository that already exists
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
       register: result
 
     - name: it should not change
@@ -50,7 +62,7 @@
 
 
     - name: When in check mode, and deleting a policy that does not exists
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
@@ -65,7 +77,7 @@
 
 
     - name: When in check mode, setting policy on a repository that has no policy
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
@@ -81,7 +93,7 @@
 
 
     - name: When setting policy on a repository that has no policy
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
@@ -95,7 +107,7 @@
 
 
     - name: When in check mode, and deleting a policy that exists
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
@@ -111,7 +123,7 @@
 
 
     - name: When deleting a policy that exists
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
@@ -124,11 +136,11 @@
           - not result.created
 
 
-    - name: When setting a policy by policy_text
-      ecr:
+    - name: When setting a policy as a string
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        policy_text: '{{ policy | to_json }}'
+        policy: '{{ policy | to_json }}'
       register: result
 
     - name: it should change and not create
@@ -139,7 +151,7 @@
 
 
     - name: When setting a policy to its current value
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
@@ -152,7 +164,7 @@
 
 
     - name: When omitting policy on a repository that has a policy
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
       register: result
@@ -163,23 +175,8 @@
           - not result|changed
 
 
-    - name: When specifying both policy and policy_text
-      ecr:
-        region: '{{ ec2_region }}'
-        name: '{{ ecr_name }}'
-        policy: '{{ policy }}'
-        policy_text: '{{ policy_text }}'
-      register: result
-      ignore_errors: true
-
-    - name: it should fail
-      assert:
-        that:
-          - result|failed
-
-
     - name: When specifying both policy and delete_policy
-      ecr:
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
@@ -193,8 +190,8 @@
           - result|failed
 
 
-    - name: When specifying invalid JSON for policy_text
-      ecr:
+    - name: When specifying invalid JSON for policy
+      ecs_ecr:
         region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy_text: "Ceci n'est pas une JSON"
@@ -208,7 +205,7 @@
 
 
     - name: When in check mode, deleting a policy that exists
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
       register: result
       check_mode: yes
 
@@ -221,7 +218,7 @@
 
 
     - name: When deleting a policy that exists
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
       register: result
 
     - name: it should change
@@ -231,7 +228,7 @@
 
 
     - name: When in check mode, deleting a policy that does not exist
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
       register: result
       check_mode: yes
 
@@ -243,7 +240,7 @@
 
 
     - name: When deleting a policy that does not exist
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
       register: result
 
     - name: it should not change
@@ -253,4 +250,4 @@
 
   always:
     - name: Delete lingering ECR repository
-      ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
