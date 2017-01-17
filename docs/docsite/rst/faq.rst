@@ -150,7 +150,7 @@ How do I disable cowsay?
 ++++++++++++++++++++++++
 
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable::
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable:
 
 .. code-block:: shell-session
 
