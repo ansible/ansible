@@ -101,7 +101,7 @@ output:
       }
 '''
 
-# Import from Python standard library
+import os
 
 try:
     import botocore
@@ -117,12 +117,13 @@ except ImportError:
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        api_id=dict(type='str', required=False),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
-        api_file=dict(type='str', default=None, aliases=['src']),
-        stage=dict(type='str', default=None),
-        deploy_desc=dict(type='str', default=None),
+    argument_spec.update(
+        dict(
+            api_id=dict(type='str', required=False),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
+            api_file=dict(type='str', default=None, aliases=['src']),
+            stage=dict(type='str', default=None),
+            deploy_desc=dict(type='str', default=None),
         )
     )
 
@@ -130,19 +131,19 @@ def main():
                            supports_check_mode=False,  ) #TODO !!!`
 
     api_id = module.params.get('api_id')
-    state = module.params.get('state').lower()
-    api_file = module.params.get('api_file')
+    state = module.params.get('state')
+    api_file = os.path.expanduser(module.params.get('api_file'))
     stage= module.params.get('stage')
     deploy_desc= module.params.get('deploy_desc')
 
 #    check_mode = module.check_mode
     changed = False
 
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='Python module "botocore" is missing, please install it')
-
     if not HAS_BOTO3:
         module.fail_json(msg='Python module "boto3" is missing, please install it')
+
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='Python module "botocore" is missing, please install it')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if not region:
@@ -152,7 +153,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='apigateway',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if not api_id:
         desc="Incomplete API creation by ansible api_gateway module"
