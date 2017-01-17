@@ -95,6 +95,13 @@
   assert:
     that: "{{_.failed}}"
 
+- name: Test extract
+  assert:
+    that:
+        - '"c" == 2 | extract(["a", "b", "c"])'
+        - '"b" == 1 | extract(["a", "b", "c"])'
+        - '"a" == 0 | extract(["a", "b", "c"])'
+
 - name: Container lookups with extract
   assert:
     that:
@@ -104,6 +111,9 @@
         - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+  # map was added to jinja2 in version 2.7
+  when: "{{ ( lookup('pipe', 'pip show --disable-pip-version-check jinja2 | grep ^Version: | sed \"s/^Version: //\"') |
+              version_compare('2.7', '>=') ) }}"
 
 - name: Test json_query filter
   assert:
