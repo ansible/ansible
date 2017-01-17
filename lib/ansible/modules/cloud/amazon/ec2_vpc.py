@@ -85,6 +85,11 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
+  dhcp_option:
+    description:
+      - a dhcp-options id to associate to the VPC
+    required: no
+    default: Null
   state:
     description:
       - Create or terminate the VPC
@@ -123,6 +128,7 @@ EXAMPLES = '''
             az: us-west-2a
             resource_tags: { "Environment":"Dev", "Tier" : "DB" }
         internet_gateway: True
+        dhcp_option: dopt-5d539f26
         route_tables:
           - subnets:
               - 172.22.2.0/24
@@ -337,6 +343,7 @@ def create_vpc(module, vpc_conn):
     subnets = module.params.get('subnets')
     internet_gateway = module.params.get('internet_gateway')
     route_tables = module.params.get('route_tables')
+    dhcp_option = module.params.get('dhcp_option')
     vpc_spec_tags = module.params.get('resource_tags')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
@@ -400,6 +407,44 @@ def create_vpc(module, vpc_conn):
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_support=dns_support)
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_hostnames=dns_hostnames)
 
+    # Check if a dhcp_option was provided
+    if dhcp_option is not None:
+
+        #get all of the dhcp_option_ids in the account
+        dhcp_result = vpc_conn.get_all_dhcp_options(filters={'dhcp-options-id': dhcp_option})
+
+        #Check that the supplied dhcp_option_id exists
+        if dhcp_result != []:
+
+            #get the dhcp_option_id currently associated with the VPC
+            dhcp_association = vpc_conn.get_all_vpcs(vpc.id, filters={'dhcpOptionsId': dhcp_option})
+
+            #if the supplied dhcp_option_id is not already associated, try to associate it.
+            if dhcp_association == []:
+                try:
+                    vpc_conn.associate_dhcp_options(dhcp_option, vpc.id)
+                    changed = True
+
+                except EC2ResponseError as e:
+                    module.fail_json(msg='Unable to associate dhcp option {0}, error: {1}'.format(dhcp_option, e))
+        else:
+            module.fail_json(msg='The dhcp-option-id supplied does not exist')
+
+    # if no dhcp option id is supplied, check if a non-default option id is associated
+    # if so, change it back to default.
+
+    if dhcp_option is None:
+        current_vpc = find_vpc(module, vpc_conn, id, cidr_block)
+        current_vpc_dict = get_vpc_info(current_vpc)
+        default_option = 'default'
+
+        if current_vpc_dict['dhcp_options_id'] != default_option:
+            try:
+                vpc_conn.associate_dhcp_options(default_option, vpc.id)
+                changed = True
+
+            except EC2ResponseError, e:
+                module.fail_json(msg='Unable to associate dhcp option {0}, error: {1}'.format(default_option, e))
 
     # Process all subnet properties
     if subnets is not None:
@@ -703,6 +748,7 @@ def main():
             dns_hostnames = dict(type='bool', default=True),
             subnets = dict(type='list'),
             vpc_id = dict(),
+            dhcp_option = dict(),
             internet_gateway = dict(type='bool', default=False),
             resource_tags = dict(type='dict', required=True),
             route_tables = dict(type='list'),
