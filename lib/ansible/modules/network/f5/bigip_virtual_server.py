@@ -84,6 +84,12 @@ options:
         by the virtual server
     required: false
     default: None
+  all_policies:
+    description:
+      - List of all policies enabled for the virtual server.
+    required: false
+    default: None
+    version_added: "2.3"
   all_rules:
     version_added: "2.2"
     description:
@@ -116,6 +122,13 @@ options:
       - Default Profile which manages the session persistence
     required: false
     default: None
+  fallback_persistence_profile:
+    description:
+      - Specifies the persistence profile you want the system to use if it
+        cannot use the specified default persistence profile.
+    required: false
+    default: None
+    version_added: "2.3"
   route_advertisement_state:
     description:
       - Enable route advertisement for destination
@@ -311,6 +324,43 @@ def set_profiles(api, name, profiles_list):
         return updated
     except bigsuds.OperationFailed as e:
         raise Exception('Error on setting profiles : %s' % e)
+
+
+def get_policies(api, name):
+    return api.LocalLB.VirtualServer.get_content_policy(
+        virtual_servers=[name]
+    )[0]
+
+
+def set_policies(api, name, policies_list):
+    updated = False
+    try:
+        if policies_list is None:
+            return False
+        current_policies = get_policies(api, name)
+        to_add_policies = []
+        for x in policies_list:
+            if x not in current_policies:
+                to_add_policies.append(x)
+        to_del_policies = []
+        for x in current_policies:
+            if x not in policies_list:
+                to_del_policies.append(x)
+        if len(to_del_policies) > 0:
+            api.LocalLB.VirtualServer.remove_content_policy(
+                virtual_servers=[name],
+                policies=[to_del_policies]
+            )
+            updated = True
+        if len(to_add_policies) > 0:
+            api.LocalLB.VirtualServer.add_content_policy(
+                virtual_servers=[name],
+                policies=[to_add_policies]
+            )
+            updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting policies : %s' % e)
 
 
 def get_vlan(api, name):
@@ -550,6 +600,36 @@ def set_default_persistence_profiles(api, name, persistence_profile):
         raise Exception('Error on setting default persistence profile : %s' % e)
 
 
+def get_fallback_persistence_profile(api, name):
+    return api.LocalLB.VirtualServer.get_fallback_persistence_profile(
+        virtual_servers=[name]
+    )[0]
+
+
+def set_fallback_persistence_profile(api, partition, name, persistence_profile):
+    updated = False
+    if persistence_profile is None:
+        return updated
+    try:
+        # This is needed because the SOAP API expects this to be an "empty"
+        # value to set the fallback profile to "None". The fq_name function
+        # does not take "None" into account though, so I do that here.
+        if persistence_profile != "":
+            persistence_profile = fq_name(partition, persistence_profile)
+
+        current_fallback_profile = get_fallback_persistence_profile(api, name)
+
+        if current_fallback_profile != persistence_profile:
+            api.LocalLB.VirtualServer.set_fallback_persistence_profile(
+                virtual_servers=[name],
+                profile_names=[persistence_profile]
+            )
+            updated = True
+        return updated
+    except bigsuds.OperationFailed as e:
+        raise Exception('Error on setting fallback persistence profile : %s' % e)
+
+
 def get_route_advertisement_status(api, address):
     result = api.LocalLB.VirtualAddressV2.get_route_advertisement_state(virtual_addresses=[address]).pop(0)
     result = result.split("STATE_")[-1].lower()
@@ -579,6 +659,7 @@ def main():
         name=dict(type='str', required=True, aliases=['vs']),
         destination=dict(type='str', aliases=['address', 'ip']),
         port=dict(type='int'),
+        all_policies=dict(type='list'),
         all_profiles=dict(type='list'),
         all_rules=dict(type='list'),
         enabled_vlans=dict(type='list'),
@@ -586,7 +667,8 @@ def main():
         description=dict(type='str'),
         snat=dict(type='str'),
         route_advertisement_state=dict(type='str', default='disabled', choices=['enabled', 'disabled']),
-        default_persistence_profile=dict(type='str')
+        default_persistence_profile=dict(type='str'),
+        fallback_persistence_profile=dict(type='str')
     ))
 
     module = AnsibleModule(
@@ -614,6 +696,7 @@ def main():
     destination = module.params['destination']
     port = module.params['port']
     all_profiles = fq_list_names(partition, module.params['all_profiles'])
+    all_policies = fq_list_names(partition, module.params['all_policies'])
     all_rules = fq_list_names(partition, module.params['all_rules'])
 
     enabled_vlans = module.params['enabled_vlans']
@@ -627,6 +710,7 @@ def main():
     snat = module.params['snat']
     route_advertisement_state = module.params['route_advertisement_state']
     default_persistence_profile = fq_name(partition, module.params['default_persistence_profile'])
+    fallback_persistence_profile = module.params['fallback_persistence_profile']
 
     if 1 > port > 65535:
         module.fail_json(msg="valid ports must be in range 1 - 65535")
@@ -666,11 +750,13 @@ def main():
                     try:
                         vs_create(api, name, destination, port, pool)
                         set_profiles(api, name, all_profiles)
+                        set_policies(api, name, all_policies)
                         set_enabled_vlans(api, name, all_enabled_vlans)
                         set_rules(api, name, all_rules)
                         set_snat(api, name, snat)
                         set_description(api, name, description)
                         set_default_persistence_profiles(api, name, default_persistence_profile)
+                        set_fallback_persistence_profile(api, partition, name, fallback_persistence_profile)
                         set_state(api, name, state)
                         set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         result = {'changed': True}
@@ -693,9 +779,11 @@ def main():
                         result['changed'] |= set_description(api, name, description)
                         result['changed'] |= set_snat(api, name, snat)
                         result['changed'] |= set_profiles(api, name, all_profiles)
+                        result['changed'] |= set_policies(api, name, all_policies)
                         result['changed'] |= set_enabled_vlans(api, name, all_enabled_vlans)
                         result['changed'] |= set_rules(api, name, all_rules)
                         result['changed'] |= set_default_persistence_profiles(api, name, default_persistence_profile)
+                        result['changed'] |= set_fallback_persistence_profile(api, partition, name, fallback_persistence_profile)
                         result['changed'] |= set_state(api, name, state)
                         result['changed'] |= set_route_advertisement_state(api, destination, partition, route_advertisement_state)
                         api.System.Session.submit_transaction()
