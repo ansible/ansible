@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # We don't set -u here, due to pypa/virtualenv#150
-set -ex
+set -e
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
@@ -10,14 +10,19 @@ MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 # but for the python3 tests we need virtualenv to use python3
 if [ -f /usr/bin/python3 ]
 then
-    PYTHON="/usr/bin/python3"
+    PYTHON="--python /usr/bin/python3"
 else
-    PYTHON="$(which python)"
+    PYTHON=""
 fi
 
-virtualenv --system-site-packages --python "$PYTHON" "${MYTMPDIR}/jinja2"
+virtualenv --system-site-packages $PYTHON "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
+
+echo "################"
+echo "Python path: $(which python)"
+echo "Python version: $(python -V)"
+echo "################"
 
 pip install -U jinja2==2.9.4
 
