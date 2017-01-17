@@ -21,18 +21,20 @@
 
 # See also: https://technet.microsoft.com/en-us/sysinternals/pxexec.aspx
 
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
-$command = Get-AnsibleParam -obj $params -name "command" -default "whoami.exe"
+$command = Get-AnsibleParam -obj $params -name "command" -failifempty $true
 $executable = Get-AnsibleParam -obj $params -name "executable" -default "psexec.exe"
 $hostnames = Get-AnsibleParam -obj $params -name "hostnames"
 $username = Get-AnsibleParam -obj $params -name "username"
-$password = Get-AnsibleParam -obj $params -name "password" -failifempty $true
+$password = Get-AnsibleParam -obj $params -name "password"
 $chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
-$noprofile = Get-AnsibleParam -obj $params -name "noprofile"
-$elevated = Get-AnsibleParam -obj $params -name "elevated"
-$limited = Get-AnsibleParam -obj $params -name "limited"
-$system = Get-AnsibleParam -obj $params -name "system"
+$wait = Get-AnsibleParam -obj $params -name "wait" -type "bool" -default $true
+$noprofile = Get-AnsibleParam -obj $params -name "noprofile" -type "bool" -default $false
+$elevated = Get-AnsibleParam -obj $params -name "elevated" -type "bool" -default $false
+$limited = Get-AnsibleParam -obj $params -name "limited" -type "bool" -default $false
+$system = Get-AnsibleParam -obj $params -name "system" -type "bool" -default $false
+$interactive = Get-AnsibleParam -obj $params -name "interactive" -type "bool" -default $false
 $priority = Get-AnsibleParam -obj $params -name "priority" -validateset "background","low","belownormal","abovenormal","high","realtime"
 $timeout = Get-AnsibleParam -obj $params -name "timeout"
 $extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -default @()
@@ -41,61 +43,65 @@ $result = @{
     changed = $true
 }
 
-$extra_args = ""
+$arguments = ""
 
 # Supports running on local system if not hostname is specified
 If ($hostnames -ne $null) {
-  $extra_args = " \\" + $($hostnames | sort -Unique) -join ','
+  $arguments = " \\" + $($hostnames | sort -Unique) -join ','
 }
 
 # Username is optional
 If ($username -ne $null) {
-    $extra_args += " -u " + $username
+    $arguments += " -u \"$username\""
 }
 
-# Password is required
-If ($password -eq $null) {
-    Fail-Json $result "The 'password' parameter is a required parameter."
-} Else {
-    $extra_args += " -p " + $password
+# Password is optional
+If ($password -ne $null) {
+    $arguments += " -p \"$password\""
 }
 
 If ($chdir -ne $null) {
-    $extra_args += " -w " + $chdir
+    $arguments += " -w \"$chdir\""
 }
 
-If ($noprofile -ne $null) {
-    $extra_args += " -e"
+If ($wait -eq $false) {
+    $arguments += " -d"
 }
 
-If ($elevated -ne $null) {
-    $extra_args += " -h"
+If ($noprofile -eq $true) {
+    $arguments += " -e"
 }
 
-If ($system -ne $null) {
-    $extra_args += " -s"
+If ($elevated -eq $true) {
+    $arguments += " -h"
 }
 
-If ($limited -ne $null) {
-    $extra_args += " -l"
+If ($system -eq $true) {
+    $arguments += " -s"
+}
+
+If ($interactive -eq $true) {
+    $arguments += " -i"
+}
+
+If ($limited -eq $true) {
+    $arguments += " -l"
 }
 
 If ($priority -ne $null) {
-    $extra_args += " -" + $priority
+    $arguments += " -$priority"
 }
 
 If ($timeout -ne $null) {
-    $extra_args += " -n " + $timeout
+    $arguments += " -n $timeout"
 }
-
-$extra_args += " -accepteula"
 
 # Add additional advanced options
 ForEach ($opt in $extra_opts) {
-    $extra_args += " " + $opt
+    $arguments += " $opt"
 }
 
-$extra_args += " " + $command
+$arguments += " -accepteula"
 
 $pinfo = New-Object System.Diagnostics.ProcessStartInfo
 $pinfo.FileName = $executable
@@ -103,17 +109,18 @@ $pinfo.RedirectStandardError = $true
 $pinfo.RedirectStandardOutput = $true
 $pinfo.UseShellExecute = $false
 # TODO: psexec has a limit to the argument length of 260 (?)
-$pinfo.Arguments = $extra_args
+$pinfo.Arguments = "$arguments $command"
 
-$result.psexec_command = ($executable + $extra_args)
+$result.psexec_command = "$executable$arguments $command"
 
-$p = New-Object System.Diagnostics.Process
-$p.StartInfo = $pinfo
-$p.Start() | Out-Null
-$result.stdout = $p.StandardOutput.ReadToEnd()
-$result.stderr = $p.StandardError.ReadToEnd()
-$p.WaitForExit()
-$result.rc = $p.ExitCode
+$proc = New-Object System.Diagnostics.Process
+$proc.StartInfo = $pinfo
+$proc.Start() | Out-Null
+# TODO: Fix the possible deadlock
+$result.stdout = $proc.StandardOutput.ReadToEnd()
+$result.stderr = $proc.StandardError.ReadToEnd()
+$proc.WaitForExit()
+$result.rc = $proc.ExitCode
 
 If ($result.rc -eq 0) {
     $result.failed = $false

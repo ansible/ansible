@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: win_psexec
 version_added: '2.3'
@@ -35,7 +35,6 @@ options:
     description:
     - The command line to run through PsExec (limited to 260 characters).
     required: true
-    default: whoami.exe
   executable:
     description:
     - The location of the PsExec utility (in case it is not located in your PATH).
@@ -52,22 +51,29 @@ options:
     description:
     - The password for the (remote) user to run the command as.
     - This is mandatory in order authenticate yourself.
-    required: true
   chdir:
     description:
     - Run the command from this (remote) directory.
   noprofile:
     description:
     - Run the command without loading the account's profile.
+    default: False
   elevated:
     description:
     - Run the command with elevated privileges.
+    default: False
+  interactive:
+    description:
+    - Run the program so that it interacts with the desktop on the remote system.
+    default: False
   limited:
     description:
     - Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
+    default: False
   system:
     description:
     - Run the remote command in the System account.
+    default: False
   priority:
     description:
     - Used to run the command at a different priority.
@@ -81,13 +87,24 @@ options:
   timeout:
     description:
     - The connection timeout in seconds
+  wait:
+    description:
+    - Wait for the application to terminate.
+    - Only use for non-interactive applications.
+    default: True
 author: Dag Wieers (@dagwieers)
-"""
+'''
 
 EXAMPLES = r'''
-# Test the PsExec connection to the local system with your user (runs whoami)
+# Test the PsExec connection to the local system (target node) with your user
 - win_psexec:
-    password: some_password
+    command: whoami.exe
+
+# Run regedit.exe locally (on target node) as SYSTEM and interactively
+- win_psexec:
+    command: regedit.exe
+    interactive: yes
+    system: yes
 
 # Run the setup.exe installer on multiple servers using the Domain Administrator
 - win_psexec:
@@ -108,12 +125,12 @@ EXAMPLES = r'''
     priority: low
 '''
 
-RETURN = '''
+RETURN = r'''
 cmd:
     description: The complete command line used by the module, including PsExec call and additional options.
     returned: always
     type: string
-    sample: 'psexec.exe \\remote_server -u DOMAIN\Administrator -p some_password E:\setup.exe'
+    sample: psexec.exe \\remote_server -u DOMAIN\Administrator -p some_password E:\setup.exe
 rc:
     description: The return code for the command
     returned: always
@@ -123,17 +140,17 @@ stdout:
     description: The standard output from the command
     returned: always
     type: string
-    sample: 'Success.'
+    sample: Success.
 stderr:
     description: The error output from the command
     returned: always
     type: string
-    sample: 'Error 15 running E:\setup.exe'
+    sample: Error 15 running E:\setup.exe
 msg:
     description: Possible error message on failure
     returned: failed
     type: string
-    sample: "The 'password' parameter is a required parameter."
+    sample: The 'password' parameter is a required parameter.
 changed:
     description: Whether or not any changes were made.
     returned: always
