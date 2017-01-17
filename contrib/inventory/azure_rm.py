@@ -148,11 +148,11 @@ By default hosts are named by their unqualified resource name in Azure. You may 
 if it leads to name collisions - because you use the same resource name in multiple resource groups -  
 or if you find other names more convenient. 
 
-To use the private computer name of a VM as ID:
-AZURE_ID_FORMAT={computer_name}
+To use the private computer name of a VM as inventory host name:
+AZURE_INVENTORY_NAME_FORMAT={computer_name}
 
 To use a qualified name that is guaranteed to be unique in the subscription:
-AZURE_ID_FORMAT={resource_group}_{name}
+AZURE_INVENTORY_NAME_FORMAT={resource_group}_{name}
 
 Specify any Python format string containing host variables provided by this inventory.
 
@@ -245,7 +245,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
     group_by_tag='AZURE_GROUP_BY_TAG',
-    id_format='AZURE_ID_FORMAT'
+    id_format='AZURE_INVENTORY_NAME_FORMAT'
 )
 
 AZURE_MIN_VERSION = "0.30.0rc5"
