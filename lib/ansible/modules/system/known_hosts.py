@@ -119,34 +119,15 @@ def enforce_state(module, params):
 
     found,replace_or_add,found_line,key=search_for_host_key(module,host,key,hash_host,path,sshkeygen)
 
+    params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
+
     #We will change state if found==True & state!="present"
     #or found==False & state=="present"
     #i.e found XOR (state=="present")
     #Alternatively, if replace is true (i.e. key present, and we must change it)
     if module.check_mode:
-        diff = {
-            'before_header': path,
-            'after_header': path,
-            'before': '',
-            'after': '',
-        }
-        try:
-            inf = open(path, "r")
-        except IOError:
-            e = get_exception()
-            if e.errno == errno.ENOENT:
-                diff['before_header'] = '/dev/null'
-        else:
-            diff['before'] = inf.read()
-            inf.close()
-        diff['after'] = ''.join([
-            line for line_number, line in enumerate(diff['before'].splitlines(1))
-            if not (found_line==(line_number + 1) and (replace_or_add or state=='absent'))
-        ])
-        if state == 'present':
-            diff['after'] += key
         module.exit_json(changed = replace_or_add or (state=="present") != found,
-                         diff=diff)
+                         diff=params['diff'])
 
     #Now do the work.
 
@@ -315,6 +296,30 @@ def normalize_known_hosts_key(key):
         d['type']=k[1]
         d['key']=k[2]
     return d
+
+def compute_diff(path, found_line, replace_or_add, state, key):
+    diff = {
+        'before_header': path,
+        'after_header': path,
+        'before': '',
+        'after': '',
+    }
+    try:
+        inf = open(path, "r")
+    except IOError:
+        e = get_exception()
+        if e.errno == errno.ENOENT:
+            diff['before_header'] = '/dev/null'
+    else:
+        diff['before'] = inf.read()
+        inf.close()
+    diff['after'] = ''.join([
+        line for line_number, line in enumerate(diff['before'].splitlines(1))
+        if not (found_line==(line_number + 1) and (replace_or_add or state=='absent'))
+    ])
+    if state == 'present':
+        diff['after'] += key
+    return diff
 
 def main():
 
