@@ -451,7 +451,7 @@ def validate_uuids(module):
         module.fail_json(msg='No valid UUID(s) found for: {0}'.format(", ".join(failed)))
 
 
-def manage_all_vms(module, vm_state, changed):
+def manage_all_vms(module, vm_state):
     # Handle operations for all VMs, which can by definition only
     # be state transitions.
     state = module.params['state']
@@ -460,7 +460,7 @@ def manage_all_vms(module, vm_state, changed):
         module.fail_json(msg='State "created" is only valid for tasks with a single VM')
 
     # If any of the VMs has a change, the task as a whole has a change.
-    any_changed = changed
+    any_changed = False
 
     # First get all VM uuids and for each check their state, and adjust it if needed.
     for uuid in get_all_vm_uuids(module):
@@ -546,7 +546,6 @@ def main():
         vm_state = 'rebooted'
 
     result = {'state': state}
-    changed = False
 
     # While it's possible to refer to a given VM by it's `alias`, it's easier
     # to operate on VMs by their UUID. So if we're not given a `uuid`, look
@@ -569,7 +568,7 @@ def main():
     result['uuid'] = uuid
 
     if uuid == '*':
-        result['changed'] = manage_all_vms(module, vm_state, changed)
+        result['changed'] = manage_all_vms(module, vm_state)
         module.exit_json(**result)
 
     # The general flow is as follows:
@@ -591,7 +590,7 @@ def main():
 
     # First handle the case where the VM should be deleted and is not present.
     if not current_vm_state and vm_state == 'deleted':
-        changed = False
+        result['changed'] = False
     elif module.check_mode:
         # Shortcut for check mode, if there is no VM yet, it will need to be created.
         # Or, if the VM is not in the desired state yet, it needs to transition.
@@ -603,12 +602,10 @@ def main():
         module.exit_json(**result)
     # No VM was found that matched the given ID (alias or uuid), so we create it.
     elif not current_vm_state:
-        changed, result['uuid'] = new_vm(module, uuid, vm_state)
+        result['changed'], result['uuid'] = new_vm(module, uuid, vm_state)
     else:
         # VM was found, operate on its state directly.
-        changed = vm_state_transition(module, uuid, vm_state)
-
-    result['changed'] = changed
+        result['changed'] = vm_state_transition(module, uuid, vm_state)
 
     module.exit_json(**result)
 
