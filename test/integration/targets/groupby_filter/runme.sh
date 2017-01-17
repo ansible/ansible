@@ -15,7 +15,7 @@ else
     PYTHON="$(which python)"
 fi
 
-virtualenv --system-site-packages --python $PYTHON "${MYTMPDIR}/jinja2"
+virtualenv --system-site-packages --python "$PYTHON" "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
 
