@@ -47,7 +47,7 @@ class ManageWindowsCI(object):
         env = ansible_environment(self.core_ci.args)
         cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
-        for _ in range(1, 90):
+        for _ in range(1, 120):
             try:
                 run_command(self.core_ci.args, cmd, env=env)
                 return
