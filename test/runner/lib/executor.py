@@ -239,8 +239,7 @@ def network_inventory(remotes):
 
     for remote in remotes:
         groups[remote.platform].append(
-            '%s ansible_host=%s ansible_user=%s ' \
-            'ansible_connection=network_cli ansible_ssh_private_key_file=%s ansible_network_os=%s' % (
+            '%s ansible_host=%s ansible_user=%s ansible_connection=network_cli ansible_ssh_private_key_file=%s ansible_network_os=%s' % (
                 remote.name.replace('.', '_'),
                 remote.connection.hostname,
                 remote.connection.username,
