@@ -151,7 +151,7 @@ def match_active_opt(option, line):
 # do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=False):
+        state='present', backup=False, no_extra_spaces=False, create=True):
 
     diff = {'before': '',
             'after': '',
