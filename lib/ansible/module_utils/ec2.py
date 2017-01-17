@@ -233,7 +233,10 @@ def get_aws_connection_info(module, boto3=False):
 
     for param, value in boto_params.items():
         if isinstance(value, str):
-            boto_params[param] = unicode(value, 'utf-8', 'strict')
+            try:
+                boto_params[param] = unicode(value, 'utf-8', 'strict')
+            except NameError:
+                boto_params[param] = value
 
     return region, ec2_url, boto_params
 
