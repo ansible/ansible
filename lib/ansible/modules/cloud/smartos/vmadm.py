@@ -228,20 +228,20 @@ EXAMPLES = '''
 
 RETURN = '''
 uuid:
-    description: UUID of the managed VM.
-    returned: always
-    type: string
-    sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
+  description: UUID of the managed VM.
+  returned: always
+  type: string
+  sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
 alias:
-    description: Alias of the managed VM.
-    returned: When addressing a VM by alias.
-    type: string
-    sample: 'dns-zone'
+  description: Alias of the managed VM.
+  returned: When addressing a VM by alias.
+  type: string
+  sample: 'dns-zone'
 state:
-    description: State of the target, after execution.
-    returned: success
-    type: string
-    sample: 'running'
+  description: State of the target, after execution.
+  returned: success
+  type: string
+  sample: 'running'
 '''
 
 # While vmadm(1M) supports a -E option to return any errors in JSON, the
