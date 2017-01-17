@@ -35,7 +35,7 @@ description:
        sections if they don't exist.
      - Before version 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
      - Since version 2.3, this module adds missing ending newlines to files to keep in line with the POSIX standard, even when
-       no modifications need to be applied.
+       no other modifications need to be applied.
 version_added: "0.9"
 options:
   path:
