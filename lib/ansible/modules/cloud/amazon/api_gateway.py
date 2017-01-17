@@ -26,13 +26,13 @@ short_description: Manage AWS API Gateway APIs
 description:
      - Allows for the management of API Gatway APIs
      - Normally you should give the api_id since there is no other
-       stable guaranteed unique identifier for the API.  If you do 
-       not give api_id then a new API will be create each time 
+       stable guaranteed unique identifier for the API.  If you do
+       not give api_id then a new API will be create each time
        this is run.
-     - Beware that there are very hard limits on the rate that 
-       you can call API Gateway's REST API.  You may need to patch 
+     - Beware that there are very hard limits on the rate that
+       you can call API Gateway's REST API.  You may need to patch
        your boto.  See https://github.com/boto/boto3/issues/876
-       and discuss with your AWS rep. 
+       and discuss with your AWS rep.
 version_added: '2.2'
 requirements: [ boto3 ]
 options:
@@ -115,6 +115,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -128,7 +129,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,  ) #TODO !!!`
+                           supports_check_mode=False,  )   # TODO !!!`
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')
@@ -165,9 +166,9 @@ def main():
 
     create_response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
 
-    if deploy_desc == None:
+    if deploy_desc is None:
         deploy_desc = "Automatic deployment."
-    if stage: 
+    if stage:
         deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
                                                  description=deploy_desc)
     changed=True
