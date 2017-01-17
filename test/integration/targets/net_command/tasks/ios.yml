@@ -1,0 +1,144 @@
+---
+# Test code for the net_command module.
+# (c) 2017, Red Hat
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+#########################################
+# Positive: Basic Golden path
+#
+- name: net_command - Valid command
+  net_command: show version
+  connection: network_cli
+  register: result
+
+- name: Display result
+  debug:
+    msg: "{{ result }}"
+
+- name: Ensure output is valid
+  assert:
+    that:
+      # net_command should always return "changed", it isn't idempotent
+      - result|changed
+      - result|success
+      - result.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+      - result.rc == 0
+      - result.stderr == ""
+      # Check for platform specific string in output
+      - result.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - result.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - "'Cisco Systems' in result.stdout"
+      - "'Cisco' in result.stdout_lines[0]"
+
+
+##########################################
+## Positive: stdout and stderr with rc:0
+##
+#- name: net_command - stdout and stderr, rc:0
+#  net_command: python -c 'import os; os.write(2, "Oh no, this is an error\n"); os.write(1, "This is stdout\n") '
+#  connection: network_cli
+#  register: result
+#
+#- name: Display result
+#  debug:
+#    msg: "{{ result }}"
+#
+#- name: Ensure output is valid
+#  assert:
+#    that:
+#      # net_command should always return "changed", it isn't idempotent
+#      - result|changed
+#      - result|success
+#      - result.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+#      - result.rc == 0
+#      - result.stderr == ""
+#      # Check for platform specific string in output
+#      - result.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+#      - result.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+#      - "'This is stdout' in result.stdout"
+#      - "'Oh no, this is an error' in result.stderr"
+#      - "'Version' in result.stdout_lines[0]"
+#  # FIXME BUG https://github.com/ansible/ansible/issues/20233
+#  # FIXME Once working change test to check for exact return, rather than "in"
+#  ignore_errors: true
+
+#########################################
+# Negative: None zero exit value and stderr
+
+- name: net_command - None zero exit value and stderr
+  net_command: show foobar
+  connection: network_cli
+  register: result
+  ignore_errors: true
+
+- name: Display result
+  debug:
+    msg: "{{ result }}"
+
+- name: Check we failed
+  assert:
+    that:
+      # net_command should always return "changed", it isn't idempotent
+      - result|changed
+      - result|failed
+      - result.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+      - result.rc == 1
+      - "'Invalid input detected at' in result.stderr"
+      # Check for platform specific string in output
+      - result.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - result.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - result.stdout == ""
+      # FIXME BUG: https://github.com/ansible/ansible/issues/20296
+      #- "'Version' in result.stdout_lines[0]"
+
+#########################################
+
+- name: net_command - Missing command
+  net_command:
+  connection: network_cli
+  register: result
+  ignore_errors: true
+
+- name: Display result
+  debug:
+    msg: "{{ result }}"
+
+- name: Check we failed
+  assert:
+    that:
+      # net_command should always return "changed", it isn't idempotent
+      - result|changed
+      - result|failed
+      - result.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+      - result.rc == 1
+      # Check for platform specific string in output
+      - result.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - result.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+      - result.stdout == ""
+      # FIXME BUG: https://github.com/ansible/ansible/issues/20294
+      - "'Invalid command:' in result.stderr"
+  ignore_errors: true
+
+# Quoting and escape tests - look at command/shell test cases
+#
+#
+# Blocked Test Cases
+#   * Run a command that returns stdout and stderr
+#
+# Run through ansible-lint
