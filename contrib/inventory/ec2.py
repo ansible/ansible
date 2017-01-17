@@ -921,10 +921,7 @@ class Ec2Inventory(object):
         # Set the inventory name
         hostname = None
         if self.hostname_variable:
-            if self.hostname_variable.startswith('tag_'):
-                hostname = instance.tags.get(self.hostname_variable[4:], None)
-            else:
-                hostname = getattr(instance, self.hostname_variable)
+            hostname = getattr(instance, self.hostname_variable, None)
 
         # If we can't get a nice hostname, use the destination address
         if not hostname:
