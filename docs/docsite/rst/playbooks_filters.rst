@@ -4,7 +4,7 @@ Filters
 .. contents:: Topics
 
 
-Filters in Ansible are actually from Jinja2, they are a way of transforming data inside a template expression.  Jinja2 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
+Filters in Ansible are from Jinja2, and are used for transforming data inside a template expression.  Jinja2 ships with many filters. See `builtin filters`_ in the official Jinja2 template documentation.
 
 Take into account that templating happens on the the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
