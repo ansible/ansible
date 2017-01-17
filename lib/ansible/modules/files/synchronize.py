@@ -443,7 +443,7 @@ def main():
     ssh_opts = '-S none'
 
     if not verify_host:
-      ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
+      ssh_opts = '%s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' % ssh_opts
 
     if ssh_args:
       ssh_opts = '%s %s' % (ssh_opts, ssh_args)
