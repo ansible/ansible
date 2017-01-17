@@ -82,6 +82,15 @@ class GalaxyRole(object):
                 self.paths = [x for x in galaxy.roles_paths]
                 self.paths = [os.path.join(x, self.name) for x in self.paths]
 
+    def __repr__(self):
+        """
+        Returns "rolename (version)" if version is not null
+        Returns "rolename" otherwise
+        """
+        if self.version:
+            return "%s (%s)" % (self.name, self.version)
+        else:
+            return self.name
 
     def __eq__(self, other):
         return self.name == other.name
@@ -321,7 +330,7 @@ class GalaxyRole(object):
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
                 # return the parsed yaml metadata
-                display.display("- %s was installed successfully" % self.name)
+                display.display("- %s was installed successfully" % str(self))
                 if not local_file:
                     try:
                         os.unlink(tmp_file)
