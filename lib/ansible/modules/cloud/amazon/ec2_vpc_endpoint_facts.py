@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 module: ec2_vpc_endpoint_facts
 short_description: Retrieves AWS VPC endpoints details using AWS methods.
 description:
   - Gets various details related to AWS VPC Endpoints
-version_added: "2.2"
+version_added: "2.4"
 requirements: [ boto3 ]
 options:
   query:
@@ -27,10 +31,6 @@ options:
       - Specifies the query action to take. Services returns the supported
         AWS services that can be specified when creating an endpoint.
     required: True
-    choices: [
-            'services',
-            'endpoints'
-            ]
   max_items:
     description:
       - Maximum number of items to return. AWS maximum of 1000
@@ -40,6 +40,9 @@ options:
       - If the result exceeds the max_items or the AWS maximum of 1000 you
         can specify the token to get the next set of results
     required: false
+    choices:
+      - services
+      - endpoints
   vpc_endpoint_ids:
     description:
       - Get details of specific endpoint IDs
@@ -77,9 +80,12 @@ EXAMPLES = '''
     query: endpoints
     region: ap-southeast-2
     filters:
-      vpc-id: [vpc-12345678, vpc-87654321]
-      vpc-endpoint-state: ['available','pending']
-    max_items: 200
+      vpc-id:
+        - vpc-12345678
+        - vpc-87654321
+      vpc-endpoint-state:
+        - available
+        - pending
   register: existing_endpoints
 
 - name: Get details on specific endpoint
@@ -98,15 +104,16 @@ result:
   type: dictionary or a list of dictionaries
 '''
 
-try:
-    import json
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+import json
 
-import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+
+try:
+    import botocore
+except ImportError:
+    pass  # will be picked up from imported HAS_BOTO3
 
 
 def date_handler(obj):
@@ -126,16 +133,7 @@ def get_supported_services(client, module):
 
 def get_endpoints(client, module):
     params = dict()
-    if module.params.get('filters'):
-        params['Filters'] = []
-        for key, value in module.params.get('filters').iteritems():
-            temp_dict = dict()
-            temp_dict['Name'] = key
-            if isinstance(value, basestring):
-                temp_dict['Values'] = [value]
-            else:
-                temp_dict['Values'] = value
-            params['Filters'].append(temp_dict)
+    params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
     if module.params.get('max_items'):
         params['MaxResults'] = module.params.get('max_items')
     if module.params.get('next_token'):
@@ -153,15 +151,13 @@ def get_endpoints(client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        query=dict(choices=[
-            'services',
-            'endpoints',
-        ], required=True),
-        max_items=dict(type='int'),
-        next_token=dict(),
-        filters=dict(default=None, type='dict'),
-        vpc_endpoint_ids=dict(default=None, type='list'),
+    argument_spec.update(
+        dict(
+            query=dict(choices=['services', 'endpoints'], required=True),
+            max_items=dict(type='int'),
+            next_token=dict(),
+            filters=dict(default={}, type='dict'),
+            vpc_endpoint_ids=dict(default=None, type='list'),
         )
     )
 
@@ -169,7 +165,7 @@ def main():
 
     # Validate Requirements
     if not HAS_BOTO3:
-        module.fail_json(msg='json and botocore/boto3 is required.')
+        module.fail_json(msg='botocore and boto3 are required.')
 
     try:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -177,20 +173,17 @@ def main():
             connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
         else:
             module.fail_json(msg="region must be specified")
-    except botocore.exceptions.NoCredentialsError, e:
+    except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
     invocations = {
         'services': get_supported_services,
         'endpoints': get_endpoints,
     }
-    results = invocations[module.params.get('query')](ec2, module)
+    results = invocations[module.params.get('query')](connection, module)
 
     module.exit_json(result=results)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
