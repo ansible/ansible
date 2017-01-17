@@ -33,6 +33,7 @@ Ansible Changes By Release
 - aws
   * ec2_lc_facts
   * aws_kms
+  * ecs_ecr
 - cloudstack
   * cs_host
   * cs_nic
