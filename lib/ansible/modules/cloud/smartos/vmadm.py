@@ -19,170 +19,183 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from ansible.module_utils.basic import AnsibleModule
+import os
+import re
+import tempfile
+import time
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
 module: vmadm
-short_description: Manage SmartOS virtual machines and zones
+short_description: Manage SmartOS virtual machines and zones.
 description:
-    - Manage SmartOS virtual machines through vmadm(1M)
+  - Manage SmartOS virtual machines through vmadm(1M).
 version_added: "2.3"
 author: Jasper Lievisse Adriaanse (@jasperla)
 options:
-    name:
-        required: false
-        aliases: [ alias ]
-        description:
-          - Name of the VM. vmadm(1M) uses this as an optional name.
-    force:
-        required: false
-        description:
-          - Force a particular action (i.e. stop or delete a VM).
-    state:
-        required: true
-        choices: [ present, absent, stopped, restarted ]
-        description:
-          - States for the VM to be in. Please note that C(present), C(stopped) and C(restarted)
-            operate on a VM that is currently provisioned. C(present) means that the VM will be
-            created if it was absent, and that it will be in a running state. C(absent) will
-            shutdown the zone before removing it.
-            C(stopped) means the zone will be created if it doesn't exist already, before shutting
-            it down.
-    autoboot:
-        required: false
-        description:
-          - Whether or not a VM is booted when the system is rebooted.
-    brand:
-        required: true
-        choices: [ joyent, joyent-minimal, kvm, lx ]
-        default: joyent
-        description:
-          - Type for of virtual machine.
-    cpu_cap:
-        required: false
-        description:
-          - Sets a limit on the amount of CPU time that can be used by a VM.
-            Use C(0) for no cap.
-    cpu_shares:
-        required: false
-        description:
-          - Sets a limit on the number of fair share scheduler (FSS) CPU shares for
-            a VM. This limit is relative to all other VMs on the system.
-    customer_metadata:
-        required: false
-        description:
-          - Metadata to be set and associated with this VM, this contain customer
-            modifiable keys.
-    delegate_dataset:
-        required: false
-        description:
-          - Whether to delegate a ZFS dataset to an OS VM.
-    disk_driver:
-        required: false
-        description:
-          - Default value for a virtual disk model for KVM guests.
-    disks:
-        required: false
-        description:
-          - A list of disks to add, valid properties are documented in vmadm(1M).
-    dns_domain:
-        required: false
-        description:
-          - Domain value for C(/etc/hosts).
-    filesystems:
-        required: false
-        description:
-          - Mount additional filesystems into an OS VM.
-    firewall_enabled:
-        required: false
-        description:
-          - Enables the firewall, allowing fwadm(1M) rules to be applied.
-    fs_allowed:
-        required: false
-        description:
-          - Comma separated list of filesystem types this zone is allowed to mount.
-    hostname:
-        required: false
-        description:
-          - Zone/VM hostname.
-    image_uuid:
-        required: false
-        description:
-          - Image UUID.
-    indestructible_zoneroot:
-        required: false
-        description:
-          - Adds an C(@indestructible) snapshot to zoneroot.
-    internal_metadata:
-        required: false
-        description:
-          - Metadata to be set and associated with this VM, this contains operator
-            generated keys.
-    kernel_version:
-        required: false
-        description:
-          - Kernel version to emulate for LX VMs.
-    maintain_resolvers:
-        required: false
-        description:
-          - Resolvers in C(/etc/resolv.conf) will be updated when updating
-            the C(resolvers) property.
-    max_physical_memory:
-        required: false
-        description:
-          - Maximum amount of memory (in MiBs) on the host that the VM is allowed to use.
-    max_swap:
-        required: false
-        description:
-          - Maximum amount of virtual memory (in MiBs) the VM is allowed to use.
-    nic_driver:
-        required: false
-        description:
-          - Default value for a virtual NIC model for KVM guests.
-    nics:
-        required: false
-        description:
-          - A list of nics to add, valid properties are documented in vmadm(1M).
-    qemu_extra_opts:
-        required: false
-        description:
-          - Additional qemu cmdline arguments for KVM guests.
-    quota:
-        required: false
-        description:
-          - Quota on zone filesystems (in MiBs).
-    ram:
-        required: false
-        description:
-          - Amount of virtual RAM for a KVM guest (in MiBs).
-    resolvers:
-        required: false
-        description:
-          - List of resolvers to be put into C(/etc/resolv.conf).
-    uuid:
-        required: false
-        description:
-          - UUID of the VM. Can either be a full UUID or C(*) for all VMs.
-    vcpus:
-        required: false
-        description:
-          - Number of virtual CPUs for a KVM guest.
-    vnc_port:
-        required: false
-        description:
-        - TCP port to listen of the VNC server. Or set C(0) for random,
-          or C(-1) to disable.
-    zfs_io_priority:
-        required: false
-        description:
-          - IO throttle priority value relative to other VMs.
-    zpool:
-        required: false
-        description:
-          - ZFS pool the VM's zone dataset will be created in.
+  autoboot:
+    required: false
+    description:
+      - Whether or not a VM is booted when the system is rebooted.
+  brand:
+    required: true
+    choices: [ joyent, joyent-minimal, kvm, lx ]
+    default: joyent
+    description:
+      - Type for of virtual machine.
+  cpu_cap:
+    required: false
+    description:
+      - Sets a limit on the amount of CPU time that can be used by a VM.
+        Use C(0) for no cap.
+  cpu_shares:
+    required: false
+    description:
+      - Sets a limit on the number of fair share scheduler (FSS) CPU shares for
+        a VM. This limit is relative to all other VMs on the system.
+  customer_metadata:
+    required: false
+    description:
+      - Metadata to be set and associated with this VM, this contain customer
+        modifiable keys.
+  delegate_dataset:
+    required: false
+    description:
+      - Whether to delegate a ZFS dataset to an OS VM.
+  disk_driver:
+    required: false
+    description:
+      - Default value for a virtual disk model for KVM guests.
+  disks:
+    required: false
+    description:
+      - A list of disks to add, valid properties are documented in vmadm(1M).
+  dns_domain:
+    required: false
+    description:
+      - Domain value for C(/etc/hosts).
+  filesystems:
+      required: false
+      description:
+        - Mount additional filesystems into an OS VM.
+  firewall_enabled:
+    required: false
+    description:
+      - Enables the firewall, allowing fwadm(1M) rules to be applied.
+  force:
+    required: false
+    description:
+      - Force a particular action (i.e. stop or delete a VM).
+  fs_allowed:
+    required: false
+    description:
+      - Comma separated list of filesystem types this zone is allowed to mount.
+  hostname:
+    required: false
+    description:
+      - Zone/VM hostname.
+  image_uuid:
+    required: false
+    description:
+      - Image UUID.
+  indestructible_zoneroot:
+    required: false
+    description:
+      - Adds an C(@indestructible) snapshot to zoneroot.
+  internal_metadata:
+    required: false
+    description:
+      - Metadata to be set and associated with this VM, this contains operator
+        generated keys.
+  kernel_version:
+    required: false
+    description:
+      - Kernel version to emulate for LX VMs.
+  maintain_resolvers:
+    required: false
+    description:
+      - Resolvers in C(/etc/resolv.conf) will be updated when updating
+        the C(resolvers) property.
+  max_physical_memory:
+    required: false
+    description:
+      - Maximum amount of memory (in MiBs) on the host that the VM is allowed to use.
+  max_swap:
+    required: false
+    description:
+      - Maximum amount of virtual memory (in MiBs) the VM is allowed to use.
+  name:
+    required: false
+    aliases: [ alias ]
+    description:
+      - Name of the VM. vmadm(1M) uses this as an optional name.
+  nic_driver:
+    required: false
+    description:
+      - Default value for a virtual NIC model for KVM guests.
+  nics:
+    required: false
+    description:
+      - A list of nics to add, valid properties are documented in vmadm(1M).
+  qemu_extra_opts:
+    required: false
+    description:
+      - Additional qemu cmdline arguments for KVM guests.
+  quota:
+    required: false
+    description:
+      - Quota on zone filesystems (in MiBs).
+  ram:
+    required: false
+    description:
+      - Amount of virtual RAM for a KVM guest (in MiBs).
+  resolvers:
+    required: false
+    description:
+      - List of resolvers to be put into C(/etc/resolv.conf).
+  state:
+    required: true
+    choices: [ present, absent, stopped, restarted ]
+    description:
+      - States for the VM to be in. Please note that C(present), C(stopped) and C(restarted)
+        operate on a VM that is currently provisioned. C(present) means that the VM will be
+        created if it was absent, and that it will be in a running state. C(absent) will
+        shutdown the zone before removing it.
+        C(stopped) means the zone will be created if it doesn't exist already, before shutting
+        it down.
+  uuid:
+    required: false
+    description:
+      - UUID of the VM. Can either be a full UUID or C(*) for all VMs.
+  vcpus:
+    required: false
+    description:
+      - Number of virtual CPUs for a KVM guest.
+  vnc_port:
+    required: false
+    description:
+      - TCP port to listen of the VNC server. Or set C(0) for random,
+        or C(-1) to disable.
+  zfs_io_priority:
+    required: false
+    description:
+      - IO throttle priority value relative to other VMs.
+  zpool:
+    required: false
+    description:
+      - ZFS pool the VM's zone dataset will be created in.
 requirements:
     - python >= 2.6
 '''
@@ -233,24 +246,14 @@ state:
     sample: 'running'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-import os
-import re
-import tempfile
-import time
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 # While vmadm(1M) supports a -E option to return any errors in JSON, the
 # generated JSON does not play well with the JSON parsers of Python.
 # The returned message contains '\n' as part of the stacktrace,
 # which breaks the parsers.
 
 def get_vm_prop(module, uuid, prop):
-    """Lookup a property for the given VM.
-    Returns the property, or None if not found."""
+    # Lookup a property for the given VM.
+    # Returns the property, or None if not found.
     cmd = '{0} lookup -j -o {1} uuid={2}'.format(module.vmadm, prop, uuid)
 
     (rc, stdout, stderr) = module.run_command(cmd)
@@ -266,8 +269,8 @@ def get_vm_prop(module, uuid, prop):
 
 
 def get_vm_uuid(module, alias):
-    """Lookup the uuid that goes with the given alias.
-    Returns the uuid or '' if not found."""
+    # Lookup the uuid that goes with the given alias.
+    # Returns the uuid or '' if not found.
     cmd = '{0} lookup -j -o uuid alias={1}'.format(module.vmadm, alias)
 
     (rc, stdout, stderr) = module.run_command(cmd)
@@ -282,7 +285,7 @@ def get_vm_uuid(module, alias):
 
 
 def get_all_vm_uuids(module):
-    """Retrieve the UUIDs for all VMs"""
+    # Retrieve the UUIDs for all VMs.
     cmd = '{0} lookup -j -o uuid'.format(module.vmadm)
 
     (rc, stdout, stderr) = module.run_command(cmd)
@@ -334,7 +337,7 @@ def new_vm(module, uuid, vm_state):
 
 
 def vmadm_create_vm(module, payload_file):
-    """Create a new VM using the provided payload."""
+    # Create a new VM using the provided payload.
     cmd = '{0} create -f {1}'.format(module.vmadm, payload_file)
 
     return module.run_command(cmd)
@@ -374,7 +377,7 @@ def set_vm_state(module, vm_uuid, vm_state):
 
 
 def create_payload(module, uuid):
-    """Create the JSON payload (vmdef) and return the filename."""
+    # Create the JSON payload (vmdef) and return the filename.
 
     p = module.params
 
@@ -444,9 +447,8 @@ def validate_uuids(module):
 
 
 def manage_all_vms(module, vm_state, changed):
-    """ Handle operations for all VMs, which can by definition only
-    be state transitions.
-    """
+    # Handle operations for all VMs, which can by definition only
+    # be state transitions.
     state = module.params['state']
 
     if state == 'created':
