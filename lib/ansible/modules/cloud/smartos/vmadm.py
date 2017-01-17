@@ -23,7 +23,7 @@ from ansible.module_utils.basic import AnsibleModule
 import os
 import re
 import tempfile
-import time
+import traceback
 try:
     import json
 except ImportError:
@@ -251,6 +251,7 @@ state:
 # The returned message contains '\n' as part of the stacktrace,
 # which breaks the parsers.
 
+
 def get_vm_prop(module, uuid, prop):
     # Lookup a property for the given VM.
     # Returns the property, or None if not found.
@@ -259,8 +260,8 @@ def get_vm_prop(module, uuid, prop):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg='Could not perform lookup of {0} on {1}: {2}'.
-                         format(prop, uuid, stderr))
+        module.fail_json(
+            msg='Could not perform lookup of {0} on {1}'.format(prop, uuid), exception=stderr)
 
     try:
         return json.loads(stdout)[0][prop]
@@ -276,12 +277,13 @@ def get_vm_uuid(module, alias):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg='Could not retrieve UUID of {0}: {1}'.format(alias, stderr))
+        module.fail_json(
+            msg='Could not retrieve UUID of {0}'.format(alias), exception=stderr)
 
     try:
         return json.loads(stdout)[0]['uuid']
     except:
-        return ''
+        return None
 
 
 def get_all_vm_uuids(module):
@@ -291,7 +293,7 @@ def get_all_vm_uuids(module):
     (rc, stdout, stderr) = module.run_command(cmd)
 
     if rc != 0:
-        module.fail_json(msg='Failed to get VMs list: {0}'.format(stderr))
+        module.fail_json(msg='Failed to get VMs list', exception=stderr)
 
     try:
         output = json.loads(stdout)
@@ -307,7 +309,7 @@ def new_vm(module, uuid, vm_state):
 
     if rc != 0:
         changed = False
-        module.fail_json(msg='Could not create VM: {0}'.format(stderr))
+        module.fail_json(msg='Could not create VM', exception=stderr)
     else:
         changed = True
         # 'vmadm create' returns all output to stderr...
@@ -330,8 +332,9 @@ def new_vm(module, uuid, vm_state):
     except Exception as e:
         # Since the payload may contain sensitive information, fail hard
         # if we cannot remove the file so the operator knows about it.
-        module.fail_json(msg='Could not remove temporary JSON payload file {0}: {1}'.
-                         format(payload_file, e))
+        module.fail_json(
+            msg='Could not remove temporary JSON payload file {0}'.format(payload_file),
+            exception=traceback.format_exc(e))
 
     return changed, vm_uuid
 
@@ -394,7 +397,8 @@ def create_payload(module, uuid):
     try:
         vmdef_json = json.dumps(vmdef)
     except Exception as e:
-        module.fail_json(msg='Could not create valid JSON payload: {0}'.format(e))
+        module.fail_json(
+            msg='Could not create valid JSON payload', exception=traceback.format_exc(e))
 
     # Create the temporary file that contains our payload, and set tight
     # permissions for it may container sensitive information.
@@ -408,7 +412,8 @@ def create_payload(module, uuid):
         fh.write(vmdef_json)
         fh.close()
     except Exception as e:
-        module.fail_json(msg='Could not save JSON payload as {0}: {1}'.format(fname, e))
+        module.fail_json(
+            msg='Could not save JSON payload as {0}'.format(fname), exception=traceback.format_exc(e))
 
     return fname
 
@@ -470,6 +475,7 @@ def manage_all_vms(module, vm_state, changed):
                 any_changed = (vm_state_transition(module, uuid, vm_state) | any_changed)
 
     return any_changed
+
 
 def main():
     # In order to reduce the clutter and boilerplate for trivial options,
@@ -552,7 +558,7 @@ def main():
         # uuid. If they're already deleted there's nothing to looup.
         # So if state == deleted and get_vm_uuid() returned '', the VM is already
         # deleted and there's nothing else to do.
-        if uuid == '' and vm_state == 'deleted':
+        if uuid is None and vm_state == 'deleted':
             result['name'] = p['name']
             module.exit_json(**result)
 
