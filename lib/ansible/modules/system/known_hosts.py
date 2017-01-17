@@ -124,7 +124,29 @@ def enforce_state(module, params):
     #i.e found XOR (state=="present")
     #Alternatively, if replace is true (i.e. key present, and we must change it)
     if module.check_mode:
-        module.exit_json(changed = replace_or_add or (state=="present") != found)
+        diff = {
+            'before_header': path,
+            'after_header': path,
+            'before': '',
+            'after': '',
+        }
+        try:
+            inf = open(path, "r")
+        except IOError:
+            e = get_exception()
+            if e.errno == errno.ENOENT:
+                diff['before_header'] = '/dev/null'
+        else:
+            diff['before'] = inf.read()
+            inf.close()
+        diff['after'] = ''.join([
+            line for line_number, line in enumerate(diff['before'].splitlines(1))
+            if not (found_line==(line_number + 1) and (replace_or_add or state=='absent'))
+        ])
+        if state == 'present':
+            diff['after'] += key
+        module.exit_json(changed = replace_or_add or (state=="present") != found,
+                         diff=diff)
 
     #Now do the work.
 
