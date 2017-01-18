@@ -157,22 +157,6 @@ class ActionModule(ActionBase):
 
             source_full = self._loader.get_real_file(source_full)
 
-            # Generate a hash of the local file.
-            local_checksum = checksum(source_full)
-
-            # Get the local mode and set if user wanted it preserved
-            # https://github.com/ansible/ansible-modules-core/issues/1124
-            if self._task.args.get('mode', None) == 'preserve':
-                lmode = '0%03o' % stat.S_IMODE(os.stat(source_full).st_mode)
-                self._task.args['mode'] = lmode
-
-            # If local_checksum is not defined we can't find the file so we should fail out.
-            if local_checksum is None:
-                result['failed'] = True
-                result['msg'] = "could not find src=%s" % source_full
-                self._remove_tmp_path(tmp)
-                return result
-
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
             # for dest being a dir via remote call below.
@@ -180,6 +164,19 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest, source_rel)
             else:
                 dest_file = self._connection._shell.join_path(dest)
+
+            if not force:
+                # Avoid possible heavy checksum operation by checking if the dest_file exists
+                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=False)
+
+                if dest_status['exists'] and dest_status['isdir']:
+                    # Append the relative source location to the destination and get remote stats again
+                    dest_file = self._connection._shell.join_path(dest, source_rel)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=False)
+
+                if dest_status['exists']:
+                    # remote_file exists so continue to next iteration.
+                    continue
 
             # Attempt to get remote file info
             dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
@@ -198,9 +195,21 @@ class ActionModule(ActionBase):
                     dest_file = self._connection._shell.join_path(dest, source_rel)
                     dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
 
-            if dest_status['exists'] and not force:
-                # remote_file does not exist so continue to next iteration.
-                continue
+            # Generate a hash of the local file.
+            local_checksum = checksum(source_full)
+
+            # If local_checksum is not defined we can't find the file so we should fail out.
+            if local_checksum is None:
+                result['failed'] = True
+                result['msg'] = "could not find src=%s" % source_full
+                self._remove_tmp_path(tmp)
+                return result
+
+            # Get the local mode and set if user wanted it preserved
+            # https://github.com/ansible/ansible-modules-core/issues/1124
+            if self._task.args.get('mode', None) == 'preserve':
+                lmode = '0%03o' % stat.S_IMODE(os.stat(source_full).st_mode)
+                self._task.args['mode'] = lmode
 
             if local_checksum != dest_status['checksum']:
                 # The checksums don't match and we will change or error out.
