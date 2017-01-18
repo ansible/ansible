@@ -33,6 +33,7 @@ from ansible.module_utils.ovirt import (
     create_connection,
     equal,
     get_dict_of_struct,
+    get_entity,
     get_link_name,
     ovirt_full_argument_spec,
     search_by_name,
@@ -192,7 +193,7 @@ class HostNetworksModule(BaseModule):
         update = False
         bond = self._module.params['bond']
         networks = self._module.params['networks']
-        nic = nic_service.get()
+        nic = get_entity(nic_service)
 
         if nic is None:
             return update
