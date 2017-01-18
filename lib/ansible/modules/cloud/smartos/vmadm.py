@@ -234,6 +234,8 @@ state:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import os
 import re
 import tempfile
@@ -261,8 +263,16 @@ def get_vm_prop(module, uuid, prop):
             msg='Could not perform lookup of {0} on {1}'.format(prop, uuid), exception=stderr)
 
     try:
-        return json.loads(stdout)[0][prop]
+        stdout_json = json.loads(stdout)
     except:
+        e = get_exception()
+        module.fail_json(
+            msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
+            details=to_native(e))
+
+    if len(stdout_json) > 0 and prop in stdout_json[0]:
+        return stdout_json[0][prop]
+    else:
         return None
 
 
@@ -281,15 +291,18 @@ def get_vm_uuid(module, alias):
     # That is not an error condition as we might be explicitly checking it's
     # absence.
     if stdout.strip() == '[]':
-      return None
+        return None
     else:
-      try:
-        stdout_json = json.loads(stdout)
-      except:
-        module.fail_json(msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias))
+        try:
+            stdout_json = json.loads(stdout)
+        except:
+            e = get_exception()
+            module.fail_json(
+                msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias),
+                details=to_native(e))
 
-      if len(stdout_json) > 0 and 'uuid' in stdout_json[0]:
-        return stdout_json[0]['uuid']
+        if len(stdout_json) > 0 and 'uuid' in stdout_json[0]:
+            return stdout_json[0]['uuid']
 
 
 def get_all_vm_uuids(module):
@@ -302,10 +315,11 @@ def get_all_vm_uuids(module):
         module.fail_json(msg='Failed to get VMs list', exception=stderr)
 
     try:
-        output = json.loads(stdout)
-        return list(map(lambda v: v['uuid'], output))
+        stdout_json = json.loads(stdout)
+        return [v['uuid'] for v in stdout_json]
     except:
-        return []
+        e = get_exception()
+        module.fail_json(msg='Could not retrieve VM UUIDs', details=to_native(e))
 
 
 def new_vm(module, uuid, vm_state):
@@ -412,18 +426,16 @@ def create_payload(module, uuid):
         # XXX: When there's a way to get the current ansible temporary directory
         # drop the mkstemp call and rely on ANSIBLE_KEEP_REMOTE_FILES to retain
         # the payload (thus removing the `save_payload` option).
-        fname = tempfile.mkstemp(uuid)[1]
+        fname = tempfile.mkstemp()[1]
         fh = open(fname, 'w')
         os.chmod(fname, 0o400)
         fh.write(vmdef_json)
         fh.close()
     except Exception as e:
         module.fail_json(
-            msg='Could not save JSON payload as {0}'.format(fname),
-            exception=traceback.format_exc(e))
+            msg='Could not save JSON payload', exception=traceback.format_exc(e))
 
     return fname
-
 
 def vm_state_transition(module, uuid, vm_state):
     ret = set_vm_state(module, uuid, vm_state)
