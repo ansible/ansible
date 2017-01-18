@@ -10,3 +10,4 @@
     - { role: win_get_url, tags: test_win_get_url }
     - { role: win_msi, tags: test_win_msi }
     - { role: win_package, tags: test_win_package }
+    - { role: win_path, tags: test_win_path }
