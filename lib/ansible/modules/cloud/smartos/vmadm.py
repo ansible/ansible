@@ -19,17 +19,6 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.basic import AnsibleModule
-import os
-import re
-import tempfile
-import traceback
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -243,6 +232,16 @@ state:
   type: string
   sample: 'running'
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+import os
+import re
+import tempfile
+import traceback
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 # While vmadm(1M) supports a -E option to return any errors in JSON, the
 # generated JSON does not play well with the JSON parsers of Python.
