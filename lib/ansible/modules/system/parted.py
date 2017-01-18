@@ -31,7 +31,7 @@ description:
   - Linux parted tool. For a full description of the fields and the options check the GNU parted manual.
 options:
   device:
-    description: The block device (disk) where to operate
+    description: The block device (disk) where to operate.
     required: True
   align:
     description: Set alignment for newly created partitions.
@@ -48,10 +48,11 @@ options:
     default: KiB
   label:
     description: Creates a new disk label.
+    choices: ['aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98', 'sun', '']
     required: False
     default: msdos
   part_type:
-    description: Is one of 'primary', 'extended' or 'logical' and may be specified only with 'msdos' or 'dvh' partition tables. A name must be specified for a 'gpt' partition table. Neither part-type nor name may be used with a 'sun' partition table. 
+    description: Is one of 'primary', 'extended' or 'logical' and may be specified only with 'msdos' or 'dvh' partition tables. A name must be specified for a 'gpt' partition table. Neither part-type nor name may be used with a 'sun' partition table.
     choices: ['primary', 'extended', 'logical']
     required: False
   part_start:
@@ -66,11 +67,11 @@ options:
     description: Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
     required: False
   flags_on:
-    description: A comma-separated list of flags to set for the partition
+    description: A comma-separated list of flags to set for the partition.
     required: False
     default: ''
   flags_off:
-    description: A comma-separated list of flags to clear for the partition
+    description: A comma-separated list of flags to clear for the partition.
     required: False
     default: ''
   state:
@@ -86,68 +87,73 @@ partition_info:
   returned: success
   type: dict
   contains:
-    generic:
-      description: Generic device information
+    device:
+      description: Generic device information.
       type: dict
     partitions:
-      description: List of device partitions
+      description: List of device partitions.
       type: list
     sample: >
-      { "partition_info": {
-        "generic": {
-          "dev": "/dev/sda",
+      {
+        "disk": {
+          "dev": "/dev/sdb",
           "logical_block": 512,
           "model": "VMware Virtual disk",
           "physical_block": 512,
-          "size": 15728640,
+          "size": 5242880,
           "table": "msdos"
         },
         "partitions": [{
-          "begin": 1024,
-          "end": 513024,
-          "flags": "boot",
-          "fstype": "ext4",
-          "num": 1,
-          "size": 512000
-        }, ...
-        ]
-      },
-      "script": "" }
+            "begin": 1024,
+            "end": 1048576,
+            "flags": "lvm",
+            "fstype": null,
+            "num": 1,
+            "size": 1047552
+        }, ...],
+        "script": ""
+      }
 '''
 
 EXAMPLES = """
-- name: Read device information
-  parted: device=/dev/sdb
+# Create a new primary partition
+- parted:
+    device: /dev/sdb
+    number: 1
+    state: present
+
+# Remove partition number 1
+- parted:
+    device: /dev/sdb
+    number: 1
+    state: absent
+
+# Create a new primary partition with a size of 1GiB
+- parted:
+    device: /dev/sdb
+    number: 1
+    state: present
+    part_end: 1GiB
+
+# Create a new primary partition for LVM
+- parted:
+    device: /dev/sdb
+    number: 2
+    flags_on: lvm
+    state: present
+    part_start: 1GiB
+
+# Read device information
+- parted: device=/dev/sdb
   register: sdb_info
 
-- name: Create a new primary partition
-  parted:
-    device=/dev/sdb
-    number=1
-    state=present
-
-- name: Create a new primary partition with a size of 1GiB
-  parted:
-    device=/dev/sdb
-    number=1
-    flags_on=lvm
-    state=present
-    part_end=1GiB
-
-- name: Create a new primary partition for LVM
-  parted:
-    device=/dev/sdb
-    number=1
-    flags_on=lvm
-    state=present
-
-- name: Remove all LVM partitions from disk
-  parted:
-    device=/dev/sdb
-    number="{{ item.num }}"
-    state=absent
-  with_items: "{{ sdb_info.partitions }}"
-  when: 'lvm' in item.flags
+# Remove all partitions from disk
+- parted:
+    device: /dev/sdb
+    number: "{{ item.num }}"
+    state: absent
+  with_items:
+   - "{{ sdb_info.partitions }}"
 """
 
 
@@ -374,13 +380,14 @@ def main():
     # Final status of the device
     final_device_status = get_device_info(device, unit)
     module.exit_json(
-        changed=changed,
-        partition_info=final_device_status,
+        changed=changed, 
+        disk=final_device_status['generic'],
+        partitions=final_device_status['partitions'],
         script=output_script.strip()
     )
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':                                                                          
     main() 

@@ -80,6 +80,8 @@ Ansible Changes By Release
   * imgadm
 - web_infrastructure
   * jenkins_script
+- system
+  * parted
 - windows:
   * win_say
   * win_shortcut
