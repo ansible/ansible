@@ -65,7 +65,10 @@ options:
       - process
       - user
 author: "Jon Hawkesworth (@jhawkesworth)"
-notes: 
+notes:
+   - This module is best-suited for setting the entire value of an
+     environment variable. For safe element-based management of
+     path-like environment vars, use the M(win_path) module.
    - This module does not broadcast change events.  
      This means that the minority of windows applications which can have 
      their environment changed without restarting will not be notified and 
