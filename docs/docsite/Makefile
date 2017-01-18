@@ -34,6 +34,7 @@ clean:
 	-rm rst/list_of_*.rst
 	-rm rst/*_by_category.rst
 	-rm rst/*_module.rst
+	-rm rst/playbooks_directives.rst
 
 .PHONEY: docs clean
 
