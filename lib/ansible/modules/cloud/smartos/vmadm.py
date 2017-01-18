@@ -125,7 +125,7 @@ options:
     required: false
     description:
       - Resolvers in C(/etc/resolv.conf) will be updated when updating
-        the C(resolvers) property.
+        the I(resolvers) property.
   max_physical_memory:
     required: false
     description:
@@ -411,7 +411,8 @@ def create_payload(module, uuid):
         fh.close()
     except Exception as e:
         module.fail_json(
-            msg='Could not save JSON payload as {0}'.format(fname), exception=traceback.format_exc(e))
+            msg='Could not save JSON payload as {0}'.format(fname),
+            exception=traceback.format_exc(e))
 
     return fname
 
@@ -464,7 +465,7 @@ def manage_all_vms(module, vm_state):
     for uuid in get_all_vm_uuids(module):
         current_vm_state = get_vm_prop(module, uuid, 'state')
         if not current_vm_state and vm_state == 'deleted':
-            changed = False
+            any_changed = False
         else:
             if module.check_mode:
                 if (not current_vm_state) or (get_vm_prop(module, uuid, 'state') != state):
