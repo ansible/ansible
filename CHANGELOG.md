@@ -27,6 +27,15 @@ Ansible Changes By Release
   the old overwriting behaviour via the config option.  In 2.5, multiple --tags
   options will be merged with no way to go back to the old behaviour.
 
+###Modules Notes:
+- oVirt/RHV
+  * Add dynamic inventory.
+  * Add support for 4.1 features.
+  * Add support for data centers, clusters, hosts, storage domains and networks management.
+  * Add support for hosts and virtual machines affinity groups and labels.
+  * Add support for users, groups and permissions management.
+  * Improved virtual machines and disks management.
+
 ###New Modules:
 - archive
 - beadm
@@ -73,6 +82,41 @@ Ansible Changes By Release
   * infini_vol
 - omapi_host
 - openwrt_init
+- ovirt:
+  * ovirt_affinity_labels_facts
+  * ovirt_affinity_labels
+  * ovirt_clusters_facts
+  * ovirt_clusters
+  * ovirt_datacenters_facts
+  * ovirt_datacenters
+  * ovirt_external_providers_facts
+  * ovirt_external_providers
+  * ovirt_groups_facts
+  * ovirt_groups
+  * ovirt_host_networks
+  * ovirt_host_pm
+  * ovirt_hosts_facts
+  * ovirt_hosts
+  * ovirt_mac_pools
+  * ovirt_networks_facts
+  * ovirt_networks
+  * ovirt_nics_facts
+  * ovirt_nics
+  * ovirt_permissions_facts
+  * ovirt_permissions
+  * ovirt_quotas_facts
+  * ovirt_quotas
+  * ovirt_storage_domains_facts
+  * ovirt_storage_domains
+  * ovirt_tags_facts
+  * ovirt_tags
+  * ovirt_templates_facts
+  * ovirt_templates
+  * ovirt_users_facts
+  * ovirt_users
+  * ovirt_vmpools_facts
+  * ovirt_vmpools
+  * ovirt_vms_facts
 - packet:
   * packet_device
   * packet_sshkey
