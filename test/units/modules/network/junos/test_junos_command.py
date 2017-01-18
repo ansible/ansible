@@ -47,7 +47,7 @@ setattr(jnpr_mock.junos.version, 'VERSION', '2.0.0')
 module_patcher = patch.dict('sys.modules', modules)
 module_patcher.start()
 
-from ansible.modules.core.network.junos import junos_command
+from ansible.modules.network.junos import junos_command
 
 
 def set_module_args(args):
