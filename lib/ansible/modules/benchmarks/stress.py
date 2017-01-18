@@ -45,10 +45,11 @@ options:
   state:
     description:
      - Execute module to run stress or parse an existing stress result file.
+    choices: ['benchmark', 'parse']
     required: true
   timeout:
     description:
-     - Total time to run stress for.
+     - Total time, in seconds, to run stress for.
     required: true
 requirements:
  - stress
@@ -109,6 +110,24 @@ exec_cmd:
 import os
 import re
 import json
+
+
+def check_ps(module, process_name):
+
+    pgrep_bin = module.get_bin_path('pgrep', False)
+    ps_bin = module.get_bin_path('ps', True)
+
+    rc = out = err = None
+
+    if pgrep_bin:
+        rc, out, err = module.run_command("{} {}".format(pgrep_bin, process_name))
+    else:
+        rc, out, err = module.run_command("{} -fC {}".format(ps_bin, process_name))
+
+    if rc == 0:
+        module.fail_json(msg="{} process already exists!".format(process_name))
+    else:
+        return False
 
 
 def benchmark(module, result, bin, params):
@@ -207,6 +226,7 @@ def main():
         else:
             stress_bin = module.get_bin_path('stress', True, ['/usr/bin/local'])
 
+        check_ps(module, 'stress')
         benchmark(module, result, stress_bin, module.params)
 
     for param in ['timeout', 'cpu']:
