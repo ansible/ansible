@@ -87,8 +87,22 @@ class TestPlayIterator(unittest.TestCase):
               - debug: msg="this is a post_task"
             """,
             '/etc/ansible/roles/test_role/tasks/main.yml': """
-            - debug: msg="this is a role task"
+            - name: role task
+              debug: msg="this is a role task"
+            - block:
+              - name: role block task
+                debug: msg="inside block in role"
+              always:
+              - name: role always task
+                debug: msg="always task in block in role"
+            - include: foo.yml
+            - name: role task after include
+              debug: msg="after include in role"
             """,
+            '/etc/ansible/roles/test_role/tasks/foo.yml': """
+            - name: role included task
+              debug: msg="this is task in an include from a role"
+            """
         })
 
         mock_var_manager = MagicMock()
@@ -141,6 +155,31 @@ class TestPlayIterator(unittest.TestCase):
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role task")
+        self.assertIsNotNone(task._role)
+        # role block task
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role block task")
+        self.assertIsNotNone(task._role)
+        # role block always task
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role always task")
+        self.assertIsNotNone(task._role)
+        # role include task
+        #(host_state, task) = itr.get_next_task_for_host(hosts[0])
+        #self.assertIsNotNone(task)
+        #self.assertEqual(task.action, 'debug')
+        #self.assertEqual(task.name, "role included task")
+        #self.assertIsNotNone(task._role)
+        # role task after include
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role task after include")
         self.assertIsNotNone(task._role)
         # regular play task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
