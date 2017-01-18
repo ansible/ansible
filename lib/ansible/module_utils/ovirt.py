@@ -247,6 +247,20 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
+def get_entity(service):
+    """
+    Ignore SDK Error in case of getting an entity from service.
+    """
+    entity = None
+    try:
+        entity = service.get()
+    except sdk.Error:
+        # We can get here 404, we should ignore it, in case
+        # of removing entity for example.
+        pass
+    return entity
+
+
 def wait(
     service,
     condition,
@@ -270,7 +284,7 @@ def wait(
         start = time.time()
         while time.time() < start + timeout:
             # Exit if the condition of entity is valid:
-            entity = service.get()
+            entity = get_entity(service)
             if condition(entity):
                 return
             elif fail_condition(entity):
