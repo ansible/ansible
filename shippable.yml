@@ -55,6 +55,8 @@ matrix:
     - env: TEST=linux/ubuntu1604/3
     - env: TEST=linux/ubuntu1604py3/3
 build:
+  pre_ci:
+    - docker images | grep u14pyt
   pre_ci_boot:
     options: "--privileged=false --net=bridge"
   ci:
