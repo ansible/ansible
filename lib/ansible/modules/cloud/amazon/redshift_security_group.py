@@ -17,13 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
+try:
+    import boto
+    import boto.redshift
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
 DOCUMENTATION = '''
 module: redshift_security_group
 author: '"Jens Carl (@j-carl), Hothead Games Inc."'
 short_description: Redshift security group management
 description:
   - allows you to create, delete, and modify Redshift security groups
-version_added: "2.2"
+version_added: "2.3"
 options:
   state:
     description:
@@ -47,6 +58,7 @@ options:
 
 extends_documentation_fragment:
     - aws
+    - ec2
 requirements: [ 'boto' ]
 '''
 
@@ -94,16 +106,6 @@ changed:
     type: boolean
     sample: True
 '''
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info
-
-try:
-    import boto
-    import boto.redshift
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 
 def _clear_rules(module, redshift, group):
@@ -161,11 +163,6 @@ def create_group(module, redshift):
         except boto.exception.JSONResponseError as e:
             module.fail_json(msg=str(e))
 
-    # Process all rule properties.
-    if rules is not None:
-        if not isinstance(rules, list):
-            module.fail_json(msg='Rules needs to be a list of CIDR or EC2 security groups')
-
     try:
         for rule in rules:
             group_kwargs = {}
@@ -186,7 +183,8 @@ def create_group(module, redshift):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec.update(
+        dict(
             state       = dict(choices=['present', 'absent'], required=True),
             group_name  = dict(aliases=['name'], default='Default'),
             description = dict(),
