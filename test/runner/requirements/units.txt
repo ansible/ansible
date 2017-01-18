@@ -9,5 +9,3 @@ python-memcached
 pyyaml
 redis
 unittest2 ; python_version < '2.7'
-jxmlease
-junos-eznc
