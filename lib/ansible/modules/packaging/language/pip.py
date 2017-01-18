@@ -156,8 +156,7 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
-    name: svn+http://myrepo/svn/MyApp#
-    egg: MyApp'
+    name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
 # Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
 - pip:
