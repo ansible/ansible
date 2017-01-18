@@ -32,7 +32,7 @@ version_added: "2.3"
 author: "Michael Gale (gale.michael@gmail.com)"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
-      updated or deleted using this module. A auota will be updated
+      updated or deleted using this module. A quota will be updated
       if matches an existing project and is present.
 options:
     name:
@@ -115,7 +115,7 @@ options:
     rbac_policy:
         required: False
         default: None
-        description: Number of polcies to allow.
+        description: Number of policies to allow.
     router:
         required: False
         default: None
