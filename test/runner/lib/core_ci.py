@@ -19,7 +19,7 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    CommonConfig,
+    EnvironmentConfig,
     display,
     is_shippable,
 )
@@ -29,7 +29,7 @@ class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, name=None):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         :type platform: str
         :type version: str
         :type stage: str
@@ -347,7 +347,7 @@ class SshKey(object):
     """Container for SSH key used to connect to remote instances."""
     def __init__(self, args):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         """
         tmp = os.path.expanduser('~/.ansible/test/')
 
