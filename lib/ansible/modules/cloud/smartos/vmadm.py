@@ -277,10 +277,19 @@ def get_vm_uuid(module, alias):
         module.fail_json(
             msg='Could not retrieve UUID of {0}'.format(alias), exception=stderr)
 
-    try:
-        return json.loads(stdout)[0]['uuid']
-    except:
-        return None
+    # If no VM was found matching the given alias, we get back an empty array.
+    # That is not an error condition as we might be explicitly checking it's
+    # absence.
+    if stdout.strip() == '[]':
+      return None
+    else:
+      try:
+        stdout_json = json.loads(stdout)
+      except:
+        module.fail_json(msg='Invalid JSON returned by vmadm for uuid lookup of {0}'.format(alias))
+
+      if len(stdout_json) > 0 and 'uuid' in stdout_json[0]:
+        return stdout_json[0]['uuid']
 
 
 def get_all_vm_uuids(module):
