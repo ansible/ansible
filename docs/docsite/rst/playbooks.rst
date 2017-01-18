@@ -16,14 +16,12 @@ ways to organize playbooks and the files they include, and we'll offer up some s
 It is recommended to look at `Example Playbooks <https://github.com/ansible/ansible-examples>`_ while reading along with the playbook documentation.  These illustrate best practices as well as how to put many of the various concepts together.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    playbooks_intro
    playbooks_roles
    playbooks_variables
-   playbooks_filters
-   playbooks_filters_ipaddr
-   playbooks_tests
+   playbooks_templating
    playbooks_conditionals
    playbooks_loops
    playbooks_blocks

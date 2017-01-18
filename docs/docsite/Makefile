@@ -1,4 +1,4 @@
-SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"):
 FORMATTER=../../hacking/module_formatter.py
 DUMPER=../../hacking/dump_playbook_attributes.py
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
@@ -7,22 +7,16 @@ else
 CPUS := $(shell nproc)
 endif
 
-all: clean docs
+all: docs
 
-docs: clean directives modules htmldocs
-	-(cp *.ico htmlout/)
-	-(cp *.jpg htmlout/)
-	-(cp *.png htmlout/)
-
-variables:
-	(mkdir -p htmlout/)
-	dot variables.dot -Tpng -o htmlout/variables.png
+docs: clean htmldocs
 
 htmldocs: directives modules staticmin
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
-webdocs: htmldocs
+webdocs: docs
 
+#TODO: leaving htmlout removal for those having older versions, should eventually be removed also
 clean:
 	-rm -rf htmlout
 	-rm -rf _build
