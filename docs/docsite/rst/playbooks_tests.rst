@@ -1,5 +1,5 @@
-Jinja2 tests
-============
+Tests
+-----
 
 .. contents:: Topics
 
@@ -8,14 +8,14 @@ Tests in Jinja2 are a way of evaluating template expressions and returning True 
 Jinja2 ships with many of these. See `builtin tests`_ in the official Jinja2 template documentation.
 Tests are very similar to filters and are used mostly the same way, but they can also be used in list processing filters, like C(map()) and C(select()) to choose items in the list.
 
-Like filters, tests always execute on the Ansible controller, **not** on the target of a task, as they test local data.
+Like all templating, tests always execute on the Ansible controller, **not** on the target of a task, as they test local data.
 
 In addition to those Jinja2 tests, Ansible supplies a few more and users can easily create their own.
 
 .. _testing_strings:
 
 Testing strings
----------------
+```````````````
 
 To match strings against a substring or a regex, use the "match" or "search" filter::
 
@@ -38,7 +38,7 @@ To match strings against a substring or a regex, use the "match" or "search" fil
 .. _testing_versions:
 
 Version Comparison
-------------------
+``````````````````
 
 .. versionadded:: 1.6
 
@@ -64,7 +64,7 @@ be used.  The default is ``False``, but this setting as ``True`` uses more stric
 .. _math_tests:
 
 Group theory tests
-------------------
+``````````````````
 
 .. versionadded:: 2.1
 
@@ -84,7 +84,7 @@ To see if a list includes or is included by another list, you can use 'issubset'
 .. _path_tests:
 
 Testing paths
--------------
+`````````````
 
 The following tests can provide information about a path on the controller::
 
@@ -112,7 +112,7 @@ The following tests can provide information about a path on the controller::
 .. _test_task_results:
 
 Task results
-------------
+````````````
 
 The following tasks are illustrative of the tests meant to check the status of tasks::
 

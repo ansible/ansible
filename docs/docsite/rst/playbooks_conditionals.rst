@@ -4,10 +4,11 @@ Conditionals
 .. contents:: Topics
 
 
-Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), 
-or previous task result.  In some cases, the values of variables may depend on other variables.  
-Further, additional groups can be created to manage hosts based on
-whether the hosts match other criteria.   There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
+Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), or previous task result.
+In some cases, the values of variables may depend on other variables.
+Further, additional groups can be created to manage hosts based on whether the hosts match other criteria.
+There are many options to control execution flow in Ansible.
+More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
 
 Let's dig into what they are.
 
@@ -16,8 +17,8 @@ Let's dig into what they are.
 The When Statement
 ``````````````````
 
-Sometimes you will want to skip a particular step on a particular host.  This could be something
-as simple as not installing a certain package if the operating system is a particular version,
+Sometimes you will want to skip a particular step on a particular host.
+This could be something as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
 This is easy to do in Ansible with the `when` clause, which contains a raw Jinja2 expression without double curly braces (see :doc:`playbooks_variables`).
@@ -95,13 +96,12 @@ Then a conditional execution might look like::
           when: epic
 
 or::
- 
+
     tasks:
         - shell: echo "This certainly isn't epic!"
           when: not epic
 
-If a required variable has not been set, you can skip or fail using Jinja2's
-`defined` test. For example::
+If a required variable has not been set, you can skip or fail using Jinja2's `defined` test. For example::
 
     tasks:
         - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
@@ -110,8 +110,8 @@ If a required variable has not been set, you can skip or fail using Jinja2's
         - fail: msg="Bailing out. this play requires 'bar'"
           when: bar is undefined
 
-This is especially useful in combination with the conditional import of vars
-files (see below).
+This is especially useful in combination with the conditional import of vars files (see below).
+As the examples show, you don't need to use `{{ }}` to use variables inside conditionals, as these are already implied.
 
 .. _loops_and_conditionals:
 
