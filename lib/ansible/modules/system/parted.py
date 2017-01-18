@@ -34,7 +34,7 @@ options:
     description: The block device (disk) where to operate
     required: True
   align:
-    description: Set alignment for newly created partitions, valid alignment types are: none, cylinder, minimal and optimal.
+    description: Set alignment for newly created partitions.
     choices: ['none', 'cylinder', 'minimal', 'optimal']
     required: False
     default: optimal
@@ -75,7 +75,7 @@ options:
     default: ''
   state:
     description: If to create or delete a partition. If not present or empty the module will return only the device information.
-    choices: ['present', 'absent'. '']
+    choices: ['present', 'absent', '']
     required: False
     default: present
 '''
@@ -92,8 +92,8 @@ partition_info:
     partitions:
       description: List of device partitions
       type: list
-    sample: {
-      "partition_info": {
+    sample: >
+      { "partition_info": {
         "generic": {
           "dev": "/dev/sda",
           "logical_block": 512,
@@ -112,8 +112,7 @@ partition_info:
         }, ...
         ]
       },
-      "script": ""
-    } 
+      "script": "" }
 '''
 
 EXAMPLES = """
