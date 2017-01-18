@@ -174,6 +174,19 @@ class PathMapper(object):
                 }
 
             if ext == '.py':
+                network_utils = (
+                    'netcfg',
+                    'netcli',
+                    'network_common',
+                    'network',
+                )
+
+                if name in network_utils:
+                    return {
+                        'network-integration': 'network/',  # target all network platforms
+                        'units': 'all',
+                    }
+
                 if name in self.prefixes and self.prefixes[name] == 'network':
                     network_target = 'network/%s/' % name
 
@@ -241,6 +254,28 @@ class PathMapper(object):
                 'integration': integration_name,
                 'units': units_path,
             }
+
+        if path.startswith('lib/ansible/plugins/terminal/'):
+            if ext == '.py':
+                if name in self.prefixes and self.prefixes[name] == 'network':
+                    network_target = 'network/%s/' % name
+
+                    if network_target in self.integration_targets_by_alias:
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    display.warning('Integration tests for "%s" not found.' % network_target)
+
+                    return {
+                        'units': 'all',
+                    }
+
+                return {
+                    'network-integration': 'all',
+                    'units': 'all',
+                }
 
         if path.startswith('lib/ansible/utils/module_docs_fragments/'):
             return {
