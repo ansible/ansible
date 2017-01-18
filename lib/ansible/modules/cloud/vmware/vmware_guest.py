@@ -1062,10 +1062,15 @@ class PyVmomiHelper(object):
                 ident.userData.orgName = str(self.params['customization']['productid'])
 
             if 'joindomain' in self.params['customization']:
-                # TODO: Escalate if domainAdmin and domainPassword are not provided
+                if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use joindomain feature")
+
                 ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
-                ident.identification.domainAdminPassword = str(self.params['customization'].get('domainadminpassword'))
                 ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))
+                ident.identification.domainAdminPassword = vim.vm.customization.Password()
+                ident.identification.domainAdminPassword.value = str(self.params['customization'].get('domainadminpassword'))
+                ident.identification.domainAdminPassword.plainText = True
+
             elif 'joinworkgroup' in self.params['customization']:
                 ident.identification.joinWorkgroup = str(self.params['customization'].get('joinworkgroup'))
 
