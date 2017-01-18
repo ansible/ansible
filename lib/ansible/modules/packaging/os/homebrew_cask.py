@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 ---
 module: homebrew_cask
 author:
+    - "Kyle Benson @kyle-benson"
     - "Indrajit Raychaudhuri (@indrajitr)"
     - "Daniel Jaouen (@danieljaouen)"
     - "Enric Lluelles (@enriclluelles)"
@@ -137,10 +138,12 @@ class HomebrewCask(object):
 
     VALID_CASK_CHARS = r'''
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
+        \s                  # spaces
+        :                   # colons
+        {sep}               # the OS-specific path separator
         .                   # dots
-        /                   # slash (for taps)
         -                   # dashes
-    '''
+    '''.format(sep=os.path.sep)
 
     INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
     INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
@@ -301,13 +304,17 @@ class HomebrewCask(object):
 
     @current_cask.setter
     def current_cask(self, cask):
+        self._current_cask = cask
         if not self.valid_cask(cask):
             self._current_cask = None
             self.failed = True
             self.message = 'Invalid cask: {0}.'.format(cask)
             raise HomebrewCaskException(self.message)
-
         else:
+            if ".rb" in cask:
+                self._url_cask = True
+            else:
+                self._url_cask = False
             self._current_cask = cask
             return cask
     # /class properties -------------------------------------------- }}}
@@ -448,13 +455,7 @@ class HomebrewCask(object):
             self.message = 'Invalid cask: {0}.'.format(self.current_cask)
             raise HomebrewCaskException(self.message)
 
-        if self._current_cask_is_installed():
-            self.unchanged_count += 1
-            self.message = 'Cask already installed: {0}'.format(
-                self.current_cask,
-            )
-            return True
-
+        ## Since this will always evaluate true it can be moved around to make url organization easier
         if self.module.check_mode:
             self.changed = True
             self.message = 'Cask would be installed: {0}'.format(
@@ -462,10 +463,27 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
-        opts = (
-            [self.brew_path, 'cask', 'install', self.current_cask]
-            + self.install_options
-        )
+        if self._url_cask:
+            self.url_current_cask = self.current_cask
+            self.current_cask = self.current_cask.rpartition('/')[2].partition('.')[0]
+
+            opts = (
+                [self.brew_path, 'cask', 'install', self.url_current_cask]
+                + self.install_options
+            )
+        else:
+            opts = (
+                [self.brew_path, 'cask', 'install', self.current_cask]
+                + self.install_options
+            )
+
+        if self._current_cask_is_installed():
+            self.unchanged_count += 1
+            self.message = 'Cask already installed: {0}'.format(
+                self.current_cask,
+            )
+            return True
+
 
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
@@ -495,6 +513,9 @@ class HomebrewCask(object):
             self.message = 'Invalid cask: {0}.'.format(self.current_cask)
             raise HomebrewCaskException(self.message)
 
+        if self._url_cask:
+            self.current_cask = self.current_cask.rpartition('/')[2].partition('.')[0]
+
         if not self._current_cask_is_installed():
             self.unchanged_count += 1
             self.message = 'Cask already uninstalled: {0}'.format(
@@ -514,7 +535,6 @@ class HomebrewCask(object):
                if opt]
 
         rc, out, err = self.module.run_command(cmd)
-
         if not self._current_cask_is_installed():
             self.changed_count += 1
             self.changed = True
@@ -527,7 +547,10 @@ class HomebrewCask(object):
 
     def _uninstall_casks(self):
         for cask in self.casks:
-            self.current_cask = cask
+            if ".rb" in cask:
+                self.current_cask = cask.rpartition('/')[2].partition('.')[0]
+            else:
+                self.current_cask = cask
             self._uninstall_current_cask()
 
         return True
