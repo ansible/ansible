@@ -444,6 +444,7 @@ class EnvironmentConfig(CommonConfig):
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
         self.remote_stage = args.remote_stage  # type: str
+        self.remote_aws_region = args.remote_aws_region  # type: str
 
         self.requirements = args.requirements  # type: bool
 
