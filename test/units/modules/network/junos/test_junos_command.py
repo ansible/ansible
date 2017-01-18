@@ -28,11 +28,26 @@ except ImportError:
     from io import StringIO
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
-from ansible.modules.network.junos import junos_command
-from ansible.module_utils.junos import xml_to_json
+from ansible.compat.tests.mock import patch, MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
+
+jnpr_mock = MagicMock()
+jxmlease_mock = MagicMock()
+modules = {
+    'jnpr': jnpr_mock,
+    'jnpr.junos': jnpr_mock.junos,
+    'jnpr.junos.utils': jnpr_mock.junos.utils,
+    'jnpr.junos.utils.config': jnpr_mock.junos.utils.config,
+    'jnpr.junos.version': jnpr_mock.junos.version,
+    'jnpr.junos.exception': jnpr_mock.junos.execption,
+    'jxmlease': jxmlease_mock
+}
+setattr(jnpr_mock.junos.version, 'VERSION', '2.0.0')
+module_patcher = patch.dict('sys.modules', modules)
+module_patcher.start()
+
+from ansible.modules.core.network.junos import junos_command
 
 
 def set_module_args(args):
@@ -60,6 +75,10 @@ def load_fixture(name):
     fixture_data[path] = data
     return data
 
+rpc_command_map = {
+    'get_software_information': 'show version'
+}
+
 
 class test_junosCommandModule(unittest.TestCase):
 
@@ -68,7 +87,7 @@ class test_junosCommandModule(unittest.TestCase):
         self.run_commands = self.mock_run_commands.start()
 
         self.mock_connect = patch('ansible.module_utils.junos.Netconf.connect')
-        self.connect = self.mock_connect.start()
+        self.mock_connect.start()
 
         self.saved_stdout = sys.stdout
 
@@ -89,13 +108,11 @@ class test_junosCommandModule(unittest.TestCase):
                     command = obj['command']
                 except ValueError:
                     command = item
-
-                filename = os.path.join(cmd_type,
+                if cmd_type == 'rpcs':
+                    command = rpc_command_map[str(command)]
+                filename = os.path.join('output',
                                         str(command).replace(' ', '_') + '.{0}'.format(fmt))
-                if fmt == 'xml':
-                    output.append(xml_to_json(load_fixture(filename)))
-                else:
-                    output.append(load_fixture(filename))
+                output.append(load_fixture(filename))
 
             return output
 
@@ -120,17 +137,23 @@ class test_junosCommandModule(unittest.TestCase):
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
 
-    def test_junos_command_format_xml(self):
-        set_module_args(dict(commands=['show version'], host='test', format='xml'))
-        result = self.execute_module(fmt='xml')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('software-information' in result['stdout'][0])
-
     def test_junos_command_multiple(self):
         set_module_args(dict(commands=['show version', 'show version'], host='test'))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 2)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
+
+    def test_junos_command_format_xml(self):
+        set_module_args(dict(commands=['show version'], host='test', format='xml'))
+        result = self.execute_module(fmt='xml')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue('<software-information>' in result['stdout'][0])
+
+    def test_junos_command_format_json(self):
+        set_module_args(dict(commands=['show version'], host='test', format='xml'))
+        result = self.execute_module(fmt='json')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue('software-information' in result['stdout'][0])
 
     def test_junos_command_wait_for(self):
         wait_for = 'result[0] contains "Hostname"'
@@ -172,10 +195,34 @@ class test_junosCommandModule(unittest.TestCase):
         set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
         result = self.execute_module(fmt='xml', cmd_type='rpcs')
         self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('software-information' in result['stdout'][0])
+        self.assertTrue('<software-information>' in result['stdout'][0])
 
-    def test_junos_command_rpc_multiple(self):
+    def test_junos_command_rpc_format_xml_multiple(self):
         set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
         result = self.execute_module(fmt='xml', cmd_type='rpcs')
+        self.assertEqual(len(result['stdout']), 2)
+        self.assertTrue('<software-information>' in result['stdout'][0])
+
+    def test_junos_command_rpc_format_text(self):
+        set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
+        result = self.execute_module(fmt='text', cmd_type='rpcs')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue(result['stdout'][0].startswith('Hostname'))
+
+    def test_junos_command_rpc_format_text_multiple(self):
+        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
+        result = self.execute_module(fmt='text', cmd_type='rpcs')
+        self.assertEqual(len(result['stdout']), 2)
+        self.assertTrue(result['stdout'][0].startswith('Hostname'))
+
+    def test_junos_command_rpc_format_json(self):
+        set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
+        result = self.execute_module(fmt='json', cmd_type='rpcs')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue('software-information' in result['stdout'][0])
+
+    def test_junos_command_rpc_format_json_multiple(self):
+        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
+        result = self.execute_module(fmt='json', cmd_type='rpcs')
         self.assertEqual(len(result['stdout']), 2)
         self.assertTrue('software-information' in result['stdout'][0])
