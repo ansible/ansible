@@ -104,6 +104,14 @@ Target: February/March 2017
   - CloudFormation YAML, cross-stack reference, and roles support
   - ECS module refactor
   - AWS module unit testing w/ placebo (boto3 only)
+  
+- **oVirt support** (machacekondra)
+
+  - Add support for oVirt 4.1 features.
+  - Add support for data centers, clusters, hosts, storages and networks management.
+  - Add support for hosts and virtual machines affinity groups and labels.
+  - Add support for users, groups and permissions management.
+  - Improved virtual machines and disks management.
 
 - **Plugin Loader**
 
