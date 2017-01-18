@@ -41,22 +41,22 @@ options:
     aliases: []
   instance_name:
     description:
-      - instance name if you wish to attach or detach the disk 
+      - instance name if you wish to attach or detach the disk
     required: false
-    default: null 
+    default: null
     aliases: []
   mode:
     description:
       - GCE mount mode of disk, READ_ONLY (default) or READ_WRITE
     required: false
-    default: "READ_ONLY" 
+    default: "READ_ONLY"
     choices: ["READ_WRITE", "READ_ONLY"]
     aliases: []
   name:
     description:
       - name of the disk
     required: true
-    default: null 
+    default: null
     aliases: []
   size_gb:
     description:
@@ -128,6 +128,12 @@ options:
     default: "pd-standard"
     choices: ["pd-standard", "pd-ssd"]
     aliases: []
+  delete_on_termination:
+    version_added: "2.3"
+    description:
+      - If yes, deletes the volume when instance is terminated
+    default: no
+    choices: ["yes", "no"]
 
 requirements:
     - "python >= 2.6"
@@ -158,6 +164,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            delete_on_termination = dict(type='bool'),
             detach_only = dict(type='bool'),
             instance_name = dict(),
             mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
@@ -179,6 +186,7 @@ def main():
 
     gce = gce_connect(module)
 
+    delete_on_termination = module.params.get('delete_on_termination')
     detach_only = module.params.get('detach_only')
     instance_name = module.params.get('instance_name')
     mode = module.params.get('mode')
@@ -189,6 +197,11 @@ def main():
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
+
+    if delete_on_termination and not instance_name:
+        module.fail_json(
+            msg='Must specify an instance name when requesting delete on termination',
+            changed=False)
 
     if detach_only and not instance_name:
         module.fail_json(
@@ -233,9 +246,9 @@ def main():
             module.fail_json(msg="Must supply a size_gb", changed=False)
         try:
             size_gb = int(round(float(size_gb)))
-            if size_gb < 1: 
+            if size_gb < 1:
                 raise Exception
-        except:        
+        except:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
                     changed=False)
 
@@ -273,11 +286,14 @@ def main():
             changed = True
         if inst and not is_attached:
             try:
-                gce.attach_volume(inst, disk, device=name, ex_mode=mode)
+                gce.attach_volume(inst, disk, device=name, ex_mode=mode,
+                                  ex_auto_delete=delete_on_termination)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['attached_to_instance'] = inst.name
             json_output['attached_mode'] = mode
+            if delete_on_termination:
+                json_output['delete_on_termination'] = True
             changed = True
 
     # user wants to delete a disk (or perhaps just detach it).
