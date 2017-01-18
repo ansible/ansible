@@ -65,6 +65,11 @@ options:
       - Enable encryption at rest for this volume.
     default: false
     version_added: "1.8"
+  kms_key_id:
+    description:
+      - Specify the id of the KMS key to use.
+    default: null
+    version_added: "2.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -318,12 +323,21 @@ def boto_supports_volume_encryption():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
+def boto_supports_kms_key_id():
+    """
+    Check if Boto library supports kms_key_ids (added in 2.39.0)
+
+    Returns:
+        True if version is equal to or higher then the version needed, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
 
 def create_volume(module, ec2, zone):
     changed = False
     name = module.params.get('name')
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
+    kms_key_id = module.params.get('kms_key_id')
     volume_size = module.params.get('volume_size')
     volume_type = module.params.get('volume_type')
     snapshot = module.params.get('snapshot')
@@ -335,7 +349,10 @@ def create_volume(module, ec2, zone):
     if volume is None:
         try:
             if boto_supports_volume_encryption():
-                volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
+                if kms_key_id is not None:
+                    volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted, kms_key_id)
+                else:
+                    volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops, encrypted)
                 changed = True
             else:
                 volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
@@ -486,6 +503,7 @@ def main():
             volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
             iops = dict(),
             encrypted = dict(type='bool', default=False),
+            kms_key_id = dict(),
             device_name = dict(),
             delete_on_termination = dict(type='bool', default=False),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
@@ -503,6 +521,7 @@ def main():
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
     encrypted = module.params.get('encrypted')
+    kms_key_id = module.params.get('kms_key_id')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
@@ -545,6 +564,9 @@ def main():
 
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
+
+    if kms_key_id is not None and not boto_supports_kms_key_id():
+        module.fail_json(msg="You must use boto >= v2.39.0 to use kms_key_id")
 
     # Here we need to get the zone info for the instance. This covers situation where
     # instance is specified but zone isn't.
