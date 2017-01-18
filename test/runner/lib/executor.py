@@ -21,6 +21,7 @@ import lib.thread
 
 from lib.core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from lib.manage_ci import (
@@ -187,6 +188,9 @@ def command_network_integration(args):
 
     if args.platform:
         instances = []  # type: list [lib.thread.WrappedThread]
+
+        # generate an ssh key (if needed) up front once, instead of for each instance
+        SshKey(args)
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
