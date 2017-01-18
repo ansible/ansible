@@ -29,8 +29,9 @@ $result = New-Object psobject @{
 
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 If ($creates -ne $null) {
-    If (Test-Path $params.creates) {
-        Exit-Json $result "The 'creates' file or directory already exists."
+    If (Test-Path $creates) {
+        $result.msg = "The 'creates' file or directory ($creates) already exists."
+        Exit-Json $result
     }
 }
 
@@ -139,4 +140,4 @@ Set-Attr $result.win_unzip "src" $src.toString()
 Set-Attr $result.win_unzip "dest" $dest.toString()
 Set-Attr $result.win_unzip "recurse" $recurse.toString()
 
-Exit-Json $result;
+Exit-Json $result
