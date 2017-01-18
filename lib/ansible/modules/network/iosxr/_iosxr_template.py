@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: iosxr_template
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage Cisco IOSXR device configurations over SSH
 description:
   - Manages network device configurations over SSH.  This module
