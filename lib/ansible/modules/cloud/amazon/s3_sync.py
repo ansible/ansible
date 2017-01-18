@@ -217,17 +217,6 @@ except ImportError:
     pass
 
 
-def boto_exception(err):
-    '''generic error message handler'''
-    if hasattr(err, 'error_message'):
-        error = err.error_message
-    elif hasattr(err, 'message'):
-        error = str(err.message) + ' ' + str(err) + ' - ' + str(type(err))
-    else:
-        error = '%s: %s' % (Exception, err)
-
-    return error
-
 # the following function, calculate_multipart_etag, is from tlastowka
 # on github and is used under its (compatible) GPL license. So this
 # license applies to the following function.
