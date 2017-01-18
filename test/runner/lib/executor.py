@@ -183,12 +183,20 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
     if args.platform:
         instances = []  # type: list [lib.thread.WrappedThread]
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
+            platform_target = 'network/%s/' % platform
+
+            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                    platform_version, platform))
+                continue
+
             instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
             instance.daemon = True
             instance.start()
@@ -202,9 +210,12 @@ def command_network_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
 
+        filename = 'test/integration/inventory.networking'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.networking', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -258,12 +269,12 @@ def network_inventory(remotes):
     for group in groups:
         hosts = '\n'.join(groups[group])
 
-        template += """
+        template += textwrap.dedent("""
         [%s]
         %s
-        """ % (group, hosts)
+        """) % (group, hosts)
 
-    inventory = textwrap.dedent(template)
+    inventory = template
 
     return inventory
 
@@ -291,9 +302,12 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
+        filename = 'test/integration/inventory.winrm'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.winrm', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
