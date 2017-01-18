@@ -166,7 +166,7 @@ EXAMPLES = """
     olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
 
 - name: Get rid of an unneeded attribute
-  ldap_entry:
+  ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
     value: ""
@@ -184,7 +184,7 @@ EXAMPLES = """
 #   bind_dn: cn=admin,dc=example,dc=com
 #   bind_pw: password
 - name: Get rid of an unneeded attribute
-  ldap_entry:
+  ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
     value: ""
