@@ -1,7 +1,7 @@
 ---
 - hosts: ios
   gather_facts: no
-  connection: local
+  connection: network_cli
 
   vars:
     limit_to: "*"
