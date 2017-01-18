@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # We don't set -u here, due to pypa/virtualenv#150
-set -e
+set -ex
 
 MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 
@@ -19,10 +19,8 @@ virtualenv --system-site-packages $PYTHON "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
 
-echo "################"
-echo "Python path: $(which python)"
-echo "Python version: $(python -V)"
-echo "################"
+which python
+python -V
 
 pip install -U jinja2==2.9.4
 
