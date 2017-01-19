@@ -367,7 +367,7 @@ def main():
     argument_spec.update(dict(
         dest = dict(required=False, default=None, type='path'),
         url_username = dict(required=False, default=None, aliases=['user']),
-        url_password = dict(required=False, default=None, aliases=['password']),
+        url_password = dict(required=False, default=None, aliases=['password'], no_log=True),
         body = dict(required=False, default=None, type='raw'),
         body_format = dict(required=False, default='raw', choices=['raw', 'json']),
         method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
