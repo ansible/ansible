@@ -63,7 +63,11 @@ class InventoryParser(object):
         # We expect top level keys to correspond to groups, iterate over them
         # to get host, vars and subgroups (which we iterate over recursivelly)
         for group_name in data.keys():
-            self._parse_groups(group_name, data[group_name])
+            if group_name == 'vars':
+                # top 'group' named vars is really a vars section for 'all' group
+                self._parse_groups('all', {'vars': data['vars']})
+            else:
+                self._parse_groups(group_name, data[group_name])
 
         # Finally, add all top-level groups as children of 'all'.
         # We exclude ungrouped here because it was already added as a child of
@@ -85,10 +89,10 @@ class InventoryParser(object):
 
             if 'vars' in group_data:
                 for var in group_data['vars']:
-                    if var != 'ansible_group_priority':
-                        self.groups[group].set_variable(var, group_data['vars'][var])
-                    else:
+                    if var == 'ansible_group_priority':
                         self.groups[group].set_priority(group_data['vars'][var])
+                    else:
+                        self.groups[group].set_variable(var, group_data['vars'][var])
 
             if 'children' in group_data:
                 for subgroup in group_data['children']:
