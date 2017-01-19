@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding: utf-8 -*-
 
-# (c) 2016, Wayne Witzel III <wayne@riotousliving.com>
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,8 @@ description:
 options:
     name:
       description:
-        - Name string to use for the organization.
+        - Name to use for the organization.
       required: True
-      default: null
     description:
       description:
         - String to use for the organization.
@@ -41,7 +40,7 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    config_file:
+    tower_config_file:
       description:
         - Path to the Tower config file. See notes.
       required: False
@@ -53,9 +52,9 @@ requirements:
   - "ansible-tower-cli >= 3.0.3"
 
 notes:
-  - If no I(config_file) is provided we will attempt to use the tower-cli library
+  - If no I(tower_config_file) is provided we will attempt to use the tower-cli library
     defaults to find your Tower host information.
-  - I(config_file) should contain Tower configuration in the following format:
+  - I(tower_config_file) should contain Tower configuration in the following format:
       host=hostname
       username=username
       password=password
@@ -69,7 +68,7 @@ EXAMPLES = '''
           name: "Foo"
           description: "Foo bar organization"
           state: present
-          config_file: "~/tower_cli.cfg"
+          tower_config_file: "~/tower_cli.cfg"
 '''
 
 import os
@@ -77,35 +76,21 @@ import os
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
-    from tower_cli.utils import parser
+
     from tower_cli.conf import settings
+    from ansible.module_utils.ansible_tower import tower_auth_config
 
     HAS_TOWER_CLI = True
 except ImportError:
     HAS_TOWER_CLI = False
 
 
-def tower_auth_config(module):
-    config_file = module.params.get('config_file')
-    if not config_file:
-        return {}
-
-    config_file = os.path.expanduser(config_file)
-    if not os.path.exists(config_file):
-        module.fail_json(msg='file not found: %s' % config_file)
-    if os.path.isdir(config_file):
-        module.fail_json(msg='directory can not be used as config file: %s' % config_file)
-
-    with open(config_file, 'rb') as f:
-        return parser.string_to_dict(f.read())
-
-
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(),
+            name = dict(required=True),
             description = dict(),
-            config_file = dict(),
+            tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=False
@@ -130,7 +115,7 @@ def main():
             elif state == 'absent':
                 result = organization.delete(name=name)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
-            module.fail_json(msg='{}'.format(excinfo), changed=False)
+            module.fail_json(msg='Failed to update the organization: {}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
