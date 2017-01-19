@@ -24,6 +24,7 @@ from ansible.compat.six import PY3
 
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
 from ansible.vars.hostvars import HostVars
+from ansible.vars.unsafe_proxy import AnsibleUnsafeText
 
 class AnsibleDumper(yaml.SafeDumper):
     '''
@@ -42,6 +43,11 @@ else:
 
 AnsibleDumper.add_representer(
     AnsibleUnicode,
+    represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUnsafeText,
     represent_unicode,
 )
 
