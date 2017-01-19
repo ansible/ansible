@@ -36,7 +36,7 @@ from datetime import datetime
 import uuid
 
 import yaml
-from jinja2.filters import environmentfilter
+from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
     import passlib.hash
@@ -438,11 +438,35 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
+
+@environmentfilter
+def do_groupby(environment, value, attribute):
+    """Overridden groupby filter for jinja2, to address an issue with
+    jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
+    has repr that prevents ansible.template.safe_eval.safe_eval from being
+    able to parse and eval the data.
+
+    jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
+    >=2.9.5 uses a standard tuple repr on the namedtuple.
+
+    The adaptation here, is to run the jinja2 `do_groupby` function, and
+    cast all of the namedtuples to a regular tuple.
+
+    See https://github.com/ansible/ansible/issues/20098
+
+    We may be able to remove this in the future.
+    """
+    return [tuple(t) for t in _do_groupby(environment, value, attribute)]
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
     def filters(self):
         return {
+            # jinja2 overrides
+            'groupby': do_groupby,
+
             # base 64
             'b64decode': partial(unicode_wrap, base64.b64decode),
             'b64encode': partial(unicode_wrap, base64.b64encode),
