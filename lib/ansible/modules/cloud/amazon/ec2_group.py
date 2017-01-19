@@ -71,6 +71,18 @@ options:
     required: false
     default: 'true'
     aliases: []
+  revoke_rules:
+    version_added: "2.3"
+    description:
+      - List of firewall inbound rules to revoke in this group (see examples). If none are supplied, nothing will change.
+    required: false
+    default: []
+  revoke_rules_egress:
+    version_added: "2.3"
+    description:
+      - List of firewall outbound rules to revoke in this group (see examples). If none are supplied, nothing will change.
+    required: false
+    default: []
 
 extends_documentation_fragment:
     - aws
@@ -131,6 +143,21 @@ EXAMPLES = '''
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
+
+# the example group will no longer accept connections on port 80
+- name: example ec2 group revocation
+  ec2_group:
+    name: example
+    description: an example EC2 group
+    vpc_id: 12345
+    region: eu-west-1a
+    aws_secret_key: SECRET
+    aws_access_key: ACCESS
+    revoke_rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
 '''
 
 try:
@@ -249,6 +276,8 @@ def main():
         state = dict(default='present', type='str', choices=['present', 'absent']),
         purge_rules=dict(default=True, required=False, type='bool'),
         purge_rules_egress=dict(default=True, required=False, type='bool'),
+        revoke_rules=dict(default=[], required=False, type='list'),
+        revoke_rules_egress=dict(default=[], required=False, type='list'),
 
     )
     )
@@ -268,6 +297,8 @@ def main():
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
+    revoke_rules = module.params['revoke_rules']
+    revoke_rules_egress = module.params['revoke_rules_egress']
 
     changed = False
 
@@ -377,6 +408,38 @@ def main():
                             group.authorize(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
                         changed = True
 
+        # Revoke ingress rules
+        if revoke_rules is not None:
+            for rule in revoke_rules:
+                validate_rule(module, rule)
+
+                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+                if target_group_created:
+                    changed = True
+
+                if rule['proto'] in ('all', '-1', -1):
+                    rule['proto'] = -1
+                    rule['from_port'] = None
+                    rule['to_port'] = None
+
+                # Convert ip to list we can iterate over
+                if not isinstance(ip, list):
+                    ip = [ip]
+
+                # Only try to revoke rule if it exists
+                for thisip in ip:
+                    ruleId = make_rule_key('in', rule, group_id, thisip)
+                    if ruleId in groupRules:
+                        del groupRules[ruleId]
+
+                        grantGroup = None
+                        if group_id:
+                            grantGroup = groups[group_id]
+
+                        if not module.check_mode:
+                            group.revoke(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
+                        changed = True
+
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
             for (rule, grant) in groupRules.values():
@@ -453,6 +516,44 @@ def main():
             else:
                 # make sure the default egress rule is not removed
                 del groupRules[default_egress_rule]
+
+       # Revoke egress rules
+        if revoke_rules_egress is not None:
+            for rule in revoke_rules_egress:
+                validate_rule(module, rule)
+
+                group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
+                if target_group_created:
+                    changed = True
+
+                if rule['proto'] in ('all', '-1', -1):
+                    rule['proto'] = -1
+                    rule['from_port'] = None
+                    rule['to_port'] = None
+
+                # Convert ip to list we can iterate over
+                if not isinstance(ip, list):
+                    ip = [ip]
+
+                # Only try to revoke rule if it exists
+                for thisip in ip:
+                    ruleId = make_rule_key('in', rule, group_id, thisip)
+                    if ruleId in groupRules:
+                        del groupRules[ruleId]
+
+                        grantGroup = None
+                        if group_id:
+                            grantGroup = groups[group_id].id
+
+                        if not module.check_mode:
+                            ec2.revoke_security_group_egress(
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=thisip)
+                        changed = True
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
