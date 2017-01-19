@@ -152,7 +152,7 @@ options:
     version_added: "1.3"
   ignore_nonexistent_bucket:
     description:
-      - Overrides initial bucket lookups in case bucket or iam policies are restrictive
+      - Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True.
     default: false
     aliases: []
     version_added: "2.2"
@@ -275,7 +275,7 @@ except ImportError:
 
 def key_check(module, s3, bucket, obj, version=None, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         key_check = bucket.get_key(obj, version_id=version)
     except s3.provider.storage_response_error as e:
         if version is not None and e.status == 400: # If a specified version doesn't exist a 400 is returned.
@@ -288,7 +288,7 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
         return False
 
 def keysum(module, s3, bucket, obj, version=None, validate=True):
-    bucket = s3.lookup(bucket, validate)
+    bucket = s3.lookup(bucket, validate=validate)
     key_check = bucket.get_key(obj, version_id=version)
     if not key_check:
         return None
@@ -300,9 +300,9 @@ def keysum(module, s3, bucket, obj, version=None, validate=True):
 
 def bucket_check(module, s3, bucket, validate=True):
     try:
-        result = s3.lookup(bucket, validate)
+        result = s3.lookup(bucket, validate=validate)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s: %s" % (bucket, str(e)),
+        module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s: %s" % (bucket, e)),
                 exception=traceback.format_exc())
     return bool(result)
 
@@ -314,7 +314,7 @@ def create_bucket(module, s3, bucket, location=None):
         for acl in module.params.get('permission'):
             bucket.set_acl(acl)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg="Failed while creating bucket %s: %s" % (bucket, str(e)),
+        module.fail_json(msg="Failed while creating bucket %s: %s" % (bucket, e),
                 exception=traceback.format_exc())
     if bucket:
         return True
@@ -323,8 +323,7 @@ def get_bucket(module, s3, bucket):
     try:
         return s3.lookup(bucket)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
-        module.fail_json(msg="Failed while getting bucket %s: %s" % (bucket, str(e)),
+        module.fail_json(msg="Failed while getting bucket %s: %s" % (bucket, e),
                 exception=traceback.format_exc())
 
 def list_keys(module, bucket_object, prefix, marker, max_keys):
@@ -346,7 +345,7 @@ def delete_bucket(module, s3, bucket):
 
 def delete_key(module, s3, bucket, obj, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         bucket.delete_key(obj)
         module.exit_json(msg="Object deleted from bucket %s"%bucket, changed=True)
     except s3.provider.storage_response_error as e:
@@ -354,7 +353,7 @@ def delete_key(module, s3, bucket, obj, validate=True):
 
 def create_dirkey(module, s3, bucket, obj, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
         key.set_contents_from_string('')
         module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
@@ -370,7 +369,7 @@ def path_check(path):
 
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
         if metadata:
             for meta_key in metadata.keys():
@@ -387,7 +386,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None, validate=True):
     # retries is the number of loops; range/xrange needs to be one
     # more to get that count of loops.
-    bucket = s3.lookup(bucket, validate)
+    bucket = s3.lookup(bucket, validate=validate)
     key = bucket.get_key(obj, version_id=version)
     for x in range(0, retries + 1):
         try:
@@ -404,7 +403,7 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None, valida
 
 def download_s3str(module, s3, bucket, obj, version=None, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         key = bucket.get_key(obj, version_id=version)
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
@@ -413,7 +412,7 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
 
 def get_download_url(module, s3, bucket, obj, expiry, changed=True, validate=True):
     try:
-        bucket = s3.lookup(bucket, validate)
+        bucket = s3.lookup(bucket, validate=validate)
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
         module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
