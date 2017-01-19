@@ -112,7 +112,7 @@
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
   # map was added to jinja2 in version 2.7
-  when: "{{ ( lookup('pipe', 'pip show --disable-pip-version-check jinja2 | grep ^Version: | sed \"s/^Version: //\"') |
+  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') |
               version_compare('2.7', '>=') ) }}"
 
 - name: Test json_query filter
