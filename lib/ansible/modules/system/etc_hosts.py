@@ -19,18 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes
-import os
-import re
-import tempfile
-
-
 DOCUMENTATION = '''
 ---
-module: hosts
+module: etc_hosts
 author: Jiri Tyr (@jtyr)
 version_added: '2.3'
 short_description: Manages records in the /etc/hosts file
@@ -50,7 +41,7 @@ options:
     default: null
     description:
       - Alias(es) of the IP address. Multiple aliases can be either a normal
-        YAML list or a string containing space/comma separated list.
+        YAML list or a string containing comma separated list.
   path:
     required: false
     default: /etc/hosts
@@ -69,18 +60,18 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Add a new record without alias
-  hosts:
+  etc_hosts:
     ip: 10.0.0.1
     hostname: some.domain1.com
 
 - name: Add a new record with an alias
-  hosts:
+  etc_hosts:
     ip: 10.0.0.1
     hostname: some.domain2.com
     alias: some
 
 - name: Add a new record with multiple aliases
-  hosts:
+  etc_hosts:
     ip: 10.0.0.2
     hostname: some.domain3.com
     alias:
@@ -88,12 +79,12 @@ EXAMPLES = '''
       - other
 
 - name: Remove all records with the specified IP
-  hosts:
+  etc_hosts:
     ip: 10.0.0.1
     state: absent
 
 - name: Remove record with specified IP and hostname
-  hosts:
+  etc_hosts:
     ip: 10.0.0.2
     hostname: some.domain3.com
     state: absent
@@ -108,7 +99,16 @@ state:
 '''
 
 
-class Hosts:
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes
+import os
+import re
+import tempfile
+
+
+class EtcHosts:
     def __init__(self, module):
         # To be able to use fail_json
         self.module = module
@@ -297,7 +297,7 @@ def main():
         argument_spec=dict(
             ip=dict(required=True),
             hostname=dict(),
-            alias=dict(type='raw'),
+            alias=dict(type='list'),
             path=dict(default='/etc/hosts'),
             state=dict(choices=['present', 'absent'], default='present')
         ),
@@ -311,18 +311,8 @@ def main():
     if state == 'present' and module.params['hostname'] is None:
         module.fail_json(msg="Option 'hostname' is required.")
 
-    # Split aliases if any
-    if module.params['alias'] is not None:
-        if isinstance(module.params['alias'], string_types):
-            p_split = re.compile("\s*,\s*|\s+")
-            module.params['alias'] = p_split.split(
-                module.params['alias'].strip())
-        elif not isinstance(module.params['alias'], list):
-            module.fail_json(
-                msg="Option 'alias' can only be a string or a list.")
-
     # Read the hosts file
-    hosts = Hosts(module)
+    hosts = EtcHosts(module)
 
     changed = False
 
