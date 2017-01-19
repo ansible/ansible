@@ -31,14 +31,9 @@ class ActionModule(ActionBase):
         # remove as modules might hide due to nolog
         del results['invocation']['module_args']
         results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars))
-        # Remove special fields from the result, which can only be set
-        # internally by the executor engine. We do this only here in
-        # the 'normal' action, as other action plugins may set this.
-        #
-        # We don't want modules to determine that running the module fires
-        # notify handlers.  That's for the playbook to decide.
-        for field in ('_ansible_notify',):
-            if field in results:
-                results.pop(field)
+
+        # hack to keep --verbose from showing all the setup module results
+        if self._task.action == 'setup':
+            results['_ansible_verbose_override'] = True
 
         return results
