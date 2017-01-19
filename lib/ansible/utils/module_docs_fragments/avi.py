@@ -1,8 +1,7 @@
 #
 # Created on December 12, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
-# module_check: not supported
-# Avi Version: 16.3.2
+# Avi Version: 16.3.4
 #
 #
 # This file is part of Ansible

@@ -408,8 +408,8 @@ def main():
     if not HAS_AVI:
         return module.fail_json(msg=(
             'Avi API SDK is not installed. '
-            'Pl. use sudo pip install --upgrade avisdk to install Avi SDK. '
-            'For more details visit https://github.com/avinetworks/sdk'))
+            'Use "sudo pip install --upgrade avisdk" to install Avi SDK. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'virtualservice',
                            set([]))
 

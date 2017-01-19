@@ -51,19 +51,18 @@ requirements: [ avisdk ]
 options:
     http_method:
         description:
-            - Allowed HTTP methods for RESTful services and are supported by
-            Avi Controller.
+            - Allowed HTTP methods for RESTful services and are supported by Avi Controller.
         choices: ["get", "put", "post", "patch", "delete"]
         required: true
     data:
         description:
-            - HTTP body
+            - HTTP body in YAML format.
     data_json:
         description:
-            - HTTP body in json
+            - HTTP body in JSON format.
     params:
         description:
-            - parameters to the request
+            - Query parameters passed to the HTTP API.
 extends_documentation_fragment:
     - avi
 '''
@@ -125,16 +124,15 @@ def main():
     if not HAS_AVI:
         return module.fail_json(msg=(
             'Avi API SDK is not installed. '
-            'Pl. use sudo pip install --upgrade avisdk to install Avi SDK. '
-            'For more details visit https://github.com/avinetworks/sdk'))
+            'Use "sudo pip install --upgrade avisdk" to install Avi SDK. '
+            'For more details visit https://github.com/avinetworks/sdk.'))
+    tenant_uuid = module.params.get('tenant_uuid', None)
     api = ApiSession.get_session(
-            module.params['controller'],
-            module.params['username'],
-            module.params['password'],
-            tenant=module.params['tenant'])
+        module.params['controller'], module.params['username'],
+        module.params['password'], tenant=module.params['tenant'],
+        tenant_uuid=tenant_uuid)
 
     tenant = module.params.get('tenant', '')
-    tenant_uuid = module.params.get('tenant_uuid', '')
     timeout = int(module.params.get('timeout', 60))
     path = module.params.get('path', '')
     params = module.params.get('params', None)

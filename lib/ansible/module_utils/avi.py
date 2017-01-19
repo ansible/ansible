@@ -1,8 +1,7 @@
 #
 # Created on December 12, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
-# module_check: not supported
-# Avi Version: 16.3.2
+# Avi Version: 16.3.4
 #
 #
 # This file is part of Ansible
@@ -30,8 +29,8 @@ def avi_common_argument_spec():
     :return: dict
     """
     return dict(
-            controller=dict(default=os.environ.get('AVI_CONTROLLER', '')),
-            username=dict(default=os.environ.get('AVI_USERNAME', '')),
-            password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
-            tenant=dict(default='admin'),
-            tenant_uuid=dict(default=''))
+        controller=dict(default=os.environ.get('AVI_CONTROLLER', '')),
+        username=dict(default=os.environ.get('AVI_USERNAME', '')),
+        password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
+        tenant=dict(default='admin'),
+        tenant_uuid=dict(default=''))
