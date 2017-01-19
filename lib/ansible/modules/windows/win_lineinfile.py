@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: win_lineinfile
 author: "Brian Lloyd <brian.d.lloyd@gmail.com>"
@@ -104,9 +104,9 @@ options:
     default: "windows"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-"""
+'''
 
-EXAMPLES = r"""
+EXAMPLES = r'''
 # Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - win_lineinfile:
     path: C:\temp\example.conf
@@ -147,4 +147,4 @@ EXAMPLES = r"""
     path: C:\temp\testfile.txt
     line: Line added to file
     newline: unix
-"""
+'''

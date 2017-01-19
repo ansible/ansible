@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_copy
 version_added: "1.9.2"
@@ -50,7 +50,7 @@ options:
 author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
@@ -61,12 +61,12 @@ EXAMPLES = '''
     src: files/temp_files/
     dest: c:\temp
 '''
-RETURN = '''
+RETURN = r'''
 dest:
     description: destination file/path
     returned: changed
     type: string
-    sample: 'c:\temp'
+    sample: c:\temp
 src:
     description: source file used for the copy on the target machine
     returned: changed
