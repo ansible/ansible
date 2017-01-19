@@ -40,6 +40,7 @@ options:
     aliases: [ dest, destfile, name ]
     required: true
   regexp:
+    aliases: [ 'regex' ]
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found. Only the last line
@@ -459,7 +460,7 @@ def main():
         argument_spec=dict(
             path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            regexp=dict(type='str'),
+            regexp=dict(type='str', aliases=['regex']),
             line=dict(type='str', aliases=['value']),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
