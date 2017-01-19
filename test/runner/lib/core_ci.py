@@ -19,17 +19,22 @@ from lib.util import (
     ApplicationError,
     run_command,
     make_dirs,
-    CommonConfig,
+    EnvironmentConfig,
     display,
     is_shippable,
 )
+
+AWS_ENDPOINTS = {
+    'us-east-1': 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
+    'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
+}
 
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, name=None):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         :type platform: str
         :type version: str
         :type stage: str
@@ -44,6 +49,7 @@ class AnsibleCoreCI(object):
         self.connection = None
         self.instance_id = None
         self.name = name if name else '%s-%s' % (self.platform, self.version)
+        self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
 
         aws_platforms = (
             'windows',
@@ -58,7 +64,22 @@ class AnsibleCoreCI(object):
         )
 
         if self.platform in aws_platforms:
-            self.endpoint = 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com'
+            if args.remote_aws_region:
+                # permit command-line override of region selection
+                region = args.remote_aws_region
+                # use a dedicated CI key when overriding the region selection
+                self.ci_key += '.%s' % args.remote_aws_region
+            elif is_shippable():
+                # split Shippable jobs across multiple regions to maximize use of launch credits
+                if self.platform == 'freebsd':
+                    region = 'us-east-2'
+                else:
+                    region = 'us-east-1'
+            else:
+                # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
+                region = 'us-east-1'
+
+            self.endpoint = AWS_ENDPOINTS[region]
 
             if self.platform == 'windows':
                 self.ssh_key = None
@@ -117,7 +138,7 @@ class AnsibleCoreCI(object):
 
     def start_remote(self):
         """Start instance for remote development/testing."""
-        with open(os.path.expanduser('~/.ansible-core-ci.key'), 'r') as key_fd:
+        with open(self.ci_key, 'r') as key_fd:
             auth_key = key_fd.read().strip()
 
         self._start(dict(
@@ -347,7 +368,7 @@ class SshKey(object):
     """Container for SSH key used to connect to remote instances."""
     def __init__(self, args):
         """
-        :type args: CommonConfig
+        :type args: EnvironmentConfig
         """
         tmp = os.path.expanduser('~/.ansible/test/')
 

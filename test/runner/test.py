@@ -51,6 +51,10 @@ from lib.target import (
     walk_sanity_targets,
 )
 
+from lib.core_ci import (
+    AWS_ENDPOINTS,
+)
+
 import lib.cover
 
 
@@ -409,6 +413,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             docker=None,
             remote=None,
             remote_stage=None,
+            remote_aws_region=None,
         )
 
         return
@@ -432,6 +437,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote stage to use: %(choices)s',
                         choices=['prod', 'dev'],
                         default='prod')
+
+    remote.add_argument('--remote-aws-region',
+                        metavar='REGION',
+                        help='remote aws region to use: %(choices)s (default: auto)',
+                        choices=sorted(AWS_ENDPOINTS),
+                        default=None)
 
 
 def add_extra_docker_options(parser, integration=True):

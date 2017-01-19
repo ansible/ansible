@@ -5,9 +5,21 @@ from __future__ import absolute_import, print_function
 import os
 import re
 
-from lib.target import walk_module_targets
-from lib.util import display, ApplicationError, run_command
-from lib.executor import EnvironmentConfig, Delegate, install_command_requirements
+from lib.target import (
+    walk_module_targets,
+)
+
+from lib.util import (
+    display,
+    ApplicationError,
+    EnvironmentConfig,
+    run_command,
+)
+
+from lib.executor import (
+    Delegate,
+    install_command_requirements,
+)
 
 COVERAGE_DIR = 'test/results/coverage'
 COVERAGE_FILE = os.path.join(COVERAGE_DIR, 'coverage')
