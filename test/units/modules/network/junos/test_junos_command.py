@@ -132,97 +132,62 @@ class test_junosCommandModule(unittest.TestCase):
         return result
 
     def test_junos_command_format_text(self):
-        set_module_args(dict(commands=['show version'], host='test'))
+        set_module_args(dict(commands=['show version'], host='test', format='text'))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
 
     def test_junos_command_multiple(self):
-        set_module_args(dict(commands=['show version', 'show version'], host='test'))
+        set_module_args(dict(commands=['show version', 'show version'], host='test', format='text'))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 2)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
 
-    def test_junos_command_format_xml(self):
-        set_module_args(dict(commands=['show version'], host='test', format='xml'))
-        result = self.execute_module(fmt='xml')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('<software-information>' in result['stdout'][0])
-
-    def test_junos_command_format_json(self):
-        set_module_args(dict(commands=['show version'], host='test', format='xml'))
-        result = self.execute_module(fmt='json')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('software-information' in result['stdout'][0])
-
     def test_junos_command_wait_for(self):
         wait_for = 'result[0] contains "Hostname"'
-        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for))
+        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, format='text'))
         self.execute_module()
 
     def test_junos_command_wait_for_fails(self):
         wait_for = 'result[0] contains "test string"'
-        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for))
+        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, format='text'))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 10)
 
     def test_junos_command_retries(self):
         wait_for = 'result[0] contains "test string"'
-        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, retries=2))
+        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, retries=2, format='text'))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 2)
 
     def test_junos_command_match_any(self):
         wait_for = ['result[0] contains "Hostname"',
                     'result[0] contains "test string"']
-        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, match='any'))
+        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, match='any', format='text'))
         self.execute_module()
 
     def test_junos_command_match_all(self):
         wait_for = ['result[0] contains "Hostname"',
                     'result[0] contains "Model"']
-        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, match='all'))
+        set_module_args(dict(commands=['show version'], host='test', wait_for=wait_for, match='all', format='text'))
         self.execute_module()
 
     def test_junos_command_match_all_failure(self):
         wait_for = ['result[0] contains "Hostname"',
                     'result[0] contains "test string"']
         commands = ['show version', 'show version']
-        set_module_args(dict(commands=commands, host='test', wait_for=wait_for, match='all'))
+        set_module_args(dict(commands=commands, host='test', wait_for=wait_for, match='all', format='text'))
         self.execute_module(failed=True)
 
-    def test_junos_command_rpc_format_xml(self):
-        set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
-        result = self.execute_module(fmt='xml', cmd_type='rpcs')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('<software-information>' in result['stdout'][0])
-
-    def test_junos_command_rpc_format_xml_multiple(self):
-        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
-        result = self.execute_module(fmt='xml', cmd_type='rpcs')
-        self.assertEqual(len(result['stdout']), 2)
-        self.assertTrue('<software-information>' in result['stdout'][0])
-
     def test_junos_command_rpc_format_text(self):
-        set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
+        set_module_args(dict(rpcs=['get_software_information'], host='test', format='text'))
         result = self.execute_module(fmt='text', cmd_type='rpcs')
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
 
     def test_junos_command_rpc_format_text_multiple(self):
-        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
-        result = self.execute_module(fmt='text', cmd_type='rpcs')
+        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test',
+                             format='text'))
+        result = self.execute_module(cmd_type='rpcs')
         self.assertEqual(len(result['stdout']), 2)
         self.assertTrue(result['stdout'][0].startswith('Hostname'))
-
-    def test_junos_command_rpc_format_json(self):
-        set_module_args(dict(rpcs=['get_software_information'], host='test', format='xml'))
-        result = self.execute_module(fmt='json', cmd_type='rpcs')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue('software-information' in result['stdout'][0])
-
-    def test_junos_command_rpc_format_json_multiple(self):
-        set_module_args(dict(commands=['get_software_information', 'get_software_information'], host='test'))
-        result = self.execute_module(fmt='json', cmd_type='rpcs')
-        self.assertEqual(len(result['stdout']), 2)
-        self.assertTrue('software-information' in result['stdout'][0])
