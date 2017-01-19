@@ -32,10 +32,15 @@ Set-Attr $result "data_changed" $false;
 Set-Attr $result "data_type_changed" $false;
 
 $registryKey = Get-Attr -obj $params -name "key" -failifempty $true
-$registryValue = Get-Attr -obj $params -name "value" -default $null
+$registryValue = Get-Attr -obj $params -name "value" -default "(default)"
 $state = Get-Attr -obj $params -name "state" -validateSet "present","absent" -default "present"
 $registryData = Get-Attr -obj $params -name "data" -default $null
 $registryDataType = Get-Attr -obj $params -name "datatype" -validateSet "binary","dword","expandstring","multistring","string","qword" -default "string"
+
+# Allow empty values as the "(default)" value
+If ($registryValue -eq "") {
+    $registryValue = "(default)"
+}
 
 If ($state -eq "present" -and $registryData -eq $null -and $registryValue -ne $null)
 {
