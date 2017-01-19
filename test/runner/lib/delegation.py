@@ -11,7 +11,6 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
-    EnvironmentConfig,
     IntegrationConfig,
     SubprocessError,
     ShellConfig,
@@ -29,6 +28,7 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
+    EnvironmentConfig,
     run_command,
     common_environment,
     display,
