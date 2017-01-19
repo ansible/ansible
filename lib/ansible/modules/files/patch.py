@@ -91,15 +91,15 @@ note:
 
 EXAMPLES = '''
 - name: apply patch to one file
-  patch: >
-    src=/tmp/index.html.patch
-    dest=/var/www/index.html
+  patch:
+    src: /tmp/index.html.patch
+    dest: /var/www/index.html
 
 - name: apply patch to multiple files under basedir
-  patch: >
-    src=/tmp/customize.patch
-    basedir=/var/www
-    strip=1
+  patch:
+    src: /tmp/customize.patch
+    basedir: /var/www
+    strip: 1
 '''
 
 import os
