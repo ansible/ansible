@@ -3,6 +3,13 @@ Developing Modules
 
 .. contents:: Topics
 
+.. _module_dev_welcome:
+
+Welcome
+```````
+This section discusses how to develop, debug, review, and test modules.
+
+
 Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
 or by the :command:`ansible` or :command:`ansible-playbook` programs.  They
 return information to ansible by printing a JSON string to stdout before
@@ -26,44 +33,44 @@ repo for more established and widely used modules.  "Extras" modules may be prom
 but there's no fundamental difference in the end - both ship with Ansible, all in one package, regardless
 of how you acquire Ansible.
 
-.. _module_dev_tutorial:
+.. _module_dev_should_you:
 
-Tutorial
-````````
+Should You Develop A Module?
+````````````````````````````
+Before diving into the work of creating a new module, you should think about whether you actually *should* 
+develop a module. Ask the following questions:
 
-Let's build a very-basic module to get and set the system time.  For starters, let's build
-a module that just outputs the current time.
+1. Does a similar module already exist? 
 
-We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
-out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
-is fine.
+There are a lot of modules out there, and there are a lot that are in development. You should check out the list of existing modules at :doc:`../modules` or look at the module PRs for the ansible repository and see if a module that does what you want exists or is in development.
 
-Now Python Ansible modules contain some extremely powerful shortcuts (that all the core modules use)
-but first we are going to build a module the very hard way.  The reason we do this is because modules
-written in any language OTHER than Python are going to have to do exactly this.  We'll show the easy
-way later.
+2. Should you use or develop an action plugin instead? 
 
-So, here's an example.  You would never really need to build a module to set the system time,
-the 'command' module could already be used to do this.
+Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary. 
 
-Reading the modules that come with Ansible (linked above) is a great way to learn how to write
-modules.   Keep in mind, though, that some modules in Ansible's source tree are internalisms,
-so look at :ref:`service` or :ref:`yum`, and don't stare too close into things like ``async_wrapper`` or
-you'll turn to stone.  Nobody ever executes ``async_wrapper`` directly.
+For more information about action plugins, go here: (TODO: link here)
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`
+3. Should you use a role instead?
 
-.. code-block:: python
+Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.  
+ 
 
-    #!/usr/bin/python
 
-    import datetime
-    import json
+.. _developing_modules_all:
 
-    date = str(datetime.datetime.now())
-    print json.dumps({
-        "time" : date
-    })
+The following topics will discuss how to develop modules:
+
+:doc:`developing_modules_general`
+    A general overview of how to develop modules
+:doc:`guide_aws`
+    Working with Amazon Web Services (AWS) modules.
+:doc:`developing_modules_python3`
+    Adding Python 3 support to modules (all new modules must be py2.4 and py3 compatible).
+:doc:`guide_network_modules`
+    Working with Network modules.
+:doc:`intro_windows`
+    Working with Windows modules.
+
 
 .. _module_testing:
 
@@ -98,8 +105,6 @@ If you did not, you might have a typo in your module, so recheck it and try agai
 
 Reading Input
 `````````````
-
-
 Let's modify the module to allow setting the current time.  We'll do this by seeing
 if a key value pair in the form `time=<string>` is passed in to the module.
 
