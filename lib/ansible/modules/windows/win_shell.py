@@ -67,7 +67,8 @@ EXAMPLES = r'''
 - win_shell: C:\somescript.ps1 >> c:\somelog.txt
 
 # Change the working directory to somedir/ before executing the command.
-- win_shell: C:\somescript.ps1 >> c:\somelog.txt chdir=c:\somedir
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt
+    chdir: c:\somedir
 
 # You can also use the 'args' form to provide the options. This command
 # will change the working directory to somedir/ and will only run when
