@@ -1,0 +1,24 @@
+---
+- name: Test jinja2 groupby
+  hosts: localhost
+  gather_facts: False
+  connection: local
+  vars:
+    fruits:
+      - name: apple
+        enjoy: yes
+      - name: orange
+        enjoy: no
+      - name: strawberry
+        enjoy: yes
+    expected: [[false, [{"enjoy": false, "name": "orange"}]], [true, [{"enjoy": true, "name": "apple"}, {"enjoy": true, "name": "strawberry"}]]]
+  tasks:
+    - debug:
+        msg: "{{ lookup('pipe', 'pip freeze | grep -i jinja2') }}"
+
+    - set_fact:
+        result: "{{ fruits | groupby('enjoy') }}"
+
+    - assert:
+        that:
+          - result == expected
