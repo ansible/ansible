@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_share
 version_added: "2.1"
@@ -87,7 +87,7 @@ options:
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Playbook example
 # Add share and set permissions
 ---
@@ -95,7 +95,7 @@ EXAMPLES = '''
   win_share:
     name: internal
     description: top secret share
-    path: C:/shares/internal
+    path: C:\shares\internal
     list: 'no'
     full: Administrators,CEO
     read: HR-Global
@@ -105,7 +105,7 @@ EXAMPLES = '''
   win_share:
     name: company
     description: top secret share
-    path: C:/shares/company
+    path: C:\shares\company
     list: 'yes'
     full: Administrators,CEO
     read: Global
@@ -116,6 +116,6 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 
 '''

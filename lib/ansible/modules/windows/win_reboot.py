@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION='''
+DOCUMENTATION = r'''
 ---
 module: win_reboot
 short_description: Reboot a windows machine
@@ -63,7 +63,7 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
-EXAMPLES='''
+EXAMPLES = r'''
 # Unconditionally reboot the machine with all defaults
 - win_reboot:
 
@@ -79,7 +79,7 @@ EXAMPLES='''
     reboot_timeout_sec: 3600
 '''
 
-RETURN='''
+RETURN = r'''
 rebooted:
     description: true if the machine was rebooted
     returned: always

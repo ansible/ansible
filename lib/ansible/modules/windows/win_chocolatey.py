@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'committer',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_chocolatey
 version_added: "1.9"
@@ -75,16 +75,16 @@ options:
     version_added: '2.1'
   allow_empty_checksums:
     description:
-      - Allow empty Checksums to be used 
+      - Allow empty Checksums to be used
     require: false
     default: false
     version_added: '2.2'
   ignore_checksums:
     description:
-      - Ignore Checksums 
+      - Ignore Checksums
     require: false
     default: false
-    version_added: '2.2'      
+    version_added: '2.2'
   ignore_dependencies:
     description:
       - Ignore dependencies, only install/upgrade the package itself
@@ -98,7 +98,7 @@ author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe
 # * Time each item that is run
 # * Support 'changed' with gems - would require shelling out to `gem list` first and parsing, kinda defeating the point of using chocolatey.
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Install git
   win_chocolatey:
     name: git

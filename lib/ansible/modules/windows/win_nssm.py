@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_nssm
 version_added: "2.0"
@@ -105,17 +105,17 @@ author:
   - "Hans-Joachim Kliemeck (@h0nIg)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Install and start the foo service
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
 
 # Install and start the foo service with a key-value pair argument
-# This will yield the following command: C:\windows\\foo.exe bar "true"
+# This will yield the following command: C:\windows\foo.exe bar "true"
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     app_parameters:
         bar: true
 
@@ -123,7 +123,7 @@ EXAMPLES = '''
 # This will yield the following command: C:\windows\\foo.exe -bar "true"
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     app_parameters:
         "-bar": true
 
@@ -131,7 +131,7 @@ EXAMPLES = '''
 # This will yield the following command: C:\windows\\foo.exe bar
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     app_parameters:
         _: bar
 
@@ -139,7 +139,7 @@ EXAMPLES = '''
 # This will yield the following command: C:\windows\\foo.exe bar -file output.bat
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     app_parameters:
         _: bar
         "-file": "output.bat"
@@ -147,27 +147,27 @@ EXAMPLES = '''
 # Install and start the foo service, redirecting stdout and stderr to the same file
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
-    stdout_file: C:\windows\\foo.log
-    stderr_file: C:\windows\\foo.log
+    application: C:\windows\foo.exe
+    stdout_file: C:\windows\foo.log
+    stderr_file: C:\windows\foo.log
 
 # Install and start the foo service, but wait for dependencies tcpip and adf
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     dependencies: 'adf,tcpip'
 
 # Install and start the foo service with dedicated user
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     user: foouser
     password: secret
 
 # Install the foo service but do not start it automatically
 - win_nssm:
     name: foo
-    application: C:\windows\\foo.exe
+    application: C:\windows\foo.exe
     state: present
     start_mode: manual
 

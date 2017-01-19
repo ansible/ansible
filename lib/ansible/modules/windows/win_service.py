@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_service
 version_added: "1.7"
@@ -62,7 +62,7 @@ options:
 author: "Chris Hoffman (@chrishoffman)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Restart a service
   win_service:
     name: spooler

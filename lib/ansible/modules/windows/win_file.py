@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_file
 version_added: "1.9.2"
@@ -58,7 +58,7 @@ options:
     choices: [ file, directory, touch, absent ]
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a file
   win_file:
     path: C:\temp\foo.conf

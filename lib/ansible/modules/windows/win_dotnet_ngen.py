@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_dotnet_ngen
 version_added: "2.0"
@@ -43,7 +43,7 @@ author: Peter Mounce
 options: {}
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Run ngen tasks
   win_dotnet_ngen:
 '''

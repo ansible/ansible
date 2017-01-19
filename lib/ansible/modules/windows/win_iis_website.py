@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_iis_website
 version_added: "2.0"
@@ -98,7 +98,7 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 # Start a website
 
@@ -110,8 +110,8 @@ EXAMPLES = '''
     ip: 127.0.0.1
     hostname: acme.local
     application_pool: "acme"
-    physical_path: 'c:\\sites\\acme'
-    parameters: 'logfile.directory:c:\\sites\\logs'
+    physical_path: c:\sites\acme
+    parameters: logfile.directory:c:\sites\logs
   register: website
 
 # Some commandline examples:

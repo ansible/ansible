@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_regedit
 version_added: "2.0"
@@ -47,7 +47,7 @@ options:
     aliases: []
   data:
     description:
-      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional. 
+      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional.
     required: false
     default: null
     aliases: []
@@ -80,7 +80,7 @@ EXAMPLES = r'''
 - name: Create Registry Key called MyCompany
   win_regedit:
     key: HKCU:\Software\MyCompany
-    
+
 - name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "world".
   win_regedit:
     key: HKCU:\Software\MyCompany
@@ -112,7 +112,7 @@ EXAMPLES = r'''
   win_regedit:
     key: HKCU:\Software\MyCompany
     state: absent
-    
+
 - name: Delete Registry Value "hello" from MyCompany Key
   win_regedit:
     key: HKCU:\Software\MyCompany
@@ -124,14 +124,14 @@ EXAMPLES = r'''
     key: HKCU:\Software\My Company
 '''
 
-RETURN = '''
+RETURN = r'''
 data_changed:
-    description: whether this invocation changed the data in the registry value 
+    description: whether this invocation changed the data in the registry value
     returned: success
     type: boolean
     sample: False
 data_type_changed:
-    description: whether this invocation changed the datatype of the registry value 
+    description: whether this invocation changed the datatype of the registry value
     returned: success
     type: boolean
     sample: True

@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_firewall_rule
 version_added: "2.0"
@@ -112,7 +112,7 @@ options:
 
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Firewall rule to allow smtp on TCP port 25
   action: win_firewall_rule
   args:

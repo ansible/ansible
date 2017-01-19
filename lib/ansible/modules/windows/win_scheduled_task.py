@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_scheduled_task
 version_added: "2.0"
@@ -87,7 +87,7 @@ options:
     default: '\'
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create a scheduled task to open a command prompt
 - win_scheduled_task:
     name: TaskName

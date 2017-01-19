@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_stat
 version_added: "1.7"
@@ -53,7 +53,7 @@ options:
 author: "Chris Church (@cchurch)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Obtain information about a file
   win_stat:
     path: C:\foo.ini

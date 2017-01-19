@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_timezone
 version_added: "2.1"
@@ -44,10 +44,10 @@ author: Phil Schwartz
 '''
 
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Set machine's timezone to Central Standard Time
   win_timezone:
     timezone: "Central Standard Time"
 '''
 
-RETURN = '''# '''
+RETURN = r'''# '''
