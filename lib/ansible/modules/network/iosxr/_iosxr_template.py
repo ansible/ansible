@@ -100,11 +100,21 @@ updates:
   type: list
   sample: ['...', '...']
 
-responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
-  type: list
-  sample: ['...', '...']
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
