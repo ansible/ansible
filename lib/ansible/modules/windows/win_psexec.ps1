@@ -43,6 +43,48 @@ $result = @{
     changed = $true
 }
 
+If (-Not (Get-Command $executable -ErrorAction SilentlyContinue)) {
+    Fail-Json $result "Executable '$executable' was not found."
+}
+
+$util_def = @'
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Threading;
+
+namespace Ansible.Command {
+
+    public static class NativeUtil {
+
+        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr) {
+            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
+            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+            string so = null, se = null;
+
+            ThreadPool.QueueUserWorkItem((s)=> {
+                so = stdoutStream.ReadToEnd();
+                sowait.Set();
+            });
+
+            ThreadPool.QueueUserWorkItem((s) => {
+                se = stderrStream.ReadToEnd();
+                sewait.Set();
+            });
+
+            foreach(var wh in new WaitHandle[] { sowait, sewait })
+                wh.WaitOne();
+
+            stdout = so;
+            stderr = se;
+        }
+    }
+}
+'@
+
+$util_type = Add-Type -TypeDefinition $util_def
+
 $arguments = ""
 
 # Supports running on local system if not hostname is specified
@@ -52,16 +94,16 @@ If ($hostnames -ne $null) {
 
 # Username is optional
 If ($username -ne $null) {
-    $arguments += " -u \"$username\""
+    $arguments += " -u `"$username`""
 }
 
 # Password is optional
 If ($password -ne $null) {
-    $arguments += " -p \"$password\""
+    $arguments += " -p `"$password`""
 }
 
 If ($chdir -ne $null) {
-    $arguments += " -w \"$chdir\""
+    $arguments += " -w `"$chdir`""
 }
 
 If ($wait -eq $false) {
@@ -103,29 +145,45 @@ ForEach ($opt in $extra_opts) {
 
 $arguments += " -accepteula"
 
-$pinfo = New-Object System.Diagnostics.ProcessStartInfo
-$pinfo.FileName = $executable
-$pinfo.RedirectStandardError = $true
-$pinfo.RedirectStandardOutput = $true
-$pinfo.UseShellExecute = $false
-# TODO: psexec has a limit to the argument length of 260 (?)
-$pinfo.Arguments = "$arguments $command"
+$proc = New-Object System.Diagnostics.Process
+$psi = $proc.StartInfo
+$psi.FileName = $executable
+$psi.Arguments = "$arguments $command"
+$psi.RedirectStandardOutput = $true
+$psi.RedirectStandardError = $true
+$psi.UseShellExecute = $false
 
+# TODO: psexec has a limit to the argument length of 260 (?)
 $result.psexec_command = "$executable$arguments $command"
 
-$proc = New-Object System.Diagnostics.Process
-$proc.StartInfo = $pinfo
-$proc.Start() | Out-Null
-# TODO: Fix the possible deadlock
-$result.stdout = $proc.StandardOutput.ReadToEnd()
-$result.stderr = $proc.StandardError.ReadToEnd()
-$proc.WaitForExit()
-$result.rc = $proc.ExitCode
+$start_datetime = [DateTime]::UtcNow
 
-If ($result.rc -eq 0) {
-    $result.failed = $false
-} Else {
-    $result.failed = $true
+Try {
+    $proc.Start() | Out-Null # will always return $true for non shell-exec cases
+} Catch [System.ComponentModel.Win32Exception] {
+    # fail nicely for "normal" error conditions
+    # FUTURE: this probably won't work on Nano Server
+    $excep = $_
+    $result.rc = $excep.Exception.NativeErrorCode
+    Fail-Json $result $excep.Exception.Message
 }
 
+$stdout = $stderr = [string] $null
+
+[Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
+
+$result.stdout = $stdout
+$result.stderr = $stderr
+
+$proc.WaitForExit() | Out-Null
+
+$result.rc = $proc.ExitCode
+
+$end_datetime = [DateTime]::UtcNow
+
+$result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
+$result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
+$result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+
 Exit-Json $result
+

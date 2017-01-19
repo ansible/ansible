@@ -157,10 +157,11 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
         }
     }
 
-    # Expand environment variables on path-type (Beware: turns $null into "")
     If ($value -ne $null -and $type -eq "path") {
+        # Expand environment variables on path-type (Beware: turns $null into "")
         $value = Expand-Environment($value)
     } ElseIf ($type -eq "bool") {
+        # Convert boolean types to real Powershell booleans
         $value = $value | ConvertTo-Bool
     }
 

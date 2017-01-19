@@ -92,6 +92,7 @@ options:
     - Wait for the application to terminate.
     - Only use for non-interactive applications.
     default: True
+requires: [ psexec ]
 author: Dag Wieers (@dagwieers)
 '''
 
