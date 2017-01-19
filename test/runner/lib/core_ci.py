@@ -71,7 +71,7 @@ class AnsibleCoreCI(object):
                 self.ci_key += '.%s' % args.remote_aws_region
             elif is_shippable():
                 # split Shippable jobs across multiple regions to maximize use of launch credits
-                if self.platform == 'freebsd':
+                if self.platform == 'windows':
                     region = 'us-east-2'
                 else:
                     region = 'us-east-1'
