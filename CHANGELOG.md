@@ -97,7 +97,7 @@ Ansible Changes By Release
 
 * dense: minimal stdout output with fallback to default when verbose
 
-## 2.2 "The Battle of Evermore" - ACTIVE DEVELOPMENT
+## 2.2 "The Battle of Evermore" - 2016-11-01
 
 ###Major Changes:
 
