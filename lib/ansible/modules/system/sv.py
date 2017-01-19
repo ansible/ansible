@@ -222,6 +222,9 @@ class Sv(object):
     def reload(self):
         return self.execute_command([self.svc_cmd, 'reload', self.svc_full])
 
+    def restarted(self):
+        return self.restart()
+
     def restart(self):
         return self.execute_command([self.svc_cmd, 'restart', self.svc_full])
 
