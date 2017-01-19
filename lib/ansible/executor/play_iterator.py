@@ -270,7 +270,7 @@ class PlayIterator:
         return (s, task)
 
 
-    def _get_next_task_from_state(self, state, host, peek):
+    def _get_next_task_from_state(self, state, host, peek, in_child=False):
 
         task = None
 
@@ -336,7 +336,7 @@ class PlayIterator:
                 # have one recurse into it for the next task. If we're done with the child
                 # state, we clear it and drop back to geting the next task from the list.
                 if state.tasks_child_state:
-                    (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, host=host, peek=peek)
+                    (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.tasks_child_state):
                         # failed child state, so clear it and move into the rescue portion
                         state.tasks_child_state = None
@@ -374,7 +374,7 @@ class PlayIterator:
                 # The process here is identical to ITERATING_TASKS, except instead
                 # we move into the always portion of the block.
                 if state.rescue_child_state:
-                    (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek)
+                    (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.rescue_child_state):
                         state.rescue_child_state = None
                         self._set_failed_state(state)
@@ -404,7 +404,7 @@ class PlayIterator:
                 # run state to ITERATING_COMPLETE in the event of any errors, or when we
                 # have hit the end of the list of blocks.
                 if state.always_child_state:
-                    (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, host=host, peek=peek)
+                    (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.always_child_state):
                         state.always_child_state = None
                         self._set_failed_state(state)
@@ -429,7 +429,7 @@ class PlayIterator:
 
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
-                            if block._eor and host.name in block._role._had_task_run:
+                            if block._eor and host.name in block._role._had_task_run and not in_child:
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]
