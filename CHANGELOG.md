@@ -98,6 +98,37 @@ Ansible Changes By Release
 
 * dense: minimal stdout output with fallback to default when verbose
 
+
+## 2.2.1 "The Battle of Evermore" - 2017-01-16
+
+### Major Changes:
+
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+
+### Minor Changes:
+
+* Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
+* Fixed a bug related to roles where in certain situations a role may be run more than once despite not allowing duplicates.
+* Fixed some additional bugs related to atomic_move for modules.
+* Fixes multiple bugs related to field/attribute inheritance in nested blocks and includes, as well as task iteration logic during failures.
+* Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
+* Fixed dnf on systems with dnf-2.0.x (some changes in the API).
+* Fixed traceback with dnf install of groups.
+* Fixes a bug in which include_vars was not working with failed_when.
+* Fix for include_vars only loading files with .yml, .yaml, and .json extensions.  This was only supposed to apply to loading a directory of vars files.
+* Fixes several bugs related to properly incrementing the failed count in the host statistics.
+* Fixes a bug with listening handlers which did not specify a `name` field.
+* Fixes a bug with the `play_hosts` internal variable, so that it properly reflects the current list of hosts.
+* Fixes a bug related to the v2_playbook_on_start callback method and legacy (v1) plugins.
+* Fixes an openssh related process exit race condition, related to the fact that connections using ControlPersist do not close stderr.
+* Improvements and fixes to OpenBSD fact gathering.
+* Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
+* Fixed Windows async to avoid blocking due to handle inheritance.
+* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Various minor fixes for Python 3
+* Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
+
+
 ## 2.2 "The Battle of Evermore" - 2016-11-01
 
 ###Major Changes:
