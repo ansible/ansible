@@ -15,6 +15,7 @@ Ansible Changes By Release
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
 * ansible-doc now displays path to module
+* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
