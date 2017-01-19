@@ -649,8 +649,8 @@ class Connection(ConnectionBase):
                 res = (returncode, stdout, stderr)
 
         if not success:
-            raise AnsibleError("failed to transfer file to {0}:\n{1}\n{2}"\
-                    .format(to_native(out_path), to_native(res[1]), to_native(res[2])))
+            raise AnsibleError("failed to transfer file {0} to {1}:\n{2}\n{3}"\
+            .format(to_native(in_path), to_native(out_path), to_native(res[1]), to_native(res[2])))
 
     #
     # Main public methods
