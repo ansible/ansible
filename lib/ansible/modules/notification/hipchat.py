@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: hipchat
 version_added: "1.2"
-short_description: Send a message to hipchat.
+short_description: Send a message to Hipchat.
 description:
-   - Send a message to hipchat
+   - Send a message to a Hipchat room, with options to control the formatting.
 options:
   token:
     description:
@@ -37,8 +37,8 @@ options:
     required: true
   from:
     description:
-      - Name the message will appear be sent from. max 15 characters.
-        Over 15, will be shorten.
+      - Name the message will appear to be sent from. Max length is 15
+        characters - above this it will be truncated.
     required: false
     default: Ansible
   msg:
@@ -48,19 +48,19 @@ options:
     default: null
   color:
     description:
-      - Background color for the message. Default is yellow.
+      - Background color for the message.
     required: false
     default: yellow
     choices: [ "yellow", "red", "green", "purple", "gray", "random" ]
   msg_format:
     description:
-      - message format. html or text. Default is text.
+      - Message format.
     required: false
     default: text
     choices: [ "text", "html" ]
   notify:
     description:
-      - notify or not (change the tab color, play a sound, etc)
+      - If true, a notification will be triggered for users in the room.
     required: false
     default: 'yes'
     choices: [ "yes", "no" ]
@@ -74,7 +74,8 @@ options:
     version_added: 1.5.1
   api:
     description:
-      - API url if using a self-hosted hipchat server. For hipchat api version 2 use C(/v2) path in URI
+      - API url if using a self-hosted hipchat server. For Hipchat API version
+        2 use the default URI with C(/v2) instead of C(/v1).
     required: false
     default: 'https://api.hipchat.com/v1'
     version_added: 1.6.0
