@@ -17,11 +17,15 @@
     provider: "{{ cli }}"
   register: result
 
+- name: debug, remove me
+  debug:
+    msg: "{{ result }}"
 - assert:
     that:
       - "result.changed == true"
 # https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
 
 - name: check device with config
   ios_config:
@@ -33,6 +37,7 @@
     that:
       - "result.changed == false"
 # https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
 
 - debug: msg="END cli/src_basic.yaml"

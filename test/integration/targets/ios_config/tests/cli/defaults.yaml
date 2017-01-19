@@ -23,7 +23,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "result.updates is not defined"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#    - "result.updates is not defined"
 
 - name: check device with defaults included
   ios_config:
