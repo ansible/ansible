@@ -3915,9 +3915,6 @@ def get_all_facts(module):
         if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
             setup_result['ansible_facts'][k] = v
 
-    # hack to keep --verbose from showing all the setup module results
-    setup_result['_ansible_verbose_override'] = True
-
     return setup_result
 
 # Allowed fact subset for gather_subset options and what classes they use
