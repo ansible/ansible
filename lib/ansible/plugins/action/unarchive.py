@@ -59,7 +59,7 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        remote_user = self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
             self._cleanup_remote_tmp = True

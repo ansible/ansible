@@ -102,7 +102,7 @@ class ActionModule(ActionBase):
             result['msg'] = "src and dest are required"
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        remote_user = self._play_context.remote_user
         if boolean(remote_src):
             result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
             return result
