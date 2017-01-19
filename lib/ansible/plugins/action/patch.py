@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
         src        = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        remote_user = self._play_context.remote_user
 
         if src is None:
             result['failed'] = True
