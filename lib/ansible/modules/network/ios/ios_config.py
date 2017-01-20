@@ -246,7 +246,6 @@ def check_args(module, warnings):
                 'network provider arguments are no longer supported.  Please '
                 'use connection: network_cli for the task'
             )
-            warnings.append(key)
             break
 
 def extract_banners(config):
