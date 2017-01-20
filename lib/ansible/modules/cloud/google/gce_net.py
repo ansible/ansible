@@ -208,7 +208,7 @@ def format_allowed_section(allowed):
         return []
     if ports.count(","):
         ports = ports.split(",")
-    elif:
+    elif ports:
         ports = [ports]
     return_val = {"IPProtocol": protocol}
     if ports:
