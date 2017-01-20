@@ -55,7 +55,7 @@
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
           - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
-          - 'ansible_mounts|default("UNDEF_HW") != "UNDEF_HW"'
+          - 'ansible_mounts|default("UNDEF_HW") != "UNDEF_HW" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
 
 - hosts: facthost4
