@@ -302,7 +302,7 @@ def bucket_check(module, s3, bucket, validate=True):
     try:
         result = s3.lookup(bucket, validate=validate)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s: %s" % (bucket, e)),
+        module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s: %s" % (bucket, e),
                 exception=traceback.format_exc())
     return bool(result)
 
@@ -314,7 +314,7 @@ def create_bucket(module, s3, bucket, location=None):
         for acl in module.params.get('permission'):
             bucket.set_acl(acl)
     except s3.provider.storage_response_error as e:
-        module.fail_json(msg="Failed while creating bucket %s: %s" % (bucket, e),
+        module.fail_json(msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission) %s: %s" % (bucket, e),
                 exception=traceback.format_exc())
     if bucket:
         return True
@@ -469,7 +469,7 @@ def main():
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')
     expiry = int(module.params['expiry'])
-    dest = os.path.expanduser(module.params.get('dest', ''))
+    dest = module.params.get('dest', '')
     headers = module.params.get('headers')
     marker = module.params.get('marker')
     max_keys = module.params.get('max_keys')
@@ -484,6 +484,9 @@ def main():
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
+
+    if dest:
+        dest = os.path.expanduser(dest)
 
     for acl in module.params.get('permission'):
         if acl not in CannedACLStrings:
