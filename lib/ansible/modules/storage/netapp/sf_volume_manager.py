@@ -24,6 +24,8 @@ DOCUMENTATION = '''
 module: sf_volume_manager
 
 short_description: Manage SolidFire volumes
+extends_documentation_fragment:
+    - netapp.solidfire
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
@@ -32,43 +34,32 @@ description:
 
 options:
 
-    hostname:
+    state:
         required: true
         description:
-        - hostname
-
-    username:
-        required: true
-        description:
-        - username
-
-    password:
-        required: true
-        description:
-        - password
-
-    action:
-        required: true
-        description:
-        - Create, Delete, or Update a volume with the passed parameters
-        choices: ['create', 'delete', 'update']
+        - Whether the specified volume should exist or not.
+        choices: ['present', 'absent']
 
     name:
-        required: false
-        note: required when action == 'create'
+        required: true
         description:
         - The name of the volume to manage
 
     account_id:
-        required: false
-        note: required when action == 'create'
+        required: true
         type: int
         description:
         - account_id for the owner of this volume
 
+    new_account_id:
+        required: false
+        type: int
+        description:
+        - new account_id for the volume
+
     enable512e:
         required: false
-        note: required when action == 'create'
+        note: required when state == 'present'
         type: bool
         description:
         - Should the volume provides 512-byte sector emulation?
@@ -85,13 +76,15 @@ options:
 
     volume_id:
         required: false
-        note: required when action == 'delete' or action == 'update'
         description:
-        - The ID of the volume to manage or update
+        - The ID of the volume to manage or update.
+        - In order to create multiple volumes with the same name, but different volume_ids, please declare the volume_id
+          parameter with an arbitary value. However, the specified volume_id will not be assigned to the newly created
+          volume (since it's an auto-generated property).
 
     size:
         required: false
-        note: required when action == 'create'
+        note: required when state == 'present'
         description:
         - The size of the volume in (size_unit)
 
@@ -122,7 +115,7 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: create
+       state: present
        name: AnsibleVol
        account_id: 3
        enable512e: False
@@ -134,8 +127,10 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: update
-       volume_id: 2
+       state: present
+       name: AnsibleVol
+       account_id: 3
+       new_account_id: 2
        access: readWrite
 
    - name: Delete Volume
@@ -143,8 +138,9 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: delete
-       volume_id: 2
+       state: absent
+       name: AnsibleVol
+       account_id: 2
 """
 
 RETURN = """
@@ -168,32 +164,21 @@ msg:
 
 """
 
-'''
-    Todo:
-        Enable volume delete by Name and account ID. Currently only possible through volume_id.
-
-        Before updating a volume, check the previous (current) attributes to currently report
-        the 'changed' property
-
-'''
-import sys
-import json
 import logging
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
-import socket
+HAS_SF_SDK = netapp_utils.has_sf_sdk()
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-from solidfire.factory import ElementFactory
 
 
 class SolidFireVolume(object):
@@ -202,7 +187,7 @@ class SolidFireVolume(object):
 
         self._size_unit_map = dict(
 
-            # SolidFire displays 1024 ** 3 as 1.1 GB, thus use 1000.
+            # Management GUI displays 1024 ** 3 as 1.1 GB, thus use 1000.
             bytes=1,
             b=1,
             kb=1000,
@@ -217,30 +202,30 @@ class SolidFireVolume(object):
 
         self.module = AnsibleModule(
             argument_spec=dict(
-                action=dict(required=True, choices=['create', 'delete', 'update']),
-                name=dict(type='str'),
-                account_id=dict(type='str'),
-                enable512e=dict(type='bool'),
-                qos=dict(required=False, type='str'),
-                attributes=dict(required=False, type='dict'),
+                state=dict(required=True, choices=['present', 'absent']),
+                name=dict(required=True, type='str'),
+                account_id=dict(required=True, type='int'),
 
-                volume_id=dict(type='int'),
+                new_account_id=dict(required=False, type='int', default=None),
+                enable512e=dict(type='bool'),
+                qos=dict(required=False, type='str', default=None),
+                attributes=dict(required=False, type='dict', default=None),
+
+                volume_id=dict(type='int', default=None),
                 size=dict(type='int'),
                 size_unit=dict(default='gb',
                                choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
                                         'pb', 'eb', 'zb', 'yb'], type='str'),
 
-                access=dict(required=False, type='str', choices=['readOnly', 'readWrite',
-                                                                 'locked', 'replicationTarget']),
+                access=dict(required=False, type='str', default=None, choices=['readOnly', 'readWrite',
+                                                                               'locked', 'replicationTarget']),
                 
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
             ),
             required_if=[
-                ('action', 'create', ['name', 'account_id', 'size', 'enable512e']),
-                ('action', 'delete', ['volume_id']),
-                ('action', 'update', ['volume_id'])
+                ('state', 'present', ['size', 'enable512e'])
             ],
             supports_check_mode=False
         )
@@ -248,9 +233,10 @@ class SolidFireVolume(object):
         p = self.module.params
 
         # set up state variables
-        self.action = p['action']
+        self.state = p['state']
         self.name = p['name']
         self.account_id = p['account_id']
+        self.new_account_id = p['new_account_id']
         self.enable512e = p['enable512e']
         self.qos = p['qos']
         self.attributes = p['attributes']
@@ -267,19 +253,43 @@ class SolidFireVolume(object):
         self.username = p['username']
         self.password = p['password']
 
-        # create connection to solidfire cluster
-        self.sfe = ElementFactory.create(self.hostname, self.username, self.password)
+        if HAS_SF_SDK is False:
+            self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
+        else:
+            self.sfe = netapp_utils.create_sf_connection(hostname=self.hostname,
+                                                         username=self.username,
+                                                         password=self.password)
+
+    def get_volume(self):
+        """
+            Return volume object if found
+
+            :return: Details about the volume. None if not found.
+            :rtype: dict
+        """
+        volume_list = self.sfe.list_volumes_for_account(account_id=self.account_id)
+        for volume in volume_list.volumes:
+            if volume.name == self.name:
+                # Update self.volume_id
+                if self.volume_id is not None:
+                    if volume.volume_id == self.volume_id and str(volume.delete_time) == "":
+                        return volume
+                else:
+                    if str(volume.delete_time) == "":
+                        self.volume_id = volume.volume_id
+                        return volume
+        return None
 
     def create_volume(self):
         logger.debug('Creating volume %s of size %s', self.name, self.size)
 
         try:
-            create_volume_result = self.sfe.create_volume(name=self.name,
-                                                          account_id=self.account_id,
-                                                          total_size=self.size,
-                                                          enable512e=self.enable512e,
-                                                          qos=self.qos,
-                                                          attributes=self.attributes)
+            self.sfe.create_volume(name=self.name,
+                                   account_id=self.account_id,
+                                   total_size=self.size,
+                                   enable512e=self.enable512e,
+                                   qos=self.qos,
+                                   attributes=self.attributes)
 
         except:
             err = get_exception()
@@ -299,12 +309,14 @@ class SolidFireVolume(object):
             raise
 
     def update_volume(self):
-        logger.debug('Updating volume %s', self.name)
+        logger.debug('DEBUG: Updating volume %s', self.name)
 
         try:
-            self.sfe.modify_volume(self.volume_id, account_id=self.account_id,
+            self.sfe.modify_volume(self.volume_id,
+                                   account_id=self.new_account_id,
                                    access=self.access,
-                                   qos=self.qos, total_size=self.size,
+                                   qos=self.qos,
+                                   total_size=self.size,
                                    attributes=self.attributes)
 
         except:
@@ -314,18 +326,74 @@ class SolidFireVolume(object):
 
     def apply(self):
         changed = False
+        volume_exists = False
+        update_volume = False
+        volume_detail = self.get_volume()
 
-        if self.action == 'create':
-            self.create_volume()
-            changed = True
+        if volume_detail:
+            volume_exists = True
 
-        elif self.action == 'delete':
-            self.delete_volume()
-            changed = True
+            if self.state == 'absent':
+                logger.debug(
+                    "CHANGED: volume exists, but requested state is 'absent'")
+                changed = True
 
-        elif self.action == 'update':
-            self.update_volume()
-            changed = True
+            elif self.state == 'present':
+                if volume_detail.access is not None and self.access is not None and volume_detail.access != self.access:
+                    logger.debug("CHANGED: Volume access needs to be updated")
+                    update_volume = True
+                    changed = True
+
+                elif volume_detail.account_id is not None and self.new_account_id is not None \
+                        and volume_detail.account_id != self.new_account_id:
+                    logger.debug("CHANGED: Account ID for volume needs to be updated")
+                    update_volume = True
+                    changed = True
+
+                elif volume_detail.qos is not None and self.qos is not None and volume_detail.qos != self.qos:
+                    logger.debug("CHANGED: Volume QOS needs to be updated")
+                    update_volume = True
+                    changed = True
+
+                elif volume_detail.total_size is not None and volume_detail.total_size != self.size:
+                    size_difference = abs(volume_detail.total_size - self.size)
+                    # Change size only if difference is bigger than 0.001
+                    if size_difference/self.size > 0.001:
+                        log_msg = "CHANGED: Volume needs to be re-sized. Reported size is %s and new size is %s" % \
+                                  (str(volume_detail.total_size), str(self.size))
+
+                        logger.debug(log_msg)
+                        update_volume = True
+                        changed = True
+
+                elif volume_detail.attributes is not None and self.attributes is not None and \
+                        volume_detail.attributes != self.attributes:
+                    logger.debug("CHANGED: Volume attributes need to be updated")
+                    update_volume = True
+                    changed = True
+
+        else:
+            if self.state == 'present':
+                logger.debug(
+                    "CHANGED: volume does not exist, but requested state is "
+                    "'present'")
+
+                changed = True
+
+        if changed:
+            if self.module.check_mode:
+                logger.debug('skipping changes due to check mode')
+            else:
+                if self.state == 'present':
+                    if not volume_exists:
+                        self.create_volume()
+                    elif update_volume:
+                            self.update_volume()
+
+                elif self.state == 'absent':
+                    self.delete_volume()
+        else:
+            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
@@ -341,3 +409,4 @@ def main():
         raise
 
 main()
+

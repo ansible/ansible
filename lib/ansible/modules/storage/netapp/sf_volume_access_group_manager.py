@@ -24,6 +24,8 @@ DOCUMENTATION = '''
 module: sf_volume_access_group_manager
 
 short_description: Manage SolidFire Volume Access Groups
+extends_documentation_fragment:
+    - netapp.solidfire
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
@@ -32,30 +34,14 @@ description:
 
 options:
 
-    hostname:
+    state:
         required: true
         description:
-        - hostname
-
-    username:
-        required: true
-        description:
-        - username
-
-    password:
-        required: true
-        description:
-        - password
-
-    action:
-        required: true
-        description:
-        - Create, Delete, or Update a volume access group with the passed parameters
-        choices: ['create', 'delete', 'update']
+        - Whether the specified volume access group should exist or not.
+        choices: ['present', 'absent']
 
     name:
-        required: false
-        note: required when action == 'create'
+        required: true
         description:
         - Name of the volume access group. It is not required to be unique, but recommended.
 
@@ -90,7 +76,6 @@ options:
 
     volume_access_group_id:
         required: false
-        note: required when action == 'delete' or action == 'update'
         description:
         - The ID of the volume access group to modify or delete.
 
@@ -102,7 +87,7 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: create
+       state: present
        name: AnsibleVolumeAccessGroup
        volumes: 7,8
 
@@ -111,7 +96,7 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: update
+       state: present
        volume_access_group_id: 1
        name: AnsibleVolumeAccessGroup-Renamed
 
@@ -120,7 +105,7 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       action: delete
+       state: absent
        volume_access_group_id: 1
 """
 
@@ -146,29 +131,21 @@ msg:
 """
 
 
-'''
-        Before updating a volume access group, check the previous (current) attributes to currently report
-        the 'changed' property
-
-'''
-import sys
-import json
 import logging
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
-import socket
+HAS_SF_SDK = netapp_utils.has_sf_sdk()
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-from solidfire.factory import ElementFactory
 
 
 class SolidFireVolumeAccessGroup(object):
@@ -177,53 +154,67 @@ class SolidFireVolumeAccessGroup(object):
 
         self.module = AnsibleModule(
             argument_spec=dict(
-                action=dict(required=True, choices=['create', 'delete', 'update']),
+                state=dict(required=True, choices=['present', 'absent']),
+                name=dict(required=True, type='str'),
+                volume_access_group_id=dict(required=False, type='int', default=None),
 
-                name=dict(type='str'),
-                initiators=dict(required=False, type='list'),
-                volumes=dict(required=False, type='list'),
-                virtual_network_id=dict(required=False, type='list'),
-                virtual_network_tags=dict(required=False, type='list'),
-                attributes=dict(required=False, type='dict'),
-
-                volume_access_group_id=dict(type='int'),
+                initiators=dict(required=False, type='list', default=None),
+                volumes=dict(required=False, type='list', default=None),
+                virtual_network_id=dict(required=False, type='list', default=None),
+                virtual_network_tags=dict(required=False, type='list', default=None),
+                attributes=dict(required=False, type='dict', default=None),
 
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
             ),
-            required_if=[
-                ('action', 'create', ['name']),
-                ('action', 'delete', ['volume_access_group_id']),
-                ('action', 'update', ['volume_access_group_id'])
-            ],
             supports_check_mode=False
         )
 
         p = self.module.params
 
         # set up state variables
-        self.action = p['action']
+        self.state = p['state']
         self.name = p['name']
+        self.volume_access_group_id = p['volume_access_group_id']
+
         self.initiators = p['initiators']
         self.volumes = p['volumes']
         self.virtual_network_id = p['virtual_network_id']
         self.virtual_network_tags = p['virtual_network_tags']
         self.attributes = p['attributes']
-        self.volume_access_group_id = p['volume_access_group_id']
 
         self.hostname = p['hostname']
         self.username = p['username']
         self.password = p['password']
 
-        # create connection to solidfire cluster
-        self.sfe = ElementFactory.create(self.hostname, self.username, self.password)
+        if HAS_SF_SDK is False:
+            self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
+        else:
+            self.sfe = netapp_utils.create_sf_connection(hostname=self.hostname,
+                                                         username=self.username,
+                                                         password=self.password)
+
+    def get_volume_access_group(self):
+        access_groups_list = self.sfe.list_volume_access_groups()
+
+        for group in access_groups_list.volume_access_groups:
+            if group.name == self.name:
+                # Update self.volume_access_group_id:
+                if self.volume_access_group_id is not None:
+                    if group.volume_access_group_id == self.volume_access_group_id:
+                        return group
+                else:
+                    self.volume_access_group_id = group.volume_access_group_id
+                    return group
+        return None
 
     def create_volume_access_group(self):
         logger.debug('Creating volume access group %s', self.name)
 
         try:
-            self.sfe.create_volume_access_group(name=self.name, initiators=self.initiators,
+            self.sfe.create_volume_access_group(name=self.name,
+                                                initiators=self.initiators,
                                                 volumes=self.volumes,
                                                 virtual_network_id=self.virtual_network_id,
                                                 virtual_network_tags=self.virtual_network_tags,
@@ -252,8 +243,10 @@ class SolidFireVolumeAccessGroup(object):
             self.sfe.modify_volume_access_group(volume_access_group_id=self.volume_access_group_id,
                                                 virtual_network_id=self.virtual_network_id,
                                                 virtual_network_tags=self.virtual_network_tags,
-                                                name=self.name, initiators=self.initiators,
-                                                volumes=self.volumes, attributes=self.attributes)
+                                                name=self.name,
+                                                initiators=self.initiators,
+                                                volumes=self.volumes,
+                                                attributes=self.attributes)
         except:
             err = get_exception()
             logger.exception('Error updating volume access group %s : %s', self.volume_access_group_id, str(err))
@@ -261,18 +254,55 @@ class SolidFireVolumeAccessGroup(object):
 
     def apply(self):
         changed = False
+        group_exists = False
+        update_group = False
+        group_detail = self.get_volume_access_group()
 
-        if self.action == 'create':
-            self.create_volume_access_group()
-            changed = True
+        if group_detail:
+            group_exists = True
 
-        elif self.action == 'delete':
-            self.delete_volume_access_group()
-            changed = True
+            if self.state == 'absent':
+                logger.debug(
+                    "CHANGED: group exists, but requested state is 'absent'")
+                changed = True
 
-        elif self.action == 'update':
-            self.update_volume_access_group()
-            changed = True
+            elif self.state == 'present':
+                # Check if we need to update the group
+                if self.volumes is not None and group_detail.volumes != self.volumes:
+                    logger.debug("CHANGED: Volume access group - volumes need to be updated")
+                    update_group = True
+                    changed = True
+                elif self.initiators is not None and group_detail.initiators != self.initiators:
+                    logger.debug("CHANGED: Volume access group - initiators need to be updated")
+                    update_group = True
+                    changed = True
+                elif self.virtual_network_id is not None or self.virtual_network_tags is not None or \
+                                self.attributes is not None:
+                    logger.debug("CHANGED: Volume access group needs to be updated")
+                    update_group = True
+                    changed = True
+
+        else:
+            if self.state == 'present':
+                logger.debug(
+                    "CHANGED: group does not exist, but requested state is "
+                    "'present'")
+                changed = True
+
+        if changed:
+            if self.module.check_mode:
+                logger.debug('skipping changes due to check mode')
+            else:
+                if self.state == 'present':
+                    if not group_exists:
+                        self.create_volume_access_group()
+                    elif update_group:
+                        self.update_volume_access_group()
+
+                elif self.state == 'absent':
+                    self.delete_volume_access_group()
+        else:
+            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 

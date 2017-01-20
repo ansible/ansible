@@ -25,8 +25,34 @@ except:
     HAS_NETAPP_LIB = False
 
 
+HAS_SF_SDK = False
+try:
+    from solidfire.factory import ElementFactory
+    from solidfire.custom.models import TimeIntervalFrequency
+    from solidfire.models import Schedule, ScheduleInfo
+
+    HAS_SF_SDK = True
+except:
+    HAS_SF_SDK = False
+
+
 def has_netapp_lib():
     return HAS_NETAPP_LIB
+
+
+def has_sf_sdk():
+    return HAS_SF_SDK
+
+
+def create_sf_connection(hostname, username, password, port=None):
+    if HAS_SF_SDK and hostname and username and password:
+        try:
+            return_val = ElementFactory.create(hostname, username, password, port=port)
+            return return_val
+        except:
+            raise Exception("Unable to create SF connection")
+    else:
+        raise ImportError("Unable to import the SolidFire Python SDK")
 
 
 def setup_ontap_zapi(hostname, username, password, vserver=None):

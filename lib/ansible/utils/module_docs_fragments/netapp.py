@@ -632,3 +632,28 @@ example:
             username: "{{ netapp_username }}"
             password: "{{ netapp_password }}"
 """
+
+# Documentation fragment for SolidFire
+    SOLIDFIRE = """
+options:
+  hostname:
+      required: true
+      description:
+      - Hostname
+  username:
+      required: true
+      description:
+      - Username
+  password:
+      required: true
+      description:
+      - Password
+
+requirements:
+  - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
+  - Ansible 2.2
+  - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
+
+notes:
+  - The modules prefixed with *netapp\_cdot* are built to support the ONTAP storage platform.
+"""

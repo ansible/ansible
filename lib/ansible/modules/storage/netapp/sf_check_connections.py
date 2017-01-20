@@ -24,6 +24,8 @@ DOCUMENTATION = '''
 module: sf_check_connections
 
 short_description: Check connectivity to MVIP and SVIP.
+extends_documentation_fragment:
+    - netapp.solidfire
 version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
@@ -31,21 +33,6 @@ description:
 - The test pings the MVIP and SVIP, and executes a simple API method to verify connectivity.
 
 options:
-
-  hostname:
-    required: true
-    description:
-    - hostname
-
-  username:
-    required: true
-    description:
-    - username
-
-  password:
-    required: true
-    description:
-    - password
 
   skip:
     required: false
@@ -85,24 +72,21 @@ msg:
 
 """
 
-import sys
-import json
 import logging
 from traceback import format_exc
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+import ansible.module_utils.netapp as netapp_utils
 
-import socket
+HAS_SF_SDK = netapp_utils.has_sf_sdk()
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-from solidfire.factory import ElementFactory
 
 
 class SolidFireConnection(object):
@@ -114,7 +98,7 @@ class SolidFireConnection(object):
             argument_spec=dict(
                 hostname=dict(required=True, type='str'),
                 username=dict(required=True, type='str'),
-                password=dict(required=True, type='str'),
+                password=dict(required=True, type='str', no_log=True),
                 skip=dict(required=False, type='str', default=None, choices=['mvip', 'svip']),
                 mvip=dict(required=False, type='str', default=None),
                 svip=dict(required=False, type='str', default=None)
@@ -132,24 +116,10 @@ class SolidFireConnection(object):
         self.mvip = p['mvip']
         self.svip = p['svip']
 
-        self.sfe = None
-
-    def establish_connection(self):
-        """
-            Establish connection to SolidFire cluster
-
-            :return: true if connection was successful.
-            :rtype: bool
-        """
-        try:
-            self.sfe = ElementFactory.create(self.hostname, self.username, self.password, port=442)
-            return True
-
-        except:
-            err = get_exception()
-            logger.exception('Error establishing connection to SolidFire cluster: %s',
-                             str(err))
-            return False
+        if HAS_SF_SDK is False:
+            self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
+        else:
+            self.sfe = netapp_utils.ElementFactory.create(self.hostname, self.username, self.password, port=442)
 
     def check_mvip_connection(self):
         """
@@ -193,8 +163,6 @@ class SolidFireConnection(object):
 
         failed = True
         msg = ''
-
-        self.establish_connection()
 
         if self.skip is None:
             mvip_connection_established = self.check_mvip_connection()
