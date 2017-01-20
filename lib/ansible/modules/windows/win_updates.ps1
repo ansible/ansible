@@ -79,10 +79,10 @@ $job_body = {
         [string[]]$category_names=@("CriticalUpdates","SecurityUpdates","UpdateRollups"),
         [ValidateSet("installed", "searched")]
         [string]$state="installed",
-        [bool]$_ansible_check_mode=$false
+        [bool]$check_mode=$false
         )
 
-        $is_check_mode = $($state -eq "searched") -or $_ansible_check_mode
+        $is_check_mode = $($state -eq "searched") -or $check_mode
 
         $category_guids = $category_names | % { MapCategoryNameToGUID $_ }
 
@@ -107,7 +107,7 @@ $job_body = {
         $searchresult = $searcher.Search($criteria)
 
         Write-DebugLog "Creating update collection..."
-    
+
         $updates_to_install = New-Object -ComObject Microsoft.Update.UpdateColl
 
         Write-DebugLog "Found $($searchresult.Updates.Count) updates"
@@ -146,29 +146,29 @@ $job_body = {
         $update_status.found_update_count = $updates_to_install.Count
         $update_status.installed_update_count = 0
 
-        # bail out here for check mode  
-        if($is_check_mode -eq $true) { 
+        # bail out here for check mode
+        if($is_check_mode -eq $true) {
           Write-DebugLog "Check mode; exiting..."
           Write-DebugLog "Return value: $($update_status | out-string)"
 
           if($updates_to_install.Count -gt 0) { $update_status.changed = $true }
-          return $update_status 
+          return $update_status
         }
 
-        if($updates_to_install.Count -gt 0) {   
-          if($update_status.reboot_required) { 
+        if($updates_to_install.Count -gt 0) {
+          if($update_status.reboot_required) {
             throw "A reboot is required before more updates can be installed."
           }
           else {
             Write-DebugLog "No reboot is pending..."
           }
-          Write-DebugLog "Downloading updates..." 
+          Write-DebugLog "Downloading updates..."
         }
 
         foreach($update in $updates_to_install) {
-            if($update.IsDownloaded) { 
+            if($update.IsDownloaded) {
                 Write-DebugLog "Update $($update.Identity.UpdateID) already downloaded, skipping..."
-                continue 
+                continue
             }
             Write-DebugLog "Creating downloader object..."
             $dl = $session.CreateUpdateDownloader()
@@ -233,7 +233,7 @@ $job_body = {
 
         }
 
-        if($update_fail_count -gt 0) {  
+        if($update_fail_count -gt 0) {
             $update_status.failed = $true
             $update_status.msg="Failed to install one or more updates"
         }
@@ -252,7 +252,7 @@ $job_body = {
         return $update_status
     }
 
-    Try { 
+    Try {
         # job system adds a bunch of cruft to top-level dict, so we have to send a sub-dict
         return @{ job_output = DoWindowsUpdate @boundparms }
     }
@@ -270,7 +270,7 @@ Function DestroyScheduledJob {
   $schedjob = Get-ScheduledJob -Name $job_name -ErrorAction SilentlyContinue
 
   # nuke it if it's there
-  If($schedjob -ne $null) {  
+  If($schedjob -ne $null) {
       Write-DebugLog "ScheduledJob $job_name exists, ensuring it's not running..."
       # can't manage jobs across sessions, so we have to resort to the Task Scheduler script object to kill running jobs
       $schedserv = New-Object -ComObject Schedule.Service
@@ -284,8 +284,8 @@ Function DestroyScheduledJob {
           $task_to_stop.Stop()
       }
 
-      <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job 
-      and/or polling will block forever, since the killed job object in the parent 
+      <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job
+      and/or polling will block forever, since the killed job object in the parent
       session doesn't know it's been killed :( #>
 
       Unregister-ScheduledJob -Name $job_name
@@ -318,7 +318,7 @@ Function RunAsScheduledJob {
   }
   else {
     Write-DebugLog "Starting scheduled job (PS3 method)"
-    Add-JobTrigger -inputobject $schedjob -trigger $(New-JobTrigger -once -at $(Get-Date).AddSeconds(2))      
+    Add-JobTrigger -inputobject $schedjob -trigger $(New-JobTrigger -once -at $(Get-Date).AddSeconds(2))
   }
 
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -336,7 +336,7 @@ Function RunAsScheduledJob {
 
       # FUTURE: configurable timeout so we don't block forever?
       # FUTURE: add a global WaitHandle in case another instance kills our job, so we don't block forever
-      $job = Wait-Job -Name $schedjob.Name -ErrorAction SilentlyContinue 
+      $job = Wait-Job -Name $schedjob.Name -ErrorAction SilentlyContinue
   }
 
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -363,7 +363,7 @@ Function RunAsScheduledJob {
       $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason
   }
 
-  Try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling... 
+  Try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling...
       Unregister-ScheduledJob -Name $job_name -Force -ErrorAction Continue
   }
   Catch {
@@ -405,9 +405,11 @@ $common_inject = {
 # source the common code into the current scope so we can call it
 . $common_inject
 
-$parsed_args = Parse-Args $args $true
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
 # grr, why use PSCustomObject for args instead of just native hashtable?
-$parsed_args.psobject.properties | foreach -begin {$job_args=@{}} -process {$job_args."$($_.Name)" = $_.Value} -end {$job_args}
+$params.psobject.properties | foreach -begin {$job_args=@{}} -process {$job_args."$($_.Name)" = $_.Value} -end {$job_args}
 
 # set the log_path for the global log function we injected earlier
 $log_path = $job_args['log_path']
