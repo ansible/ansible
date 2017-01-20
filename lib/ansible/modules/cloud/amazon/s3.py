@@ -554,9 +554,9 @@ def main():
         keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
         if keyrtn is False:
             if version is not None:
-                module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version), failed=True)
+                module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version))
             else:
-                module.fail_json(msg="Key %s or source bucket %s does not exist."% (obj, bucket), failed=True)
+                module.fail_json(msg="Key %s or source bucket %s does not exist."% (obj, bucket))
 
         # If the destination path doesn't exist or overwrite is True, no need to do the md5um etag check, so just download.
         pathrtn = path_check(dest)
@@ -595,7 +595,7 @@ def main():
         # Lets check the src path.
         pathrtn = path_check(src)
         if not pathrtn:
-            module.fail_json(msg="Local object for PUT does not exist", failed=True)
+            module.fail_json(msg="Local object for PUT does not exist")
 
         # Lets check to see if bucket exists to get ground truth.
         if bucketrtn:
@@ -631,13 +631,13 @@ def main():
     # Delete an object from a bucket, not the entire bucket
     if mode == 'delobj':
         if obj is None:
-            module.fail_json(msg="object parameter is required", failed=True)
+            module.fail_json(msg="object parameter is required")
         if bucket:
             deletertn = delete_key(module, s3, bucket, obj, validate=validate)
             if deletertn is True:
                 module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
         else:
-            module.fail_json(msg="Bucket parameter is required.", failed=True)
+            module.fail_json(msg="Bucket parameter is required.")
 
 
     # Delete an entire bucket, including all objects in the bucket
@@ -647,7 +647,7 @@ def main():
             if deletertn is True:
                 module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
         else:
-            module.fail_json(msg="Bucket parameter is required.", failed=True)
+            module.fail_json(msg="Bucket parameter is required.")
 
     # Support for listing a set of keys
     if mode == 'list':
@@ -655,7 +655,7 @@ def main():
 
         # If the bucket does not exist then bail out
         if bucket_object is None:
-            module.fail_json(msg="Target bucket (%s) cannot be found"% bucket, failed=True)
+            module.fail_json(msg="Target bucket (%s) cannot be found"% bucket)
 
         list_keys(module, bucket_object, prefix, marker, max_keys)
 
@@ -685,13 +685,13 @@ def main():
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':
         if not bucket and not obj:
-            module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
+            module.fail_json(msg="Bucket and Object parameters must be set")
 
         keyrtn = key_check(module, s3, bucket, obj, validate=validate)
         if keyrtn:
             get_download_url(module, s3, bucket, obj, expiry, validate=validate)
         else:
-            module.fail_json(msg="Key %s does not exist." % obj, failed=True)
+            module.fail_json(msg="Key %s does not exist." % obj)
 
     if mode == 'getstr':
         if bucket and obj:
@@ -699,9 +699,9 @@ def main():
             if keyrtn:
                 download_s3str(module, s3, bucket, obj, version=version, validate=validate)
             elif version is not None:
-                module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version), failed=True)
+                module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version))
             else:
-                module.fail_json(msg="Key %s does not exist." % obj, failed=True)
+                module.fail_json(msg="Key %s does not exist." % obj)
 
     module.exit_json(failed=False)
 
