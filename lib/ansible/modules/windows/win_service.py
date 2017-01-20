@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = r'''
 ---
 module: win_service
-version_added: "1.7"
+version_added: '1.7'
 short_description: Manages Windows services
 description:
     - Manages Windows services
@@ -37,12 +37,9 @@ options:
     description:
       - Name of the service
     required: true
-    default: null
-    aliases: []
   start_mode:
     description:
       - Set the startup type for the service
-    required: false
     choices:
       - auto
       - manual
@@ -50,16 +47,13 @@ options:
   state:
     description:
       - C(started)/C(stopped) are idempotent actions that will not run
-        commands unless necessary.  C(restarted) will always bounce the
-        service.
-    required: false
+        commands unless necessary.
+      - C(restarted) will always bounce the service.
     choices:
       - started
       - stopped
       - restarted
-    default: null
-    aliases: []
-author: "Chris Hoffman (@chrishoffman)"
+author: Chris Hoffman (@chrishoffman)
 '''
 
 EXAMPLES = r'''
