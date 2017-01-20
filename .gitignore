@@ -40,6 +40,7 @@ docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
 docs/docsite/searchindex.js
 docs/docsite/htmlout
+docs/docsite/_build
 docs/api/rst/
 docs/api/_build/
 # deb building stuff...
