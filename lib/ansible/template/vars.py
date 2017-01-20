@@ -50,8 +50,11 @@ class AnsibleJ2Vars:
         self._locals  = dict()
         if isinstance(locals, dict):
             for key, val in iteritems(locals):
-                if key[:2] == 'l_' and val is not missing:
-                    self._locals[key[2:]] = val
+                if val is not missing:
+                    if key[:2] == 'l_':
+                        self._locals[key[2:]] = val
+                    elif key not in ('context', 'environment', 'template'):
+                        self._locals[key] = val
 
     def __contains__(self, k):
         if k in self._templar._available_variables:
