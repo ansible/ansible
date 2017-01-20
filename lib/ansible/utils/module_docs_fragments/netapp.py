@@ -650,10 +650,8 @@ options:
       - Password
 
 requirements:
-  - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
-  - Ansible 2.2
-  - netapp-lib (2015.9.25). Install using 'pip install netapp-lib'
+  - solidfire-sdk-python (1.1.0.92)
 
 notes:
-  - The modules prefixed with *netapp\_cdot* are built to support the ONTAP storage platform.
+  - The modules prefixed with *sf\_* are built to support the SolidFire storage platform.
 """
