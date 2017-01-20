@@ -87,6 +87,16 @@ options:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
         required: false
         version_added: 2.3
+    placement_constraints:
+        description:
+          - The placement constraints for the tasks in the service
+        required: false
+        version_added: 2.4
+    placement_strategy:
+        description:
+          - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
+        required: false
+        version_added: 2.4
 extends_documentation_fragment:
     - aws
     - ec2
@@ -98,7 +108,7 @@ EXAMPLES = '''
     state: present
     name: console-test-service
     cluster: new_cluster
-    task_definition: new_cluster-task:1"
+    task_definition: 'new_cluster-task:1'
     desired_count: 0
 
 # Basic provisioning example
@@ -113,8 +123,9 @@ EXAMPLES = '''
     state: absent
     cluster: new_cluster
 
-# With custom deployment configuration
+# With custom deployment configuration (added in version 2.3), placement constraints and strategy (added in version 2.4)
 - ecs_service:
+    state: present
     name: test-service
     cluster: test-cluster
     task_definition: test-task-definition
@@ -122,7 +133,12 @@ EXAMPLES = '''
     deployment_configuration:
       minimum_healthy_percent: 75
       maximum_percent: 150
-    state: present
+    placement_constraints:
+      - type: memberOf
+        expression: 'attribute:flavor==test'
+    placement_strategy:
+      - type: binpack
+        field: memory
 '''
 
 RETURN = '''
@@ -200,9 +216,38 @@ service:
                     returned: always
                     type: int
         events:
-            description: lost of service events
+            description: list of service events
             returned: always
             type: list of complex
+        placementConstraints:
+            description: List of placement constraints objects
+            returned: always
+            type: list of complex
+            contains:
+                type:
+                    description: The type of constraint. Valid values are distinctInstance and memberOf.
+                    returned: always
+                    type: string
+                expression:
+                    description: A cluster query language expression to apply to the constraint. Note you cannot specify an expression if the constraint type is
+                                 distinctInstance.
+                    returned: always
+                    type: string
+        placementStrategy:
+            description: List of placement strategy objects
+            returned: always
+            type: list of complex
+            contains:
+                type:
+                    description: The type of placement strategy. Valid values are random, spread and binpack.
+                    returned: always
+                    type: string
+                field:
+                    description: The field to apply the placement strategy against. For the spread placement strategy, valid values are instanceId
+                                 (or host, which has the same effect), or any platform or custom attribute that is applied to a container instance,
+                                 such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
+                    returned: always
+                    type: string
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service
@@ -261,13 +306,11 @@ class EcsServiceManager:
     def describe_service(self, cluster_name, service_name):
         response = self.ecs.describe_services(
             cluster=cluster_name,
-            services=[
-                service_name
-                ])
+            services=[service_name])
         msg = ''
         if len(response['failures'])>0:
             c = self.find_in_array(response['failures'], service_name, 'arn')
-            msg += ", failure reason is "+c['reason']
+            msg += ", failure reason is " + c['reason']
             if c and c['reason']=='MISSING':
                 return None
             # fall thru and look through found ones
@@ -289,8 +332,9 @@ class EcsServiceManager:
 
         return True
 
-    def create_service(self, service_name, cluster_name, task_definition,
-                       load_balancers, desired_count, client_token, role, deployment_configuration):
+    def create_service(self, service_name, cluster_name, task_definition, load_balancers,
+                       desired_count, client_token, role, deployment_configuration,
+                       placement_constraints, placement_strategy):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -299,7 +343,9 @@ class EcsServiceManager:
             desiredCount=desired_count,
             clientToken=client_token,
             role=role,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+            placementConstraints=placement_constraints,
+            placementStrategy=placement_strategy)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
@@ -330,8 +376,8 @@ class EcsServiceManager:
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
 
-def main():
 
+def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent', 'deleting']),
@@ -344,7 +390,9 @@ def main():
         role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10),
-        deployment_configuration=dict(required=False, default={}, type='dict')
+        deployment_configuration=dict(required=False, default={}, type='dict'),
+        placement_constraints=dict(required=False, default=[], type='list'),
+        placement_strategy=dict(required=False, default=[], type='list')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -364,14 +412,14 @@ def main():
     service_mgr = EcsServiceManager(module)
 
     deployment_configuration = map_complex_type(module.params['deployment_configuration'],
-                                                            DEPLOYMENT_CONFIGURATION_TYPE_MAP)
+                                                DEPLOYMENT_CONFIGURATION_TYPE_MAP)
 
     deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
 
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
     except Exception as e:
-        module.fail_json(msg="Exception describing service '"+module.params['name']+"' in cluster '"+module.params['cluster']+"': "+str(e))
+        module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + module.params['cluster'] + "': " + str(e))
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
@@ -388,6 +436,10 @@ def main():
         if not matching:
             if not module.check_mode:
                 loadBalancers = module.params['load_balancers']
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+
                 role = module.params['role']
                 clientToken = module.params['client_token']
 
@@ -410,7 +462,9 @@ def main():
                         module.params['desired_count'],
                         clientToken,
                         role,
-                        deploymentConfiguration)
+                        deploymentConfiguration,
+                        module.params['placement_constraints'],
+                        module.params['placement_strategy'])
 
                 results['service'] = response
 
@@ -440,7 +494,7 @@ def main():
 
     elif module.params['state'] == 'deleting':
         if not existing:
-            module.fail_json(msg="Service '"+module.params['name']+" not found.")
+            module.fail_json(msg="Service '" + module.params['name'] + " not found.")
             return
         # it exists, so we should delete it and mark changed.
         # return info about the cluster deleted
@@ -454,8 +508,8 @@ def main():
                 results['changed'] = True
                 break
             time.sleep(delay)
-        if i is repeat-1:
-            module.fail_json(msg="Service still not deleted after "+str(repeat)+" tries of "+str(delay)+" seconds each.")
+        if i is repeat - 1:
+            module.fail_json(msg="Service still not deleted after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
             return
 
     module.exit_json(**results)
