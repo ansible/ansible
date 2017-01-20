@@ -155,7 +155,7 @@ options:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True."
     default: false
     aliases: []
-    version_added: "2.2"
+    version_added: "2.3"
 
 requirements: [ "boto" ]
 author:
@@ -544,7 +544,7 @@ def main():
     if not ignore_nonexistent_bucket:
         validate = True
         if mode not in ('create', 'put', 'delete') and not bucketrtn:
-            module.fail_json(msg="Source bucket cannot be found.", failed=True)
+            module.fail_json(msg="Source bucket cannot be found.")
     else:
         validate = False
 
@@ -556,12 +556,10 @@ def main():
             if version is not None:
                 module.fail_json(msg="Key %s with version id %s does not exist."% (obj, version), failed=True)
             else:
-                module.fail_json(msg="Key %s does not exist."%obj, failed=True)  # we could change this to specify that the problem may also be a nonexistent bucket
+                module.fail_json(msg="Key %s or source bucket %s does not exist."% (obj, bucket), failed=True)
 
         # If the destination path doesn't exist or overwrite is True, no need to do the md5um etag check, so just download.
         pathrtn = path_check(dest)
-        if pathrtn is False or overwrite == 'always':
-            download_s3file(module, s3, bucket, obj, dest, retries, version=version, validate=validate)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
@@ -569,7 +567,6 @@ def main():
             md5_local = module.md5(dest)
             if md5_local == md5_remote:
                 sum_matches = True
-                module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
                 if overwrite == 'always':
                     download_s3file(module, s3, bucket, obj, dest, retries, version=version, validate=validate)
                 else:
@@ -581,6 +578,9 @@ def main():
                     download_s3file(module, s3, bucket, obj, dest, retries, version=version, validate=validate)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
+        else:
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version, validate=validate)
+
 
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
         if sum_matches and overwrite == 'never':
