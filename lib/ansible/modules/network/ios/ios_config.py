@@ -366,8 +366,8 @@ def main():
         if match != 'none':
             config, have_banners = get_running_config(module)
             path = module.params['parents']
-            configobjs = candidate.difference(config, path=path,match=match,
-                                            replace=replace)
+            configobjs = candidate.difference(config, path=path, match=match,
+                                              replace=replace)
         else:
             configobjs = candidate.items
             have_banners = {}
@@ -398,7 +398,7 @@ def main():
             result['changed'] = True
 
     if module.params['backup']:
-        result['__backup__'] = get_config()
+        result['__backup__'] = get_config(module=module)
 
     if module.params['save']:
         if not module.check_mode:

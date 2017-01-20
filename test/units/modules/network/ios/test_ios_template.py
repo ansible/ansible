@@ -29,7 +29,7 @@ from ansible.errors import AnsibleModuleExit
 from ansible.modules.network.ios import _ios_template
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
-
+from ansible.module_utils.local import LocalAnsibleModule
 
 def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
@@ -118,7 +118,11 @@ class TestIosTemplateModule(unittest.TestCase):
         src = load_fixture('ios_template_config.cfg')
         set_module_args(dict(src=src, include_defaults=False))
         self.execute_module()
-        self.get_config.assert_called_with(flags=[])
+        _, kwargs = self.get_config.call_args
+        # Ensure flags doesn't contain "default", or any other value
+        self.assertEqual(kwargs['flags'], [])
+        self.assertIsInstance(kwargs['module'], LocalAnsibleModule)
+
 
     def test_ios_template_backup(self):
         set_module_args(dict(backup=True))
