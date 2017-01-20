@@ -30,7 +30,7 @@ from numbers import Number
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.utils import concat as j2_concat
+from jinja2.utils import concat as j2_concat, missing
 from jinja2.runtime import Context, StrictUndefined
 from ansible import constants as C
 from ansible.compat.six import string_types, text_type
@@ -154,15 +154,22 @@ class AnsibleContext(Context):
             return True
         return False
 
+    def _update_unsafe(self, val):
+        if val is not None and not self.unsafe and self._is_unsafe(val):
+            self.unsafe = True
+
     def resolve(self, key):
         '''
         The intercepted resolve(), which uses the helper above to set the
         internal flag whenever an unsafe variable value is returned.
         '''
         val = super(AnsibleContext, self).resolve(key)
-        if val is not None and not self.unsafe:
-            if self._is_unsafe(val):
-                self.unsafe = True
+        self._update_unsafe(val)
+        return val
+
+    def resolve_or_missing(self, key):
+        val = super(AnsibleContext, self).resolve_or_missing(key)
+        self._update_unsafe(val)
         return val
 
 class AnsibleEnvironment(Environment):
