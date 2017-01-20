@@ -573,10 +573,14 @@ class AzureInventory(object):
                                                                              certificate_url=listener.certificate_url))
 
             for interface in machine.network_profile.network_interfaces:
-                interface_reference = self._parse_ref_id(interface.id)
-                network_interface = self._network_client.network_interfaces.get(
-                    interface_reference['resourceGroups'],
-                    interface_reference['networkInterfaces'])
+                try:
+                    interface_reference = self._parse_ref_id(interface.id)
+                    network_interface = self._network_client.network_interfaces.get(
+                        interface_reference['resourceGroups'],
+                        interface_reference['networkInterfaces']
+                    )
+                except CloudError:
+                    continue
                 if network_interface.primary:
                     if self.group_by_security_group and \
                        self._security_groups[resource_group].get(network_interface.id, None):
