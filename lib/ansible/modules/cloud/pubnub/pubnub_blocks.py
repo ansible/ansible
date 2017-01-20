@@ -20,7 +20,7 @@
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'commiter',
+                    'supported_by': 'committer',
                     'version': '1.0'}
 
 
@@ -42,7 +42,7 @@ options:
       - Email from account for which new session should be started.
       - Not required if C(cache) contains result of previous module call (in same play).
     required: false
-  pwd:
+  password:
     description:
       - Password which match to account to which specified C(email) belong.
       - Not required if C(cache) contains result of previous module call (in same play).
@@ -66,7 +66,7 @@ options:
     required: false
     default: 'start'
     choices: ['start', 'stop', 'present', 'absent']
-  block:
+  name:
     description:
       - Name of managed block which will be later visible on admin.pubnub.com.
     required: true
@@ -77,7 +77,7 @@ options:
     default: 'New block'
   event_handlers:
     description:
-      - List of event handlers which should be updated for specified C(block).
+      - List of event handlers which should be updated for specified block C(name).
       - "Each entry for new event handler should contain: C(name), C(src), C(channels), C(event). C(name) used as event handler name which can be used later to make changes to it."
       - C(src) is full path to file with event handler code.
       - C(channels) is name of channel from which event handler is waiting for events.
@@ -90,7 +90,7 @@ options:
   changes:
     description:
       - List of fields which should be changed by block itself (doesn't affect any event handlers).
-      - Possible options for change is C(name) and C(description).
+      - "Possible options for change is: C(name)."
     required: false
     default: {}
   validate_certs:
@@ -106,10 +106,10 @@ EXAMPLES = '''
 - name: Create single event handler
   pubnub_blocks:
     email: '{{ email }}'
-    pwd: '{{ password }}'
+    password: '{{ password }}'
     application: '{{ app_name }}'
     keyset: '{{ keyset_name }}'
-    block: '{{ block_name }}'
+    name: '{{ block_name }}'
     event_handlers:
       -
         src: '{{ path_to_handler_source }}'
@@ -121,10 +121,10 @@ EXAMPLES = '''
 - name: Change event handler 'event'
   pubnub_blocks:
     email: '{{ email }}'
-    pwd: '{{ password }}'
+    password: '{{ password }}'
     application: '{{ app_name }}'
     keyset: '{{ keyset_name }}'
-    block: '{{ block_name }}'
+    name: '{{ block_name }}'
     event_handlers:
       -
         name: '{{ handler_name }}'
@@ -134,10 +134,10 @@ EXAMPLES = '''
 - name: Stopping block
   pubnub_blocks:
     email: '{{ email }}'
-    pwd: '{{ password }}'
+    password: '{{ password }}'
     application: '{{ app_name }}'
     keyset: '{{ keyset_name }}'
-    block: '{{ block_name }}'
+    name: '{{ block_name }}'
     state: stop
 
 # Multiple module calls with cached result passing
@@ -145,10 +145,10 @@ EXAMPLES = '''
       register: module_cache
       pubnub_blocks:
         email: '{{ email }}'
-        pwd: '{{ password }}'
+        password: '{{ password }}'
         application: '{{ app_name }}'
         keyset: '{{ keyset_name }}'
-        block: '{{ block_name }}'
+        name: '{{ block_name }}'
         state: present
     - name: Add '{{ event_handler_1_name }}' event handler to '{{ block_name }}'
       register: module_cache
@@ -156,7 +156,7 @@ EXAMPLES = '''
         cache: '{{ module_cache }}'
         application: '{{ app_name }}'
         keyset: '{{ keyset_name }}'
-        block: '{{ block_name }}'
+        name: '{{ block_name }}'
         state: present
         event_handlers:
           -
@@ -170,7 +170,7 @@ EXAMPLES = '''
         cache: '{{ module_cache }}'
         application: '{{ app_name }}'
         keyset: '{{ keyset_name }}'
-        block: '{{ block_name }}'
+        name: '{{ block_name }}'
         state: present
         event_handlers:
           -
@@ -184,7 +184,7 @@ EXAMPLES = '''
         cache: '{{ module_cache }}'
         application: '{{ app_name }}'
         keyset: '{{ keyset_name }}'
-        block: '{{ block_name }}'
+        name: '{{ block_name }}'
         state: start
 '''
 
@@ -202,19 +202,12 @@ PN_BLOCK_STATE_CHECK_MAX_COUNT = 30
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import *
 from ansible.module_utils.urls import *
-PN_URLENCODE = None
-try:
-    import urllib.parse
-    PN_URLENCODE = urllib.parse.urlencode
-except ImportError:
-    import urllib
-    PN_URLENCODE = urllib.urlencode
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 try:
     import zlib
     ZLIB_AVAILABLE = True
 except ImportError:
     ZLIB_AVAILABLE = False
-import traceback
 import random
 import copy
 import time
@@ -240,7 +233,7 @@ class PubNubAccount(object):
         self._api = PubNubAPIClient(module=module, account=self)
         self._orig_service_data = None
         self._applications = dict()
-        if not _is_empty(cache):
+        if cache:
             self._restore(cache)
 
     @property
@@ -250,11 +243,7 @@ class PubNubAccount(object):
         :rtype:  int
         :return: Reference on unique user identifier or 'None' in case if account model configuration not completed.
         """
-        uid = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('user')):
-            uid = self._orig_service_data['user']['id']
-
-        return uid
+        return _object_value(obj=self._orig_service_data, key='user.id')
 
     @property
     def email(self):
@@ -264,11 +253,7 @@ class PubNubAccount(object):
         :return: Reference on account's owner email address or 'None' in case if account model configuration not
                  completed.
         """
-        email = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('user')):
-            email = self._orig_service_data['user']['email']
-
-        return email
+        return _object_value(obj=self._orig_service_data, key='user.email')
 
     def changed(self):
         """Check whether something changed in account's data.
@@ -278,7 +263,8 @@ class PubNubAccount(object):
         :return: 'True' in case if account or application data has been modified.
         """
         applications_changed = False
-        for application_name in self._applications:
+        applications = self._applications if self._applications is not None else dict()
+        for application_name in applications:
             applications_changed = self.application_by_name(application_name).changed()
             if applications_changed:
                 break
@@ -294,7 +280,7 @@ class PubNubAccount(object):
         :return: Dictionary which represent account model with all it fields and values.
         """
         export_data = copy.deepcopy(self._orig_service_data)
-        if not _is_empty(self._applications):
+        if self._applications:
             exported_applications = list()
             for application_name in self._applications:
                 application = self.application_by_name(application_name)
@@ -322,8 +308,8 @@ class PubNubAccount(object):
         :return: Reference on registered application model or 'None' in case if there is no application with specified
                  name.
         """
-        app = self._applications.get(application)
-        if _is_empty(app):
+        app = _object_value(obj=self._applications, key=application)
+        if app is None:
             error_fmt = "There is no '%s' application for %s. Make sure what correct application name has " + \
                         "been passed. If application doesn't exist you can create it on admin.pubnub.com."
             error_args = (application, self.email)
@@ -331,16 +317,16 @@ class PubNubAccount(object):
 
         return app
 
-    def login(self, email, pwd):
+    def login(self, email, password):
         """Start new PubNub block management API access session using provided account credentials.
 
-        :type email:  str
-        :param email: Email of account for which REST API calls should be authorized.
-        :type pwd:    str
-        :param pwd:   Account's password.
+        :type email:     str
+        :param email:    Email of account for which REST API calls should be authorized.
+        :type password:  str
+        :param password: Account's password.
         """
         # Authorize with account's credentials and complete account model configuration.
-        self._process_account_data(self._api.start_session(email=email, pwd=pwd))
+        self._process_account_data(self._api.start_session(email=email, password=password))
         # Fetch and process list of registered applications.
         self._process_applications_data(self._api.fetch_applications(account_id=self.uid))
 
@@ -361,12 +347,12 @@ class PubNubAccount(object):
         :param cache: Reference on dictionary which contain information from previous module run and allow to restore
                       account model to it's latest state.
         """
-        if not _is_empty(cache.get('pnm_applications')):
+        if _object_value(obj=cache, key='pnm_applications'):
             self._process_applications_data(cache.pop('pnm_applications'))
         self._process_account_data(cache)
 
         # Update session information for API.
-        self._api.session = self._session = cache['token']
+        self._api.session = self._session = _object_value(obj=cache, key='token')
 
     def _process_account_data(self, account):
         """Process service data to configure account data model.
@@ -426,11 +412,7 @@ class PubNubApplication(object):
         :return: Reference on unique application identifier or 'None' in case if application model configuration not
                  completed.
         """
-        uid = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('id')):
-            uid = self._orig_service_data['id']
-
-        return uid
+        return _object_value(obj=self._orig_service_data, key='id')
 
     @property
     def name(self):
@@ -439,11 +421,7 @@ class PubNubApplication(object):
         :rtype:  str
         :return: Reference on application name or 'None' in case if application model configuration not completed.
         """
-        name = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('name')):
-            name = self._orig_service_data['name']
-
-        return name
+        return _object_value(obj=self._orig_service_data, key='name')
 
     def changed(self):
         """Check whether application's data has been changed or not.
@@ -453,7 +431,8 @@ class PubNubApplication(object):
         :return: 'True' in case if application or keysets data has been modified.
         """
         keysets_changed = False
-        for keyset_name in self._keysets:
+        keysets = self._keysets if self._keysets is not None else dict()
+        for keyset_name in keysets:
             keysets_changed = self.keyset_by_name(keyset_name).changed()
             if keysets_changed:
                 break
@@ -469,7 +448,7 @@ class PubNubApplication(object):
         :return: Dictionary which represent application model with all it fields and values.
         """
         export_data = copy.deepcopy(self._orig_service_data)
-        if not _is_empty(self._keysets):
+        if self._keysets:
             exported_keysets = list()
             for keyset_name in self._keysets:
                 keyset = self.keyset_by_name(keyset_name)
@@ -495,8 +474,8 @@ class PubNubApplication(object):
         :rtype:  PubNubKeyset
         :return: Reference on application's keyset model or 'None' in case if there is no keysets with specified name.
         """
-        ks = self._keysets.get(keyset)
-        if _is_empty(ks):
+        ks = _object_value(obj=self._keysets, key=keyset)
+        if ks is None:
             error_fmt = "There is no '%s' keyset for '%s' application. Make sure what correct keyset name has " + \
                         "been passed. If keyset doesn't exist you can create it on admin.pubnub.com."
             error_args = (keyset, self.name)
@@ -517,7 +496,7 @@ class PubNubApplication(object):
         :param application: Reference on dictionary which describe application which is registered for authorized
                             account.
         """
-        if not _is_empty(application.get('keys')):
+        if _object_value(obj=application, key='keys'):
             keysets = application.pop('keys')
             for keyset in keysets:
                 keyset_model = PubNubKeyset(self._module, application=self, api_client=self._api, keyset=keyset)
@@ -558,11 +537,7 @@ class PubNubKeyset(object):
         :rtype:  int
         :return: Reference on unique keyset identifier or 'None' in case if keyset model configuration not completed.
         """
-        uid = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('id')):
-            uid = self._orig_service_data['id']
-
-        return uid
+        return _object_value(obj=self._orig_service_data, key='id')
 
     @property
     def name(self):
@@ -571,11 +546,7 @@ class PubNubKeyset(object):
         :rtype:  str
         :return: Reference on keyset name or 'None' in case if keyset model configuration not completed.
         """
-        name = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('properties')):
-            name = self._orig_service_data['properties']['name']
-
-        return name
+        return _object_value(obj=self._orig_service_data, key='properties.name')
 
     def changed(self):
         """Check whether keyset's data has been changed or not.
@@ -586,11 +557,13 @@ class PubNubKeyset(object):
         """
         blocks_changed = False
         if not self._changed:
-            blocks = self._blocks if not _is_empty(self._blocks) else dict()
+            blocks = self._blocks if self._blocks is not None else dict()
             for block_name in blocks:
-                blocks_changed = self.block_by_name(block_name).changed()
-                if blocks_changed:
-                    break
+                block = self.block_by_name(block_name, ignore_missing_block=True)
+                if block:
+                    blocks_changed = block.changed()
+                    if blocks_changed:
+                        break
 
         return self._changed or blocks_changed
 
@@ -603,11 +576,12 @@ class PubNubKeyset(object):
         :return: Dictionary which keyset application model with all it fields and values.
         """
         export_data = copy.deepcopy(self._orig_service_data)
-        if not _is_empty(self._blocks):
+        if self._blocks:
             exported_blocks = list()
             for block_name in self._blocks:
-                block = self.block_by_name(block_name)
-                exported_blocks.append(block.export())
+                block = self.block_by_name(block_name, ignore_missing_block=True)
+                if block:
+                    exported_blocks.append(block.export())
             export_data['pnm_blocks'] = exported_blocks
 
         return export_data
@@ -621,7 +595,7 @@ class PubNubKeyset(object):
         :rtype:  PubNubBlock
         :return: Reference on block model or 'None' in case if there is no block with specified name.
         """
-        return self.block_by_name(block=self._module.params['block'], ignore_missing_block=ignore_missing_block)
+        return self.block_by_name(block=self._module.params['name'], ignore_missing_block=ignore_missing_block)
 
     def block_by_name(self, block, ignore_missing_block=False):
         """Retrieve reference on one of keyset's block by it't name.
@@ -634,8 +608,8 @@ class PubNubKeyset(object):
         :return: Reference on one of keyset's block model or 'None' in case if there is no block with specified name.
         """
         self._fetch_blocks_if_required()
-        block_model = self._blocks.get(block)
-        if _is_empty(block_model) and not ignore_missing_block:
+        block_model = _object_value(obj=self._blocks, key=block)
+        if block_model is None and not ignore_missing_block:
             self._module.fail_json(changed=self.changed(), msg="'{}' block doesn't exists.".format(block))
 
         return block_model
@@ -648,7 +622,7 @@ class PubNubKeyset(object):
         :param new_block: Reference on initialized new block which should be created.
         """
         self._fetch_blocks_if_required()
-        created_block = self.block_by_name(block=new_block.name, ignore_missing_block=_is_empty(new_block.uid))
+        created_block = self.block_by_name(block=new_block.name, ignore_missing_block=(new_block.uid is None))
         if created_block is None:
             new_block.set_api_client(self._api)
             self._blocks[new_block.name] = new_block
@@ -666,9 +640,9 @@ class PubNubKeyset(object):
                          under 'old_name' will be removed.
         """
         self._fetch_blocks_if_required()
-        if not _is_empty(self._blocks):
-            target_key = new_name if not _is_empty(new_name) else old_name
-            if not _is_empty(new_name) and not _is_empty(old_name) and not _is_empty(self._blocks.get(old_name)):
+        if self._blocks:
+            target_key = new_name if new_name else old_name
+            if new_name and _object_value(self._blocks, old_name):
                 del self._blocks[old_name]
             self._blocks[target_key] = block
 
@@ -685,16 +659,17 @@ class PubNubKeyset(object):
 
     def save(self):
         """Store any changes to keyset and/or blocks."""
-        if not _is_empty(self._blocks):
+        if self._blocks:
             blocks_for_removal = list()
             for block_name in self._blocks:
-                block = self.block_by_name(block_name)
-                if block.should_delete:
-                    blocks_for_removal.append(block.name)
-                block.save()
+                block = self.block_by_name(block_name, ignore_missing_block=True)
+                if block:
+                    if block.should_delete:
+                        blocks_for_removal.append(block.name)
+                    block.save()
             for block_name in blocks_for_removal:
                 del self._blocks[block_name]
-            if not _is_empty(blocks_for_removal):
+            if blocks_for_removal:
                 self._changed = True
 
     def _fetch_blocks_if_required(self):
@@ -712,7 +687,7 @@ class PubNubKeyset(object):
         :type keyset:  dict
         :param keyset: Reference on dictionary which contain information about application's keyset.
         """
-        if not _is_empty(keyset.get('pnm_blocks')):
+        if _object_value(obj=keyset, key='pnm_blocks'):
             self._process_blocks_data(keyset.pop('pnm_blocks'))
         self._orig_service_data = copy.deepcopy(keyset)
 
@@ -726,14 +701,14 @@ class PubNubKeyset(object):
         :param block_name: Reference on name of the only one block which should be parsed. If 'None' then all blocks
                            will be parsed.
         """
-        if _is_empty(self._blocks):
+        if self._blocks is None:
             self._blocks = dict()
 
         for block in blocks:
             if block_name is None or PubNubBlock.name_from_payload(block) == block_name:
                 block_model = PubNubBlock(self._module, keyset=self, api_client=self._api, block=block)
                 self._blocks[block_model.name] = block_model
-                if not _is_empty(block_name):
+                if block_name:
                     break
 
 
@@ -768,7 +743,7 @@ class PubNubBlock(object):
         self._block_data = None
         self._event_handlers = dict()
         self._should_delete = False
-        if not _is_empty(block):
+        if block:
             self._process_block_data(block)
         else:
             self.name = name
@@ -791,14 +766,12 @@ class PubNubBlock(object):
         :return: Block information in format which is known to PubNub service.
         """
         payload = dict()
-        if not _is_empty(self._orig_service_data):
+        if self._orig_service_data:
             payload.update(key_id=self.keyset.uid, block_id=self.uid, name=self.name, description=self.description)
-        if not _is_empty(self._block_data):
-            if not _is_empty(self._block_data.get('name')):
-                payload['name'] = self._block_data['name']
-            if not _is_empty(self._block_data.get('description')):
-                payload['description'] = self._block_data['description']
-        if _is_empty(payload.get('description')):
+        if self._block_data:
+            payload['name'] = _object_value(obj=self._block_data, key='name', default=_object_value(obj=payload, key='name'))
+            payload['description'] = _object_value(obj=self._block_data, key='description', default=_object_value(obj=payload, key='description'))
+        if not _object_value(obj=payload, key='description'):
             payload['description'] = 'New block'
 
         return payload
@@ -810,11 +783,7 @@ class PubNubBlock(object):
         :rtype:  int
         :return: Reference on unique block's identifier or 'None' in case if block model configuration not completed.
         """
-        uid = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('id')):
-            uid = self._orig_service_data['id']
-
-        return uid
+        return _object_value(obj=self._orig_service_data, key='id')
 
     @property
     def name(self):
@@ -823,9 +792,9 @@ class PubNubBlock(object):
         :rtype:  str
         :return: Reference on block's name or 'None' in case if block model configuration not completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._block_data
+        data = self._orig_service_data if self._orig_service_data else self._block_data
 
-        return data['name'] if not _is_empty(data) and not _is_empty(data.get('name')) else None
+        return _object_value(obj=data, key='name')
 
     @name.setter
     def name(self, name):
@@ -845,9 +814,9 @@ class PubNubBlock(object):
         :rtype:  str
         :return: Reference on block's description or 'None' in case if block model configuration not completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._block_data
+        data = self._orig_service_data if self._orig_service_data else self._block_data
 
-        return data['description'] if not _is_empty(data) and not _is_empty(data.get('description')) else None
+        return _object_value(obj=data, key='description')
 
     @description.setter
     def description(self, description):
@@ -867,11 +836,7 @@ class PubNubBlock(object):
         :rtype:  str
         :return: Reference on block's state or 'None' in case if block model configuration not completed.
         """
-        state = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('state')):
-            state = self._orig_service_data['state']
-
-        return state
+        return _object_value(obj=self._orig_service_data, key='state')
 
     @property
     def target_state(self):
@@ -880,11 +845,7 @@ class PubNubBlock(object):
         :rtype:  str
         :return: Reference on block's state or 'None' in case if block model configuration not completed.
         """
-        state = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('intended_state')):
-            state = self._orig_service_data['intended_state']
-
-        return state
+        return _object_value(obj=self._orig_service_data, key='intended_state')
 
     @target_state.setter
     def target_state(self, target_state):
@@ -912,11 +873,7 @@ class PubNubBlock(object):
         :rtype:  str
         :return: Reference on block's name or 'None' in case if block model configuration not completed.
         """
-        name = None
-        if not _is_empty(payload) and not _is_empty(payload.get('name')):
-            name = payload['name']
-
-        return name
+        return _object_value(obj=payload, key='name')
 
     def changed(self):
         """Check whether block's data has been changed or not.
@@ -928,9 +885,11 @@ class PubNubBlock(object):
         event_handlers_changed = False
         if not self._changed:
             for event_handler_name in self._event_handlers:
-                event_handlers_changed = self.event_handler_by_name(event_handler_name).changed()
-                if event_handlers_changed:
-                    break
+                event_handler = self.event_handler_by_name(event_handler_name)
+                if event_handler:
+                    event_handlers_changed = event_handler.changed()
+                    if event_handlers_changed:
+                        break
 
         return self._changed or event_handlers_changed
 
@@ -942,7 +901,9 @@ class PubNubBlock(object):
         """
         self._api = api_client
         for event_handler_name in self._event_handlers:
-            self.event_handler_by_name(event_handler_name).set_api_client(api_client)
+            event_handler = self.event_handler_by_name(event_handler_name)
+            if event_handler:
+                event_handler.set_api_client(api_client)
 
     def export(self):
         """Export block model.
@@ -953,15 +914,16 @@ class PubNubBlock(object):
         :return: Dictionary which keyset application model with all it fields and values.
         """
         export_data = dict()
-        if not _is_empty(self._orig_service_data):
+        if self._orig_service_data:
             export_data.update(self._orig_service_data)
-        if not _is_empty(self._block_data):
+        if self._block_data:
             export_data.update(self._block_data)
-        if not _is_empty(self._event_handlers):
+        if self._event_handlers:
             exported_event_handlers = list()
             for event_handler_name in self._event_handlers:
                 event_handler = self.event_handler_by_name(event_handler_name)
-                exported_event_handlers.append(event_handler.export())
+                if event_handler:
+                    exported_event_handlers.append(event_handler.export())
             export_data['event_handlers'] = exported_event_handlers
 
         return export_data
@@ -975,16 +937,18 @@ class PubNubBlock(object):
         :return: Reference on block's event handler model or 'None' in case if there is no event handler with specified
                  name.
         """
-        return self._event_handlers.get(event_handler)
+        return _object_value(obj=self._event_handlers, key=event_handler)
 
     def apply_changes(self):
         """Update block information if required."""
         # Check whether block name should be changed or not.
         changes = self._module.params['changes']
-        if not _is_empty(changes) and not _is_empty(changes.get('name')):
+        if _object_value(obj=changes, key='name'):
             self.name = changes['name']
-            self._module.params['block'] = changes['name']
+            self._module.params['name'] = changes['name']
             self.keyset.replace_block(old_name=self.name, block=self, new_name=changes['name'])
+        if _object_value(obj=self._module.params, key='description') and self._module.params['description'] != self.description:
+            self.description = self._module.params['description']
 
     def start(self):
         """Start block if possible.
@@ -1051,7 +1015,7 @@ class PubNubBlock(object):
                 self._change_block_state(state='stopped', update_cached_state=False)
             else:
                 # Change block operation state as it has been requested during module call.
-                self._change_block_state(state=self._block_data['intended_state'])
+                self._change_block_state(state=_object_value(obj=self._block_data, key='intended_state'))
 
         if will_change:
             self._changed = True
@@ -1064,14 +1028,15 @@ class PubNubBlock(object):
             event_handlers_for_removal = list()
             for event_handler_name in self._event_handlers:
                 event_handler = self.event_handler_by_name(event_handler_name)
-                if event_handler.should_delete:
-                    event_handlers_for_removal.append(event_handler.name)
-                event_handler.save()
-            if not _is_empty(event_handlers_for_removal):
+                if event_handler:
+                    if event_handler.should_delete:
+                        event_handlers_for_removal.append(event_handler.name)
+                    event_handler.save()
+            if event_handlers_for_removal:
                 self._changed = True
 
         if self._will_change_event_handlers():
-            self._change_block_state(state=self._block_data['intended_state'])
+            self._change_block_state(state=_object_value(obj=self._block_data, key='intended_state'))
 
     def _should_create(self):
         """Check whether block should be created or not.
@@ -1079,7 +1044,7 @@ class PubNubBlock(object):
         :rtype:  bool
         :return: 'True' in case if there is no raw data from PubNub service about this block.
         """
-        return _is_empty(self._orig_service_data)
+        return self._orig_service_data is None
 
     def _should_save(self):
         """Check whether there is block changes which should be saved.
@@ -1088,8 +1053,8 @@ class PubNubBlock(object):
         :return: 'True' in case if there is unsaved changes.
         """
         should_save = self._should_create()
-        if not should_save and not _is_empty(self._orig_service_data) and not _is_empty(self._block_data):
-            should_save = cmp(self._orig_service_data, self._block_data) != 0
+        if not should_save and self._orig_service_data and self._block_data:
+            should_save = _compare_values(self._orig_service_data, self._block_data) != 0
 
         return should_save
 
@@ -1103,7 +1068,7 @@ class PubNubBlock(object):
         :return: 'True' in case if any portion of event blocks should be modified.
         """
         will_change = False
-        if not _is_empty(event_handlers):
+        if event_handlers:
             for event_handler in event_handlers:
                 eh = self.event_handler_by_name(PubNubEventHandler.name_from_payload(event_handler))
                 will_change = eh.will_change_with_data(event_handler) if eh else eh is None
@@ -1111,9 +1076,11 @@ class PubNubBlock(object):
                     break
         else:
             for event_handler_name in self._event_handlers:
-                will_change = self.event_handler_by_name(event_handler_name).will_change_with_data()
-                if will_change:
-                    break
+                eh = self.event_handler_by_name(event_handler_name)
+                if eh:
+                    will_change = eh.will_change_with_data()
+                    if will_change:
+                        break
 
         return will_change
 
@@ -1141,7 +1108,7 @@ class PubNubBlock(object):
             if update_cached_state:
                 self._block_data['intended_state'] = state
 
-            if _is_empty(current_state):
+            if not current_state:
                 self._changed = True
 
     def _process_block_data(self, block):
@@ -1151,7 +1118,7 @@ class PubNubBlock(object):
         :type block:  dict
         :param block: Reference on dictionary which contain information about specific block.
         """
-        if not _is_empty(block.get('event_handlers')):
+        if _object_value(obj=block, key='event_handlers'):
             event_handlers = block.pop('event_handlers')
             for event_handler in event_handlers:
                 event_handler_model = PubNubEventHandler(self._module, block=self, api_client=self._api,
@@ -1176,7 +1143,7 @@ class PubNubBlock(object):
         if timeout:
             delay = PN_BLOCK_STATE_CHECK_MAX_COUNT * PN_BLOCK_STATE_CHECK_INTERVAL
             error_message = '\'{}\' block not {}\'ed in {} seconds'.format(self.name, state, delay)
-        elif not _is_empty(stack):
+        elif stack:
             error_message = 'Unable to {} \'{}\' block because of error: {}'.format(state, self.name, error_reason)
 
         if error_message:
@@ -1219,7 +1186,7 @@ class PubNubEventHandler(object):
         :return: Event handler information in format which is known to PubNub service.
         """
         payload = dict()
-        if not _is_empty(self._orig_service_data):
+        if self._orig_service_data:
             payload.update(key_id=self._block.keyset.uid, block_id=self._block.uid, name=self.name,
                            channels=self.channels, code=self.code, event=self.event,
                            type=self._orig_service_data['type'], output=self._orig_service_data['output'],
@@ -1236,11 +1203,7 @@ class PubNubEventHandler(object):
         :return: Reference on unique block's identifier or 'None' in case if event handler model configuration not
                  completed.
         """
-        uid = None
-        if not _is_empty(self._orig_service_data) and not _is_empty(self._orig_service_data.get('id')):
-            uid = self._orig_service_data['id']
-
-        return uid
+        return _object_value(obj=self._orig_service_data, key='id')
 
     @property
     def name(self):
@@ -1249,9 +1212,9 @@ class PubNubEventHandler(object):
         :rtype:  str
         :return: Reference on event handler's name or 'None' in case if event handler model configuration not completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._event_handler_data
+        data = self._orig_service_data if self._orig_service_data else self._event_handler_data
 
-        return data['name'] if not _is_empty(data) and not _is_empty(data.get('name')) else None
+        return _object_value(obj=data, key='name')
 
     @name.setter
     def name(self, name):
@@ -1271,9 +1234,9 @@ class PubNubEventHandler(object):
         :rtype:  str
         :return: Reference on event handler's code or 'None' in case if event handler model configuration not completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._event_handler_data
+        data = self._orig_service_data if self._orig_service_data else self._event_handler_data
 
-        return data['code'] if not _is_empty(data) and not _is_empty(data.get('code')) else None
+        return _object_value(obj=data, key='code')
 
     @code.setter
     def code(self, name):
@@ -1294,9 +1257,9 @@ class PubNubEventHandler(object):
         :return: Reference on event handler's trigger channel or 'None' in case if event handler model configuration not
                  completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._event_handler_data
+        data = self._orig_service_data if self._orig_service_data else self._event_handler_data
 
-        return data['channels'] if not _is_empty(data) and not _is_empty(data.get('channels')) else None
+        return _object_value(obj=data, key='channels')
 
     @channels.setter
     def channels(self, channels):
@@ -1317,9 +1280,9 @@ class PubNubEventHandler(object):
         :return: Reference on event handler's trigger event or 'None' in case if event handler model configuration not
                  completed.
         """
-        data = self._orig_service_data if not _is_empty(self._orig_service_data) else self._event_handler_data
+        data = self._orig_service_data if self._orig_service_data else self._event_handler_data
 
-        return data['event'] if not _is_empty(data) and not _is_empty(data.get('event')) else None
+        return _object_value(obj=data, key='event')
 
     @event.setter
     def event(self, event):
@@ -1339,11 +1302,7 @@ class PubNubEventHandler(object):
         :rtype:  str
         :return: Reference on event handler's name or 'None' in case if block model configuration not completed.
         """
-        name = None
-        if not _is_empty(payload) and not _is_empty(payload.get('name')):
-            name = payload['name']
-
-        return name
+        return _object_value(obj=payload, key='name')
 
     @property
     def should_delete(self):
@@ -1379,7 +1338,7 @@ class PubNubEventHandler(object):
         :return: Dictionary which keyset application model with all it fields and values.
         """
         export_data = dict()
-        if not _is_empty(self._orig_service_data):
+        if self._orig_service_data:
             export_data.update(self._orig_service_data)
         export_data.update(self._event_handler_data)
 
@@ -1394,22 +1353,22 @@ class PubNubEventHandler(object):
         :rtype:  bool
         :return: 'True' in case if any portion of event handler require modification.
         """
-        should_update = _is_empty(self._orig_service_data) and not _is_empty(self._event_handler_data)
-        if not should_update and not _is_empty(event_handler):
+        should_update = self._orig_service_data is None and self._event_handler_data
+        if not should_update and event_handler:
             # Retrieve user-provided handler information.
             fields = ['name', 'src', 'channels', 'event']
             (name, src_path, channels, event) = tuple(_values_for_keys(event_handler, keys=fields))
-            if not _is_empty(event_handler.get('changes')) and not _is_empty(event_handler['changes'].get('name')):
+            if _object_value(obj=event_handler, key='changes.name'):
                 name = event_handler['changes']['name']
-            should_update = name != self.name or not _is_empty(event) and event != self.event
-            should_update = should_update or not _is_empty(channels) and channels != self.channels
+            should_update = name != self.name or event and event != self.event
+            should_update = should_update or channels and channels != self.channels
             if not should_update:
                 code = _content_of_file_at_path(src_path)
-                should_update = not _is_empty(code) and code != self.code
-            handler_state = event_handler['state'] if not _is_empty(event_handler.get('state')) else 'present'
+                should_update = code and code != self.code
+            handler_state = _object_value(obj=event_handler, key='state', default='present')
             should_update = should_update or handler_state == 'absent'
-        elif not should_update and not _is_empty(self._orig_service_data) and not _is_empty(self._event_handler_data):
-            should_update = cmp(self._orig_service_data, self._event_handler_data) != 0
+        elif not should_update and self._orig_service_data and self._event_handler_data:
+            should_update = _compare_values(self._orig_service_data, self._event_handler_data) != 0
 
         return should_update
 
@@ -1419,20 +1378,20 @@ class PubNubEventHandler(object):
         :type event_handler:  dict
         :param event_handler: Reference on dictionary which represent event handler changes.
         """
-        handler_state = event_handler['state'] if not _is_empty(event_handler.get('state')) else 'present'
+        handler_state = _object_value(obj=event_handler, key='state', default='present')
         if handler_state != 'absent':
             # Retrieve user-provided handler information.
             fields = ['name', 'src', 'channels', 'event']
             (name, src_path, channels, event) = tuple(_values_for_keys(event_handler, keys=fields))
-            if not _is_empty(event_handler.get('changes')) and not _is_empty(event_handler['changes'].get('name')):
+            if _object_value(obj=event_handler, key='changes.name'):
                 name = event_handler['changes']['name']
             self.name = name
-            if not _is_empty(channels):
+            if channels:
                 self.channels = channels
-            if not _is_empty(event):
+            if event:
                 self.event = event
             code = _content_of_file_at_path(src_path)
-            if not _is_empty(code):
+            if code:
                 self.code = code
         else:
             self._should_delete = True
@@ -1449,7 +1408,7 @@ class PubNubEventHandler(object):
             fields = ['name', 'channels', 'event', 'code']
             handler_data.update(self._default_handler_payload())
             (name, channels, event, code) = _values_for_keys(handler_data, fields)
-            if not _is_empty(name) and not _is_empty(channels) and not _is_empty(event) and not _is_empty(code):
+            if name and channels and event and code:
                 if not self._module.check_mode:
                     handler_data.update(self._api.create_event_handler(keyset_id=self._block.keyset.uid,
                                                                        payload=handler_data))
@@ -1458,10 +1417,10 @@ class PubNubEventHandler(object):
                 self._changed = True
             else:
                 missed_fields = list()
-                missed_fields.append('name') if _is_empty(name) else None
-                missed_fields.append('channels') if _is_empty(channels) else None
-                missed_fields.append('code') if _is_empty(code) else None
-                missed_fields.append('event') if _is_empty(event) else None
+                missed_fields.append('name') if not name else None
+                missed_fields.append('channels') if not channels else None
+                missed_fields.append('code') if not code else None
+                missed_fields.append('event') if not event else None
                 error_message = 'Unable create event handler w/o following fields: {}.'.format(', '.join(missed_fields))
                 self._module.fail_json(changed=self.changed(), msg=error_message)
         elif self.should_delete:
@@ -1487,20 +1446,26 @@ class PubNubEventHandler(object):
         :return: 'True' in case if this is new event handler (doesn't have unique identifier assigned by PubNub
                  service).
         """
-        return _is_empty(self._orig_service_data)
+        return self._orig_service_data is None
 
     def _process_event_handler_data(self, event_handler):
+        """Process received event handler's information.
+
+        Use provided information to complete event handler initialization.
+        :type event_handler:  dict
+        :param event_handler: Reference on dictionary with event handler information from PubNub service or
+                              cached information from previous module call.
+        """
         # Check whether event handler payload belong to new handler or not.
-        event_handler_exists = not _is_empty(event_handler.get('id'))
-        handler_state = event_handler['state'] if not _is_empty(event_handler.get('state')) else 'present'
+        event_handler_exists = _object_value(obj=event_handler, key='id') is not None
+        handler_state = _object_value(obj=event_handler, key='state', default='present')
         if not event_handler_exists and handler_state == 'present':
             (name, channels, event, src_path) = _values_for_keys(event_handler, ['name', 'channels', 'event', 'src'])
-            if not _is_empty(event_handler.get('changes')) and not _is_empty(event_handler['changes'].get('name')):
+            if _object_value(obj=event_handler, key='changes.name'):
                 name = event_handler['changes']['name']
             code = _content_of_file_at_path(src_path)
-            if not _is_empty(name) and not _is_empty(channels) and not _is_empty(event) and not _is_empty(code):
-                self._state = 'present'
-                self._event_handler_data = dict(name=name, channels=channels, event=event, code=code)
+            self._state = 'present'
+            self._event_handler_data = dict(name=name, channels=channels, event=event, code=code)
         elif event_handler_exists:
             self._state = handler_state
             self._should_delete = True if self._state == 'absent' else False
@@ -1555,7 +1520,7 @@ class PubNubEndpoint(object):
         :return: Target REST API endpoint which is relative to base address.
         """
         endpoint = '/v1/blocks/key/{}/block'.format(keyset_id)
-        if not _is_empty(block_id):
+        if block_id:
             endpoint = '{}/{}'.format(endpoint, block_id)
 
         return endpoint
@@ -1591,7 +1556,7 @@ class PubNubEndpoint(object):
         :return: Target REST API endpoint which is relative to base address.
         """
         endpoint = '/v1/blocks/key/{}/event_handler'.format(keyset_id)
-        if not _is_empty(handler_id):
+        if handler_id:
             endpoint = '{}/{}'.format(endpoint, handler_id)
 
         return endpoint
@@ -1608,7 +1573,7 @@ class PubNubEndpoint(object):
         :rtype:  str
         :return: Reference on string which is composed from API endpoint path components and query string.
         """
-        return '{}?{}'.format(endpoint, PN_URLENCODE(query))
+        return '{}?{}'.format(endpoint, urlencode(query))
 
 
 class PubNubAPIClient(object):
@@ -1642,7 +1607,7 @@ class PubNubAPIClient(object):
         :return: Dictionary with expected module arguments requirements.
         """
         return dict(email=dict(default='', required=False, type='str'),
-                    pwd=dict(default='', required=False, type='str', no_log=True))
+                    password=dict(default='', required=False, type='str', no_log=True))
 
     @property
     def session(self):
@@ -1661,17 +1626,17 @@ class PubNubAPIClient(object):
         """
         self._session = session
 
-    def start_session(self, email, pwd):
+    def start_session(self, email, password):
         """Start new PubNub block management API access session using provided account credentials.
-        :type email:  str
-        :param email: Email of account for which REST API calls should be authorized.
-        :type pwd:    str
-        :param pwd:   Account's password.
+        :type email:     str
+        :param email:    Email of account for which REST API calls should be authorized.
+        :type password:  str
+        :param password: Account's password.
         :rtype:  dict
         :return: Reference on dictionary which contain information about authorized account.
         """
         response = self.request(api_endpoint=PubNubEndpoint.account(), http_method='POST',
-                                data=dict(email=email, password=pwd))
+                                data=dict(email=email, password=password))
         self._session = response['result']['token']
 
         return response['result']
@@ -1689,7 +1654,7 @@ class PubNubAPIClient(object):
         # Send account information audit request.
         response = self.request(api_endpoint=PubNubEndpoint.applications(account_id), http_method='GET')
 
-        return response['result'] if not _is_empty(response.get('result')) else list()
+        return _object_value(obj=response, key='result', default=list())
 
     def fetch_blocks(self, keyset_id):
         """Retrieve list of blocks created for keyset.
@@ -1721,7 +1686,7 @@ class PubNubAPIClient(object):
                                 http_method='GET')
         block = response['payload']
 
-        return block[0] if not _is_empty(block) else list()
+        return block[0] if block else list()
 
     def create_block(self, keyset_id, block_payload):
         """Create new block using initial payload.
@@ -1849,11 +1814,11 @@ class PubNubAPIClient(object):
                     break
         else:
             stack = 'Not available'
-            if not _is_empty(response.get('message')):
+            if _object_value(obj=response, key='message'):
                 service_message = response['message']
-                if not _is_empty(service_message.get('text')):
+                if _object_value(obj=service_message, key='text'):
                     error_reason = service_message['text']
-                if not _is_empty(service_message.get('stack')):
+                if _object_value(obj=service_message, key='stack'):
                     stack = service_message['stack']
         return timeout, error_reason, stack
 
@@ -1922,15 +1887,16 @@ class PubNubAPIClient(object):
         headers = {'Accept': 'application/json'}
         if ZLIB_AVAILABLE:
             headers.update({'Accept-Encoding': 'gzip,deflate'})
-        if not _is_empty(data):
+        if data:
             headers.update({'Content-Type': 'application/json'})
+            # Prepare POST data if required (if provided).
+            json_data = self.module.jsonify(data)
+        else:
+            json_data = None
 
         # Authorize request if required.
-        if not _is_empty(self.session):
+        if self.session:
             headers['X-Session-Token'] = self.session
-
-        # Prepare POST data if required (if provided).
-        json_data = self.module.jsonify(data) if not _is_empty(headers.get('Content-Type')) else None
 
         response = None
         error_message = None
@@ -1940,16 +1906,16 @@ class PubNubAPIClient(object):
             # Process API call error.
             descr = None
             try:
-                descr = self.module.from_json(res_inf.get('body')) if not _is_empty(res_inf.get('body')) else None
+                descr = self.module.from_json(res_inf['body']) if _object_value(obj=res_inf, key='body') else None
             except ValueError:
-                error_message = res_inf.get('body')
-            if not _is_empty(descr):
-                error_message = descr.get('message')
-        elif _is_empty(res_stream):
-            error_message = '{} ({})'.format(res_inf['msg'], res_inf['url'])
+                error_message = _object_value(obj=res_inf, key='body')
+            if descr:
+                error_message = _object_value(obj=descr, key='message')
+        elif not res_stream:
+            error_message = '{} ({})'.format(_object_value(obj=res_inf, key='msg'), _object_value(obj=res_inf, key='url'))
         else:
             raw_response = _decompress_if_possible(res_stream.read(), res_inf)
-            if _is_empty(raw_response):
+            if not raw_response:
                 error_message = 'Unexpected response: Empty PubNub service response.'
             else:
                 try:
@@ -1957,21 +1923,58 @@ class PubNubAPIClient(object):
                 except ValueError:
                     error = sys.exc_info()[1]
                     error_message = "Unexpected response: %s. Received response: %s" % (error.message, raw_response)
-        if not _is_empty(error_message):
-                self.module.fail_json(changed=self.state_changed, msg=error_message, url=res_inf['url'],
-                                      status=res_inf['status'], post_body=data, module_cache=self.account.export())
+        if error_message:
+            self.module.fail_json(changed=self.state_changed, msg=error_message, url=_object_value(obj=res_inf, key='url'),
+                                  status=res_inf['status'], post_body=data, module_cache=self.account.export())
 
         return response
 
 
-def _is_empty(val):
+def _compare_values(value1, value2):
+    """Compare two passed values.
+
+    This method is replacement to 'cmp' which has been removed from Python 3.x.
+    :return: Negative value if 'value1' is smaller than 'value2', zero if equal and positive in case if 'value1'
+             is greater than 'value2'.
     """
-    Check whether specified value is 'empty' (not set or doesn't contain any data).
-    :param val: Reference on value against which check should be done.
-    :rtype:  bool
-    :return: 'True' in case if specified value is 'empty'
+    result = 0
+    if value1 < value2:
+        result = -1
+    elif value1 > value2:
+        result = 1
+
+    return result
+
+
+def _object_value(obj, key=None, default=None):
+    """Retrieve value which is stored under specified 'key'.
+
+    Function allow to handle case when 'dct' is None and can't respond to 'get()'.
+    :param obj:     Reference on object for which value should be retrieved.
+    :param key:     str
+    :param key:     Reference on key which should be used to fetch value from dictionary. Key can be specified as
+                    key-path by joining path components with '.'.
+    :param default: Reference on value which should be returned in case if no value has been found for 'key'.
+    :return: Reference on value which is stored for 'key' or 'None' in case if dictionary is 'None' or no value for
+             'key'.
     """
-    return val is None or not val
+    value = obj
+    if value is not None:
+        if key:
+            for part in key.split('.'):
+                if isinstance(value, dict):
+                    value = value.get(part) if value.get(part) is not None else default
+                elif isinstance(value, tuple) or isinstance(value, list):
+                    index = int(part)
+                    value = value[index] if index < len(value) else default
+                if default is not None and value and value == default:
+                    break
+        else:
+            value = default
+    else:
+        value = default
+
+    return value
 
 
 def _values_for_keys(dct, keys):
@@ -2001,7 +2004,7 @@ def _content_of_file_at_path(path):
     :return: File content or 'None'
     """
     content = None
-    if not _is_empty(path) and os.path.exists(to_bytes(path)):
+    if path and os.path.exists(to_bytes(path)):
         with open(to_bytes(path), mode="r") as opened_file:
             b_content = opened_file.read()
             try:
@@ -2031,18 +2034,18 @@ def main():
     fields = PubNubAPIClient.authorization_fields()
     fields.update(dict(application=dict(required=True, type='str'), keyset=dict(required=True, type='str'),
                        state=dict(default='present', type='str', choices=['start', 'stop', 'present', 'absent']),
-                       block=dict(required=True, type='str'), description=dict(type='str'),
+                       name=dict(required=True, type='str'), description=dict(type='str'),
                        event_handlers=dict(default=list(), type='list'), changes=dict(default=dict(), type='dict'),
                        cache=dict(default=dict(), type='dict'), validate_certs=dict(default=True, type='bool')))
     module = AnsibleModule(argument_spec=fields, supports_check_mode=True)
 
     module_cache = None
-    if not _is_empty(module.params.get('cache')) and not _is_empty(module.params['cache'].get('module_cache')):
+    if _object_value(obj=module.params, key='cache.module_cache'):
         module_cache = copy.deepcopy(module.params['cache']['module_cache'])
     account = PubNubAccount(module, cache=module_cache)
-    if _is_empty(module_cache):
-        if not _is_empty(module.params['email']) and not _is_empty(module.params['pwd']):
-            account.login(email=module.params['email'], pwd=module.params['pwd'])
+    if not module_cache:
+        if module.params['email'] and module.params['password']:
+            account.login(email=module.params['email'], password=module.params['password'])
         else:
             module.fail_json(msg='Missing account credentials.',
                              description='It looks like not account credentials has been passed or \'cache\' field ' +
@@ -2054,21 +2057,21 @@ def main():
     # Retrieve reference on target block (the one which used decided to manager).
     expect_block_to_exist = module.params['state'] in ['start', 'stop']
     block = application.active_keyset.current_block(not expect_block_to_exist)
-    is_new_block = _is_empty(block) and module.params['state'] != 'absent'
+    is_new_block = not block and module.params['state'] != 'absent'
 
     # Create new block if required.
     if is_new_block:
-        description = module['description'] if not _is_empty(module.params.get('description')) else 'New block'
-        block = PubNubBlock(module=module, keyset=application.active_keyset, name=module.params['block'],
+        description = module.params['description'] if _object_value(obj=module.params, key='description') else 'New block'
+        block = PubNubBlock(module=module, keyset=application.active_keyset, name=module.params['name'],
                             description=description)
         application.active_keyset.add_block(block)
 
     # Remove block if required.
-    if module.params['state'] == 'absent' and not _is_empty(block):
+    if module.params['state'] == 'absent' and block:
         application.active_keyset.remove_block(block)
         block = None
 
-    if not _is_empty(block):
+    if block:
         # Apply block changed if required.
         block.apply_changes()
 
@@ -2076,7 +2079,7 @@ def main():
         block.update_event_handlers(module.params['event_handlers'])
 
     # Update block operation state if required.
-    if not _is_empty(block) and not is_new_block:
+    if block and not is_new_block:
         if module.params['state'] == 'start':
             block.start()
         elif module.params['state'] == 'stop':
