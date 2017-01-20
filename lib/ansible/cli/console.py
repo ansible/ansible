@@ -423,7 +423,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=self.loader)
             self.loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             self.loader.set_vault_password(vault_pass)
 
         self.variable_manager = VariableManager()
