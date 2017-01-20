@@ -28,7 +28,7 @@ Ansible Changes By Release
   the old overwriting behaviour via the config option.  In 2.5, multiple --tags
   options will be merged with no way to go back to the old behaviour.
 * Modules
-  * ec2_vpc will be deprecated in 2.5
+  * ec2_vpc will be deprecated in 2.3 and removed in 2.5
 
 ###New Modules:
 - archive
