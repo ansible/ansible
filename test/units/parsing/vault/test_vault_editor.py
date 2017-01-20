@@ -30,8 +30,9 @@ from ansible.compat.tests.mock import patch
 
 from ansible import errors
 from ansible.parsing.vault import VaultLib
-from ansible.parsing.vault import VaultEditor
+from ansible.parsing.vault import VaultEditor, ensure_realpath
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.compat.tests.mock import MagicMock, patch
 
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
@@ -198,3 +199,114 @@ class TestVaultEditor(unittest.TestCase):
         assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit is False, "error decrypting migrated 1.0 file"
         assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
+
+    def test_decrypt_file_symlink(self):
+        v = VaultEditor('test-vault-password')
+
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+        v.write_data = MagicMock()
+        v.decrypt_file(sym)
+        args = v.write_data.call_args[0]
+        self.assertEqual(args[1], real)
+
+    def test_encrypt_file_symlink(self):
+        v = VaultEditor('test-vault-password')
+
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink.yml')
+        real = os.path.join(fixtures, 'vault-real.yml')
+        v.write_data = MagicMock()
+        v.encrypt_file(sym)
+        args = v.write_data.call_args[0]
+        self.assertEqual(args[1], real)
+
+    def test_edit_file_symlink(self):
+        v = VaultEditor('test-vault-password')
+
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+        v._edit_file_helper = MagicMock()
+        v.edit_file(sym)
+        args = v._edit_file_helper.call_args[0]
+        self.assertEqual(args[0], real)
+
+    @patch('os.chmod')
+    @patch('os.chown')
+    def test_rekey_file_symlink(self, chown_mock, chmod_mock):
+        v = VaultEditor('test-vault-password')
+
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+        v.write_data = MagicMock()
+        v.rekey_file(sym, 'foo')
+        args = v.write_data.call_args[0]
+        self.assertEqual(args[1], real)
+        self.assertEqual(chown_mock.call_args[0][0], real)
+        self.assertEqual(chmod_mock.call_args[0][0], real)
+
+
+class TestEnsureRealpath(unittest.TestCase):
+    def test_stdout(self):
+        @ensure_realpath
+        def foo(self, filename):
+            self.assertEqual(filename, '-')
+
+        foo(self, '-')
+
+    def test_already_realpath(self):
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+
+        @ensure_realpath
+        def foo(self, filename):
+            self.assertEqual(filename, real)
+
+        foo(self, real)
+
+    def test_symlink(self):
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+
+        @ensure_realpath
+        def foo(self, filename):
+            self.assertEqual(filename, real)
+
+        foo(self, sym)
+
+    def test_output_symlink(self):
+        fixtures = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures'
+        )
+        sym = os.path.join(fixtures, 'vault-symlink-enc.yml')
+        real = os.path.join(fixtures, 'vault-real-enc.yml')
+
+        @ensure_realpath
+        def foo(self, filename, output_file=None):
+            self.assertEqual(output_file, real)
+
+        foo(self, sym, output_file=sym)
