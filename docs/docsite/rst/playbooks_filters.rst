@@ -501,6 +501,20 @@ which will produce this output:
 
 .. _other_useful_filters:
 
+.. uri_filter:
+
+URI Filter
+`````````````````
+
+.. versionadded:: 2.4
+
+The `uri` filter allows to extract the hostname, path, port or scheme from an URI::
+
+    {{ "http://localhost:9000/foo" | uri('hostname') }}
+    # => 'localhost'
+    {{ "http://localhost:9000/foo" | uri('path') }}
+    # => '/foo'
+
 Other Useful Filters
 ````````````````````
 
@@ -635,7 +649,7 @@ Combinations always require a set size::
 
 To get a list combining the elements of other lists use ``zip``::
 
-    - name: give me list combo of 2 lists 
+    - name: give me list combo of 2 lists
       debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
 
     - name: give me shortest combo of 2 lists
