@@ -156,6 +156,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
+                 { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
                 ]
 
     def __init__(self, module, load_on_init=True, cached_facts=None):
@@ -651,12 +652,14 @@ class Distribution(object):
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
+        'ClearLinux': 'Clear Linux Software for Intel Architecture',
     }
 
     # A list with OS Family members
