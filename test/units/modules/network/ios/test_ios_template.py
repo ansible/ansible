@@ -120,8 +120,8 @@ class TestIosTemplateModule(unittest.TestCase):
         self.execute_module()
         _, kwargs = self.get_config.call_args
         # Ensure flags doesn't contain "default", or any other value
-        assert kwargs['flags'] == []
-        assert isinstance(kwargs['module'], LocalAnsibleModule)
+        self.assertEqual(kwargs['flags'], [])
+        self.assertIsInstance(kwargs['module'], LocalAnsibleModule)
 
 
     def test_ios_template_backup(self):
