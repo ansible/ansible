@@ -101,7 +101,6 @@ state:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 import os
 import re
