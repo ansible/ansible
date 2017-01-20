@@ -6,7 +6,6 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: collect any backup files
@@ -26,7 +25,6 @@
   ios_template:
     src: basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -50,6 +48,5 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/backup.yaml"
