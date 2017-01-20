@@ -273,6 +273,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._low_level_execute_command(cmd, sudoable=False)
 
     def _transfer_file(self, local_path, remote_path):
+        remote_path = self._remote_expand_user(remote_path)
         self._connection.put_file(local_path, remote_path)
         return remote_path
 
@@ -280,7 +281,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Copies the module data out to the temporary module path.
         '''
-
+        remote_path = self._remote_expand_user(remote_path)
         if isinstance(data, dict):
             data = jsonify(data)
 
