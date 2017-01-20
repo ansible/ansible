@@ -19,6 +19,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_bytes
+import os
+import re
+import tempfile
+
+
 ANSIBLE_METADATA = {
     'status': [
         'preview'
@@ -105,14 +113,6 @@ state:
   type: string
   sample: "present"
 '''
-
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils._text import to_bytes
-import os
-import re
-import tempfile
 
 
 class EtcHosts:
