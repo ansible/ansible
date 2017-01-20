@@ -32,6 +32,7 @@ version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
     - pyapi-gitlab python module
+    - administrator rights on the Gitlab server
 options:
     server_url:
         description:
