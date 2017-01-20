@@ -218,7 +218,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         tmp_mode = 0o700
 
-        if use_systemp_tmp:
+        if use_system_tmp:
             tmpdir = None
         else:
             tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP)
