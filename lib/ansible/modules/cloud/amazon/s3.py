@@ -152,7 +152,7 @@ options:
     version_added: "1.3"
   ignore_nonexistent_bucket:
     description:
-      - Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True.
+      - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True."
     default: false
     aliases: []
     version_added: "2.2"
