@@ -164,7 +164,7 @@ EXAMPLES = r"""
     line: '192.168.1.99 foo.lab.net foo'
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile: "
+- lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%wheel\s'
