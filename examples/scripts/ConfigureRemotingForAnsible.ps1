@@ -114,7 +114,7 @@ Trap
 }
 $ErrorActionPreference = "Stop"
 $EventSource = $MyInvocation.MyCommand.Name
-If ($EventSource -eq $Null)
+If (-Not $EventSource)
 {
     $EventSource = "Powershell CLI"
 }
