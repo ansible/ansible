@@ -78,7 +78,7 @@ class LookupModule(LookupBase):
         elif isinstance(result, dict):
             new_dict = {}
             for key in result.keys():
-                value = reslut[key] # python2 and 3 compatible....
+                value = result[key] # python2 and 3 compatible....
                 new_dict[key] = self.convert_mongo_result_to_valid_json(value)
             return new_dict
         elif isinstance(result, datetime.datetime):
