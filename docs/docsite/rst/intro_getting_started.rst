@@ -52,6 +52,13 @@ public SSH key should be located in ``authorized_keys`` on those systems::
     192.0.2.50
     aserver.example.org
     bserver.example.org
+   
+   
+And if you want to connect to localhost, you write ``/etc/ansible/hosts`` as below::
+
+    localhost ansible_connection=local
+
+
 
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
