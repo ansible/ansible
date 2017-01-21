@@ -246,7 +246,7 @@ def main():
                 module.fail_json(msg='src and dest are required for creating links')
 
     # original_basename is used by other modules that depend on file.
-    if os.path.isdir(b_path) and state not in ("link", "absent"):
+    if state not in ("link", "absent") and os.path.isdir(b_path):
         basename = None
         if params['original_basename']:
             basename = params['original_basename']
@@ -362,7 +362,7 @@ def main():
 
     elif state in ('link', 'hard'):
 
-        if os.path.isdir(b_path) and not os.path.islink(b_path):
+        if not os.path.islink(b_path) and os.path.isdir(b_path):
             relpath = path
         else:
             b_relpath = os.path.dirname(b_path)
@@ -370,7 +370,7 @@ def main():
 
         absrc = os.path.join(relpath, src)
         b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-        if not os.path.exists(b_absrc) and not force:
+        if not force and not os.path.exists(b_absrc):
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
