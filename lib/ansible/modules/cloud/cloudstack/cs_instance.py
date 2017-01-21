@@ -533,13 +533,21 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     if not vpc_id and self.is_vm_in_vpc(vm=v):
                         continue
                     if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
-                        # Query the user data if we need to
-                        if 'userdata' not in v and self.get_user_data() is not None:
-                            res = self.cs.getVirtualMachineUserData(virtualmachineid=v['id'])
-                            v['userdata'] = res['virtualmachineuserdata'].get('userdata',"")
                         self.instance = v
                         break
         return self.instance
+
+
+    def _get_instance_user_data(self, instance):
+        # Query the user data if we need to
+        if 'userdata' in instance:
+            return instance['userdata']
+
+        user_data = ""
+        if self.get_user_data() is not None:
+            res = self.cs.getVirtualMachineUserData(virtualmachineid=instance['id'])
+            user_data = res['virtualmachineuserdata'].get('userdata',"")
+        return user_data
 
 
     def get_iptonetwork_mappings(self):
@@ -717,6 +725,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update = {}
         args_instance_update['id'] = instance['id']
         args_instance_update['userdata'] = self.get_user_data()
+        instance['userdata'] = self._get_instance_user_data(instance)
         args_instance_update['ostypeid'] = self.get_os_type(key='id')
         if self.module.params.get('group'):
             args_instance_update['group'] = self.module.params.get('group')
@@ -921,6 +930,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def get_result(self, instance):
         super(AnsibleCloudStackInstance, self).get_result(instance)
         if instance:
+            self.result['user_data'] = self._get_instance_user_data(instance)
             if 'securitygroup' in instance:
                 security_groups = []
                 for securitygroup in instance['securitygroup']:
