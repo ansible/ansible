@@ -177,7 +177,12 @@ $result.stderr = $stderr
 
 $proc.WaitForExit() | Out-Null
 
-$result.rc = $proc.ExitCode
+If ($wait -eq $true) {
+    $result.rc = $proc.ExitCode
+} else {
+    $result.rc = 0
+    $result.pid = $proc.ExitCode
+}
 
 $end_datetime = [DateTime]::UtcNow
 
