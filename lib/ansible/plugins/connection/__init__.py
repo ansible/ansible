@@ -49,7 +49,8 @@ BUFSIZE = 65536
 def ensure_connect(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        self._connect()
+        if not self._connected:
+            self._connect()
         return func(self, *args, **kwargs)
     return wrapped
 
