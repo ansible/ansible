@@ -426,10 +426,6 @@ def command_integration_filtered(args, targets):
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if not args.explain:
-        remove_tree(test_dir)
-        make_dirs(test_dir)
-
     if any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
@@ -460,6 +456,11 @@ def command_integration_filtered(args, targets):
         try:
             while tries:
                 tries -= 1
+
+                if not args.explain:
+                    # create a fresh test directory for each test target
+                    remove_tree(test_dir)
+                    make_dirs(test_dir)
 
                 try:
                     if target.script_path:

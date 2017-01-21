@@ -16,10 +16,6 @@ virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
 
-pip install -U jinja2==2.9.4
+pip install -U jinja2
 
-ansible-playbook -i ../../inventory test_jinja2_groupby.yml -v "$@"
-
-pip install -U "jinja2<2.9.0"
-
-ansible-playbook -i ../../inventory test_jinja2_groupby.yml -v "$@"
+ansible-playbook -i ../../inventory main.yml -e @../../integration_config.yml -v "$@"

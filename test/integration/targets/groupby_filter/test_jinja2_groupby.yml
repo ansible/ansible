@@ -1,7 +1,7 @@
 ---
 - name: Test jinja2 groupby
   hosts: localhost
-  gather_facts: False
+  gather_facts: True
   connection: local
   vars:
     fruits:
@@ -13,8 +13,13 @@
         enjoy: yes
     expected: [[false, [{"enjoy": false, "name": "orange"}]], [true, [{"enjoy": true, "name": "apple"}, {"enjoy": true, "name": "strawberry"}]]]
   tasks:
-    - debug:
-        msg: "{{ lookup('pipe', 'pip freeze | grep -i jinja2') }}"
+    - name: show python interpreter
+      debug:
+         msg: "{{ ansible_python['executable'] }}"
+
+    - name: show jinja2 version
+      debug:
+         msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
 
     - set_fact:
         result: "{{ fruits | groupby('enjoy') }}"
