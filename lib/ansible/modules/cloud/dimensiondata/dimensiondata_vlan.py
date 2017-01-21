@@ -20,19 +20,7 @@
 #   - Aimon Bustardo <aimon.bustardo@dimensiondata.com>
 #   - Bert Diwa      <Lamberto.Diwa@dimensiondata.com>
 #
-from ansible.module_utils.basic import *
-from ansible.module_utils.dimensiondata import *
-try:
-    from libcloud.common.dimensiondata import DimensionDataAPIException
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
-    import libcloud.security
-    HAS_LIBCLOUD = True
-except:
-    HAS_LIBCLOUD = False
 
-# Get regions early to use in docs etc.
-dd_regions = get_dd_regions()
 
 DOCUMENTATION = '''
 ---
@@ -47,10 +35,9 @@ options:
     description:
       - The target region.
     choices:
-      - Regions choices are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - Regions choices are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
-      - Note that the region values are available as list from dd_regions().
-      - Note that the default value "na" stands for "North America".  The code prepends 'dd-' to the region choice.
+      - Regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
+      - They are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
+      - Note that the default value "na" stands for "North America". The module prepends 'dd-' to the region choice.
     default: na
   location:
     description:
@@ -187,6 +174,18 @@ vlan:
 '''
 
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.dimensiondata import *
+try:
+    from libcloud.common.dimensiondata import DimensionDataAPIException
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
+    import libcloud.security
+    HAS_LIBCLOUD = True
+except ImportError:
+    HAS_LIBCLOUD = False
+
+
 def vlan_obj_to_dict(vlan):
     vlan_d = dict(id=vlan.id,
                   name=vlan.name,
@@ -196,6 +195,7 @@ def vlan_obj_to_dict(vlan):
                   private_ipv4_range_size=vlan.private_ipv4_range_size,
                   status=vlan.status,
                   )
+
     return vlan_d
 
 
@@ -208,7 +208,7 @@ def wait_for_vlan_state(module, driver, vlan_id, state_to_wait_for):
         )
     except DimensionDataAPIException as e:
         module.fail_json(msg='VLAN did not reach % state in time: %s'
-                         % (state, e.msg))
+                         % (state_to_wait_for, e.msg))
 
 
 def create_vlan(module, driver, location, network_domain, name, description,
@@ -220,11 +220,15 @@ def create_vlan(module, driver, location, network_domain, name, description,
         if e.code == 'NAME_NOT_UNIQUE':
             vlan = get_vlan(module, driver, location, network_domain, 'False',
                             name)
+
             return {'vlan': vlan, 'changed': False}
+
         module.fail_json(msg="Failed to create VLAN: %s" % e)
+
     # Wait for it to become ready
     if module.params['wait']:
         vlan = wait_for_vlan_state(module, driver, vlan.id, 'NORMAL')
+
     return {'vlan': vlan, 'changed': True}
 
 
@@ -274,15 +278,18 @@ def update_vlan(module, driver, location, network_domain, vlan_id,
     elif vlan_obj.name != name or vlan_obj.description != description:
         vlan_obj.name = name
         vlan_obj.description = description
+
         try:
             vlan = driver.ex_update_vlan(vlan_obj)
         except DimensionDataAPIException as e:
             module.fail_json(msg="Failed to update VLAN: %s" % e)
+
         changed = True
     else:
         changed = False
         vlan = False
-    return {'changed': changed, 'vlan': vlan}
+
+    return dict(changed=changed, vlan=vlan)
 
 
 def expand_vlan(module, driver, location, network_domain, vlan_id, name,
@@ -305,7 +312,7 @@ def expand_vlan(module, driver, location, network_domain, vlan_id, name,
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            region=dict(default='na', choices=dd_regions),
+            region=dict(default='na'),
             location=dict(required=True, type='str'),
             network_domain=dict(required=True, type='str'),
             name=dict(default=False, type='str'),
@@ -327,9 +334,10 @@ def main():
         module.fail_json(msg='libcloud is required for this module.')
 
     # set short vars for readability
-    credentials = get_credentials()
-    if credentials is False:
+    credentials = get_credentials(module)
+    if not credentials:
         module.fail_json(msg="User credentials not found")
+
     user_id = credentials['user_id']
     key = credentials['key']
     region = 'dd-%s' % module.params['region']
@@ -361,8 +369,9 @@ def main():
                           description, base_address, prefix_size)
         vlan = vlan_obj_to_dict(res['vlan'])
         if res['changed'] is False:
-            module.exit_json(changed=False, msg="VLAN with name '%s'" +
-                             " already exists." % name, vlan=vlan)
+            module.exit_json(changed=False, msg="VLAN with name '%s'" % name +
+                             " already exists.", vlan=vlan)
+
         module.exit_json(changed=True, msg="Successfully created VLAN.",
                          vlan=vlan)
     elif action == 'read' or action == 'get':
@@ -395,17 +404,18 @@ def main():
         if vlan_id is False:
             module.fail_json(msg="'vlan_id' is a required argument when " +
                              "expanding a VLAN")
+
         res = expand_vlan(module, driver, location, network_domain, vlan_id,
                           name, prefix_size)
+
         if type(res) is bool:
             module.exit_json(changed=False, msg="VLAN already requested size.")
         else:
             module.exit_json(changes=True, msg="VLAN network size modified.",
                              vlan=vlan_obj_to_dict(res))
     else:
-        fail_json(msg="Requested action was " +
-                  "'%s'. Action must be one of 'create', 'read', " +
-                  "'update', 'expand' or 'delete'" % state)
+        module.fail_json(msg="Requested action was '%s'. " % action +
+                             "Action must be one of 'create', 'read', 'update', 'expand' or 'delete'")
 
 if __name__ == '__main__':
     main()
