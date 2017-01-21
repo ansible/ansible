@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: show python interpreter
+  debug:
+     msg: "{{ ansible_python['executable'] }}"
+
+- name: show jinja2 version
+  debug:
+     msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+
 - name: get default group
   shell: id -gn
   register: group
