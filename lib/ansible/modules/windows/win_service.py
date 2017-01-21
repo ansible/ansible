@@ -59,6 +59,14 @@ options:
       - restarted
     default: null
     aliases: []
+  force:
+    description:
+    - Override restrictions that prevent C(stopped) or C(restarted) from succeeding,
+      e.g. using C(force) will stop and restart a service that has dependent services.
+    default: false
+    choices:
+    - 'no'
+    - 'yes'
 author: "Chris Hoffman (@chrishoffman)"
 '''
 
