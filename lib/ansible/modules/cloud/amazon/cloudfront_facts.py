@@ -31,23 +31,23 @@ author: Willem van Ketwich (@wilvk)
 options:
     distribution_id:
         description:
-          - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+            - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
         required: false
     invalidation_id:
         description:
-          - The id of the invalidation to get information about. Used with invalidation.
+            - The id of the invalidation to get information about. Used with invalidation.
         required: false
     origin_access_identity_id:
         description:
-          - The id of the cloudfront origin access identity to get information about.
+            - The id of the cloudfront origin access identity to get information about.
         required: false
     web_acl_id:
         description:
-          - Used with list_distributions_by_web_acl_id.
+            - Used with list_distributions_by_web_acl_id.
         required: false
     domain_name_alias:
         description:
-          - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
+            - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
         required: false
     all_lists:
         description:
@@ -114,6 +114,11 @@ options:
             - Get a list of streaming distributions.
         required: false
         default: false
+    summary:
+        description:
+            - Returns a summary of all distributions, streaming distributions and origin_access_identities. This is the default behaviour if no option is selected.
+        required: false
+        default: false
 
 extends_documentation_fragment:
     - aws
@@ -122,6 +127,10 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+# Get a summary of distributions
+- cloudfront_facts:
+    summary: true
 
 # Get information about a distribution
 - cloudfront_facts:
@@ -189,6 +198,10 @@ streaming_distribution:
 streaming_distribution_configuration:
     description: Describes the streaming configuration information for the distribution. Requires distribution_id or domain_name_alias to be specified.
     returned: only if streaming_distribution_configuration is true
+    type: dict
+summary:
+    description: Gives a summary of distributions (distribution ids, aliases and invalidation ids), streaming distributions (distribution ids and aliases) and origin access identities (origin access identity ids).
+    returned: as default or if summary is true
     type: dict
 '''
 
