@@ -300,17 +300,71 @@ class CloudFrontServiceManager:
     def list_invalidations(self, distribution_id):
         try:
             func = partial(self.client.list_invalidations, DistributionId=distribution_id)
-            return self.paginated_response(func, 'InvalidationList')['Items']
+            invalidations = self.paginated_response(func, 'InvalidationList')
+            if invalidations['Quantity'] > 0:
+                return invalidations['Items']
+            return {}
         except Exception as e:
             self.module.fail_json(msg="Error listing invalidations = " + str(e), exception=traceback.format_exc(e))
 
-    def list_streaming_distributions(self):
+    def list_streaming_distributions(self, keyed=True):
         try:
             func = partial(self.client.list_streaming_distributions)
-            streaming_distributions = self.paginated_response(func, 'StreamingDistributionList')['Items']
-            return self.keyed_list_helper(streaming_distributions)
+            streaming_distribution_list = self.paginated_response(func, 'StreamingDistributionList')['Items']
+            if not keyed:
+                return streaming_distribution_list
+            return self.keyed_list_helper(streaming_distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing streaming distributions = " + str(e), exception=traceback.format_exc(e))
+
+    def summary(self):
+        try:
+            summary_dict = {}
+            distribution_list = { 'distributions': [] }
+            origin_access_identity_id_list = { 'origin_access_identities': [] }
+            streaming_distributions_list = { 'streaming_distributions': [] }
+
+            distributions = self.list_distributions(False)
+            for dist in distributions:
+                for alias in dist['Aliases']['Items']:
+                    distribution_id = str(dist['Id'])
+                    temp_dist = { 'alias': alias }
+                    temp_dist.update( { 'distribution_id': distribution_id } )
+                    invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(distribution_id)
+                    if invalidation_ids:
+                        temp_dist.update( {'invalidations': invalidation_ids } )
+                    distribution_list['distributions'].append(temp_dist)
+
+            origin_access_identities = self.list_origin_access_identities()
+            for origin_access_identity in origin_access_identities:
+                origin_access_identity_id_list['origin_access_identities'].append(str(origin_access_identity['Id']))
+
+            streaming_distributions = self.list_streaming_distributions(False)
+            for streaming_distribution in streaming_distributions:
+                for streaming_alias in streaming_distribution['Aliases']['Items']:
+                    streaming_distribution_id = str(streaming_distribution['Id'])
+                    temp_streaming_distribution = { 'alias': streaming_alias }
+                    temp_streaming_distribution.update( { 'distribution_id': streaming_distribution_id } )
+                    streaming_distributions_list['streaming_distributions'].append(temp_streaming_distribution)
+
+            summary_dict.update(distribution_list)
+            summary_dict.update(origin_access_identity_id_list)
+            summary_dict.update(streaming_distributions_list)
+
+            return summary_dict
+
+        except Exception as e:
+            self.module.fail_json(msg="Error generating summary = " + str(e), exception=traceback.format_exc(e))
+
+    def get_list_of_invalidation_ids_from_distribution_id(self, distribution_id):
+        try:
+            invalidation_ids = []
+            invalidations = self.list_invalidations(distribution_id)
+            for invalidation in invalidations:
+                invalidation_ids.append(str(invalidation['Id']))
+            return invalidation_ids
+        except Exception as e:
+            self.module.fail_json(msg="Error getting list of invalidation ids = " + str(e), exception=traceback.format_exc(e))
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
@@ -387,7 +441,8 @@ def main():
         list_distributions=dict(required=False, default=False, type='bool'),
         list_distributions_by_web_acl_id=dict(required=False, default=False, type='bool'),
         list_invalidations=dict(required=False, default=False, type='bool'),
-        list_streaming_distributions=dict(required=False, default=False, type='bool')
+        list_streaming_distributions=dict(required=False, default=False, type='bool'),
+        summary=dict(required=False, default=False, type='bool')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
@@ -419,16 +474,19 @@ def main():
     list_invalidations = module.params.get('list_invalidations')
     list_streaming_distributions = module.params.get('list_streaming_distributions')
 
+    summary = module.params.get('summary')
+
     aliases = []
 
     require_distribution_id = (distribution or distribution_config or invalidation or
             streaming_distribution or streaming_distribution_config or list_invalidations)
 
-    # set default to list_distributions if no option specified
-    list_distributions = list_distributions or not (distribution or distribution_config or
+    # set default to summary if no option specified
+    summary = summary or not (distribution or distribution_config or
             origin_access_identity or origin_access_identity_config or invalidation or
             streaming_distribution or streaming_distribution_config or list_origin_access_identities or
-            list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions)
+            list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions or
+            list_distributions)
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
@@ -455,7 +513,7 @@ def main():
         if invalidation_id:
             result['cloudfront'].update( { invalidation_id: {} } )
         facts = result['cloudfront']
-    elif list_invalidations:
+    elif distribution_id and list_invalidations:
         result = { 'cloudfront': { 'invalidations': {} } }
         facts = result['cloudfront']['invalidations']
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
@@ -504,9 +562,9 @@ def main():
             facts[alias].update(streaming_distribution_config_details)
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
-        facts[distribution_id].update(invalidations)
+        facts.update({distribution_id:invalidations})
         for alias in aliases:
-            facts[alias].update(invalidations)
+            facts.update({alias: invalidations})
 
     # get list based on options
     if all_lists or list_origin_access_identities:
@@ -519,6 +577,10 @@ def main():
         facts['distributions_by_web_acl_id'] = service_mgr.list_distributions_by_web_acl_id(web_acl_id)
     if list_invalidations:
         facts['invalidations'] = service_mgr.list_invalidations(distribution_id)
+
+    # default summary option
+    if summary:
+        facts['summary'] = service_mgr.summary()
 
     result['changed'] = False
     module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
