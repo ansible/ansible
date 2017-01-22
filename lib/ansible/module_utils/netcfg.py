@@ -108,8 +108,6 @@ def _obj_to_block(objects, visited=None):
 def dumps(objects, output='block', comments=False):
     if output == 'block':
         items = _obj_to_block(objects)
-    #elif output == 'block':
-    #    items = _obj_to_raw(objects)
     elif output == 'commands':
         items = _obj_to_text(objects)
     else:
@@ -226,7 +224,7 @@ class NetworkConfig(object):
 
     def get_block_config(self, path):
         block = self.get_block(path)
-        return dumps(block, 'config')
+        return dumps(block, 'block')
 
     def _expand_block(self, configobj, S=None):
         if S is None:
