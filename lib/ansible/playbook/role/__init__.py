@@ -23,6 +23,7 @@ import collections
 import os
 
 from ansible.compat.six import iteritems, binary_type, text_type
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -199,7 +200,8 @@ class Role(Base, Become, Conditional, Taggable):
         metadata = self._load_role_yaml('meta')
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
-            self._dependencies = self._load_dependencies()
+            if C.DEFAULT_ROLE_SKIP_DEPENDENCIES != 0:
+                self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
 
