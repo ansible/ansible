@@ -276,14 +276,21 @@ class CloudFrontServiceManager:
     def list_origin_access_identities(self):
         try:
             func = partial(self.client.list_cloud_front_origin_access_identities)
-            return self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')['Items']
+            origin_access_identity_list = self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')
+            if origin_access_identity_list['Quantity'] > 0:
+              return origin_access_identity_list['Items']
+            return {}
         except Exception as e:
             self.module.fail_json(msg="Error listing cloud front origin access identities = " + str(e), exception=traceback.format_exc(e))
 
     def list_distributions(self, keyed=True):
         try:
             func = partial(self.client.list_distributions)
-            distribution_list = self.paginated_response(func, 'DistributionList')['Items']
+            distribution_list = self.paginated_response(func, 'DistributionList')
+            if distribution_list['Quantity'] == 0:
+                return {}
+            else:
+                distribution_list = distribution_list['Items']
             if not keyed:
                 return distribution_list
             return self.keyed_list_helper(distribution_list)
@@ -293,17 +300,21 @@ class CloudFrontServiceManager:
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
             func = partial(self.client.list_distributions_by_web_acl_id, WebAclId=web_acl_id)
-            distributions = self.paginated_response(func, 'DistributionList')['Items']
-            return self.keyed_list_helper(distributions)
+            distribution_list = self.paginated_response(func, 'DistributionList')
+            if distribution_list['Quantity'] == 0:
+                return {}
+            else:
+                distribution_list = distribution_list['Items']
+            return self.keyed_list_helper(distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions by web acl id = " + str(e), exception=traceback.format_exc(e))
 
     def list_invalidations(self, distribution_id):
         try:
             func = partial(self.client.list_invalidations, DistributionId=distribution_id)
-            invalidations = self.paginated_response(func, 'InvalidationList')
-            if invalidations['Quantity'] > 0:
-                return invalidations['Items']
+            invalidation_list = self.paginated_response(func, 'InvalidationList')
+            if invalidation_list['Quantity'] > 0:
+                return invalidation_list['Items']
             return {}
         except Exception as e:
             self.module.fail_json(msg="Error listing invalidations = " + str(e), exception=traceback.format_exc(e))
@@ -311,7 +322,11 @@ class CloudFrontServiceManager:
     def list_streaming_distributions(self, keyed=True):
         try:
             func = partial(self.client.list_streaming_distributions)
-            streaming_distribution_list = self.paginated_response(func, 'StreamingDistributionList')['Items']
+            streaming_distribution_list = self.paginated_response(func, 'StreamingDistributionList')
+            if streaming_distribution_list['Quantity'] == 0:
+                return {}
+            else:
+                streaming_distribution_list = streaming_distribution_list['Items']
             if not keyed:
                 return streaming_distribution_list
             return self.keyed_list_helper(streaming_distribution_list)
