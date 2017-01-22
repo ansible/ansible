@@ -28,7 +28,7 @@ description:
 version_added: "1.2"
 author: "Barnaby Court (@barnabycourt)"
 notes:
-    - In order to register a system, subscription-manager requires either a username and password, or an activationkey.
+    - In order to register a system, subscription-manager requires either a username and password, or an activationkey and an Organization ID.
 requirements:
     - subscription-manager
 options:
@@ -136,6 +136,7 @@ EXAMPLES = '''
 - redhat_subscription:
     state: present
     activationkey: 1-222333444
+    org_id: 222333444
     pool: '^(Red Hat Enterprise Server|Red Hat Virtualization)$'
 
 # Update the consumed subscriptions from the previous example (remove the Red
@@ -143,6 +144,7 @@ EXAMPLES = '''
 - redhat_subscription:
     state: present
     activationkey: 1-222333444
+    org_id: 222333444
     pool: '^Red Hat Enterprise Server$'
 
 # Register as user credentials into given environment (against Red Hat
@@ -292,8 +294,7 @@ class Rhsm(RegistrationBase):
         # Generate command arguments
         if activationkey:
             args.extend(['--activationkey', activationkey])
-            if org_id:
-                args.extend(['--org', org_id])
+            args.extend(['--org', org_id])
         else:
             if autosubscribe:
                 args.append('--autosubscribe')
@@ -483,7 +484,9 @@ def main():
                     consumer_name = dict(default=None, required=False),
                     consumer_id = dict(default=None, required=False),
                     force_register = dict(default=False, type='bool'),
-                )
+                ),
+                required_together = [ ['username', 'password'], ['activationkey', 'org_id'] ],
+                mutually_exclusive = [ ['username', 'activationkey'] ],
             )
 
     rhsm.module = module
@@ -507,10 +510,8 @@ def main():
     if state == 'present':
 
         # Check for missing parameters ...
-        if not (activationkey or username or password):
-            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, username, password))
-        if not activationkey and not (username and password):
-            module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
+        if not (activationkey or org_id or username or password):
+            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) and Organization ID (%s) or username (%s) and password (%s)" % (activationkey, org_id, username, password))
 
         # Register system
         if rhsm.is_registered and not force_register:
