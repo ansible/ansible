@@ -200,7 +200,7 @@ class Role(Base, Become, Conditional, Taggable):
         metadata = self._load_role_yaml('meta')
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
-            if C.DEFAULT_ROLE_SKIP_DEPENDENCIES != 0:
+            if not C.DEFAULT_ROLE_SKIP_DEPENDENCIES:
                 self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
