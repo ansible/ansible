@@ -251,7 +251,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'config']
+        args = [SUBMAN_CMD, 'config']
 
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
@@ -275,7 +275,7 @@ class Rhsm(RegistrationBase):
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
                    os.path.isfile('/etc/pki/consumer/key.pem')
 
-        args = ['subscription-manager', 'identity']
+        args = [SUBMAN_CMD, 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)
         if rc == 0:
             return True
@@ -289,7 +289,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'register']
+        args = [SUBMAN_CMD, 'register']
 
         # Generate command arguments
         if activationkey:
@@ -332,7 +332,7 @@ class Rhsm(RegistrationBase):
             items = ["--all"]
 
         if items:
-            args = ['subscription-manager', 'unsubscribe'] + items
+            args = [SUBMAN_CMD, 'unsubscribe'] + items
             rc, stderr, stdout = self.module.run_command(args, check_rc=True)
         return serials
 
@@ -342,7 +342,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'unregister']
+        args = [SUBMAN_CMD, 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def subscribe(self, regexp):
@@ -505,6 +505,9 @@ def main():
     consumer_name = module.params["consumer_name"]
     consumer_id = module.params["consumer_id"]
     force_register = module.params["force_register"]
+
+    global SUBMAN_CMD
+    SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
 
     # Ensure system is registered
     if state == 'present':
