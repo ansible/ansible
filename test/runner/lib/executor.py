@@ -238,6 +238,7 @@ def network_inventory(remotes):
     groups = dict([(remote.platform, []) for remote in remotes])
 
     for remote in remotes:
+<<<<<<< HEAD
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
@@ -250,6 +251,14 @@ def network_inventory(remotes):
             '%s %s' % (
                 remote.name.replace('.', '_'),
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
+=======
+        groups[remote.platform].append(
+            '%s ansible_host=%s ansible_user=%s ansible_connection=network_cli ansible_ssh_private_key_file=%s' % (
+                remote.name.replace('.', '_'),
+                remote.connection.hostname,
+                remote.connection.username,
+                remote.ssh_key.key,
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
             )
         )
 

@@ -153,7 +153,11 @@ class Conditional:
 
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             res = e._parse(presented, None, None)
+<<<<<<< HEAD
             res = generate(res, e, None, None)
+=======
+            res = e._generate(res, None, None, defer_init=True)
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
             parsed = ast.parse(res, mode='exec')
 
             class CleansingNodeVisitor(ast.NodeVisitor):

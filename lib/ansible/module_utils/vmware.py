@@ -233,6 +233,7 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
+<<<<<<< HEAD
 
 def fetch_file_from_guest(content, vm, username, password, src, dest):
 
@@ -383,3 +384,5 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
         result['failed'] = True
 
     return result
+=======
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920

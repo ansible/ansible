@@ -117,16 +117,28 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
+        self.log('loading connection plugin %s' % str(play_context.connection))
+        self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
+
         try:
+<<<<<<< HEAD
             self.log('loading connection plugin %s' % str(play_context.connection))
             self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
+=======
+            self.log('attempting to connect to remote host')
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
             self.conn._connect()
 
+            self.log('successfully connected, starting listener')
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.bind(path)
             self.socket.listen(1)
         except Exception as exc:
+<<<<<<< HEAD
             self.log(traceback.format_exc())
+=======
+            self.log(str(exc))
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
             raise
 
         signal.signal(signal.SIGALRM, self.alarm_handler)
@@ -220,7 +232,13 @@ class Server():
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
+<<<<<<< HEAD
             log(traceback.format_exc())
+=======
+            # FIXME: proper logging and error handling here
+            log('runtime exception: %s' % e)
+            print(traceback.format_exc())
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated

@@ -17,7 +17,11 @@ These roadmaps are the team's *best guess* roadmaps based on the Ansible team's 
 =======================================
 Current 2.4 Roadmap is open for comment
 =======================================
+<<<<<<< HEAD
 We are starting to build the 2.4 Roadmap. We are seeking community feedback! That document is here:
+=======
+We are starting to build the 2.4 Roadmap, targeted for June/July delivery.  We are seeking community feedback!  That document is here:
+>>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
  - `2.4 Roadmap Document <docs/docsite/rst/roadmap/ROADMAP_2_4.rst>`_
 
 
