@@ -38,11 +38,15 @@ module: timezone
 short_description: Configure timezone setting
 description:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
   - This module configures the timezone setting, both of the system clock and of the hardware clock. If you want to set up the NTP, use M(service) module.  As of version 2.3 support was added for SmartOS and BSDs.
   - It is recommended to restart C(crond) after changing the timezone, otherwise the jobs may run at the wrong time.
   - On Linux it uses the C(timedatectl) command if available. Otherwise, it edits C(/etc/sysconfig/clock) or C(/etc/timezone) for the system clock, and uses the C(hwclock) command for the hardware clock.
   - On SmartOS the C(sm-set-timezone) utility is used to set the zone timezone.
   - "On *BSD, C(/etc/localtime) is modified."
+<<<<<<< HEAD
 =======
   - This module configures the timezone setting, both of the system clock
     and of the hardware clock. I(Currently only Linux, OpenBSD and SmartOS
@@ -56,6 +60,8 @@ description:
     and on OpenBSD C(/etc/localtime) is modified.
     If you want to set up the NTP, use M(service) module.
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
 version_added: "2.2"
 options:
   name:
@@ -75,10 +81,15 @@ options:
     required: false
     aliases: ['rtc']
 <<<<<<< HEAD
+<<<<<<< HEAD
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
 =======
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+notes:
+  - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
 author:
   - "Shinichi TAMURA (@tmshn)"
   - "Jasper Lievisse Adriaanse (@jasperla)"
@@ -131,6 +142,9 @@ class Timezone(object):
         elif re.match('^joyent_.*Z', platform.version()):
             # get_platform() returns SunOS, which is too broad. So look at the
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
             # platform version instead. However we have to ensure that we're not
             # running in the global zone where changing the timezone has no effect.
             zonename_cmd = module.get_bin_path('zonename')
@@ -142,6 +156,7 @@ class Timezone(object):
             return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
         elif re.match('^(Free|Net|Open)BSD', platform.platform()):
             return super(Timezone, BSDTimezone).__new__(BSDTimezone)
+<<<<<<< HEAD
 =======
             # platform version instead.
             return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
@@ -150,6 +165,8 @@ class Timezone(object):
             # a generic base for /etc/localtime honoring Unix-like systems.
             return super(Timezone, OpenBSDTimezone).__new__(OpenBSDTimezone)
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
         else:
             # Not supported yet
             return super(Timezone, Timezone).__new__(Timezone)
@@ -488,12 +505,18 @@ class SmartOSTimezone(Timezone):
     def __init__(self, module):
         super(SmartOSTimezone, self).__init__(module)
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.settimezone = self.module.get_bin_path('sm-set-timezone', required=False)
         if not self.settimezone:
             module.fail_json(msg='sm-set-timezone not found. Make sure the smtools package is installed.')
 =======
         self.settimezone = self.module.get_bin_path('sm-set-timezone', required=True)
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+        self.settimezone = self.module.get_bin_path('sm-set-timezone', required=False)
+        if not self.settimezone:
+            module.fail_json(msg='sm-set-timezone not found. Make sure the smtools package is installed.')
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
 
     def get(self, key, phase):
         """Lookup the current timezone name in `/etc/default/init`. If anything else
@@ -534,22 +557,31 @@ class SmartOSTimezone(Timezone):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class BSDTimezone(Timezone):
     """This is the timezone implementation for *BSD which works simply through
 =======
 class OpenBSDTimezone(Timezone):
     """This is the timezone implementation for OpenBSD which works simply through
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+class BSDTimezone(Timezone):
+    """This is the timezone implementation for *BSD which works simply through
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
     updating the `/etc/localtime` symlink to point to a valid timezone name under
     `/usr/share/zoneinfo`.
     """
 
     def __init__(self, module):
 <<<<<<< HEAD
+<<<<<<< HEAD
         super(BSDTimezone, self).__init__(module)
 =======
         super(OpenBSDTimezone, self).__init__(module)
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+        super(BSDTimezone, self).__init__(module)
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
 
     def get(self, key, phase):
         """Lookup the current timezone by resolving `/etc/localtime`."""

@@ -122,6 +122,9 @@ class Server():
 
         try:
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
             self.log('loading connection plugin %s' % str(play_context.connection))
             self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
 =======
@@ -135,10 +138,14 @@ class Server():
             self.socket.listen(1)
         except Exception as exc:
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.log(traceback.format_exc())
 =======
             self.log(str(exc))
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+            self.log(traceback.format_exc())
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
             raise
 
         signal.signal(signal.SIGALRM, self.alarm_handler)
@@ -233,12 +240,16 @@ class Server():
                 s.close()
         except Exception as e:
 <<<<<<< HEAD
+<<<<<<< HEAD
             log(traceback.format_exc())
 =======
             # FIXME: proper logging and error handling here
             log('runtime exception: %s' % e)
             print(traceback.format_exc())
 >>>>>>> 6f9766b217c96bf5f9e085c8b46dfab52fd1d920
+=======
+            log(traceback.format_exc())
+>>>>>>> 0051a1c19ba40a5171b923e513e9ac336a3ff0fb
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
