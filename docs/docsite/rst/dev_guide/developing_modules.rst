@@ -64,17 +64,19 @@ The following topics will discuss how to develop modules:
 
 :doc:`developing_modules_general`
     A general overview of how to develop, debug, and test modules
-:doc:`guide_aws`
+:doc:`../guide_aws`
     Working with Amazon Web Services (AWS) modules.
 :doc:`developing_modules_python3`
     Adding Python 3 support to modules (all new modules must be py2.4 and py3 compatible).
-:doc:`guide_network_modules`
+:doc:`../guide_network_modules`
     Working with Network modules.
-:doc:`intro_windows`
+:doc:`i../ntro_windows`
     Working with Windows modules.
 
 
 .. include:: ./developing_modules_documenting.rst
+
+.. include:: ./developing_modules_best_practices.rst
 
 .. include:: ./developing_module_contributing.rst
 
