@@ -1,37 +1,7 @@
-.. _module_dev_pitfalls:
-
-Common Pitfalls
-```````````````
-
-You should also NEVER do this in a module:
-
-.. code-block:: python
-
-    print "some status message"
-
-Because the output is supposed to be valid JSON.
-
-Modules must not output anything on standard error, because the system will merge
-standard out with standard error and prevent the JSON from parsing. Capturing standard
-error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
-how the command module is implemented.
-
-If a module returns stderr or otherwise fails to produce valid JSON, the actual output
-will still be shown in Ansible, but the command will not succeed.
-
-Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
-
-Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
-
-Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
-
-Always use the hacking/test-module script when developing modules and it will warn
-you about these kind of things.
-
 .. _module_dev_conventions:
 
-Conventions/Recommendations
-```````````````````````````
+Conventions, Best Practices, and Pitfalls
+`````````````````````````````````````````
 
 As a reminder from the example code above, here are some basic conventions
 and guidelines:
@@ -211,3 +181,30 @@ To be safe, if you're working on a variant on something in Ansible's normal dist
 a bad idea to give it a new name while you are working on it, to be sure you know you're pulling
 your version.
 
+Common Pitfalls
+```````````````
+
+You should never do this in a module:
+
+.. code-block:: python
+
+    print "some status message"
+
+Because the output is supposed to be valid JSON.
+
+Modules must not output anything on standard error, because the system will merge
+standard out with standard error and prevent the JSON from parsing. Capturing standard
+error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
+how the command module is implemented.
+
+If a module returns stderr or otherwise fails to produce valid JSON, the actual output
+will still be shown in Ansible, but the command will not succeed.
+
+Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansibile.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+
+Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+
+Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+
+Always use the hacking/test-module script when developing modules and it will warn
+you about these kind of things.
