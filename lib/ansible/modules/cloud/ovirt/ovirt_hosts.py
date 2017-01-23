@@ -94,6 +94,9 @@ options:
         description:
             - "If True host will be forcibly moved to desired state."
         default: False
+    override_display:
+        description:
+            - "Override the display address of all VMs on this host with specified address."
 extends_documentation_fragment: ovirt
 '''
 
@@ -171,13 +174,17 @@ class HostsModule(BaseModule):
                 priority=self._module.params['spm_priority'],
             ) if self._module.params['spm_priority'] else None,
             override_iptables=self._module.params['override_iptables'],
+            display=otypes.Display(
+                address=self._module.params['override_display'],
+            ) if self._module.params['override_display'] else None,
         )
 
     def update_check(self, entity):
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('kdump_integration'), entity.kdump_status) and
-            equal(self._module.params.get('spm_priority'), entity.spm.priority)
+            equal(self._module.params.get('spm_priority'), entity.spm.priority) and
+            equal(self._module.params.get('override_display'), getattr(entity.display, 'address', None))
         )
 
     def pre_remove(self, entity):
@@ -189,7 +196,7 @@ class HostsModule(BaseModule):
         )
 
     def post_update(self, entity):
-        if entity.status != hoststate.UP:
+        if entity.status != hoststate.UP and self._module.params['state'] == 'present':
             if not self._module.check_mode:
                 self._service.host_service(entity.id).activate()
             self.changed = True
@@ -249,6 +256,7 @@ def main():
         override_iptables=dict(default=None, type='bool'),
         force=dict(default=False, type='bool'),
         timeout=dict(default=600, type='int'),
+        override_display=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -269,12 +277,12 @@ def main():
         control_state(hosts_module)
         if state == 'present':
             ret = hosts_module.create()
-            hosts_module.action(
+            ret['changed'] = hosts_module.action(
                 action='activate',
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 wait_condition=lambda h: h.status == hoststate.UP,
                 fail_condition=failed_state,
-            )
+            )['changed'] or ret['changed']
         elif state == 'absent':
             ret = hosts_module.remove()
         elif state == 'maintenance':
@@ -284,6 +292,7 @@ def main():
                 wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 fail_condition=failed_state,
             )
+            ret['changed'] = hosts_module.create()['changed'] or ret['changed']
         elif state == 'upgraded':
             ret = hosts_module.action(
                 action='upgrade',
