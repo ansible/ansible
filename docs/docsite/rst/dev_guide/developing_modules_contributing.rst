@@ -1,9 +1,21 @@
+.. _module_contribution:
+
+Contributing Your Module to Ansible
+```````````````````````````````````
+
+High-quality modules with minimal dependencies
+can be included in Ansible, but modules (just due to the programming
+preferences of the developers) will need to be implemented in Python and use
+the AnsibleModule common code, and should generally use consistent arguments with the rest of
+the program.   Stop by the mailing list to inquire about requirements if you like, and submit
+a github pull request to the `extras <https://github.com/ansible/ansible-modules-extras>`_ project.
+Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
+gives them slightly higher development priority (though they'll work in exactly the same way).
+
 .. _module_dev_testing:
 
-
-
-Contributing Modules
-````````````````````
+Contributing Modules Checklist
+``````````````````````````````
 
 The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
 
