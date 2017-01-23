@@ -97,6 +97,20 @@ options:
     override_display:
         description:
             - "Override the display address of all VMs on this host with specified address."
+    kernel_params:
+        description:
+            - "List of kernel boot parameters."
+            - "Following are most common kernel parameters used for host:"
+            - "Hostdev Passthrough & SR-IOV: intel_iommu=on"
+            - "Nested Virtualization: kvm-intel.nested=1"
+            - "Unsafe Interrupts: vfio_iommu_type1.allow_unsafe_interrupts=1"
+            - "PCI Reallocation: pci=realloc"
+            - "C(Note:)"
+            - "Modifying kernel boot parameters settings can lead to a host boot failure.
+               Please consult the product documentation before doing any changes."
+            - "Kernel boot parameters changes require host deploy and restart. The host needs
+               to be I(reinstalled) suceesfully and then to be I(rebooted) for kernel boot parameters
+               to be applied."
 extends_documentation_fragment: ovirt
 '''
 
@@ -104,12 +118,14 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Add host with username/password
+# Add host with username/password supporting SR-IOV:
 - ovirt_hosts:
     cluster: Default
     name: myhost
     address: 10.34.61.145
     password: secret
+    kernel_params:
+      - intel_iommu=on
 
 # Add host using public key
 - ovirt_hosts:
@@ -177,14 +193,22 @@ class HostsModule(BaseModule):
             display=otypes.Display(
                 address=self._module.params['override_display'],
             ) if self._module.params['override_display'] else None,
+            os=otypes.OperatingSystem(
+                custom_kernel_cmdline=' '.join(self._module.params['kernel_params']),
+            ) if self._module.params['kernel_params'] else None,
         )
 
     def update_check(self, entity):
+        kernel_params = self._module.params.get('kernel_params')
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('kdump_integration'), entity.kdump_status) and
             equal(self._module.params.get('spm_priority'), entity.spm.priority) and
-            equal(self._module.params.get('override_display'), getattr(entity.display, 'address', None))
+            equal(self._module.params.get('override_display'), getattr(entity.display, 'address', None)) and
+            equal(
+                sorted(kernel_params) if kernel_params else None,
+                sorted(entity.os.custom_kernel_cmdline.split(' '))
+            )
         )
 
     def pre_remove(self, entity):
@@ -218,7 +242,12 @@ def control_state(host_module):
 
     host_service = host_module._service.service(host.id)
     if failed_state(host):
-        raise Exception("Not possible to manage host '%s'." % host.name)
+        raise Exception(
+            "Not possible to manage host '%s' in state '%s'." % (
+                host.name,
+                host.status
+            )
+        )
     elif host.status in [
         hoststate.REBOOT,
         hoststate.CONNECTING,
@@ -257,6 +286,7 @@ def main():
         force=dict(default=False, type='bool'),
         timeout=dict(default=600, type='int'),
         override_display=dict(default=None),
+        kernel_params=dict(default=None, type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -309,19 +339,19 @@ def main():
                 fence_type='start',
             )
         elif state == 'stopped':
-            hosts_module.action(
+            ret = hosts_module.action(
                 action='deactivate',
                 action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
                 wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
                 fail_condition=failed_state,
             )
-            ret = hosts_module.action(
+            ret['changed'] = hosts_module.action(
                 action='fence',
                 action_condition=lambda h: h.status != hoststate.DOWN,
                 wait_condition=lambda h: h.status == hoststate.DOWN,
                 fail_condition=failed_state,
                 fence_type='stop',
-            )
+            )['changed'] or ret['changed']
         elif state == 'restarted':
             ret = hosts_module.action(
                 action='fence',
