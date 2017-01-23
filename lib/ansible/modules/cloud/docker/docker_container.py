@@ -207,6 +207,7 @@ options:
     description:
       - Specify the logging driver. Docker uses json-file by default.
     choices:
+      - none
       - json-file
       - syslog
       - journald
@@ -1961,7 +1962,9 @@ def main():
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
         links=dict(type='list'),
-        log_driver=dict(type='str', choices=['json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'], default=None),
+        log_driver=dict(type='str',
+                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'],
+                        default=None),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
         memory=dict(type='str', default='0'),
