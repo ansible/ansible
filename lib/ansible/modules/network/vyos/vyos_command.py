@@ -92,19 +92,9 @@ notes:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: vyos
-    password: vyos
-    transport: cli
-
 - vyos_command:
     commands:
       - show interfaces ethernet {{ item }}
-    provider: "{{ cli }}"
   with_items:
     - eth0
     - eth1
@@ -115,7 +105,6 @@ vars:
       - show hardware cpu
     wait_for:
       - "result[0] contains 'VyOS 1.1.7'"
-    provider: "{{ cli }}"
 """
 
 RETURN = """
