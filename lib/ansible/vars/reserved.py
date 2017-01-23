@@ -31,24 +31,24 @@ except ImportError:
     display = Display()
 
 def get_reserved_names(include_private=True):
+    ''' this function returns the list of reserved names associated with play objects'''
 
     public = set()
     private = set()
     result = set()
 
-    #FIXME: find a way to 'not hardcode'
+    #FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = [ Play, Role, Block, Task ]
 
     for aclass in class_list:
         aobj = aclass()
-        #name = type(aobj).__name__
 
         # build ordered list to loop over and dict with attributes
         for attribute in aobj.__dict__['_attributes']:
-            if 'private' in attribute: # or attribute.private:
-                private.add(attribute) #aobj.__dict__['_attributes'][attribute]
+            if 'private' in attribute:
+                private.add(attribute)
             else:
-                public.add(attribute) #aobj.__dict__['_attributes'][attribute]
+                public.add(attribute)
 
     # local_action is implicit with action
     if 'action' in public:
@@ -67,6 +67,7 @@ def get_reserved_names(include_private=True):
     return result
 
 def warn_if_reserved(myvars):
+    ''' this function warns if any variable passed conflicts with internally reserved names '''
     reserved = get_reserved_names()
     for varname in myvars:
         if varname == 'vars':
