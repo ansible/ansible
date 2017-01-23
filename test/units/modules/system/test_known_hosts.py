@@ -2,6 +2,7 @@ import os
 import tempfile
 
 from ansible.compat.tests import unittest
+from ansible.module_utils._text import to_bytes
 
 from ansible.modules.system.known_hosts import compute_diff
 
@@ -10,7 +11,7 @@ class KnownHostsDiffTestCase(unittest.TestCase):
 
     def _create_file(self, content):
         tmp_file = tempfile.NamedTemporaryFile(prefix='ansible-test-', suffix='-known_hosts', delete=False)
-        tmp_file.write(content)
+        tmp_file.write(to_bytes(content))
         tmp_file.close()
         self.addCleanup(os.unlink, tmp_file.name)
         return tmp_file.name
