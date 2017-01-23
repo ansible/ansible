@@ -317,7 +317,7 @@ def compute_diff(path, found_line, replace_or_add, state, key):
         line for line_number, line in enumerate(diff['before'].splitlines(1))
         if not (found_line==(line_number + 1) and (replace_or_add or state=='absent'))
     ])
-    if state == 'present':
+    if state == 'present' and (replace_or_add or found_line is None):
         diff['after'] += key
     return diff
 
