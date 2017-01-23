@@ -38,6 +38,7 @@ import difflib
 import os
 
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils._text import to_text
 
 __metaclass__ = type
 
@@ -131,7 +132,7 @@ class CallbackModule(CallbackBase):
             if isinstance(host_or_item, dict):
                 if 'key' in host_or_item.keys():
                     host_or_item = host_or_item['key']
-            name = colorize(unicode(host_or_item), 'bold')
+            name = colorize(to_text(host_or_item), 'bold')
 
         if error:
             color = 'failed'
@@ -180,8 +181,8 @@ class CallbackModule(CallbackBase):
            self._display.verbosity > 1:
             self._print_task()
             self.last_skipped = False
-            msg = unicode(result._result.get('msg', '')) or\
-                unicode(result._result.get('reason', ''))
+            msg = to_text(result._result.get('msg', '')) or\
+                to_text(result._result.get('reason', ''))
             self._print_host_or_item(result._host,
                                      result._result.get('changed', False),
                                      msg,
@@ -189,19 +190,19 @@ class CallbackModule(CallbackBase):
                                      is_host=True,
                                      error=failed or unreachable,
                                      stdout=result._result.get('module_stdout', None),
-                                     stderr=result._result.get('module_stderr', None),
+                                     stderr=result._result.get('exception', None),
                                      )
             if 'results' in result._result:
                 for r in result._result['results']:
                     failed = 'failed' in r
                     self._print_host_or_item(r['item'],
                                              r.get('changed', False),
-                                             unicode(r.get('msg', '')),
+                                             to_text(r.get('msg', '')),
                                              r.get('diff', None),
                                              is_host=False,
                                              error=failed,
                                              stdout=r.get('module_stdout', None),
-                                             stderr=r.get('module_stderr', None),
+                                             stderr=r.get('exception', None),
                                              )
         else:
             self.last_skipped = True
