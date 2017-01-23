@@ -93,15 +93,19 @@ tasks:
 
 from base64 import b64decode
 from os.path import expanduser
-from Crypto.Cipher import PKCS1_v1_5
-from Crypto.PublicKey import RSA
 import datetime
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 try:
     import boto.ec2
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+BACKEND = default_backend()
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -151,19 +155,16 @@ def main():
     else:
         try:
             with f:
-                key = RSA.importKey(f.read(), key_passphrase)
-        except (ValueError, IndexError, TypeError) as e:
+                key = load_pem_private_key(f.read(), key_passphrase, BACKEND)
+        except (ValueError, TypeError) as e:
             module.fail_json(msg = "unable to parse key file")
 
-    cipher = PKCS1_v1_5.new(key)
-    sentinel = 'password decryption failed!!!'
-
     try:
-        decrypted = cipher.decrypt(decoded, sentinel)
+        decrypted = key.decrypt(decoded, PKCS1v15())
     except ValueError as e:
         decrypted = None
 
-    if decrypted == None:
+    if decrypted is None:
         module.exit_json(win_password='', changed=False)
     else:
         if wait:

@@ -26,14 +26,6 @@ import traceback
 
 from jinja2.exceptions import TemplateNotFound
 
-# TODO: not needed if we use the cryptography library with its default RNG
-# engine
-HAS_ATFORK=True
-try:
-    from Crypto.Random import atfork
-except ImportError:
-    HAS_ATFORK=False
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
@@ -94,9 +86,6 @@ class WorkerProcess(multiprocessing.Process):
         #import cProfile, pstats, StringIO
         #pr = cProfile.Profile()
         #pr.enable()
-
-        if HAS_ATFORK:
-            atfork()
 
         try:
             # execute the task and build a TaskResult from the result
