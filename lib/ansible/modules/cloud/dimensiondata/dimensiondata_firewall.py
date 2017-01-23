@@ -20,23 +20,8 @@
 #   - Aimon Bustardo <Aimon.Bustardo@dimensiondata.com>
 #   - Lawrence Lui   <lawrence.lui@dimensiondata.com>
 #   - Jay Riddell    <Jay.Riddell@dimensiondata.com>
+#   - Adam Friedman  <tintoy@tintoy.io>
 #
-from ansible.module_utils.basic import *
-from ansible.module_utils.dimensiondata import *
-try:
-    from libcloud.common.dimensiondata import DimensionDataAPIException
-    from libcloud.common.dimensiondata import DimensionDataFirewallRule
-    from libcloud.common.dimensiondata import DimensionDataFirewallAddress
-    from libcloud.compute.base import NodeLocation
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
-    import libcloud.security
-    HAS_LIBCLOUD = True
-except:
-    HAS_LIBCLOUD = False
-
-# Get regions early to use in docs etc.
-dd_regions = get_dd_regions()
 
 DOCUMENTATION = '''
 ---
@@ -51,12 +36,22 @@ options:
   region:
     description:
       - The target region.
-    choices:
-      - Regions choices are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - Regions choices are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
-      - Note that the region values are available as list from dd_regions().
-      - Note that the default value "na" stands for "North America".  The code prepends 'dd-' to the region choice.
+      - Valid regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
+      - Regions are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
+      - Note that the default value "na" stands for "North America".
+      - The module prepends 'dd-' to the region.
     default: na
+  mcp_user:
+    description:
+      - The username used to authenticate to the CloudControl API.
+      - If not specified, will fall back to MCP_USER from environment variable or  ~/.dimensiondata.
+    required: false
+  mcp_password:
+    description:
+      - The password used to authenticate to the CloudControl API.
+      - If not specified, will fall back to MCP_PASSWORD from environment variable or  ~/.dimensiondata.
+      - Required if mcp_user is specified.
+    required: false
   location:
     description:
       - The target datacenter.
@@ -238,11 +233,27 @@ firewall_rule:
             sample: enabled
 '''
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.dimensiondata import *
+from ansible.module_utils.pycompat24 import get_exception
+
+try:
+    from libcloud.common.dimensiondata import DimensionDataAPIException
+    from libcloud.common.dimensiondata import DimensionDataFirewallRule
+    from libcloud.common.dimensiondata import DimensionDataFirewallAddress
+    from libcloud.compute.base import NodeLocation
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
+    import libcloud.security
+    HAS_LIBCLOUD = True
+except ImportError:
+    HAS_LIBCLOUD = False
+
 
 def get_firewall_rule_by_name(driver, name, network_domain_id):
     firewall_rules = driver.ex_list_firewall_rules(
         network_domain=network_domain_id)
-    rule = filter(lambda x: x.name == name, firewall_rules)
+    rule = [firewall_rule for firewall_rule in firewall_rules if firewall_rule.name == name]
     if len(rule) > 0:
         return rule[0]
     else:
@@ -284,7 +295,9 @@ def create_firewall_rule(module, driver, name, action, network_domain_id,
         module.exit_json(changed=True, msg="Firewall rule created " +
                          "successfully.",
                          firewall_rule=rule_obj_to_dict(new_rule))
-    except DimensionDataAPIException as e:
+
+    except DimensionDataAPIException:
+        e = get_exception()
         module.fail_json(msg="Create Firewall Rule failed with: '%s'" % e)
 
 
@@ -296,7 +309,8 @@ def delete_firewall_rule(module, driver, rule):
                              msg="Deleted firewall rule with name: '%s'" %
                              rule.name)
         module.fail_json("Unexpected failure deleting rule %s" % rule.name)
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
         module.fail_json(msg="Failed to delete firewall rule: %s" % str(e))
 
 
@@ -337,6 +351,7 @@ def sync_firewall_rule_state(module, driver, fw_rule, state):
         return {'success': True, 'result': 'nochange'}
     elif state != 'disabled' and fw_rule.enabled != 'true':
         enabled = True
+
     try:
         # State doesnt match, so set state.
         driver.ex_set_firewall_rule_state(fw_rule, enabled)
@@ -344,7 +359,8 @@ def sync_firewall_rule_state(module, driver, fw_rule, state):
         module.exit_json(changed=True,
                          msg="Firewall rule %s state changed." %
                          fw_rule.name, firewall_rule=rule_obj_to_dict(fw_rule))
-    except DimensionDataAPIException as e:
+    except DimensionDataAPIException:
+        e = get_exception()
         module.fail_json(msg="Firewall rule state change failed with: %s" % e)
 
 
@@ -367,7 +383,7 @@ def rule_obj_to_dict(rule):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            region=dict(default='na', choices=dd_regions),
+            region=dict(default='na'),
             location=dict(required=True, type='str'),
             network_domain=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
@@ -392,9 +408,10 @@ def main():
         module.fail_json(msg='libcloud is required for this module.')
 
     # set short vars for readability
-    credentials = get_credentials()
+    credentials = get_credentials(module)
     if credentials is False:
         module.fail_json(msg="User credentials not found")
+
     user_id = credentials['user_id']
     key = credentials['key']
     region = 'dd-%s' % module.params['region']
@@ -425,14 +442,16 @@ def main():
     # Check if relative_to_rule exists
     if position == 'BEFORE' or position == 'AFTER':
         if relative_to_rule is None:
-            module.fail_json(msg="'relative_to_rule' must be a valid rule " +
-                                 "name when 'position' is " +
-                                 "'BEFORE' or 'AFTER'")
+            module.fail_json(
+                msg="'relative_to_rule' must be a valid rule name when 'position' is 'BEFORE' or 'AFTER'"
+            )
+
         target_rule = get_firewall_rule_by_name(driver, relative_to_rule,
                                                 network_obj.id)
         if target_rule is None:
-            module.fail_json(msg="Rule '%s' specified in 'relative_to_rule'" +
-                             " not found" % relative_to_rule )
+            module.fail_json(
+                msg="Rule '%s' specified in 'relative_to_rule' not found" % relative_to_rule
+            )
 
     # Get rule if exists
     existing_rule = get_firewall_rule_by_name(driver, name, network_obj.id)
@@ -448,33 +467,34 @@ def main():
                                                    destination_port)
         if existing_rule is None:
             # Create Firewall Rule
-            fw_rule = create_firewall_rule(module, driver, name, action,
-                                           network_obj.id,
-                                           ip_version, protocol,
-                                           source_obj.ip_address,
-                                           source_obj.ip_prefix_size,
-                                           source_obj.port_begin,
-                                           source_obj.port_end,
-                                           destination_obj.ip_address,
-                                           destination_obj.ip_prefix_size,
-                                           destination_obj.port_begin,
-                                           destination_obj.port_end, position,
-                                           relative_to_rule, enabled)
+            create_firewall_rule(
+                module, driver, name, action,
+                network_obj.id,
+                ip_version, protocol,
+                source_obj.ip_address,
+                source_obj.ip_prefix_size,
+                source_obj.port_begin,
+                source_obj.port_end,
+                destination_obj.ip_address,
+                destination_obj.ip_prefix_size,
+                destination_obj.port_begin,
+                destination_obj.port_end, position,
+                relative_to_rule, enabled
+            )
         else:
             # Rule already exists
-            fw_rule = existing_rule
             # Exit now if state doesnt need updating
-            if fw_rule.enabled == 'false' and state == 'disabled':
+            if existing_rule.enabled == 'false' and state == 'disabled':
                 module.exit_json(changed=False,
                                  msg="Firewall rule exists and is disabled.",
-                                 firewall_rule=rule_obj_to_dict(fw_rule))
-            elif fw_rule.enabled == 'true' and state != 'disabled':
+                                 firewall_rule=rule_obj_to_dict(existing_rule))
+            elif existing_rule.enabled == 'true' and state != 'disabled':
                 module.exit_json(changed=False,
                                  msg="Firewall rule exists and is enabled.",
-                                 firewall_rule=rule_obj_to_dict(fw_rule))
+                                 firewall_rule=rule_obj_to_dict(existing_rule))
             else:
                 # Sync Rule state
-                sync_firewall_rule_state(module, driver, fw_rule, state)
+                sync_firewall_rule_state(module, driver, existing_rule, state)
     elif state == "absent":
         if existing_rule is None:
             module.exit_json(msg="Rule with name '%s' not found." % name)
@@ -482,8 +502,9 @@ def main():
             # Delete rule
             delete_firewall_rule(module, driver, existing_rule)
     else:
-        module.fail_json(msg="Unrecongnized state given. Must be one of: " +
-                         "present, absent, enabled, disabled")
+        module.fail_json(
+            msg="Unrecongnized state given. Must be one of: present, absent, enabled, disabled"
+        )
 
 
 main()
