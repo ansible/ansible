@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0',
+}
 
 DOCUMENTATION = """
 ---
@@ -138,12 +140,13 @@ warnings:
   type: list
   sample: ['...', '...']
 """
-import ansible.module_utils.vyos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.network import NetworkModule, NetworkError
+import time
+
+from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
+from ansible.module_utils.vyos2 import run_commands
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
@@ -153,17 +156,26 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, string_types):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text']:
-            module.fail_json(msg='invalid output specified for command')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown keyword specified')
-        yield cmd
+def parse_commands(module, warnings):
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        response=dict(),
+    ))
+    commands = command(module.params['commands'])
+
+    for index, cmd in enumerate(commands):
+        if module.check_mode and not cmd['command'].startswith('show'):
+            warnings.append('only show commands are supported when using '
+                            'check mode, not executing `%s`' % cmd['command'])
+        else:
+            if cmd['command'].startswith('conf'):
+                module.fail_json(msg='vyos_command does not support running '
+                                     'config mode commands.  Please use '
+                                     'vyos_config instead')
+        commands[index] = module.jsonify(cmd)
+
+    return commands
 
 def main():
     spec = dict(
@@ -177,63 +189,48 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
-                           supports_check_mode=True)
+    module = LocalAnsibleModule(argument_spec=spec, supports_check_mode=True)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
 
     warnings = list()
+    commands = parse_commands(module, warnings)
 
-    runner = CommandRunner(module)
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
 
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='vyos_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'vyos_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
 
-    for item in conditionals:
-        runner.add_conditional(item)
+    for _ in range(retries):
+        responses = run_commands(module, commands)
 
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
+        for item in conditionals:
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
 
-    try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+            if not conditionals:
+                break
 
-    result = dict(changed=False, stdout=list())
+            time.sleep(interval)
 
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'])
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, falied_conditions=failed_conditions)
 
-    result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+    result = {
+        'changed': False,
+        'stdout': responses,
+        'warnings': warnings,
+        'stdout_lines': list(to_lines(responses)),
+    }
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
