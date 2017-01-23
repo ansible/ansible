@@ -22,7 +22,6 @@ __metaclass__ = type
 
 import os
 import tempfile
-from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -31,27 +30,6 @@ from ansible import errors
 from ansible.parsing import vault
 from ansible.module_utils._text import to_bytes, to_text
 
-
-# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
 
 v10_data = """$ANSIBLE_VAULT;1.0;AES
 53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
@@ -423,9 +401,6 @@ class TestVaultEditor(unittest.TestCase):
 
     def test_decrypt_1_0(self):
         # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
             f.write(to_bytes(v10_data))
@@ -451,9 +426,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_decrypt_1_1(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
             f.write(to_bytes(v11_data))
@@ -478,10 +450,6 @@ class TestVaultEditor(unittest.TestCase):
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
     def test_rekey_migration(self):
-        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v10_file = tempfile.NamedTemporaryFile(delete=False)
         with v10_file as f:
             f.write(to_bytes(v10_data))
