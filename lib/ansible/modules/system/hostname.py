@@ -33,8 +33,8 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname.
-    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI, Alpine Linux.
-    - Any distribution that uses systemd as their init system.
+    - Currently works on most Linux distribution, *BSD, Solaris (including derivatives).
+    - Windows, HP-UX and AIX are not supported at this moment. Please open a ticket for other systems where this module does not work yet.
     - Note, this module does *NOT* modify /etc/hosts. You need to modify it yourself using other modules like template or replace.
 options:
     name:
