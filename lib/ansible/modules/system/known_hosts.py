@@ -313,12 +313,12 @@ def compute_diff(path, found_line, replace_or_add, state, key):
     else:
         diff['before'] = inf.read()
         inf.close()
-    diff['after'] = ''.join([
-        line for line_number, line in enumerate(diff['before'].splitlines(1))
-        if not (found_line==(line_number + 1) and (replace_or_add or state=='absent'))
-    ])
+    lines = diff['before'].splitlines(1)
+    if (replace_or_add or state == 'absent') and 1 <= found_line <= len(lines):
+        del lines[found_line - 1]
     if state == 'present' and (replace_or_add or found_line is None):
-        diff['after'] += key
+        lines.append(key)
+    diff['after'] = ''.join(lines)
     return diff
 
 def main():
