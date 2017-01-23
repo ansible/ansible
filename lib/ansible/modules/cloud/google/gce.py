@@ -33,7 +33,8 @@ description:
 options:
   image:
     description:
-       - image string to use for the instance
+      - image string to use for the instance (default will follow latest
+        stable debian image)
     required: false
     default: "debian-8"
   instance_names:
