@@ -26,7 +26,7 @@ DOCUMENTATION = """
 ---
 module: vyos_command
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author: "Nathaniel Case (@qalthos)"
 short_description: Run one or more commands on VyOS devices
 description:
   - The command module allows running one or more commands on remote
@@ -38,7 +38,6 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
-extends_documentation_fragment: vyos
 options:
   commands:
     description:
@@ -72,7 +71,7 @@ options:
   retries:
     description:
       - Specifies the number of retries a command should be tried
-        before it is considered failed.  The command is run on the
+        before it is considered failed. The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
     required: false
@@ -80,8 +79,8 @@ options:
   interval:
     description:
       - Configures the interval in seconds to wait between I(retries)
-        of the command.  If the command does not pass the specified
-        conditional, the interval indicates how to long to wait before
+        of the command. If the command does not pass the specified
+        conditions, the interval indicates how long to wait before
         trying the command again.
     required: false
     default: 1
@@ -119,7 +118,7 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The conditionals that failed
+  description: The conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']
@@ -128,6 +127,21 @@ warnings:
   returned: always
   type: list
   sample: ['...', '...']
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 import time
 
@@ -139,11 +153,13 @@ from ansible.module_utils.vyos2 import run_commands
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
+
 def to_lines(stdout):
     for item in stdout:
         if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
+
 
 def parse_commands(module, warnings):
     command = ComplexList(dict(
@@ -165,6 +181,7 @@ def parse_commands(module, warnings):
         commands[index] = module.jsonify(cmd)
 
     return commands
+
 
 def main():
     spec = dict(
