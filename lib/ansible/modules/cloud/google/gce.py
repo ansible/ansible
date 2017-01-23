@@ -35,7 +35,7 @@ options:
     description:
        - image string to use for the instance
     required: false
-    default: "debian-7"
+    default: "debian-8"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -617,7 +617,7 @@ def change_instance_state(module, gce, instance_names, number, zone_name, state)
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            image = dict(default='debian-7'),
+            image = dict(default='debian-8'),
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
