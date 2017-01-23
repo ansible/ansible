@@ -26,20 +26,20 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-_DEVICE_CONFIG = None
+_DEVICE_CONFIGS = {}
 
-def get_config(module):
-    global _DEVICE_CONFIG
+def get_config(module, target='commands'):
+    cmd = ' '.join(['show configuration', target])
 
-    if _DEVICE_CONFIG:
-        return _DEVICE_CONFIG
-
-    rc, out, err = module.exec_command('show configuration commands')
-    if rc != 0:
-        module.fail_json(msg='unable to retrieve current config', stderr=err)
-
-    _DEVICE_CONFIG = out.strip()
-    return _DEVICE_CONFIG
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = module.exec_command(cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=err)
+        cfg = str(out).strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
 def run_commands(module, commands, check_rc=True):
     assert isinstance(commands, list), 'commands must be a list'
