@@ -91,19 +91,22 @@ notes:
 """
 
 EXAMPLES = """
-- vyos_command:
-    commands:
-      - show interfaces ethernet {{ item }}
-  with_items:
-    - eth0
-    - eth1
+tasks:
+  - name: show configuration on ethernet devices eth0 and eth1
+    vyos_command:
+      commands:
+        - show interfaces ethernet {{ item }}
+    with_items:
+      - eth0
+      - eth1
 
-- vyos_command:
-    commands:
-      - show version
-      - show hardware cpu
-    wait_for:
-      - "result[0] contains 'VyOS 1.1.7'"
+  - name: run multiple commands and check if version output contains specific version string
+    vyos_command:
+      commands:
+        - show version
+        - show hardware cpu
+      wait_for:
+        - "result[0] contains 'VyOS 1.1.7'"
 """
 
 RETURN = """
