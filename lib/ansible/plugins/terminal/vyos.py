@@ -38,9 +38,12 @@ class TerminalModule(TerminalBase):
         re.compile(r"\n\s+Set failed"),
     ]
 
+    terminal_length = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+
     def on_open_shell(self):
         try:
             self._exec_cli_command('set terminal length 0')
+            self._exec_cli_command('set terminal length %s' % self.terminal_length)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
