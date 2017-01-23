@@ -294,6 +294,9 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
 
 
 def unfrackgitpath(path):
+    if path is None:
+        return None
+
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
 
