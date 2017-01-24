@@ -84,6 +84,7 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
+- logstash_plugin
 - omapi_host
 - openwrt_init
 - ovirt:
