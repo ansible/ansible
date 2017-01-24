@@ -43,7 +43,7 @@ options:
   password:
       required: true
       description:
-      - Password
+      - Password for the specified user.
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3
@@ -61,7 +61,7 @@ options:
   hostname:
       required: true
       description:
-      - The hostname or IP address of the SolidFire cluster
+      - The hostname or IP address of the SolidFire cluster.
   username:
       required: true
       description:
@@ -69,7 +69,7 @@ options:
   password:
       required: true
       description:
-      - Password
+      - Password for the specified user.
 
 requirements:
   - solidfire-sdk-python (1.1.0.92)
