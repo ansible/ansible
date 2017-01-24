@@ -149,7 +149,7 @@ class TestIosConfigModule(unittest.TestCase):
         commands = ['hostname foo', 'test1', 'test2']
         self.execute_module(changed=True, commands=commands, sort=False)
 
-    def test_ios_config_before_after_no_chnage(self):
+    def test_ios_config_before_after_no_change(self):
         set_module_args(dict(lines=['hostname router'],
                              before=['test1', 'test2'],
                              after=['test3','test4']))
