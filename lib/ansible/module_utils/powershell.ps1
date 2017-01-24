@@ -110,57 +110,60 @@ Function Expand-Environment($value)
 #Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
 #Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, $type=$null)
+Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $failifempty = $false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, $type = $null, $aliases = @())
 {
-    # Check if the provided Member $name exists in $obj and return it or the default. 
-    Try
-    {
-        If (-not $obj.$name.GetType)
-        {
-            throw
+    # Check if the provided Member $name or aliases exist in $obj and return it or the default.
+    try {
+
+        $found = $null
+        # First try to find preferred parameter $name
+        $aliases = @($name) + $aliases
+
+        # Iterate over aliases to find acceptable Member $name
+        foreach ($alias in $aliases) {
+            if (Get-Member -InputObject $obj -Name $alias) {
+                $found = $alias
+                break
+            }
         }
 
-        if ($ValidateSet)
-        {
-            if ($ValidateSet -contains ($obj.$name))
-            {
+        if ($found -eq $null) {
+            throw
+        }
+        $name = $found
+
+        if ($ValidateSet) {
+
+            if ($ValidateSet -contains ($obj.$name)) {
                 $value = $obj.$name
-            }
-            Else
-            {
-                if ($ValidateSetErrorMessage -eq $null)
-                {
+            } else {
+                if ($ValidateSetErrorMessage -eq $null) {
                     #Auto-generated error should be sufficient in most use cases
                     $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
                 }
                 Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
             }
-        }
-        Else
-        {
+
+        } else {
             $value = $obj.$name
         }
-    }
-    Catch
-    {
-        If ($failifempty -eq $false)
-        {
+
+    } catch {
+        if ($failifempty -eq $false) {
             $value = $default
-        }
-        Else
-        {
-            If (!$emptyattributefailmessage)
-            {
+        } else {
+            if (!$emptyattributefailmessage) {
                 $emptyattributefailmessage = "Missing required argument: $name"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
+
     }
 
-    If ($value -ne $null -and $type -eq "path") {
+    if ($value -ne $null -and $type -eq "path") {
         # Expand environment variables on path-type (Beware: turns $null into "")
         $value = Expand-Environment($value)
-    } ElseIf ($type -eq "bool") {
+    } elseif ($type -eq "bool") {
         # Convert boolean types to real Powershell booleans
         $value = $value | ConvertTo-Bool
     }
@@ -221,7 +224,7 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     $parameters
 }
 
-# Helper function to calculate a hash of a file in a way which powershell 3 
+# Helper function to calculate a hash of a file in a way which powershell 3
 # and above can handle:
 Function Get-FileChecksum($path)
 {
@@ -255,7 +258,7 @@ Function Get-PendingRebootStatus
     {
         return $True
     }
-    else 
+    else
     {
         return $False
     }
