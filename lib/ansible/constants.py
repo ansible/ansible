@@ -239,6 +239,7 @@ DEFAULT_INTERNAL_POLL_INTERVAL = get_config(p, DEFAULTS, 'internal_poll_interval
 ERROR_ON_MISSING_HANDLER  = get_config(p, DEFAULTS, 'error_on_missing_handler', 'ANSIBLE_ERROR_ON_MISSING_HANDLER', True, value_type='boolean')
 SHOW_CUSTOM_STATS = get_config(p, DEFAULTS, 'show_custom_stats', 'ANSIBLE_SHOW_CUSTOM_STATS', False, value_type='boolean')
 NAMESPACE_FACTS = get_config(p, DEFAULTS, 'restrict_facts_namespace', 'ANSIBLE_RESTRICT_FACTS', False, value_type='boolean')
+DEFAULT_SKIP_ROLE_DEPENDENCIES    = get_config(p, DEFAULTS, 'skip_role_dependencies', 'ANSIBLE_SKIP_ROLE_DEPENDENCIES', False, value_type='boolean')
 
 # static includes
 DEFAULT_TASK_INCLUDES_STATIC    = get_config(p, DEFAULTS, 'task_includes_static', 'ANSIBLE_TASK_INCLUDES_STATIC', False, value_type='boolean')
