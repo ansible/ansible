@@ -217,7 +217,7 @@ The Credstash Lookup
 ````````````````````
 .. versionadded:: 2.0
 
-Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
+Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/fugue/credstash
 
 First, you need to store your secrets with credstash:
 
