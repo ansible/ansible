@@ -11,7 +11,7 @@ syntax highlighting before you include it in your Python file.
 
 
 Example
-```````
+'''''''
 
 See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
@@ -74,7 +74,7 @@ the ``copy`` module::
     '''
 
 Building & Testing
-``````````````````
+''''''''''''''''''
 
 Put your completed module file into the 'library' directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
