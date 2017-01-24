@@ -46,6 +46,7 @@ Ansible Changes By Release
   * ec2_lc_facts
   * aws_kms
   * ecs_ecr
+  * ec2_vpc_vgw_facts
 - cloudscale_server
 - cloudstack
   * cs_host
