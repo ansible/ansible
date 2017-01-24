@@ -4,7 +4,7 @@
 # Ansible module to manage PaloAltoNetworks Firewall
 # (c) 2016, techbizdev <techbizdev@paloaltonetworks.com>
 #
-# This file is part of Ansible.
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: panos_cert_gen_ssh
 short_description: generates a self-signed certificate - NOT A CA -- using SSH with SSH key
 description:
-    - generate certificate
+    - generates a self-signed certificate that can be used by GlobalProtect client. root-ca must be preset on the system first. This module depends on paramiko for ssh.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -162,7 +162,7 @@ def main():
         password=dict(),
         cert_cn=dict(required=True),
         cert_friendly_name=dict(required=True),
-        rsa_nbits=dict(default='1024'),
+        rsa_nbits=dict(default='2048'),
         signed_by=dict(required=True)
 
     )
