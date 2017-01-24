@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import errno
 import glob
 import os
 import tempfile
@@ -82,6 +83,23 @@ SUPPORTED_PYTHON_VERSIONS = (
 COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+
+
+def check_startup():
+    """Checks to perform at startup before running commands."""
+    check_legacy_modules()
+
+
+def check_legacy_modules():
+    """Detect conflicts with legacy core/extras module directories to avoid problems later."""
+    for directory in 'core', 'extras':
+        path = 'lib/ansible/modules/%s' % directory
+
+        for root, _, file_names in os.walk(path):
+            if file_names:
+                # the directory shouldn't exist, but if it does, it must contain no files
+                raise ApplicationError('Files prohibited in "%s". '
+                                       'These are most likely legacy modules from version 2.2 or earlier.' % root)
 
 
 def create_shell_command(command):

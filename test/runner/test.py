@@ -39,6 +39,7 @@ from lib.executor import (
     ApplicationWarning,
     Delegate,
     generate_pip_install,
+    check_startup,
 )
 
 from lib.target import (
@@ -67,6 +68,7 @@ def main():
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
+        check_startup()
 
         try:
             args.func(config)
