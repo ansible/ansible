@@ -40,7 +40,7 @@ Target: February/March 2017
   
   - Pipelining support
   - Become support
-  - Integrated kerberos ticket management (via ansible_user/ansible_password)
+  - Integrated kerberos ticket management (via ansible_user/ansible_password) (done)
   - Switch PS input encoding to BOM-less UTF8
   - Server 2016 support/testing (now RTM’d)
   - Modularize Windows module_utils (allow N files)
