@@ -9,10 +9,9 @@ which conforms to the schema defined below. You may find it easier to
 start writing your ``DOCUMENTATION`` string in an editor with YAML
 syntax highlighting before you include it in your Python file.
 
-.. _module_doc_example:
 
 Example
-+++++++
+```````
 
 See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
@@ -73,3 +72,20 @@ the ``copy`` module::
         sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
     '''
+
+Building & Testing
+``````````````````
+
+Put your completed module file into the 'library' directory and then
+run the command: ``make webdocs``. The new 'modules.html' file will be
+built and appear in the 'docsite/' directory.
+
+.. tip::
+
+   If you're having a problem with the syntax of your YAML you can
+   validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
+
+.. tip::
+
+    You can set the environment variable ANSIBLE_KEEP_REMOTE_FILES=1 on the controlling host to prevent ansible from
+    deleting the remote files so you can debug your module.
