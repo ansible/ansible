@@ -266,14 +266,14 @@ def compare_option_group(client, module):
         # Catch new settings you've provided that aren't in the current settings
         old_settings = []
         new_settings = []
-        for setting_name in new_options:
-            new_settings.append(setting_name['OptionName'])
-        for option in current_option['Options']:
-            old_settings.append(option['OptionName'])
-        if cmp(sorted(old_settings),sorted(new_settings)) != 0:
-            to_be_added = list(set(new_settings) - set(old_settings))
-            to_be_removed = list(set(old_settings) - set(new_settings))
+        new_settings = set([item['OptionName'] for item in new_options])
+        old_settings = set([item['OptionName'] for item in current_option['Options']])
+        if new_settings != old_settings:
+            to_be_added = list(new_settings - old_settings)
+            to_be_removed = list(old_settings - new_settings)
+
         return to_be_added, to_be_removed
+
 
 
 def setup_rds_option_group(client, module):
