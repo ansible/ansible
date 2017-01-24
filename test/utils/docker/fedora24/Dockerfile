@@ -21,6 +21,7 @@ RUN dnf clean all && \
     dbus-python \
     file \
     findutils \
+    gcc \
     git \
     glibc-locale-source \
     iproute \
@@ -36,6 +37,7 @@ RUN dnf clean all && \
     procps \
     python2-dnf \
     python-coverage \
+    python-devel \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \
