@@ -24,12 +24,15 @@ RUN dnf clean all && \
     git \
     glibc-locale-source \
     iproute \
+    libffi \
+    libffi-devel \
     make \
     mariadb-server \
     mercurial \
     MySQL-python \
     openssh-clients \
     openssh-server \
+    openssl-devel \
     procps \
     python2-dnf \
     python-coverage \
