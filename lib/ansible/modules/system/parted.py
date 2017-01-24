@@ -36,9 +36,10 @@ description:
   - Linux parted tool. For a full description of the fields and the
     options check the GNU parted manual.
 notes:
-  - When dealing with new disks and with parted versions before 3.1, the module
-    queries directly the system to obtain disk information. In this case the
-    units CHS and CYL are not supported.
+  - When fetching information about a new disks and when the version of parted
+    installed on the system is before version 3.1, the module queries directly
+    the system to obtain disk information. In this case the units CHS and CYL
+    are not supported.
 requirements: []
 options:
   device:
@@ -59,7 +60,8 @@ options:
     description:
      - Selects the current default unit that Parted will use to display
        locations and capacities on the disk and to interpret those given by the
-       user if they are not suffixed by an unit.
+       user if they are not suffixed by an unit. When fetching information about
+       a disk, it is always recommended to specify a unit.
     choices: [
        's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', '%', 'cyl',
        'chs', 'compact'
@@ -177,8 +179,8 @@ EXAMPLES = """
     state: present
     part_start: 1GiB
 
-# Read device information
-- parted: device=/dev/sdb
+# Read device information (always use unit when probing)
+- parted: device=/dev/sdb unit=MiB
   register: sdb_info
 
 # Remove all partitions from disk
@@ -306,11 +308,13 @@ def read_record(file_path, default=None):
     Reads the first line of a file and returns it.
     """
     try:
-        with open(file_path, 'r') as f:
-            t = f.readline()
+        f = open(file_path, 'r')
+        t = f.readline()
         return t.strip()
     except:
         return default
+    finally:
+        f.close()
 
 
 def get_unlabeled_device_info(device, unit):
