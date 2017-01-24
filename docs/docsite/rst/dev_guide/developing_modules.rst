@@ -60,25 +60,27 @@ Check out the roles documentation `here <http://docs.ansible.com/ansible/playboo
 How To Develop A Module
 ```````````````````````
 
-The following topics will discuss how to develop modules:
+The following topics will discuss how to develop and work with modules:
 
 :doc:`developing_modules_general`
     A general overview of how to develop, debug, and test modules
+:doc:`developing_modules_documenting`
+    How to include in-line documentation in your module.
+:doc:`developing_modules_best_practices`
+    Best practices, recommendations, and things to avoid.
+:doc:`developing_modules_contributing`
+     Guidelines for contributing your module to Ansible.
+
 :doc:`../guide_aws`
     Working with Amazon Web Services (AWS) modules.
 :doc:`developing_modules_python3`
     Adding Python 3 support to modules (all new modules must be py2.4 and py3 compatible).
-:doc:`../guide_network_modules`
+:doc:`../intro_networking`
     Working with Network modules.
-:doc:`i../ntro_windows`
+:doc:`../intro_windows`
     Working with Windows modules.
 
 
-.. include:: ./developing_modules_documenting.rst
-
-.. include:: ./developing_modules_best_practices.rst
-
-.. include:: ./developing_module_contributing.rst
 
 .. seealso::
 
