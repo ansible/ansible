@@ -123,6 +123,14 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+msg:
+  type: string
+  description: A friendly message describing the task result.
+  returned: always
+  sample: Logical volume testlv created.
+'''
+
 import re
 
 def convert_size(size):
@@ -257,7 +265,7 @@ def main():
     else:
         lv_policy="m"
 
-    # Add --test option when running in check-mode
+    # Add echo command when running in check-mode
     if module.check_mode:
         test_opt = 'echo '
     else:
@@ -299,11 +307,10 @@ def main():
         if this_lv is None:
             module.fail_json(msg="No size given.")
 
-    msg=''
     if this_lv is None:
         if state == 'present':
             if lv_size > this_vg['free']:
-                module.fail_json(msg="Not enough free space in volume group %s: %sM free." % (this_vg['name'], this_vg['free']))
+                module.fail_json(msg="Not enough free space in volume group %s: %s MB free." % (this_vg['name'], this_vg['free']))
 
             ### create LV
             mklv_cmd = module.get_bin_path("mklv", required=True)
@@ -311,8 +318,7 @@ def main():
             cmd = "%s %s -t %s -y %s -c %s  -e %s %s %s %sM %s" % (test_opt, mklv_cmd, lv_type, lv, copies, lv_policy, opts, vg, lv_size, pvs)
             rc, _, err = module.run_command(cmd)
             if rc == 0:
-                changed = True
-                msg = "Logical volume %s created." % lv
+                module.exit_json(changed=True, msg="Logical volume %s created." % lv)
             else:
                 module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
     else:
@@ -321,8 +327,7 @@ def main():
             rmlv_cmd = module.get_bin_path("rmlv", required=True)
             rc, _, err = module.run_command("%s %s -f %s" % (test_opt, rmlv_cmd, this_lv['name']))
             if rc == 0:
-                changed = True
-                msg = "Logical volume %s deleted." % lv
+                module.exit_json(changed=True, msg="Logical volume %s deleted." % lv)
             else:
                 module.fail_json(msg="Failed to remove logical volume %s" % (lv), rc=rc, err=err)
         else:
@@ -331,8 +336,7 @@ def main():
                 chlv_cmd = module.get_bin_path("chlv", required=True)
                 rc, _, err = module.run_command("%s %s -e %s %s" % (test_opt, chlv_cmd, lv_policy, this_lv['name']))
                 if rc == 0:
-                    changed = True
-                    msg = "Logical volume %s policy changed: %s." % (lv, policy)
+                    module.exit_json(changed=True, msg="Logical volume %s policy changed: %s." % (lv, policy))
             if not size:
                 pass
             if vg != this_lv['vg']:
@@ -344,16 +348,14 @@ def main():
                 cmd = "%s %s %sM" % (extendlv_cmd, lv, lv_size - this_lv['size'])
                 rc, out, err = module.run_command(cmd)
                 if rc == 0:
-                    changed = True
-                    msg += "Logical volume %s size extended to %sMB." % (lv, lv_size)
+                    module.exit_json(changed=True, msg="Logical volume %s size extended to %sMB." % (lv, lv_size))
                 else:
                     module.fail_json(msg="Unable to resize %s to %sMB" % (lv, lv_size), rc=rc, err=err)
             elif lv_size < this_lv['size']:
                 module.fail_json(msg="No shrinking of Logical Volume %s permitted. Current size: %s MB" % (lv, this_lv['size']))
             else:
-                msg += "Logical volume %s size is already %sMB." % (lv, lv_size)
+                module.exit_json(changed=False, msg="Logical volume %s size is already %sMB." % (lv, lv_size))
 
-    module.exit_json(changed=changed, msg=msg)
 
 # import module snippets
 from ansible.module_utils.basic import *
