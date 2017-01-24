@@ -1,9 +1,9 @@
 boto3
+cryptography
 jinja2
 mock
 nose
 passlib
-pycrypto
 pytest
 python-memcached
 pyyaml

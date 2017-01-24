@@ -1,3 +1,4 @@
+cryptography
 jinja2
 junit-xml
 pywinrm
