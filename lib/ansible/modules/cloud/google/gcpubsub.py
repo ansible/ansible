@@ -55,6 +55,10 @@ options:
   publish:
     description: List of dictionaries describing messages and attributes to be published.  Dictionary is in message(str):attributes(dict) format. Only message is required.
     required: False
+  state:
+    description: State of the topic or queue (absent, present). Applies to the most granular resource. Remove the most granular resource.  If subcription is specified we remove it.  If only topic is specified, that is what is removed. Note that a topic can be removed without first removing the subscription.
+    required: False
+    default: "present"
 '''
 EXAMPLES = '''
 # Create a topic and publish a message to it
@@ -146,11 +150,18 @@ pulled_messages:
     type: list of dictionary
     sample: [{ "ack_id": "XkASTCcYREl...","attributes": {"key1": "val1",...}, "data": "this is message 1", "message_id": "49107464153705"},..]
 
+state:
+    description: The state of the topic or subscription. Value will be either 'absent' or 'present'.
+    returned: Always
+    type: str
+    sample: "present"
+
 subscription: 
     description: Name of subscription.
     returned: When subscription fields are specified
     type: str
     sample: "mysubscription"
+
 topic: 
     description: Name of topic.
     returned: Always
