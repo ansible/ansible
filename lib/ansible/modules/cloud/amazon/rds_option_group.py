@@ -235,13 +235,13 @@ def match_option_group_options(client, module):
             for option in current_option['Options']:
                 for setting_name in new_options:
                     if setting_name['OptionName'] == option['OptionName']:
-                        for name in setting_name.iterkeys():
+                        for name in iter(setting_name):
                             # Security groups need to be handled separately due to different keys on request and what is
                             # returned by the API
-                            if name in option.iterkeys() and name != 'OptionSettings' and name != 'VpcSecurityGroupMemberships':
+                            if name in iter(option) and name != 'OptionSettings' and name != 'VpcSecurityGroupMemberships':
                                 if cmp(setting_name[name], option[name]) != 0:
                                     requires_update = True
-                            if name in option.iterkeys() and name == 'VpcSecurityGroupMemberships':
+                            if name in iter(option) and name == 'VpcSecurityGroupMemberships':
                                 for groups in option[name]:
                                     if groups['VpcSecurityGroupId'] not in setting_name[name]:
                                         requires_update = True
@@ -360,7 +360,7 @@ def main():
 
     if not HAS_BOTO3:
         module.fail_json(msg='json and boto3 is required.')
-    state = module.params.get('state').lower()
+    state = module.params.get('state')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='rds', region=region, endpoint=ec2_url, **aws_connect_kwargs)
