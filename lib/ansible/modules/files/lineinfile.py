@@ -286,6 +286,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
+            break
 
     msg = ''
     changed = False
