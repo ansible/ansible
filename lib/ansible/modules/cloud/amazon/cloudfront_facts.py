@@ -349,41 +349,44 @@ class CloudFrontServiceManager:
     def summary(self):
         try:
             summary_dict = {}
-            distribution_list = { 'distributions': [] }
-            origin_access_identity_id_list = { 'origin_access_identities': [] }
-            streaming_distributions_list = { 'streaming_distributions': [] }
-
-            distributions = self.list_distributions(False)
-            for dist in distributions:
-                for alias in dist['Aliases']['Items']:
-                    distribution_id = str(dist['Id'])
-                    temp_dist = { 'alias': alias }
-                    temp_dist.update( { 'distribution_id': distribution_id } )
-                    invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(distribution_id)
-                    if invalidation_ids:
-                        temp_dist.update( {'invalidations': invalidation_ids } )
-                    distribution_list['distributions'].append(temp_dist)
-
-            origin_access_identities = self.list_origin_access_identities()
-            for origin_access_identity in origin_access_identities:
-                origin_access_identity_id_list['origin_access_identities'].append(str(origin_access_identity['Id']))
-
-            streaming_distributions = self.list_streaming_distributions(False)
-            for streaming_distribution in streaming_distributions:
-                for streaming_alias in streaming_distribution['Aliases']['Items']:
-                    streaming_distribution_id = str(streaming_distribution['Id'])
-                    temp_streaming_distribution = { 'alias': streaming_alias }
-                    temp_streaming_distribution.update( { 'distribution_id': streaming_distribution_id } )
-                    streaming_distributions_list['streaming_distributions'].append(temp_streaming_distribution)
-
-            summary_dict.update(distribution_list)
-            summary_dict.update(origin_access_identity_id_list)
-            summary_dict.update(streaming_distributions_list)
-
+            summary_dict.update(self.summary_get_distribution_list())
+            summary_dict.update(self.summary_get_origin_access_identity_list())
+            summary_dict.update(self.summary_get_streaming_distribution_list())
             return summary_dict
-
         except Exception as e:
             self.module.fail_json(msg="Error generating summary = " + str(e), exception=traceback.format_exc(e))
+
+    def summary_get_streaming_distribution_list(self):
+        streaming_distributions_list = { 'streaming_distributions': [] }
+        streaming_distributions = self.list_streaming_distributions(False)
+        for streaming_distribution in streaming_distributions:
+            for streaming_alias in streaming_distribution['Aliases']['Items']:
+                streaming_distribution_id = str(streaming_distribution['Id'])
+                temp_streaming_distribution = { 'alias': streaming_alias }
+                temp_streaming_distribution.update( { 'distribution_id': streaming_distribution_id } )                
+                streaming_distributions_list['streaming_distributions'].append(temp_streaming_distribution)
+        return streaming_distributions_list
+
+    def summary_get_origin_access_identity_list(self):
+        origin_access_identity_list = { 'origin_access_identities': [] }
+        origin_access_identities = self.list_origin_access_identities()
+        for origin_access_identity in origin_access_identities:
+            origin_access_identity_list['origin_access_identities'].append(str(origin_access_identity['Id']))
+        return origin_access_identity_list
+
+    def summary_get_distribution_list(self):
+        distribution_list = { 'distributions': [] }
+        distributions = self.list_distributions(False)
+        for dist in distributions:
+            for alias in dist['Aliases']['Items']:
+                distribution_id = str(dist['Id'])
+                temp_dist = { 'alias': alias }
+                temp_dist.update( { 'distribution_id': distribution_id } )
+                invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(distribution_id)
+                if invalidation_ids:
+                    temp_dist.update( {'invalidations': invalidation_ids } )
+                distribution_list['distributions'].append(temp_dist)
+        return distribution_list
 
     def get_list_of_invalidation_ids_from_distribution_id(self, distribution_id):
         try:
@@ -450,6 +453,12 @@ class CloudFrontServiceManager:
             for alias in aliases:
                 keyed_list.update({alias: item})
         return keyed_list
+
+def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
+    facts[distribution_id].update(details)
+    for alias in aliases:
+        facts[alias].update(details)
+    return facts
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -554,17 +563,13 @@ def main():
         result = { 'cloudfront': {} }
         facts = result['cloudfront']
 
-    # get details based on options
+# get details based on options
     if distribution:
         distribution_details = service_mgr.get_distribution(distribution_id)
-        facts[distribution_id].update(distribution_details)
-        for alias in aliases:
-            facts[alias].update(distribution_details)
+        facts = set_facts_for_distribution_id_and_alias(distribution_details, facts, distribution_id, aliases)
     if distribution_config:
         distribution_config_details = service_mgr.get_distribution_config(distribution_id)
-        facts[distribution_id].update(distribution_config_details)
-        for alias in aliases:
-            facts[alias].update(distribution_config_details)
+        facts = set_facts_for_distribution_id_and_alias(distribution_config_details, facts, distribution_id, aliases)
     if origin_access_identity:
         facts[origin_access_identity_id].update(service_mgr.get_origin_access_identity(origin_access_identity_id))
     if origin_access_identity_config:
@@ -572,25 +577,16 @@ def main():
     if invalidation:
         invalidation = service_mgr.get_invalidation(distribution_id, invalidation_id)
         facts[invalidation_id].update(invalidation)
-        facts[distribution_id].update(invalidation)
-        for alias in aliases:
-            facts[alias].update(invalidation)
+        facts = set_facts_for_distribution_id_and_alias(invalidation, facts, distribution_id, aliases)
     if streaming_distribution:
         streaming_distribution_details = service_mgr.get_streaming_distribution(distribution_id)
-        facts[distribution_id].update(streaming_distribution_details)
-        for alias in aliases:
-            facts[alias].update(streaming_distribution_details)
+        facts = set_facts_for_distribution_id_and_alias(streaming_distribution_details, facts, distribution_id, aliases)
     if streaming_distribution_config:
         streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
-        facts[distribution_id].update(streaming_distribution_config_details)
-        for alias in aliases:
-            facts[alias].update(streaming_distribution_config_details)
+        facts = set_facts_for_distribution_id_and_alias(streaming_distribution_config_details, facts, distribution_id, aliases)
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
-        facts.update({distribution_id:invalidations})
-        for alias in aliases:
-            facts.update({alias: invalidations})
-
+        facts = set_facts_for_distribution_id_and_alias(invalidations, facts, distribution_id, aliases)
     # get list based on options
     if all_lists or list_origin_access_identities:
         facts['origin_access_identities'] = service_mgr.list_origin_access_identities()
