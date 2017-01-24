@@ -59,7 +59,7 @@ EXAMPLES = '''
     region: ap-southeast-2
     profile: production
     filters:
-        "tag:Name": "vgw-123"
+        "tag:Name": "main-virt-gateway"
   register: vgw_facts
 
 - name: Gather facts about a specific virtual gateway by VpnGatewayIds
@@ -129,7 +129,7 @@ def list_virtual_gateways(client, module):
     try:
         all_virtual_gateways = client.describe_vpn_gateways(**params)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e),exception=traceback.format_exc())
 
     snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
                                 for vgw in all_virtual_gateways['VpnGateways']]
