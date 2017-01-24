@@ -15,8 +15,6 @@ apt-get install -qq \
     libssl-dev \
     libffi-dev \
 
-pip install cryptography
-
 ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
 
 pip install tox --disable-pip-version-check
