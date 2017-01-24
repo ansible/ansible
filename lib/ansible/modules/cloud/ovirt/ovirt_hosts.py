@@ -59,7 +59,10 @@ options:
     state:
         description:
             - "State which should a host to be in after successful completion."
-        choices: ['present', 'absent', 'maintenance', 'upgraded', 'started', 'restarted', 'stopped']
+        choices: [
+            'present', 'absent', 'maintenance', 'upgraded', 'started',
+            'restarted', 'stopped', 'reinstalled'
+        ]
         default: present
     comment:
         description:
@@ -240,14 +243,17 @@ def control_state(host_module):
     if host is None:
         return
 
+    state = host_module._module.params['state']
     host_service = host_module._service.service(host.id)
     if failed_state(host):
-        raise Exception(
-            "Not possible to manage host '%s' in state '%s'." % (
-                host.name,
-                host.status
+        # In case host is in INSTALL_FAILED status, we can reinstall it:
+        if hoststate.INSTALL_FAILED == host.status and state != 'reinstalled':
+            raise Exception(
+                "Not possible to manage host '%s' in state '%s'." % (
+                    host.name,
+                    host.status
+                )
             )
-        )
     elif host.status in [
         hoststate.REBOOT,
         hoststate.CONNECTING,
@@ -271,7 +277,10 @@ def control_state(host_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'upgraded', 'started', 'restarted', 'stopped'],
+            choices=[
+                'present', 'absent', 'maintenance', 'upgraded', 'started',
+                'restarted', 'stopped', 'reinstalled',
+            ],
             default='present',
         ),
         name=dict(required=True),
@@ -359,6 +368,39 @@ def main():
                 fail_condition=failed_state,
                 fence_type='restart',
             )
+        elif state == 'reinstalled':
+            # Deactivate host if not in maintanence:
+            deactivate_changed = hosts_module.action(
+                action='deactivate',
+                action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
+                wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
+                fail_condition=failed_state,
+            )['changed']
+
+            # Reinstall host:
+            install_changed = hosts_module.action(
+                action='install',
+                action_condition=lambda h: h.status == hoststate.MAINTENANCE,
+                wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
+                fail_condition=failed_state,
+                host=otypes.Host(
+                    override_iptables=module.params['override_iptables'],
+                ) if module.params['override_iptables'] else None,
+                root_password=module.params['password'],
+                ssh=otypes.Ssh(
+                    authentication_method='publickey',
+                ) if module.params['public_key'] else None,
+            )['changed']
+
+            # Activate host after reinstall:
+            ret = hosts_module.action(
+                action='activate',
+                action_condition=lambda h: h.status == hoststate.MAINTENANCE,
+                wait_condition=lambda h: h.status == hoststate.UP,
+                fail_condition=failed_state,
+            )
+            ret['changed'] = install_changed or deactivate_changed or ret['changed']
+
 
         module.exit_json(**ret)
     except Exception as e:
