@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2013-2016 Ansible, Inc"
+copyright = "2013-2017 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -203,8 +203,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
-   AUTHOR, 'manual'),
+  ('index', 'ansible.tex', 'Ansible 2.2 Documentation', AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
