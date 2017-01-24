@@ -26,22 +26,6 @@ and guidelines:
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
-Building & Testing
-++++++++++++++++++
-
-Put your completed module file into the 'library' directory and then
-run the command: ``make webdocs``. The new 'modules.html' file will be
-built and appear in the 'docsite/' directory.
-
-.. tip::
-
-   If you're having a problem with the syntax of your YAML you can
-   validate it on the `YAML Lint <http://www.yamllint.com/>`_ website.
-
-.. tip::
-
-    You can set the environment variable ANSIBLE_KEEP_REMOTE_FILES=1 on the controlling host to prevent ansible from
-    deleting the remote files so you can debug your module.
 
 .. _debugging_ansiblemodule_based_modules:
 
@@ -162,7 +146,6 @@ module file and test that the real module works via :command:`ansible` or
     with Ansible normally.  Those are not bugs in the module; they're
     limitations of ``excommunicate``.  Use at your own risk.
 
-.. _module_paths:
 
 Module Paths
 ````````````
@@ -172,7 +155,7 @@ sure it is in the :envvar:`ANSIBLE_LIBRARY` environment variable.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
-    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras
+    ANSIBLE_LIBRARY=~/ansible-modules-core
 
 And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
 to make sure you're not reporting bugs on versions from your fork!

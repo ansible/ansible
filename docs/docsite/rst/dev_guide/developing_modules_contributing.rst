@@ -12,7 +12,7 @@ a github pull request to the `extras <https://github.com/ansible/ansible-modules
 Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
 gives them slightly higher development priority (though they'll work in exactly the same way).
 
-.. _module_dev_testing:
+.. formerly marked with _module_dev_testing:
 
 Contributing Modules Checklist
 ``````````````````````````````
