@@ -9,6 +9,8 @@ RUN yum clean all && \
     file \
     gcc \
     git \
+    libffi \
+    libffi-devel \
     make \
     mercurial \
     mysql \
@@ -16,6 +18,7 @@ RUN yum clean all && \
     mysql-server \
     openssh-clients \
     openssh-server \
+    openssl-devel \
     python-coverage \
     python-devel \
     python-httplib2 \
@@ -39,8 +42,6 @@ RUN yum clean all && \
     zip \
     && \
     yum clean all
-
-RUN rpm -e --nodeps python-crypto && pip install --upgrade pycrypto
 
 RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/

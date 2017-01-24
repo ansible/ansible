@@ -12,6 +12,10 @@ apt-get install -qq \
     python2.4 \
     g++-4.9 \
     python3.6-dev \
+    libssl-dev \
+    libffi-dev \
+
+pip install cryptography
 
 ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
 

@@ -16,6 +16,8 @@ RUN apt-get update -y && \
     fakeroot \
     gawk \
     git \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     make \
