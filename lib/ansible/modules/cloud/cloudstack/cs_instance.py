@@ -558,6 +558,27 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return res
 
 
+    def ssh_key_has_changed(self):
+        ssh_key_name = self.module.params.get('ssh_key')
+        if ssh_key_name is None:
+            return False
+
+        instance_ssh_key_name = self.instance.get('keypair')
+        if instance_ssh_key_name is None:
+            return True
+
+        if ssh_key_name == instance_ssh_key_name:
+            return False
+
+        res = self.cs.listSSHKeyPairs(name=instance_ssh_key_name)
+        instance_ssh_key = res['sshkeypair'][0]
+        res = self.cs.listSSHKeyPairs(name=ssh_key_name)
+        param_ssh_key = res['sshkeypair'][0]
+        if param_ssh_key['fingerprint'] != instance_ssh_key['fingerprint']:
+            return True
+        return False
+
+
     def security_groups_has_changed(self):
         security_groups = self.module.params.get('security_groups')
         if security_groups is None:
@@ -724,13 +745,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             args_instance_update['displayname'] = self.module.params.get('display_name')
         instance_changed = self.has_changed(args_instance_update, instance)
 
-        # SSH key data
-        args_ssh_key = {}
-        args_ssh_key['id'] = instance['id']
-        args_ssh_key['projectid'] = self.get_project(key='id')
-        if self.module.params.get('ssh_key'):
-            args_ssh_key['keypair'] = self.module.params.get('ssh_key')
-        ssh_key_changed = self.has_changed(args_ssh_key, instance)
+        ssh_key_changed = self.ssh_key_has_changed()
 
         security_groups_changed = self.security_groups_has_changed()
 
@@ -773,6 +788,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
                     # Reset SSH key
                     if ssh_key_changed:
+                        # SSH key data
+                        args_ssh_key = {}
+                        args_ssh_key['id'] = instance['id']
+                        args_ssh_key['projectid'] = self.get_project(key='id')
+                        args_ssh_key['keypair'] = self.module.params.get('ssh_key')
                         instance = self.cs.resetSSHKeyForVirtualMachine(**args_ssh_key)
                         if 'errortext' in instance:
                             self.module.fail_json(msg="Failed: '%s'" % instance['errortext'])
