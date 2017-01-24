@@ -27,6 +27,7 @@ The following is a list of module_utils files and a general description. The mod
 - junos.py -  Definitions and helper functions for modules that manage Junos networking devices
 - known_hosts.py - utilities for working with known_hosts file
 - mysql.py - Allows modules to connect to a MySQL instance
+- netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
 - netcfg.py - Configuration utility functions for use by networking modules
 - netcmd.py - Defines commands and comparison operators for use in networking modules
 - network.py - Functions for running commands on networking devices
@@ -45,5 +46,3 @@ The following is a list of module_utils files and a general description. The mod
 - vca.py - Contains utilities for modules that work with VMware vCloud Air 
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
 - vyos.py - Definitions and functions for working with VyOS networking
- 
-- netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.

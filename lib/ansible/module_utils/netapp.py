@@ -44,7 +44,20 @@ def has_sf_sdk():
     return HAS_SF_SDK
 
 
-def create_sf_connection(hostname, username, password, port=None):
+def ontap_sf_host_argument_spec():
+
+    return dict(
+        hostname=dict(required=True, type='str'),
+        username=dict(required=True, type='str', aliases=['user']),
+        password=dict(required=True, type='str', aliases=['pass'], no_log=True),
+    )
+
+
+def create_sf_connection(module, port=None):
+    hostname = module.params['hostname']
+    username = module.params['username']
+    password = module.params['password']
+
     if HAS_SF_SDK and hostname and username and password:
         try:
             return_val = ElementFactory.create(hostname, username, password, port=port)
@@ -52,10 +65,14 @@ def create_sf_connection(hostname, username, password, port=None):
         except:
             raise Exception("Unable to create SF connection")
     else:
-        raise ImportError("Unable to import the SolidFire Python SDK")
+        module.fail_json(msg="the python SolidFire SDK module is required")
 
 
-def setup_ontap_zapi(hostname, username, password, vserver=None):
+def setup_ontap_zapi(module, vserver=None):
+    hostname = module.params['hostname']
+    username = module.params['username']
+    password = module.params['password']
+
     if HAS_NETAPP_LIB:
         # set up zapi
         server = zapi.NaServer(hostname)
@@ -70,4 +87,4 @@ def setup_ontap_zapi(hostname, username, password, vserver=None):
         server.set_transport_type('HTTP')
         return server
     else:
-        raise ImportError("Unable to import the NetApp-Lib module")
+        module.fail_json(msg="the python NetApp-Lib module is required")

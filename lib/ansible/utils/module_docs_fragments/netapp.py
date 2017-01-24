@@ -38,7 +38,9 @@ options:
   username:
       required: true
       description:
-      - Username
+      - Username : This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
+      - For more information, please read the documentation here: https://goo.gl/BRu78Z
+
   password:
       required: true
       description:
@@ -52,121 +54,6 @@ requirements:
 notes:
   - The modules prefixed with C(netapp\_cdot) are built to support the ONTAP storage platform.
 
-example:
-    - name: NetApp Sample Playbook
-      hosts: localhost
-      gather_facts: no
-      connection: local
-      vars:
-        netapp_hostname: # Your hostname
-        netapp_username: # Username
-        netapp_password: # Password
-
-      tasks:
-        - name: License Manager
-          na_cdot_license:
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-            remove_unused: false
-            remove_expired: true
-            serial_number: #################
-            licenses:
-              nfs: #################
-              # To remove a license, use the 'remove' keyword
-              # nfs: remove
-              cifs: #################
-              iscsi: #################
-              fcp: #################
-              snaprestore: #################
-              flexclone: #################
-
-        - name: Aggregate Manager
-          na_cdot_aggregate:
-            state: absent
-            name: ansibleAggr
-            #new_name: ansibleAggrRenamed
-            disk_count: 1
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: SVM Manager
-          na_cdot_svm:
-            state: present
-            name: ansibleVServer
-            #new_name: ansibleVServerRenamed
-            root_volume: vol1
-            root_volume_aggregate: aggr1
-            root_volume_security_style: mixed
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: User Role Manager
-          na_cdot_user_role:
-            state: present
-            name: ansibleRole
-            command_directory_name: DEFAULT
-            access_level: none
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: User Manager
-          na_cdot_user:
-            state: present
-            name: Sample
-            application: ssh
-            authentication_method: password
-            set_password: apn1242183u1298u41
-            role_name: vsadmin
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: Volume Manager
-          na_cdot_volume:
-            state: present
-            name: ansibleVolume
-            #new_name: ansibleVolumeRenamed
-            #is_infinite: False
-            #is_online: True
-            aggregate_name: aggr1
-            size: 20
-            size_unit: mb
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: QTree Manager
-          na_cdot_qtree:
-            state: present
-            name: ansibleQTree
-            #new_name: ansibleQTreeRenamed
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-        - name: LUN Manager
-          na_cdot_lun:
-            state: present
-            name: ansibleLUN
-            force_resize: True
-            force_remove: False
-            force_remove_fenced: False
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            size: 5
-            size_unit: mb
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
 """
 
 # Documentation fragment for SolidFire
@@ -179,7 +66,8 @@ options:
   username:
       required: true
       description:
-      - Username
+      - Username : Please ensure that the user has the adequate permissions.
+      - For more information, please read the official documentation: https://goo.gl/ddJa4Q
   password:
       required: true
       description:
