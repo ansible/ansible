@@ -80,6 +80,19 @@ options:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
+  message_attributes:
+    description:
+      - Dictionary of message attributes. These are optional structured data entries to be sent along to the endpoint.
+      - This is in AWS's distinct Name/Type/Value format; see example below.
+    required: false
+    default: None
+  message_structure:
+    description:
+      - The payload format to use for the message.
+      - This must be 'json' to support non-default messages (`http`, `https`, `email`, `sms`, `sqs`). It must be 'string' to support message_attributes.
+    required: true
+    default: json
+    choices: ['json', 'string']
 
 requirements:
     - "boto"
@@ -99,6 +112,19 @@ EXAMPLES = """
     sms: deployed!
     subject: Deploy complete!
     topic: deploy
+  delegate_to: localhost
+
+- name: Send message with message_attributes
+  sns:
+    topic: "deploy"
+    msg: "message with extra details!"
+    message_attributes:
+      channel:
+        data_type: String
+        string_value: "mychannel"
+      color:
+        data_type: String
+        string_value: "green"
   delegate_to: localhost
 """
 
@@ -143,6 +169,8 @@ def main():
             sms=dict(type='str', default=None),
             http=dict(type='str', default=None),
             https=dict(type='str', default=None),
+            message_attributes=dict(type='dict', default=None),
+            message_structure=dict(type='str', choices=['json', 'string'], default='json'),
         )
     )
 
@@ -159,6 +187,8 @@ def main():
     sms = module.params['sms']
     http = module.params['http']
     https = module.params['https']
+    message_attributes = module.params['message_attributes']
+    message_structure = module.params['message_structure']
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
@@ -168,6 +198,11 @@ def main():
     except boto.exception.NoAuthHandlerFound:
         e = get_exception()
         module.fail_json(msg=str(e))
+
+    if not message_structure=='string' and message_attributes:
+        module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
+    elif message_structure=='string' and (email or sqs or sms or http or https):
+        module.fail_json(msg="do not specify non-default message formats when using the 'string' message_structure. they can only be used with the 'json' message_structure.")
 
     # .publish() takes full ARN topic id, but I'm lazy and type shortnames
     # so do a lookup (topics cannot contain ':', so thats the decider)
@@ -191,10 +226,15 @@ def main():
     if https:
         dict_msg.update(https=https)
 
-    json_msg = json.dumps(dict_msg)
+    if not message_structure == 'json':
+        json_msg = msg
+    else:
+        json_msg = json.dumps(dict_msg)
+
     try:
         connection.publish(topic=arn_topic, subject=subject,
-                           message_structure='json', message=json_msg)
+                           message_structure=message_structure, message=json_msg,
+                           message_attributes=message_attributes)
     except boto.exception.BotoServerError:
         e = get_exception()
         module.fail_json(msg=str(e))
