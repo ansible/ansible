@@ -128,7 +128,7 @@ EXAMPLES = r"""
 
 – name: insert/update configuration using a local file
   blockinfile:
-    block: "{{ lookup(‘file’, ‘./local/ssh_config’) }}"
+    block: "{{ lookup('file', './local/ssh_config') }}"
     dest: "/etc/ssh/ssh_config"
     backup: yes
 
