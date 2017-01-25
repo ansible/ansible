@@ -91,7 +91,7 @@ class ShellBase(object):
         cmd = ['test', '-e', shlex_quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
 
@@ -107,13 +107,17 @@ class ShellBase(object):
         # to somewhere in or below /var/tmp and if so use /var/tmp.  If
         # anything else we use /tmp (because /tmp is specified by POSIX nad
         # /var/tmp is not).
+
         if system:
             if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
                 basetmpdir = '/var/tmp'
             else:
                 basetmpdir = '/tmp'
-        else:
+        elif tmpdir is None:
             basetmpdir = C.DEFAULT_REMOTE_TMP
+        else:
+            basetmpdir = tmpdir
+
         basetmp = self.join_path(basetmpdir, basefile)
 
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
