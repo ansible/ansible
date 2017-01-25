@@ -53,42 +53,35 @@ options:
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
-        required: False
         default: 'first'
         choices: ['first', 'last']
    uuid:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
             - This is required if name is not supplied.
-        required: False
    template:
         description:
             - Template used to create VM.
             - If this value is not set, VM is created without using a template.
             - If the VM exists already this setting will be ignored.
-        required: False
    is_template:
         description:
             - Flag the instance as a template
-        required: False
         default: False
         version_added: "2.3"
    folder:
         description:
             - Destination folder, absolute path to find an existing guest or create the new guest
-        required: False
    hardware:
         description:
             - "Manage some VM hardware attributes."
             - "Valid attributes are: memory_mb, num_cpus and scsi"
             - "scsi: Valid values are buslogic, lsilogic, lsilogicsas and paravirtual (default)"
-        required: False
    guest_id:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
             - "This field is required when creating a VM"
             - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
-        required: False
         version_added: "2.3"
    disk:
         description:
@@ -97,23 +90,19 @@ options:
             - "type: Valid value is thin (default: None)"
             - "datastore: Datastore to use for the disk. If autoselect_datastore is True, filter datastore selection."
             - "autoselect_datastore (bool): select the less used datastore."
-        required: False
    resource_pool:
         description:
             - Affect machine to the given resource pool
             - Resource pool should be child of the selected host parent
-        required: False
         default: None
         version_added: "2.3"
    wait_for_ip_address:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
-        required: False
    force:
         description:
             - Ignore warnings and complete the actions
-        required: False
    datacenter:
         description:
             - Destination datacenter for the deploy operation
@@ -121,22 +110,18 @@ options:
    cluster:
         description:
             - The cluster name where the VM will run.
-        required: False
         version_added: "2.3"
    esxi_hostname:
         description:
             - The esxi hostname where the VM will run.
-        required: False
    annotation:
         description:
             - A note or annotation to include in the VM
-        required: False
         version_added: "2.3"
    customvalues:
         description:
             - Define a list of customvalues to set on VM.
             - "A customvalue object takes 2 fields 'key' and 'value'."
-        required: False
         version_added: "2.3"
    networks:
         description:
@@ -145,13 +130,12 @@ options:
           - Add an optional C(gateway) entry to configure a gateway
           - Add an optional C(mac) entry to customize mac address
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
-        required: False
+          - Add an optional C(device_type) to configure the virtual NIC (pcnet32, vmxnet2, vmxnet3, e1000, e1000e)
         version_added: "2.3"
    snapshot_op:
         description:
           - A key, value pair of snapshot operation types and their additional required parameters.
           - Beware that this functionality will disappear in v2.3 and move into module C(vmware_guest_snapshot)
-        required: False
         version_added: "2.3"
    customization:
         description:
@@ -174,7 +158,6 @@ options:
           - "  productid (string): Product ID"
           - "  runonce (list): List of commands to run at first user logon"
           - "  timezone (int): Timezone (default: 85) See https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx"
-        required: False
         version_added: "2.3"
 extends_documentation_fragment: vmware.documentation
 '''
@@ -547,24 +530,22 @@ class PyVmomiHelper(object):
             vm = self.content.searchIndex.FindByUuid(uuid=uuid, vmSearch=True)
         elif folder:
             # Build the absolute folder path to pass into the search method
-            if self.params['folder'].startswith('/'):
-                searchpath = '%(datacenter)s%(folder)s' % self.params
-            else:
+            if not self.params['folder'].startswith('/'):
                 self.module.fail_json(msg="Folder %(folder)s needs to be an absolute path, starting with '/'." % self.params)
+            searchpath = '%(datacenter)s%(folder)s' % self.params
 
-            if searchpath:
-                # get all objects for this path ...
-                f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
-                if f_obj:
-                    if isinstance(f_obj, vim.Datacenter):
-                        f_obj = f_obj.vmFolder
-                    for c_obj in f_obj.childEntity:
-                        if not isinstance(c_obj, vim.VirtualMachine):
-                            continue
-                        if c_obj.name == name:
-                            vm = c_obj
-                            if self.params['name_match'] == 'first':
-                                break
+            # get all objects for this path ...
+            f_obj = self.content.searchIndex.FindByInventoryPath(searchpath)
+            if f_obj:
+                if isinstance(f_obj, vim.Datacenter):
+                    f_obj = f_obj.vmFolder
+                for c_obj in f_obj.childEntity:
+                    if not isinstance(c_obj, vim.VirtualMachine):
+                        continue
+                    if c_obj.name == name:
+                        vm = c_obj
+                        if self.params['name_match'] == 'first':
+                            break
 
         if vm:
             self.current_vm_obj = vm
@@ -917,7 +898,7 @@ class PyVmomiHelper(object):
                 ident.guiUnattended.password.value = str(self.params['customization']['password'])
                 ident.guiUnattended.password.plainText = True
             else:
-                self.module.fail_json(msg="The 'customization' section requires 'password' entry, which cannot be empty.")
+                self.module.fail_json(msg="The 'customization' section requires a 'password' entry, which cannot be empty.")
 
             if 'productid' in self.params['customization']:
                 ident.userData.orgName = str(self.params['customization']['productid'])
