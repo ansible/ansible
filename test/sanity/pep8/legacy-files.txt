@@ -50,7 +50,6 @@ lib/ansible/modules/cloud/amazon/elasticache.py
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py
 lib/ansible/modules/cloud/amazon/execute_lambda.py
 lib/ansible/modules/cloud/amazon/iam.py
-lib/ansible/modules/cloud/amazon/iam_cert.py
 lib/ansible/modules/cloud/amazon/iam_policy.py
 lib/ansible/modules/cloud/amazon/iam_server_certificate_facts.py
 lib/ansible/modules/cloud/amazon/lambda.py
