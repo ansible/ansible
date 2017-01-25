@@ -91,6 +91,14 @@ def python_info():
     # items in path hooks can be custom types, namely zipimporter
     python_info['sys_path_hooks'] = [repr(x) for x in sys.path_hooks]
 
+    sys_modules_info = {}
+    for name, py_module in sys.modules.items():
+        module_repr = None
+        if py_module:
+            module_repr = repr(py_module)
+        sys_modules_info[name] = module_repr
+
+    python_info['sys_modules'] = sys_modules_info
     # Note: sys.version and other info is already collected in get_python_facts
     #       during fact collection. This info could be collected there as well.
 
