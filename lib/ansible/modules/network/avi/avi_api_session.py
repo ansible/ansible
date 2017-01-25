@@ -43,9 +43,9 @@ DOCUMENTATION = '''
 module: avi_api
 author: Gaurav Rastogi (grastogi@avinetworks.com)
 
-short_description: API Module for invoking any Avi API.
+short_description: Avi API Module.
 description:
-    - This module is used to configure Pool object
+    - This module can be used for calling any resources defined in Avi REST API. This module is useful for invoking HTTP Patch methods and accessing resources that do not have an REST object associated with them.
 version_added: 2.3
 requirements: [ avisdk ]
 options:
@@ -63,6 +63,12 @@ options:
     params:
         description:
             - Query parameters passed to the HTTP API.
+    path:
+        description:
+            - Path for Avi API resource. For example, "path: virtualservice" will translate to api/virtualserivce.
+    timeout:
+        description:
+            - Timeout for Avi API calls.
 extends_documentation_fragment:
     - avi
 '''
@@ -123,8 +129,7 @@ def main():
 
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi API SDK is not installed. '
-            'Use "sudo pip install --upgrade avisdk" to install Avi SDK. '
+            'Avi python API SDK (avisdk) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     tenant_uuid = module.params.get('tenant_uuid', None)
     api = ApiSession.get_session(

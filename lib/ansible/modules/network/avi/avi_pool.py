@@ -327,8 +327,7 @@ def main():
         argument_spec=argument_specs)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi API SDK is not installed. '
-            'Use "sudo pip install --upgrade avisdk" to install Avi SDK. '
+            'Avi python API SDK (avisdk) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'pool',
                            set([]))
