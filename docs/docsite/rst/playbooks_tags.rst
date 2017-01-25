@@ -1,10 +1,11 @@
 Tags
 ====
 
-If you have a large playbook it may become useful to be able to run a
-specific part of the configuration without running the whole playbook.
+If you have a large playbook it may become useful to be able to run a specific part of the configuration without running the whole playbook.
 
 Both plays and tasks support a "tags:" attribute for this reason.
+You can **ONLY** filter tasks based on tags from the command line with `--tags` or `--skip-tags`.
+Adding "tags:" in any part of a play (including roles) adds those tags to the contained tasks.
 
 Example::
 
