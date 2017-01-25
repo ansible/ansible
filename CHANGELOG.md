@@ -140,7 +140,8 @@ Ansible Changes By Release
 - zfs:
   * zfs_facts
   * zpool_facts
-
+- bigswitch:
+  * bigmon_policy
 ####New Callbacks:
 
 * dense: minimal stdout output with fallback to default when verbose

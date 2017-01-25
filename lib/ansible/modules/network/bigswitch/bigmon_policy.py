@@ -43,7 +43,7 @@ options:
      - Forward matching packets to delivery interfaces, Drop is for measure rate of matching packets,
        but do not forward to delivery interfaces, capture packets and write to a PCAP file, or enable NetFlow generation.
     default: forward
-    choices: ['forward', 'drop', 'flow-gen', 'flow-gen']
+    choices: ['forward', 'drop', 'flow-gen']
   priority:
     description:
      - A priority associated with this policy. The higher priority policy takes precedence over a lower priority.
@@ -86,13 +86,13 @@ notes:
 ''' 
 
 EXAMPLES = '''
-   - name: policy to aggregate filter and deliver data center (DC) 1 traffic
-     bigmon_policy:
-       name: policy1
-       policy_description: DC 1 traffic policy
-       action: drop
-       controller: '{{ inventory_hostname }}'
-       state: present
+- name: policy to aggregate filter and deliver data center (DC) 1 traffic
+      bigmon_policy:
+        name: policy1
+        policy_description: DC 1 traffic policy
+        action: drop
+        controller: '{{ inventory_hostname }}'
+        state: present
 '''
 
 RETURN = '''
