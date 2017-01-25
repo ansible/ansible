@@ -18,6 +18,10 @@
       paths: '../vars'
 
 # Make sure we start fresh
+- name: stop postgresql service
+  service: name={{ postgresql_service }} state=stopped
+  ignore_errors: True
+
 - name: remove old db (RedHat or Suse)
   command: rm -rf "{{ pg_dir }}"
   ignore_errors: True
@@ -116,6 +120,10 @@
     path: /etc/rc.conf
     line: 'postgresql_enable="YES"'
   when: ansible_os_family == "FreeBSD"
+
+- name: start postgresql service
+  # work-around for issue on FreeBSD where service won't restart if currently stopped
+  service: name={{ postgresql_service }} state=started
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
