@@ -55,6 +55,16 @@ def process_info():
     process_info['cwd'] = os.getcwdu()
     process_info['ppid'] = os.getppid()
 
+    process_info['sys_argv'] = sys.argv
+
+    times_result = os.times()
+    process_times = {'user': times_result[0],
+                     'system': times_result[1],
+                     'children_user': times_result[2],
+                     'children_system': times_result[3],
+                     'elapsed': times_result[4]}
+    process_info['times'] = process_times
+
     return process_info
 
 
@@ -65,15 +75,15 @@ def python_site_info():
 
     # These only exist for python 2.6+
     try:
-        python_info['site_PREFIXES'] = site.PREFIXES
-        python_info['site_USER_SITE'] = site.USER_SITE
-        python_info['site_USER_BASE'] = site.USER_BASE
+        python_info['PREFIXES'] = site.PREFIXES
+        python_info['USER_SITE'] = site.USER_SITE
+        python_info['USER_BASE'] = site.USER_BASE
     except AttributeError:
         pass
 
     # only exists in python 2.7+
     try:
-        python_info['site_getsitepackages'] = site.getsitepackages()
+        python_info['getsitepackages'] = site.getsitepackages()
     except AttributeError:
         pass
 
@@ -97,18 +107,20 @@ def python_version_info():
     return version_info
 
 
-def python_info():
-    python_info = {}
+def python_paths_info():
+    path_info = {}
 
-    python_info['sys_argv'] = sys.argv
-    python_info['sys_path'] = sys.path
-    python_info['sys_prefix'] = sys.prefix
-    python_info['sys_exec_prefix'] = sys.exec_prefix
-    python_info['sys_meta_path'] = sys.meta_path
+    path_info['path'] = sys.path
+    path_info['prefix'] = sys.prefix
+    path_info['exec_prefix'] = sys.exec_prefix
+    path_info['meta_path'] = sys.meta_path
 
     # items in path hooks can be custom types, namely zipimporter
-    python_info['sys_path_hooks'] = [repr(x) for x in sys.path_hooks]
+    path_info['path_hooks'] = [repr(x) for x in sys.path_hooks]
+    return path_info
 
+
+def python_sys_modules_info():
     sys_modules_info = {}
     for name, py_module in sys.modules.items():
         module_repr = None
@@ -116,9 +128,13 @@ def python_info():
             module_repr = repr(py_module)
         sys_modules_info[name] = module_repr
 
+    return sys_modules_info
     python_info['sys_modules'] = sys_modules_info
 
-    python_info['executable'] = sys.executable
+
+def python_info():
+    info = {}
+    info['executable'] = sys.executable
 
     python_type = None
     try:
@@ -128,12 +144,12 @@ def python_info():
             python_type = sys.implementation.name
         except AttributeError:
             pass
-    python_info['type'] = python_type
+    info['type'] = python_type
 
     versions = python_version_info()
-    python_info.update(versions)
+    info.update(versions)
 
-    return python_info
+    return info
 
 
 def env_info():
@@ -145,14 +161,19 @@ def module_invocation():
     data = {}
     data['locale'] = locale.getlocale()
 
-    data['python'] = python_info()
+    py_info = python_info()
 
-    data['python_site_info'] = python_site_info()
+    py_info['site'] = python_site_info()
+    py_info['sys_paths'] = python_paths_info()
+    py_info['sys_modules'] = python_sys_modules_info()
 
-    data['process'] = process_info()
+    data['python'] = py_info
 
     # facts collects env info as well, but the goal here is to collect the
     # env this particular module invocation is using.
     data['environment'] = env_info()
+
+    # collect process info last so process cumulative times are useful
+    data['process'] = process_info()
 
     return data
