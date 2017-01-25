@@ -261,3 +261,13 @@ Function Get-PendingRebootStatus
     }
 
 }
+
+Function Get-SIDFromAccountName($accountName)
+{
+    # Helper function to get the SID of an account.
+    # $accountName can be either
+    # - a User Principal Name, on the form user@domain, or
+    # - an account with domain, on the form domain\user
+    $objUser = New-Object System.Security.Principal.NTAccount($accountName)
+    return $objUser.Translate([System.Security.Principal.SecurityIdentifier]).Value
+}
