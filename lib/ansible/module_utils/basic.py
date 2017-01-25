@@ -57,7 +57,7 @@ import pwd
 import platform
 import errno
 import datetime
-from itertools import repeat, chain
+from itertools import repeat, chain, imap
 
 try:
     import syslog
@@ -92,9 +92,9 @@ except ImportError:
 # this matters, make sure to check for strings before checking for sequencetype
 try:
     from collections.abc import KeysView
-    SEQUENCETYPE = (Sequence, KeysView)
+    SEQUENCETYPE = (Sequence, KeysView, imap)
 except:
-    SEQUENCETYPE = Sequence
+    SEQUENCETYPE = (Sequence, imap)
 
 try:
     import json
