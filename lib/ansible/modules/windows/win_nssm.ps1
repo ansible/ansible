@@ -245,7 +245,12 @@ Function Nssm-Update-AppParameters
                 $appParamVals += $val
 
                 if ($key -eq "_") {
-                    $singleLineParams = "$val " + $singleLineParams
+                    if ($appParametersHash.Count -eq 1)
+                    {
+                        $singleLineParams = "$val"
+                    } else {
+                        $singleLineParams = "$val " + $singleLineParams
+                    }
                 } else {
                     $singleLineParams = $singleLineParams + "$key ""$val"""
                 }
