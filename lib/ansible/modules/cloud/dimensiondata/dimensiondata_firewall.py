@@ -26,30 +26,30 @@
 DOCUMENTATION = '''
 ---
 module: dimensiondata_firewall
-short_description: Create, update, and delete MCP 2.0 firewall rules.
+short_description: Create, update, and delete MCP 2.0 firewall rules
 description:
     - Create, update, and delete MCP 2.0 firewall rules.
     - Requires MCP 2.0.
-version_added: "2.2"
+version_added: "2.3"
 author: 'Aimon Bustardo (@aimonb)'
 options:
   region:
     description:
       - The target region.
       - Valid regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - Regions are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
+      - Regions are also listed in U(https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html)
       - Note that the default value "na" stands for "North America".
       - The module prepends 'dd-' to the region.
     default: na
   mcp_user:
     description:
       - The username used to authenticate to the CloudControl API.
-      - If not specified, will fall back to MCP_USER from environment variable or  ~/.dimensiondata.
+      - If not specified, will fall back to C(MCP_USER) from environment variable or C(~/.dimensiondata).
     required: false
   mcp_password:
     description:
       - The password used to authenticate to the CloudControl API.
-      - If not specified, will fall back to MCP_PASSWORD from environment variable or  ~/.dimensiondata.
+      - If not specified, will fall back to C(MCP_PASSWORD) from environment variable or C(~/.dimensiondata).
       - Required if mcp_user is specified.
     required: false
   location:
@@ -76,40 +76,41 @@ options:
     description:
       - Action to take when rule matched.
       - ACCEPT_DECISIVELY or DROP
-    choices: [ACCEPT_DECISIVELY, DROP]
-    default: ACCEPT_DECISIVELY
+    choices: ["ACCEPT_DECISIVELY", "DROP"]
+    default: "ACCEPT_DECISIVELY"
   ip_version:
     description:
       - IPv4 or IPv6.
-    choices: [IPv4, IPv6]
-    default: IPv4
+    choices: ["IPv4", "IPv6"]
+    default: "IPv4"
   protocol:
     description:
       - Network protocol type.
       - IP, ICMP, TCP, or UDP.
-    choices: [IP, ICMP, TCP, UDP]
-    default: TCP
+    choices: ["IP", "ICMP", "TCP", "UDP"]
+    default: "TCP"
   source:
     description:
       - Source host IP or subnet as CIDR.
-    default: ANY
+    default: "ANY"
   source_port:
     description:
       - Source ANY, single port or port range.
-    default: ANY
+    default: "ANY"
   destination:
     description:
       - Destination host IP or subnet as CIDR.
-    default: ANY
+    default: "ANY"
   destination_port:
     description:
       - Destination ANY, single port or port range.
-    default: ANY
+    default: "ANY"
   position:
     description:
       - Placement of rule in relation to others.
       - One of FIRST, LAST, BEFORE, AFTER.
-    default: LAST
+    choices: ["FIRST", "LAST", "BEFORE", "AFTER"]
+    default: "LAST"
   relative_to_rule:
     description:
       - BEFORE or AFTER this rule.
@@ -233,8 +234,8 @@ firewall_rule:
             sample: enabled
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.dimensiondata import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.dimensiondata import get_credentials, get_network_domain
 from ansible.module_utils.pycompat24 import get_exception
 
 try:
@@ -384,24 +385,26 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             region=dict(default='na'),
+            mcp_user=dict(required=False, type='str'),
+            mcp_password=dict(required=False, type='str'),
             location=dict(required=True, type='str'),
             network_domain=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            state=dict(default='present', choices=['present', 'absent',
-                       'enabled', 'disabled']),
-            action=dict(default='ACCEPT_DECISIVELY',
-                        choices=['ACCEPT_DECISIVELY', 'DROP']),
+            state=dict(default='present', choices=['present', 'absent', 'enabled', 'disabled']),
+            action=dict(default='ACCEPT_DECISIVELY', choices=['ACCEPT_DECISIVELY', 'DROP']),
             ip_version=dict(default='IPv4', choices=['IPv4', 'IPv6']),
             protocol=dict(default='TCP', choices=['IP', 'ICMP', 'TCP', 'UDP']),
             source=dict(required=False, default='ANY', type='str'),
             source_port=dict(required=False, default='ANY', type='str'),
             destination=dict(required=False, default='ANY', type='str'),
             destination_port=dict(required=False, default='ANY', type='str'),
-            position=dict(default='LAST', choices=['FIRST', 'LAST',
-                                                   'BEFORE', 'AFTER']),
+            position=dict(default='LAST', choices=['FIRST', 'LAST', 'BEFORE', 'AFTER']),
             relative_to_rule=dict(required=False, default=None, type='str'),
             verify_ssl_cert=dict(required=False, default=True, type='bool')
-        )
+        ),
+        required_together=[
+            ['mcp_user', 'mcp_password']
+        ]
     )
 
     if not HAS_LIBCLOUD:
@@ -501,10 +504,6 @@ def main():
         else:
             # Delete rule
             delete_firewall_rule(module, driver, existing_rule)
-    else:
-        module.fail_json(
-            msg="Unrecongnized state given. Must be one of: present, absent, enabled, disabled"
-        )
 
-
-main()
+if __name__ == '__main__':
+    main()
