@@ -119,7 +119,9 @@ options:
             - "C(**IMPORTANT**)"
             - "There is no reliable way to achieve idempotency, so every time
                you specify this parameter the disks are copied, so please handle
-               your playbook accordingly to not copy the disks all the time."
+               your playbook accordingly to not copy the disks all the time. This
+               is valid only for VM and floating disks, template disks works
+               as expected."
         version_added: "2.3"
     force:
         description:
@@ -254,7 +256,7 @@ def upload_disk_image(connection, module):
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         elif auth.get('ca_file'):
-            context.load_verify_locations(cafile='ca.pem')
+            context.load_verify_locations(cafile=auth.get('ca_file'))
 
         proxy_connection = HTTPSConnection(
             proxy_url.hostname,
@@ -375,6 +377,9 @@ class DisksModule(BaseModule):
                 changed = changed or self.action(
                     action='copy',
                     entity=disk,
+                    action_condition=(
+                        lambda disk: new_disk_storage.id not in [sd.id for sd in disk.storage_domains]
+                    ),
                     wait_condition=lambda disk: disk.status == otypes.DiskStatus.OK,
                     storage_domain=otypes.StorageDomain(
                         id=new_disk_storage.id,
