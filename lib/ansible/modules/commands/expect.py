@@ -107,7 +107,7 @@ EXAMPLES = '''
 
 
 def response_closure(module, question, responses):
-    resp_gen = (u'%s\n' % r.rstrip('\n').decode() for r in responses)
+    resp_gen = (u'%s\n' % str(r).rstrip('\n').decode() for r in responses)
 
     def wrapped(info):
         try:
@@ -150,7 +150,7 @@ def main():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = u'%s\n' % value.rstrip('\n').decode()
+            response = u'%s\n' % str(value).rstrip('\n').decode()
 
         events[key.decode()] = response
 
