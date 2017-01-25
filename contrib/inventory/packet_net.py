@@ -8,8 +8,8 @@ Generates inventory that Ansible can understand by making API request to
 Packet.net using the Packet library.
 
 NOTE: This script assumes Ansible is being executed where the environment
-variable needed for Packet API KEY have already been set:
-    export PACKET_NET_API_KEY='PK123'
+variable needed for Packet API Token already been set:
+    export PACKET_API_TOKEN=Bfse9F24SFtfs423Gsd3ifGsd43sSdfs
 
 This script also assumes there is a packet_net.ini file alongside it.  To specify a
 different path to packet_net.ini, define the PACKET_NET_INI_PATH environment variable:
@@ -18,7 +18,8 @@ different path to packet_net.ini, define the PACKET_NET_INI_PATH environment var
 
 '''
 
-# (c) 2012, Peter Sankauskas
+# (c) 2016, Peter Sankauskas
+# (c) 2017, Tomas Karasek
 #
 # This file is part of Ansible,
 #
@@ -42,13 +43,14 @@ import os
 import argparse
 import re
 from time import time
-import packet
 import six
-import boto
 
 from six.moves import configparser
-from collections import defaultdict
 
+try:
+    import packet
+except ImportError as e:
+    sys.exit("failed=True msg='`packet-python` library required for this script'")
 
 import traceback
 
@@ -118,8 +120,13 @@ class PacketInventory(object):
             config = configparser.ConfigParser()
         else:
             config = configparser.SafeConfigParser()
-        packet_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'packet_net.ini')
-        packet_ini_path = os.path.expanduser(os.path.expandvars(os.environ.get('PACKET_NET_INI_PATH', packet_default_ini_path)))
+
+        _ini_path_raw = os.environ.get('PACKET_NET_INI_PATH')
+
+        if _ini_path_raw:
+            packet_ini_path = os.path.expanduser(os.path.expandvars(_ini_path_raw))
+        else:
+            packet_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'packet_net.ini')
         config.read(packet_ini_path)
 
         # items per page
@@ -237,9 +244,9 @@ class PacketInventory(object):
 
     def connect(self):
         ''' create connection to api server'''
-        token=os.environ.get('PACKET_NET_API_KEY')
+        token=os.environ.get('PACKET_API_TOKEN')
         if token is None:
-            raise Exception("Error reading token from environment (PACKET_NET_API_KEY)!")
+            raise Exception("Error reading token from environment (PACKET_API_TOKEN)!")
         manager = packet.Manager(auth_token=token)
         return manager
 
@@ -306,11 +313,11 @@ class PacketInventory(object):
             return
 
         # if we only want to include hosts that match a pattern, skip those that don't
-        if self.pattern_include and not self.pattern_include.match(dest):
+        if self.pattern_include and not self.pattern_include.match(device.hostname):
             return
 
         # if we need to exclude hosts that match a pattern, skip those
-        if self.pattern_exclude and self.pattern_exclude.match(dest):
+        if self.pattern_exclude and self.pattern_exclude.match(device.hostname):
             return
 
         # Add to index
