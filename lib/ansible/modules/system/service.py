@@ -1310,10 +1310,10 @@ class SunOSService(Service):
 
     def svcadm_supports_sync(self):
         # Support for synchronous restart/refresh is only supported on
-        # Oracle Solaris >= 11.
+        # Oracle Solaris >= 11.2
         for line in open('/etc/release', 'r').readlines():
             m = re.match('\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
-            if m and m.groups()[0] > 10:
+            if m and m.groups()[0] >= 11.2:
                 return True
 
     def get_service_status(self):
