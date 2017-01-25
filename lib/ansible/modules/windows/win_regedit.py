@@ -37,7 +37,7 @@ options:
   path:
     description:
       - Name of registry path.
-      - Should be in one of the following registry hives: HKCC, HKCR, HKCU, HKLM, HKU.
+      - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU, HKLM, HKU.'
     required: true
     aliases: [ key ]
   name:
@@ -71,7 +71,6 @@ options:
     default: present
 notes:
 - Check-mode C(-C/--check) and diff output (-D/--diff) are supported, so that you can test every change against the active configuration before applying changes.
-- At the moment REG_NONE support is missing because it is lacking from the Powershell API. Workarounds are possible but currently lacking.
 - Beware that some registry hives (HKEY_USERS in particular) do not allow to create new registry paths.
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
