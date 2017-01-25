@@ -546,7 +546,9 @@ EXAMPLES = '''
     log_options:
       syslog-address: tcp://my-syslog-server:514
       syslog-facility: daemon
-      syslog-tag: myservice
+      # NOTE: in Docker 1.13+ the "syslog-tag" option was renamed to "tag" for
+      # older docker installs, use "syslog-tag" instead
+      tag: myservice
 
 - name: Create db container and connect to network
   docker_container:
