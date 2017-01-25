@@ -1001,11 +1001,14 @@ def validate_parameters(required_vars, valid_vars, module):
 
     params = {}
     for (k, v) in optional_params.items():
-        if module.params.get(k) and k not in required_vars:
+        if module.params.get(k) in [True, False] and k not in required_vars:
             if k in valid_vars:
                 params[v] = module.params[k]
             else:
-                module.fail_json(msg="Parameter %s is not valid for %s command" % (k, command))
+                if module.params.get(k) == False:
+                    pass
+                else:
+                    module.fail_json(msg="Parameter %s is not valid for %s command" % (k, command))
 
     if module.params.get('security_groups'):
         params[sec_group] = module.params.get('security_groups').split(',')
