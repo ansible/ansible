@@ -166,10 +166,10 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils import introspection
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
-import __main__ as module_main
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -660,100 +660,6 @@ def get_flags_from_attributes(attributes):
             flags.append(key)
     return ''.join(flags)
 
-
-def _introspect_module_meta_info():
-    data = {}
-
-    data['documentation'] = getattr(module_main, 'DOCUMENTATION', None)
-    data['metadata'] = getattr(module_main, 'ANSIBLE_METADATA', None)
-    data['return'] = getattr(module_main, 'RETURN', None)
-    data['examples'] = getattr(module_main, 'EXAMPLES', None)
-    return data
-
-
-def _introspect_process_info():
-    process_info = {}
-    process_info['pid'] = os.getpid()
-    process_info['uid'] = os.getuid()
-    process_info['euid'] = os.geteuid()
-    process_info['gid'] = os.getgid()
-    process_info['cwd'] = os.getcwdu()
-    process_info['ppid'] = os.getppid()
-    return process_info
-
-
-def _introspect_python_site_info():
-    import site
-
-    data = {}
-    python_info = {}
-    # These only exist for python 2.6+
-    try:
-        python_info['site.PREFIXES'] = site.PREFIXES
-        python_info['site.USER_SITE'] = site.USER_SITE
-        python_info['site.USER_BASE'] = site.USER_BASE
-    except AttributeError:
-        pass
-
-    # only exists in python 2.7+
-    try:
-        python_info['site.getsitepackages'] = site.getsitepackages()
-    except AttributeError:
-        pass
-
-    data['python_site'] = python_info
-    return data
-
-
-def _introspect_python_info():
-        data = {}
-
-        python_info = {}
-        python_info['sys.argv'] = sys.argv
-        python_info['sys.path'] = sys.path
-        python_info['sys.prefix'] = sys.prefix
-        python_info['sys.exec_prefix'] = sys.exec_prefix
-        python_info['sys.meta_path'] = sys.meta_path
-        # items in path hooks can be custom types, namely zipimporter
-        python_info['sys.path_hooks'] = [repr(x) for x in sys.path_hooks]
-
-        # Note: sys.version and other info is already collected in get_python_facts
-        #       during fact collection. This info could be collected there as well.
-
-        data['python'] = python_info
-        return data
-
-
-def _introspect_env_info():
-    data = {}
-    env_info = os.environ.copy()
-    data['environment'] = env_info
-    return data
-
-
-def _introspect_module_invocation():
-    # info about the env and runtime of the module as it was invoked
-    data = {}
-    data['locale'] = locale.getlocale()
-
-    python_info = _introspect_python_info()
-    data.update(python_info)
-
-    python_site_info = _introspect_python_site_info()
-    data.update(python_site_info)
-
-    process_info = _introspect_process_info()
-    data['process'] = process_info
-
-    # facts collects env info as well, but the goal here is to collect the
-    # env this particular module invocation is using.
-    env_info = _introspect_env_info()
-    #env_info = {'environment': {}}
-    data.update(env_info)
-
-    return data
-
-
 class AnsibleFallbackNotFound(Exception):
     pass
 
@@ -902,7 +808,7 @@ class AnsibleModule(object):
         module_info = self._introspect_module()
         data['module'] = module_info
 
-        module_invocation_info = _introspect_module_invocation()
+        module_invocation_info = introspection.module_invocation()
         data['module_invocation'] = module_invocation_info
         return data
 
@@ -950,7 +856,7 @@ class AnsibleModule(object):
         data['run_command_environ_update'] = self.run_command_environ_update
 
         # The DOCUMENTATION, EXAMPLES, METADATA, etc
-        module_meta_info = _introspect_module_meta_info()
+        module_meta_info = introspection._module_meta_info()
         data['metadata'] = module_meta_info
 
         return data
