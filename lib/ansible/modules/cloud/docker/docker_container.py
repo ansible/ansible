@@ -31,7 +31,7 @@ description:
   - Manage the life cycle of docker containers.
   - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
 
-version_added: "2.1.0"
+version_added: "2.1"
 
 options:
   blkio_weight:
