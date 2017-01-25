@@ -76,7 +76,7 @@ options:
     default: null
   list:
     description:
-      - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+      - Package name to run the equivalent of yum list <package> against.
     required: false
     default: null
   state:
@@ -229,6 +229,11 @@ EXAMPLES = '''
   yum:
     name: "@^gnome-desktop-environment"
     state: present
+
+- name: List ansible packages and register result to print with debug later.
+  yum:
+    list: ansible
+  register: result
 '''
 
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
