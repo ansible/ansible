@@ -29,26 +29,9 @@ description:
     - Create, update, delete snapshot groups for NetApp E-series storage arrays
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    api_username:
-        required: true
-        description:
-        - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_password:
-        required: true
-        description:
-        - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_url:
-        required: true
-        description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
     state:
         description:
             - Whether to ensure the group is present or absent.

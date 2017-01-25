@@ -28,26 +28,9 @@ description:
     - Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    api_username:
-        required: true
-        description:
-        - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_password:
-        required: true
-        description:
-        - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_url:
-        required: true
-        description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
     name:
         description:
             - The name of the async array you wish to target, or create.
@@ -90,10 +73,6 @@ options:
             - The threshold (in minutes) for notifying the user that periodic synchronization has taken too long to complete.
         required: no
         default: 10
-    ssid:
-        description:
-            - The ID of the primary storage array for the async mirror action
-        required: yes
     state:
         description:
             - A C(state) of present will either create or update the async mirror group.

@@ -27,30 +27,9 @@ version_added: "2.2"
 short_description: Add/remove arrays from the Web Services Proxy
 description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  api_username:
-    required: true
-    description:
-    - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
-    required: true
-    description:
-    - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
-    required: true
-    description:
-    - The url to the SANtricity WebServices Proxy or embedded REST API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-    required: false
-    default: true
-    description:
-    - Should https certificates be validated?
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage. This value must be unique for each array.
   state:
     required: true
     description:

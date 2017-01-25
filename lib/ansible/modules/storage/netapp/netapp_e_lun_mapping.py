@@ -29,16 +29,9 @@ short_description: Create or Remove LUN Mappings
 description:
      - Allows for the creation and removal of volume to host mappings for NetApp E-series storage arrays.
 version_added: "2.2"
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
-  ssid:
-    description:
-      - "The storage system array identifier."
-    required: False
   lun:
     description:
       - The LUN number you wish to give the mapping
@@ -67,19 +60,6 @@ options:
       - All parameters I(lun), I(target), I(target_type) and I(volume_name) must still be supplied.
     required: True
     choices: ["present", "absent"]
-  api_url:
-    description:
-      - "The full API url. Example: http://ENDPOINT:8080/devmgr/v2"
-      - This can optionally be set via an environment variable, API_URL
-    required: False
-  api_username:
-    description:
-      - The username used to authenticate against the API. This can optionally be set via an environment variable, API_USERNAME
-    required: False
-  api_password:
-    description:
-      - The password used to authenticate against the API. This can optionally be set via an environment variable, API_PASSWORD
-    required: False
 '''
 
 EXAMPLES = '''

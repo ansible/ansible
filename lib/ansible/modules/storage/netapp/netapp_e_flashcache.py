@@ -28,30 +28,9 @@ version_added: '2.2'
 short_description: Manage NetApp SSD caches
 description:
 - Create or remove SSD caches on a NetApp E-Series storage array.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  api_username:
-      required: true
-      description:
-      - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
-      required: true
-      description:
-      - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
-      required: true
-      description:
-      - The url to the SANtricity WebServices Proxy or embedded REST API.
-      example:
-      - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage (as configured on the web services proxy).
   state:
     required: true
     description:

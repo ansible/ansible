@@ -30,30 +30,9 @@ description:
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
 note: Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status will be returned, no other changes can be made to a pre-existing snapshot volume.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    api_username:
-        required: true
-        description:
-        - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_password:
-        required: true
-        description:
-        - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_url:
-        required: true
-        description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
-    ssid:
-      description:
-          - storage array ID
-      required: True
     snapshot_image_id:
       required: True
       description:

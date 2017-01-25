@@ -29,19 +29,12 @@ description:
      - Sets or updates the password for a storage array.  When the password is updated on the storage array, it must be updated on the SANtricity Web Services proxy. Note, all storage arrays do not have a Monitor or RO role.
 version_added: "2.2"
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
     name:
       description:
         - The name of the storage array. Note that if more than one storage array with this name is detected, the task will fail and you'll have to use the ID instead.
-      required: False
-    ssid:
-      description:
-        - the identifier of the storage array in the Web Services Proxy.
       required: False
     set_admin:
       description:
@@ -55,22 +48,6 @@ options:
       description:
         - The password you would like to set. Cannot be more than 30 characters.
       required: True
-    api_url:
-      description:
-        - The full API url.
-        - "Example: http://ENDPOINT:8080/devmgr/v2"
-        - This can optionally be set via an environment variable, API_URL
-      required: False
-    api_username:
-      description:
-        - The username used to authenticate against the API
-        - This can optionally be set via an environment variable, API_USERNAME
-      required: False
-    api_password:
-      description:
-        - The password used to authenticate against the API
-        - This can optionally be set via an environment variable, API_PASSWORD
-      required: False
 '''
 
 EXAMPLES = '''
