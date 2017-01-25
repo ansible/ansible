@@ -325,7 +325,7 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec = argument_spec,
         add_file_common_args=True,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     url  = module.params['url']
