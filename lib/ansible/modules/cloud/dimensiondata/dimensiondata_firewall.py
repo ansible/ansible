@@ -75,7 +75,6 @@ options:
   action:
     description:
       - Action to take when rule matched.
-      - ACCEPT_DECISIVELY or DROP
     choices: ["ACCEPT_DECISIVELY", "DROP"]
     default: "ACCEPT_DECISIVELY"
   ip_version:
@@ -86,7 +85,6 @@ options:
   protocol:
     description:
       - Network protocol type.
-      - IP, ICMP, TCP, or UDP.
     choices: ["IP", "ICMP", "TCP", "UDP"]
     default: "TCP"
   source:
@@ -108,7 +106,6 @@ options:
   position:
     description:
       - Placement of rule in relation to others.
-      - One of FIRST, LAST, BEFORE, AFTER.
     choices: ["FIRST", "LAST", "BEFORE", "AFTER"]
     default: "LAST"
   relative_to_rule:
