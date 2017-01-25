@@ -150,10 +150,12 @@ if ($type -eq "binary" -and $data -ne $null -and $data -is [String]) {
     $data = Convert-RegExportHexStringToByteArray($data)
 }
 
-# Expand string if type expandstring
-if ($type -eq "expandstring" -and $data -ne $null -and $data -is [String]) {
-    $data = Expand-Environment($data)
-    $datatype = "string"
+# Special case handling for the path's default property.
+if ($name.ToLower() -eq "(default)") {
+    if ($type -eq "expandstring" -and $data -ne $null -and $data -is [String]) {
+        $data = Expand-Environment($data)
+    }
+    $type = "string"
 }
 
 if ($state -eq "present") {
@@ -177,8 +179,12 @@ if ($state -eq "present") {
                 # Changes Data and DataType
                 if (-not $check_mode) {
                     try {
-                        Remove-ItemProperty -Path $path -Name $name
-                        New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force
+                        if ($name.ToLower() -eq "(default)") {
+                            $null = $(Get-Item -Path $path -ErrorAction 'Stop').OpenSubKey('','ReadWriteSubTree').SetValue($null,$data)
+                        } else {
+                            Remove-ItemProperty -Path $path -Name $name
+                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force
+                        }
                     } catch {
                         Fail-Json $result $_.Exception.Message
                     }
