@@ -252,7 +252,7 @@ Function Nssm-Update-AppParameters
                         $singleLineParams = "$val " + $singleLineParams
                     }
                 } else {
-                    $singleLineParams = $singleLineParams + "$key ""$val"""
+                    $singleLineParams = $singleLineParams + "$key $val"
                 }
             }
 
