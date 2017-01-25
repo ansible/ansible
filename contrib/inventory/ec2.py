@@ -666,29 +666,30 @@ class Ec2Inventory(object):
                 reservations = []
                 autoscale_groups = conn_autoscale.get_all_groups()
                 for autoscale_group in autoscale_groups:
-                  tags = {}
-                  for tag in autoscale_group.tags:
-                    if tag.propagate_at_launch:
-                        tags[tag.key] = tag.value
+                  if autoscale_group.name:
+                    tags = {}
+                    for tag in autoscale_group.tags:
+                      if tag.propagate_at_launch:
+                          tags[tag.key] = tag.value
 
-                  for autoscale_group_instance in autoscale_group.instances:
+                    for autoscale_group_instance in autoscale_group.instances:
 
-                    if self.ec2_instance_filters:
-                        for filter_key, filter_values in self.ec2_instance_filters.items():
-                            reservations.extend(conn_ec2.get_all_instances(
-                                filters = {
-                                    filter_key : filter_values,
-                                    'instance-id': [ autoscale_group_instance.instance_id ]
-                                }
-                            ))
-                    else:
-                        reservations = conn_ec2.get_all_instances(
-                            filters = { 'instance-id': [ autoscale_group_instance.instance_id ] })
+                      if self.ec2_instance_filters:
+                          for filter_key, filter_values in self.ec2_instance_filters.items():
+                              reservations.extend(conn_ec2.get_all_instances(
+                                  filters = {
+                                      filter_key : filter_values,
+                                      'instance-id': [ autoscale_group_instance.instance_id ]
+                                  }
+                              ))
+                      else:
+                          reservations = conn_ec2.get_all_instances(
+                              filters = { 'instance-id': [ autoscale_group_instance.instance_id ] })
 
-                    for reservation in reservations:
-                      for reservation_instance in reservation.instances:
-                        reservation_instance.tags = tags
-                        self.add_instance(reservation_instance, region)
+                      for reservation in reservations:
+                        for reservation_instance in reservation.instances:
+                          reservation_instance.tags = tags
+                          self.add_instance(reservation_instance, region)
 
         except boto.exception.BotoServerError as e:
             if e.error_code == 'AuthFailure':
