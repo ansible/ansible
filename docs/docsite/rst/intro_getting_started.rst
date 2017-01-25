@@ -54,12 +54,6 @@ public SSH key should be located in ``authorized_keys`` on those systems::
     bserver.example.org
    
    
-And if you want to connect to localhost, you write ``/etc/ansible/hosts`` as below::
-
-    localhost ansible_connection=local
-
-
-
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
@@ -113,6 +107,21 @@ explore what you can do with different modules, and to learn about the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
+
+Tips
+
+Only the local server, you do not need to write on inventory file to specify the local server.
+All you have to do is typing "localhost" or "127.0.0.1" on where specifies a server name.
+
+Example:
+
+.. code-block:: bash
+
+    $ ansible localhost -m ping
+
+Also, you can specify localhost explicitly by writing like this on your inventory file::
+
+    localhost ansible_connection=local
 
 .. _a_note_about_host_key_checking:
 
