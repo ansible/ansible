@@ -108,9 +108,9 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None):
+    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path!
+        # FIXME: Support system temp path and passed in tmpdir!
         return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
     def expand_user(self, user_home_path):
