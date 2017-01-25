@@ -78,8 +78,8 @@
   command: locale-gen pt_BR
   when: ansible_os_family == 'Debian'
 
-- name: Generate es_MX locale (Debian)
-  command: locale-gen es_MX
+- name: Generate es_ES locale (Debian)
+  command: locale-gen es_ES
   when: ansible_os_family == 'Debian'
 
 - name: install i18ndata
@@ -90,8 +90,8 @@
   command: localedef -f ISO-8859-1 -i pt_BR pt_BR
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
-- name: Generate es_MX locale (Red Hat)
-  command: localedef -f ISO-8859-1 -i es_MX es_MX
+- name: Generate es_ES locale (Red Hat)
+  command: localedef -f ISO-8859-1 -i es_ES es_ES
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 - name: restart postgresql service

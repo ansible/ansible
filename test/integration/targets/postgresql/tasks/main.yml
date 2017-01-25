@@ -111,7 +111,7 @@
     state: 'present'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
-    lc_ctype: 'es_MX{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
     template: 'template0'
     login_user: "{{ pg_user }}"
 
@@ -126,7 +126,7 @@
       - "result.stdout_lines[-1] == '(1 row)'"
       - "'LATIN1' in result.stdout_lines[-2]"
       - "'pt_BR' in result.stdout_lines[-2]"
-      - "'es_MX' in result.stdout_lines[-2]"
+      - "'es_ES' in result.stdout_lines[-2]"
       - "'UTF8' not in result.stdout_lines[-2]"
       - "'en_US' not in result.stdout_lines[-2]"
 
@@ -138,7 +138,7 @@
     state: 'present'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
-    lc_ctype: 'es_MX{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
     template: 'template0'
     login_user: "{{ pg_user }}"
   register: result
@@ -156,7 +156,7 @@
     state: 'present'
     encoding: 'UTF8'
     lc_collate: 'pt_BR{{ locale_utf8_suffix }}'
-    lc_ctype: 'es_MX{{ locale_utf8_suffix }}'
+    lc_ctype: 'es_ES{{ locale_utf8_suffix }}'
     template: 'template0'
     login_user: "{{ pg_user }}"
   register: result
