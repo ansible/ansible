@@ -114,7 +114,7 @@ class ShellBase(object):
                 basetmpdir = '/tmp'
         else:
             basetmpdir = C.DEFAULT_REMOTE_TMP
-        basetmp = self.join_path(basetmpdir, basefile)
+        basetmp = os.path.expanduser(self.join_path(basetmpdir, basefile))
 
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
         cmd += ' %s echo %s=%s echo %s %s' % (self._SHELL_AND, basefile, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
