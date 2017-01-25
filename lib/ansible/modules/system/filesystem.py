@@ -209,7 +209,7 @@ def main():
 
     cmd = module.get_bin_path('blkid', required=True)
 
-    rc,raw_fs,err = module.run_command(cmd,"-c /dev/null", "-o value -s TYPE", dev)
+    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, ' '.join(dev)))
     fs = raw_fs.strip()
 
     if fs == fstype and resizefs == False and not force:
