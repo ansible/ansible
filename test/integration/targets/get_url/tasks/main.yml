@@ -77,7 +77,7 @@
     - '"OK" in result.msg'
 
 - name: test HTTP HEAD for nonexistent URL in check mode
-  get_url: url=" http://{ {httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
+  get_url: url="http://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
   check_mode: True
   register: result
   ignore_errors: True
