@@ -69,17 +69,10 @@ The following topics will discuss how to develop and work with modules:
 :doc:`developing_modules_best_practices`
     Best practices, recommendations, and things to avoid.
 :doc:`developing_modules_contributing`
-     Guidelines for contributing your module to Ansible.
+     Checklist for contributing your module to Ansible.
 
-:doc:`../guide_aws`
-    Working with Amazon Web Services (AWS) modules.
 :doc:`developing_modules_python3`
     Adding Python 3 support to modules (all new modules must be py2.4 and py3 compatible).
-:doc:`../intro_networking`
-    Working with Network modules.
-:doc:`../intro_windows`
-    Working with Windows modules.
-
 
 
 .. seealso::
