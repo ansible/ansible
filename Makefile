@@ -175,6 +175,7 @@ clean:
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
 	find . -type f -name '*.pyc' -delete
+	rm -f /test/units/.coverage*
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
 	$(MAKE) -C docs/api clean
