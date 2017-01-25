@@ -290,6 +290,9 @@ class Rhsm(RegistrationBase):
         args = ['subscription-manager', 'register']
 
         # Generate command arguments
+        if force_register:
+            args.extend(['--force'])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
             if org_id:
@@ -307,8 +310,6 @@ class Rhsm(RegistrationBase):
                 args.extend(['--name', consumer_name])
             if consumer_id:
                 args.extend(['--consumerid', consumer_id])
-            if force_register:
-                args.extend(['--force'])
             if environment:
                 args.extend(['--environment', environment])
 
