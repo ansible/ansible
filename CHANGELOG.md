@@ -88,39 +88,40 @@ Ansible Changes By Release
 - omapi_host
 - openwrt_init
 - ovirt:
-  * ovirt_affinity_labels_facts
+  * ovirt_affinity_groups
   * ovirt_affinity_labels
-  * ovirt_clusters_facts
+  * ovirt_affinity_labels_facts
   * ovirt_clusters
-  * ovirt_datacenters_facts
+  * ovirt_clusters_facts
   * ovirt_datacenters
-  * ovirt_external_providers_facts
+  * ovirt_datacenters_facts
   * ovirt_external_providers
-  * ovirt_groups_facts
+  * ovirt_external_providers_facts
   * ovirt_groups
+  * ovirt_groups_facts
   * ovirt_host_networks
   * ovirt_host_pm
-  * ovirt_hosts_facts
   * ovirt_hosts
+  * ovirt_hosts_facts
   * ovirt_mac_pools
-  * ovirt_networks_facts
   * ovirt_networks
-  * ovirt_nics_facts
+  * ovirt_networks_facts
   * ovirt_nics
-  * ovirt_permissions_facts
+  * ovirt_nics_facts
   * ovirt_permissions
-  * ovirt_quotas_facts
+  * ovirt_permissions_facts
   * ovirt_quotas
-  * ovirt_storage_domains_facts
+  * ovirt_quotas_facts
   * ovirt_storage_domains
-  * ovirt_tags_facts
+  * ovirt_storage_domains_facts
   * ovirt_tags
-  * ovirt_templates_facts
+  * ovirt_tags_facts
   * ovirt_templates
-  * ovirt_users_facts
+  * ovirt_templates_facts
   * ovirt_users
-  * ovirt_vmpools_facts
+  * ovirt_users_facts
   * ovirt_vmpools
+  * ovirt_vmpools_facts
   * ovirt_vms_facts
 - packet:
   * packet_device
