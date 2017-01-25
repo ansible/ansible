@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_volume_copy
 short_description: Create volume copy pairs
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create and delete snapshots images on volume groups for NetApp E-series storage arrays.
 version_added: '2.2'

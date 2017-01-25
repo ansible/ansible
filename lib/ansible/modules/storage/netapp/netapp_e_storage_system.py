@@ -25,6 +25,8 @@ DOCUMENTATION = '''
 module: netapp_e_storage_system
 version_added: "2.2"
 short_description: Add/remove arrays from the Web Services Proxy
+extends_documentation_fragment:
+    - netapp.santricity
 description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
 options:

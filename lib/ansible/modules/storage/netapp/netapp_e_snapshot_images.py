@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_images
 short_description: Create and delete snapshot images
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create and delete snapshots images on snapshot groups for NetApp E-series storage arrays.
     - Only the oldest snapshot image can be deleted so consistency is preserved.

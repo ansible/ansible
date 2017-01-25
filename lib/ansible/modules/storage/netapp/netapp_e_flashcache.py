@@ -26,6 +26,8 @@ module: netapp_e_flashcache
 author: Kevin Hulquest (@hulquest)
 version_added: '2.2'
 short_description: Manage NetApp SSD caches
+extends_documentation_fragment:
+    - netapp.santricity
 description:
 - Create or remove SSD caches on a NetApp E-Series storage array.
 options:

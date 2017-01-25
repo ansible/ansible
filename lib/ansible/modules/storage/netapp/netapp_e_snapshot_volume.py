@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_volume
 short_description: Manage E/EF-Series snapshot volumes.
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Create, update, remove snapshot volumes for NetApp E/EF-Series storage arrays.
 version_added: '2.2'

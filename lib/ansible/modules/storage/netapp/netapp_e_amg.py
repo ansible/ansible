@@ -24,6 +24,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_amg
 short_description: Create, Remove, and Update Asynchronous Mirror Groups
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
 version_added: '2.2'

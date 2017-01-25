@@ -25,6 +25,8 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_auth
 short_description: Sets or updates the password for a storage array.
+extends_documentation_fragment:
+    - netapp.santricity
 description:
      - Sets or updates the password for a storage array.  When the password is updated on the storage array, it must be updated on the SANtricity Web Services proxy. Note, all storage arrays do not have a Monitor or RO role.
 version_added: "2.2"

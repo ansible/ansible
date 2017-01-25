@@ -25,6 +25,8 @@ DOCUMENTATION = """
 ---
 module: netapp_e_amg_sync
 short_description: Conduct synchronization actions on asynchronous member groups.
+extends_documentation_fragment:
+    - netapp.santricity
 description:
     - Allows for the initialization, suspension and resumption of an asynchronous mirror group's synchronization for NetApp E-series storage arrays.
 version_added: '2.2'

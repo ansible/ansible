@@ -28,6 +28,8 @@ DOCUMENTATION = '''
 module: netapp_e_hostgroup
 version_added: "2.2"
 short_description: Manage NetApp Storage Array Host Groups
+extends_documentation_fragment:
+    - netapp.santricity
 author: Kevin Hulquest (@hulquest)
 description:
 - Create, update or destroy host groups on a NetApp E-Series storage array.

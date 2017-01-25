@@ -25,6 +25,8 @@ DOCUMENTATION = '''
 module: netapp_e_facts
 version_added: '2.2'
 short_description: Get facts about NetApp E-Series arrays
+extends_documentation_fragment:
+    - netapp.santricity
 options:
   api_username:
     required: true
