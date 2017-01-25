@@ -19,7 +19,7 @@ module: rds_cluster_param_group
 short_description: Manages RDS Aurora Cluster Parameter Groups
 description:
   -Manages the creation, modification, deletion of RDS Aurora parameter groups.
-version_added: "2.2"
+version_added: "2.3"
 author: "Nick Aslanidis (@naslanidis)"
 options:
   param_group_name:
@@ -151,7 +151,7 @@ def create_cluster_param_group(client, module):
 
     tag_array = []
     if module.params.get('tags'):
-        for tag, value in module.params.get('tags').iteritems():
+        for tag, value in iter(module.params.get('tags')):
             tag_array.append({'Key': tag, 'Value': value})
         params['Tags'] = tag_array
 
