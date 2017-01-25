@@ -385,6 +385,8 @@ def get_vrf_list(module):
 
 
 def get_interface_info(interface, module):
+    if not interface.startswith('loopback'):
+        interface = interface.capitalize()
     command = 'show run | section interface.{0}'.format(interface.capitalize())
     vrf_regex = ".*vrf\s+member\s+(?P<vrf>\S+).*"
 
