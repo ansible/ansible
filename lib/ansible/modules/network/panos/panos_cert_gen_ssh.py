@@ -22,9 +22,9 @@
 DOCUMENTATION = '''
 ---
 module: panos_cert_gen_ssh
-short_description: generates a self-signed certificate - NOT A CA -- using SSH with SSH key
+short_description: generates a self-signed certificate using SSH protocol with SSH key
 description:
-    - generates a self-signed certificate that can be used by GlobalProtect client. root-ca must be preset on the system first. This module depends on paramiko for ssh.
+    - This module generates a self-signed certificate that can be used by GlobalProtect client, SSL connector, or otherwise. Root certificate must be preset on the system first. This module depends on paramiko for ssh.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
