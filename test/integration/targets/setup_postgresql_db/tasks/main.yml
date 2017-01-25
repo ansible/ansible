@@ -23,6 +23,12 @@
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
+- name: remove old db (FreeBSD)
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
+  when: ansible_os_family == "FreeBSD"
+
 # Theoretically, pg_dropcluster should work but it doesn't so rm files
 - name: remove old db config (debian)
   command: rm -rf /etc/postgresql
@@ -47,6 +53,17 @@
   loop_control:
     loop_var: postgresql_package_item
   when: ansible_pkg_mgr  ==  'apt'
+
+- name: install FreeBSD dependencies for postgresql test
+  pkgng: name={{ postgresql_package_item }} state=present
+  with_items: "{{postgresql_packages}}"
+  loop_control:
+    loop_var: postgresql_package_item
+  when: ansible_os_family == "FreeBSD"
+
+- name: initialize postgres (FreeBSD)
+  command: /usr/local/etc/rc.d/postgresql oneinitdb
+  when: ansible_os_family == "FreeBSD"
 
 - name: Initialize postgres (RedHat systemd)
   command: postgresql-setup initdb
@@ -93,6 +110,12 @@
 - name: Generate es_ES locale (Red Hat)
   command: localedef -f ISO-8859-1 -i es_ES es_ES
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
+
+- name: enable postgresql service (FreeBSD)
+  lineinfile:
+    path: /etc/rc.conf
+    line: 'postgresql_enable="YES"'
+  when: ansible_os_family == "FreeBSD"
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
