@@ -218,7 +218,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         tmp_mode = 0o700
 
-        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
+        if use_system_tmp:
+            tmpdir = None
+        else:
+            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP)
+
+        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
         # error handling on this seems a little aggressive?
