@@ -169,7 +169,7 @@ EXAMPLES = """
   ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    value: ""
+    values: ""
     state: exact
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
@@ -187,7 +187,7 @@ EXAMPLES = """
   ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    value: ""
+    values: ""
     state: exact
     params: "{{ ldap_auth }}"
 """
