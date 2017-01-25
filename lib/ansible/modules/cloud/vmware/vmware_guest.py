@@ -1207,6 +1207,7 @@ class PyVmomiHelper(object):
 
                 clonespec.config = self.configspec
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
+                self.change_detected = True
             else:
                 # ConfigSpec require name for VM creation
                 self.configspec.name = self.params['name']
@@ -1216,6 +1217,7 @@ class PyVmomiHelper(object):
                                                         vmPathName="[" + datastore_name + "] " + self.params["name"])
 
                 task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                self.change_detected = True
             self.wait_for_task(task)
         except TypeError:
             self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs.")
