@@ -309,12 +309,12 @@ def read_record(file_path, default=None):
     """
     try:
         f = open(file_path, 'r')
-        t = f.readline()
-        return t.strip()
+        try:
+            return f.readline().strip()
+        finally:
+            f.close()
     except:
         return default
-    finally:
-        f.close()
 
 
 def get_unlabeled_device_info(device, unit):
