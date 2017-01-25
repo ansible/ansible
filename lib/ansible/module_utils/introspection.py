@@ -80,6 +80,23 @@ def python_site_info():
     return python_info
 
 
+def python_version_info():
+    version_info = {}
+
+    # Note: sys.version and other info is already collected in get_python_facts
+    #       during fact collection. This info could be collected there as well.
+    versions = {'major': sys.version_info[0],
+                'minor': sys.version_info[1],
+                'micro': sys.version_info[2],
+                'releaselevel': sys.version_info[3],
+                'serial': sys.version_info[4]}
+
+    version_info['version'] = versions
+    version_info['version_list'] = list(sys.version_info)
+
+    return version_info
+
+
 def python_info():
     python_info = {}
 
@@ -88,6 +105,7 @@ def python_info():
     python_info['sys_prefix'] = sys.prefix
     python_info['sys_exec_prefix'] = sys.exec_prefix
     python_info['sys_meta_path'] = sys.meta_path
+
     # items in path hooks can be custom types, namely zipimporter
     python_info['sys_path_hooks'] = [repr(x) for x in sys.path_hooks]
 
@@ -99,8 +117,21 @@ def python_info():
         sys_modules_info[name] = module_repr
 
     python_info['sys_modules'] = sys_modules_info
-    # Note: sys.version and other info is already collected in get_python_facts
-    #       during fact collection. This info could be collected there as well.
+
+    python_info['executable'] = sys.executable
+
+    python_type = None
+    try:
+        python_type = sys.subversion[0]
+    except AttributeError:
+        try:
+            python_type = sys.implementation.name
+        except AttributeError:
+            pass
+    python_info['type'] = python_type
+
+    versions = python_version_info()
+    python_info.update(versions)
 
     return python_info
 
