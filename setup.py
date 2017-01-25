@@ -50,6 +50,7 @@ setup(name='ansible',
          'bin/ansible-console',
          'bin/ansible-connection',
          'bin/ansible-vault',
+         'bin/ansible-shell',
       ],
       data_files=[],
 )
