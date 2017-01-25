@@ -489,7 +489,6 @@ class StrategyBase:
                             self._variable_manager._extra_vars[var[0]] = var[1]
 
                     if 'ansible_facts' in result_item:
-
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             item = result_item.get(loop_var, None)
