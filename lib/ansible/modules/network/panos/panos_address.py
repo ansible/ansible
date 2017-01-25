@@ -177,6 +177,9 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
+    if not HAS_LIB:
+        module.fail_json(msg='pan-python required for this module')
+
     ip_address = module.params["ip_address"]
     password = module.params["password"]
     username = module.params['username']
