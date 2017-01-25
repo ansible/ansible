@@ -19,8 +19,6 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-# TODO: Add missing REG_NONE support
-
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -29,7 +27,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $path = Get-AnsibleParam -obj $params -name "path" -type "string" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "string" -aliases "entry","value"
 $data = Get-AnsibleParam -obj $params -name "data"
-$type = Get-AnsibleParam -obj $params -name "type" -type "string" -validateSet "binary","dword","expandstring","multistring","string","qword" -aliases "datatype" -default "string"
+$type = Get-AnsibleParam -obj $params -name "type" -type "string" -validateSet "none","binary","dword","expandstring","multistring","string","qword" -aliases "datatype" -default "string"
 $state = Get-AnsibleParam -obj $params -name "state" -type "string" -validateSet "present","absent" -default "present"
 
 $result = @{
@@ -40,10 +38,6 @@ $result = @{
         prepared = ""
     }
     warnings = @()
-}
-
-if ($state -eq "present" -and $data -eq $null -and $name -ne $null) {
-    Fail-Json $result "missing required argument: data"
 }
 
 # Fix HCCC:\ PSDrive for pre-2.3 compatibility
@@ -59,7 +53,7 @@ if (-not ($path -match "^HK(CC|CR|CU|LM|U):\\")) {
 
 # Allow empty values as the "(default)" value
 if ($name -eq "") {
-    $registryValue = "(default)"
+    $name = "(default)"
 }
 
 Function Test-ValueData {
@@ -80,11 +74,17 @@ Function Test-ValueData {
 # Handles binary, integer(dword) and string registry data
 Function Compare-Data {
     Param (
-        [parameter(Mandatory=$true)] [AllowEmptyString()] $ReferenceData,
-        [parameter(Mandatory=$true)] [AllowEmptyString()] $DifferenceData
+        [parameter(Mandatory=$true)] [AllowEmptyString()] [AllowNull()] $ReferenceData,
+        [parameter(Mandatory=$true)] [AllowEmptyString()] [AllowNull()] $DifferenceData
     )
 
-    if ($ReferenceData -is [String] -or $ReferenceData -is [int]) {
+    if ($ReferenceData -eq $null) {
+        if ($DifferenceData -eq $null) {
+            return $true
+        } else {
+            return $false
+        }
+    } elseif ($ReferenceData -is [String] -or $ReferenceData -is [int]) {
         if ($ReferenceData -eq $DifferenceData) {
             return $true
         } else {
@@ -158,6 +158,13 @@ if ($name.ToLower() -eq "(default)") {
     $type = "string"
 }
 
+# Support REG_NONE with empty value
+# FIXME: REG_NONE support is not idempotent
+if ($type -eq "none" -or $data -eq $null) {
+    $data = New-Object byte[] 0
+#    $data = ([byte[]] @())
+}
+
 if ($state -eq "present") {
 
     if ((Test-Path $path) -and $name -ne $null) {
@@ -165,14 +172,14 @@ if ($state -eq "present") {
         if (Test-ValueData -Path $path -Name $name) {
 
             # Handle binary data
-            $old_data =(Get-ItemProperty -Path $path | Select-Object -ExpandProperty $name)
+            $old_data = (Get-ItemProperty -Path $path | Select-Object -ExpandProperty $name)
 
             if ($name.ToLower() -eq "(default)") {
                 # Special case handling for the path's default property.
                 # Because .GetValueKind() doesn't work for the (default) path property
-                $old_type = "String"
+                $old_type = "String".ToLower()
             } else {
-                $old_type = (Get-Item $path).GetValueKind($name)
+                $old_type = (Get-Item $path).GetValueKind($name).ToString().ToLower()
             }
 
             if ($type -ne $old_type) {
@@ -197,12 +204,17 @@ if ($state -eq "present") {
 -"$name" = "$old_type`:$data"
 +"$name" = "$type`:$data"
 "@
-
+            # FIXME: Compare-Data fails to work for null-length byte arrays
             } elseif (-not (Compare-Data -ReferenceData $old_data -DifferenceData $data)) {
                 # Changes Only Data
                 if (-not $check_mode) {
                     try {
-                        Set-ItemProperty -Path $path -Name $name -Value $data
+                        if ($type -eq "none") {
+                            Remove-ItemProperty -Path $path -Name $name
+                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force
+                        } else {
+                            Set-ItemProperty -Path $path -Name $name -Value $data
+                        }
                     } catch {
                         Fail-Json $result $_.Exception.Message
                     }
@@ -220,7 +232,7 @@ if ($state -eq "present") {
             }
 
         } else {
-
+            # Add missing entry
             if (-not $check_mode) {
                 try {
                     New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type
@@ -244,7 +256,6 @@ if ($state -eq "present") {
                     $new_path | New-ItemProperty -Name $name -Value $data -PropertyType $type -Force
                 }
             } catch {
-                throw
                 Fail-Json $result $_.Exception.Message
             }
         }
@@ -260,8 +271,6 @@ if ($state -eq "present") {
 "@
         }
 
-    } else {
-        # FIXME: Value is null, should we silently ignore this and do nothing ?
     }
 
 } elseif ($state -eq "absent") {
