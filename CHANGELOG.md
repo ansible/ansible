@@ -47,6 +47,8 @@ Ansible Changes By Release
   * aws_kms
   * ecs_ecr
   * ec2_vpc_vgw_facts
+- bigswitch:
+  * bigmon_policy
 - cloudscale_server
 - cloudstack
   * cs_host
@@ -140,8 +142,7 @@ Ansible Changes By Release
 - zfs:
   * zfs_facts
   * zpool_facts
-- bigswitch:
-  * bigmon_policy
+
 ####New Callbacks:
 
 * dense: minimal stdout output with fallback to default when verbose
