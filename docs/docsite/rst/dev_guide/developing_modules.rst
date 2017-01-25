@@ -21,18 +21,6 @@ See :doc:`../modules` for a list of existing modules.
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
-By default, everything that ships with Ansible is pulled from its source tree, but
-additional paths can be added.
-
-The directory :file:`./library`, alongside your top level :term:`playbooks`, is also automatically
-added as a search directory.
-
-Should you develop an interesting Ansible module, consider sending a pull request to the
-`modules-extras project <https://github.com/ansible/ansible-modules-extras>`_.  There's also a core
-repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
-but there's no fundamental difference in the end - both ship with Ansible, all in one package, regardless
-of how you acquire Ansible.
-
 .. _module_dev_should_you:
 
 Should You Develop A Module?
@@ -42,7 +30,7 @@ develop a module. Ask the following questions:
 
 1. Does a similar module already exist? 
 
-There are a lot of existing modules available, and more that are in development. You should check out the list of existing modules at :doc:`../modules` or look at the module PRs for the ansible repository and see if a module that does what you want exists or is in development.
+There are a lot of existing modules available, and more that are in development. You should check out the list of existing modules at :doc:`../modules` or look at the `module PRs <https://github.com/ansible/ansible/labels/module>`_ for the ansible repository on Github to see if a module that does what you want exists or is in development.
 
 2. Should you use or develop an action plugin instead? 
 
