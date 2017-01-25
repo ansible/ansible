@@ -40,6 +40,8 @@ description:
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
+     - When run with --check, it will do a HEAD request to validate the URL but
+       will not download the entire file or verify it against hashes.
 version_added: "0.6"
 options:
   url:
@@ -420,6 +422,7 @@ def main():
     # If the remote URL exists, we're done with check mode
     if module.check_mode:
         os.remove(tmpsrc)
+        res_args = dict( url = url, dest = dest, src = tmpsrc, changed = True, msg = info.get('msg', ''))
         module.exit_json(**res_args)
 
     # raise an error if there is no tmpsrc file
