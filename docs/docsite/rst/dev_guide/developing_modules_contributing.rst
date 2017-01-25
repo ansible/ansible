@@ -8,7 +8,7 @@ can be included in Ansible, but modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use
 the AnsibleModule common code, and should generally use consistent arguments with the rest of
 the program.   Stop by the mailing list to inquire about requirements if you like, and submit
-a github pull request to the `extras <https://github.com/ansible/ansible-modules-extras>`_ project.
+a github pull request to the `ansible <https://github.com/ansible/ansible>`_ project.
 Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
 gives them slightly higher development priority (though they'll work in exactly the same way).
 
