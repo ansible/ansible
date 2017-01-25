@@ -58,9 +58,9 @@ def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, 
     b_content += b_body
 
     b_addresses = b_to.split(b',')
-    if b_cc:
+    if cc:
         b_addresses += b_cc.split(b',')
-    if b_bcc:
+    if bcc:
         b_addresses += b_bcc.split(b',')
 
     for b_address in b_addresses:
