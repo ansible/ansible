@@ -1,3 +1,5 @@
+#Requires -RunAsAdministrator
+
 # Configure a Windows host for remote management with Ansible
 # -----------------------------------------------------------
 #
