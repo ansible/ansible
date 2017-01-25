@@ -126,6 +126,12 @@ EXAMPLES = r"""
           address 192.0.2.23
           netmask 255.255.255.0
 
+– name: insert/update configuration using a local file
+  blockinfile:
+    block: "{{ lookup(‘file’, ‘./local/ssh_config’) }}"
+    dest: "/etc/ssh/ssh_config"
+    backup: yes
+
 - name: insert/update HTML surrounded by custom markers after <body> line
   blockinfile:
     path: /var/www/html/index.html
