@@ -67,7 +67,12 @@
   when: ansible_os_family == 'Suse'
 
 - name: Copy pg_hba into place
-  copy: src=pg_hba.conf dest="{{ pg_hba_location }}" owner="postgres" group="root" mode="0644"
+  template:
+    src: files/pg_hba.conf
+    dest: "{{ pg_hba_location }}"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    mode: "0644"
 
 - name: Generate pt_BR locale (Debian)
   command: locale-gen pt_BR
