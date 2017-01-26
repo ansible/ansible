@@ -265,6 +265,19 @@ options:
             - "Sets time zone offset of the guest hardware clock."
             - "For example: Etc/GMT"
         version_added: "2.3"
+    serial_policy:
+        description:
+            - "Specify a serial number policy for the Virtual Machine."
+            - "Following options are supported:"
+            - "C(vm) - Sets the Virtual Machine's UUID as its serial number."
+            - "C(host) - Sets the host's UUID as the Virtual Machine's serial number."
+            - "C(custom) - Allows you to specify a custom serial number in C(serial_policy_value)."
+        version_added: "2.3"
+    serial_policy_value:
+        description:
+            - "Allows you to specify a custom serial number."
+            - "This parameter is used only when C(serial_policy) is I(custom)."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -518,6 +531,13 @@ class VmsModule(BaseModule):
             time_zone=otypes.TimeZone(
                 name=self.param('timezone'),
             ) if self.param('timezone') else None,
+            serial_number=otypes.SerialNumber(
+                policy=otypes.SerialNumberPolicy(self.param('serial_policy')),
+                value=self.param('serial_policy_value'),
+            ) if (
+                self.param('serial_policy') is not None or
+                self.param('serial_policy_value') is not None
+            ) else None,
         )
 
     def update_check(self, entity):
@@ -539,6 +559,8 @@ class VmsModule(BaseModule):
             and equal(self.param('description'), entity.description)
             and equal(self.param('comment'), entity.comment)
             and equal(self.param('timezone'), entity.time_zone.name)
+            and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
+            and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
         )
 
     def pre_create(self, entity):
@@ -864,6 +886,8 @@ def main():
         description=dict(default=None),
         comment=dict(default=None),
         timezone=dict(default=None),
+        serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
+        serial_policy_value=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
