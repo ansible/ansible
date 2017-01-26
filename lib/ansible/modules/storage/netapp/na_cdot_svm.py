@@ -185,7 +185,7 @@ class NetAppCDOTSVM(object):
         self.root_volume_security_style = p['root_volume_security_style']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("the python NetApp-Lib module is required")
+            self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_ontap_zapi(module=self.module)
 
