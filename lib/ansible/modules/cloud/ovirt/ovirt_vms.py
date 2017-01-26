@@ -504,20 +504,20 @@ class VmsModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and
-            equal(convert_to_bytes(self.param('memory')), entity.memory) and
-            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
-            equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
-            equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
-            equal(self.param('type'), str(entity.type)) and
-            equal(self.param('operating_system'), str(entity.os.type)) and
-            equal(self.param('high_availability'), entity.high_availability.enabled) and
-            equal(self.param('stateless'), entity.stateless) and
-            equal(self.param('cpu_shares'), entity.cpu_shares) and
-            equal(self.param('delete_protected'), entity.delete_protected) and
-            equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
-            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
-            equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
+            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster))
+            and equal(convert_to_bytes(self.param('memory')), entity.memory)
+            and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
+            and equal(self.param('cpu_cores'), entity.cpu.topology.cores)
+            and equal(self.param('cpu_sockets'), entity.cpu.topology.sockets)
+            and equal(self.param('type'), str(entity.type))
+            and equal(self.param('operating_system'), str(entity.os.type))
+            and equal(self.param('high_availability'), entity.high_availability.enabled)
+            and equal(self.param('stateless'), entity.stateless)
+            and equal(self.param('cpu_shares'), entity.cpu_shares)
+            and equal(self.param('delete_protected'), entity.delete_protected)
+            and equal(self.param('use_latest_template_version'), entity.use_latest_template_version)
+            and equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
+            and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
         )
 
     def pre_create(self, entity):
