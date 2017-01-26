@@ -39,22 +39,23 @@ try:
 except ImportError:
     HAS_LIBCLOUD_BASE = False
 
+# google-auth
+try:
+    import google.auth
+    from google.oauth2 import service_account
+    HAS_GOOGLE_AUTH = True
+except ImportError as e:
+    HAS_GOOGLE_AUTH = False
+
 # google-python-api
 try:
+    import google_auth_httplib2
     from httplib2 import Http
-    from oauth2client.service_account import ServiceAccountCredentials
     from googleapiclient.http import set_user_agent
     HAS_GOOGLE_API_LIB = True
 except ImportError:
     HAS_GOOGLE_API_LIB = False
 
-# google-cloud-python
-try:
-    import google.cloud.core as _GOOGLE_CLOUD_CORE_CHECK__
-    from httplib2 import Http
-    HAS_GOOGLE_CLOUD_CORE = True
-except ImportError:
-    HAS_GOOGLE_CLOUD_CORE = False
 
 # Ansible Display object for warnings
 try:
@@ -195,7 +196,7 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
             return None
         else:
             if credentials_file is None or project_id is None:
-                module.fail_json(msg=('GCP connection error: enable to determine project (%s) or'
+                module.fail_json(msg=('GCP connection error: unable to determine project (%s) or '
                 'credentials file (%s)' % (project_id, credentials_file)))
 
     # ensure the credentials file is found and is in the proper format.
@@ -300,16 +301,23 @@ def get_google_cloud_credentials(module, scopes=[]):
               params dict {'service_account_email': '...', 'credentials_file': '...', 'project_id': ...}
     :rtype: ``tuple``
     """
-    creds = _get_gcp_credentials(module,
+    if not HAS_GOOGLE_AUTH:
+        module.fail_json(msg='Please install google-auth.')
+
+    conn_params = _get_gcp_credentials(module,
                                  require_valid_json=True,
                                  check_libcloud=False)
     try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            creds['credentials_file'],
-            scopes=scopes
-        )
+        if conn_params['credentials_file']:
+            credentials = service_account.Credentials.from_service_account_file(
+                conn_params['credentials_file'])
+            if scopes:
+                credentials = credentials.with_scopes(scopes)
+        else:
+            credentials = google.auth.default(
+                    scopes=scopes)[0]
 
-        return (credentials, creds)
+        return (credentials, conn_params)
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
@@ -318,10 +326,10 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     """
     Authentication for use with google-python-api-client.
 
-    Function calls _get_gcp_credentials, which attempts to assemble the credentials from various locations.
-    Next it attempts to authenticate with Google.
+    Function calls get_google_cloud_credentials, which attempts to assemble the credentials 
+    from various locations.  Next it attempts to authenticate with Google.
 
-    This function returns an httplib2 object that can be provided to the Google Python API client.
+    This function returns an httplib2 (compatible) object that can be provided to the Google Python API client.
 
     For libcloud, don't use this function, use gcp_connect instead.  For Google Cloud, See
     get_google_cloud_credentials for how to connect.
@@ -330,7 +338,7 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     U(https://cloud.google.com/apis/docs/client-libraries-explained#google_api_client_libraries)
 
     Google API example:
-      http_auth, conn_params = gcp_api_auth(module, scopes, user_agent_product, user_agent_version)
+      http_auth, conn_params = get_google_api_auth(module, scopes, user_agent_product, user_agent_version)
       service = build('myservice', 'v1', http=http_auth)
       ...
 
@@ -356,14 +364,23 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     if not scopes:
         scopes = ['https://www.googleapis.com/auth/cloud-platform']
     try:
-        (credentials, conn_params) = get_google_credentials(module, scopes,
-                                                            require_valid_json=True, check_libcloud=False)
+        (credentials, conn_params) = get_google_cloud_credentials(module, scopes)
         http = set_user_agent(Http(), '%s-%s' % (user_agent_product, user_agent_version))
-        http_auth = credentials.authorize(http)
+        http_auth = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+
         return (http_auth, conn_params)
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
+
+def check_min_pkg_version(pkg_name, minimum_version):
+    """Minimum required version is >= installed version."""
+    from pkg_resources import get_distribution
+    try:
+        installed_version = get_distribution(pkg_name).version
+        return LooseVersion(installed_version) >= minimum_version
+    except Exception as e:
+        return False
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
