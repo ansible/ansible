@@ -103,6 +103,32 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = '''
+snapshots_created:
+    description: List of newly created snapshots
+    returned: When snapshots are created
+    type: list
+    sample: "[disk0-example-snapshot, disk1-example-snapshot]"
+
+snapshots_deleted:
+    description: List of destroyed snapshots
+    returned: When snapshots are deleted
+    type: list
+    sample: "[disk0-example-snapshot, disk1-example-snapshot]"
+
+snapshots_existing:
+    description: List of snapshots that already existed (no-op)
+    returned: When snapshots were already present
+    type: list
+    sample: "[disk0-example-snapshot, disk1-example-snapshot]"
+
+snapshots_absent:
+    description: List of snapshots that were already absent (no-op)
+    returned: When snapshots were already absent
+    type: list
+    sample: "[disk0-example-snapshot, disk1-example-snapshot]"
+'''
+
 try:
     from libcloud.compute.types import Provider
     _ = Provider.GCE
@@ -154,9 +180,15 @@ def main():
     disks = module.params.get('disks')
     state = module.params.get('state')
 
-    changed = False
+    json_output = dict(
+        changed=False,
+        snapshots_created=[],
+        snapshots_deleted=[],
+        snapshots_existing=[],
+        snapshots_absent=[]
+    )
+
     snapshot = None
-    msg = ''
 
     instance = gce.ex_get_node(instance_name, 'all')
     instance_disks = instance.extra['disks']
@@ -173,22 +205,22 @@ def main():
             snapshot = find_snapshot(volume_obj, snapshot_name)
 
             if snapshot and state == 'present':
-                msg = snapshot_name + " already exists"
+                json_output['snapshots_existing'].append(snapshot_name)
 
             elif snapshot and state == 'absent':
                 snapshot.destroy()
-                changed = True
-                msg = snapshot_name + " was deleted"
+                json_output['changed'] = True
+                json_output['snapshots_deleted'].append(snapshot_name)
 
             elif not snapshot and state == 'present':
                 volume_obj.snapshot(snapshot_name)
-                changed = True
-                msg = snapshot_name + " created"
+                json_output['changed'] = True
+                json_output['snapshots_created'].append(snapshot_name)
 
             elif not snapshot and state == 'absent':
-                msg = snapshot_name + " already absent"
+                json_output['snapshots_absent'].append(snapshot_name)
 
-    module.exit_json(changed=changed, msg=msg)
+    module.exit_json(**json_output)
 
 
 if __name__ == '__main__':
