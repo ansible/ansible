@@ -110,8 +110,7 @@ explore, but you already have a fully working infrastructure!
 
 Tips
 
-Only the local server, you do not need to write on inventory file to specify the local server.
-All you have to do is typing "localhost" or "127.0.0.1" on where specifies a server name.
+When running commands, you can specify the local server by using "localhost" or "127.0.0.1" for the server name.
 
 Example:
 
@@ -119,7 +118,7 @@ Example:
 
     $ ansible localhost -m ping
 
-Also, you can specify localhost explicitly by writing like this on your inventory file::
+You can specify localhost explicitly by adding this to your inventory file::
 
     localhost ansible_connection=local
 
