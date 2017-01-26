@@ -146,10 +146,11 @@ from ansible.module_utils.redhat import *
 # INSERT COMMON SNIPPETS
 from ansible.module_utils.basic import *
 
+
 class Rhn(RegistrationBase):
 
-    def __init__(self, username=None, password=None):
-        RegistrationBase.__init__(self, username, password)
+    def __init__(self, module=None, username=None, password=None):
+        RegistrationBase.__init__(self, module, username, password)
         self.config = self.load_config()
 
     def load_config(self):
@@ -344,7 +345,6 @@ class Rhn(RegistrationBase):
 
 def main():
 
-
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='present', choices=['present', 'absent']),
@@ -363,24 +363,25 @@ def main():
     if not HAS_UP2DATE_CLIENT:
         module.fail_json(msg="Unable to import up2date_client.  Is 'rhn-client-tools' installed?")
 
-    rhn = Rhn()
-
     server_url = module.params['server_url']
-    if server_url:
-        rhn.configure_server_url(server_url)
-
-    if not rhn.server_url:
-        module.fail_json(msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)")
+    username = module.params['username']
+    password = module.params['password']
 
     state = module.params['state']
-    rhn.username = module.params['username']
-    rhn.password = module.params['password']
     activationkey = module.params['activationkey']
     profilename = module.params['profilename']
     sslcacert = module.params['sslcacert']
     systemorgid = module.params['systemorgid']
     channels = module.params['channels']
-    rhn.module = module
+
+    rhn = Rhn(module=module, username=username, password=password)
+
+    # use the provided server url and persist it to the rhn config.
+    if server_url:
+        rhn.configure_server_url(server_url)
+
+    if not rhn.server_url:
+        module.fail_json(msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)")
 
     # Ensure system is registered
     if state == 'present':
