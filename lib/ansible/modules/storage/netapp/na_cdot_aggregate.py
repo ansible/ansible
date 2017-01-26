@@ -140,7 +140,7 @@ class NetAppCDOTAggregate(object):
         self.disk_count = p['disk_count']
 
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json("Unable to import the NetApp-Lib module")
+            self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_ontap_zapi(module=self.module)
 
