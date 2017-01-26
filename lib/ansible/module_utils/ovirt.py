@@ -293,15 +293,15 @@ def wait(
     if wait:
         start = time.time()
         while time.time() < start + timeout:
-            # Sleep for `poll_interval` seconds if none of the conditions apply:
-            time.sleep(float(poll_interval))
-
             # Exit if the condition of entity is valid:
             entity = get_entity(service)
             if condition(entity):
                 return
             elif fail_condition(entity):
                 raise Exception("Error while waiting on result state of the entity.")
+
+            # Sleep for `poll_interval` seconds if none of the conditions apply:
+            time.sleep(float(poll_interval))
 
         raise Exception("Timeout exceed while waiting on result state of the entity.")
 
