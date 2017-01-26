@@ -148,15 +148,15 @@ except ImportError:
     HAS_UP2DATE_CLIENT = False
 
 # INSERT REDHAT SNIPPETS
-from ansible.module_utils.redhat import *
+from ansible.module_utils import redhat
 # INSERT COMMON SNIPPETS
 from ansible.module_utils.basic import *
 
 
-class Rhn(RegistrationBase):
+class Rhn(redhat.RegistrationBase):
 
     def __init__(self, module=None, username=None, password=None):
-        RegistrationBase.__init__(self, module, username, password)
+        redhat.RegistrationBase.__init__(self, module, username, password)
         self.config = self.load_config()
 
     def load_config(self):
@@ -246,7 +246,7 @@ class Rhn(RegistrationBase):
              * enabling the rhnplugin yum plugin
              * disabling the subscription-manager yum plugin
         '''
-        RegistrationBase.enable(self)
+        redhat.RegistrationBase.enable(self)
         self.update_plugin_conf('rhnplugin', True)
         self.update_plugin_conf('subscription-manager', False)
 
