@@ -25,8 +25,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: setup
-version_added: historical
+module: gather_facts
+version_added: 2.4
 short_description: Gathers facts about remote hosts
 options:
     gather_subset:
@@ -85,6 +85,7 @@ notes:
       their output must be formattable in JSON (Ansible will take care of this). Test the
       output of your scripts.
       This option was added in Ansible 2.1.
+    - The module used to be named 'setup', changed in version 2.4.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

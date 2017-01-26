@@ -172,7 +172,7 @@ class PlayIterator:
 
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
-        setup_task.action = 'setup'
+        setup_task.action = 'gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.tags = ['always']
         setup_task.args = {
