@@ -260,7 +260,8 @@ def get_vlan(module, driver, location, network_domain, vlan_id, name):
 def delete_vlan(module, driver, location, network_domain, vlan_id, name):
     vlan = get_vlan(module, driver, location, network_domain,
                     vlan_id, name)
-    if type(vlan) is dict:
+
+    if isinstance(vlan, dict):
         return False
     try:
         return driver.ex_delete_vlan(vlan)
@@ -296,7 +297,7 @@ def expand_vlan(module, driver, location, network_domain, vlan_id, name,
                 private_ipv4_range_size):
     vlan_obj = get_vlan(module, driver, location, network_domain,
                         vlan_id, name)
-    if type(vlan_obj) is dict:
+    if isinstance(vlan_obj, dict):
         module.exit_json(changed=False, msg="VLAN not found.")
     else:
         if vlan_obj.private_ipv4_range_size == private_ipv4_range_size:
@@ -377,7 +378,7 @@ def main():
     elif action == 'read' or action == 'get':
         res = get_vlan(module, driver, location, network_domain,
                        vlan_id, name)
-        if type(res) is dict:
+        if isinstance(res, dict):
             vlan = res
         else:
             vlan = vlan_obj_to_dict(res)
@@ -408,7 +409,7 @@ def main():
         res = expand_vlan(module, driver, location, network_domain, vlan_id,
                           name, prefix_size)
 
-        if type(res) is bool:
+        if isinstance(res, bool):
             module.exit_json(changed=False, msg="VLAN already requested size.")
         else:
             module.exit_json(changes=True, msg="VLAN network size modified.",
