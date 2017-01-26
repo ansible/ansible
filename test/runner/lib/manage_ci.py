@@ -47,7 +47,7 @@ class ManageWindowsCI(object):
         env = ansible_environment(self.core_ci.args)
         cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
-        for _ in range(1, 90):
+        for _ in range(1, 120):
             try:
                 run_command(self.core_ci.args, cmd, env=env)
                 return
@@ -75,6 +75,7 @@ class ManageNetworkCI(object):
             'ansible_port=%s' % self.core_ci.connection.port,
             'ansible_connection=network_cli',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))

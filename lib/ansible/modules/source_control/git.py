@@ -294,6 +294,9 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
 
 
 def unfrackgitpath(path):
+    if path is None:
+        return None
+
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
 
@@ -637,7 +640,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
     # Return if remote URL isn't changing.
     remote_url = get_remote_url(git_path, module, dest, remote)
-    if remote_url == repo or remote_url == unfrackgitpath(repo):
+    if remote_url == repo or unfrackgitpath(remote_url) == unfrackgitpath(repo):
         return False
 
     command = [git_path, 'remote', 'set-url', remote, repo]
@@ -1009,7 +1012,7 @@ def main():
         # exit if already at desired sha version
         if module.check_mode:
             remote_url = get_remote_url(git_path, module, dest, remote)
-            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackgitpath(repo)
+            remote_url_changed = remote_url and remote_url != repo and unfrackgitpath(remote_url) != unfrackgitpath(repo)
         else:
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
         result.update(remote_url_changed=remote_url_changed)

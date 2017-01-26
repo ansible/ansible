@@ -150,7 +150,7 @@ def get_current_config(module):
         flags = ['all']
     else:
         flags = []
-    return get_config(flags=flags)
+    return get_config(module=module, flags=flags)
 
 def main():
     """ main entry point for module execution
@@ -182,7 +182,7 @@ def main():
     result = {'changed': False}
 
     if module.params['backup']:
-        result['__backup__'] = get_config()
+        result['__backup__'] = get_config(module=module)
 
     if not module.params['force']:
         contents = get_current_config(module)
@@ -195,7 +195,7 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(commands)
+            load_config(module, commands)
         result['changed'] = True
 
     result['updates'] = commands

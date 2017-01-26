@@ -49,6 +49,8 @@ from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
 
 def do_fork():
@@ -101,9 +103,9 @@ def recv_data(s):
         data += d
     return data
 
-def log(msg, host=None):
+def log(msg, host=None, **kwargs):
     if host:
-        msg = '[%s] %s' % (host, msg)
+        msg = '<%s> %s' % (host, msg)
     facility = getattr(syslog, C.DEFAULT_SYSLOG_FACILITY, syslog.LOG_USER)
     syslog.openlog('ansible-connection', 0, facility)
     syslog.syslog(syslog.LOG_INFO, str(msg))
@@ -117,20 +119,14 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
-        self.log('loading connection plugin %s' % str(play_context.connection))
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
+        self.conn._connect()
+        if not self.conn.connected:
+            raise AnsibleConnectionFailure(err)
 
-        try:
-            self.log('attempting to connect to remote host')
-            self.conn._connect()
-
-            self.log('successfully connected, starting listener')
-            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.socket.bind(path)
-            self.socket.listen(1)
-        except Exception as exc:
-            self.log(str(exc))
-            raise
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.socket.bind(path)
+        self.socket.listen(1)
 
         signal.signal(signal.SIGALRM, self.alarm_handler)
 
@@ -140,7 +136,7 @@ class Server():
             return meth(*args, **kwargs)
 
     def log(self, msg):
-        log(msg, self.play_context.remote_addr)
+        log(msg, host=self.play_context.remote_addr)
 
     def alarm_handler(self, signum, frame):
         '''
@@ -223,9 +219,7 @@ class Server():
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            # FIXME: proper logging and error handling here
-            log('runtime exception: %s' % e)
-            print(traceback.format_exc())
+            log(traceback.format_exc())
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
@@ -264,6 +258,8 @@ def main():
         print(traceback.format_exc())
         sys.exit(1)
 
+    display.verbosity = pc.verbosity
+
     # here we create a hash to use later when creating the socket file,
     # so we can hide the info about the target host/user/etc.
     m = hashlib.sha256()
@@ -285,7 +281,12 @@ def main():
     if not os.path.exists(sf_path):
         pid = do_fork()
         if pid == 0:
-            server = Server(sf_path, pc)
+            try:
+                server = Server(sf_path, pc)
+            except AnsibleConnectionFailure as exc:
+                log(str(exc), pc.remote_addr)
+            except Exception as exc:
+                log(traceback.format_exc(), pc.remote_addr)
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
             server.run()
@@ -339,4 +340,6 @@ def main():
     sys.exit(rc)
 
 if __name__ == '__main__':
+    display = Display()
+    display.display = log
     main()

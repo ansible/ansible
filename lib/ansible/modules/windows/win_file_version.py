@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_file_version
 version_added: "2.1"
@@ -48,7 +48,7 @@ EXAMPLES = r'''
     msg: '{{ exe_file_version }}'
 '''
 
-RETURN = """
+RETURN = r'''
 win_file_version.path:
   description: file path
   returned: always
@@ -84,4 +84,4 @@ win_file_version.file_private_part:
   returned: no error
   type: string
 
-"""
+'''

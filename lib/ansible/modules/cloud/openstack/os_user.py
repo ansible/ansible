@@ -201,7 +201,7 @@ def main():
         module.fail_json(msg='shade is required for this module')
 
     name = module.params['name']
-    password = module.params['password']
+    password = module.params.pop('password')
     email = module.params['email']
     default_project = module.params['default_project']
     domain = module.params['domain']

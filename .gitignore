@@ -30,18 +30,19 @@ docs/man/man3/*
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docsite/rst/modules_by_category.rst
-docsite/rst/playbooks_directives.rst
-docsite/rst/list_of_*.rst
-docsite/rst/*_module.rst
-docsite/*.html
-docsite/_static/*.gif
-docsite/_static/*.png
-docsite/_static/websupport.js
-docsite/searchindex.js
-docsite/htmlout
-docs-api/rst/
-docs-api/_build/
+docs/docsite/rst/modules_by_category.rst
+docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/list_of_*.rst
+docs/docsite/rst/*_module.rst
+docs/docsite/*.html
+docs/docsite/_static/*.gif
+docs/docsite/_static/*.png
+docs/docsite/_static/websupport.js
+docs/docsite/searchindex.js
+docs/docsite/htmlout
+docs/docsite/_build
+docs/api/rst/
+docs/api/_build/
 # deb building stuff...
 /debian/
 deb-build
@@ -57,6 +58,7 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/integration/targets/*/backup/
 # Development
 /test/develop
 venv

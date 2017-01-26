@@ -247,6 +247,20 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
+def get_entity(service):
+    """
+    Ignore SDK Error in case of getting an entity from service.
+    """
+    entity = None
+    try:
+        entity = service.get()
+    except sdk.Error:
+        # We can get here 404, we should ignore it, in case
+        # of removing entity for example.
+        pass
+    return entity
+
+
 def wait(
     service,
     condition,
@@ -269,15 +283,15 @@ def wait(
     if wait:
         start = time.time()
         while time.time() < start + timeout:
+            # Sleep for `poll_interval` seconds if none of the conditions apply:
+            time.sleep(float(poll_interval))
+
             # Exit if the condition of entity is valid:
-            entity = service.get()
+            entity = get_entity(service)
             if condition(entity):
                 return
             elif fail_condition(entity):
                 raise Exception("Error while waiting on result state of the entity.")
-
-            # Sleep for `poll_interval` seconds if nor of the conditions apply:
-            time.sleep(float(poll_interval))
 
 
 def __get_auth_dict():
@@ -348,6 +362,29 @@ def check_params(module):
     """
     if module.params.get('name') is None and module.params.get('id') is None:
         module.fail_json(msg='"name" or "id" is required')
+
+
+def engine_version(connection):
+    """
+    Return string representation of oVirt engine version.
+    """
+    engine_api = connection.system_service().get()
+    engine_version = engine_api.product_info.version
+    return '%s.%s' % (engine_version.major, engine_version.minor)
+
+
+def check_support(version, connection, module, params):
+    """
+    Check if parameters used by user are supported by oVirt Python SDK
+    and oVirt engine.
+    """
+    api_version = LooseVersion(engine_version(connection))
+    version = LooseVersion(version)
+    for param in params:
+        if module.params.get(param) is not None:
+            return LooseVersion(sdk_version.VERSION) >= version and api_version >= version
+
+    return True
 
 
 class BaseModule(object):

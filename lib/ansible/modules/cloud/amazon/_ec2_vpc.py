@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'committer',
                     'version': '1.0'}
 
@@ -25,6 +25,10 @@ short_description: configure AWS virtual private clouds
 description:
     - Create or terminates AWS virtual private clouds.  This module has a dependency on python-boto.
 version_added: "1.4"
+deprecated: >-
+  Deprecated in 2.3. Use M(ec2_vpc_net) along with supporting modules including
+  M(ec2_vpc_igw), M(ec2_vpc_route_table), M(ec2_vpc_subnet), M(ec2_vpc_dhcp_options),
+  M(ec2_vpc_nat_gateway), M(ec2_vpc_nacl).
 options:
   cidr_block:
     description:
@@ -399,7 +403,6 @@ def create_vpc(module, vpc_conn):
     # It also must be done one at a time.
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_support=dns_support)
     vpc_conn.modify_vpc_attribute(vpc.id, enable_dns_hostnames=dns_hostnames)
-
 
     # Process all subnet properties
     if subnets is not None:

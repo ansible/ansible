@@ -2,10 +2,10 @@
 
 from __future__ import absolute_import, print_function
 
+import errno
 import glob
 import os
 import tempfile
-import sys
 import time
 import textwrap
 import functools
@@ -21,6 +21,7 @@ import lib.thread
 
 from lib.core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from lib.manage_ci import (
@@ -30,6 +31,7 @@ from lib.manage_ci import (
 
 from lib.util import (
     CommonConfig,
+    EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
@@ -81,6 +83,23 @@ SUPPORTED_PYTHON_VERSIONS = (
 COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+
+
+def check_startup():
+    """Checks to perform at startup before running commands."""
+    check_legacy_modules()
+
+
+def check_legacy_modules():
+    """Detect conflicts with legacy core/extras module directories to avoid problems later."""
+    for directory in 'core', 'extras':
+        path = 'lib/ansible/modules/%s' % directory
+
+        for root, _, file_names in os.walk(path):
+            if file_names:
+                # the directory shouldn't exist, but if it does, it must contain no files
+                raise ApplicationError('Files prohibited in "%s". '
+                                       'These are most likely legacy modules from version 2.2 or earlier.' % root)
 
 
 def create_shell_command(command):
@@ -183,12 +202,23 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
     if args.platform:
         instances = []  # type: list [lib.thread.WrappedThread]
 
+        # generate an ssh key (if needed) up front once, instead of for each instance
+        SshKey(args)
+
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
+            platform_target = 'network/%s/' % platform
+
+            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                    platform_version, platform))
+                continue
+
             instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
             instance.daemon = True
             instance.start()
@@ -202,9 +232,12 @@ def command_network_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
 
+        filename = 'test/integration/inventory.networking'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.networking', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -238,12 +271,18 @@ def network_inventory(remotes):
     groups = dict([(remote.platform, []) for remote in remotes])
 
     for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_connection='network_cli',
+            ansible_ssh_private_key_file=remote.ssh_key.key,
+            ansible_network_os=remote.platform,
+        )
+
         groups[remote.platform].append(
-            '%s ansible_host=%s ansible_user=%s ansible_connection=network_cli ansible_ssh_private_key_file=%s' % (
+            '%s %s' % (
                 remote.name.replace('.', '_'),
-                remote.connection.hostname,
-                remote.connection.username,
-                remote.ssh_key.key,
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
 
@@ -252,12 +291,12 @@ def network_inventory(remotes):
     for group in groups:
         hosts = '\n'.join(groups[group])
 
-        template += """
+        template += textwrap.dedent("""
         [%s]
         %s
-        """ % (group, hosts)
+        """) % (group, hosts)
 
-    inventory = textwrap.dedent(template)
+    inventory = template
 
     return inventory
 
@@ -285,9 +324,12 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
+        filename = 'test/integration/inventory.winrm'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.winrm', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -319,15 +361,22 @@ def windows_inventory(remotes):
     :type remotes: list[AnsibleCoreCI]
     :rtype: str
     """
-    hosts = ['%s ansible_host=%s ansible_user=%s ansible_password="%s" ansible_port=%s' %
-             (
-                 remote.name.replace('/', '_'),
-                 remote.connection.hostname,
-                 remote.connection.username,
-                 remote.connection.password,
-                 remote.connection.port,
-             )
-             for remote in remotes]
+    hosts = []
+
+    for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_password=remote.connection.password,
+            ansible_port=remote.connection.port,
+        )
+
+        hosts.append(
+            '%s %s' % (
+                remote.name.replace('/', '_'),
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
+            )
+        )
 
     template = """
     [windows]
@@ -395,10 +444,6 @@ def command_integration_filtered(args, targets):
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if not args.explain:
-        remove_tree(test_dir)
-        make_dirs(test_dir)
-
     if any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
@@ -429,6 +474,11 @@ def command_integration_filtered(args, targets):
         try:
             while tries:
                 tries -= 1
+
+                if not args.explain:
+                    # create a fresh test directory for each test target
+                    remove_tree(test_dir)
+                    make_dirs(test_dir)
 
                 try:
                     if target.script_path:
@@ -1006,17 +1056,6 @@ def detect_changes_local(args):
     return sorted(names)
 
 
-def docker_qualify_image(name):
-    """
-    :type name: str
-    :rtype: str
-    """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
-
-    return 'ansible/ansible:%s' % name
-
-
 def get_integration_filter(args, targets):
     """
     :type args: IntegrationConfig
@@ -1159,48 +1198,6 @@ class SanityFunc(SanityTest):
 
         self.func = func
         self.intercept = intercept
-
-
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
 
 
 class TestConfig(EnvironmentConfig):

@@ -1,5 +1,7 @@
-Jinja2 'ipaddr()' filter
-========================
+:orphan:
+
+ipaddr filter
+`````````````
 
 .. versionadded:: 1.9
 
@@ -25,7 +27,7 @@ It can usually be installed either via your system package manager, or using
    :backlinks: top
 
 Basic tests
------------
+^^^^^^^^^^^
 
 ``ipaddr()`` is designed to return the input value if a query is True, and
 ``False`` if query is False. This way it can be very easily used in chained
@@ -86,7 +88,7 @@ And the same data filtered for IPv6 addresses::
 
 
 Filtering lists
----------------
+^^^^^^^^^^^^^^^
 
 You can filter entire lists - ``ipaddr()`` will return a list with values
 valid for a particular query::
@@ -105,7 +107,7 @@ valid for a particular query::
 
 
 Wrapping IPv6 addresses in [ ] brackets
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Some configuration files require IPv6 addresses to be "wrapped" in square
 brackets (``[ ]``). To accomplish that, you can use ``ipwrap()`` filter. It
@@ -124,7 +126,7 @@ chain both filters together::
 
 
 Basic queries
--------------
+^^^^^^^^^^^^^
 
 You can provide single argument to each ``ipaddr()`` filter. Filter will then
 treat it as a query and return values modified by that query. Lists will
@@ -140,7 +142,7 @@ If a query type is not recognized, Ansible will raise an error.
 
 
 Getting information about hosts and networks
---------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Here's our test list again::
 
@@ -224,7 +226,7 @@ end of the range::
 
 
 Getting information from host/prefix values
--------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Very frequently you use combination of IP addresses and subnet prefixes
 ("CIDR"), this is even more common with IPv6. ``ipaddr()`` filter can extract
@@ -288,7 +290,7 @@ If needed, you can extract subnet and prefix information from 'host/prefix' valu
     [64, 24]
 
 Converting subnet masks to CIDR notation
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given a subnet in the form of network address and subnet mask, it can be converted into CIDR notation using ``ipaddr()``.  This can be useful for converting Ansible facts gathered about network configuration from subnet masks into CIDR format::
 
@@ -320,7 +322,7 @@ This result can be canonicalised with ``ipaddr()`` to produce a subnet in CIDR f
 
 
 IP address conversion
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 Here's our test list again::
 
@@ -361,7 +363,7 @@ You can convert IP addresses to PTR records::
 
 
 Converting IPv4 address to 6to4 address
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `6to4`_ tunnel is a way to access IPv6 Internet from IPv4-only network. If you
 have a public IPv4 address, you automatically can configure it's IPv6
@@ -379,7 +381,7 @@ be automatically converted to a router address (with ``::1/48`` host address)::
 
 
 Subnet manipulation
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 ``ipsubnet()`` filter can be used to manipulate network subnets in several ways.
 
@@ -429,25 +431,25 @@ a first argument, ``ipsubnet()`` filter will instead return biggest subnet that
 contains a given IP address::
 
     # {{ address | ipsubnet(20) }}
-    192.168.128.0/18
+    192.168.128.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::
 
     # First subnet
-    # {{ subnet | ipsubnet(18, 0) }}
+    # {{ address | ipsubnet(18, 0) }}
     192.168.128.0/18
 
     # Last subnet
-    # {{ subnet | ipsubnet(18, -1) }}
+    # {{ address | ipsubnet(18, -1) }}
     192.168.144.4/31
 
     # Fifth subnet
-    # {{ subnet | ipsubnet(18, 5) }}
+    # {{ address | ipsubnet(18, 5) }}
     192.168.144.0/23
 
     # Fifth to last subnet
-    # {{ subnet | ipsubnet(18, -5) }}
+    # {{ address | ipsubnet(18, -5) }}
     192.168.144.0/27
 
 You can use ``ipsubnet()`` filter with ``ipaddr()`` filter to for example split
@@ -462,7 +464,7 @@ difference between subnets.
 
 
 MAC address filter
-------------------
+^^^^^^^^^^^^^^^^^^
 
 You can use ``hwaddr()`` filter to check if a given string is a MAC address or
 convert it between various formats. Examples::

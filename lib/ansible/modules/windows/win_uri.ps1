@@ -42,7 +42,7 @@ $method = Get-AnsibleParam -obj $params "method" -default "GET"
 $content_type = Get-AnsibleParam -obj $params -name "content_type"
 $headers = Get-AnsibleParam -obj $params -name "headers"
 $body = Get-AnsibleParam -obj $params -name "body"
-$dest = Get-AnsibleParam -obj $params -name "dest" -default $null
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -default $null
 $use_basic_parsing = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "use_basic_parsing" -default $true)
 
 $webrequest_opts.Uri = $url

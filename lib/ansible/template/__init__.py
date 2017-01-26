@@ -30,7 +30,7 @@ from numbers import Number
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.utils import concat as j2_concat
+from jinja2.utils import concat as j2_concat, missing
 from jinja2.runtime import Context, StrictUndefined
 from ansible import constants as C
 from ansible.compat.six import string_types, text_type
@@ -154,15 +154,22 @@ class AnsibleContext(Context):
             return True
         return False
 
+    def _update_unsafe(self, val):
+        if val is not None and not self.unsafe and self._is_unsafe(val):
+            self.unsafe = True
+
     def resolve(self, key):
         '''
         The intercepted resolve(), which uses the helper above to set the
         internal flag whenever an unsafe variable value is returned.
         '''
         val = super(AnsibleContext, self).resolve(key)
-        if val is not None and not self.unsafe:
-            if self._is_unsafe(val):
-                self.unsafe = True
+        self._update_unsafe(val)
+        return val
+
+    def resolve_or_missing(self, key):
+        val = super(AnsibleContext, self).resolve_or_missing(key)
+        self._update_unsafe(val)
         return val
 
 class AnsibleEnvironment(Environment):
@@ -324,7 +331,7 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True, bare_deprecated=True, disable_lookups=False):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -406,14 +413,26 @@ class Templar:
                 return result
 
             elif isinstance(variable, (list, tuple)):
-                return [self.template(v, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
+                return [self.template(
+                            v,
+                            preserve_trailing_newlines=preserve_trailing_newlines,
+                            fail_on_undefined=fail_on_undefined,
+                            overrides=overrides,
+                            disable_lookups=disable_lookups,
+                        ) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
                 for k in variable.keys():
                     if k not in static_vars:
-                        d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        d[k] = self.template(
+                                   variable[k],
+                                   preserve_trailing_newlines=preserve_trailing_newlines,
+                                   fail_on_undefined=fail_on_undefined,
+                                   overrides=overrides,
+                                   disable_lookups=disable_lookups,
+                               )
                     else:
                         d[k] = variable[k]
                 return d

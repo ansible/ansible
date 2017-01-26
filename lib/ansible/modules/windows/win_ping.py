@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_ping
 version_added: "1.7"
@@ -42,7 +42,7 @@ options:
 author: "Chris Church (@cchurch)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Test connectivity to a windows host
 ansible winserver -m win_ping
 

@@ -104,7 +104,7 @@ def get_docstring(filename, verbose=False):
                                     doc['notes'].extend(notes)
 
                             if 'options' not in fragment:
-                                raise Exception("missing options in fragment, possibly misformatted?")
+                                raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
                             for key, value in fragment.items():
                                 if key not in doc:
@@ -117,7 +117,7 @@ def get_docstring(filename, verbose=False):
                                     elif isinstance(doc[key], MutableSequence):
                                         doc[key] = sorted(frozenset(doc[key] + value))
                                     else:
-                                        raise Exception("Attempt to extend a documentation fragement of unknown type")
+                                        raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" (fragment_name, filename))
 
                     elif 'EXAMPLES' == theid:
                         plainexamples = child.value.s[1:]  # Skip first empty line
@@ -130,8 +130,12 @@ def get_docstring(filename, verbose=False):
                         if type(metadata).__name__ == 'Dict':
                             metadata = ast.literal_eval(child.value)
                         else:
-                            display.warning("Non-dict metadata detected in %s, skipping" % filename)
-                            metadata = dict()
+                            # try yaml loading
+                            metadata = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+
+                        if not isinstance(metadata, dict):
+                            display.warning("Invalid metadata detected in %s, using defaults" % filename)
+                            metadata = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
 
     except:
         display.error("unable to parse %s" % filename)

@@ -192,18 +192,6 @@ class GalaxyCLI(CLI):
                             "however it will reset any main.yml files that may have\n"
                             "been modified there already." % role_path)
 
-        platforms = []
-        if not offline:
-            platforms = self.api.get_list("platforms") or []
-
-        # group the list of platforms from the api based
-        # on their names, with the release field being
-        # appended to a list of versions
-        platform_groups = defaultdict(list)
-        for platform in platforms:
-            platform_groups[platform['name']].append(platform['release'])
-            platform_groups[platform['name']].sort()
-
         inject_data = dict(
             role_name=role_name,
             author='your name',
@@ -212,7 +200,6 @@ class GalaxyCLI(CLI):
             license='license (GPLv2, CC-BY, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='1.2',
-            platforms=platform_groups,
             container_enabled=self.options.container_enabled
         )
 
@@ -369,9 +356,19 @@ class GalaxyCLI(CLI):
             display.vvv('Installing role %s ' % role.name)
             # query the galaxy API for the role data
 
-            if role.install_info is not None and not force:
-                display.display('- %s is already installed, skipping.' % role.name)
-                continue
+            if role.install_info is not None:
+                if role.install_info['version'] != role.version:
+                    if force:
+                        display.display('- changing role %s from %s to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        role.remove()
+                    else:
+                        display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                        (role.name, role.install_info['version'], role.version or "unspecified"))
+                        continue
+                else:
+                    display.display('- %s is already installed, skipping.' % str(role))
+                    continue
 
             try:
                 installed = role.install()
@@ -392,14 +389,18 @@ class GalaxyCLI(CLI):
                         # we know we can skip this, as it's not going to
                         # be found on galaxy.ansible.com
                         continue
-                    if dep_role.install_info is None or force:
+                    if dep_role.install_info is None:
                         if dep_role not in roles_left:
-                            display.display('- adding dependency: %s' % dep_role.name)
+                            display.display('- adding dependency: %s' % str(dep_role))
                             roles_left.append(dep_role)
                         else:
                             display.display('- dependency %s already pending installation.' % dep_role.name)
                     else:
-                        display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                        if dep_role.install_info['version'] != dep_role.version:
+                            display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                            (str(dep_role), role.name, dep_role.install_info['version']))
+                        else:
+                            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
                 display.warning("- %s was NOT installed successfully." % role.name)

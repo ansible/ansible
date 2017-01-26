@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 module: yum_repository
 author: Jiri Tyr (@jtyr)
 version_added: '2.1'
-short_description: Add and remove YUM repositories
+short_description: Add or remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
 
@@ -437,7 +437,7 @@ EXAMPLES = '''
   yum_repository:
     name: epel
     state: absent
-  notify: yum-clean-all
+  notify: yum-clean-metadata
 
 - name: Remove repository from a specific repo file
   yum_repository:

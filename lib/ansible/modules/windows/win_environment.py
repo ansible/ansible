@@ -25,13 +25,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_environment
 version_added: "2.0"
 short_description: Modifies environment variables on windows hosts.
 description:
-    - Uses .net Environment to set or remove environment variables and can set at User, Machine or Process level.  
+    - Uses .net Environment to set or remove environment variables and can set at User, Machine or Process level.
     - User level environment variables will be set, but not available until the user has logged off and on again.
 options:
   state:
@@ -48,12 +48,12 @@ options:
     required: true
     default: no default
   value:
-    description: 
+    description:
       - The value to store in the environment variable. Can be omitted for state=absent
     required: false
     default: no default
   level:
-    description: 
+    description:
       - The level at which to set the environment variable.
       - Use 'machine' to set for all users.
       - Use 'user' to set for the current user that ansible is connected as.
@@ -65,21 +65,24 @@ options:
       - process
       - user
 author: "Jon Hawkesworth (@jhawkesworth)"
-notes: 
-   - This module does not broadcast change events.  
-     This means that the minority of windows applications which can have 
-     their environment changed without restarting will not be notified and 
-     therefore will need restarting to pick up new environment settings.  
-     User level environment variables will require the user to log out 
+notes:
+   - This module is best-suited for setting the entire value of an
+     environment variable. For safe element-based management of
+     path-like environment vars, use the M(win_path) module.
+   - This module does not broadcast change events.
+     This means that the minority of windows applications which can have
+     their environment changed without restarting will not be notified and
+     therefore will need restarting to pick up new environment settings.
+     User level environment variables will require the user to log out
      and in again before they become available.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Set an environment variable for all users
   win_environment:
     state: present
     name: TestVariable
-    value: "Test value"
+    value: Test value
     level: machine
   # Remove an environment variable for the current users
   win_environment:

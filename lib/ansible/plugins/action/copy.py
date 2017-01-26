@@ -139,7 +139,7 @@ class ActionModule(ActionBase):
         delete_remote_tmp = (len(source_files) == 1)
 
         # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        remote_user = self._play_context.remote_user
         if not delete_remote_tmp:
             if tmp is None or "-tmp-" not in tmp:
                 tmp = self._make_tmp_path(remote_user)

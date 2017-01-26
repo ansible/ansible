@@ -19,20 +19,23 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
 
-$result = New-Object psobject @{
-    recurse = $false
-    purge = $false
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$purge = Get-AnsibleParam -obj $params -name "purge" -type "bool" -default $false
+$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false
+$flags = Get-AnsibleParam -obj $params -name "flags" -type "string" -default $null
+
+$result = @{
+    src = $src
+    dest = $dest
+    recurse = $recurse
+    purge = $purge
     changed = $false
 }
-
-$src = Get-AnsibleParam -obj $params -name "src" -failifempty $true
-$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
-$purge = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "purge" -default $false)
-$recurse = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "recurse" -default $false)
-$flags = Get-AnsibleParam -obj $params -name "flags" -default $null
-$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 # Search for an Error Message
 # Robocopy seems to display an error after 3 '-----' separator lines
@@ -68,10 +71,7 @@ if (-Not (Test-Path $src)) {
 }
 
 $robocopy_opts += $src
-Set-Attr $result "src" $src
-
 $robocopy_opts += $dest
-Set-Attr $result "dest" $dest
 
 if ($flags -eq $null) {
     if ($purge) {
@@ -88,13 +88,11 @@ Else {
     }
 }
 
-Set-Attr $result "purge" $purge
-Set-Attr $result "recurse" $recurse
-Set-Attr $result "flags" $flags
+$result.flags = $flags
 
 $robocopy_output = ""
 $rc = 0
-If ($_ansible_check_mode -eq $true) {
+If ($check_mode -eq $true) {
     $robocopy_output = "Would have copied the contents of $src to $dest"
     $rc = 0
 }
@@ -109,8 +107,8 @@ Else {
     }
 }
 
-Set-Attr $result "return_code" $rc
-Set-Attr $result "output" $robocopy_output
+$result.return_code = $rc
+$result.output = $robocopy_output
 
 $cmd_msg = "Success"
 $changed = $false
@@ -161,7 +159,7 @@ switch ($rc)
     }
 }
 
-Set-Attr $result "msg" $cmd_msg
-Set-Attr $result "changed" $changed
+$result.msg = $cmd_msg
+$result.changed = $changed
 
 Exit-Json $result

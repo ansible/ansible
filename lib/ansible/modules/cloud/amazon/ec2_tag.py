@@ -53,53 +53,49 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Basic example of adding tag(s)
-tasks:
-- name: tag a resource
-  ec2_tag: 
-    region: eu-west-1 
-    resource: vol-XXXXXX 
+- name: Ensure tags are present on a resource
+  ec2_tag:
+    region: eu-west-1
+    resource: vol-XXXXXX
     state: present
     tags:
       Name: ubervol
       env: prod
 
-# Playbook example of adding tags to volumes on an instance
-tasks:
-- name: launch an instance
-  ec2: 
+- name: Ensure one dbserver is running
+  ec2:
     count_tags:
       Name: dbserver
       Env: production
     exact_count: 1
-    group: "{{ security_group }}" 
-    keypair: "{{ keypair }}" 
-    image: "{{ image_id }}" 
+    group: '{{ security_group }}'
+    keypair: '{{ keypair }}'
+    image: '{{ image_id }}'
     instance_tags:
       Name: dbserver
       Env: production
-    instance_type: "{{ instance_type }}" 
+    instance_type: '{{ instance_type }}'
     region: eu-west-1
     volumes:
       - device_name: /dev/xvdb
         device_type: standard
         volume_size: 10
-        delete_on_termination: true
-    wait: true 
+        delete_on_termination: True
+    wait: True
   register: ec2
 
-- name: list the volumes for the instance
+- name: Retrieve all volumes for a queried instance
   ec2_vol:
-    instance: "{{ item.id }}"
+    instance: '{{ item.id }}'
     region: eu-west-1
     state: list
-  with_items: "{{ ec2.tagged_instances }}"
+  with_items: '{{ ec2.tagged_instances }}'
   register: ec2_vol
 
-- name: tag the volumes
+- name: Ensure all volumes are tagged
   ec2_tag:
     region:  eu-west-1
-    resource: "{{ item.id }}"
+    resource: '{{ item.id }}'
     state: present
     tags: 
       Name: dbserver
@@ -108,21 +104,19 @@ tasks:
     - ec2_vol.results
     - volumes
 
-# Playbook example of listing tags on an instance
-tasks:
-- name: get ec2 facts
+- name: Get EC2 facts
   action: ec2_facts
 
-- name: list tags on an instance
+- name: Retrieve all tags on an instance
   ec2_tag:
-    region: "{{ ansible_ec2_placement_region }}"
-    resource: "{{ ansible_ec2_instance_id }}"
+    region: '{{ ansible_ec2_placement_region }}'
+    resource: '{{ ansible_ec2_instance_id }}'
     state: list
   register: ec2_tags
 
-- name: list tags, such as Name, env if exist
-  shell: echo {{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}
-
+- name: List tags, such as Name and env
+  debug:
+    msg: '{{ ec2_tags.tags.Name }} {{ ec2_tags.tags.env }}'
 '''
 
 

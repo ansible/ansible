@@ -5,6 +5,7 @@
 # to the complete work.
 #
 # Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2017 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -54,7 +55,7 @@ def run_commands(module, commands, check_rc=True):
         responses.append(out)
     return responses
 
-def load_config(module, commands, commit=False, replace=False):
+def load_config(module, commands, commit=False, replace=False, comment=None):
     assert isinstance(commands, list), 'commands must be a list'
 
     rc, out, err = module.exec_command('configure terminal')
@@ -78,8 +79,11 @@ def load_config(module, commands, commit=False, replace=False):
     rc, diff, err = module.exec_command('show commit changes diff')
     if commit:
         cmd = 'commit'
+        if comment:
+            cmd += ' comment {0}'.format(comment)
     else:
         cmd = 'abort'
+        diff = None
     module.exec_command(cmd)
 
-    return {'diff': diff}
+    return diff

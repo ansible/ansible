@@ -1,20 +1,19 @@
-Jinja2 filters
-==============
+Filters
+-------
 
 .. contents:: Topics
 
 
-Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.
-Jinja2 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
+Filters in Ansible are from Jinja2, and are used for transforming data inside a template expression.  Jinja2 ships with many filters. See `builtin filters`_ in the official Jinja2 template documentation.
 
-Take into account that filters always execute on the Ansible controller, **not** on the task target, as they manipulate local data.
+Take into account that templating happens on the the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
-In addition to those, Ansible supplies many more.
+In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
 
 .. _filters_for_formatting_data:
 
 Filters For Formatting Data
----------------------------
+```````````````````````````
 
 The following filters will take a data structure in a template and render it in a slightly different format.  These
 are occasionally useful for debugging::
@@ -48,7 +47,7 @@ for example::
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined
--------------------------------
+```````````````````````````````
 
 The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
 
@@ -62,7 +61,7 @@ The variable value will be used as is, but the template evaluation will raise an
 .. _defaulting_undefined_variables:
 
 Defaulting Undefined Variables
-------------------------------
+``````````````````````````````
 
 Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
 
@@ -75,7 +74,7 @@ being raised.
 .. _omitting_undefined_variables:
 
 Omitting Parameters
--------------------
+```````````````````
 
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
@@ -98,7 +97,7 @@ parameter will not be sent to the file module while the final file will receive 
 .. _list_filters:
 
 List Filters
-------------
+````````````
 
 These filters all operate on list variables.
 
@@ -115,7 +114,7 @@ To get the maximum value from a list of numbers::
 .. _set_theory_filters:
 
 Set Theory Filters
-------------------
+``````````````````
 All these functions return a unique set from sets or lists.
 
 .. versionadded:: 1.4
@@ -144,7 +143,7 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 .. _random_filter:
 
 Random Number Filter
---------------------
+````````````````````
 
 .. versionadded:: 1.6
 
@@ -179,7 +178,7 @@ As of Ansible version 2.3, it's also possible to initialize the random number ge
 
 
 Shuffle Filter
---------------
+``````````````
 
 .. versionadded:: 1.8
 
@@ -203,7 +202,8 @@ note that when used with a non 'listable' item it is a noop, otherwise it always
 .. _math_stuff:
 
 Math
---------------------
+````
+j
 .. versionadded:: 1.9
 
 
@@ -230,7 +230,8 @@ Note that jinja2 already provides some like abs() and round().
 .. json_query_filter:
 
 JSON Query Filter
------------------
+`````````````````
+
 .. versionadded:: 2.2
 
 Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
@@ -296,7 +297,8 @@ In this example, we get a hash map with all ports and names of a cluster::
 .. _ipaddr_filter:
 
 IP address filter
------------------
+`````````````````
+
 .. versionadded:: 1.9
 
 To test if a string is a valid IP address::
@@ -316,10 +318,12 @@ address. For example, to get the IP address itself from a CIDR, you can use::
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :doc:`playbooks_filters_ipaddr`.
 
+
 .. _hash_filters:
 
 Hashing filters
---------------------
+```````````````
+
 .. versionadded:: 1.9
 
 To get the sha1 hash of a string::
@@ -353,7 +357,7 @@ Hash types available depend on the master system running ansible,
 .. _combine_filter:
 
 Combining hashes/dictionaries
------------------------------
+`````````````````````````````
 
 .. versionadded:: 2.0
 
@@ -391,7 +395,7 @@ setting in `ansible.cfg`.
 .. _extract_filter:
 
 Extracting values from containers
----------------------------------
+`````````````````````````````````
 
 .. versionadded:: 2.1
 
@@ -424,7 +428,7 @@ This would return a list containing the value of `b['a']['x']['y']`.
 .. _comment_filter:
 
 Comment Filter
---------------
+``````````````
 
 .. versionadded:: 2.0
 
@@ -496,21 +500,11 @@ which will produce this output:
     # host: myhost
     #
 
-ipaddr() filters
-----------------
-
-A number of filters are available, including:
-
-* `ipaddr`
-* `ipv4`
-* `ipv6`
-
-See :doc:`playbooks_filters_ipaddr`
 
 .. _other_useful_filters:
 
 Other Useful Filters
---------------------
+````````````````````
 
 To add quotes for shell usage::
 
@@ -618,7 +612,7 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
 
 Debugging Filters
------------------
+`````````````````
 
 .. versionadded:: 2.3
 

@@ -203,6 +203,7 @@ class Connection(_Connection):
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
+        display.debug('alarm_handler fired!')
         self.close_shell()
 
     def exec_command(self, cmd):
@@ -242,7 +243,12 @@ class Connection(_Connection):
             return (1, '', str(exc))
 
         try:
+            if not signal.getsignal(signal.SIGALRM):
+                display.debug('setting alarm handler in network_cli')
+                signal.signal(signal.SIGALRM, self.alarm_handler)
+            signal.alarm(self._play_context.timeout)
             out = self.send(obj)
+            signal.alarm(0)
             return (0, out, '')
         except (AnsibleConnectionFailure, ValueError) as exc:
             return (1, '', str(exc))

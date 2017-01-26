@@ -33,9 +33,10 @@ description:
 options:
   image:
     description:
-       - image string to use for the instance
+      - image string to use for the instance (default will follow latest
+        stable debian image)
     required: false
-    default: "debian-7"
+    default: "debian-8"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -155,7 +156,7 @@ options:
   external_ip:
     version_added: "1.9"
     description:
-      - type of external ip, ephemeral by default; alternatively, a list of fixed gce ips or ip names can be given (if there is not enough specified ip, 'ephemeral' will be used). Specify 'none' if no external ip is desired.
+      - type of external ip, ephemeral by default; alternatively, a fixed gce ip or ip name can be given. Specify 'none' if no external ip is desired.
     required: false
     default: "ephemeral"
   disk_auto_delete:
@@ -397,18 +398,15 @@ def create_instances(module, gce, instance_names, number):
 
     if external_ip == "none":
         instance_external_ip = None
-    elif not isinstance(external_ip, basestring):
+    elif external_ip != "ephemeral":
+        instance_external_ip = external_ip
         try:
-            if len(external_ip) != 0:
-                instance_external_ip = external_ip.pop(0)
-                # check if instance_external_ip is an ip or a name
-                try:
-                    socket.inet_aton(instance_external_ip)
-                    instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
-                except socket.error:
-                    instance_external_ip = gce.ex_get_address(instance_external_ip)
-            else:
-                instance_external_ip = 'ephemeral'
+            # check if instance_external_ip is an ip or a name
+            try:
+                socket.inet_aton(instance_external_ip)
+                instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
+            except socket.error:
+                instance_external_ip = gce.ex_get_address(instance_external_ip)
         except GoogleBaseError as e:
             module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
     else:
@@ -620,7 +618,7 @@ def change_instance_state(module, gce, instance_names, number, zone_name, state)
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            image = dict(default='debian-7'),
+            image = dict(default='debian-8'),
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
@@ -637,8 +635,8 @@ def main():
             zone = dict(default='us-central1-a'),
             service_account_email = dict(),
             service_account_permissions = dict(type='list'),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
             ip_forward = dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),

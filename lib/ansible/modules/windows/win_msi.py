@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_msi
 version_added: "1.7"
@@ -64,7 +64,7 @@ options:
 author: "Matt Martz (@sivel)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Install an MSI file
   win_msi:
     path: C:\7z920-x64.msi
