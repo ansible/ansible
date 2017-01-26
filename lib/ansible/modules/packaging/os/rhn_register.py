@@ -149,8 +149,7 @@ except ImportError:
 
 # INSERT REDHAT SNIPPETS
 from ansible.module_utils import redhat
-# INSERT COMMON SNIPPETS
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, get_exception
 
 
 class Rhn(redhat.RegistrationBase):
