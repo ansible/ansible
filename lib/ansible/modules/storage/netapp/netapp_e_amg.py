@@ -122,9 +122,8 @@ msg:
 
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, get_exception
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -216,11 +215,8 @@ def remove_amg(module, ssid, api_url, pwd, user, async_id):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
-        api_username=dict(type='str', required=True),
-        api_password=dict(type='str', required=True, no_log=True),
-        api_url=dict(type='str', required=True),
         name=dict(required=True, type='str'),
         new_name=dict(required=False, type='str'),
         secondaryArrayId=dict(required=True, type='str'),
@@ -229,7 +225,6 @@ def main():
         recoveryWarnThresholdMinutes=dict(required=False, default=20, type='int'),
         repoUtilizationWarnThreshold=dict(required=False, default=80, type='int'),
         interfaceType=dict(required=False, choices=['fibre', 'iscsi'], type='str'),
-        ssid=dict(required=True, type='str'),
         state=dict(required=True, choices=['present', 'absent']),
         syncWarnThresholdMinutes=dict(required=False, default=10, type='int')
     ))

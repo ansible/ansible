@@ -109,19 +109,15 @@ json:
 """
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
+
 
 class AMGsync(object):
     def __init__(self):
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
-            api_url=dict(type='str', required=True),
             name=dict(required=True, type='str'),
-            ssid=dict(required=True, type='str'),
             state=dict(required=True, type='str', choices=['running', 'suspended']),
             delete_recovery_point=dict(required=False, type='bool', default=False)
         ))

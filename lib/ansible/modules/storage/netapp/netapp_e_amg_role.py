@@ -72,9 +72,8 @@ msg:
 
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 HEADERS = {
@@ -144,16 +143,12 @@ def update_amg(module, ssid, api_url, api_usr, api_pwd, body, amg_id):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True, type='str'),
         role=dict(required=True, choices=['primary', 'secondary']),
         noSync=dict(required=False, type='bool', default=False),
         force=dict(required=False, type='bool', default=False),
-        ssid=dict(required=True, type='str'),
-        api_url=dict(required=True),
-        api_username=dict(required=False),
-        api_password=dict(required=False, no_log=True),
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)

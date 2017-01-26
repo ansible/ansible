@@ -119,7 +119,7 @@ import json
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 def group_exists(module, id_type, ident, ssid, api_url, user, pwd):
@@ -272,19 +272,16 @@ def get_hosts_in_group(module, ssid, group_name, api_url, user, pwd):
 
 
 def main():
+    argument_spec = eseries_host_argument_spec()
+    argument_spec = argument_spec.update(dict(
+        name=dict(required=False),
+        new_name=dict(required=False),
+        id=dict(required=False),
+        state=dict(required=True, choices=['present', 'absent']),
+        hosts=dict(required=False, type='list'),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=False),
-            new_name=dict(required=False),
-            ssid=dict(required=True),
-            id=dict(required=False),
-            state=dict(required=True, choices=['present', 'absent']),
-            hosts=dict(required=False, type='list'),
-            api_url=dict(required=True),
-            api_username=dict(required=True),
-            validate_certs=dict(required=False, default=True),
-            api_password=dict(required=True, no_log=True)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False,
         mutually_exclusive=[['name', 'id']],
         required_one_of=[['name', 'id']]

@@ -81,9 +81,8 @@ import json
 import logging
 import sys
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 
@@ -116,13 +115,9 @@ class NetAppESeriesFlashCache(object):
             yb=1024 ** 8
         )
 
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
-            api_url=dict(type='str', required=True),
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            ssid=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             disk_count=dict(type='int'),
             disk_refs=dict(type='list'),

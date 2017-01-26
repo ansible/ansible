@@ -18,9 +18,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 HAS_NETAPP_LIB = False
 try:
@@ -96,10 +98,29 @@ def setup_ontap_zapi(module, vserver=None):
         module.fail_json(msg="the python NetApp-Lib module is required")
 
 
+def eseries_host_argument_spec():
+    """Retrieve a base argument specifiation common to all NetApp E-Series modules"""
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.update(dict(
+        api_username=dict(type='str', required=True),
+        api_password=dict(type='str', required=True, no_log=True),
+        api_url=dict(type='str', required=True),
+        ssid=dict(type='str', required=True),
+        validate_certs=dict(required=False, default=True),
+    ))
+    return argument_spec
+
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
             force=False, last_mod_time=None, timeout=10, validate_certs=True,
             url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
     """Issue an HTTP request to a url, retrieving an optional JSON response."""
+
+    if headers is None:
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,

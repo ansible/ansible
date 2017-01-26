@@ -96,18 +96,14 @@ HEADERS = {
 }
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
+
 
 class SnapshotVolume(object):
     def __init__(self):
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
-            api_url=dict(type='str', required=True),
-            ssid=dict(type='str', required=True),
             snapshot_image_id=dict(type='str', required=True),
             full_threshold=dict(type='int', default=85),
             name=dict(type='str', required=True),

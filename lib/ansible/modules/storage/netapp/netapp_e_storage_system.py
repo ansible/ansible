@@ -88,7 +88,7 @@ from time import sleep
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 
@@ -121,10 +121,9 @@ def do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, reque
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
-        ssid=dict(required=True, type='str'),
         controller_addresses=dict(type='list'),
         array_wwn=dict(required=False, type='str'),
         array_password=dict(required=False, type='str', no_log=True),
@@ -142,6 +141,7 @@ def main():
     p = module.params
 
     state = p['state']
+    # TODO: allow SSID to be optional
     ssid = p['ssid']
     controller_addresses = p['controller_addresses']
     array_wwn = p['array_wwn']

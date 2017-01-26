@@ -116,10 +116,10 @@ import json
 import logging
 from traceback import format_exc
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netapp import request
+
 
 def select(predicate, iterable):
     # python 2, 3 generic filtering.
@@ -173,13 +173,10 @@ class NetAppESeriesStoragePool(object):
             yb=1024 ** 8
         )
 
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
             api_url=dict(type='str', required=True),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
-            ssid=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             criteria_size_unit=dict(default='gb', type='str'),
             criteria_drive_count=dict(type='int'),

@@ -68,9 +68,8 @@ HEADERS = {
 }
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 
@@ -156,14 +155,9 @@ def delete_image(module, ssid, api_url, pwd, user, snapshot_group):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         snapshot_group=dict(required=True, type='str'),
-        ssid=dict(required=True, type='str'),
-        api_url=dict(required=True),
-        api_username=dict(required=False),
-        api_password=dict(required=False, no_log=True),
-        validate_certs=dict(required=False, default=True),
         state=dict(required=True, choices=['create', 'remove'], type='str'),
     ))
     module = AnsibleModule(argument_spec)

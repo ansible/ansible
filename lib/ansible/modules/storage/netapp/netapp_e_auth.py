@@ -74,7 +74,7 @@ import json
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 HEADERS = {
@@ -164,16 +164,13 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         name=dict(required=False, type='str'),
         ssid=dict(required=False, type='str'),
         current_password=dict(required=False, no_log=True),
         new_password=dict(required=True, no_log=True),
         set_admin=dict(required=True, type='bool'),
-        api_url=dict(required=True),
-        api_username=dict(required=False),
-        api_password=dict(required=False, no_log=True)
     )
     )
     module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=[['name', 'ssid']],

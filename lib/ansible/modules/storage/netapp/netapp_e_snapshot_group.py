@@ -127,20 +127,16 @@ HEADERS = {
 }
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 
 class SnapshotGroup(object):
     def __init__(self):
 
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
-            api_url=dict(type='str', required=True),
             state=dict(required=True, choices=['present', 'absent']),
             base_volume_name=dict(required=True),
             name=dict(required=True),
@@ -150,7 +146,6 @@ class SnapshotGroup(object):
             full_policy=dict(default='purgepit', choices=['unknown', 'failbasewrites', 'purgepit']),
             rollback_priority=dict(default='medium', choices=['highest', 'high', 'medium', 'low', 'lowest']),
             storage_pool_name=dict(type='str'),
-            ssid=dict(required=True),
         )
 
         self.module = AnsibleModule(argument_spec=argument_spec)

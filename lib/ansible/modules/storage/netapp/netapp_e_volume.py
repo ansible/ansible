@@ -127,9 +127,8 @@ import logging
 import time
 from traceback import format_exc
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 
@@ -157,13 +156,9 @@ class NetAppESeriesVolume(object):
             yb=1024 ** 8
         )
 
-        self._post_headers = dict(Accept="application/json")
-        self._post_headers['Content-Type'] = 'application/json'
-
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
-            ssid=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             storage_pool_name=dict(type='str'),
             size_unit=dict(default='gb', choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'],
@@ -177,10 +172,6 @@ class NetAppESeriesVolume(object):
             thin_volume_max_repo_size=dict(type='int'),
             # TODO: add cache, owning controller support, thin expansion policy, etc
             log_path=dict(type='str'),
-            api_url=dict(type='str'),
-            api_username=dict(type='str'),
-            api_password=dict(type='str'),
-            validate_certs=dict(type='bool'),
         ))
 
         self.module = AnsibleModule(argument_spec=argument_spec,

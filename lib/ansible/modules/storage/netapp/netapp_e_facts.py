@@ -50,18 +50,12 @@ RETURN = """
 msg: Gathered facts for <StorageArrayId>.
 """
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, get_exception
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
+
 
 def main():
-    argument_spec = basic_auth_argument_spec()
-    argument_spec.update(
-        api_username=dict(type='str', required=True),
-        api_password=dict(type='str', required=True, no_log=True),
-        api_url=dict(type='str', required=True),
-        ssid=dict(required=True))
-
+    argument_spec = eseries_host_argument_spec()
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True

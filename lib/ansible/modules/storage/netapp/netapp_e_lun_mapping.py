@@ -84,7 +84,7 @@ import json
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netapp import request
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
 
 HEADERS = {
@@ -226,16 +226,12 @@ def remove_mapping(module, ssid, lun_mapping, api_url, user, pwd):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
-        api_username=dict(type='str', required=True),
-        api_password=dict(type='str', required=True, no_log=True),
-        api_url=dict(type='str', required=True),
         state=dict(required=True, choices=['present', 'absent']),
         target=dict(required=False, default=None),
         target_type=dict(required=False, choices=['host', 'group']),
         lun=dict(required=False, type='int', default=0),
-        ssid=dict(required=False),
         volume_name=dict(required=True),
     ))
 
