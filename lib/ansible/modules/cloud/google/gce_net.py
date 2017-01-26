@@ -208,7 +208,7 @@ def format_allowed_section(allowed):
         return []
     if ports.count(","):
         ports = ports.split(",")
-    else:
+    elif ports:
         ports = [ports]
     return_val = {"IPProtocol": protocol}
     if ports:
@@ -231,7 +231,7 @@ def sorted_allowed_list(allowed_list):
     # sort by protocol
     allowed_by_protocol = sorted(allowed_list,key=lambda x: x['IPProtocol'])
     # sort the ports list
-    return sorted(allowed_by_protocol, key=lambda y: y['ports'].sort())
+    return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
 
 
 def main():
