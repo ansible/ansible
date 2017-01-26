@@ -133,7 +133,6 @@ EXAMPLES = '''
 '''
 
 import os
-import re
 import sys
 import xmlrpclib
 import urlparse
@@ -323,20 +322,6 @@ class Rhn(redhat.RegistrationBase):
             if new_childs:
                 out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
             return out_base and out_childs
-
-    def _subscribe(self, channels=[]):
-        '''
-            Subscribe to requested yum repositories using 'rhn-channel' command
-        '''
-        rhn_channel_cmd = "rhn-channel --user='%s' --password='%s'" % (self.username, self.password)
-        rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --available-channels", check_rc=True)
-
-        # Enable requested repoid's
-        for wanted_channel in channels:
-            # Each inserted repo regexp will be matched. If no match, no success.
-            for available_channel in stdout.rstrip().split('\n'):  # .rstrip() because of \n at the end -> empty string at the end
-                if re.search(wanted_repo, available_channel):
-                    rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel, check_rc=True)
 
     def _is_hosted(self):
         '''
