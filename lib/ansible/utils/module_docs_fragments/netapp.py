@@ -38,8 +38,7 @@ options:
   username:
       required: true
       description:
-      - Username: This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the documentation U(https://goo.gl/BRu78Z).
-
+      - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the documentation U(https://goo.gl/BRu78Z).
   password:
       required: true
       description:
@@ -65,7 +64,7 @@ options:
   username:
       required: true
       description:
-      - Username: Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
+      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
   password:
       required: true
       description:
