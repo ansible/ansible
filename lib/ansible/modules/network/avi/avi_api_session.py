@@ -65,7 +65,7 @@ options:
             - Query parameters passed to the HTTP API.
     path:
         description:
-            - Path for Avi API resource. For example, "path: virtualservice" will translate to api/virtualserivce.
+            - Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).
     timeout:
         description:
             - Timeout for Avi API calls.
