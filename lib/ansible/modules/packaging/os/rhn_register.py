@@ -132,8 +132,9 @@ EXAMPLES = '''
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
+import os
+import re
 import sys
-import types
 import xmlrpclib
 import urlparse
 
