@@ -35,6 +35,7 @@ from ansible.module_utils.ovirt import (
     create_connection,
     equal,
     get_link_name,
+    get_id_by_name,
     ovirt_full_argument_spec,
     search_by_name,
     wait,
@@ -245,6 +246,11 @@ options:
     kernel_params:
         description:
             - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
+        version_added: "2.3"
+    instance_type:
+        description:
+            - "Name of virtual machine's hardware configuration."
+            - "By default no instance type is used."
         version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -488,6 +494,12 @@ class VmsModule(BaseModule):
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self._module.params['memory_guaranteed']),
             ) if self._module.params['memory_guaranteed'] else None,
+            instance_type=otypes.InstanceType(
+                id=get_id_by_name(
+                    self._connection.system_service().instance_types_service(),
+                    self.param('instance_type'),
+                ),
+            ) if self.param('instance_type') else None,
         )
 
     def update_check(self, entity):
@@ -504,7 +516,8 @@ class VmsModule(BaseModule):
             equal(self._module.params.get('cpu_shares'), entity.cpu_shares) and
             equal(self._module.params.get('delete_protected'), entity.delete_protected) and
             equal(self._module.params.get('use_latest_template_version'), entity.use_latest_template_version) and
-            equal(self._module.params.get('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
+            equal(self._module.params.get('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
         )
 
     def pre_create(self, entity):
@@ -826,6 +839,7 @@ def main():
         kernel_path=dict(default=None),
         initrd_path=dict(default=None),
         kernel_params=dict(default=None),
+        instance_type=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
