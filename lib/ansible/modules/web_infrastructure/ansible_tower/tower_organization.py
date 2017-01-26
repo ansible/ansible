@@ -97,6 +97,7 @@ try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
+    from tower_cli.api import client
     from tower_cli.conf import settings
     from ansible.module_utils.ansible_tower import tower_auth_config
 
@@ -131,6 +132,14 @@ def main():
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
+
+        if module.check_mode:
+            try:
+                result = client.get('/ping').json()
+                module.exit_json(changed=True, tower_version='{0}'.format(result['version']))
+            except (exc.ConnectionError, exc.BadRequest) as excinfo:
+                module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
+
         organization = tower_cli.get_resource('organization')
         try:
             if state == 'present':
@@ -139,7 +148,7 @@ def main():
             elif state == 'absent':
                 result = organization.delete(name=name)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
-            module.fail_json(msg='Failed to update the organization: {}'.format(excinfo), changed=False)
+            module.fail_json(msg='Failed to update the organization: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
