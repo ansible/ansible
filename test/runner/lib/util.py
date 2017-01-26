@@ -78,7 +78,8 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
-def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None):
+def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -89,13 +90,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type always: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout)
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
+                       cmd_verbosity=cmd_verbosity)
 
 
-def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None):
+def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -105,6 +109,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type explain: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -117,7 +122,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=1)
+    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
