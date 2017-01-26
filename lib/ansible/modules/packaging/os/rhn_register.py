@@ -83,6 +83,11 @@ options:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
         required: false
         default: []
+    enable_eus:
+        description:
+            - If true, extended update support will be requested.
+        required: false
+        default: false
 '''
 
 EXAMPLES = '''
