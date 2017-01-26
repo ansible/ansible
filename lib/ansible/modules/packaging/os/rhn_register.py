@@ -166,9 +166,9 @@ class Rhn(RegistrationBase):
         # well
         def get_option_default(self, key, default=''):
             # the class in rhn-client-tools that this comes from didn't
-            # implement __contains__() until 2.5.x.  That's why we check if
-            # the key is present in the dictionary that is the actual storage
-            if key in self.dict:
+            # implement __contains__() until 2.5.x. The Config object implements
+            # has_key on all versions, so we use that.
+            if self.has_key(key):
                 return self[key]
             else:
                 return default
