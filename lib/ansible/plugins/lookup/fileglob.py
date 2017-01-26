@@ -23,7 +23,6 @@ import glob
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.utils.path import unfrackpath
 
 
 class LookupModule(LookupBase):
@@ -34,12 +33,9 @@ class LookupModule(LookupBase):
         for term in terms:
             term_file = os.path.basename(term)
             term_dir = os.path.dirname(term)
-            if term_dir.startswith('~') or term_dir.startswith(os.path.sep):
-                basepath = unfrackpath(to_text(term_dir))
-                candidates = [basepath]
-            else:
-                paths = self.get_search_path(variables)
-                candidates = self._loader.path_dwim_get_candidates(paths, 'files', term_dir)
+
+            paths = self.get_search_path(variables)
+            candidates = self._loader.path_dwim_get_candidates(paths, 'files', term_dir)
 
             for b_candidate in candidates:
                 dwimmed_path = to_text(b_candidate)
