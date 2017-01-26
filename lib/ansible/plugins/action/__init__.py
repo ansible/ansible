@@ -498,13 +498,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # FIXME: Can't use os.path.sep for Windows paths.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
-        if expand_path == '~':
-            if self._play_context.become and self._play_context.become_user:
-                expand_path = '~%s' % self._play_context.become_user
-
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
-        #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
         if not initial_fragment:
