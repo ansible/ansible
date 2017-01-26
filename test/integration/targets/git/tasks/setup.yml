@@ -21,8 +21,11 @@
   shell: gpg --version 2>1 | head -1 | sed -e 's/gpg (GnuPG) //'
   register: gpg_version
 
-- name: set dummy git config
-  shell: git config --global user.email "noreply@example.com"; git config --global user.name "Ansible Test Runner"
+- name: set git global user.email if not already set
+  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+
+- name: set git global user.name if not already set
+  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
 
 - name: create repo_dir
   file: path={{repo_dir}} state=directory
