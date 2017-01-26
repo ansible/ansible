@@ -27,7 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+
+import tower_cli.utils.exceptions as exc
 from tower_cli.utils import parser
+from tower_cli.api import client
 
 
 def tower_auth_config(module):
@@ -62,3 +65,13 @@ def tower_auth_config(module):
         if verify_ssl:
             auth_config['verify_ssl'] = verify_ssl
         return auth_config
+
+
+def tower_check_mode(module):
+    '''Execute check mode logic for Ansible Tower modules'''
+    if module.check_mode:
+        try:
+            result = client.get('/ping').json()
+            module.exit_json(changed=True, tower_version='{0}'.format(result['version']))
+        except (exc.ServerError, exc.ConnectionError, exc.BadRequest) as excinfo:
+            module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))

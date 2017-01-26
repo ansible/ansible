@@ -97,9 +97,8 @@ try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
-    from tower_cli.api import client
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import tower_auth_config
+    from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode
 
     HAS_TOWER_CLI = True
 except ImportError:
@@ -132,14 +131,7 @@ def main():
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
-
-        if module.check_mode:
-            try:
-                result = client.get('/ping').json()
-                module.exit_json(changed=True, tower_version='{0}'.format(result['version']))
-            except (exc.ConnectionError, exc.BadRequest) as excinfo:
-                module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
-
+        tower_check_mode(module)
         organization = tower_cli.get_resource('organization')
         try:
             if state == 'present':
