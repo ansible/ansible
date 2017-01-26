@@ -394,30 +394,30 @@ def main():
 
         # Register system
         if rhn.is_registered:
-            module.exit_json(changed=False, msg="System already registered.")
-        else:
-            try:
-                rhn.enable()
-                rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
-                rhn.subscribe(channels)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
+            return module.exit_json(changed=False, msg="System already registered.")
 
-            module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
+        try:
+            rhn.enable()
+            rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
+            rhn.subscribe(channels)
+        except Exception:
+            e = get_exception()
+            module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
+
+        module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
 
     # Ensure system is *not* registered
     if state == 'absent':
         if not rhn.is_registered:
-            module.exit_json(changed=False, msg="System already unregistered.")
-        else:
-            try:
-                rhn.unregister()
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to unregister: %s" % e)
+            return module.exit_json(changed=False, msg="System already unregistered.")
 
-            module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
+        try:
+            rhn.unregister()
+        except Exception:
+            e = get_exception()
+            module.fail_json(msg="Failed to unregister: %s" % e)
+
+        module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
 
 
 if __name__ == '__main__':
