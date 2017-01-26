@@ -811,6 +811,10 @@ class PyVmomiHelper(object):
             if hasattr(self.cache.get_network(network_devices[key]['name']), 'portKeys'):
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
+
+                if nic.device.backing and ( nic.device.backing.port.portgroupKey != pg_obj.key or nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid ):
+                    nic_change_detected = True
+
                 dvs_port_connection = vim.dvs.PortConnection()
                 dvs_port_connection.portgroupKey = pg_obj.key
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
