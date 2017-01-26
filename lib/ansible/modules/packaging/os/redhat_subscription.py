@@ -104,7 +104,11 @@ options:
         version_added: "2.1"
     consumer_id:
         description:
-            - References an existing consumer ID to resume using a previous registration for this system. If the  system's identity certificate is lost or corrupted, this option allows it to resume using its previous identity and subscriptions. The default is to not specify a consumer ID so a new ID is created.
+            - |
+              References an existing consumer ID to resume using a previous registration
+              for this system. If the  system's identity certificate is lost or corrupted,
+              this option allows it to resume using its previous identity and subscriptions.
+              The default is to not specify a consumer ID so a new ID is created.
         required: False
         default: null
         version_added: "2.1"
@@ -165,7 +169,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 
-# import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_exception
 
 SUBMAN_CMD = None
@@ -263,9 +266,9 @@ class Rhsm(RegistrationBase):
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--system.hostname'.
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
-                args.append('--%s=%s' % (k.replace('_','.'), v))
+                args.append('--%s=%s' % (k.replace('_', '.'), v))
 
         self.module.run_command(args, check_rc=True)
 
@@ -374,20 +377,19 @@ class Rhsm(RegistrationBase):
         return subscribed_pool_ids
 
     def update_subscriptions(self, regexp):
-        changed=False
+        changed = False
         consumed_pools = RhsmPools(self.module, consumed=True)
         pool_ids_to_keep = [p.get_pool_id() for p in consumed_pools.filter(regexp)]
 
-        serials_to_remove=[p.Serial for p in consumed_pools if p.get_pool_id() not in pool_ids_to_keep]
+        serials_to_remove = [p.Serial for p in consumed_pools if p.get_pool_id() not in pool_ids_to_keep]
         serials = self.unsubscribe(serials=serials_to_remove)
 
         subscribed_pool_ids = self.subscribe(regexp)
 
         if subscribed_pool_ids or serials:
-            changed=True
+            changed = True
         return {'changed': changed, 'subscribed_pool_ids': subscribed_pool_ids,
                 'unsubscribed_serials': serials}
-
 
 
 class RhsmPool(object):
@@ -397,7 +399,7 @@ class RhsmPool(object):
 
     def __init__(self, module, **kwargs):
         self.module = module
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __str__(self):
@@ -449,7 +451,7 @@ class RhsmPools(object):
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:
-                (key, value) = line.split(':',1)
+                (key, value) = line.split(':', 1)
                 key = key.strip().replace(" ", "")  # To unify
                 value = value.strip()
                 if key in ['ProductName', 'SubscriptionName']:
@@ -459,7 +461,7 @@ class RhsmPools(object):
                     # Associate value with most recently recorded product
                     products[-1].__setattr__(key, value)
                 # FIXME - log some warning?
-                #else:
+                # else:
                     # warnings.warn("Unhandled subscription key/value: %s/%s" % (key,value))
         return products
 
@@ -508,7 +510,7 @@ def main():
     server_hostname = module.params['server_hostname']
     server_insecure = module.params['server_insecure']
     rhsm_baseurl = module.params['rhsm_baseurl']
-    autosubscribe = module.params['autosubscribe'] == True
+    autosubscribe = module.params['autosubscribe']
     activationkey = module.params['activationkey']
     org_id = module.params['org_id']
     environment = module.params['environment']
@@ -541,8 +543,8 @@ def main():
                 rhsm.enable()
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
-                             consumer_type, consumer_name, consumer_id, force_register,
-                             environment, rhsm_baseurl, server_insecure)
+                              consumer_type, consumer_name, consumer_id, force_register,
+                              environment, rhsm_baseurl, server_insecure)
                 subscribed_pool_ids = rhsm.subscribe(pool)
             except Exception:
                 e = get_exception()
