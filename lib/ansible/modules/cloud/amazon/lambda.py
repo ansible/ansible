@@ -98,7 +98,7 @@ options:
     default: None
   env_variables:
     description:
-      - provide ENV vars in a dict such as {var: value, var2: value2}
+      - A dictionary of environment variables the Lambda function is given.
     required: false
     default: None
 author:
