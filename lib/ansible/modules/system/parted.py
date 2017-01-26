@@ -33,14 +33,17 @@ module: parted
 short_description: Configure block device partitions
 version_added: "2.3"
 description:
-  - Linux parted tool. For a full description of the fields and the
-    options check the GNU parted manual.
+  - This module allows configuring block device partition using the C(parted)
+    command line tool. For a full description of the fields and the options
+    check the GNU parted manual.
 notes:
-  - When fetching information about a new disks and when the version of parted
-    installed on the system is before version 3.1, the module queries directly
-    the system to obtain disk information. In this case the units CHS and CYL
-    are not supported.
-requirements: []
+  - When fetching information about a new disk and when the version of parted
+    installed on the system is before version 3.1, the module queries the kernel
+    through C(/sys/) to obtain disk information. In this case the units CHS and
+    CYL are not supported.
+requirements:
+  - This module requires either parted version >= 3.1. If parted version < 3.1
+    the it is required a Linux version running the sysfs file system C(/sys/).
 options:
   device:
     description: The block device (disk) where to operate.
@@ -100,19 +103,15 @@ options:
     description:
      - Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
     required: False
-  flags_on:
-    description: A comma-separated list of flags to set for the partition.
+  flags:
+    description: A list of the flags that has to be set on the partition.
     required: False
-    default: ''
-  flags_off:
-    description: A comma-separated list of flags to clear for the partition.
-    required: False
-    default: ''
+    default: null
   state:
     description:
-     - If to create or delete a partition. If not present or empty the module
-       will return only the device information.
-    choices: ['present', 'absent', '']
+     - If to create or delete a partition. If not present the module will return
+       only the device information.
+    choices: ['present', 'absent']
     required: False
     default: present
 '''
@@ -142,7 +141,9 @@ partition_info:
         "partitions": [{
             "begin": 1024,
             "end": 1048576,
-            "flags": "lvm",
+            "flags": [
+                "lvm"
+            ],
             "fstype": null,
             "num": 1,
             "size": 1047552
@@ -175,7 +176,7 @@ EXAMPLES = """
 - parted:
     device: /dev/sdb
     number: 2
-    flags_on: lvm
+    flags: [ lvm ]
     state: present
     part_start: 1GiB
 
@@ -234,13 +235,15 @@ def parse_partition_info(output, unit):
             continue
 
         part_params = line.split(':')
+        flags = [f for f in part_params[6].split(', ') if f != '']
+
         parts.append({
             'num':    int(part_params[0]),
             'begin':  parse_unit(part_params[1], unit),
             'end':    parse_unit(part_params[2], unit),
             'size':   parse_unit(part_params[3], unit),
             'fstype': part_params[4] or None,
-            'flags':  part_params[6] or None,
+            'flags':  flags,
         })
 
     return { 'generic': generic, 'partitions': parts }
@@ -400,15 +403,17 @@ def parted_version():
 
     rc, out, err = module.run_command("parted --version")
     if rc != 0:
-        module.fail_json(msg="Error running parted.", rc=rc, out=out, err=err)
+        module.fail_json(
+            msg="Failed to get parted version.", rc=rc, out=out, err=err
+        )
 
     lines = out.split('\n')
     if len(lines) == 0:
-        module.fail_json(msg="Error finding parted version.", out=out)
+        module.fail_json(msg="Failed to get parted version.", rc=0, out=out)
 
     matches = re.search(r'^parted.+(\d+)\.(\d+)$', lines[0])
     if len(matches.groups()) != 2:
-        module.fail_json(msg="Error finding parted version.", out=out)
+        module.fail_json(msg="Failed to get parted version.", rc=0, out=out)
 
     major = int(matches.group(1))
     minor = int(matches.group(2))
@@ -467,9 +472,10 @@ def main():
             align = dict(
                 default='optimal',
                 choices=['none', 'cylinder', 'minimal', 'optimal'],
-                required=False
+                required=False,
+                type='str'
             ),
-            number = dict(default=-1, type='int', required=False),
+            number = dict(default=None, type='int', required=False),
 
             # unit <unit> command
             unit = dict(
@@ -478,48 +484,45 @@ def main():
                     's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB',
                     'TiB', '%', 'cyl', 'chs', 'compact'
                 ],
-                required=False
+                required=False,
+                type='str'
             ),
 
             # mklabel <label-type> command
             label = dict(
-                default='',
                 choices=[
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
                      'pc98', 'sun', ''
                 ],
-                required=False
+                required=False,
+                type='str'
             ),
 
             # mkpart <part-type> [<fs-type>] <start> <end> command
             part_type = dict(
                 default='primary',
                 choices=['primary', 'extended', 'logical'],
-                required=False
+                required=False,
+                type='str'
             ),
             part_start = dict(default='0%', type='str', required=False),
             part_end = dict(default='100%', type='str', required=False),
 
             # name <partition> <name> command
-            name = dict(default='', type='str', required=False),
+            name = dict(type='str', required=False),
 
             # set <partition> <flag> <state> command
-            flags_on = dict(default='', type='str', required=False),
-            flags_off = dict(default='', type='str', required=False),
+            flags = dict(type='list', required=False),
 
             # rm/mkpart command
             state = dict(
-                default='',
-                choices=['present', 'absent', ''],
-                required=False
+                choices=['present', 'absent'],
+                required=False,
+                type='str'
             )
         ),
         required_together = [
-            ['state', 'number'],
-            ['part_type', 'part_start', 'part_end', 'number'],
-            ['name', 'number'],
-            ['flags_on', 'number'],
-            ['flags_off', 'number']
+            ['number', 'state']
         ]
     )
 
@@ -528,20 +531,25 @@ def main():
     align       = module.params['align'].lower()
     number      = module.params['number']
     unit        = module.params['unit']
-    label       = module.params['label'].lower()
+    label       = module.params['label']
     part_type   = module.params['part_type'].lower()
     part_start  = module.params['part_start']
     part_end    = module.params['part_end']
     name        = module.params['name']
-    flags_on    = module.params['flags_on'].lower().split(',')
-    flags_off   = module.params['flags_off'].lower().split(',')
-    state       = module.params['state'].lower()
+    state       = module.params['state']
+    flags       = module.params['flags']
+
+    # Conditioning
+    if state:
+        state = state.lower()
+    if number and number < 0:
+        module.fail_json(msg="The partition number must be non negativ.e")
 
     # Read the current disk information
     current_device = get_device_info(device, unit)
     current_parts = current_device['partitions']
 
-    if state == 'present':
+    if state and state == 'present':
         # Default value for the label
         if not current_device['generic']['table'] or \
            current_device['generic']['table'] == 'unknown' and \
@@ -578,15 +586,19 @@ def main():
             if name and name in ['gpt', 'mac', 'mips', 'pc98']:
                 script += "name {0} {1} ".format(number, name)
 
-            # Flags to set
-            for flag in flags_on:
-                if flag and not part_exists(current_parts, 'flags', flag):
-                    script += "set {0} {1} on ".format(number, flag)
+            # Manage flags
+            if flags:
+                partition = [p for p in current_parts if p['num'] == number][0]
 
-            # Flags to clear
-            for flag in flags_off:
-                if flag and part_exists(current_parts, 'flags', flag):
-                    script += "set {0} {1} off ".format(number, flag)
+                # Compute only the changes in flags status
+                flags_off = list(set(partition['flags']) - set(flags))
+                flags_on  = list(set(flags) - set(partition['flags']))
+
+                for f in flags_on:
+                    script += "set {0} {1} on ".format(number, f)
+
+                for f in flags_off:
+                    script += "set {0} {1} off ".format(number, f)
 
         # Set the unit of the run
         if unit and script:
@@ -597,7 +609,7 @@ def main():
             output_script += script; changed = True
             parted(script, device, align)
 
-    elif state == 'absent':
+    elif state and state == 'absent':
         # Remove the partition
         if part_exists(current_parts, 'num', number):
             script = "rm {0} ".format(number)
@@ -616,4 +628,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
