@@ -27,6 +27,14 @@
 #
 from ansible.module_utils.six import iteritems
 
+def to_list(val):
+    if isinstance(val, (list, tuple, set)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
+
 class ComplexDict:
 
     def __init__(self, attrs):
