@@ -51,11 +51,6 @@ if (-not ($path -match "^HK(CC|CR|CU|LM|U):\\")) {
     Fail-Json $result "path: $path is not a valid powershell path, see module documentation for examples."
 } 
 
-# Allow empty values as the "(default)" value
-if ($name -eq "") {
-    $name = "(default)"
-}
-
 Function Test-ValueData {
     Param (
         [parameter(Mandatory=$true)] [ValidateNotNullOrEmpty()] $Path,
@@ -145,21 +140,24 @@ if (-not (Test-Path HKCC:\)) {
     New-PSDrive -Name HKCC -PSProvider Registry -Root HKEY_CURRENT_CONFIG
 }
 
+
 # Convert HEX string to binary if type binary
 if ($type -eq "binary" -and $data -ne $null -and $data -is [String]) {
     $data = Convert-RegExportHexStringToByteArray($data)
 }
 
 # Special case handling for the path's default property.
-if ($name.ToLower() -eq "(default)") {
+if ($name -eq "" -or ($name -ne $null -and $name.ToLower() -eq "(default)")) {
+    # Apparently, "(default)" cannot be of type expandstring, do it ourselves
     if ($type -eq "expandstring" -and $data -ne $null -and $data -is [String]) {
         $data = Expand-Environment($data)
     }
+    $name = "(default)"
     $type = "string"
 }
 
 # Support REG_NONE with empty value
-# FIXME: REG_NONE support is not idempotent
+# FIXME: REG_NONE support is not idempotent yet
 if ($type -eq "none" -or $data -eq $null) {
     $data = New-Object byte[] 0
 #    $data = ([byte[]] @())
@@ -174,7 +172,7 @@ if ($state -eq "present") {
             # Handle binary data
             $old_data = (Get-ItemProperty -Path $path | Select-Object -ExpandProperty $name)
 
-            if ($name.ToLower() -eq "(default)") {
+            if ($name -eq "(default)") {
                 # Special case handling for the path's default property.
                 # Because .GetValueKind() doesn't work for the (default) path property
                 $old_type = "String".ToLower()
@@ -291,7 +289,7 @@ if ($state -eq "present") {
 -"$name" = "$type`:$data"
 "@
 
-        } elseif (Test-ValueData -Path $path -Value $name) {
+        } elseif (Test-ValueData -Path $path -Name $name) {
 
             if (-not $check_mode) {
                 try {
