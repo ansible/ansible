@@ -260,6 +260,11 @@ options:
         description:
             - "Comment of the Virtual Machine."
         version_added: "2.3"
+    timezone:
+        description:
+            - "Sets time zone offset of the guest hardware clock."
+            - "For example: Etc/GMT"
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -510,6 +515,9 @@ class VmsModule(BaseModule):
             ) if self.param('instance_type') else None,
             description=self.param('description'),
             comment=self.param('comment'),
+            time_zone=otypes.TimeZone(
+                name=self.param('timezone'),
+            ) if self.param('timezone') else None,
         )
 
     def update_check(self, entity):
@@ -530,6 +538,7 @@ class VmsModule(BaseModule):
             and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
             and equal(self.param('description'), entity.description)
             and equal(self.param('comment'), entity.comment)
+            and equal(self.param('timezone'), entity.time_zone.name)
         )
 
     def pre_create(self, entity):
@@ -854,6 +863,7 @@ def main():
         instance_type=dict(default=None),
         description=dict(default=None),
         comment=dict(default=None),
+        timezone=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
