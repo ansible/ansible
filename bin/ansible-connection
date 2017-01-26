@@ -120,8 +120,8 @@ class Server():
         self._start_time = datetime.datetime.now()
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
-        rc, out, err = self.conn._connect()
-        if rc != 0:
+        self.conn._connect()
+        if not self.conn.connected:
             raise AnsibleConnectionFailure(err)
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
