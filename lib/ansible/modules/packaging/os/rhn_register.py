@@ -159,23 +159,13 @@ class Rhn(RegistrationBase):
         if not HAS_UP2DATE_CLIENT:
             return None
 
-        self.config = up2date_client.config.initUp2dateConfig()
+        config = up2date_client.config.initUp2dateConfig()
 
-        # Add support for specifying a default value w/o having to standup some
-        # configuration.  Yeah, I know this should be subclassed ... but, oh
-        # well
-        def get_option_default(self, key, default=''):
-            # the class in rhn-client-tools that this comes from didn't
-            # implement __contains__() until 2.5.x.  That's why we check if
-            # the key is present in the dictionary that is the actual storage
-            if key in self.dict:
-                return self[key]
-            else:
-                return default
+        return config
 
-        self.config.get_option = types.MethodType(get_option_default, self.config, up2date_client.config.Config)
-
-        return self.config
+    @property
+    def server_url(self):
+        return self.config['serverURL']
 
     @property
     def hostname(self):
@@ -185,7 +175,7 @@ class Rhn(RegistrationBase):
 
             Returns: str
         '''
-        url = urlparse.urlparse(self.config['serverURL'])
+        url = urlparse.urlparse(self.server_url)
         return url[1].replace('xmlrpc.','')
 
     @property
@@ -235,9 +225,9 @@ class Rhn(RegistrationBase):
         '''
         return os.path.isfile(self.config['systemIdPath'])
 
-    def configure(self, server_url):
+    def configure_server_url(self, server_url):
         '''
-            Configure system for registration
+            Configure server_url for registration
         '''
 
         self.config.set('serverURL', server_url)
@@ -259,8 +249,8 @@ class Rhn(RegistrationBase):
             support will be requested.
         '''
         register_cmd = ['/usr/sbin/rhnreg_ks', '--username', self.username, '--password', self.password, '--force']
-        if self.module.params.get('server_url', None):
-            register_cmd.extend(['--serverUrl', self.module.params.get('server_url')])
+        if self.server_url:
+            register_cmd.extend(['--serverUrl', self.server_url])
         if enable_eus:
             register_cmd.append('--use-eus-channel')
         if activationkey is not None:
@@ -354,8 +344,6 @@ class Rhn(RegistrationBase):
 
 def main():
 
-    # Read system RHN configuration
-    rhn = Rhn()
 
     module = AnsibleModule(
         argument_spec = dict(
@@ -375,13 +363,18 @@ def main():
     if not HAS_UP2DATE_CLIENT:
         module.fail_json(msg="Unable to import up2date_client.  Is 'rhn-client-tools' installed?")
 
-    if not module.params['server_url']:
-        module.params['server_url'] = rhn.config.get_option('serverURL')
+    rhn = Rhn()
+
+    server_url = module.params['server_url']
+    if server_url:
+        rhn.configure_server_url(server_url)
+
+    if not rhn.server_url:
+        module.fail_json(msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)")
 
     state = module.params['state']
     rhn.username = module.params['username']
     rhn.password = module.params['password']
-    rhn.configure(module.params['server_url'])
     activationkey = module.params['activationkey']
     profilename = module.params['profilename']
     sslcacert = module.params['sslcacert']
