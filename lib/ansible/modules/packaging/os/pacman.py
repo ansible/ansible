@@ -191,18 +191,19 @@ def upgrade(module, pacman_path):
     cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
     cmdneedrefresh = "%s -Qqu" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
+    data = stdout.split('\n')
+    data.remove('')
 
     if rc == 0:
         if module.check_mode:
-            data = stdout.split('\n')
-            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data) - 1))
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=data)
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
-            module.exit_json(changed=True, msg='System upgraded')
+            module.exit_json(changed=True, msg='System upgraded', packages=data)
         else:
             module.fail_json(msg="Could not upgrade")
     else:
-        module.exit_json(changed=False, msg='Nothing to upgrade')
+        module.exit_json(changed=False, msg='Nothing to upgrade', packages=data)
 
 def remove_packages(module, pacman_path, packages):
     if module.params["recurse"] or module.params["force"]:
