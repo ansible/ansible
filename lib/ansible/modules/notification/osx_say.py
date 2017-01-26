@@ -53,7 +53,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-DEFAULT_VOICE='Trinoids'
+DEFAULT_VOICE='Alex'
 
 def say(module, msg, voice):
     module.run_command(["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
