@@ -292,6 +292,9 @@ class Rhsm(RegistrationBase):
         args = [SUBMAN_CMD, 'register']
 
         # Generate command arguments
+        if force_register:
+            args.extend(['--force'])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
             args.extend(['--org', org_id])
@@ -308,8 +311,6 @@ class Rhsm(RegistrationBase):
                 args.extend(['--name', consumer_name])
             if consumer_id:
                 args.extend(['--consumerid', consumer_id])
-            if force_register:
-                args.extend(['--force'])
             if environment:
                 args.extend(['--environment', environment])
 
