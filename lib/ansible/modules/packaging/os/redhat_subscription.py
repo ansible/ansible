@@ -165,6 +165,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 
+SUBMAN_CMD = None
+
 
 class RegistrationBase(object):
     def __init__(self, module, username=None, password=None):
