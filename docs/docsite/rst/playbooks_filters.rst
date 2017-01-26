@@ -203,7 +203,7 @@ note that when used with a non 'listable' item it is a noop, otherwise it always
 
 Math
 ````
-j
+
 .. versionadded:: 1.9
 
 
