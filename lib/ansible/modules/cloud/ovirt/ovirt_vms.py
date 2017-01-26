@@ -252,6 +252,9 @@ options:
             - "Name of virtual machine's hardware configuration."
             - "By default no instance type is used."
         version_added: "2.3"
+    description:
+        description:
+            - "Description of the Virtual Machine."
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -500,6 +503,7 @@ class VmsModule(BaseModule):
                     self.param('instance_type'),
                 ),
             ) if self.param('instance_type') else None,
+            description=self.param('description'),
         )
 
     def update_check(self, entity):
@@ -518,6 +522,7 @@ class VmsModule(BaseModule):
             and equal(self.param('use_latest_template_version'), entity.use_latest_template_version)
             and equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
             and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
+            and equal(self.param('description'), entity.description)
         )
 
     def pre_create(self, entity):
@@ -840,6 +845,7 @@ def main():
         initrd_path=dict(default=None),
         kernel_params=dict(default=None),
         instance_type=dict(default=None),
+        description=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
