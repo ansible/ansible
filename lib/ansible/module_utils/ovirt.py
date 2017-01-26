@@ -57,6 +57,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
     Convert SDK Struct type into dictionary.
     """
     res = {}
+
     def remove_underscore(val):
         if val.startswith('_'):
             val = val[1:]
@@ -100,10 +101,10 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
 
     if struct is not None:
         for key, value in struct.__dict__.items():
-            key = remove_underscore(key)
             if value is None:
                 continue
 
+            key = remove_underscore(key)
             res[key] = convert_value(value)
 
     return res
@@ -342,7 +343,7 @@ def ovirt_facts_full_argument_spec(**kwargs):
     spec = dict(
         auth=__get_auth_dict(),
         fetch_nested=dict(default=False, type='bool'),
-        nested_attributes=dict(type='list'),
+        nested_attributes=dict(type='list', default=list()),
     )
     spec.update(kwargs)
     return spec
@@ -361,7 +362,7 @@ def ovirt_full_argument_spec(**kwargs):
         wait=dict(default=True, type='bool'),
         poll_interval=dict(default=3, type='int'),
         fetch_nested=dict(default=False, type='bool'),
-        nested_attributes=dict(type='list'),
+        nested_attributes=dict(type='list', default=list()),
     )
     spec.update(kwargs)
     return spec
