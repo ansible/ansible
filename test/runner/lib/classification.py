@@ -146,7 +146,7 @@ class PathMapper(object):
         if path.startswith('examples/'):
             if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
                 return {
-                    'windows-integration': 'all',
+                    'windows-integration': 'connection_winrm',
                 }
 
             return minimal
