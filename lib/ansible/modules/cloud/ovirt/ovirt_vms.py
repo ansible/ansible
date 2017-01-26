@@ -255,6 +255,11 @@ options:
     description:
         description:
             - "Description of the Virtual Machine."
+        version_added: "2.3"
+    comment:
+        description:
+            - "Comment of the Virtual Machine."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -504,6 +509,7 @@ class VmsModule(BaseModule):
                 ),
             ) if self.param('instance_type') else None,
             description=self.param('description'),
+            comment=self.param('comment'),
         )
 
     def update_check(self, entity):
@@ -523,6 +529,7 @@ class VmsModule(BaseModule):
             and equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])])
             and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
             and equal(self.param('description'), entity.description)
+            and equal(self.param('comment'), entity.comment)
         )
 
     def pre_create(self, entity):
@@ -846,6 +853,7 @@ def main():
         kernel_params=dict(default=None),
         instance_type=dict(default=None),
         description=dict(default=None),
+        comment=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
