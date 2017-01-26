@@ -378,6 +378,7 @@ def main():
     sslcacert = module.params['sslcacert']
     systemorgid = module.params['systemorgid']
     channels = module.params['channels']
+    enable_eus = module.params['enable_eus']
 
     rhn = Rhn(module=module, username=username, password=password)
 
@@ -403,7 +404,7 @@ def main():
 
         try:
             rhn.enable()
-            rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
+            rhn.register(enable_eus, activationkey, profilename, sslcacert, systemorgid)
             rhn.subscribe(channels)
         except Exception:
             e = get_exception()
