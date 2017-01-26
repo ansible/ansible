@@ -221,7 +221,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if use_system_tmp:
             tmpdir = None
         else:
-            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP)
+            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
@@ -490,7 +490,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         finally:
             return x
 
-    def _remote_expand_user(self, path):
+    def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
             return path
@@ -498,6 +498,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # FIXME: Can't use os.path.sep for Windows paths.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
+        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
+            expand_path = '~%s' % self._play_context.become_user
+
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
         initial_fragment = data['stdout'].strip().splitlines()[-1]
