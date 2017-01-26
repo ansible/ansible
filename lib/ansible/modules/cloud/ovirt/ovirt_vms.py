@@ -437,13 +437,13 @@ class VmsModule(BaseModule):
         through it's version until we find the version we look for.
         """
         template = None
-        if self._module.params['template']:
+        if self.param('template'):
             templates_service = self._connection.system_service().templates_service()
-            templates = templates_service.list(search='name=%s' % self._module.params['template'])
-            if self._module.params['template_version']:
+            templates = templates_service.list(search='name=%s' % self.param('template'))
+            if self.param('template_version'):
                 templates = [
                     t for t in templates
-                    if t.version.version_number == self._module.params['template_version']
+                    if t.version.version_number == self.param('template_version')
                 ]
             if templates:
                 template = templates[0]
@@ -453,47 +453,47 @@ class VmsModule(BaseModule):
     def build_entity(self):
         template = self.__get_template_with_version()
         return otypes.Vm(
-            name=self._module.params['name'],
+            name=self.param('name'),
             cluster=otypes.Cluster(
-                name=self._module.params['cluster']
-            ) if self._module.params['cluster'] else None,
+                name=self.param('cluster')
+            ) if self.param('cluster') else None,
             template=otypes.Template(
                 id=template.id,
             ) if template else None,
-            use_latest_template_version=self._module.params['use_latest_template_version'],
-            stateless=self._module.params['stateless'] or self._module.params['use_latest_template_version'],
-            delete_protected=self._module.params['delete_protected'],
+            use_latest_template_version=self.param('use_latest_template_version'),
+            stateless=self.param('stateless') or self.param('use_latest_template_version'),
+            delete_protected=self.param('delete_protected'),
             high_availability=otypes.HighAvailability(
-                enabled=self._module.params['high_availability']
-            ) if self._module.params['high_availability'] is not None else None,
+                enabled=self.param('high_availability')
+            ) if self.param('high_availability') is not None else None,
             cpu=otypes.Cpu(
                 topology=otypes.CpuTopology(
-                    cores=self._module.params['cpu_cores'],
-                    sockets=self._module.params['cpu_sockets'],
+                    cores=self.param('cpu_cores'),
+                    sockets=self.param('cpu_sockets'),
                 )
             ) if (
-                self._module.params['cpu_cores'] or self._module.params['cpu_sockets']
+                self.param('cpu_cores') or self.param('cpu_sockets')
             ) else None,
-            cpu_shares=self._module.params['cpu_shares'],
+            cpu_shares=self.param('cpu_shares'),
             os=otypes.OperatingSystem(
-                type=self._module.params['operating_system'],
+                type=self.param('operating_system'),
                 boot=otypes.Boot(
                     devices=[
-                        otypes.BootDevice(dev) for dev in self._module.params['boot_devices']
+                        otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
-                ) if self._module.params['boot_devices'] else None,
+                ) if self.param('boot_devices') else None,
             ) if (
-                self._module.params['operating_system'] or self._module.params['boot_devices']
+                self.param('operating_system') or self.param('boot_devices')
             ) else None,
             type=otypes.VmType(
-                self._module.params['type']
-            ) if self._module.params['type'] else None,
+                self.param('type')
+            ) if self.param('type') else None,
             memory=convert_to_bytes(
-                self._module.params['memory']
-            ) if self._module.params['memory'] else None,
+                self.param('memory')
+            ) if self.param('memory') else None,
             memory_policy=otypes.MemoryPolicy(
-                guaranteed=convert_to_bytes(self._module.params['memory_guaranteed']),
-            ) if self._module.params['memory_guaranteed'] else None,
+                guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
+            ) if self.param('memory_guaranteed') else None,
             instance_type=otypes.InstanceType(
                 id=get_id_by_name(
                     self._connection.system_service().instance_types_service(),
@@ -504,26 +504,26 @@ class VmsModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
-            equal(convert_to_bytes(self._module.params['memory']), entity.memory) and
-            equal(convert_to_bytes(self._module.params['memory_guaranteed']), entity.memory_policy.guaranteed) and
-            equal(self._module.params.get('cpu_cores'), entity.cpu.topology.cores) and
-            equal(self._module.params.get('cpu_sockets'), entity.cpu.topology.sockets) and
-            equal(self._module.params.get('type'), str(entity.type)) and
-            equal(self._module.params.get('operating_system'), str(entity.os.type)) and
-            equal(self._module.params.get('high_availability'), entity.high_availability.enabled) and
-            equal(self._module.params.get('stateless'), entity.stateless) and
-            equal(self._module.params.get('cpu_shares'), entity.cpu_shares) and
-            equal(self._module.params.get('delete_protected'), entity.delete_protected) and
-            equal(self._module.params.get('use_latest_template_version'), entity.use_latest_template_version) and
-            equal(self._module.params.get('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and
+            equal(convert_to_bytes(self.param('memory')), entity.memory) and
+            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
+            equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
+            equal(self.param('type'), str(entity.type)) and
+            equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('high_availability'), entity.high_availability.enabled) and
+            equal(self.param('stateless'), entity.stateless) and
+            equal(self.param('cpu_shares'), entity.cpu_shares) and
+            equal(self.param('delete_protected'), entity.delete_protected) and
+            equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
+            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
             equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
         )
 
     def pre_create(self, entity):
         # If VM don't exists, and template is not specified, set it to Blank:
         if entity is None:
-            if self._module.params.get('template') is None:
+            if self.param('template') is None:
                 self._module.params['template'] = 'Blank'
 
     def post_update(self, entity):
@@ -578,7 +578,7 @@ class VmsModule(BaseModule):
         self._migrate_vm(vm_service.get())
 
     def _attach_cd(self, entity):
-        cd_iso = self._module.params['cd_iso']
+        cd_iso = self.param('cd_iso')
         if cd_iso is not None:
             vm_service = self._service.service(entity.id)
             current = vm_service.get().status == otypes.VmStatus.UP
@@ -599,7 +599,7 @@ class VmsModule(BaseModule):
         return entity
 
     def _migrate_vm(self, entity):
-        vm_host = self._module.params['host']
+        vm_host = self.param('host')
         vm_service = self._service.vm_service(entity.id)
         if vm_host is not None:
             # In case VM is preparing to be UP, wait to be up, to migrate it:
@@ -618,14 +618,14 @@ class VmsModule(BaseModule):
         wait(
             service=vm_service,
             condition=lambda vm: vm.status == otypes.VmStatus.UP,
-            wait=self._module.params['wait'],
-            timeout=self._module.params['timeout'],
+            wait=self.param('wait'),
+            timeout=self.param('timeout'),
         )
 
     def __attach_disks(self, entity):
         disks_service = self._connection.system_service().disks_service()
 
-        for disk in self._module.params['disks']:
+        for disk in self.param('disks'):
             # If disk ID is not specified, find disk by name:
             disk_id = disk.get('id')
             if disk_id is None:
@@ -688,7 +688,7 @@ class VmsModule(BaseModule):
         # Attach NICs to VM, if specified:
         vnic_profiles_service = self._connection.system_service().vnic_profiles_service()
         nics_service = self._service.service(entity.id).nics_service()
-        for nic in self._module.params['nics']:
+        for nic in self.param('nics'):
             if search_by_name(nics_service, nic.get('name')) is None:
                 if not self._module.check_mode:
                     nics_service.add(
