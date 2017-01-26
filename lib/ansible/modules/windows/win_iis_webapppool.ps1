@@ -20,7 +20,6 @@
 
 # WANT_JSON
 # POWERSHELL_COMMON
-
 $params = Parse-Args $args;
 
 # Name parameter
@@ -49,6 +48,8 @@ If (Get-Member -InputObject $params -Name attributes) {
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $NULL){
   Import-Module WebAdministration
+  Add-Type -Path C:\Windows\system32\inetsrv\Microsoft.Web.Administration.dll
+  $t = [Type]"Microsoft.Web.Administration.ApplicationPool"
 }
 
 # Result
@@ -79,7 +80,13 @@ try {
     $attributes.GetEnumerator() | foreach {
       $newParameter = $_;
       $currentParameter = Get-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key
-      if(-not $currentParameter -or ($currentParameter.Value -as [String]) -ne $newParameter.Value) {
+      $currentParamVal = ""
+      try {
+        $currentParamVal = $currentParameter
+      } catch {
+        $currentParamVal = $currentParameter.Value
+      }
+      if(-not $currentParamVal -or ($currentParamVal -as [String]) -ne $newParameter.Value) {
         Set-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key $newParameter.Value
         $result.changed = $TRUE
       }
@@ -90,17 +97,9 @@ try {
       Stop-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
-    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped'))) {
+    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped')) -or ($state -eq 'restarted')) {
       Start-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
-    }
-    if ($state -eq 'restarted') {
-      switch ($pool.State)
-        { 
-          'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
-          default { Restart-WebAppPool -Name $name -ErrorAction Stop }
-        }
-      $result.changed = $TRUE   
     }
   }
 } catch {
@@ -115,9 +114,23 @@ if ($pool)
     name = $pool.Name
     state = $pool.State
     attributes =  New-Object psobject @{}
+    enumerations =  New-Object psobject @{}
   };
-  
-  $pool.Attributes | ForEach { $result.info.attributes.Add($_.Name, $_.Value)};
+
+  $pool.Attributes | ForEach {
+     # lookup name if enum
+     if ($_.Schema.Type -eq 'enum') {
+        $propertyName = $_.Name.Substring(0,1).ToUpper() + $_.Name.Substring(1)
+        $enum = [Microsoft.Web.Administration.ApplicationPool].GetProperty($propertyName).PropertyType.FullName
+        $enum_names = [Enum]::GetNames($enum)
+        $result.info.enumerations.Add($_.Name, $enum_names)
+        $result.info.attributes.Add($_.Name, $enum_names[$_.Value])
+     } else {
+        $result.info.attributes.Add($_.Name, $_.Value);
+     }
+  }
+
 }
 
 Exit-Json $result
+
