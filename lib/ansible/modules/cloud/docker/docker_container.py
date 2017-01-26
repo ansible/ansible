@@ -378,11 +378,11 @@ options:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
          rather than stopping it. Use keep_volumes to retain volumes associated with the removed container.'
-      - 'I(present) - Asserts the existence of a container matching the name and any provided configuration parameters. If no
-        container matches the name, a container will be created. If a container matches the name but the provided configuration
-        does not match, the container will be updated, if it can be. If it cannot be updated, it will be removed and re-created
+      - 'I(present) - Asserts the existence of a docker image matching the name and any provided configuration parameters. If no
+        image matches the name, the image will be pulled. If an image matches the name but the provided configuration
+        does not match, the image will be updated, if it can be. If it cannot be updated, it will be removed and re-created
         with the requested config. Image version will be taken into account when comparing configuration. To ignore image
-        version use the ignore_image option. Use the recreate option to force the re-creation of the matching container. Use
+        version use the ignore_image option. Use the recreate option to force the re-creation of the matching image. Use
         force_kill to kill the container rather than stopping it. Use keep_volumes to retain volumes associated with a removed
         container.'
       - 'I(started) - Asserts there is a running container matching the name and any provided configuration. If no container
