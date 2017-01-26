@@ -40,6 +40,26 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
+    host:
+      description:
+        - URL to your Tower instance.
+      required: False
+      default: null
+    username:
+        description:
+          - Username for your Tower instance.
+        required: False
+        default: null
+    password:
+        description:
+          - Password for your Tower instance.
+        required: False
+        default: null
+    verify_ssl:
+        description:
+          - Dis/allow insecure connections to Tower.
+        required: False
+        default: null
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
@@ -90,10 +110,14 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             description = dict(),
+            host = dict(),
+            username = dict(),
+            password = dict(),
+            verify_ssl = dict(type='bool'),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if not HAS_TOWER_CLI:
