@@ -32,7 +32,7 @@
 - assert:
     that:
       - "check00_result.failed == true"
-      - "check00_result.msg == 'key: HKCU\\Software is not a valid powershell path, see module documentation for examples.'"
+      - "check00_result.msg == 'path: HKCU\\Software is not a valid powershell path, see module documentation for examples.'"
 
 - name: remove setting
   win_regedit:
