@@ -182,7 +182,7 @@ class Rhn(RegistrationBase):
             Returns: str
         '''
         url = urlparse.urlparse(self.server_url)
-        return url[1].replace('xmlrpc.','')
+        return url[1].replace('xmlrpc.', '')
 
     @property
     def systemid(self):
@@ -334,7 +334,7 @@ class Rhn(RegistrationBase):
         # Enable requested repoid's
         for wanted_channel in channels:
             # Each inserted repo regexp will be matched. If no match, no success.
-            for available_channel in stdout.rstrip().split('\n'): # .rstrip() because of \n at the end -> empty string at the end
+            for available_channel in stdout.rstrip().split('\n'):  # .rstrip() because of \n at the end -> empty string at the end
                 if re.search(wanted_repo, available_channel):
                     rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel, check_rc=True)
 
@@ -347,6 +347,7 @@ class Rhn(RegistrationBase):
             return True
         else:
             return False
+
 
 def main():
 
