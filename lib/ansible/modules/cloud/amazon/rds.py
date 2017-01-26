@@ -1001,7 +1001,7 @@ def validate_parameters(required_vars, valid_vars, module):
 
     params = {}
     for (k, v) in optional_params.items():
-        if module.params.get(k) in [True, False] and k not in required_vars:
+        if module.params.get(k) is not None and k not in required_vars:
             if k in valid_vars:
                 params[v] = module.params[k]
             else:
