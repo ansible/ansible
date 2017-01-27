@@ -51,10 +51,10 @@ class GalaxyToken(object):
         f = open(self.file,'w')
         f.close()
         os.chmod(self.file,S_IRUSR|S_IWUSR) # owner has +rw
-        display.vvv('Created %s' % self.file) 
+        display.vvv('Created %s' % self.file)
         return open(self.file, 'r')
 
-    def set(self, token): 
+    def set(self, token):
         self.config['token'] = token
         self.save()
 

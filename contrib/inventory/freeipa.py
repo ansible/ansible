@@ -7,7 +7,7 @@ import json
 def initialize():
     '''
     This function initializes the FreeIPA/IPA API. This function requires
-    no arguments. A kerberos key must be present in the users keyring in 
+    no arguments. A kerberos key must be present in the users keyring in
     order for this to work.
     '''
 
@@ -68,8 +68,8 @@ def parse_args():
 
 def print_host(host):
     '''
-    This function is really a stub, it could return variables to be used in 
-    a playbook. However, at this point there are no variables stored in 
+    This function is really a stub, it could return variables to be used in
+    a playbook. However, at this point there are no variables stored in
     FreeIPA/IPA.
 
     This function expects one string, this hostname to lookup variables for.

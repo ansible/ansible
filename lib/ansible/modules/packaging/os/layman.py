@@ -157,7 +157,7 @@ def install_overlay(module, name, list_url=None):
     layman = init_layman(layman_conf)
 
     if layman.is_installed(name):
-        return False    
+        return False
 
     if module.check_mode:
         mymsg = 'Would add layman repo \'' + name + '\''

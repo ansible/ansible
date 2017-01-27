@@ -153,31 +153,31 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"interface": "eth1/33", "neighbor_policy": "test", 
+    sample: {"interface": "eth1/33", "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 existing:
     description:
         - k/v pairs of existing configuration
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test1", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test1",
             "neighbor_type": "prefix", "sparse": true}
 end_state:
     description: k/v pairs of configuration after module execution
     returned: always
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface eth1/33", "ip pim neighbor-policy test", 
+    sample: ["interface eth1/33", "ip pim neighbor-policy test",
             "ip pim neighbor-policy test"]
 changed:
     description: check to see if a change was made on the device

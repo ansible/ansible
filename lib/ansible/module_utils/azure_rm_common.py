@@ -375,10 +375,10 @@ class AzureRMModuleBase(object):
         '''
         dependencies = dict()
         if enum_modules:
-            for module_name in enum_modules:  
+            for module_name in enum_modules:
                mod = importlib.import_module(module_name)
                for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
-                   dependencies[mod_class_name] = mod_class_obj 
+                   dependencies[mod_class_name] = mod_class_obj
             self.log("dependencies: ");
             self.log(str(dependencies))
         serializer = Serializer(classes=dependencies)

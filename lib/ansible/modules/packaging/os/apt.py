@@ -776,7 +776,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))    
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))
             # try again
             cache = apt.Cache()
         else:

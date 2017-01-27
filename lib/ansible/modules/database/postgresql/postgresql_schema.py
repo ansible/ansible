@@ -87,7 +87,7 @@ EXAMPLES = '''
     name: acme
 
 # Create a new schema "acme" with a user "bob" who will own it
-- postgresql_schema: 
+- postgresql_schema:
     name: acme
     owner: bob
 

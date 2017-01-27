@@ -142,13 +142,13 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_always(self, attr, ds):
         try:
             return load_list_of_tasks(
-                ds, 
+                ds,
                 play=self._play,
-                block=self, 
-                role=self._role, 
+                block=self,
+                role=self._role,
                 task_include=None,
-                variable_manager=self._variable_manager, 
-                loader=self._loader, 
+                variable_manager=self._variable_manager,
+                loader=self._loader,
                 use_handlers=self._use_handlers,
             )
         except AssertionError:

@@ -117,10 +117,10 @@ updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["ip igmp snooping link-local-groups-suppression", 
-             "ip igmp snooping group-timeout 50", 
-             "no ip igmp snooping report-suppression", 
-             "no ip igmp snooping v3-report-suppression", 
+    sample: ["ip igmp snooping link-local-groups-suppression",
+             "ip igmp snooping group-timeout 50",
+             "no ip igmp snooping report-suppression",
+             "no ip igmp snooping v3-report-suppression",
              "no ip igmp snooping"]
 changed:
     description: check to see if a change was made on the device

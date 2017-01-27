@@ -43,7 +43,7 @@ options:
 
   count_offset:
     description:
-      - From which number to start the count. 
+      - From which number to start the count.
 
   device_ids:
     description:
@@ -59,9 +59,9 @@ options:
 
   hostnames:
     description:
-      - A hostname of a device, or a list of hostnames. 
+      - A hostname of a device, or a list of hostnames.
       - If given string or one-item list, you can use the C("%d") Python string format to expand numbers from count.
-      - If only one hostname, it might be expanded to list if count>1. 
+      - If only one hostname, it might be expanded to list if count>1.
     aliases: [name]
 
   lock:
@@ -127,7 +127,7 @@ EXAMPLES = '''
       plan: baremetal_0
       facility: sjc1
 
-- name: create 3 ubuntu devices called server-01, server-02 and server-03  
+- name: create 3 ubuntu devices called server-01, server-02 and server-03
   hosts: localhost
   tasks:
   - packet_device:
@@ -435,7 +435,7 @@ def wait_for_ips(module, packet_conn, created_devices):
                      % [d.hostname for d in created_devices])
 
 
-def get_existing_devices(module, packet_conn): 
+def get_existing_devices(module, packet_conn):
     project_id = module.params.get('project_id')
     return packet_conn.list_devices(project_id, params={'per_page': MAX_DEVICES})
 
@@ -545,7 +545,7 @@ def main():
 
     if not module.params.get('auth_token'):
         _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" % 
+                      "the auth_token parameter is required" %
                        PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 

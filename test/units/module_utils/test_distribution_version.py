@@ -174,19 +174,19 @@ ID_LIKE="suse"
     },
     {
         "platform.dist": [
-            "", 
-            "", 
+            "",
+            "",
             ""
-        ], 
+        ],
         "input": {
             "/etc/os-release": "NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\nPRETTY_NAME=\"openSUSE Tumbleweed\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:tumbleweed:20160917\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
-        }, 
-        "name": "openSUSE Tumbleweed 20160917", 
+        },
+        "name": "openSUSE Tumbleweed 20160917",
         "result": {
-            "distribution_release": "NA", 
-            "distribution": "openSUSE Tumbleweed", 
-            "distribution_major_version": "NA", 
-            "os_family": "Suse", 
+            "distribution_release": "NA",
+            "distribution": "openSUSE Tumbleweed",
+            "distribution_major_version": "NA",
+            "os_family": "Suse",
             "distribution_version": "20160917"
         }
     },

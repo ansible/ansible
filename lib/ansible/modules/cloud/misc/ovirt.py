@@ -446,7 +446,7 @@ def main():
     vmcpus        = module.params['instance_cpus']      # number of cpu
     vmnic         = module.params['instance_nic']       # network interface
     vmnetwork     = module.params['instance_network']   # logical network
-    vmmem         = module.params['instance_mem']       # mem size 
+    vmmem         = module.params['instance_mem']       # mem size
     vmdisk_alloc  = module.params['disk_alloc']         # thin, preallocated
     vmdisk_int    = module.params['disk_int']           # disk interface virtio or ide
     vmos          = module.params['instance_os']        # Operating System

@@ -206,7 +206,7 @@ EXAMPLES = '''
       - hostname: instance-3
         domain: anydomain.com
         datacenter: dal09
-        tags: 
+        tags:
           - ansible-module-test
           - ansible-module-test-slaves
         hourly: True

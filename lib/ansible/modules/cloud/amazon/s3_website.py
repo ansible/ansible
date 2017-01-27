@@ -30,7 +30,7 @@ options:
     description:
       - "Name of the s3 bucket"
     required: true
-    default: null 
+    default: null
   error_key:
     description:
       - "The object key name to use when a 4XX class error occurs. To remove an error key, set to None."

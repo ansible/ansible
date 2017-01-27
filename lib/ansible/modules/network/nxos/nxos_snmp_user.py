@@ -87,19 +87,19 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"authentication": "md5", "group": "network-operator", 
+    sample: {"authentication": "md5", "group": "network-operator",
             "pwd": "test_password", "user": "ntc"}
 existing:
     description:
         - k/v pairs of existing configuration
     type: dict
-    sample: {"authentication": "no", "encrypt": "none", 
+    sample: {"authentication": "no", "encrypt": "none",
              "group": ["network-operator"], "user": "ntc"}
 end_state:
     description: k/v pairs configuration vtp after module execution
     returned: always
     type: dict
-    sample: {"authentication": "md5", "encrypt": "none", 
+    sample: {"authentication": "md5", "encrypt": "none",
              "group": ["network-operator"], "user": "ntc"}
 updates:
     description: command sent to the device

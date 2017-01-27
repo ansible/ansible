@@ -101,7 +101,7 @@ options:
     description:
       - The resource_id of an existing DHCP options set.
         If this is specified, then it will override other settings, except tags
-        (which will be updated to match) 
+        (which will be updated to match)
     required: False
     default: None
     version_added: "2.1"
