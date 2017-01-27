@@ -36,47 +36,40 @@ options:
     required: false
     default: "present"
     choices: ["present", "absent"]
-    aliases: []
   name:
     description:
       - The name of the GCE instance template.
     required: true
     default: null
-    aliases: []
   size:
     description:
       - instance template size to use, use 'f1-micro' by default
     required: false
     default: "f1-micro"
-    aliases: []
   source:
     description:
       - A source disk to attach to the instance.
         Cannot specify both 'image' and 'source'.
     required: false
     default: null
-    aliases: []
   image:
     description:
       - The image to use to create the instance.
         Cannot specify both 'image' and 'source'.
     required: false
     default: null
-    aliases: []
   image_family:
     description:
       - The image family to use to create the instance.
         Cannot specify both 'image' and 'source'.
     required: false
     default: null
-    aliases: []
   disk_type:
     description:
       - Specify a pd-standard (default) disk or pd-ssd
         for an SSD disk.
     required: false
     default: pd-standard
-    aliases: []
   disk_auto_delete:
     description:
       - Indicate that the boot disk should be
@@ -84,26 +77,22 @@ options:
         True by default.
     required: false
     default: true
-    aliases: []
   network:
     description:
       - The network to associate with the instance.
     required: false
     default: "default"
-    aliases: []
   subnetwork:
     description:
       - The Subnetwork resource for this instance.
     required: false
     default: null
-    aliases: []
   can_ip_forword:
     description:
       - Set to True to allow instance to
         send/receive non-matching src/dst packets.
     required: false
     default: false
-    aliases: []
   external_ip:
     description:
       - The external IP address to use.
@@ -113,13 +102,11 @@ options:
         specify adress name.
     required: false
     default: "ephemeral"
-    aliases: []
   service_account_email:
     description:
       - service account email
     required: false
     default: null
-    aliases: []
   service_account_permissions:
     description:
       - service account permissions (see
@@ -140,13 +127,11 @@ options:
         terminated by Compute Engine.
     required: false
     default: null
-    aliases: []
   preemptible:
     description:
       - Defines whether the instance is preemptible.
     required: false
     default: null
-    aliases: []
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
