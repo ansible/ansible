@@ -1,5 +1,6 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com> and others
+# (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -31,6 +32,7 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.module_utils._text import to_text
 
 
@@ -148,7 +150,7 @@ class PluginLoader:
                     results.append(os.path.join(root,x))
         return results
 
-    def _get_package_paths(self):
+    def _get_package_paths(self, subdirs=True):
         ''' Gets the path of a Python package '''
 
         if not self.package:
@@ -159,11 +161,18 @@ class PluginLoader:
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
             self.package_path = os.path.dirname(m.__file__)
-        return self._all_directories(self.package_path)
+        if subdirs:
+            return self._all_directories(self.package_path)
+        return [self.package_path]
 
-    def _get_paths(self):
+    def _get_paths(self, subdirs=True):
         ''' Return a list of paths to search for plugins in '''
 
+        # FIXME: This is potentially buggy if subdirs is sometimes True and
+        # sometimes False.  In current usage, everything calls this with
+        # subdirs=True except for module_utils_loader which always calls it
+        # with subdirs=False.  So there currently isn't a problem with this
+        # caching.
         if self._paths is not None:
             return self._paths
 
@@ -173,15 +182,18 @@ class PluginLoader:
         if self.config is not None:
             for path in self.config:
                 path = os.path.realpath(os.path.expanduser(path))
-                contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
-                for c in contents:
-                    if os.path.isdir(c) and c not in ret:
-                        ret.append(c)
+                if subdirs:
+                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
+                    for c in contents:
+                        if os.path.isdir(c) and c not in ret:
+                            ret.append(c)
                 if path not in ret:
                     ret.append(path)
 
         # look for any plugins installed in the package subtree
-        ret.extend(self._get_package_paths())
+        # Note package path always gets added last so that every other type of
+        # path is searched before it.
+        ret.extend(self._get_package_paths(subdirs=subdirs))
 
         # HACK: because powershell modules are in the same directory
         # hierarchy as other modules we have to process them last.  This is
@@ -197,6 +209,7 @@ class PluginLoader:
         # would have class_names, they would not work as written.
         reordered_paths = []
         win_dirs = []
+
         for path in ret:
             if path.endswith('windows'):
                 win_dirs.append(path)
@@ -260,6 +273,9 @@ class PluginLoader:
 
                 # HACK: We have no way of executing python byte
                 # compiled files as ansible modules so specifically exclude them
+                ### FIXME: I believe this is only correct for modules and
+                # module_utils.  For all other plugins we want .pyc and .pyo should
+                # bew valid
                 if full_path.endswith(('.pyc', '.pyo')):
                     continue
 
@@ -464,6 +480,13 @@ module_loader = PluginLoader(
     'ansible.modules',
     C.DEFAULT_MODULE_PATH,
     'library',
+)
+
+module_utils_loader = PluginLoader(
+    '',
+    'ansible.module_utils',
+    'module_utils',
+    'module_utils',
 )
 
 lookup_loader = PluginLoader(
