@@ -368,7 +368,7 @@ class Facts(object):
             self.facts['service_mgr'] = proc_1_map.get(proc_1, proc_1)
 
         # start with the easy ones
-        elif  self.facts['distribution'] == 'MacOSX':
+        elif self.facts['distribution'] == 'MacOSX':
             #FIXME: find way to query executable, version matching is not ideal
             if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
                 self.facts['service_mgr'] = 'launchd'
@@ -2155,7 +2155,7 @@ class AIX(Hardware):
                     rc, out, err = self.module.run_command(cmd)
                     if rc == 0 and out:
                         pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
-                        for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                        for n in re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
                             pv_info = { 'pv_name': n.group(1),
                                         'pv_state': n.group(2),
                                         'total_pps': n.group(3),

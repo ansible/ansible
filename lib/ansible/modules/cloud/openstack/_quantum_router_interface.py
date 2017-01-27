@@ -193,7 +193,7 @@ def _get_port_id(neutron, module, router_id, subnet_id):
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
     if not ports['ports']:
         return None
-    for port in  ports['ports']:
+    for port in ports['ports']:
         for subnet in port['fixed_ips']:
             if subnet['subnet_id'] == subnet_id:
                 return port['id']
@@ -209,7 +209,7 @@ def _add_interface_router(neutron, module, router_id, subnet_id):
         module.fail_json(msg = "Error in adding interface to router: %s" % e.message)
     return True
 
-def  _remove_interface_router(neutron, module, router_id, subnet_id):
+def _remove_interface_router(neutron, module, router_id, subnet_id):
     kwargs = {
         'subnet_id': subnet_id
     }

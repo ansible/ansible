@@ -39,7 +39,7 @@ def list_groups(api):
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:
-            members += (host for host in  hostgroup['memberindirect_host'])
+            members += (host for host in hostgroup['memberindirect_host'])
         inventory[hostgroup['cn'][0]] = {'hosts': [host for host in members]}
 
         for member in members:

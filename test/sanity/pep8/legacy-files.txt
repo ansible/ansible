@@ -27,7 +27,6 @@ docs/docsite/conf.py
 docs/docsite/rst/conf.py
 docs/docsite/rst/dev_guide/conf.py
 examples/scripts/uptime.py
-hacking/dump_playbook_attributes.py
 hacking/metadata-tool.py
 hacking/module_formatter.py
 hacking/tests/gen_distribution_version_testcase.py
@@ -142,16 +141,13 @@ lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py
 lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py
 lib/ansible/modules/cloud/azure/azure_rm_securitygroup.py
 lib/ansible/modules/cloud/azure/azure_rm_securitygroup_facts.py
-lib/ansible/modules/cloud/azure/azure_rm_storageblob.py
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py
-lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py
 lib/ansible/modules/cloud/centurylink/clc_loadbalancer.py
 lib/ansible/modules/cloud/cloudscale/cloudscale_server.py
 lib/ansible/modules/cloud/cloudstack/cs_firewall.py
 lib/ansible/modules/cloud/cloudstack/cs_host.py
 lib/ansible/modules/cloud/cloudstack/cs_instance.py
-lib/ansible/modules/cloud/cloudstack/cs_instance_facts.py
 lib/ansible/modules/cloud/cloudstack/cs_iso.py
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py
@@ -307,7 +303,6 @@ lib/ansible/modules/network/dellos9/dellos9_config.py
 lib/ansible/modules/network/dellos9/dellos9_facts.py
 lib/ansible/modules/network/dnsimple.py
 lib/ansible/modules/network/dnsmadeeasy.py
-lib/ansible/modules/network/eos/eos_eapi.py
 lib/ansible/modules/network/exoscale/exo_dns_record.py
 lib/ansible/modules/network/f5/bigip_facts.py
 lib/ansible/modules/network/f5/bigip_monitor_tcp.py
@@ -507,13 +502,10 @@ lib/ansible/playbook/play_context.py
 lib/ansible/playbook/playbook_include.py
 lib/ansible/playbook/role/__init__.py
 lib/ansible/playbook/role/metadata.py
-lib/ansible/playbook/role_include.py
 lib/ansible/playbook/taggable.py
 lib/ansible/plugins/action/__init__.py
 lib/ansible/plugins/action/add_host.py
 lib/ansible/plugins/action/async.py
-lib/ansible/plugins/action/package.py
-lib/ansible/plugins/action/service.py
 lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/synchronize.py

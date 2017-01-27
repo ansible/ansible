@@ -121,9 +121,9 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
     elif action == "certificates":
         return "https://%s/%s/meters/%s/%s.pem" % (api_host, apiid, meter_id, cert_type)
     elif action == "tags":
-        return  "https://%s/%s/meters/%s/tags" % (api_host, apiid, meter_id)
+        return "https://%s/%s/meters/%s/tags" % (api_host, apiid, meter_id)
     elif action == "delete":
-        return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
+        return "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(module, name, apiid, apikey, action, data=None, meter_id=None, cert_type=None):
     

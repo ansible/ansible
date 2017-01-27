@@ -208,7 +208,7 @@ class GalaxyRole(object):
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(**self.spec)
         elif self.src:
-            if  os.path.isfile(self.src):
+            if os.path.isfile(self.src):
                 # installing a local tar.gz
                 local_file = True
                 tmp_file = self.src
