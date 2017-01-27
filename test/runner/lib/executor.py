@@ -938,7 +938,7 @@ def command_sanity_pep8(args, targets):
             display.info(line, verbosity=1)
 
     if errors:
-        display.warning('PEP 8 errors are currently treated as warnings. They will soon result in test failure.')
+        raise ApplicationError('PEP 8: There are %d issues which need to be resolved.' % len(errors))
 
 
 def command_sanity_yamllint(args, targets):
