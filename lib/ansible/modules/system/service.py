@@ -625,11 +625,9 @@ class LinuxService(Service):
             cleanout = status_stdout.lower().replace(self.name.lower(), '')
             if "stop" in cleanout:
                 self.running = False
-            elif "run" in cleanout and "not" in cleanout:
-                self.running = False
-            elif "run" in cleanout and "not" not in cleanout:
-                self.running = True
-            elif "start" in cleanout and "not" not in cleanout:
+            elif "run" in cleanout:
+                self.running = not ("not " in cleanout)
+            elif "start" in cleanout and "not " not in cleanout:
                 self.running = True
             elif 'could not access pid file' in cleanout:
                 self.running = False
@@ -1305,6 +1303,19 @@ class SunOSService(Service):
         if not self.svcadm_cmd:
             self.module.fail_json(msg='unable to find svcadm binary')
 
+        if self.svcadm_supports_sync():
+            self.svcadm_sync = '-s'
+        else:
+            self.svcadm_sync = ''
+
+    def svcadm_supports_sync(self):
+        # Support for synchronous restart/refresh is only supported on
+        # Oracle Solaris >= 11.2
+        for line in open('/etc/release', 'r').readlines():
+            m = re.match('\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
+            if m and m.groups()[0] >= 11.2:
+                return True
+
     def get_service_status(self):
         status = self.get_sunos_svcs_status()
         # Only 'online' is considered properly running. Everything else is off
@@ -1396,9 +1407,9 @@ class SunOSService(Service):
         elif self.action == 'stop':
             subcmd = "disable -st"
         elif self.action == 'reload':
-            subcmd = "refresh -s"
+            subcmd = "refresh %s" % (self.svcadm_sync)
         elif self.action == 'restart' and status == 'online':
-            subcmd = "restart -s"
+            subcmd = "restart %s" % (self.svcadm_sync)
         elif self.action == 'restart' and status != 'online':
             subcmd = "enable -rst"
 

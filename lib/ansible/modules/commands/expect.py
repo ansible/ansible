@@ -18,15 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-
-try:
-    import pexpect
-    HAS_PEXPECT = True
-except ImportError:
-    HAS_PEXPECT = False
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -105,9 +96,22 @@ EXAMPLES = '''
         - response3
 '''
 
+import datetime
+import os
+
+try:
+    import pexpect
+    HAS_PEXPECT = True
+except ImportError:
+    HAS_PEXPECT = False
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def response_closure(module, question, responses):
-    resp_gen = (u'%s\n' % r.rstrip('\n').decode() for r in responses)
+    resp_gen = (u'%s\n' % to_text(r).rstrip(u'\n') for r in responses)
 
     def wrapped(info):
         try:
@@ -150,7 +154,7 @@ def main():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = u'%s\n' % value.rstrip('\n').decode()
+            response = u'%s\n' % to_text(value).rstrip(u'\n')
 
         events[key.decode()] = response
 
@@ -234,9 +238,6 @@ def main():
         ret['msg'] = 'command exceeded timeout'
         module.fail_json(**ret)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

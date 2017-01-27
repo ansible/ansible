@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: show python interpreter
+  debug:
+     msg: "{{ ansible_python['executable'] }}"
+
+- name: show jinja2 version
+  debug:
+     msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+
 - name: get default group
   shell: id -gn
   register: group
@@ -229,3 +237,17 @@
     that: 
       - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
       - "template_result|changed"
+
+# Create a template using a child template, to ensure that variables
+# are passed properly from the parent to subtemplate context (issue #20063)
+
+- name: test parent and subtemplate creation of context
+  template: src=parent.j2 dest={{output_dir}}/parent_and_subtemplate.templated
+  register: template_result
+
+- stat: path={{output_dir}}/parent_and_subtemplate.templated
+
+- name: verify that the parent and subtemplate creation worked
+  assert:
+    that:
+    - "template_result|changed"

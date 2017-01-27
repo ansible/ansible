@@ -6,13 +6,12 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 
@@ -26,7 +25,6 @@
   ios_template:
     src: basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -37,7 +35,7 @@
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
   delegate_to: localhost
 
@@ -50,6 +48,5 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/backup.yaml"

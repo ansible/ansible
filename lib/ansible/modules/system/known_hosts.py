@@ -89,8 +89,10 @@ import os.path
 import tempfile
 import errno
 import re
+
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+
 
 def enforce_state(module, params):
     """
@@ -251,7 +253,6 @@ def search_for_host_key(module,host,key,hash_host,path,sshkeygen):
                 # It always outputs the non-localized comment before the found key
                 found_line = int(re.search(r'found: line (\d+)', l).group(1))
             except IndexError:
-                e = get_exception()
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)

@@ -78,7 +78,8 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
-def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None):
+def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -89,13 +90,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type always: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout)
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
+                       cmd_verbosity=cmd_verbosity)
 
 
-def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None):
+def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -105,6 +109,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type explain: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -117,7 +122,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=1)
+    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -411,6 +416,60 @@ class CommonConfig(object):
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
+
+
+class EnvironmentConfig(CommonConfig):
+    """Configuration common to all commands which execute in an environment."""
+    def __init__(self, args, command):
+        """
+        :type args: any
+        """
+        super(EnvironmentConfig, self).__init__(args)
+
+        self.command = command
+
+        self.local = args.local is True
+
+        if args.tox is True or args.tox is False or args.tox is None:
+            self.tox = args.tox is True
+            self.tox_args = 0
+            self.python = args.python if 'python' in args else None  # type: str
+        else:
+            self.tox = True
+            self.tox_args = 1
+            self.python = args.tox  # type: str
+
+        self.docker = docker_qualify_image(args.docker)  # type: str
+        self.remote = args.remote  # type: str
+
+        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
+        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
+        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+
+        self.tox_sitepackages = args.tox_sitepackages  # type: bool
+
+        self.remote_stage = args.remote_stage  # type: str
+        self.remote_aws_region = args.remote_aws_region  # type: str
+
+        self.requirements = args.requirements  # type: bool
+
+        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.delegate = self.tox or self.docker or self.remote
+
+        if self.delegate:
+            self.requirements = True
+
+
+def docker_qualify_image(name):
+    """
+    :type name: str
+    :rtype: str
+    """
+    if not name or any((c in name) for c in ('/', ':')):
+        return name
+
+    return 'ansible/ansible:%s' % name
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

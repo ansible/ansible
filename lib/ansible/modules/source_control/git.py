@@ -229,6 +229,29 @@ EXAMPLES = '''
     refspec: '+refs/pull/*:refs/heads/*'
 '''
 
+RETURN = '''
+after:
+    description: last commit revision of the repository retrived during the update
+    returned: success
+    type: string
+    sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
+before:
+    description: commit revision before the repository was updated, "null" for new repository
+    returned: success
+    type: string
+    sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
+remote_url_changed:
+    description: Contains True or False whether or not the remote URL was changed.
+    returned: success
+    type: boolean
+    sample: True
+warnings:
+    description: List of warnings if requested features were not available due to a too old git version.
+    returned: error
+    type: string
+    sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+'''
+
 import os
 import re
 import shlex
@@ -271,6 +294,9 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
 
 
 def unfrackgitpath(path):
+    if path is None:
+        return None
+
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
 
@@ -614,7 +640,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
     # Return if remote URL isn't changing.
     remote_url = get_remote_url(git_path, module, dest, remote)
-    if remote_url == repo or remote_url == unfrackgitpath(repo):
+    if remote_url == repo or unfrackgitpath(remote_url) == unfrackgitpath(repo):
         return False
 
     command = [git_path, 'remote', 'set-url', remote, repo]
@@ -986,7 +1012,7 @@ def main():
         # exit if already at desired sha version
         if module.check_mode:
             remote_url = get_remote_url(git_path, module, dest, remote)
-            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackgitpath(repo)
+            remote_url_changed = remote_url and remote_url != repo and unfrackgitpath(remote_url) != unfrackgitpath(repo)
         else:
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
         result.update(remote_url_changed=remote_url_changed)

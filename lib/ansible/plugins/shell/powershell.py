@@ -108,9 +108,9 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None):
+    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path!
+        # FIXME: Support system temp path and passed in tmpdir!
         return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
     def expand_user(self, user_home_path):
@@ -216,7 +216,7 @@ class ShellModule(object):
             rm_tmp = self._escape(self._unquote(rm_tmp))
             rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
             script = '%s\nFinally { %s }' % (script, rm_cmd)
-        return self._encode_script(script)
+        return self._encode_script(script, preserve_rc=False)
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''
@@ -243,11 +243,15 @@ class ShellModule(object):
         replace = lambda m: substs[m.lastindex - 1]
         return re.sub(pattern, replace, value)
 
-    def _encode_script(self, script, as_list=False, strict_mode=True):
+    def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
         script = to_text(script)
         if strict_mode:
             script = u'Set-StrictMode -Version Latest\r\n%s' % script
+        # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
+        # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
+        if preserve_rc:
+            script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n' % script
         script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
         encoded_script = base64.b64encode(script.encode('utf-16-le'))
         cmd_parts = _common_args + ['-EncodedCommand', encoded_script]

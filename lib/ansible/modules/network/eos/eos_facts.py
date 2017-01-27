@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -47,31 +49,19 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
 # Collect all facts from the device
 - eos_facts:
     gather_subset: all
-    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - eos_facts:
     gather_subset:
       - config
-    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - eos_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -145,30 +135,44 @@ ansible_net_neighbors:
 """
 import re
 
-from ansible.module_utils.netcli import CommandRunner, AddCommandError
+from functools import partial
+
+from ansible.module_utils import eos
+from ansible.module_utils import eapi
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import NetworkModule
+
+SHARED_LIB = 'eos'
 
 
-def add_command(runner, command, output=None):
-    try:
-        runner.add_command(command, output)
-    except AddCommandError:
-        # AddCommandError is raised for any issue adding a command to
-        # the runner.  Silently ignore the exception in this case
-        pass
+def get_ansible_module():
+    if SHARED_LIB == 'eos':
+        return LocalAnsibleModule
+    return AnsibleModule
 
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+run_commands = partial(invoke, 'run_commands')
+
+def check_args(module, warnings):
+    if SHARED_LIB == 'eapi':
+        eapi.check_args(module)
 
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    COMMANDS = frozenset()
+
+    def __init__(self, module):
+        self.module = module
         self.facts = dict()
+        self.responses = None
 
-        self.load_commands()
-
-    def load_commands(self):
-        raise NotImplementedError
+    def populate(self):
+        self.responses = run_commands(self.module, list(self.COMMANDS))
 
 
 class Default(FactsBase):
@@ -179,22 +183,24 @@ class Default(FactsBase):
         'modelName': 'model'
     }
 
-    def load_commands(self):
-        add_command(self.runner, 'show version', output='json')
-        add_command(self.runner, 'show hostname', output='json')
-        add_command(self.runner, 'bash timeout 5 cat /mnt/flash/boot-config')
+    COMMANDS = [
+        'show version | json',
+        'show hostname | json',
+        'bash timeout 5 cat /mnt/flash/boot-config'
+    ]
 
     def populate(self):
-        data = self.runner.get_command('show version', 'json')
+        super(Default, self).populate()
+        data = self.responses[0]
         for key, value in iteritems(self.SYSTEM_MAP):
             if key in data:
                 self.facts[value] = data[key]
 
-        self.facts.update(self.runner.get_command('show hostname', 'json'))
+        self.facts.update(self.responses[1])
         self.facts.update(self.parse_image())
 
     def parse_image(self):
-        data = self.runner.get_command('bash timeout 5 cat /mnt/flash/boot-config')
+        data = self.responses[2]
         if isinstance(data, dict):
             data = data['messages'][0]
         match = re.search(r'SWI=(.+)$', data, re.M)
@@ -206,21 +212,23 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def load_commands(self):
-        add_command(self.runner, 'dir all-filesystems', output='text')
-        add_command(self.runner, 'show version', output='json')
+    COMMANDS = [
+        'dir all-filesystems',
+        'show version | json'
+    ]
 
     def populate(self):
+        super(Hardware, self).populate()
         self.facts.update(self.populate_filesystems())
         self.facts.update(self.populate_memory())
 
     def populate_filesystems(self):
-        data = self.runner.get_command('dir all-filesystems', 'text')
+        data = self.responses[0]
         fs = re.findall(r'^Directory of (.+)/', data, re.M)
         return dict(filesystems=fs)
 
     def populate_memory(self):
-        values = self.runner.get_command('show version', 'json')
+        values = self.responses[1]
         return dict(
             memfree_mb=int(values['memFree']) / 1024,
             memtotal_mb=int(values['memTotal']) / 1024
@@ -228,11 +236,11 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def load_commands(self):
-        add_command(self.runner, 'show running-config', output='text')
+    COMMANDS = ['show running-config']
 
     def populate(self):
-        self.facts['config'] = self.runner.get_command('show running-config')
+        super(Config, self).populate()
+        self.facts['config'] = self.responses[0]
 
 
 class Interfaces(FactsBase):
@@ -248,18 +256,21 @@ class Interfaces(FactsBase):
         'forwardingModel': 'type'
     }
 
-    def load_commands(self):
-        add_command(self.runner, 'show interfaces', output='json')
-        add_command(self.runner, 'show lldp neighbors', output='json')
+    COMMANDS = [
+        'show interfaces | json',
+        'show lldp neighbors | json'
+    ]
 
     def populate(self):
+        super(Interfaces, self).populate()
+
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interfaces', 'json')
+        data = self.responses[0]
         self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.runner.get_command('show lldp neighbors', 'json')
+        data = self.responses[1]
         self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
 
     def populate_interfaces(self, data):
@@ -318,11 +329,19 @@ FACT_SUBSETS = dict(
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(eapi.eapi_argument_spec)
+
+    cls = get_ansible_module()
+    module = cls(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -361,20 +380,13 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](runner))
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
@@ -385,4 +397,5 @@ def main():
 
 
 if __name__ == '__main__':
+    SHARED_LIB = 'eapi'
     main()

@@ -27,17 +27,24 @@ from urlparse import urlparse
 from ansible.module_utils.basic import *
 
 HAS_DOCKER_PY = True
+HAS_DOCKER_PY_2 = False
 HAS_DOCKER_ERROR = None
 
 try:
     from requests.exceptions import SSLError
-    from docker import Client
     from docker import __version__ as docker_version
     from docker.errors import APIError, TLSParameterError, NotFound
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
-    from docker.utils.types import Ulimit, LogConfig
     from docker import auth
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+        HAS_DOCKER_PY_2 = True
+        from docker import APIClient as Client
+        from docker.types import Ulimit, LogConfig
+    else:
+        from docker import Client
+        from docker.utils.types import Ulimit, LogConfig
+
 except ImportError as exc:
     HAS_DOCKER_ERROR = str(exc)
     HAS_DOCKER_PY = False
@@ -135,7 +142,7 @@ class AnsibleDockerClient(Client):
                                                                                            MIN_DOCKER_VERSION))
 
         self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode   
+        self.check_mode = self.module.check_mode
         self._connect_params = self._get_connect_params()
 
         try:
@@ -377,9 +384,9 @@ class AnsibleDockerClient(Client):
         images = self._image_lookup(name, tag)
         if len(images) == 0:
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
-            registry, repo_name = auth.resolve_repository_name(name) 
+            registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
-                # the name does not contain a registry, so let's see if docker.io works 
+                # the name does not contain a registry, so let's see if docker.io works
                 lookup = "docker.io/%s" % name
                 self.log("Check for docker.io image: %s" % lookup)
                 images = self._image_lookup(lookup, tag)
@@ -397,9 +404,9 @@ class AnsibleDockerClient(Client):
         self.log("Image %s:%s not found." % (name, tag))
         return None
 
-    def _image_lookup(self, name, tag): 
+    def _image_lookup(self, name, tag):
         '''
-        Including a tag in the name parameter sent to the docker-py images method does not 
+        Including a tag in the name parameter sent to the docker-py images method does not
         work consistently. Instead, get the result set for name and manually check if the tag
         exists.
         '''
@@ -408,7 +415,7 @@ class AnsibleDockerClient(Client):
         except Exception as exc:
             self.fail("Error searching for image %s - %s" % (name, str(exc)))
         images = response
-        if tag: 
+        if tag:
             lookup = "%s:%s" % (name, tag)
             images = []
             for image in response:

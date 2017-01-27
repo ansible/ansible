@@ -5,11 +5,10 @@
   ios_command:
     commands:
       - show version
-      - show interface GigabitEthernet0/0
+      - show interface loopback 888
     wait_for:
-      - "result[0] contains 15.6"
-      - "result[1] contains GigabitEthernet0/0"
-    provider: "{{ cli }}"
+      - "result[0] contains Cisco"
+      - "result[1] contains Loopback888"
   register: result
 
 - assert:

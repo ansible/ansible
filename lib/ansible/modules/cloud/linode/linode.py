@@ -250,8 +250,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
         
         # Any create step triggers a job that need to be waited for.
         if not servers:
-            for arg in ('name', 'plan', 'distribution', 'datacenter'):
-                if not eval(arg):
+            for arg in (name, plan, distribution, datacenter):
+                if not arg:
                     module.fail_json(msg='%s is required for active state' % arg)
             # Create linode entity
             new_server = True
@@ -267,8 +267,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            for arg in ('name', 'linode_id', 'distribution'):
-                if not eval(arg):
+            for arg in (name, linode_id, distribution):
+                if not arg:
                     module.fail_json(msg='%s is required for active state' % arg)
             # Create disks (1 from distrib, 1 for SWAP)
             new_server = True
@@ -300,8 +300,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            for arg in ('name', 'linode_id', 'distribution'):
-                if not eval(arg):
+            for arg in (name, linode_id, distribution):
+                if not arg:
                     module.fail_json(msg='%s is required for active state' % arg)
 
             # Check architecture
@@ -387,8 +387,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             instances.append(instance)
 
     elif state in ('stopped'):
-        for arg in ('name', 'linode_id'):
-            if not eval(arg):
+        for arg in (name, linode_id):
+            if not arg:
                 module.fail_json(msg='%s is required for active state' % arg)
 
         if not servers:
@@ -408,8 +408,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             instances.append(instance)
 
     elif state in ('restarted'):
-        for arg in ('name', 'linode_id'):
-            if not eval(arg):
+        for arg in (name, linode_id):
+            if not arg:
                 module.fail_json(msg='%s is required for active state' % arg)
 
         if not servers:

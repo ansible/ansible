@@ -464,6 +464,7 @@ class TestActionBase(unittest.TestCase):
 
         mock_connection = MagicMock()
         mock_connection.build_module_command.side_effect = build_module_command
+        mock_connection._shell.get_remote_filename.return_value = 'copy.py'
         mock_connection._shell.join_path.side_effect = os.path.join
 
         # we're using a real play context here

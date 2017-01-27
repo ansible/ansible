@@ -133,10 +133,7 @@ import os
 import re
 import argparse
 import sys
-from time import time
-import sys
 import ConfigParser
-import urllib, urllib2, base64
 
 
 def get_log_filename():

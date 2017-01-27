@@ -87,22 +87,22 @@ EXAMPLES = '''
     stack_policy: true
 
 # Example dictionary outputs for stack_outputs, stack_parameters and stack_resources:
-"stack_outputs": {
-    "ApplicationDatabaseName": "dazvlpr01xj55a.ap-southeast-2.rds.amazonaws.com",
-    ...
-},
-"stack_parameters": {
-    "DatabaseEngine": "mysql",
-    "DatabasePassword": "****",
-    ...
-},
-"stack_resources": {
-    "AutoscalingGroup": "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7",
-    "AutoscalingSecurityGroup": "sg-abcd1234",
-    "ApplicationDatabase": "dazvlpr01xj55a",
-    "EcsTaskDefinition": "arn:aws:ecs:ap-southeast-2:123456789:task-definition/dev-someapp-EcsTaskDefinition-1F2VM9QB0I7K9:1"
-    ...
-}
+# "stack_outputs": {
+#     "ApplicationDatabaseName": "dazvlpr01xj55a.ap-southeast-2.rds.amazonaws.com",
+#     ...
+# },
+# "stack_parameters": {
+#     "DatabaseEngine": "mysql",
+#     "DatabasePassword": "****",
+#     ...
+# },
+# "stack_resources": {
+#     "AutoscalingGroup": "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7",
+#     "AutoscalingSecurityGroup": "sg-abcd1234",
+#     "ApplicationDatabase": "dazvlpr01xj55a",
+#     "EcsTaskDefinition": "arn:aws:ecs:ap-southeast-2:123456789:task-definition/dev-someapp-EcsTaskDefinition-1F2VM9QB0I7K9:1"
+#     ...
+# }
 '''
 
 RETURN = '''

@@ -5,6 +5,7 @@
 # to the complete work.
 #
 # Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2017 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -26,87 +27,63 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import re
+_DEVICE_CONFIGS = {}
 
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.network import NetworkError, NetworkModule
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
 
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = module.exec_command(cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=err)
+        cfg = str(out).strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
-class Cli(CliBase):
+def run_commands(module, commands, check_rc=True):
+    assert isinstance(commands, list), 'commands must be a list'
+    responses = list()
 
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
+    for cmd in commands:
+        rc, out, err = module.exec_command(cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=err, rc=rc)
+        responses.append(out)
+    return responses
 
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
+def load_config(module, commands, commit=False, replace=False, comment=None):
+    assert isinstance(commands, list), 'commands must be a list'
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
+    rc, out, err = module.exec_command('configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=err)
 
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send(['terminal length 0', 'terminal exec prompt no-timestamp'])
+    failed = False
+    for command in commands:
+        if command == 'end':
+            pass
 
-    ### Config methods ###
+        rc, out, err = module.exec_command(command)
+        if rc != 0:
+            failed = True
+            break
 
-    def configure(self, commands):
-        cmds = ['configure terminal']
-        if commands[-1] == 'end':
-            commands.pop()
-        cmds.extend(to_list(commands))
-        cmds.extend(['commit', 'end'])
-        responses = self.execute(cmds)
-        return responses[1:]
+    if failed:
+        module.exec_command('abort')
+        module.fail_json(msg=err, commands=commands, rc=rc)
 
-    def get_config(self, flags=None):
-        cmd = 'show running-config'
-        if flags:
-            if isinstance(flags, list):
-                cmd += ' %s' % ' '.join(flags)
-            else:
-                cmd += ' %s' % flags
-        return self.execute([cmd])[0]
+    rc, diff, err = module.exec_command('show commit changes diff')
+    if commit:
+        cmd = 'commit'
+        if comment:
+            cmd += ' comment {0}'.format(comment)
+    else:
+        cmd = 'abort'
+        diff = None
+    module.exec_command(cmd)
 
-    def load_config(self, config, commit=False, replace=False, comment=None):
-        commands = ['configure terminal']
-        commands.extend(config)
-
-        if commands[-1] == 'end':
-            commands.pop()
-
-        try:
-            self.execute(commands)
-            diff = self.execute(['show commit changes diff'])
-            if commit:
-                if replace:
-                    prompt = re.compile(r'\[no\]:\s$')
-                    commit = 'commit replace'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    cmd = Command(commit, prompt=prompt, response='yes')
-                    self.execute([cmd, 'end'])
-                else:
-                    commit = 'commit'
-                    if comment:
-                        commit += ' comment %s' % comment
-                    self.execute([commit, 'end'])
-            else:
-                self.execute(['abort'])
-        except NetworkError:
-            self.execute(['abort'])
-            diff = None
-            raise
-
-        return diff[0]
-
-Cli = register_transport('cli', default=True)(Cli)
+    return diff

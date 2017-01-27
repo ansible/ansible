@@ -11,7 +11,6 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
-    EnvironmentConfig,
     IntegrationConfig,
     SubprocessError,
     ShellConfig,
@@ -29,7 +28,9 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
+    EnvironmentConfig,
     run_command,
+    common_environment,
     display,
 )
 
@@ -122,15 +123,21 @@ def delegate_docker(args, exclude, require):
         if not args.allow_destructive:
             cmd.append('--allow-destructive')
 
+    cmd_options = []
+
+    if isinstance(args, ShellConfig):
+        cmd_options.append('-it')
+
     if not args.explain:
         lib.pytar.create_tarfile('/tmp/ansible.tgz', '.', lib.pytar.ignore)
 
     try:
         if util_image:
-            util_id, _ = run_command(args, [
-                'docker', 'run', '--detach',
-                util_image,
-            ], capture=True)
+            util_options = [
+                '--detach',
+            ]
+
+            util_id, _ = docker_run(args, util_image, options=util_options)
 
             if args.explain:
                 util_id = 'util_id'
@@ -139,14 +146,14 @@ def delegate_docker(args, exclude, require):
         else:
             util_id = None
 
-        test_cmd = [
-            'docker', 'run', '--detach',
+        test_options = [
+            '--detach',
             '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
             '--privileged=%s' % str(privileged).lower(),
         ]
 
         if util_id:
-            test_cmd += [
+            test_options += [
                 '--link', '%s:ansible.http.tests' % util_id,
                 '--link', '%s:sni1.ansible.http.tests' % util_id,
                 '--link', '%s:sni2.ansible.http.tests' % util_id,
@@ -154,7 +161,7 @@ def delegate_docker(args, exclude, require):
                 '--env', 'HTTPTESTER=1',
             ]
 
-        test_id, _ = run_command(args, test_cmd + [test_image], capture=True)
+        test_id, _ = docker_run(args, test_image, options=test_options)
 
         if args.explain:
             test_id = 'test_id'
@@ -163,44 +170,23 @@ def delegate_docker(args, exclude, require):
 
         # write temporary files to /root since /tmp isn't ready immediately on container start
         docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
-
-        run_command(args,
-                    ['docker', 'exec', test_id, '/bin/bash', '/root/docker.sh'])
-
+        docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
         docker_put(args, test_id, '/tmp/ansible.tgz', '/root/ansible.tgz')
-
-        run_command(args,
-                    ['docker', 'exec', test_id, 'mkdir', '/root/ansible'])
-
-        run_command(args,
-                    ['docker', 'exec', test_id, 'tar', 'oxzf', '/root/ansible.tgz', '--directory', '/root/ansible'])
+        docker_exec(args, test_id, ['mkdir', '/root/ansible'])
+        docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
 
         try:
-            command = ['docker', 'exec']
-
-            if isinstance(args, ShellConfig):
-                command.append('-it')
-
-            run_command(args, command + [test_id] + cmd)
+            docker_exec(args, test_id, cmd, options=cmd_options)
         finally:
-            run_command(args,
-                        ['docker', 'exec', test_id,
-                         'tar', 'czf', '/root/results.tgz', '--directory', '/root/ansible/test', 'results'])
-
+            docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
             docker_get(args, test_id, '/root/results.tgz', '/tmp/results.tgz')
-
-            run_command(args,
-                        ['tar', 'oxzf', '/tmp/results.tgz', '-C', 'test'])
+            run_command(args, ['tar', 'oxzf', '/tmp/results.tgz', '-C', 'test'])
     finally:
         if util_id:
-            run_command(args,
-                        ['docker', 'rm', '-f', util_id],
-                        capture=True)
+            docker_rm(args, util_id)
 
         if test_id:
-            run_command(args,
-                        ['docker', 'rm', '-f', test_id],
-                        capture=True)
+            docker_rm(args, test_id)
 
 
 def docker_pull(args, image):
@@ -214,7 +200,7 @@ def docker_pull(args, image):
 
     for _ in range(1, 10):
         try:
-            run_command(args, ['docker', 'pull', image])
+            docker_command(args, ['pull', image])
             return
         except SubprocessError:
             display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
@@ -231,10 +217,9 @@ def docker_put(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    cmd = ['docker', 'exec', '-i', container_id, 'dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE]
-
     with open(src, 'rb') as src_fd:
-        run_command(args, cmd, stdin=src_fd, capture=True)
+        docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
+                    options=['-i'], stdin=src_fd, capture=True)
 
 
 def docker_get(args, container_id, src, dst):
@@ -245,10 +230,69 @@ def docker_get(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    cmd = ['docker', 'exec', '-i', container_id, 'dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE]
-
     with open(dst, 'wb') as dst_fd:
-        run_command(args, cmd, stdout=dst_fd, capture=True)
+        docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
+                    options=['-i'], stdout=dst_fd, capture=True)
+
+
+def docker_run(args, image, options):
+    """
+    :type args: EnvironmentConfig
+    :type image: str
+    :type options: list[str] | None
+    :rtype: str | None, str | None
+    """
+    if not options:
+        options = []
+
+    return docker_command(args, ['run'] + options + [image], capture=True)
+
+
+def docker_rm(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    """
+    docker_command(args, ['rm', '-f', container_id], capture=True)
+
+
+def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :type cmd: list[str]
+    :type options: list[str] | None
+    :type capture: bool
+    :type stdin: file | None
+    :type stdout: file | None
+    :rtype: str | None, str | None
+    """
+    if not options:
+        options = []
+
+    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
+
+
+def docker_command(args, cmd, capture=False, stdin=None, stdout=None):
+    """
+    :type args: EnvironmentConfig
+    :type cmd: list[str]
+    :type capture: bool
+    :type stdin: file | None
+    :type stdout: file | None
+    :rtype: str | None, str | None
+    """
+    env = docker_environment()
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout)
+
+
+def docker_environment():
+    """
+    :rtype: dict[str, str]
+    """
+    env = common_environment()
+    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
+    return env
 
 
 def delegate_remote(args, exclude, require):

@@ -25,36 +25,34 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_regedit
 version_added: "2.0"
-short_description: Add, Edit, or Remove Registry Keys and Values
+short_description: Add, change, or remove registry keys and values
 description:
-    - Add, Edit, or Remove Registry Keys and Values using ItemProperties Cmdlets
+    - Add, modify or remove registry keys and values.
+    - More information about the windows registry from Wikipedia (https://en.wikipedia.org/wiki/Windows_Registry).
 options:
-  key:
+  path:
     description:
-      - Name of Registry Key
+      - Name of registry path.
+      - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU, HKLM, HKU.'
     required: true
-    default: null
-    aliases: []
-  value:
+    aliases: [ key ]
+  name:
     description:
-      - Name of Registry Value
-    required: true
-    default: null
-    aliases: []
+      - Name of registry entry in C(path).
+      - This is an entry in the above C(key) parameter.
+      - If not provided, or empty we use the default name '(default)'
+    aliases: [ entry ]
   data:
     description:
-      - Registry Value Data.  Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional. 
-    required: false
-    default: null
-    aliases: []
-  datatype:
+      - Value of the registry entry C(name) in C(path).
+      - Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional.
+  type:
     description:
-      - Registry Value Data Type
-    required: false
+      - Registry value data type.
     choices:
       - binary
       - dword
@@ -63,75 +61,86 @@ options:
       - string
       - qword
     default: string
-    aliases: []
+    aliases: [ datatype ]
   state:
     description:
-      - State of Registry Value
-    required: false
+      - State of registry entry.
     choices:
       - present
       - absent
     default: present
-    aliases: []
+notes:
+- Check-mode C(-C/--check) and diff output (-D/--diff) are supported, so that you can test every change against the active configuration before applying changes.
+- Beware that some registry hives (HKEY_USERS in particular) do not allow to create new registry paths.
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
 EXAMPLES = r'''
-- name: Create Registry Key called MyCompany
+- name: Create registry path MyCompany
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    
-- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "world".
+    path: HKCU:\Software\MyCompany
+
+- name: Add or update registry path MyCompany, with entry 'hello', and containing 'world'
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    value: hello
+    path: HKCU:\Software\MyCompany
+    name: hello
     data: world
 
-- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and data for the value "hello" containing "1337" as type "dword".
+- name: Add or update registry path MyCompany, with entry 'hello', and containing 1337
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    value: hello
+    path: HKCU:\Software\MyCompany
+    name: hello
     data: 1337
-    datatype: dword
+    type: dword
 
-- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and binary data for the value "hello" as type "binary" data expressed as comma separated list
+- name: Add or update registry path MyCompany, with entry 'hello', and containing binary data in hex-string format
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    value: hello
+    path: HKCU:\Software\MyCompany
+    name: hello
     data: hex:be,ef,be,ef,be,ef,be,ef,be,ef
-    datatype: binary
+    type: binary
 
-- name: Create Registry Key called MyCompany, a value within MyCompany Key called "hello", and binary data for the value "hello" as type "binary" data expressed as yaml array of bytes
+- name: Add or update registry path MyCompany, with entry 'hello', and containing binary data in yaml format
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    value: hello
+    path: HKCU:\Software\MyCompany
+    name: hello
     data: [0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef,0xbe,0xef]
-    datatype: binary
+    type: binary
 
-- name: Delete Registry Key MyCompany. Not specifying a value will delete the root key which means all values will be deleted
+- name: Disable keyboard layout hotkey for all users (changes existing)
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    state: absent
-    
-- name: Delete Registry Value "hello" from MyCompany Key
+    path: HKU:\.DEFAULT\Keyboard Layout\Toggle
+    name: Layout Hotkey
+    data: 3
+    type: dword
+
+- name: Disable language hotkey for current users (adds new)
   win_regedit:
-    key: HKCU:\Software\MyCompany
-    value: hello
+    path: HKCU:\Keyboard Layout\Toggle
+    name: Language Hotkey
+    data: 3
+    type: dword
+
+- name: Remove registry path MyCompany (including all entries it contains)
+  win_regedit:
+    path: HKCU:\Software\MyCompany
     state: absent
 
-- name: Creates Registry Key called 'My Company'
+- name: Remove entry 'hello' from registry path MyCompany
   win_regedit:
-    key: HKCU:\Software\My Company
+    path: HKCU:\Software\MyCompany
+    name: hello
+    state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 data_changed:
-    description: whether this invocation changed the data in the registry value 
+    description: whether this invocation changed the data in the registry value
     returned: success
     type: boolean
     sample: False
 data_type_changed:
-    description: whether this invocation changed the datatype of the registry value 
+    description: whether this invocation changed the datatype of the registry value
     returned: success
     type: boolean
     sample: True

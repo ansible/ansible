@@ -95,28 +95,27 @@ author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-# Example using key data from a local file on the management machine
-- authorized_key:
+- name: Set authorized key took from file
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-# Using github url as key source
-- authorized_key:
+- name: Set authorized key took from url
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/charlie.keys
 
-# Using alternate directory locations:
-- authorized_key:
+- name: Set authorized key in alternate location
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     path: /etc/ssh/authorized_keys/charlie
-    manage_dir: no
+    manage_dir: False
 
-# Using with_file
-- name: Set up authorized_keys for the deploy user
+- name: Set up multiple authorized keys
   authorized_key:
     user: deploy
     state: present
@@ -125,35 +124,87 @@ EXAMPLES = '''
     - public_keys/doe-jane
     - public_keys/doe-john
 
-# Using key_options:
-- authorized_key:
+- name: Set authorized key defining key options
+  authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
     key_options: 'no-port-forwarding,from="10.0.1.1"'
 
-# Using validate_certs:
-- authorized_key:
+- name: Set authorized key without validating the TLS/SSL certificates
+  authorized_key:
     user: charlie
     state: present
     key: https://github.com/user.keys
-    validate_certs: no
+    validate_certs: False
 
-# Set up authorized_keys exclusively with one key
-- authorized_key:
+- name: Set authorized key, removing all the authorized key already set
+  authorized_key:
     user: root
     key: '{{ item }}'
     state: present
-    exclusive: yes
+    exclusive: True
   with_file:
     - public_keys/doe-jane
 
-# Copies the key from the user who is running ansible to the remote machine user ubuntu
-- authorized_key:
+- name: Set authorized key for user ubuntu copying it from current user
+  authorized_key:
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-  become: yes
+'''
+
+RETURN = '''
+exclusive:
+  description: If the key has been forced to be exclusive or not.
+  returned: success
+  type: boolean
+  sample: False
+key:
+  description: The key that the module was running against.
+  returned: success
+  type: string
+  sample: https://github.com/user.keys
+key_option:
+  description: Key options related to the key.
+  returned: success
+  type: string
+  sameple: null
+keyfile:
+  description: Path for authorzied key file.
+  returned: success
+  type: string
+  sameple: /home/user/.ssh/authorized_keys
+manage_dir:
+  description: Whether this module managed the directory of the authorized key file.
+  returned: success
+  type: boolean
+  sameple: True
+path:
+  description: Alternate path to the authorized_keys file
+  returned: success
+  type: string
+  sameple: null
+state:
+  description: Whether the given key (with the given key_options) should or should not be in the file
+  returned: success
+  type: string
+  sameple: present
+unique:
+  description: Whether the key is unique
+  returned: success
+  type: boolean
+  sameple: false
+user:
+  description: The username on the remote host whose authorized_keys file will be modified
+  returned: success
+  type: string
+  sameple: user
+validate_certs:
+  description: This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
+  returned: success
+  type: boolean
+  sameple: true
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -176,6 +227,7 @@ import re
 import shlex
 from operator import itemgetter
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
@@ -485,6 +537,9 @@ def enforce_state(module, params):
                 key = resp.read()
         except Exception:
             module.fail_json(msg=error_msg % key)
+
+        # resp.read gives bytes on python3, convert to native string type
+        key = to_native(key, errors='surrogate_or_strict')
 
     # extract individual keys into an array, skipping blank lines and comments
     new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]

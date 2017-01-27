@@ -408,12 +408,14 @@ class Role(Base, Become, Conditional, Taggable):
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
-        for task_block in self._task_blocks:
+        for idx, task_block in enumerate(self._task_blocks):
             new_task_block = task_block.copy(exclude_parent=True)
             if task_block._parent:
                 new_task_block._parent = task_block._parent.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
+            if idx == len(self._task_blocks) - 1:
+                new_task_block._eor = True
             block_list.append(new_task_block)
 
         return block_list

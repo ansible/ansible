@@ -74,16 +74,21 @@ def get_route_table_info(route_table):
 
     # Add any routes to array
     routes = []
+    associations = []
     for route in route_table.routes:
         routes.append(route.__dict__)
+    for association in route_table.associations:
+        associations.append(association.__dict__)
 
-    route_table_info = { 'id': route_table.id,
-                         'routes': routes,
-                         'tags': route_table.tags,
-                         'vpc_id': route_table.vpc_id
-                       }
+    route_table_info = {'id': route_table.id,
+                        'routes': routes,
+                        'associations': associations,
+                        'tags': route_table.tags,
+                        'vpc_id': route_table.vpc_id
+                        }
 
     return route_table_info
+
 
 def list_ec2_vpc_route_tables(connection, module):
 
@@ -105,7 +110,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 

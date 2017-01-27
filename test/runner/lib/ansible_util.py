@@ -24,6 +24,7 @@ def ansible_environment(args):
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color else 'false',
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_CONFIG='/dev/null',
+        ANSIBLE_HOST_KEY_CHECKING='false',
         PYTHONPATH=os.path.abspath('lib'),
         PAGER='/bin/cat',
         PATH=path,

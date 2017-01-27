@@ -69,24 +69,34 @@ class Connection(_Connection):
         """Connections to the device and sets the terminal type"""
         super(Connection, self)._connect()
 
+        display.debug('starting network_cli._connect()')
+
         network_os = self._play_context.network_os
         if not network_os:
             for cls in terminal_loader.all(class_only=True):
-                network_os = cls.guess_network_os(self.ssh)
-                if network_os:
-                    break
+                try:
+                    network_os = cls.guess_network_os(self.ssh)
+                    if network_os:
+                        break
+                except:
+                    raise AnsibleConnectionFailure(
+                        'Unable to automatically determine host network os. '
+                        'Please manually configure ansible_network_os value '
+                        'for this host'
+                    )
 
         if not network_os:
             raise AnsibleConnectionFailure(
-                'unable to determine device network os.  Please configure '
-                'ansible_network_os value'
+                'Unable to automatically determine host network os. Please '
+                'manually configure ansible_network_os value for this host'
             )
+
 
         self._terminal = terminal_loader.get(network_os, self)
         if not self._terminal:
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
-        return (0, 'connected', '')
+        self._connected = True
 
     @ensure_connect
     def open_shell(self):
@@ -107,6 +117,7 @@ class Connection(_Connection):
         display.vvv('closing connection', host=self._play_context.remote_addr)
         self.close_shell()
         super(Connection, self).close()
+        self._connected = False
 
     def close_shell(self):
         """Closes the vty shell if the device supports multiplexing"""
@@ -195,6 +206,7 @@ class Connection(_Connection):
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
+        display.debug('alarm_handler fired!')
         self.close_shell()
 
     def exec_command(self, cmd):
@@ -217,7 +229,7 @@ class Connection(_Connection):
         """
         try:
             obj = json.loads(cmd)
-        except ValueError:
+        except (ValueError, TypeError):
             obj = {'command': str(cmd).strip()}
 
         if obj['command'] == 'close_shell()':
@@ -234,7 +246,12 @@ class Connection(_Connection):
             return (1, '', str(exc))
 
         try:
+            if not signal.getsignal(signal.SIGALRM):
+                display.debug('setting alarm handler in network_cli')
+                signal.signal(signal.SIGALRM, self.alarm_handler)
+            signal.alarm(self._play_context.timeout)
             out = self.send(obj)
+            signal.alarm(0)
             return (0, out, '')
         except (AnsibleConnectionFailure, ValueError) as exc:
             return (1, '', str(exc))

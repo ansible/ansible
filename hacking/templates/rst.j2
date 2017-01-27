@@ -17,7 +17,7 @@
 
 .. contents::
    :local:
-   :depth: 1
+   :depth: 2
 
 {# ------------------------------------------
  #
@@ -30,7 +30,7 @@
 DEPRECATED
 ----------
 
-@{ deprecated }@
+@{ deprecated | convert_symbols_to_format }@
 {% endif %}
 
 Synopsis
@@ -169,8 +169,8 @@ Notes
 {% endif %}
 
 {% if not deprecated %}
-{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'committer': 'This module is supported mainly by the community and is curated by core committers', 'community': 'This module is community maintained without core committer oversight'} %}
-{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that the no backward incompatible interface changes will be made'} %}
+{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'committer': 'This module is supported mainly by the community and is curated by core committers.', 'community': 'This module is community maintained without core committer oversight.'} %}
+{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
 
 {% if metadata %}
 {% if metadata.status %}
@@ -190,15 +190,11 @@ Support
 
 @{ support[metadata.supported_by] }@
 
-{% if metadata.supported_by == 'core' %}
-For more information on what this means please read :doc:`modules_core`
-{% else %}
-For more information on what this means please read :doc:`modules_extra`
-{% endif %}
+For more information on what this means please read :doc:`modules_support`
 
 {% endif %}
 {% endif %}
 {% endif %}
 
-For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`developing_modules`.
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
 

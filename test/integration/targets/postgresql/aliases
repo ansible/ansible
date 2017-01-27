@@ -1,8 +1,6 @@
 destructive
-needs/privileged
 posix/ci/group1
 postgresql_db
 postgresql_privs
 postgresql_user
-skip/freebsd
 skip/osx

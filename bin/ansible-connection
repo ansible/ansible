@@ -19,9 +19,10 @@
 
 ########################################################
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
+__metaclass__ = type
 __requires__ = ['ansible']
+
 try:
     import pkg_resources
 except Exception:
@@ -48,6 +49,8 @@ from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
 
 def do_fork():
@@ -100,6 +103,13 @@ def recv_data(s):
         data += d
     return data
 
+def log(msg, host=None, **kwargs):
+    if host:
+        msg = '<%s> %s' % (host, msg)
+    facility = getattr(syslog, C.DEFAULT_SYSLOG_FACILITY, syslog.LOG_USER)
+    syslog.openlog('ansible-connection', 0, facility)
+    syslog.syslog(syslog.LOG_INFO, str(msg))
+
 
 class Server():
 
@@ -109,36 +119,24 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
-        try:
-            # FIXME: the connection loader here is created brand new,
-            #        so it will not see any custom paths loaded (ie. via
-            #        roles), so we will need to serialize the connection
-            #        loader and send it over as we do the PlayContext
-            #        in the main() method below.
-            self.log('loading connection plugin %s' % str(play_context.connection))
-            self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
-            self.conn._connect()
+        self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
+        self.conn._connect()
+        if not self.conn.connected:
+            raise AnsibleConnectionFailure('unable to connect to remote host')
 
-            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.socket.bind(path)
-            self.socket.listen(1)
-
-        except Exception as exc:
-            self.log(exc)
-            return
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.socket.bind(path)
+        self.socket.listen(1)
 
         signal.signal(signal.SIGALRM, self.alarm_handler)
-
-    def log(self, msg):
-        syslog_msg = '[%s] %s' % (self.play_context.remote_addr, msg)
-        facility = getattr(syslog, C.DEFAULT_SYSLOG_FACILITY, syslog.LOG_USER)
-        syslog.openlog('ansible-connection', 0, facility)
-        syslog.syslog(syslog.LOG_INFO, syslog_msg)
 
     def dispatch(self, obj, name, *args, **kwargs):
         meth = getattr(obj, name, None)
         if meth:
             return meth(*args, **kwargs)
+
+    def log(self, msg):
+        log(msg, host=self.play_context.remote_addr)
 
     def alarm_handler(self, signum, frame):
         '''
@@ -221,15 +219,13 @@ class Server():
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            # FIXME: proper logging and error handling here
-            self.log('runtime exception: %s' % e)
-            print(traceback.format_exc())
+            log(traceback.format_exc())
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            self.log('shutting down connection, connection was active for %s secs' % delta)
+            log('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -238,6 +234,7 @@ class Server():
             os.remove(self.path)
 
 def main():
+
     try:
         # read the play context data via stdin, which means depickling it
         # FIXME: as noted above, we will probably need to deserialize the
@@ -252,7 +249,6 @@ def main():
             cur_line = sys.stdin.readline()
         src = BytesIO(to_bytes(init_data))
         pc_data = cPickle.load(src)
-        #src.close()
 
         pc = PlayContext()
         pc.deserialize(pc_data)
@@ -261,6 +257,8 @@ def main():
         print("FAIL: %s" % e)
         print(traceback.format_exc())
         sys.exit(1)
+
+    display.verbosity = pc.verbosity
 
     # here we create a hash to use later when creating the socket file,
     # so we can hide the info about the target host/user/etc.
@@ -283,7 +281,10 @@ def main():
     if not os.path.exists(sf_path):
         pid = do_fork()
         if pid == 0:
-            server = Server(sf_path, pc)
+            try:
+                server = Server(sf_path, pc)
+            except Exception as exc:
+                log(traceback.format_exc(), pc.remote_addr)
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
             server.run()
@@ -312,13 +313,12 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    sys.stderr.write("failed to connect to the host, connection timeout")
+                    sys.stderr.write('failed to connect to the listener socket, '
+                    'connection timeout.  See syslog for more details')
                     sys.exit(255)
 
-        #
         # send the play_context back into the connection so the connection
-        # can handle any privilege escalation or deescalation activities
-        #
+        # can handle any privilege escalation activities
         pc_data = 'CONTEXT: %s' % src.getvalue()
         send_data(sf, to_bytes(pc_data))
         src.close()
@@ -338,4 +338,6 @@ def main():
     sys.exit(rc)
 
 if __name__ == '__main__':
+    display = Display()
+    display.display = log
     main()

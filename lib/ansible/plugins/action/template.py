@@ -23,6 +23,7 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.pycompat24 import get_exception
@@ -144,7 +145,7 @@ class ActionModule(ActionBase):
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+        remote_user = self._play_context.remote_user
         if not tmp:
             tmp = self._make_tmp_path(remote_user)
             self._cleanup_remote_tmp = True

@@ -55,6 +55,12 @@ options:
     default: null
     description:
       - Replica count for volume
+  arbiter:
+    required: false
+    default: null
+    description:
+      - Arbiter count for volume
+    version_added: "2.3"
   stripes:
     required: false
     default: null
@@ -262,6 +268,11 @@ def get_volumes():
                 volume['status'] = value
             if key.lower() == 'transport-type':
                 volume['transport'] = value
+            if value.lower().endswith(' (arbiter)'):
+                if not 'arbiters' in volume:
+                    volume['arbiters'] = []
+                value = value[:-10]
+                volume['arbiters'].append(value)
             if key.lower() != 'bricks' and key.lower()[:5] == 'brick':
                 if not 'bricks' in volume:
                     volume['bricks'] = []
@@ -315,7 +326,7 @@ def probe_all_peers(hosts, peers, myhostname):
         if host not in peers:
             probe(host, myhostname)
 
-def create_volume(name, stripe, replica, disperse, redundancy, transport, hosts, bricks, force):
+def create_volume(name, stripe, replica, arbiter, disperse, redundancy, transport, hosts, bricks, force):
     args = [ 'volume', 'create' ]
     args.append(name)
     if stripe:
@@ -324,6 +335,9 @@ def create_volume(name, stripe, replica, disperse, redundancy, transport, hosts,
     if replica:
         args.append('replica')
         args.append(str(replica))
+    if arbiter:
+        args.append('arbiter')
+        args.append(str(arbiter))
     if disperse:
         args.append('disperse')
         args.append(str(disperse))
@@ -383,6 +397,7 @@ def main():
             host=dict(required=False, default=None),
             stripes=dict(required=False, default=None, type='int'),
             replicas=dict(required=False, default=None, type='int'),
+            arbiters=dict(required=False, default=None, type='int'),
             disperses=dict(required=False, default=None, type='int'),
             redundancies=dict(required=False, default=None, type='int'),
             transport=dict(required=False, default='tcp', choices=[ 'tcp', 'rdma', 'tcp,rdma' ]),
@@ -407,6 +422,7 @@ def main():
     brick_paths = module.params['bricks']
     stripes = module.params['stripes']
     replicas = module.params['replicas']
+    arbiters = module.params['arbiters']
     disperses = module.params['disperses']
     redundancies = module.params['redundancies']
     transport = module.params['transport']
@@ -456,7 +472,7 @@ def main():
 
         # create if it doesn't exist
         if volume_name not in volumes:
-            create_volume(volume_name, stripes, replicas, disperses, redundancies, transport, cluster, brick_paths, force)
+            create_volume(volume_name, stripes, replicas, arbiters, disperses, redundancies, transport, cluster, brick_paths, force)
             volumes = get_volumes()
             changed = True
 

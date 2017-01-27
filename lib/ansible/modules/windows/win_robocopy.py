@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: win_robocopy
 version_added: "2.2"
@@ -67,7 +67,7 @@ notes:
     - This is not a complete port of the "synchronize" module. Unlike the "synchronize" module this only performs the sync/copy on the remote machine, not from the master to the remote machine.
     - This module does not currently support all Robocopy flags.
     - Works on Windows 7, Windows 8, Windows Server 2k8, and Windows Server 2k12
-"""
+'''
 
 EXAMPLES = r'''
 - name: Sync the contents of one directory to another
@@ -103,17 +103,17 @@ EXAMPLES = r'''
     flags: /XD SOME_DIR /XF SOME_FILE /MT:32
 '''
 
-RETURN = '''
+RETURN = r'''
 src:
     description: The Source file/directory of the sync.
     returned: always
     type: string
-    sample: "c:/Some/Path"
+    sample: c:\Some\Path
 dest:
     description: The Destination file/directory of the sync.
     returned: always
     type: string
-    sample: "c:/Some/Path"
+    sample: c:\Some\Path
 recurse:
     description: Whether or not the recurse flag was toggled.
     returned: always
@@ -129,7 +129,7 @@ flags:
     returned: always
     type: string
     sample: "/e /purge"
-return_code:
+rc:
     description: The return code retuned by robocopy.
     returned: success
     type: int

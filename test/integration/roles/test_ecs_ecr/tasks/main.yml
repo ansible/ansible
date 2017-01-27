@@ -1,0 +1,253 @@
+---
+- set_fact:
+    ecr_name: 'ecr-test-{{ ansible_date_time.epoch }}'
+
+- block:
+    - name: When creating with check mode
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and create
+      assert:
+        that:
+          - result|skipped
+          - result|changed
+          - result.created
+
+
+    - name: When specifying a registry that is inaccessible
+      ecs_ecr: registry_id=999999999999 name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+      ignore_errors: true
+
+    - name: it should fail with an AccessDeniedException
+      assert:
+        that:
+          - result|failed
+          - '"AccessDeniedException" in result.msg'
+
+
+    - name: When creating a repository
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+
+    - name: it should change and create
+      assert:
+        that:
+          - result|changed
+          - result.created
+
+
+    - name: When creating a repository that already exists in check mode
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+      check_mode: yes
+
+    - name: it should not skip, should not change
+      assert:
+        that:
+          - not result|skipped
+          - not result|changed
+
+
+    - name: When creating a repository that already exists
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result|changed
+
+
+    - name: When in check mode, and deleting a policy that does not exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        delete_policy: yes
+      register: result
+      check_mode: yes
+
+    - name: it should not skip and not change
+      assert:
+        that:
+          - not result|skipped
+          - not result|changed
+
+
+    - name: When in check mode, setting policy on a repository that has no policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and not create
+      assert:
+        that:
+          - result|skipped
+          - result|changed
+          - not result.created
+
+
+    - name: When setting policy on a repository that has no policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result|changed
+          - not result.created
+
+
+    - name: When in check mode, and deleting a policy that exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        delete_policy: yes
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change but not create
+      assert:
+        that:
+          - result|skipped
+          - result|changed
+          - not result.created
+
+
+    - name: When deleting a policy that exists
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        delete_policy: yes
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result|changed
+          - not result.created
+
+
+    - name: When setting a policy as a string
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy | to_json }}'
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result|changed
+          - not result.created
+
+
+    - name: When setting a policy to its current value
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result|changed
+
+
+    - name: When omitting policy on a repository that has a policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result|changed
+
+
+    - name: When specifying both policy and delete_policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy: '{{ policy }}'
+        delete_policy: yes
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result|failed
+
+
+    - name: When specifying invalid JSON for policy
+      ecs_ecr:
+        region: '{{ ec2_region }}'
+        name: '{{ ecr_name }}'
+        policy_text: "Ceci n'est pas une JSON"
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result|failed
+
+
+    - name: When in check mode, deleting a policy that exists
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and not create
+      assert:
+        that:
+          - result|skipped
+          - result|changed
+          - not result.created
+
+
+    - name: When deleting a policy that exists
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      register: result
+
+    - name: it should change
+      assert:
+        that:
+          - result|changed
+
+
+    - name: When in check mode, deleting a policy that does not exist
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      register: result
+      check_mode: yes
+
+    - name: it should not change
+      assert:
+        that:
+          - not result|skipped
+          - not result|changed
+
+
+    - name: When deleting a policy that does not exist
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result|changed
+
+  always:
+    - name: Delete lingering ECR repository
+      ecs_ecr: name='{{ ecr_name }}' region='{{ ec2_region }}' state=absent

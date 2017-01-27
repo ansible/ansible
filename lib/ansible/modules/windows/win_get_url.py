@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_get_url
 version_added: "1.7"
@@ -92,7 +92,7 @@ options:
 '''
 
 EXAMPLES = r'''
-- name: Download earthrise.jpg to specified path 
+- name: Download earthrise.jpg to specified path
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg

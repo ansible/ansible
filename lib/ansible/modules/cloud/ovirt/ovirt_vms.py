@@ -232,6 +232,20 @@ options:
             - "C(nic_name) - Set name to network interface of Virtual Machine."
             - "C(nic_on_boot) - If I(True) network interface will be set to start on boot."
         version_added: "2.3"
+    kernel_path:
+        description:
+            - "Path to a kernel image used to boot the virtual machine."
+            - "Kernel image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    initrd_path:
+        description:
+            - "Path to an initial ramdisk to be used with the kernel specified by C(kernel_path) option."
+            - "Ramdisk image must be stored on either the ISO domain or on the host's storage."
+        version_added: "2.3"
+    kernel_params:
+        description:
+            - "Kernel command line parameters (formatted as string) to be used with the kernel specified by C(kernel_path) option."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -629,6 +643,34 @@ class VmsModule(BaseModule):
                     )
                 self.changed = True
 
+    def __get_vnic_profile_id(self, nic):
+        """
+        Return VNIC profile ID looked up by it's name, because there can be
+        more VNIC profiles with same name, other criteria of filter is cluster.
+        """
+        vnics_service = self._connection.system_service().vnic_profiles_service()
+        clusters_service = self._connection.system_service().clusters_service()
+        cluster = search_by_name(clusters_service, self.param('cluster'))
+        profiles = [
+            profile for profile in vnics_service.list()
+            if profile.name == nic.get('profile_name')
+        ]
+        cluster_networks = [
+            net.id for net in self._connection.follow_link(cluster.networks)
+        ]
+        try:
+            return next(
+                profile.id for profile in profiles
+                if profile.network.id in cluster_networks
+            )
+        except StopIteration:
+            raise Exception(
+                "Profile '%s' was not found in cluster '%s'" % (
+                    nic.get('profile_name'),
+                    self.param('cluster')
+                )
+            )
+
     def __attach_nics(self, entity):
         # Attach NICs to VM, if specified:
         vnic_profiles_service = self._connection.system_service().vnic_profiles_service()
@@ -643,10 +685,7 @@ class VmsModule(BaseModule):
                                 nic.get('interface', 'virtio')
                             ),
                             vnic_profile=otypes.VnicProfile(
-                                id=search_by_name(
-                                    vnic_profiles_service,
-                                    nic.get('profile_name'),
-                                ).id
+                                id=self.__get_vnic_profile_id(nic),
                             ) if nic.get('profile_name') else None,
                             mac=otypes.Mac(
                                 address=nic.get('mac_address')
@@ -784,6 +823,9 @@ def main():
         host=dict(default=None),
         clone=dict(type='bool', default=False),
         clone_permissions=dict(type='bool', default=False),
+        kernel_path=dict(default=None),
+        initrd_path=dict(default=None),
+        kernel_params=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -841,6 +883,11 @@ def main():
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
                     initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    os=otypes.OperatingSystem(
+                        cmdline=module.params.get('kernel_params'),
+                        initrd=module.params.get('initrd_path'),
+                        kernel=module.params.get('kernel_path'),
+                    ),
                 ),
             )
 

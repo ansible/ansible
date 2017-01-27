@@ -43,7 +43,7 @@
 
 - name: start SimpleHTTPServer
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 60 # this test set takes ~15 seconds to run
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
   poll: 0
 
 - wait_for: port={{ http_port }}
@@ -280,3 +280,16 @@
     status_code: 202
     method: POST
     body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'
