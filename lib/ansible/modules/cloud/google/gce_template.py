@@ -183,7 +183,6 @@ requirements:
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
       >= 0.20.0 if using preemptible option"
 notes:
-  - Either I(image) or I(image_family) is required.
   - JSON credentials strongly preferred.
 author: "Gwenael Pellen <gwenael.pellen@arkeup.com>"
 '''
@@ -528,7 +527,8 @@ def main():
             project_id=dict(),
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
-        )
+        ),
+        required_one_of=[['image', 'image_family']]
     )
 
     if not HAS_PYTHON26:
