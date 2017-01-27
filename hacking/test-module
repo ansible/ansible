@@ -201,6 +201,8 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
             invoke = "%s " % interpreters['ansible_python_interpreter']
         else:
             invoke = ""
+    else:
+        invoke = ""
 
     os.system("chmod +x %s" % modfile)
 
