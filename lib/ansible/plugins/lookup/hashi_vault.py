@@ -17,6 +17,10 @@
 #
 # USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
 #
+# To skip SSL certificate verification you can either set the VAUL_SKIP_VERIFY
+# environment variable or set skip_verify to False:
+# {{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 ssl_verify=False url=https://myvault:8200')}}
+#
 # You can skip setting the url if you set the VAULT_ADDR environment variable
 # or if you want it to default to localhost:8200
 #
@@ -40,6 +44,11 @@ ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 if os.getenv('VAULT_ADDR') is not None:
     ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
 
+ANSIBLE_HASHI_VAULT_SKIP_VERIFY = False
+
+if os.getenv('VAULT_SKIP_VERIFY') is not None:
+    ANSIBLE_HASHI_VAULT_SKIP_VERIFY = True
+
 class HashiVault:
     def __init__(self, **kwargs):
         try:
@@ -48,11 +57,13 @@ class HashiVault:
             raise AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-            
+
+        self.skip_verify = kwargs.get('skip_verify', ANSIBLE_HASHI_VAULT_SKIP_VERIFY)
+
         self.token = kwargs.get('token')
         if self.token==None:
             raise AnsibleError("No Vault Token specified")
-        
+
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s==None:
@@ -65,7 +76,7 @@ class HashiVault:
         else:
             self.secret_field = 'value'
 
-        self.client = hvac.Client(url=self.url, token=self.token)
+        self.client = hvac.Client(url=self.url, token=self.token, verify=not self.skip_verify)
 
         if self.client.is_authenticated():
             pass
@@ -76,13 +87,13 @@ class HashiVault:
         data = self.client.read(self.secret)
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
-        
+
         if self.secret_field=='': # secret was specified with trailing ':'
             return data['data']
-        
+
         if self.secret_field not in data['data']:
             raise AnsibleError("The secret %s does not contain the field '%s'. " % (self.secret, self.secret_field))
-        
+
         return data['data'][self.secret_field]
 
 
@@ -105,6 +116,6 @@ class LookupModule(LookupBase):
            key = term.split()[0]
            value = vault_conn.get()
            ret.append(value)
-           
+
         return ret
-        
+
