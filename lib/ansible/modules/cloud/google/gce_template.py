@@ -15,6 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
+
 ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community',
@@ -226,10 +229,6 @@ EXAMPLES = '''
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
 '''
-
-import socket
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 try:
     import libcloud
@@ -500,6 +499,45 @@ def module_controller(module, gce):
     module.exit_json(**json_output)
 
 
+def check_if_system_state_would_be_changed(module, gce):
+    ''' check_if_system_state_would_be_changed !
+
+    module : AnsibleModule object
+    gce: authenticated GCE libcloud driver
+
+    Returns:
+        system_state changed
+    '''
+    changed = False
+    current_state = "absent"
+
+    state = module.params.get("state")
+    name = module.params.get("name")
+
+    instance = None
+    try:
+        instance = gce.ex_get_instancetemplate(name)
+        current_state = "present"
+    except GoogleBaseError as err:
+        module.fail_json(msg='GCE get instancetemplate problem')
+
+    if current_state != state:
+        changed = True
+
+    if current_state == "absent":
+        if changed:
+            output = 'instance template {} will be created'.format(name)
+        else:
+            output = 'nothing to do for instance template {} '.format(name)
+    if current_state == "present":
+        if changed:
+            output = 'instance template {} will be detroyed'.format(name)
+        else:
+            output = 'nothing to do for instance template {} '.format(name)
+
+    return (changed, output)
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -528,7 +566,8 @@ def main():
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
         ),
-        required_one_of=[['image', 'image_family']]
+        required_one_of=[['image', 'image_family']],
+        supports_check_mode=True
     )
 
     if not HAS_PYTHON26:
@@ -543,7 +582,14 @@ def main():
     except GoogleBaseError as err:
         module.fail_json(msg='GCE Connexion failed')
 
-    module_controller(module, gce)
+    if module.check_mode:
+        (changed, output) = check_if_system_state_would_be_changed(module, gce)
+        module.exit_json(
+            changed=changed,
+            msg=output
+        )
+    else:
+        module_controller(module, gce)
 
 
 if __name__ == '__main__':
