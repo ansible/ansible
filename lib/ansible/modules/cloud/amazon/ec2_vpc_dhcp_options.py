@@ -289,7 +289,7 @@ def main():
     changed = False
     new_options = collections.defaultdict(lambda: None)
 
-  
+
     region, ec2_url, boto_params = get_aws_connection_info(module)
     connection = connect_to_aws(boto.vpc, region, **boto_params)
 
@@ -378,9 +378,9 @@ def main():
         # and remove old ones if that was requested
         if params['delete_old'] and existing_options:
             remove_dhcp_options_by_id(connection, existing_options.id)
-  
+
     module.exit_json(changed=changed, new_options=new_options, dhcp_options_id=dhcp_option.id)
-  
+
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *

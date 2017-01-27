@@ -293,7 +293,7 @@ class ImageManager(DockerBaseClass):
         if repo_tag:
            self.name = repo
            self.tag = repo_tag
-        
+
         if self.state in ['present', 'build']:
             self.present()
         elif self.state == 'absent':

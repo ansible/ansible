@@ -142,7 +142,7 @@ def generate_inv_from_api(enterprise_entity,config):
                       break
                     else:
                       vm_nic = None
-            
+
             vm_state = True
             # From abiquo.ini: Only adding to inventory VMs deployed
             if ((config.getboolean('defaults', 'deployed_only') == True) and (vmcollection['state'] == 'NOT_ALLOCATED')):

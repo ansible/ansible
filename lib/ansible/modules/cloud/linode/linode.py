@@ -247,7 +247,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
         #  - need linode_id (entity)
         #  - need disk_id for linode_id - create disk from distrib
         #  - need config_id for linode_id - create config (need kernel)
-        
+
         # Any create step triggers a job that need to be waited for.
         if not servers:
             for arg in (name, plan, distribution, datacenter):
@@ -424,7 +424,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             instance['status'] = 'Restarting'
             changed = True
             instances.append(instance)
-            
+
     elif state in ('absent', 'deleted'):
         for server in servers:
             instance = getInstanceDetails(api, server)

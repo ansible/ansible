@@ -421,7 +421,7 @@ class VirtNetwork(object):
 
     def create(self, entryid):
         return self.conn.create(entryid)
-    
+
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 

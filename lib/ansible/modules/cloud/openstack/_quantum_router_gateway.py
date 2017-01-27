@@ -180,7 +180,7 @@ def _add_gateway_router(neutron, module, router_id, network_id):
         module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
     return True
 
-def  _remove_gateway_router(neutron, module, router_id):
+def _remove_gateway_router(neutron, module, router_id):
     try:
         neutron.remove_gateway_router(router_id)
     except Exception as e:

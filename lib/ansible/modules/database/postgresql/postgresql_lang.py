@@ -253,21 +253,21 @@ def main():
         if lang_exists(cursor, lang):
             lang_trusted = lang_istrusted(cursor, lang)
             if (lang_trusted and not trust) or (not lang_trusted and trust):
-                if  module.check_mode:
+                if module.check_mode:
                     changed = True
                 else:
                     changed = lang_altertrust(cursor, lang, trust)
         else:
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
             else:
                 changed = lang_add(cursor, lang, trust)
                 if force_trust:
                     changed = lang_altertrust(cursor, lang, trust)
-                
+
     else:
         if lang_exists(cursor, lang):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['lang_dropped'] = True
             else:

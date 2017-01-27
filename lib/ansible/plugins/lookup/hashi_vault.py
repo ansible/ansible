@@ -48,11 +48,11 @@ class HashiVault:
             raise AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-            
+
         self.token = kwargs.get('token')
         if self.token==None:
             raise AnsibleError("No Vault Token specified")
-        
+
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s==None:
@@ -76,13 +76,13 @@ class HashiVault:
         data = self.client.read(self.secret)
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
-        
+
         if self.secret_field=='': # secret was specified with trailing ':'
             return data['data']
-        
+
         if self.secret_field not in data['data']:
             raise AnsibleError("The secret %s does not contain the field '%s'. " % (self.secret, self.secret_field))
-        
+
         return data['data'][self.secret_field]
 
 
@@ -105,6 +105,6 @@ class LookupModule(LookupBase):
            key = term.split()[0]
            value = vault_conn.get()
            ret.append(value)
-           
+
         return ret
-        
+

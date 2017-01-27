@@ -38,7 +38,7 @@ EXAMPLES = '''
 # Retrieve switch/port information
  - name: Gather information from lldp
    lldp:
- 
+
  - name: Print each switch/port
    debug:
     msg: "{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifalias'] }}"
@@ -73,7 +73,7 @@ def gather_lldp():
                 current_dict = current_dict[path_component]
             current_dict[final] = value
         return output_dict
-            
+
 
 def main():
     module = AnsibleModule({})
@@ -84,7 +84,7 @@ def main():
         module.exit_json(ansible_facts=data)
     except TypeError:
         module.fail_json(msg="lldpctl command failed. is lldpd running?")    
-   
+
 # import module snippets
 from ansible.module_utils.basic import *
 

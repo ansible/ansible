@@ -612,7 +612,7 @@ def get_custom_string_value(config, arg, module):
     elif arg.startswith('dampening'):
         REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
                                 PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-        if arg == 'dampen_igp_metric' or  arg == 'dampening_routemap':
+        if arg == 'dampen_igp_metric' or arg == 'dampening_routemap':
             value = ''
             if PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value')

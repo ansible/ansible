@@ -142,7 +142,7 @@ def main():
         url = "https://api.flowdock.com/v1/messages/team_inbox/%s" % (token)
     else:
         url = "https://api.flowdock.com/v1/messages/chat/%s" % (token)
-    
+
     params = {}
 
     # required params

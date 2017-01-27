@@ -130,7 +130,7 @@ def main():
         except BotoServerError as e:
             if e.error_code != 'DBSubnetGroupNotFoundFault':
                 module.fail_json(msg = e.error_message)
-        
+
         if state == 'absent':
             if exists:
                 conn.delete_db_subnet_group(group_name)

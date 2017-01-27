@@ -639,7 +639,7 @@ class ContainerManager(DockerBaseClass):
         return options
 
     def cmd_up(self):
-    
+
         start_deps = self.dependencies
         service_names = self.services
         detached = True
@@ -943,7 +943,7 @@ class ContainerManager(DockerBaseClass):
                         short_id=container.short_id
                     ))
                 result['actions'].append(service_res)
-         
+
         if not self.check_mode and result['changed']:
             _, fd_name = tempfile.mkstemp(prefix="ansible")
             try:

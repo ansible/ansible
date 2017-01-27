@@ -145,7 +145,7 @@ class LibcloudInventory(object):
         self.cache_path_cache = cache_path + "/ansible-libcloud.cache"
         self.cache_path_index = cache_path + "/ansible-libcloud.index"
         self.cache_max_age = config.getint('cache', 'cache_max_age')
-        
+
 
     def parse_cli_args(self):
         '''
@@ -225,7 +225,7 @@ class LibcloudInventory(object):
         # Inventory: Group by key pair
         if node.extra['key_name']:
             self.push(self.inventory, self.to_safe('key_' + node.extra['key_name']), dest)
-            
+
         # Inventory: Group by security group, quick thing to handle single sg
         if node.extra['security_group']:
             self.push(self.inventory, self.to_safe('sg_' + node.extra['security_group'][0]), dest)

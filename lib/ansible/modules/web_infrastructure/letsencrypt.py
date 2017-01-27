@@ -775,7 +775,7 @@ def main():
         ),
         supports_check_mode = True,
     )
- 
+
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     locale.setlocale(locale.LC_ALL, "C")
 

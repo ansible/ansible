@@ -220,7 +220,7 @@ elif options.host:
         print('Problem executing the command "%s inventory": %s' %
               (SW_REPORT, str(e)), file=sys.stderr)
         sys.exit(2)
-    
+
     if options.human:
         print('Host: %s' % options.host)
         for k, v in iteritems(host_details):
