@@ -393,6 +393,7 @@ lib/ansible/modules/notification/mqtt.py
 lib/ansible/modules/notification/osx_say.py
 lib/ansible/modules/notification/pushbullet.py
 lib/ansible/modules/notification/sendgrid.py
+lib/ansible/modules/notification/sns.py
 lib/ansible/modules/packaging/language/bundler.py
 lib/ansible/modules/packaging/language/composer.py
 lib/ansible/modules/packaging/language/cpanm.py
