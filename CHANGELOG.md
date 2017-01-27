@@ -58,6 +58,8 @@ Ansible Changes By Release
 - packet:
   * packet_device
   * packet_sshkey
+- panos:
+  * panos_cert_gen_ssh
 - windows:
   * win_say
 
