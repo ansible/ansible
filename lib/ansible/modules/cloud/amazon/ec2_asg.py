@@ -644,7 +644,7 @@ def replace(connection, module):
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
-        
+
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
         min_size = as_group.min_size
@@ -674,7 +674,7 @@ def replace(connection, module):
     if not old_instances:
         changed = False
         return(changed, props)
-      
+
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 

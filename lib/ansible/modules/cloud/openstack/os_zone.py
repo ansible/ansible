@@ -205,7 +205,7 @@ def main():
             else:
                 if masters is None:
                     masters = []
-                
+
                 pre_update_zone = zone
                 changed = _system_state_change(state, email,
                                                description, ttl,

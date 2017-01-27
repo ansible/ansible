@@ -187,7 +187,7 @@ def create_or_update_sqs_queue(connection, module):
                 queue = connection.create_queue(queue_name)
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
-        
+
         if not module.check_mode:
             result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
             result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
@@ -195,7 +195,7 @@ def create_or_update_sqs_queue(connection, module):
             result['maximum_message_size'] = queue.get_attributes('MaximumMessageSize')['MaximumMessageSize']
             result['delivery_delay'] = queue.get_attributes('DelaySeconds')['DelaySeconds']
             result['receive_message_wait_time'] = queue.get_attributes('ReceiveMessageWaitTimeSeconds')['ReceiveMessageWaitTimeSeconds']
-          
+
     except BotoServerError:
         result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)

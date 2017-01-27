@@ -302,7 +302,7 @@ class DarwinGroup(Group):
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
         return (None, '', '')
-    
+
     def get_lowest_available_system_gid(self):
         # check for lowest available system gid (< 500)
         try:

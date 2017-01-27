@@ -97,7 +97,7 @@ def get_volume_info(volume):
                     },
                     'tags': volume.tags
                 }
-    
+
     return volume_info
 
 def list_ec2_volumes(connection, module):

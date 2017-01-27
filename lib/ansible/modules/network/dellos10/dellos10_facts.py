@@ -183,14 +183,14 @@ class Default(FactsBase):
             return sw_name.text
         else:
             return ""
- 
+
     def parse_version(self, data):
         sw_ver = data.find('./data/system-sw-state/sw-version/sw-version')    
         if sw_ver is not None:
             return sw_ver.text
         else:
             return ""
-     
+
     def parse_hostname(self, data):
         match = re.search(r'hostname\s+(\S+)', data, re.M)
         if match:
@@ -224,7 +224,7 @@ class Hardware(FactsBase):
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
         data = self.runner.get_command('show processes memory | grep Total')
-         
+
         match = self.parse_memory(data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) / 1024
@@ -236,7 +236,7 @@ class Hardware(FactsBase):
             return cpu_arch.text
         else:
             return ""
- 
+
     def parse_memory(self, data):
         return re.findall(r'\:\s*(\d+)', data, re.M)
 
@@ -372,7 +372,7 @@ class Interfaces(FactsBase):
                 lldp_facts[name].append(fact)
 
         return lldp_facts     
- 
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,

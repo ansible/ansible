@@ -365,7 +365,7 @@ def create_virtual_machine(module, azure):
         azure.get_role(name, name, name)
     except AzureMissingException:
         # vm does not exist; create it
-        
+
         if os_type == 'linux':
             # Create linux configuration
             disable_ssh_password_authentication = not password
@@ -563,7 +563,7 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-    
+
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):

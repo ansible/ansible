@@ -118,7 +118,7 @@ def _clean504(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             _delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
 
 def _cleanall(module, hookurl, oauthkey, repo, user):
@@ -130,7 +130,7 @@ def _cleanall(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             _delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
 
 def _create(module, hookurl, oauthkey, repo, user, content_type):

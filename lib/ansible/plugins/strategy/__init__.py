@@ -322,7 +322,7 @@ class StrategyBase:
             # get the original host and task.  We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)
             original_task = iterator.get_original_task(original_host, task_result._task)
-            
+
             task_result._host = original_host
             task_result._task = original_task
 
@@ -662,7 +662,7 @@ class StrategyBase:
         if group_name not in host.get_groups():
             new_group.add_host(real_host)
             changed = True
-            
+
         if changed:
             # clear cache of group dict, which is used in magic host variables
             self._inventory.clear_group_dict_cache()

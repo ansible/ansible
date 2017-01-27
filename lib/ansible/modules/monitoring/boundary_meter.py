@@ -126,7 +126,7 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
         return "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(module, name, apiid, apikey, action, data=None, meter_id=None, cert_type=None):
-    
+
     if meter_id is None:
         url = build_url(name, apiid, action)
     else:

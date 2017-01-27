@@ -53,7 +53,7 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
-            
+
     host:
         description:
             - The webfaction host on which the site should be created.
@@ -141,7 +141,7 @@ def main():
     existing_site = site_map.get(site_name)
 
     result = {}
-    
+
     # Here's where the real stuff happens
 
     if site_state == 'present':

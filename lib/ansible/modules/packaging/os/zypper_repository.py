@@ -142,7 +142,7 @@ EXAMPLES = '''
 - zypper_repository:
     repo: 'http://download.opensuse.org/repositories/systemsmanagement/openSUSE_Leap_42.1/'
     auto_import_keys: yes
- 
+
 # Force refresh of a repository
 - zypper_repository:
     repo: 'http://my_internal_ci_repo/repo

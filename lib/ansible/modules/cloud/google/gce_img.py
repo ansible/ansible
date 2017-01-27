@@ -103,7 +103,7 @@ EXAMPLES = '''
 - gce_img:
     name: test-image
     source: https://storage.googleapis.com/bucket/path/to/image.tgz
-    
+
 # Alternatively use the gs scheme
 - gce_img:
     name: test-image

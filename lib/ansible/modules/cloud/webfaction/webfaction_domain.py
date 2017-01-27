@@ -121,7 +121,7 @@ def main():
     existing_domain = domain_map.get(domain_name)
 
     result = {}
-    
+
     # Here's where the real stuff happens
 
     if domain_state == 'present':

@@ -148,7 +148,7 @@ class Ec2CustomerGatewayManager:
             CustomerGatewayId=gw_id
         )
         return response
-            
+
     def ensure_cgw_present(self, bgp_asn, ip_address):
         response = self.ec2.create_customer_gateway(
             DryRun=False,

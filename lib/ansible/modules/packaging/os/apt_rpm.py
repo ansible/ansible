@@ -110,7 +110,7 @@ def update_package_db(module):
         module.fail_json(msg="could not update package db: %s" % err)
 
 def remove_packages(module, packages):
-    
+
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -122,7 +122,7 @@ def remove_packages(module, packages):
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s: %s" % (package, err))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -162,7 +162,7 @@ def main():
                 state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
                 update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
                 package      = dict(aliases=['pkg', 'name'], required=True)))
-                
+
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):
         module.fail_json(msg="cannot find /usr/bin/apt-get and/or /usr/bin/rpm")
@@ -182,6 +182,6 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
-    
+
 if __name__ == '__main__':
     main()

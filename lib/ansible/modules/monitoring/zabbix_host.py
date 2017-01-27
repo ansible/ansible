@@ -376,10 +376,10 @@ class Host(object):
 
         if host['proxy_hostid'] != proxy_id:
             return True
-        
+
         if host['name'] != visible_name:
             return True
-        
+
         return False
 
     # link or clear template of the host

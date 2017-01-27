@@ -135,7 +135,7 @@ class GCPAuthTestCase(unittest.TestCase):
                                                   require_valid_json=False,
                                                   check_libcloud=False)
             self.assertTrue(is_valid)
-        
+
     @mock.patch('ansible.module_utils.gcp._get_gcp_environ_var',
                 side_effect=fake_get_gcp_environ_var)
     def test_get_gcp_environment_credentials(self, mockobj):
@@ -144,7 +144,7 @@ class GCPAuthTestCase(unittest.TestCase):
         actual = _get_gcp_environment_credentials(None, None, None)
         expected = tuple(['gce-email', None, None])
         self.assertEqual(expected, actual)
-        
+
         fake_env_data = {'GCE_PEM_FILE_PATH': '/path/to/pem.pem'}
         expected = tuple([None, '/path/to/pem.pem', None])
         actual = _get_gcp_environment_credentials(None, None, None)

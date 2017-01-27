@@ -127,7 +127,7 @@ class StackiHost:
 
         auth_creds  = {'USERNAME': module.params['stacki_user'],
                        'PASSWORD': module.params['stacki_password']}
-        
+
         # Get Intial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET") 
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
@@ -144,7 +144,7 @@ class StackiHost:
 
         # Endpoint to get final authentication header
         login_endpoint = self.endpoint + "/login"
-   
+
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
                                     payload=urllib.urlencode(auth_creds), method="POST") 
@@ -175,41 +175,41 @@ class StackiHost:
 
 
     def stack_check_host(self):
-    
+
         res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "list host"}),
                               headers=self.header, method="POST") 
-        
+
         if self.hostname in res.read():
             return True
         else:
             return False
-    
-    
+
+
     def stack_sync(self):
-    
+
         res = self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
                               headers=self.header, method="POST")
-            
+
         res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
                               headers=self.header, method="POST")
-    
+
 
     def stack_force_install(self):
-    
+
         data = dict()
         changed = False
-    
+
         data['cmd'] = "set host boot {0} action=install" \
             .format(self.hostname)
         res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
         changed = True
-    
+
         self.stack_sync()
-    
+
         result['changed'] = changed
         result['stdout'] = "api call successful".rstrip("\r\n")
-   
+
 
     def stack_add_interface(self):
 
@@ -217,35 +217,35 @@ class StackiHost:
             .format(self.hostname, self.prim_intf, self.prim_intf_ip, self.network, self.prim_intf_mac)
         res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
                               headers=self.header, method="POST")
-    
+
 
     def stack_add(self, result):
-    
+
         data            = dict()
         changed         = False
-    
+
         data['cmd'] = "add host {0} rack={1} rank={2} appliance={3}"\
             .format(self.hostname, self.rack, self.rank, self.appliance)
         res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
                               headers=self.header, method="POST")
-    
+
         self.stack_sync()
-    
+
         result['changed'] = changed
         result['stdout'] = "api call successful".rstrip("\r\n")
-    
-    
+
+
     def stack_remove(self, result):
-    
+
         data            = dict()
-    
+
         data['cmd'] = "remove host {0}"\
             .format(self.hostname)
         res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
                               headers=self.header, method="POST")
-    
+
         self.stack_sync()
-    
+
         result['changed'] = True
         result['stdout'] = "api call successful".rstrip("\r\n")
 

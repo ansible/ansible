@@ -143,14 +143,14 @@ def main():
     resource = module.params.get('resource')
     tags = module.params.get('tags')
     state = module.params.get('state')
-  
+
     ec2 = ec2_connect(module)
-    
+
     # We need a comparison here so that we can accurately report back changed status.
     # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
     filters = {'resource-id' : resource}
     gettags = ec2.get_all_tags(filters=filters)
-   
+
     dictadd = {}
     dictremove = {}
     baddict = {}
@@ -170,7 +170,7 @@ def main():
         tagger = ec2.create_tags(resource, dictadd)
         gettags = ec2.get_all_tags(filters=filters)
         module.exit_json(msg="Tags %s created for resource %s." % (dictadd,resource), changed=True)
- 
+
     if state == 'absent':
         if not tags:
             module.fail_json(msg="tags argument is required when state is absent")

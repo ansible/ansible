@@ -306,7 +306,7 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         # define network parameters
         network_net = params.Network(name=vmnetwork)
         nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
-        
+
     try:
         conn.vms.add(vmparams)
     except:
@@ -502,7 +502,7 @@ def main():
         else:
             vm_stop(c, vmname)
             module.exit_json(changed=True, msg="VM %s is shutting down" % vmname)
-    
+
     if state == 'restart':
         if vm_status(c, vmname) == 'up':
             vm_restart(c, vmname)

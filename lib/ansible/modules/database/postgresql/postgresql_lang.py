@@ -264,7 +264,7 @@ def main():
                 changed = lang_add(cursor, lang, trust)
                 if force_trust:
                     changed = lang_altertrust(cursor, lang, trust)
-                
+
     else:
         if lang_exists(cursor, lang):
             if module.check_mode:
