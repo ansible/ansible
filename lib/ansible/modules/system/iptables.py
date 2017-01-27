@@ -126,7 +126,7 @@ options:
   tcp_flags:
     description:
       - TCP flags specification. tcp_flags expects a dict with the two keys
-        "flags" and "flags_set". The "flags" list is the mask: a list of
+        "flags" and "flags_set". The "flags" list is the mask, a list of
         flags you want to examine. The "flags_set" list tells which one(s)
         should be set. If one of the two values is missing, the --tcp-flags option
         will be ignored.
