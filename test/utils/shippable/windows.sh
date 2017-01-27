@@ -27,7 +27,6 @@ if [ -s /tmp/windows.txt ]; then
         --windows 2008-R2_SP1 \
         --windows 2012-RTM \
         --windows 2012-R2_RTM \
-        --windows 2016-English-Full-Base \
 
 else
     echo "No changes requiring integration tests specific to Windows were detected."
