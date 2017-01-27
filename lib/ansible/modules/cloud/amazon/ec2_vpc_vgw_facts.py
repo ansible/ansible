@@ -148,7 +148,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-     # Validate Requirements
+    # Validate Requirements
     if not HAS_BOTO3:
         module.fail_json(msg='json and boto3 is required.')
 
@@ -160,7 +160,7 @@ def main():
 
     # call your function here
     results = list_virtual_gateways(connection, module)
-    
+
     module.exit_json(result=results)
 
 

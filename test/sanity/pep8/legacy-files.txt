@@ -220,7 +220,6 @@ lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/vmware/vca_fw.py
 lib/ansible/modules/cloud/vmware/vmware_guest.py
 lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
-lib/ansible/modules/cloud/vmware/vmware_vm_vss_dvs_migrate.py
 lib/ansible/modules/cloud/vmware/vmware_vswitch.py
 lib/ansible/modules/cloud/vmware/vsphere_copy.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
@@ -317,8 +316,6 @@ lib/ansible/modules/network/f5/bigip_pool.py
 lib/ansible/modules/network/f5/bigip_pool_member.py
 lib/ansible/modules/network/f5/bigip_virtual_server.py
 lib/ansible/modules/network/haproxy.py
-lib/ansible/modules/network/illumos/dladm_vlan.py
-lib/ansible/modules/network/ios/ios_config.py
 lib/ansible/modules/network/junos/junos_facts.py
 lib/ansible/modules/network/lldp.py
 lib/ansible/modules/network/nmcli.py
@@ -456,7 +453,6 @@ lib/ansible/modules/system/lvg.py
 lib/ansible/modules/system/lvol.py
 lib/ansible/modules/system/modprobe.py
 lib/ansible/modules/system/ohai.py
-lib/ansible/modules/system/open_iscsi.py
 lib/ansible/modules/system/openwrt_init.py
 lib/ansible/modules/system/pam_limits.py
 lib/ansible/modules/system/sefcontext.py
@@ -498,9 +494,7 @@ lib/ansible/modules/windows/win_regedit.py
 lib/ansible/modules/windows/win_regmerge.py
 lib/ansible/modules/windows/win_robocopy.py
 lib/ansible/modules/windows/win_say.py
-lib/ansible/modules/windows/win_share.py
 lib/ansible/modules/windows/win_shell.py
-lib/ansible/modules/windows/win_shortcut.py
 lib/ansible/modules/windows/win_unzip.py
 lib/ansible/modules/windows/win_updates.py
 lib/ansible/modules/windows/win_uri.py
@@ -575,7 +569,6 @@ setup.py
 test/integration/cleanup_ec2.py
 test/integration/cleanup_gce.py
 test/integration/setup_gce.py
-test/integration/targets/async/library/async_test.py
 test/units/cli/test_galaxy.py
 test/units/contrib/inventory/test_vmware_inventory.py
 test/units/errors/test_errors.py
