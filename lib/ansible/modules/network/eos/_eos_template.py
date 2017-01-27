@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -32,8 +34,8 @@ description:
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
-deprecated: Deprecated in 2.2. Use eos_config instead
-extends_documentation_fragment: eos
+deprecated: Deprecated in 2.2. Use M(eos_config) instead
+extends_documentation_fragment: eapi
 options:
   src:
     description:
@@ -122,15 +124,40 @@ responses:
 """
 import re
 
-import ansible.module_utils.eos
-
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils import eos
+from ansible.module_utils import eapi
+from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModle
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
-def get_config(module):
+SHARED_LIB = 'eos'
+
+def get_ansible_module():
+    if SHARED_LIB == 'eos':
+        return LocalAnsibleModule
+    return AnsibleModule
+
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+load_config = partial(invoke, 'load_config')
+get_config = partial(invoke, 'get_config')
+
+def check_args(module):
+    warnings = list()
+    if SHARED_LIB == 'eapi':
+        eapi.check_args(module)
+    return warnings
+
+def get_current_config(module):
     config = module.params.get('config')
-    defaults = module.params['include_defaults']
     if not config and not module.params['force']:
+        flags = []
+        if module.params['include_defaults']:
+            flags.append('all')
         config = module.config.get_config(include_defaults=defaults)
     return config
 
@@ -171,48 +198,53 @@ def main():
         config=dict()
     )
 
+    argument_spec.update(eapi.eapi_argument_spec)
+
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
+    cls = get_ansible_module()
 
-    replace = module.params['replace']
+    module = cls(argument_spec=argument_spec,
+                 mutually_exclusive=mutually_exclusive,
+                 supports_check_mode=True)
 
-    commands = list()
-    running = None
+    warnings = check_args(module)
 
-    result = dict(changed=False)
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
-    candidate = NetworkConfig(contents=module.params['src'], indent=3)
+    src = module.params['src']
+    candidate = NetworkConfig(contents=src, indent=3)
 
+    if module.params['backup']:
+        result['__backup__'] = get_config()
+
+    if not module.params['force']:
+        contents = get_current_config(module)
+        configobj = NetworkConfig(contents=contents, indent=3)
+        commands = candidate.difference(configobj)
+        commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c).strip() for c in commands if c]
+    else:
+        commands = [c.strip() for c in str(candidate).split('\n')]
+
+    # FIXME not implemented yet!!
     if replace:
         if module.params['transport'] == 'cli':
             module.fail_json(msg='config replace is only supported over eapi')
         commands = str(candidate).split('\n')
-    else:
-        contents = get_config(module)
-        if contents:
-            running = NetworkConfig(contents=contents, indent=3)
-            result['_backup'] = contents
 
-        if not module.params['force']:
-            commands = candidate.difference((running or list()))
-            commands = dumps(commands, 'commands').split('\n')
-            commands = [str(c) for c in commands if c]
-        else:
-            commands = str(candidate).split('\n')
-
-    commands = filter_exit(commands)
     if commands:
-        if not module.check_mode:
-            response = module.config.load_config(commands, replace=replace,
-                                                 commit=True)
-            result['responses'] = response
+        commands = filter_exit(commands)
+        commit = not module.check_mode
+        load_config(commands, commit=commit)
         result['changed'] = True
 
     result['updates'] = commands
+
     module.exit_json(**result)
 
 if __name__ == '__main__':
+    SHARED_LIB = 'eapi'
     main()
