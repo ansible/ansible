@@ -193,13 +193,20 @@ def upgrade(module, pacman_path):
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
     data = stdout.split('\n')
     data.remove('')
+    diff = {
+        'before': '',
+        'after': '',
+        'after_header': 'upgraded'
+    }
 
     if rc == 0:
+        if module._diff:
+            diff['after'] = '\n'.join(data) + '\n'
         if module.check_mode:
-            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=data)
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=data, diff=diff)
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
-            module.exit_json(changed=True, msg='System upgraded', packages=data)
+            module.exit_json(changed=True, msg='System upgraded', packages=data, diff=diff)
         else:
             module.fail_json(msg="Could not upgrade")
     else:
