@@ -36,9 +36,7 @@ options:
   data:
     description:
       - Alternate data to return instead of 'pong'
-    required: false
     default: 'pong'
-    aliases: []
 author: "Chris Church (@cchurch)"
 '''
 
@@ -47,6 +45,10 @@ EXAMPLES = r'''
 ansible winserver -m win_ping
 
 # Example from an Ansible Playbook
-- action: win_ping
+- win_ping:
+
+# Induce a crash to see what happens
+- win_ping:
+    data: crash
 '''
 
