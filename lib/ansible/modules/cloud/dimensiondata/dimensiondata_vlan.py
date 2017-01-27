@@ -19,6 +19,7 @@
 # Authors:
 #   - Aimon Bustardo <aimon.bustardo@dimensiondata.com>
 #   - Bert Diwa      <Lamberto.Diwa@dimensiondata.com>
+#   - Adam Friedman  <tintoy@tintoy.io>
 #
 
 
@@ -28,7 +29,7 @@ module: dimensiondata_vlan
 short_description: Create, Read, Update or Delete VLANs.
 description:
   - Create, Read, Update, Delete or Expand VLANs.
-version_added: "2.2"
+version_added: "2.3"
 author: 'Aimon Bustardo (@aimonb)'
 options:
   region:
@@ -36,8 +37,9 @@ options:
       - The target region.
     choices:
       - Regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - They are also listed in https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html
-      - Note that the default value "na" stands for "North America". The module prepends 'dd-' to the region choice.
+      - They are also listed in U(https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html)
+      - Note that the default value "na" stands for "North America".
+      - The module prepends 'dd-' to the region choice.
     default: na
   location:
     description:
@@ -314,6 +316,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             region=dict(default='na'),
+            mcp_user=dict(required=False, type='str'),
+            mcp_password=dict(required=False, type='str'),
             location=dict(required=True, type='str'),
             network_domain=dict(required=True, type='str'),
             name=dict(default=False, type='str'),
@@ -321,14 +325,15 @@ def main():
             description=dict(default='', type='str'),
             private_ipv4_base_address=dict(default=False, type='str'),
             private_ipv4_prefix_size=dict(default=False, type='str'),
-            action=dict(default='create', choices=['create', 'read', 'get',
-                                                   'update', 'delete',
-                                                   'expand']),
+            action=dict(default='create', choices=['create', 'read', 'get', 'update', 'delete', 'expand']),
             verify_ssl_cert=dict(required=False, default=True, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
             wait_time=dict(required=False, default=600, type='int'),
             wait_poll_interval=dict(required=False, default=2, type='int')
-        )
+        ),
+        required_together=[
+            ['mcp_user', 'mcp_password']
+        ]
     )
 
     if not HAS_LIBCLOUD:
