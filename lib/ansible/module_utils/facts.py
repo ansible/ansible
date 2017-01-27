@@ -175,6 +175,7 @@ class Facts(object):
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
+            self.get_apparmor_facts()
             self.get_caps_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
@@ -467,6 +468,13 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except (AttributeError,OSError):
                 self.facts['selinux']['type'] = 'unknown'
+
+    def get_apparmor_facts(self):
+        self.facts['apparmor'] = {}
+        if os.path.exists('/sys/kernel/security/apparmor'):
+             self.facts['apparmor']['status'] = 'enabled'
+        else:
+             self.facts['apparmor']['status'] = 'disabled'
 
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
@@ -1533,6 +1541,8 @@ class SunOSHardware(Hardware):
         self.get_cpu_facts()
         self.get_memory_facts()
         self.get_dmi_facts()
+        self.get_device_facts()
+        self.get_uptime_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1620,6 +1630,79 @@ class SunOSHardware(Hardware):
             found = re.search(r'(\w+\sEnterprise\s\w+)',system_conf)
             if found:
                 self.facts['product_name'] = found.group(1)
+
+    def get_device_facts(self):
+        # Device facts are derived for sdderr kstats. This code does not use the
+        # full output, but rather queries for specific stats.
+        # Example output:
+        # sderr:0:sd0,err:Hard Errors     0
+        # sderr:0:sd0,err:Illegal Request 6
+        # sderr:0:sd0,err:Media Error     0
+        # sderr:0:sd0,err:Predictive Failure Analysis     0
+        # sderr:0:sd0,err:Product VBOX HARDDISK   9
+        # sderr:0:sd0,err:Revision        1.0
+        # sderr:0:sd0,err:Serial No       VB0ad2ec4d-074a
+        # sderr:0:sd0,err:Size    53687091200
+        # sderr:0:sd0,err:Soft Errors     0
+        # sderr:0:sd0,err:Transport Errors        0
+        # sderr:0:sd0,err:Vendor  ATA
+
+        self.facts['devices'] = {}
+
+        disk_stats = {
+            'Product': 'product',
+            'Revision': 'revision',
+            'Serial No': 'serial',
+            'Size': 'size',
+            'Vendor': 'vendor',
+            'Hard Errors': 'hard_errors',
+            'Soft Errors': 'soft_errors',
+            'Transport Errors': 'transport_errors',
+            'Media Error': 'media_errors',
+            'Predictive Failure Analysis': 'predictive_failure_analysis',
+            'Illegal Request': 'illegal_request',
+        }
+
+        cmd = ['/usr/bin/kstat', '-p']
+
+        for ds in disk_stats:
+            cmd.append('sderr:::%s' % ds)
+
+        d = {}
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return dict()
+
+        sd_instances = frozenset(line.split(':')[1] for line in out.split('\n') if line.startswith('sderr'))
+        for instance in sd_instances:
+            lines = (line for line in out.split('\n') if ':' in line and line.split(':')[1] == instance)
+            for line in lines:
+                text, value = line.split('\t')
+                stat = text.split(':')[3]
+
+                if stat == 'Size':
+                    d[disk_stats.get(stat)] = self.module.pretty_bytes(float(value))
+                else:
+                    d[disk_stats.get(stat)] = value.rstrip()
+
+            diskname = 'sd' + instance
+            self.facts['devices'][diskname] = d
+            d = {}
+
+    def get_uptime_facts(self):
+        # On Solaris, unix:0:system_misc:snaptime is created shortly after machine boots up
+        # and displays tiem in seconds. This is much easier than using uptime as we would
+        # need to have a parsing procedure for translating from human-readable to machine-readable
+        # format.
+        # Example output:
+        # unix:0:system_misc:snaptime     1175.410463590
+        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:snaptime')
+
+        if rc != 0:
+            return
+
+        self.facts['uptime_seconds'] = int(float(out.split('\t')[1]))
+
 
 class OpenBSDHardware(Hardware):
     """
@@ -1972,6 +2055,7 @@ class AIX(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_vgs_facts()
+        self.get_mount_facts()
         return self.facts
 
     def get_cpu_facts(self):
@@ -2080,6 +2164,34 @@ class AIX(Hardware):
                                       }
                             self.facts['vgs'][m.group(1)].append(pv_info)
 
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        # AIX does not have mtab but mount command is only source of info (or to use
+        # api calls to get same info)
+        mount_path = self.module.get_bin_path('mount')
+        rc, mount_out, err = self.module.run_command(mount_path)
+        if mount_out:
+            for line in mount_out.split('\n'):
+                fields = line.split()
+                if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
+                    if re.match('^/', fields[0]):
+                        # normal mount
+                        self.facts['mounts'].append({'mount': fields[1],
+                                                 'device': fields[0],
+                                                 'fstype' : fields[2],
+                                                 'options': fields[6],
+                                                 'time': '%s %s %s' % ( fields[3], fields[4], fields[5])})
+                    else:
+                        # nfs or cifs based mount
+                        # in case of nfs if no mount options are provided on command line
+                        # add into fields empty string...
+                        if len(fields) < 8: fields.append("")
+                        self.facts['mounts'].append({'mount': fields[2],
+                                                 'device': '%s:%s' % (fields[0], fields[1]),
+                                                 'fstype' : fields[3],
+                                                 'options': fields[7],
+                                                 'time': '%s %s %s' % ( fields[4], fields[5], fields[6])})
 
 class HPUX(Hardware):
     """
@@ -3802,9 +3914,6 @@ def get_all_facts(module):
     for (k,v) in setup_options.items():
         if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
             setup_result['ansible_facts'][k] = v
-
-    # hack to keep --verbose from showing all the setup module results
-    setup_result['_ansible_verbose_override'] = True
 
     return setup_result
 

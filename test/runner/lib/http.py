@@ -76,7 +76,7 @@ class HttpClient(object):
 
         cmd += [url]
 
-        stdout, _ = run_command(self.args, cmd, capture=True, always=self.always)
+        stdout, _ = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)
 
         if self.args.explain and not self.always:
             return HttpResponse(200, '')

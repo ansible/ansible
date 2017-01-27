@@ -107,10 +107,21 @@ import __main__
 # Ubuntu15.10 with python2.7  Works
 # Ubuntu15.10 with python3.4  Fails without this
 # Ubuntu16.04.1 with python3.5  Fails without this
+# To test on another platform:
+# * use the copy module (since this shadows the stdlib copy module)
+# * Turn off pipelining
+# * Make sure that the destination file does not exist
+# * ansible ubuntu16-test -m copy -a 'src=/etc/motd dest=/var/tmp/m'
+# This will traceback in shutil.  Looking at the complete traceback will show
+# that shutil is importing copy which finds the ansible module instead of the
+# stdlib module
 scriptdir = None
 try:
     scriptdir = os.path.dirname(os.path.abspath(__main__.__file__))
-except AttributeError:
+except (AttributeError, OSError):
+    # Some platforms don't set __file__ when reading from stdin
+    # OSX raises OSError if using abspath() in a directory we don't have
+    # permission to read.
     pass
 if scriptdir is not None:
     sys.path = [p for p in sys.path if p != scriptdir]

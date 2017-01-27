@@ -25,13 +25,17 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_unzip
 version_added: "2.0"
 short_description: Unzips compressed files and archives on the Windows node
 description:
-     - Unzips compressed files and archives. For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX) has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
+- Unzips compressed files and archives.
+- Supports .zip files natively
+- Supports other formats supported by the Powershell Community Extensions (PSCX) module (basically everything 7zip supports)
+requires:
+- PSCX
 options:
   src:
     description:
@@ -66,21 +70,23 @@ options:
       - If this file or directory exists the specified src will not be extracted.
     required: no
     default: null
+notes:
+- For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX) has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
 author: Phil Schwartz
 '''
 
 EXAMPLES = r'''
 # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
-$ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib rm=true" all
+# $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=true" all
 # Playbook example
 
 # Simple unzip
 ---
 - name: Unzip a bz2 (BZip) file
   win_unzip:
-    src: "C:\Users\Phil\Logs.bz2"
-    dest: "C:\Users\Phil\OldLogs"
-    creates: "C:\Users\Phil\OldLogs"
+    src: C:\Users\Phil\Logs.bz2
+    dest: C:\Users\Phil\OldLogs
+    creates: C:\Users\Phil\OldLogs
 
 # This playbook example unzips a .zip file and recursively decompresses the contained .gz files and removes all unneeded compressed files after completion.
 ---

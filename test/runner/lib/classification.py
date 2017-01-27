@@ -10,6 +10,7 @@ from lib.target import (
     walk_units_targets,
     walk_compile_targets,
     walk_sanity_targets,
+    load_integration_prefixes,
 )
 
 from lib.util import (
@@ -86,6 +87,7 @@ class PathMapper(object):
 
         self.module_names_by_path = dict((t.path, t.module) for t in self.module_targets)
         self.integration_targets_by_name = dict((t.name, t) for t in self.integration_targets)
+        self.integration_targets_by_alias = dict((a, t) for t in self.integration_targets for a in t.aliases)
 
         self.posix_integration_by_module = dict((m, t.name) for t in self.integration_targets
                                                 if 'posix/' in t.aliases for m in t.modules)
@@ -93,6 +95,8 @@ class PathMapper(object):
                                                   if 'windows/' in t.aliases for m in t.modules)
         self.network_integration_by_module = dict((m, t.name) for t in self.integration_targets
                                                   if 'network/' in t.aliases for m in t.modules)
+
+        self.prefixes = load_integration_prefixes()
 
     def classify(self, path):
         """
@@ -139,13 +143,12 @@ class PathMapper(object):
         if path.startswith('docs/'):
             return minimal
 
-        if path.startswith('docs-api/'):
-            return minimal
-
-        if path.startswith('docsite/'):
-            return minimal
-
         if path.startswith('examples/'):
+            if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
+                return {
+                    'windows-integration': 'connection_winrm',
+                }
+
             return minimal
 
         if path.startswith('hacking/'):
@@ -171,6 +174,34 @@ class PathMapper(object):
                 }
 
             if ext == '.py':
+                network_utils = (
+                    'netcfg',
+                    'netcli',
+                    'network_common',
+                    'network',
+                )
+
+                if name in network_utils:
+                    return {
+                        'network-integration': 'network/',  # target all network platforms
+                        'units': 'all',
+                    }
+
+                if name in self.prefixes and self.prefixes[name] == 'network':
+                    network_target = 'network/%s/' % name
+
+                    if network_target in self.integration_targets_by_alias:
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    display.warning('Integration tests for "%s" not found.' % network_target)
+
+                    return {
+                        'units': 'all',
+                    }
+
                 return {
                     'integration': 'all',
                     'network-integration': 'all',
@@ -223,6 +254,28 @@ class PathMapper(object):
                 'integration': integration_name,
                 'units': units_path,
             }
+
+        if path.startswith('lib/ansible/plugins/terminal/'):
+            if ext == '.py':
+                if name in self.prefixes and self.prefixes[name] == 'network':
+                    network_target = 'network/%s/' % name
+
+                    if network_target in self.integration_targets_by_alias:
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    display.warning('Integration tests for "%s" not found.' % network_target)
+
+                    return {
+                        'units': 'all',
+                    }
+
+                return {
+                    'network-integration': 'all',
+                    'units': 'all',
+                }
 
         if path.startswith('lib/ansible/utils/module_docs_fragments/'):
             return {

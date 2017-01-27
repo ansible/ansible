@@ -115,7 +115,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 try:
     # python3
@@ -528,7 +528,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     return RedirectHandler
 
 
-def build_ssl_validation_error(hostname, port, paths):
+def build_ssl_validation_error(hostname, port, paths, exc=None):
     '''Inteligently build out the SSLValidationError based on what support
     you have installed
     '''
@@ -550,7 +550,10 @@ def build_ssl_validation_error(hostname, port, paths):
     msg.append('You can use validate_certs=False if you do'
                ' not need to confirm the servers identity but this is'
                ' unsafe and not recommended.'
-               ' Paths checked for this platform: %s')
+               ' Paths checked for this platform: %s.')
+
+    if exc:
+        msg.append('The exception msg was: %s.' % to_native(exc))
 
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
@@ -721,15 +724,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error):
+        except (ssl.SSLError, CertificateError):
             e = get_exception()
-            # fail if we tried all of the certs but none worked
-            if 'connection refused' in str(e).lower():
-                raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
-            else:
-                build_ssl_validation_error(self.hostname, self.port, paths_checked)
-        except CertificateError:
-            build_ssl_validation_error(self.hostname, self.port, paths_checked)
+            build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
+        except socket.error:
+            e = get_exception()
+            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
             # cleanup the temp file created, don't worry

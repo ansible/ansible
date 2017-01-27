@@ -109,7 +109,7 @@ EXAMPLES = '''
     name: topicExchange
     destination: topicExchange
     type: exchange
-    routing_key: *.info
+    routing_key: '*.info'
 '''
 
 import requests

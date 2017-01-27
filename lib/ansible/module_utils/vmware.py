@@ -111,6 +111,15 @@ def find_datacenter_by_name(content, datacenter_name):
 
     return None
 
+def find_datastore_by_name(content, datastore_name):
+
+    datastores = get_all_objs(content, [vim.Datastore])
+    for ds in datastores:
+        if ds.name == datastore_name:
+            return ds
+
+    return None
+
 
 def find_dvs_by_name(content, switch_name):
 
@@ -203,6 +212,10 @@ def connect_to_api(module, disconnect_atexit=True):
             service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
         else:
             module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
+    except Exception as e:
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.verify_mode = ssl.CERT_NONE
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
@@ -221,3 +234,152 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
 
+def fetch_file_from_guest(content, vm, username, password, src, dest):
+
+    """ Use VMWare's filemanager api to fetch a file over http """
+
+    result = {'failed': False}
+
+    tools_status = vm.guest.toolsStatus
+    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
+        result['failed'] = True
+        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        return result
+
+    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
+    creds = vim.vm.guest.NamePasswordAuthentication(
+        username=username, password=password
+    )
+
+    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/FileManager/FileTransferInformation.rst
+    fti = content.guestOperationsManager.fileManager. \
+        InitiateFileTransferFromGuest(vm, creds, src)
+
+    result['size'] = fti.size
+    result['url'] = fti.url
+
+    # Use module_utils to fetch the remote url returned from the api
+    rsp, info = fetch_url(self.module, fti.url, use_proxy=False,
+                          force=True, last_mod_time=None,
+                          timeout=10, headers=None)
+
+    # save all of the transfer data
+    for k, v in iteritems(info):
+        result[k] = v
+
+    # exit early if xfer failed
+    if info['status'] != 200:
+        result['failed'] = True
+        return result
+
+    # attempt to read the content and write it
+    try:
+        with open(dest, 'wb') as f:
+            f.write(rsp.read())
+    except Exception as e:
+        result['failed'] = True
+        result['msg'] = str(e)
+
+    return result
+
+def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
+
+    """ Use VMWare's filemanager api to fetch a file over http """
+
+    result = {'failed': False}
+
+    tools_status = vm.guest.toolsStatus
+    if tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning':
+        result['failed'] = True
+        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        return result
+
+    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
+    creds = vim.vm.guest.NamePasswordAuthentication(
+        username=username, password=password
+    )
+
+    # the api requires a filesize in bytes
+    fdata = None
+    try:
+        # filesize = os.path.getsize(src)
+        filesize = os.stat(src).st_size
+        with open(src, 'rb') as f:
+            fdata = f.read()
+        result['local_filesize'] = filesize
+    except Exception as e:
+        result['failed'] = True
+        result['msg'] = "Unable to read src file: %s" % str(e)
+        return result
+
+    # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.vm.guest.FileManager.html#initiateFileTransferToGuest
+    file_attribute = vim.vm.guest.FileManager.FileAttributes()
+    url = content.guestOperationsManager.fileManager. \
+        InitiateFileTransferToGuest(vm, creds, dest, file_attribute,
+                                    filesize, overwrite)
+
+    # PUT the filedata to the url ...
+    rsp, info = fetch_url(self.module, url, method="put", data=fdata,
+                          use_proxy=False, force=True, last_mod_time=None,
+                          timeout=10, headers=None)
+
+    result['msg'] = str(rsp.read())
+
+    # save all of the transfer data
+    for k, v in iteritems(info):
+        result[k] = v
+
+    return result
+
+def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
+
+    result = {'failed': False}
+
+    tools_status = vm.guest.toolsStatus
+    if (tools_status == 'toolsNotInstalled' or
+                tools_status == 'toolsNotRunning'):
+        result['failed'] = True
+        result['msg'] = "VMwareTools is not installed or is not running in the guest"
+        return result
+
+    # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/NamePasswordAuthentication.rst
+    creds = vim.vm.guest.NamePasswordAuthentication(
+        username=username, password=password
+    )
+
+    try:
+        # https://github.com/vmware/pyvmomi/blob/master/docs/vim/vm/guest/ProcessManager.rst
+        pm = content.guestOperationsManager.processManager
+        # https://www.vmware.com/support/developer/converter-sdk/conv51_apireference/vim.vm.guest.ProcessManager.ProgramSpec.html
+        ps = vim.vm.guest.ProcessManager.ProgramSpec(
+            # programPath=program,
+            # arguments=args
+            programPath=program_path,
+            arguments=program_args,
+            workingDirectory=program_cwd,
+        )
+
+        res = pm.StartProgramInGuest(vm, creds, ps)
+        result['pid'] = res
+        pdata = pm.ListProcessesInGuest(vm, creds, [res])
+
+        # wait for pid to finish
+        while not pdata[0].endTime:
+            time.sleep(1)
+            pdata = pm.ListProcessesInGuest(vm, creds, [res])
+
+        result['owner'] = pdata[0].owner
+        result['startTime'] = pdata[0].startTime.isoformat()
+        result['endTime'] = pdata[0].endTime.isoformat()
+        result['exitCode'] = pdata[0].exitCode
+        if result['exitCode'] != 0:
+            result['failed'] = True
+            result['msg'] = "program exited non-zero"
+        else:
+            result['msg'] = "program completed successfully"
+
+    except Exception as e:
+        result['msg'] = str(e)
+        result['failed'] = True
+
+    return result

@@ -37,7 +37,7 @@ options:
   src:
     description:
       - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
-      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0)
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for simple cases, for full download support look at the M(get_url) module.
     required: true
     default: null
   dest:
@@ -555,13 +555,14 @@ class ZipArchive(object):
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd, diff=diff)
 
     def unarchive(self):
-        cmd = [ self.cmd_path, '-o', self.src ]
+        cmd = [ self.cmd_path, '-o' ]
         if self.opts:
             cmd.extend(self.opts)
-         # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
-#        if self.includes:
-            # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
-#            cmd.extend(map(shell_escape, self.includes))
+        cmd.append(self.src)
+        # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
+        # if self.includes:
+        # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
+        # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend([ '-x' ] + self.excludes)
         cmd.extend([ '-d', self.dest ])

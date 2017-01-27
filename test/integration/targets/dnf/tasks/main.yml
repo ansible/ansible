@@ -18,5 +18,9 @@
 
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
+
 - include: 'dnf.yml'
-  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and False) or (ansible_distribution in ['Fedora'] and ansible_distribution_major_version >= 23)
+  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and False) or (ansible_distribution in ['Fedora'] and ansible_distribution_major_version|int >= 23)
+
+- include: 'dnfinstallroot.yml'
+  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and False) or (ansible_distribution in ['Fedora'] and ansible_distribution_major_version|int >= 23)

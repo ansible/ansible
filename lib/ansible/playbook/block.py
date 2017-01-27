@@ -53,6 +53,9 @@ class Block(Base, Become, Conditional, Taggable):
         self._use_handlers = use_handlers
         self._implicit     = implicit
 
+        # end of role flag
+        self._eor = False
+
         if task_include:
             self._parent = task_include
         elif parent_block:
@@ -182,6 +185,7 @@ class Block(Base, Become, Conditional, Taggable):
         new_me = super(Block, self).copy()
         new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
+        new_me._eor          = self._eor
 
         if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
@@ -214,6 +218,7 @@ class Block(Base, Become, Conditional, Taggable):
                 data[attr] = getattr(self, attr)
 
         data['dep_chain'] = self.get_dep_chain()
+        data['eor'] = self._eor
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -241,6 +246,7 @@ class Block(Base, Become, Conditional, Taggable):
                 setattr(self, attr, data.get(attr))
 
         self._dep_chain = data.get('dep_chain', None)
+        self._eor = data.get('eor', False)
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')

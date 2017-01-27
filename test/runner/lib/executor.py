@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function
 import glob
 import os
 import tempfile
-import sys
 import time
 import textwrap
 import functools
@@ -15,20 +14,24 @@ import random
 import pipes
 import string
 import atexit
+import re
 
 import lib.pytar
 import lib.thread
 
 from lib.core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from lib.manage_ci import (
     ManageWindowsCI,
+    ManageNetworkCI,
 )
 
 from lib.util import (
     CommonConfig,
+    EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
@@ -74,11 +77,29 @@ SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
     '3.5',
+    '3.6',
 )
 
 COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+
+
+def check_startup():
+    """Checks to perform at startup before running commands."""
+    check_legacy_modules()
+
+
+def check_legacy_modules():
+    """Detect conflicts with legacy core/extras module directories to avoid problems later."""
+    for directory in 'core', 'extras':
+        path = 'lib/ansible/modules/%s' % directory
+
+        for root, _, file_names in os.walk(path):
+            if file_names:
+                # the directory shouldn't exist, but if it does, it must contain no files
+                raise ApplicationError('Files prohibited in "%s". '
+                                       'These are most likely legacy modules from version 2.2 or earlier.' % root)
 
 
 def create_shell_command(command):
@@ -181,7 +202,103 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+
+    if args.platform:
+        instances = []  # type: list [lib.thread.WrappedThread]
+
+        # generate an ssh key (if needed) up front once, instead of for each instance
+        SshKey(args)
+
+        for platform_version in args.platform:
+            platform, version = platform_version.split('/', 1)
+            platform_target = 'network/%s/' % platform
+
+            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                    platform_version, platform))
+                continue
+
+            instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
+            instance.daemon = True
+            instance.start()
+            instances.append(instance)
+
+        install_command_requirements(args)
+
+        while any(instance.is_alive() for instance in instances):
+            time.sleep(1)
+
+        remotes = [instance.wait_for_result() for instance in instances]
+        inventory = network_inventory(remotes)
+
+        filename = 'test/integration/inventory.networking'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
+        if not args.explain:
+            with open(filename, 'w') as inventory_fd:
+                inventory_fd.write(inventory)
+    else:
+        install_command_requirements(args)
+
     command_integration_filtered(args, internal_targets)
+
+
+def network_run(args, platform, version):
+    """
+    :type args: NetworkIntegrationConfig
+    :type platform: str
+    :type version: str
+    :rtype: AnsibleCoreCI
+    """
+
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    core_ci.start()
+    core_ci.wait()
+
+    manage = ManageNetworkCI(core_ci)
+    manage.wait()
+
+    return core_ci
+
+
+def network_inventory(remotes):
+    """
+    :type remotes: list[AnsibleCoreCI]
+    :rtype: str
+    """
+    groups = dict([(remote.platform, []) for remote in remotes])
+
+    for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_connection='network_cli',
+            ansible_ssh_private_key_file=remote.ssh_key.key,
+            ansible_network_os=remote.platform,
+        )
+
+        groups[remote.platform].append(
+            '%s %s' % (
+                remote.name.replace('.', '_'),
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
+            )
+        )
+
+    template = ''
+
+    for group in groups:
+        hosts = '\n'.join(groups[group])
+
+        template += textwrap.dedent("""
+        [%s]
+        %s
+        """) % (group, hosts)
+
+    inventory = template
+
+    return inventory
 
 
 def command_windows_integration(args):
@@ -207,8 +324,12 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
+        filename = 'test/integration/inventory.winrm'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.winrm', 'w') as inventory_fd:
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -240,15 +361,22 @@ def windows_inventory(remotes):
     :type remotes: list[AnsibleCoreCI]
     :rtype: str
     """
-    hosts = ['%s ansible_host=%s ansible_user=%s ansible_password="%s" ansible_port=%s' %
-             (
-                 remote.name.replace('/', '_'),
-                 remote.connection.hostname,
-                 remote.connection.username,
-                 remote.connection.password,
-                 remote.connection.port,
-             )
-             for remote in remotes]
+    hosts = []
+
+    for remote in remotes:
+        options = dict(
+            ansible_host=remote.connection.hostname,
+            ansible_user=remote.connection.username,
+            ansible_password=remote.connection.password,
+            ansible_port=remote.connection.port,
+        )
+
+        hosts.append(
+            '%s %s' % (
+                remote.name.replace('/', '_'),
+                ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
+            )
+        )
 
     template = """
     [windows]
@@ -316,10 +444,6 @@ def command_integration_filtered(args, targets):
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if not args.explain:
-        remove_tree(test_dir)
-        make_dirs(test_dir)
-
     if any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
@@ -350,6 +474,11 @@ def command_integration_filtered(args, targets):
         try:
             while tries:
                 tries -= 1
+
+                if not args.explain:
+                    # create a fresh test directory for each test target
+                    remove_tree(test_dir)
+                    make_dirs(test_dir)
 
                 try:
                     if target.script_path:
@@ -427,9 +556,11 @@ def command_integration_role(args, target, start_at_task):
         hosts = 'windows'
         gather_facts = False
     elif 'network/' in target.aliases:
-        inventory = 'inventory.network'
+        inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
+        if hosts == 'net':
+            hosts = 'all'
     else:
         inventory = 'inventory'
         hosts = 'testhost'
@@ -686,6 +817,130 @@ def command_sanity_shellcheck(args, targets):
     run_command(args, ['shellcheck'] + paths)
 
 
+def command_sanity_pep8(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    """
+    skip_path = 'test/sanity/pep8/skip.txt'
+    legacy_path = 'test/sanity/pep8/legacy-files.txt'
+
+    with open(skip_path, 'r') as skip_fd:
+        skip_paths = set(skip_fd.read().splitlines())
+
+    with open(legacy_path, 'r') as legacy_fd:
+        legacy_paths = set(legacy_fd.read().splitlines())
+
+    with open('test/sanity/pep8/legacy-ignore.txt', 'r') as ignore_fd:
+        legacy_ignore = set(ignore_fd.read().splitlines())
+
+    with open('test/sanity/pep8/current-ignore.txt', 'r') as ignore_fd:
+        current_ignore = sorted(ignore_fd.read().splitlines())
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths)
+
+    if not paths:
+        display.info('No tests applicable.', verbosity=1)
+        return
+
+    cmd = [
+        'pep8',
+        '--max-line-length', '160',
+        '--config', '/dev/null',
+        '--ignore', ','.join(sorted(current_ignore)),
+    ] + paths
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr)
+
+    pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[A-Z0-9]{4}) (?P<message>.*)$'
+
+    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+
+    for result in results:
+        for key in 'line', 'column':
+            result[key] = int(result[key])
+
+    failed_result_paths = set([result['path'] for result in results])
+    passed_legacy_paths = set([path for path in paths if path in legacy_paths and path not in failed_result_paths])
+
+    errors = []
+    summary = {}
+
+    for path in sorted(passed_legacy_paths):
+        # Keep files out of the list which no longer require the relaxed rule set.
+        errors.append('PEP 8: %s: Passes current rule set. Remove from legacy list (%s).' % (path, legacy_path))
+
+    for path in sorted(skip_paths):
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append('PEP 8: %s: Does not exist. Remove from skip list (%s).' % (path, skip_path))
+
+    for path in sorted(legacy_paths):
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append('PEP 8: %s: Does not exist. Remove from legacy list (%s).' % (path, legacy_path))
+
+    for result in results:
+        path = result['path']
+        line = result['line']
+        column = result['column']
+        code = result['code']
+        message = result['message']
+
+        msg = 'PEP 8: %s:%s:%s: %s %s' % (path, line, column, code, message)
+
+        if path in legacy_paths:
+            msg += ' (legacy)'
+        else:
+            msg += ' (current)'
+
+        if path in legacy_paths and code in legacy_ignore:
+            # Files on the legacy list are permitted to have errors on the legacy ignore list.
+            # However, we want to report on their existence to track progress towards eliminating these exceptions.
+            display.info(msg, verbosity=3)
+
+            key = '%s %s' % (code, re.sub('[0-9]+', 'NNN', message))
+
+            if key not in summary:
+                summary[key] = 0
+
+            summary[key] += 1
+        else:
+            # Files not on the legacy list and errors not on the legacy ignore list are PEP 8 policy errors.
+            errors.append(msg)
+
+    for error in errors:
+        display.error(error)
+
+    if summary:
+        lines = []
+        count = 0
+
+        for key in sorted(summary):
+            count += summary[key]
+            lines.append('PEP 8: %5d %s' % (summary[key], key))
+
+        display.info('PEP 8: There were %d different legacy issues found (%d total):' %
+                     (len(summary), count), verbosity=1)
+
+        display.info('PEP 8: Count Code Message', verbosity=1)
+
+        for line in lines:
+            display.info(line, verbosity=1)
+
+    if errors:
+        raise ApplicationError('PEP 8: There are %d issues which need to be resolved.' % len(errors))
+
+
 def command_sanity_yamllint(args, targets):
     """
     :type args: SanityConfig
@@ -925,17 +1180,6 @@ def detect_changes_local(args):
     return sorted(names)
 
 
-def docker_qualify_image(name):
-    """
-    :type name: str
-    :rtype: str
-    """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
-
-    return 'ansible/ansible:%s' % name
-
-
 def get_integration_filter(args, targets):
     """
     :type args: IntegrationConfig
@@ -1080,48 +1324,6 @@ class SanityFunc(SanityTest):
         self.intercept = intercept
 
 
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
-
-
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
     def __init__(self, args, command):
@@ -1214,6 +1416,8 @@ class NetworkIntegrationConfig(IntegrationConfig):
         """
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
+        self.platform = args.platform  # type list [str]
+
 
 class UnitsConfig(TestConfig):
     """Configuration for the units command."""
@@ -1259,6 +1463,7 @@ SANITY_TESTS = (
     SanityFunc('code-smell', command_sanity_code_smell, intercept=False),
     # tests which honor include/exclude
     SanityFunc('shellcheck', command_sanity_shellcheck, intercept=False),
+    SanityFunc('pep8', command_sanity_pep8, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),

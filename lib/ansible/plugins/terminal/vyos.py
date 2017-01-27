@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import re
 
 from ansible.plugins.terminal import TerminalBase
@@ -38,15 +39,18 @@ class TerminalModule(TerminalBase):
         re.compile(r"\n\s+Set failed"),
     ]
 
+    terminal_length = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+
     def on_open_shell(self):
         try:
             self._exec_cli_command('set terminal length 0')
+            self._exec_cli_command('set terminal length %s' % self.terminal_length)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     @staticmethod
     def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('cat /proc/version')
-        if 'vyos' in stdout.read():
+        stdin, stdout, stderr = conn.exec_command('cat /etc/issue')
+        if 'VyOS' in stdout.read():
             return 'vyos'
 

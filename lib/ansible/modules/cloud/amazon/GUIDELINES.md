@@ -112,13 +112,12 @@ if my_new_feauture_Parameter_is_set:
 ### Connecting to AWS
 
 To connect to AWS, you should use `get_aws_connection_info` and then
-`connect_to_aws`.
+`boto3_conn` (or `connect_to_aws` for boto).
 
-The reason for using `get_aws_connection_info` and `connect_to_aws` rather than doing it
-yourself is that they handle some of the more esoteric connection
-options such as security tokens and boto profiles.
+These functions handle some of the more esoteric connection options, such as security tokens and
+boto profiles.
 
-Some boto services require region to be specified. You should check for the region parameter if required.
+Some boto services require that the region is specified. You should check for the region parameter if required.
 
 #### boto
 

@@ -33,9 +33,10 @@ description:
 options:
   image:
     description:
-       - image string to use for the instance
+      - image string to use for the instance (default will follow latest
+        stable debian image)
     required: false
-    default: "debian-7"
+    default: "debian-8"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
@@ -155,7 +156,7 @@ options:
   external_ip:
     version_added: "1.9"
     description:
-      - type of external ip, ephemeral by default; alternatively, a list of fixed gce ips or ip names can be given (if there is not enough specified ip, 'ephemeral' will be used). Specify 'none' if no external ip is desired.
+      - type of external ip, ephemeral by default; alternatively, a fixed gce ip or ip name can be given. Specify 'none' if no external ip is desired.
     required: false
     default: "ephemeral"
   disk_auto_delete:
@@ -171,6 +172,12 @@ options:
         (requires libcloud >= 0.20.0)
     required: false
     default: "false"
+  disk_size:
+    description:
+      - The size of the boot disk created for this instance (in GB)
+    required: false
+    default: 10
+    version_added: "2.3"
 
 requirements:
     - "python >= 2.6"
@@ -197,6 +204,7 @@ EXAMPLES = '''
       service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
+      disk_size: 32
 
 # Create a single Debian 8 instance in the us-central1-a Zone
 # Use existing disks, custom network/subnetwork, set service account permissions
@@ -384,23 +392,21 @@ def create_instances(module, gce, instance_names, number):
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
     preemptible = module.params.get('preemptible')
+    disk_size = module.params.get('disk_size')
     service_account_permissions = module.params.get('service_account_permissions')
     service_account_email = module.params.get('service_account_email')
 
     if external_ip == "none":
         instance_external_ip = None
-    elif not isinstance(external_ip, basestring):
+    elif external_ip != "ephemeral":
+        instance_external_ip = external_ip
         try:
-            if len(external_ip) != 0:
-                instance_external_ip = external_ip.pop(0)
-                # check if instance_external_ip is an ip or a name
-                try:
-                    socket.inet_aton(instance_external_ip)
-                    instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
-                except socket.error:
-                    instance_external_ip = gce.ex_get_address(instance_external_ip)
-            else:
-                instance_external_ip = 'ephemeral'
+            # check if instance_external_ip is an ip or a name
+            try:
+                socket.inet_aton(instance_external_ip)
+                instance_external_ip = GCEAddress(id='unknown', name='unknown', address=instance_external_ip, region='unknown', driver=gce)
+            except socket.error:
+                instance_external_ip = gce.ex_get_address(instance_external_ip)
         except GoogleBaseError as e:
             module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
     else:
@@ -505,7 +511,7 @@ def create_instances(module, gce, instance_names, number):
                 try:
                     pd = gce.ex_get_volume("%s" % instance, lc_zone)
                 except ResourceNotFoundError:
-                    pd = gce.create_volume(None, "%s" % instance, image=lc_image())
+                    pd = gce.create_volume(disk_size, "%s" % instance, image=lc_image())
             gce_args['ex_boot_disk'] = pd
 
             inst = None
@@ -612,7 +618,7 @@ def change_instance_state(module, gce, instance_names, number, zone_name, state)
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            image = dict(default='debian-7'),
+            image = dict(default='debian-8'),
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
@@ -629,12 +635,13 @@ def main():
             zone = dict(default='us-central1-a'),
             service_account_email = dict(),
             service_account_permissions = dict(type='list'),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
             ip_forward = dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
+            disk_size = dict(type='int', default=10),
             preemptible = dict(type='bool', default=None),
         ),
         mutually_exclusive=[('instance_names', 'name')]

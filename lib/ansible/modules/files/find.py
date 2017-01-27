@@ -121,7 +121,7 @@ options:
 '''
 
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Recursively find /tmp files older than 2 days
 - find:
     paths: "/tmp"
@@ -149,9 +149,11 @@ EXAMPLES = '''
     size: "10m"
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
+# Note that yaml double quotes require escaping backslashes but yaml single
+# quotes do not.
 - find:
     paths: "/var/tmp"
-    patterns: "^.*?\.(?:old|log\.gz)$"
+    patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: "10m"
     use_regex: True
 '''
@@ -323,6 +325,7 @@ def main():
     msg = ''
     looked = 0
     for npath in params['paths']:
+        npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
 
             ''' ignore followlinks for python version < 2.6 '''

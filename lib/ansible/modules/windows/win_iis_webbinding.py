@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_iis_webbinding
 version_added: "2.0"
@@ -85,7 +85,7 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Return binding information for an existing host
   win_iis_webbinding:
     name: Default Web Site

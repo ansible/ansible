@@ -27,14 +27,15 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-$creates = Get-AnsibleParam -obj $params -name "creates"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 If ($creates -ne $null) {
-    If (Test-Path $params.creates) {
-        Exit-Json $result "The 'creates' file or directory already exists."
+    If (Test-Path $creates) {
+        $result.msg = "The 'creates' file or directory ($creates) already exists."
+        Exit-Json $result
     }
 }
 
-$src = Get-AnsibleParam -obj $params -name "src" -failifempty $true
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 If (-Not (Test-Path -path $src)){
     Fail-Json $result "src file: $src does not exist."
 }
@@ -42,7 +43,7 @@ If (-Not (Test-Path -path $src)){
 $ext = [System.IO.Path]::GetExtension($src)
 
 
-$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 If (-Not (Test-Path $dest -PathType Container)){
     Try{
         New-Item -itemtype directory -path $dest
@@ -61,8 +62,9 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
         $shell = New-Object -ComObject Shell.Application
         $zipPkg = $shell.NameSpace([IO.Path]::GetFullPath($src))
         $destPath = $shell.NameSpace([IO.Path]::GetFullPath($dest))
-        # 20 means do not display any dialog (4) and overwrite any file (16)
-        $destPath.CopyHere($zipPkg.Items(), 20)
+        # From Folder.CopyHere documentation (https://msdn.microsoft.com/en-us/library/windows/desktop/bb787866.aspx)
+        # 1044 means do not display any error dialog (1024), progress dialog (4) and overwrite any file (16)
+        $destPath.CopyHere($zipPkg.Items(), 1044)
         $result.changed = $true
     }
     Catch {
@@ -139,4 +141,4 @@ Set-Attr $result.win_unzip "src" $src.toString()
 Set-Attr $result.win_unzip "dest" $dest.toString()
 Set-Attr $result.win_unzip "recurse" $recurse.toString()
 
-Exit-Json $result;
+Exit-Json $result

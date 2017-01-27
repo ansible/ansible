@@ -98,6 +98,11 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
+Function Expand-Environment($value)
+{
+    [System.Environment]::ExpandEnvironmentVariables($value)
+}
+
 # Helper function to get an "attribute" from a psobject instance in powershell.
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
@@ -105,53 +110,65 @@ Function Fail-Json($obj, $message = $null)
 #Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
 #Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
+Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $failifempty = $false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, $type = $null, $aliases = @())
 {
-    # Check if the provided Member $name exists in $obj and return it or the default. 
-    Try
-    {
-        If (-not $obj.$name.GetType)
-        {
-            throw
+    # Check if the provided Member $name or aliases exist in $obj and return it or the default.
+    try {
+
+        $found = $null
+        # First try to find preferred parameter $name
+        $aliases = @($name) + $aliases
+
+        # Iterate over aliases to find acceptable Member $name
+        foreach ($alias in $aliases) {
+            if (Get-Member -InputObject $obj -Name $alias) {
+                $found = $alias
+                break
+            }
         }
 
-        if ($ValidateSet)
-        {
-            if ($ValidateSet -contains ($obj.$name))
-            {
-                $obj.$name    
-            }
-            Else
-            {
-                if ($ValidateSetErrorMessage -eq $null)
-                {
+        if ($found -eq $null) {
+            throw
+        }
+        $name = $found
+
+        if ($ValidateSet) {
+
+            if ($ValidateSet -contains ($obj.$name)) {
+                $value = $obj.$name
+            } else {
+                if ($ValidateSetErrorMessage -eq $null) {
                     #Auto-generated error should be sufficient in most use cases
                     $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
                 }
                 Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
             }
+
+        } else {
+            $value = $obj.$name
         }
-        Else
-        {
-            $obj.$name
-        }
-        
-    }
-    Catch
-    {
-        If ($failifempty -eq $false)
-        {
-            $default
-        }
-        Else
-        {
-            If (!$emptyattributefailmessage)
-            {
+
+    } catch {
+        if ($failifempty -eq $false) {
+            $value = $default
+        } else {
+            if (!$emptyattributefailmessage) {
                 $emptyattributefailmessage = "Missing required argument: $name"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
+
     }
+
+    if ($value -ne $null -and $type -eq "path") {
+        # Expand environment variables on path-type (Beware: turns $null into "")
+        $value = Expand-Environment($value)
+    } elseif ($type -eq "bool") {
+        # Convert boolean types to real Powershell booleans
+        $value = $value | ConvertTo-Bool
+    }
+
+    $value
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
@@ -207,7 +224,7 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     $parameters
 }
 
-# Helper function to calculate a hash of a file in a way which powershell 3 
+# Helper function to calculate a hash of a file in a way which powershell 3
 # and above can handle:
 Function Get-FileChecksum($path)
 {
@@ -241,7 +258,7 @@ Function Get-PendingRebootStatus
     {
         return $True
     }
-    else 
+    else
     {
         return $False
     }

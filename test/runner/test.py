@@ -39,6 +39,7 @@ from lib.executor import (
     ApplicationWarning,
     Delegate,
     generate_pip_install,
+    check_startup,
 )
 
 from lib.target import (
@@ -49,6 +50,10 @@ from lib.target import (
     walk_units_targets,
     walk_compile_targets,
     walk_sanity_targets,
+)
+
+from lib.core_ci import (
+    AWS_ENDPOINTS,
 )
 
 import lib.cover
@@ -63,6 +68,7 @@ def main():
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
+        check_startup()
 
         try:
             args.func(config)
@@ -193,6 +199,11 @@ def parse_args():
     network_integration.set_defaults(func=command_network_integration,
                                      targets=walk_network_integration_targets,
                                      config=NetworkIntegrationConfig)
+
+    network_integration.add_argument('--platform',
+                                     metavar='PLATFORM',
+                                     action='append',
+                                     help='network platform/version').completer = complete_network_platform
 
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
@@ -404,6 +415,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             docker=None,
             remote=None,
             remote_stage=None,
+            remote_aws_region=None,
         )
 
         return
@@ -427,6 +439,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote stage to use: %(choices)s',
                         choices=['prod', 'dev'],
                         default='prod')
+
+    remote.add_argument('--remote-aws-region',
+                        metavar='REGION',
+                        help='remote aws region to use: %(choices)s (default: auto)',
+                        choices=sorted(AWS_ENDPOINTS),
+                        default=None)
 
 
 def add_extra_docker_options(parser, integration=True):
@@ -501,6 +519,18 @@ def complete_windows(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
+
+
+def complete_network_platform(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    with open('test/runner/completion/network.txt', 'r') as completion_fd:
+        images = completion_fd.read().splitlines()
+
+    return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
 
 if __name__ == '__main__':

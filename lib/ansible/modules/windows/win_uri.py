@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: win_uri
 version_added: "2.1"
@@ -57,6 +57,11 @@ options:
   body:
     description:
       - The body of the HTTP request/response to the web service.
+  dest:
+    version_added: "2.3"
+    description:
+      - Output the response body to a file.
+    default: None
   headers:
     description:
       - 'Key Value pairs for headers. Example "Host: www.somesite.com"'
@@ -68,9 +73,9 @@ options:
       - False
     default: True
 author: Corwin Brown (@blakfeld)
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Perform a GET and Store Output
   win_uri:
     url: http://example.com/endpoint
@@ -94,9 +99,9 @@ EXAMPLES = """
     url: http://www.somesite.com
     method: POST
     body: "{ 'some': 'json' }"
-"""
+'''
 
-RETURN = """
+RETURN = r'''
 url:
   description: The Target URL
   returned: always
@@ -148,4 +153,4 @@ raw_content_length:
   returned: success
   type: int
   sample: 54447
-"""
+'''

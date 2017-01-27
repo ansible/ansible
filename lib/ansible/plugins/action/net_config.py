@@ -24,21 +24,18 @@ import re
 import time
 import glob
 
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action.network import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.utils.vars import merge_hash
 
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 
 
-class ActionModule(ActionBase):
-
-    TRANSFERS_FILES = False
+class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
-        result['changed'] = False
 
         if self._task.args.get('src'):
             try:
@@ -46,16 +43,17 @@ class ActionModule(ActionBase):
             except ValueError as exc:
                 return dict(failed=True, msg=exc.message)
 
-        action = self._task.action
-
-        result.update(self._execute_module(module_name=action,
-            module_args=self._task.args, task_vars=task_vars))
+        if self._play_context.connection == 'local':
+            result = self.normal(tmp, task_vars)
+        else:
+            result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
             # NOTE: If there is a parameter error, _backup key may not be in results.
             filepath = self._write_backup(task_vars['inventory_hostname'],
                                           result['__backup__'])
+
             result['backup_path'] = filepath
 
         # strip out any keys that have two leading and two trailing
@@ -66,6 +64,22 @@ class ActionModule(ActionBase):
 
         return result
 
+    def normal(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        #results = super(ActionModule, self).run(tmp, task_vars)
+        # remove as modules might hide due to nolog
+        #del results['invocation']['module_args']
+
+        results = {}
+        results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars))
+
+        # hack to keep --verbose from showing all the setup module results
+        if self._task.action == 'setup':
+            results['_ansible_verbose_override'] = True
+
+        return results
     def _get_working_path(self):
         cwd = self._loader.get_basedir()
         if self._task._role is not None:

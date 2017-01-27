@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_copy
 version_added: "1.9.2"
@@ -38,35 +38,32 @@ options:
         with "/", only inside contents of that directory are copied to destination.
         Otherwise, if it does not end with "/", the directory itself with all contents
         is copied. This behavior is similar to Rsync.
-    required: false
-    default: null
-    aliases: []
+    required: true
   dest:
     description:
       - Remote absolute path where the file should be copied to. If src is a directory,
         this must be a directory too. Use \\ for path separators.
     required: true
-    default: null
 author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
-    dest: c:\TEMP\foo.conf
+    dest: c:\Temp\foo.conf
 
 - name: Copy files/temp_files to c:\temp
   win_copy:
     src: files/temp_files/
-    dest: c:\temp
+    dest: c:\Temp
 '''
-RETURN = '''
+RETURN = r'''
 dest:
     description: destination file/path
     returned: changed
     type: string
-    sample: 'c:\temp'
+    sample: c:\Temp
 src:
     description: source file used for the copy on the target machine
     returned: changed

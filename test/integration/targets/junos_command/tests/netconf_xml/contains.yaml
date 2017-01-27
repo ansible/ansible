@@ -8,7 +8,7 @@
       - show interfaces fxp0
     format: xml
     wait_for:
-      - "result[0].software-information.host-name contains vsrx01"
+      - "result[0].software-information.host-name contains {{ inventory_hostname_short }}"
       - "result[1].interface-information.physical-interface.name contains fxp0"
     provider: "{{ netconf }}"
   register: result

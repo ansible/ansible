@@ -25,13 +25,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_feature
 version_added: "1.7"
 short_description: Installs and uninstalls Windows Features on Windows Server
 description:
-     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets, which is not available on client os machines.
+     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets on Windows 2008 and Install/Uninstall-WindowsFeature Cmdlets on Windows 2012, which are not available on client os machines.
 options:
   name:
     description:
@@ -64,7 +64,8 @@ options:
     required: false
   include_management_tools:
     description:
-      - Adds the corresponding management tools to the specified feature
+      - Adds the corresponding management tools to the specified feature.
+      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
     choices:
       - yes
       - no
@@ -72,7 +73,8 @@ options:
     required: false
   source:
     description:
-      - Specify a source to install the feature from
+      - Specify a source to install the feature from.
+      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
     required: false
     choices: [ ' {driveletter}:\sources\sxs', ' {IP}\Share\sources\sxs' ]
     version_added: "2.1"

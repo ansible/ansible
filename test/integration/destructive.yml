@@ -22,3 +22,4 @@
     - { role: apache2_module, tags: test_apache2_module }
     # This removes ~/.ssh/known_hosts and /etc/ssh/known_hosts
     - { role: git, tags: test_git }
+    - { role: locale_gen, tags: test_locale_gen }

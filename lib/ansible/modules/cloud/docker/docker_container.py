@@ -31,7 +31,7 @@ description:
   - Manage the life cycle of docker containers.
   - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
 
-version_added: "2.1.0"
+version_added: "2.1"
 
 options:
   blkio_weight:
@@ -207,6 +207,7 @@ options:
     description:
       - Specify the logging driver. Docker uses json-file by default.
     choices:
+      - none
       - json-file
       - syslog
       - journald
@@ -545,7 +546,9 @@ EXAMPLES = '''
     log_options:
       syslog-address: tcp://my-syslog-server:514
       syslog-facility: daemon
-      syslog-tag: myservice
+      # NOTE: in Docker 1.13+ the "syslog-tag" option was renamed to "tag" for
+      # older docker installs, use "syslog-tag" instead
+      tag: myservice
 
 - name: Create db container and connect to network
   docker_container:
@@ -656,7 +659,10 @@ from ansible.module_utils.docker_common import *
 
 try:
     from docker import utils
-    from docker.utils.types import Ulimit
+    if HAS_DOCKER_PY_2:
+        from docker.types import Ulimit
+    else:
+        from docker.utils.types import Ulimit
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -1958,7 +1964,9 @@ def main():
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
         links=dict(type='list'),
-        log_driver=dict(type='str', choices=['json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'], default=None),
+        log_driver=dict(type='str',
+                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'],
+                        default=None),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
         memory=dict(type='str', default='0'),

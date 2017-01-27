@@ -19,13 +19,13 @@
 
 $params = Parse-Args $args
 
-$src= Get-Attr $params "src" $FALSE
+$src = Get-Attr $params "src" $FALSE -type "path"
 If ($src -eq $FALSE)
 {
     Fail-Json (New-Object psobject) "missing required argument: src"
 }
 
-$dest= Get-Attr $params "dest" $FALSE
+$dest = Get-Attr $params "dest" $FALSE -type "path"
 If ($dest -eq $FALSE)
 {
     Fail-Json (New-Object psobject) "missing required argument: dest"
@@ -60,13 +60,13 @@ if (Test-Path $dest -PathType Container)
     $dest = Join-Path $dest $original_basename
 }
 
-$dest_checksum = Get-FileChecksum ($dest)
+$orig_checksum = Get-FileChecksum ($dest)
 $src_checksum = Get-FileChecksum ($src)
 
-If ($src_checksum.Equals($dest_checksum))
+If ($src_checksum.Equals($orig_checksum))
 {
-    # if both are "3" then both are folders, ok to copy 
-    If ($src_checksum.Equals("3")) 
+    # if both are "3" then both are folders, ok to copy
+    If ($src_checksum.Equals("3"))
     {
        # New-Item -Force creates subdirs for recursive copies
        New-Item -Force $dest -Type file
@@ -75,9 +75,9 @@ If ($src_checksum.Equals($dest_checksum))
     }
 
 }
-ElseIf (! $src_checksum.Equals($dest_checksum))
+ElseIf (-Not $src_checksum.Equals($orig_checksum))
 {
-    If ($src_checksum.Equals("3")) 
+    If ($src_checksum.Equals("3"))
     {
        Fail-Json (New-Object psobject) "If src is a folder, dest must also be a folder"
     }
@@ -88,17 +88,20 @@ ElseIf (! $src_checksum.Equals($dest_checksum))
 
 # verify before we return that the file has changed
 $dest_checksum = Get-FileChecksum ($dest)
-If ( $src_checksum.Equals($dest_checksum))
+If ($src_checksum.Equals($dest_checksum))
 {
-    $result.changed = $TRUE
+    If (-Not $orig_checksum.Equals($dest_checksum)) {
+        $result.changed = $TRUE
+    }
 }
 Else
 {
     Fail-Json (New-Object psobject) "src checksum $src_checksum did not match dest_checksum $dest_checksum  Failed to place file $original_basename in $dest"
 }
-# generate return values
 
 $info = Get-Item $dest
 $result.size = $info.Length
+$result.src = $src
+$result.dest = $dest
 
 Exit-Json $result

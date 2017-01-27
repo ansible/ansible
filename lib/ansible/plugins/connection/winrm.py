@@ -25,6 +25,8 @@ import re
 import shlex
 import traceback
 import json
+import tempfile
+import subprocess
 
 HAVE_KERBEROS = False
 try:
@@ -76,7 +78,6 @@ class Connection(ConnectionBase):
         self.shell_id         = None
         self.delegate         = None
         self._shell_type      = 'powershell'
-
         # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
@@ -91,6 +92,8 @@ class Connection(ConnectionBase):
         self._winrm_path = hostvars.get('ansible_winrm_path', '/wsman')
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
+
+        self._kinit_cmd  = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
 
         if hasattr(winrm, 'FEATURE_SUPPORTED_AUTHTYPES'):
             self._winrm_supported_authtypes = set(winrm.FEATURE_SUPPORTED_AUTHTYPES)
@@ -114,6 +117,18 @@ class Connection(ConnectionBase):
         if unsupported_transports:
             raise AnsibleError('The installed version of WinRM does not support transport(s) %s' % list(unsupported_transports))
 
+        # if kerberos is among our transports and there's a password specified, we're managing the tickets
+        kinit_mode = str(hostvars.get('ansible_winrm_kinit_mode', '')).strip()
+        if kinit_mode == "":
+            # HACK: ideally, remove multi-transport stuff
+            self._kerb_managed = "kerberos" in self._winrm_transport and self._winrm_pass
+        elif kinit_mode == "managed":
+            self._kerb_managed = True
+        elif kinit_mode == "manual":
+            self._kerb_managed = False
+        else:
+            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: %s' % kinit_mode)
+
         # arg names we're going passing directly
         internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path'])
 
@@ -132,6 +147,29 @@ class Connection(ConnectionBase):
         for arg in passed_winrm_args.difference(internal_kwarg_mask).intersection(supported_winrm_args):
             self._winrm_kwargs[arg] = hostvars['ansible_winrm_%s' % arg]
 
+    # Until pykerberos has enough goodies to implement a rudimentary kinit/klist, simplest way is to let each connection
+    # auth itself with a private CCACHE.
+    def _kerb_auth(self, principal, password):
+        if password is None:
+            password = ""
+        self._kerb_ccache = tempfile.NamedTemporaryFile()
+        display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
+        krb5ccname = "FILE:%s" % self._kerb_ccache.name
+        krbenv = dict(KRB5CCNAME=krb5ccname)
+        os.environ["KRB5CCNAME"] = krb5ccname
+        kinit_cmdline = [self._kinit_cmd, principal]
+
+        display.vvvvv("calling kinit for principal %s" % principal)
+        p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=krbenv)
+
+        # TODO: unicode/py3
+        stdout, stderr = p.communicate(password + b'\n')
+
+        if p.returncode != 0:
+            raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
+
+        display.vvvvv("kinit succeeded for principal %s" % principal)
+
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
@@ -142,9 +180,12 @@ class Connection(ConnectionBase):
         endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
         for transport in self._winrm_transport:
-            if transport == 'kerberos' and not HAVE_KERBEROS:
-                errors.append('kerberos: the python kerberos library is not installed')
-                continue
+            if transport == 'kerberos':
+                if not HAVE_KERBEROS:
+                    errors.append('kerberos: the python kerberos library is not installed')
+                    continue
+                if self._kerb_managed:
+                    self._kerb_auth(self._winrm_user, self._winrm_pass)
             display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
                 protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
@@ -352,7 +393,7 @@ class Connection(ConnectionBase):
         '''
 
         script = script_template.format(self._shell._escape(out_path))
-        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
+        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
 
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
         # TODO: improve error handling
@@ -404,7 +445,7 @@ class Connection(ConnectionBase):
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
-                    cmd_parts = self._shell._encode_script(script, as_list=True)
+                    cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise IOError(to_native(result.std_err))

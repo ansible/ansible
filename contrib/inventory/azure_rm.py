@@ -23,7 +23,7 @@
 Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
-Manager using the AAzure Python SDK. For instruction on installing the
+Manager using the Azure Python SDK. For instruction on installing the
 Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
 
 Authentication
@@ -362,7 +362,11 @@ class AzureRM(object):
             resource_client = self.rm_client
             resource_client.providers.register(key)
         except Exception as exc:
-            self.fail("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("You might need to register {0} using an admin account".format(key))
+            self.log(("To register a provider using the Python CLI: "
+                      "https://docs.microsoft.com/azure/azure-resource-manager/"
+                      "resource-manager-common-deployment-errors#noregisteredproviderfound"))
 
     @property
     def network_client(self):

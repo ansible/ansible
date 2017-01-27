@@ -33,6 +33,9 @@ version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
+    - "Stephane Maarek (@simplesteph)"
+    - "Zac Blazic (@zacblazic)"
+
 requirements: [ json, boto, botocore, boto3 ]
 options:
     state:
@@ -78,6 +81,11 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    deployment_configuration:
+        description:
+          - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
+        required: false
+        version_added: 2.3
 extends_documentation_fragment:
     - aws
     - ec2
@@ -103,6 +111,17 @@ EXAMPLES = '''
     name: default
     state: absent
     cluster: new_cluster
+
+# With custom deployment configuration
+- ecs_service:
+    name: test-service
+    cluster: test-cluster
+    task_definition: test-task-definition
+    desired_count: 3
+    deployment_configuration:
+      minimum_healthy_percent: 75
+      maximum_percent: 150
+    state: present
 '''
 
 RETURN = '''
@@ -164,6 +183,19 @@ service:
             description: list of service deployments
             returned: always
             type: list of complex
+        deploymentConfiguration:
+            description: dictionary of deploymentConfiguration
+            returned: always
+            type: complex
+            contains:
+                maximumPercent:
+                    description: maximumPercent param
+                    returned: always
+                    type: int
+                minimumHealthyPercent:
+                    description: minimumHealthyPercent param
+                    returned: always
+                    type: int
         events:
             description: lost of service events
             returned: always
@@ -180,6 +212,12 @@ ansible_facts:
 '''
 import time
 
+DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
+    'maximum_percent': 'int',
+    'minimum_healthy_percent': 'int'
+}
+
+
 try:
     import boto
     import botocore
@@ -194,7 +232,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict, map_complex_type
 
 
 class EcsServiceManager:
@@ -204,22 +242,12 @@ class EcsServiceManager:
         self.module = module
 
         try:
-            # self.ecs = boto3.client('ecs')
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound as e:
             self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
-
-    # def list_clusters(self):
-    #     return self.client.list_clusters()
-    # {'failures=[],
-    # 'ResponseMetadata={'HTTPStatusCode=200, 'RequestId='ce7b5880-1c41-11e5-8a31-47a93a8a98eb'},
-    # 'clusters=[{'activeServicesCount=0, 'clusterArn='arn:aws:ecs:us-west-2:777110527155:cluster/default', 'status='ACTIVE', 'pendingTasksCount=0, 'runningTasksCount=0, 'registeredContainerInstancesCount=0, 'clusterName='default'}]}
-    # {'failures=[{'arn='arn:aws:ecs:us-west-2:777110527155:cluster/bogus', 'reason='MISSING'}],
-    # 'ResponseMetadata={'HTTPStatusCode=200, 'RequestId='0f66c219-1c42-11e5-8a31-47a93a8a98eb'},
-    # 'clusters=[]}
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
         for c in array_of_services:
@@ -259,7 +287,7 @@ class EcsServiceManager:
         return True
 
     def create_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+                       load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -267,16 +295,18 @@ class EcsServiceManager:
             loadBalancers=load_balancers,
             desiredCount=desired_count,
             clientToken=client_token,
-            role=role)
+            role=role,
+            deploymentConfiguration=deployment_configuration)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role):
+        load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
-            desiredCount=desired_count)
+            desiredCount=desired_count,
+            deploymentConfiguration=deployment_configuration)
         return self.jsonize(response['service'])
 
     def jsonize(self, service):
@@ -297,7 +327,6 @@ class EcsServiceManager:
     def delete_service(self, service, cluster=None):
         return self.ecs.delete_service(cluster=cluster, service=service)
 
-
 def main():
 
     argument_spec = ec2_argument_spec()
@@ -311,7 +340,8 @@ def main():
         client_token=dict(required=False, default='', type='str'),
         role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
+        repeat=dict(required=False, type='int', default=10),
+        deployment_configuration=dict(required=False, default={}, type='dict')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -329,6 +359,12 @@ def main():
       module.fail_json(msg='boto3 is required.')
 
     service_mgr = EcsServiceManager(module)
+
+    deployment_configuration = map_complex_type(module.params['deployment_configuration'],
+                                                            DEPLOYMENT_CONFIGURATION_TYPE_MAP)
+
+    deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
+
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
     except Exception as e:
@@ -360,7 +396,8 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
@@ -369,7 +406,8 @@ def main():
                         loadBalancers,
                         module.params['desired_count'],
                         clientToken,
-                        role)
+                        role,
+                        deploymentConfiguration)
 
                 results['service'] = response
 
