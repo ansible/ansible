@@ -233,9 +233,11 @@ def run(module, result):
     if commands:
         load_config(module, commands, result)
 
-    if result.get('filtered'):
-        result['warnings'].append('Some configuration commands where '
-                                  'removed, please see the filtered key')
+        if result.get('filtered'):
+            result['warnings'].append('Some configuration commands where '
+                                      'removed, please see the filtered key')
+
+        result['changed'] = True
 
 
 def main():
@@ -261,16 +263,18 @@ def main():
         supports_check_mode=True
     )
 
-    result = dict(changed=False)
+    result = dict(changed=False, warnings=[])
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)
 
-    try:
+    if any((module.params['src'], module.params['lines'])):
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+
+    if module.params['save']:
+        if not module.check_mode:
+            run_commands(module, ['save'])
+        result['changed'] = True
 
     module.exit_json(**result)
 

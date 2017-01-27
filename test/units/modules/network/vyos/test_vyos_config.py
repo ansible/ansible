@@ -122,17 +122,12 @@ class TestVyosConfigModule(unittest.TestCase):
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
-        self.assertIn('copy running-config startup-config', args)
+        self.assertIn('save', args)
 
     def test_vyos_config_lines(self):
         commands = ['set system host-name foo']
         set_module_args(dict(lines=commands))
         self.execute_module(changed=True, commands=commands)
-
-    def test_vyos_config_defaults(self):
-        set_module_args(dict(lines=['no shutdown'], parents=['interface GigabitEthernet0/0'],
-                             defaults=True))
-        self.execute_module(defaults=True)
 
     def test_vyos_config_config(self):
         config = 'set system host-name localhost'
