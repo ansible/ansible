@@ -1,5 +1,6 @@
 jinja2
 mock
+pep8
 pylint
 voluptuous
 yamllint

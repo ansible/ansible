@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import, print_function
 
-import errno
 import glob
 import os
 import tempfile
@@ -15,6 +14,7 @@ import random
 import pipes
 import string
 import atexit
+import re
 
 import lib.pytar
 import lib.thread
@@ -817,6 +817,130 @@ def command_sanity_shellcheck(args, targets):
     run_command(args, ['shellcheck'] + paths)
 
 
+def command_sanity_pep8(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    """
+    skip_path = 'test/sanity/pep8/skip.txt'
+    legacy_path = 'test/sanity/pep8/legacy-files.txt'
+
+    with open(skip_path, 'r') as skip_fd:
+        skip_paths = set(skip_fd.read().splitlines())
+
+    with open(legacy_path, 'r') as legacy_fd:
+        legacy_paths = set(legacy_fd.read().splitlines())
+
+    with open('test/sanity/pep8/legacy-ignore.txt', 'r') as ignore_fd:
+        legacy_ignore = set(ignore_fd.read().splitlines())
+
+    with open('test/sanity/pep8/current-ignore.txt', 'r') as ignore_fd:
+        current_ignore = sorted(ignore_fd.read().splitlines())
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths)
+
+    if not paths:
+        display.info('No tests applicable.', verbosity=1)
+        return
+
+    cmd = [
+        'pep8',
+        '--max-line-length', '160',
+        '--config', '/dev/null',
+        '--ignore', ','.join(sorted(current_ignore)),
+    ] + paths
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr)
+
+    pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[A-Z0-9]{4}) (?P<message>.*)$'
+
+    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+
+    for result in results:
+        for key in 'line', 'column':
+            result[key] = int(result[key])
+
+    failed_result_paths = set([result['path'] for result in results])
+    passed_legacy_paths = set([path for path in paths if path in legacy_paths and path not in failed_result_paths])
+
+    errors = []
+    summary = {}
+
+    for path in sorted(passed_legacy_paths):
+        # Keep files out of the list which no longer require the relaxed rule set.
+        errors.append('PEP 8: %s: Passes current rule set. Remove from legacy list (%s).' % (path, legacy_path))
+
+    for path in sorted(skip_paths):
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append('PEP 8: %s: Does not exist. Remove from skip list (%s).' % (path, skip_path))
+
+    for path in sorted(legacy_paths):
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append('PEP 8: %s: Does not exist. Remove from legacy list (%s).' % (path, legacy_path))
+
+    for result in results:
+        path = result['path']
+        line = result['line']
+        column = result['column']
+        code = result['code']
+        message = result['message']
+
+        msg = 'PEP 8: %s:%s:%s: %s %s' % (path, line, column, code, message)
+
+        if path in legacy_paths:
+            msg += ' (legacy)'
+        else:
+            msg += ' (current)'
+
+        if path in legacy_paths and code in legacy_ignore:
+            # Files on the legacy list are permitted to have errors on the legacy ignore list.
+            # However, we want to report on their existence to track progress towards eliminating these exceptions.
+            display.info(msg, verbosity=3)
+
+            key = '%s %s' % (code, re.sub('[0-9]+', 'NNN', message))
+
+            if key not in summary:
+                summary[key] = 0
+
+            summary[key] += 1
+        else:
+            # Files not on the legacy list and errors not on the legacy ignore list are PEP 8 policy errors.
+            errors.append(msg)
+
+    for error in errors:
+        display.error(error)
+
+    if summary:
+        lines = []
+        count = 0
+
+        for key in sorted(summary):
+            count += summary[key]
+            lines.append('PEP 8: %5d %s' % (summary[key], key))
+
+        display.info('PEP 8: There were %d different legacy issues found (%d total):' %
+                     (len(summary), count), verbosity=1)
+
+        display.info('PEP 8: Count Code Message', verbosity=1)
+
+        for line in lines:
+            display.info(line, verbosity=1)
+
+    if errors:
+        raise ApplicationError('PEP 8: There are %d issues which need to be resolved.' % len(errors))
+
+
 def command_sanity_yamllint(args, targets):
     """
     :type args: SanityConfig
@@ -1339,6 +1463,7 @@ SANITY_TESTS = (
     SanityFunc('code-smell', command_sanity_code_smell, intercept=False),
     # tests which honor include/exclude
     SanityFunc('shellcheck', command_sanity_shellcheck, intercept=False),
+    SanityFunc('pep8', command_sanity_pep8, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
