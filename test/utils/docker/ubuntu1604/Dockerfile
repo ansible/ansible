@@ -17,6 +17,8 @@ RUN apt-get update -y && \
     gawk \
     git \
     iproute2 \
+    libffi-dev \
+    libssl-dev \
     libxml2-utils \
     locales \
     lsb-release \

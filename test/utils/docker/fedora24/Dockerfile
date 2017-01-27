@@ -17,18 +17,23 @@ RUN dnf clean all && \
     dbus-python \
     file \
     findutils \
+    gcc \
     git \
     glibc-locale-source \
     iproute \
+    libffi \
+    libffi-devel \
     make \
     mariadb-server \
     mercurial \
     MySQL-python \
     openssh-clients \
     openssh-server \
+    openssl-devel \
     procps \
     python2-dnf \
     python-coverage \
+    python-devel \
     python-httplib2 \
     python-jinja2 \
     python-keyczar \

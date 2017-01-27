@@ -11,7 +11,7 @@ unittest2
 redis
 python-memcached
 python-systemd
-pycrypto
+cryptography
 botocore
 boto3
 pytest
