@@ -116,11 +116,11 @@ Example:
 
 .. code-block:: bash
 
-    $ ansible localhost -m ping
+    $ ansible localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
 
 You can specify localhost explicitly by adding this to your inventory file::
 
-    localhost ansible_connection=local
+    localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
 
 .. _a_note_about_host_key_checking:
 
