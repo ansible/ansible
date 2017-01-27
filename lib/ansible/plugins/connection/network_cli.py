@@ -229,7 +229,7 @@ class Connection(_Connection):
         """
         try:
             obj = json.loads(cmd)
-        except ValueError:
+        except (ValueError, TypeError):
             obj = {'command': str(cmd).strip()}
 
         if obj['command'] == 'close_shell()':
