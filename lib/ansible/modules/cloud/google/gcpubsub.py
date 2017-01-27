@@ -41,7 +41,7 @@ options:
     description:
        - Dictionary containing a subscripton name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull. For pulling from a subscription, message_ack (bool), max_messages (int) and return_immediate are available as subfields.  See subfields name, push_endpoint and ack_deadline for more information.
     required: False
-  name: 
+  name:
     description: Subfield of subscription. Required if subscription is specified. See examples.
     required: False
   ack_deadline:
@@ -156,13 +156,13 @@ state:
     type: str
     sample: "present"
 
-subscription: 
+subscription:
     description: Name of subscription.
     returned: When subscription fields are specified
     type: str
     sample: "mysubscription"
 
-topic: 
+topic:
     description: Name of topic.
     returned: Always
     type: str

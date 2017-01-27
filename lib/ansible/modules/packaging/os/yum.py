@@ -434,7 +434,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
             if not pkgs:
                 e,m,u = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
-            updates = my.doPackageLists(pkgnarrow='updates').updates 
+            updates = my.doPackageLists(pkgnarrow='updates').updates
         except Exception:
             e = get_exception()
             module.fail_json(msg="Failure talking to yum: %s" % e)
@@ -524,9 +524,9 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
     return set()
 
 def transaction_exists(pkglist):
-    """ 
-    checks the package list to see if any packages are 
-    involved in an incomplete transaction 
+    """
+    checks the package list to see if any packages are
+    involved in an incomplete transaction
     """
 
     conflicts = []
@@ -824,7 +824,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         res['results'].append(out)
         res['msg'] = err
 
-        # compile the results into one batch. If anything is changed 
+        # compile the results into one batch. If anything is changed
         # then mark changed
         # at the end - if we've end up failed then fail out of the rest
         # of the process

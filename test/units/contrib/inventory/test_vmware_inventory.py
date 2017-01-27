@@ -54,7 +54,7 @@ class TestVMWareInventory(unittest.TestCase):
         vmw = VMWareInventory(load=False)
         vmw.args = fakeargs
         vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
+        showdata = vmw.show()
         serializable = False
 
         try:
@@ -71,7 +71,7 @@ class TestVMWareInventory(unittest.TestCase):
         vmw.args = fakeargs
         vmw.args.list = True
         vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
+        showdata = vmw.show()
         serializable = False
 
         try:
@@ -88,7 +88,7 @@ class TestVMWareInventory(unittest.TestCase):
         vmw.args = fakeargs
         vmw.args.list = True
         vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
+        showdata = vmw.show()
         expected = json.dumps(BASICINVENTORY, indent=2)
         assert showdata == expected
 
@@ -98,7 +98,7 @@ class TestVMWareInventory(unittest.TestCase):
         vmw.args = fakeargs
         vmw.args.host = 'foo'
         vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
+        showdata = vmw.show()
         serializable = False
 
         try:
@@ -116,7 +116,7 @@ class TestVMWareInventory(unittest.TestCase):
         vmw.args.list = False
         vmw.args.host = 'foo'
         vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
+        showdata = vmw.show()
         expected = BASICINVENTORY['_meta']['hostvars']['foo']
         expected = json.dumps(expected, indent=2)
         #import epdb; epdb.st()

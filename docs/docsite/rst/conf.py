@@ -102,7 +102,7 @@ pygments_style = 'sphinx'
 
 highlight_language = 'YAML+Jinja'
 
-#Substitutions, variables, entities, & shortcuts for text which do not need to link to anything. 
+#Substitutions, variables, entities, & shortcuts for text which do not need to link to anything.
 #For titles which should be a link, use the intersphinx anchors set at the index, chapter, and section levels, such as  qi_start_:
 rst_epilog = """
 .. |acapi| replace:: *Ansible Core API Guide*

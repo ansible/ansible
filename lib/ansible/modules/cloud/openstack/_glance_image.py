@@ -157,7 +157,7 @@ def _get_ksclient(module, kwargs):
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:
         module.fail_json(msg="Error authenticating to the keystone: %s " % e.message)
-    return client 
+    return client
 
 
 def _get_endpoint(module, client, endpoint_type):
@@ -186,7 +186,7 @@ def _glance_image_present(module, params, client):
     try:
         for image in client.images.list():
             if image.name == params['name']:
-                return image.id 
+                return image.id
         return None
     except Exception as e:
         module.fail_json(msg="Error in fetching image list: %s" % e.message)

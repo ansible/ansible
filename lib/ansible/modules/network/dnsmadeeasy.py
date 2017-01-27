@@ -58,7 +58,7 @@ options:
     default: null
 
   record_value:
-    description: 
+    description:
       - "Record value. HTTPRED: <redirection URL>, MX: <priority> <target name>, NS: <name server>, PTR: <target name>, SRV: <priority> <weight> <port> <target name>, TXT: <text value>"
       - "If record_value is not specified; no changes will be made and the record will be returned in 'result' (in other words, this module can be used to fetch a record's current id, type, and ttl)"
     required: false
@@ -87,7 +87,7 @@ options:
     version_added: 1.5.1
 
 notes:
-  - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP. 
+  - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP.
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
 
 requirements: [ hashlib, hmac ]

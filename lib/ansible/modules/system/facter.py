@@ -36,7 +36,7 @@ version_added: "0.2"
 options: {}
 notes: []
 requirements: [ "facter", "ruby-json" ]
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 '''

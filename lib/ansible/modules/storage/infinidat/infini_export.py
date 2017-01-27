@@ -62,8 +62,8 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Export bar filesystem under foo pool as /data
-  infini_export: 
-    name: /data01 
+  infini_export:
+    name: /data01
     filesystem: foo
     user: admin
     password: secret

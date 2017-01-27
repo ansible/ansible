@@ -432,7 +432,7 @@ def ensure_vgw_present(client, module):
             else:
                 # attach the vgw to the supplied vpc
                 attached_vgw = attach_vgw(client, module, vpn_gateway_id)
-                vgw = find_vgw(client, module, [vpn_gateway_id]) 
+                vgw = find_vgw(client, module, [vpn_gateway_id])
                 changed = True
 
         # if params['VpcId'] is not provided, check the vgw is attached to a vpc. if so, detach it.
@@ -443,7 +443,7 @@ def ensure_vgw_present(client, module):
                 if existing_vgw[0]['VpcAttachments'][0]['State'] == 'attached':
                     # detach the vpc from the vgw
                     vpc_to_detach = existing_vgw[0]['VpcAttachments'][0]['VpcId']
-                    detach_vgw(client, module, vpn_gateway_id, vpc_to_detach) 
+                    detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     changed = True
 
                 vgw = find_vgw(client, module, [vpn_gateway_id])
@@ -492,16 +492,16 @@ def ensure_vgw_absent(client, module):
             if existing_vgw[0]['VpcAttachments'] != [] and existing_vgw[0]['VpcAttachments'][0]['State'] == 'attached':
                 if params['VpcId']:
                     if params['VpcId'] != existing_vgw[0]['VpcAttachments'][0]['VpcId']:
-                        module.fail_json(msg='The vpc-id provided does not match the vpc-id currently attached - please check the AWS console')    
+                        module.fail_json(msg='The vpc-id provided does not match the vpc-id currently attached - please check the AWS console')
 
                     else:
-                        # detach the vpc from the vgw        
+                        # detach the vpc from the vgw
                         detach_vgw(client, module, params['VpnGatewayIds'], params['VpcId'])
                         deleted_vgw = delete_vgw(client, module, params['VpnGatewayIds'])
                         changed = True
 
                 else:
-                    # attempt to detach any attached vpcs                     
+                    # attempt to detach any attached vpcs
                     vpc_to_detach = existing_vgw[0]['VpcAttachments'][0]['VpcId']
                     detach_vgw(client, module, params['VpnGatewayIds'], vpc_to_detach)
                     deleted_vgw = delete_vgw(client, module, params['VpnGatewayIds'])
@@ -519,7 +519,7 @@ def ensure_vgw_absent(client, module):
     else:
         #Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
-            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')        
+            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
 
         existing_vgw = find_vgw(client, module)
         if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':
@@ -527,10 +527,10 @@ def ensure_vgw_absent(client, module):
             if existing_vgw[0]['VpcAttachments'] != [] and existing_vgw[0]['VpcAttachments'][0]['State'] == 'attached':
                 if params['VpcId']:
                     if params['VpcId'] != existing_vgw[0]['VpcAttachments'][0]['VpcId']:
-                        module.fail_json(msg='The vpc-id provided does not match the vpc-id currently attached - please check the AWS console')      
+                        module.fail_json(msg='The vpc-id provided does not match the vpc-id currently attached - please check the AWS console')
 
                     else:
-                        # detach the vpc from the vgw                    
+                        # detach the vpc from the vgw
                         detach_vgw(client, module, vpn_gateway_id, params['VpcId'])
 
                         #now that the vpc has been detached, delete the vgw
@@ -538,7 +538,7 @@ def ensure_vgw_absent(client, module):
                         changed = True
 
                 else:
-                    # attempt to detach any attached vpcs                  
+                    # attempt to detach any attached vpcs
                     vpc_to_detach = existing_vgw[0]['VpcAttachments'][0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     changed = True
@@ -562,7 +562,7 @@ def ensure_vgw_absent(client, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(default='present', choices=['present', 'absent']),        
+        state=dict(default='present', choices=['present', 'absent']),
         region=dict(required=True),
         name=dict(),
         vpn_gateway_id=dict(),

@@ -113,7 +113,7 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
-requires: 
+requires:
     - "boto >= 2.39.0"
 """
 

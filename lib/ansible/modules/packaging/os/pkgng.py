@@ -4,7 +4,7 @@
 # (c) 2013, bleader
 # Written by bleader <bleader@ratonland.org>
 # Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+# that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -86,7 +86,7 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: no
-author: "bleader (@bleader)" 
+author: "bleader (@bleader)"
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''
@@ -102,7 +102,7 @@ EXAMPLES = '''
     name: foo,bar
     annotation: '+test1=baz,-test2,:test3=foobar'
 
-# Remove packages foo and bar 
+# Remove packages foo and bar
 - pkgng:
     name: foo,bar
     state: absent

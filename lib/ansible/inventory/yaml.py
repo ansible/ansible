@@ -78,7 +78,7 @@ class InventoryParser(object):
             self.groups[group] = Group(name=group)
 
         if isinstance(group_data, dict):
-            #make sure they are dicts 
+            #make sure they are dicts
             for section in ['vars', 'children', 'hosts']:
                 if section in group_data and isinstance(group_data[section], string_types):
                     group_data[section] = { group_data[section]: None}
