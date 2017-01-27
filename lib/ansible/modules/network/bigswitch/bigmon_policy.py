@@ -79,8 +79,7 @@ options:
     choices: [true, false]
   access_token:
     description:
-     - Bigmon access token.
-    aliases: ['BIGSWITCH_ACCESS_TOKEN']
+     - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
 
 notes:
   - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
@@ -202,7 +201,7 @@ def main():
             controller=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present'),
             validate_certs=dict(type='bool', default='False'),
-            access_token=dict(aliases=['BIGSWITCH_ACCESS_TOKEN'], no_log=True)
+            access_token=dict(type='str', no_log=True)
         )
     )
 
