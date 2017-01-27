@@ -208,7 +208,7 @@ def main():
             results['view'] = cf_man.view(ct_name)
             # only update if the values have changed.
             if results['view']['S3BucketName']              != s3_bucket_name or \
-              results['view'].get('S3KeyPrefix', '')      != s3_key_prefix  or \
+              results['view'].get('S3KeyPrefix', '')      != s3_key_prefix or \
               results['view']['IncludeGlobalServiceEvents'] != include_global_events:
                 if not module.check_mode:
                     results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)

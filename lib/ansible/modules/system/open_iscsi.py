@@ -151,7 +151,7 @@ def iscsi_get_cached_nodes(module, portal=None):
 
     # older versions of scsiadm don't have nice return codes
     # for newer versions see iscsiadm(8); also usr/iscsiadm.c for details
-                                  # err can contain [N|n]o records...
+    # err can contain [N|n]o records...
     elif rc == 21 or (rc == 255 and "o records found" in err):
         nodes = []
     else:

@@ -148,7 +148,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-     # Validate Requirements
+    # Validate Requirements
     if not HAS_BOTO3:
         module.fail_json(msg='json and botocore/boto3 is required.')
 

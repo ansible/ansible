@@ -23,7 +23,7 @@ import datetime
 __metaclass__ = type
 
 try:
-    from pymongo  import ASCENDING, DESCENDING
+    from pymongo import ASCENDING, DESCENDING
     from pymongo.errors import ConnectionFailure
     from pymongo import MongoClient
 except ImportError:
@@ -39,6 +39,7 @@ else:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+
 
 class LookupModule(LookupBase):
 

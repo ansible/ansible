@@ -226,7 +226,7 @@ import time
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.ios import load_config, get_config, run_commands
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.six  import iteritems
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
 

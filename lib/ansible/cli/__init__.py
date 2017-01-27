@@ -103,8 +103,10 @@ class CLI(with_metaclass(ABCMeta, object)):
     _CONST  = re.compile(r"C\(([^)]+)\)")
 
     PAGER   = 'less'
-    LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
-                        # -S (chop long lines) -X (disable termcap init and de-init)
+
+    # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+    # -S (chop long lines) -X (disable termcap init and de-init)
+    LESS_OPTS = 'FRSX'
 
     def __init__(self, args, callback=None):
         """

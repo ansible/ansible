@@ -175,8 +175,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
-    batch_var = 'env BATCH=yes' # This environment variable skips mid-install prompts,
-                                # setting them to their default values.
+    # This environment variable skips mid-install prompts,
+    # setting them to their default values.
+    batch_var = 'env BATCH=yes'
 
     if not module.check_mode and not cached:
         if old_pkgng:
