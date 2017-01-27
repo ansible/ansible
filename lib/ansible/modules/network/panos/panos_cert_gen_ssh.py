@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: panos_cert_gen_ssh
 short_description: generates a self-signed certificate using SSH protocol with SSH key
 description:
-    - This module generates a self-signed certificate that can be used by GlobalProtect client, SSL connector, or otherwise. Root certificate must be preset on the system first. This module depends on paramiko for ssh.
+    - This module generates a self-signed certificate that can be used by GlobalProtect client, SSL connector, or
+    - otherwise. Root certificate must be preset on the system first. This module depends on paramiko for ssh.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -138,7 +139,8 @@ def generate_cert(module, ip_address, key_filename, password,
     # generate self-signed certificate
     if isinstance(cert_cn, list):
         cert_cn = cert_cn[0]
-    cmd = 'request certificate generate signed-by {0} certificate-name {1} name {2} algorithm RSA rsa-nbits {3}\n'.format(signed_by, cert_friendly_name, cert_cn, rsa_nbits)
+    cmd = 'request certificate generate signed-by {0} certificate-name {1} name {2} algorithm RSA rsa-nbits {3}\n'.format(
+        signed_by, cert_friendly_name, cert_cn, rsa_nbits)
     shell.send(cmd)
 
     # wait for the shell to complete
@@ -166,7 +168,8 @@ def main():
         signed_by=dict(required=True)
 
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['key_filename', 'password']])
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
+                           required_one_of=[['key_filename', 'password']])
     if not HAS_LIB:
         module.fail_json(msg='paramiko is required for this module')
 
