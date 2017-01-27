@@ -86,7 +86,7 @@ options:
     description:
       - the protocol used for the load-balancer packet forwarding, tcp or udp
     required: false
-    default: "tcp" 
+    default: "tcp"
     choices: ['tcp', 'udp']
   region:
     description:
@@ -151,7 +151,7 @@ author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 
 EXAMPLES = '''
 # Simple example of creating a new LB, adding members, and a health check
-- local_action: 
+- local_action:
     module: gce_lb
     name: testlb
     region: us-central1

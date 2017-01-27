@@ -260,7 +260,7 @@ class LibvirtConnection(object):
                 else:
                     # pretend there was a change
                     res = 0
-                if res == 0: 
+                if res == 0:
                     return True
             else:
                 # change the host

@@ -237,7 +237,7 @@ def contentfilter(fsname, pattern):
                f.close()
                return True
 
-       f.close() 
+       f.close()
     except:
        pass
 

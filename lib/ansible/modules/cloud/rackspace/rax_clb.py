@@ -107,7 +107,7 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: 
+author:
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace

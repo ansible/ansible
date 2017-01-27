@@ -253,7 +253,7 @@ def present(user_facts, cursor, user, profile, resource_pool,
         if ldap:
             if ldap != (user_facts[user_key]['expired'] == 'True'):
                 query_fragments.append("password expire")
-                changed = True                
+                changed = True
         elif expired is not None and expired != (user_facts[user_key]['expired'] == 'True'):
             if expired:
                 query_fragments.append("password expire")

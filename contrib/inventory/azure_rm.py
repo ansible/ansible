@@ -32,7 +32,7 @@ The order of precedence is command line arguments, environment variables,
 and finally the [default] profile found in ~/.azure/credentials.
 
 If using a credentials file, it should be an ini formatted file with one or
-more sections, which we refer to as profiles. The script looks for a 
+more sections, which we refer to as profiles. The script looks for a
 [default] section, if a profile is not specified either on the command line
 or with an environment variable. The keys in a profile will match the
 list of command line arguments below.
@@ -42,7 +42,7 @@ in your ~/.azure/credentials file, or a service principal or Active Directory
 user.
 
 Command line arguments:
- - profile 
+ - profile
  - client_id
  - secret
  - subscription_id
@@ -61,7 +61,7 @@ Environment variables:
 
 Run for Specific Host
 -----------------------
-When run for a specific host using the --host option, a resource group is 
+When run for a specific host using the --host option, a resource group is
 required. For a specific host, this script returns the following variables:
 
 {

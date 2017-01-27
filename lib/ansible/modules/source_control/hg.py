@@ -91,8 +91,8 @@ options:
               the normal mechanism for resolving binary paths will be used.
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
-      SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
-      one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling 
+      SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
+      one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the hg module, with the following command: ssh-keyscan remote_host.com >> /etc/ssh/ssh_known_hosts."
 requirements: [ ]
 '''

@@ -28,7 +28,7 @@ author: "Rick Mendes (@rickmendes)"
 options:
   instance_id:
     description:
-      - The instance id to get the password data from. 
+      - The instance id to get the password data from.
     required: true
   key_file:
     description:
@@ -37,7 +37,7 @@ options:
   key_passphrase:
     version_added: "2.0"
     description:
-      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3. 
+      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
     required: false
     default: null
   wait:

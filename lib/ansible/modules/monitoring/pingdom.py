@@ -26,7 +26,7 @@ short_description: Pause/unpause Pingdom alerts
 description:
     - This module will let you pause/unpause Pingdom alerts
 version_added: "1.2"
-author: 
+author:
     - "Dylan Silva (@thaumos)"
     - "Justin Johns"
 requirements:

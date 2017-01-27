@@ -311,7 +311,7 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._blocked_hosts = dict()
 
         def _has_dead_workers():
-            return False            
+            return False
 
         strategy_base._tqm.has_dead_workers.side_effect = _has_dead_workers
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)

@@ -112,7 +112,7 @@ EXAMPLES = '''
   - name: "Tacacs Server Host Configuration"
     nxos_aaa_server_host:
         state: present
-        server_type: tacacs 
+        server_type: tacacs
         tacacs_port: 89
         host_timeout: 10
         address: 5.6.7.8
@@ -126,7 +126,7 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"address": "1.2.3.4", "auth_port": "2084", 
+    sample: {"address": "1.2.3.4", "auth_port": "2084",
             "host_timeout": "10", "server_type": "radius"}
 existing:
     description:
@@ -137,7 +137,7 @@ end_state:
     description: k/v pairs of configuration after module execution
     returned: always
     type: dict
-    sample: {"address": "1.2.3.4", "auth_port": "2084", 
+    sample: {"address": "1.2.3.4", "auth_port": "2084",
             "host_timeout": "10", "server_type": "radius"}
 updates:
     description: command sent to the device

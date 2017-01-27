@@ -129,7 +129,7 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) 
+            initial_state = self._get_instance_health(lb)
             if initial_state is None:
                 # Instance isn't registered with this load
                 # balancer. Ignore it and try the next one.

@@ -433,7 +433,7 @@ def main():
     if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
     for _connection_state in params['active_connection_states']:
-        try: 
+        try:
             get_connection_state_id(_connection_state)
         except:
             module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")

@@ -172,7 +172,7 @@ def detach_volume(module, profitbricks):
     """
     Detaches a volume.
 
-    This will remove a volume from the server. 
+    This will remove a volume from the server.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.

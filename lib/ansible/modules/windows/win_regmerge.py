@@ -63,7 +63,7 @@ notes:
 
 EXAMPLES = r'''
   # Merge in a registry file without comparing to current registry
-  # Note that paths using / to separate are preferred as they require less special handling than \ 
+  # Note that paths using / to separate are preferred as they require less special handling than \
   win_regmerge:
     path: C:/autodeploy/myCompany-settings.reg
   # Compare and merge registry file

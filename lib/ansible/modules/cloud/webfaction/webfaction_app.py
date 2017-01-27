@@ -101,7 +101,7 @@ EXAMPLES = '''
     webfaction_app:
       name="my_wsgi_app1"
       state=present
-      type=mod_wsgi35-python27 
+      type=mod_wsgi35-python27
       login_name={{webfaction_user}}
       login_password={{webfaction_passwd}}
       machine={{webfaction_machine}}
@@ -168,8 +168,8 @@ def main():
             # If this isn't a dry run, create the app
             result.update(
                 webfaction.create_app(
-                    session_id, app_name, app_type, 
-                    module.boolean(module.params['autostart']), 
+                    session_id, app_name, app_type,
+                    module.boolean(module.params['autostart']),
                     module.params['extra_info'],
                     module.boolean(module.params['port_open'])
                 )

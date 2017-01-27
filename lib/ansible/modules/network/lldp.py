@@ -31,7 +31,7 @@ description:
 options: {}
 author: "Andy Hill (@andyhky)"
 notes:
-  - Requires lldpd running and lldp enabled on switches 
+  - Requires lldpd running and lldp enabled on switches
 '''
 
 EXAMPLES = '''
@@ -83,7 +83,7 @@ def main():
         data = {'lldp': lldp_output['lldp']}
         module.exit_json(ansible_facts=data)
     except TypeError:
-        module.fail_json(msg="lldpctl command failed. is lldpd running?")    
+        module.fail_json(msg="lldpctl command failed. is lldpd running?")
 
 # import module snippets
 from ansible.module_utils.basic import *

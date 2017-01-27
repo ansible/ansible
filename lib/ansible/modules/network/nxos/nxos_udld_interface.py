@@ -97,7 +97,7 @@ updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface ethernet1/33", 
+    sample: ["interface ethernet1/33",
             "no udld aggressive ; no udld disable"]
 changed:
     description: check to see if a change was made on the device

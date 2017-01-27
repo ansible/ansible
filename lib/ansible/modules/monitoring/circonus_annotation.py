@@ -37,11 +37,11 @@ requirements:
 options:
     api_key:
         description:
-           - Circonus API key 
+           - Circonus API key
         required: true
     category:
         description:
-           - Annotation Category 
+           - Annotation Category
         required: true
     description:
         description:

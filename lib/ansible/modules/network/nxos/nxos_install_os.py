@@ -69,7 +69,7 @@ EXAMPLES = '''
         password: "{{ pwd }}"
         transport: nxapi
     rescue:
-      - name: Wait for device to perform checks 
+      - name: Wait for device to perform checks
         wait_for:
           port: 22
           state: stopped

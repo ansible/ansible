@@ -44,7 +44,7 @@ options:
   tags:
     description:
       - Dictionary of tags to look for and apply when creating a Peering Connection.
-    required: false    
+    required: false
   state:
     description:
       - Create, delete, accept, reject a peering connection.
@@ -67,7 +67,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix       
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept local VPC peering request
@@ -87,7 +87,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix           
+      Project: phoenix
   register: vpc_peer
 
 - name: delete a local VPC peering Connection
@@ -108,7 +108,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix         
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept peering connection from remote account
@@ -129,7 +129,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix          
+      Project: phoenix
   register: vpc_peer
 
 - name: Reject a local VPC peering Connection
@@ -149,7 +149,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix        
+      Project: phoenix
   register: vpc_peer
 
 - name: Accept a cross account VPC peering connection request
@@ -174,7 +174,7 @@ EXAMPLES = '''
     tags:
       Name: Peering connection for VPC 21 to VPC 22
       CostCode: CC1234
-      Project: phoenix         
+      Project: phoenix
   register: vpc_peer
 
 - name: Reject a cross account VPC peering Connection
@@ -269,7 +269,7 @@ def create_peer_connection(client, module):
         changed = True
         return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))                   
+        module.fail_json(msg=str(e))
 
 
 def peer_status(client, module):

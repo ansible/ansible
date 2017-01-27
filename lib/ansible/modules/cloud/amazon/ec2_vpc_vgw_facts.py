@@ -36,7 +36,7 @@ options:
     default: None
   vpn_gateway_ids:
     description:
-      - Get details of a specific Virtual Gateway ID. This value should be provided as a list. 
+      - Get details of a specific Virtual Gateway ID. This value should be provided as a list.
     required: false
     default: None
 author: "Nick Aslanidis (@naslanidis)"
@@ -66,7 +66,7 @@ EXAMPLES = '''
   ec2_vpc_vgw_facts:
     region: ap-southeast-2
     profile: production
-    vpn_gateway_ids: vgw-c432f6a7 
+    vpn_gateway_ids: vgw-c432f6a7
   register: vgw_facts
 '''
 
@@ -83,7 +83,7 @@ virtual_gateways:
                     "key": "Name",
                     "value": "TEST-VGW"
                 }
-            ], 
+            ],
             "type": "ipsec.1",
             "vpc_attachments": [
                 {

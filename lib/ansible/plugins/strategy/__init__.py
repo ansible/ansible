@@ -385,7 +385,7 @@ class StrategyBase:
                     self._tqm._stats.increment('failures', original_host.name)
 
                     # grab the current state and if we're iterating on the rescue portion
-                    # of a block then we save the failed task in a special var for use 
+                    # of a block then we save the failed task in a special var for use
                     # within the rescue/always
                     state, _ = iterator.get_next_task_for_host(original_host, peek=True)
 

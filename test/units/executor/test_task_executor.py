@@ -260,7 +260,7 @@ class TestTaskExecutor(unittest.TestCase):
         # you can't use a list as a dict key so that would probably throw
         # an error later.  If so, we can throw it now instead.
         # Squashing in this case would not be intuitive as the user is being
-        # explicit in using each list entry as a key.  
+        # explicit in using each list entry as a key.
         job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "foo": "baz", "bar": "quux" })
         items = [['a', 'b'], ['foo', 'bar']]
         mock_task.action = 'yum'

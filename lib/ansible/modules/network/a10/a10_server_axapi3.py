@@ -81,7 +81,7 @@ RETURN = '''
 
 EXAMPLES = '''
 # Create a new server
-- a10_server: 
+- a10_server:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword

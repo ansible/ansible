@@ -60,16 +60,16 @@ options:
     required: false
     default: null
   msg:
-    description: 
+    description:
       - The contents of the annotation message, in plain text.  Limited to 256 characters. Required for annotation.
     required: false
     default: null
-  annotated_by: 
+  annotated_by:
     description:
       - The person or robot who the annotation should be attributed to.
     required: false
     default: "Ansible"
-  level: 
+  level:
     description:
       - one of INFO/WARN/ERROR, defaults to INFO if not supplied.  May affect display.
     choices: ['INFO', 'WARN', 'ERROR']

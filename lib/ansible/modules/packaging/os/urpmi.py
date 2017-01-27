@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Philippe Makowski
-# Written by Philippe Makowski <philippem@mageia.org> 
+# Written by Philippe Makowski <philippem@mageia.org>
 # Based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -76,16 +76,16 @@ EXAMPLES = '''
     pkg: foo
     state: absent
 
-# description: remove packages foo and bar 
+# description: remove packages foo and bar
 - urpmi:
     pkg: foo,bar
     state: absent
 
-# description: update the package database (urpmi.update -a -q) and install bar (bar will be the updated if a newer version exists) 
+# description: update the package database (urpmi.update -a -q) and install bar (bar will be the updated if a newer version exists)
 - urpmi:
     name: bar
     state: present
-    update_cache: yes     
+    update_cache: yes
 '''
 
 

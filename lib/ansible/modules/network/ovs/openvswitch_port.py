@@ -81,7 +81,7 @@ EXAMPLES = '''
     port: eth2
     state: present
 
-# Creates port eth6 
+# Creates port eth6
 - openvswitch_port:
     bridge: bridge-loop
     port: eth6

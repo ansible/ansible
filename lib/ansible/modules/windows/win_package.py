@@ -109,7 +109,7 @@ EXAMPLES = r'''
       productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
       arguments: '/q /norestart'
       ensure: present
-      expected_return_code: 3010    
+      expected_return_code: 3010
 
 # Specify multiple non-zero return codes when successful
 # In this case we can say that both 0 (SUCCESSFUL) and 3010 (REBOOT REQUIRED) codes are acceptable

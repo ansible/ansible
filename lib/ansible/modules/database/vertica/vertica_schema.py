@@ -26,7 +26,7 @@ module: vertica_schema
 version_added: '2.0'
 short_description: Adds or removes Vertica database schema and roles.
 description:
-  - Adds or removes Vertica database schema and, optionally, roles 
+  - Adds or removes Vertica database schema and, optionally, roles
     with schema access privileges.
   - A schema will not be removed until all the objects have been dropped.
   - In such a situation, if the module tries to remove the schema it

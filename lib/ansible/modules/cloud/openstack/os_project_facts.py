@@ -96,7 +96,7 @@ openstack_projects:
     returned: always, but can be null
     type: complex
     contains:
-        id: 
+        id:
             description: Unique UUID.
             returned: success
             type: string

@@ -368,8 +368,8 @@ class User(object):
             cmd.append(self.group)
         elif self.group_exists(self.name):
             # use the -N option (no user group) if a group already
-            # exists with the same name as the user to prevent 
-            # errors from useradd trying to create a group when 
+            # exists with the same name as the user to prevent
+            # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
                 dist = platform.dist()
@@ -922,7 +922,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -1258,7 +1258,7 @@ class SunOS(User):
     """
     This is a SunOS User manipulation class - The main difference between
     this class and the generic user class is that Solaris-type distros
-    don't support the concept of a "system" account and we need to 
+    don't support the concept of a "system" account and we need to
     edit the /etc/shadow file manually to set a password. (Ugh)
 
     This overrides the following methods from the generic class:-

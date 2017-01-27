@@ -47,7 +47,7 @@ options:
 notes:
     - See also U(http://docs.ansible.com/playbooks_async.html)
 requirements: []
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 '''

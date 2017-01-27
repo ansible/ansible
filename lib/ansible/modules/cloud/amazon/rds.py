@@ -166,7 +166,7 @@ options:
     default: null
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
@@ -296,7 +296,7 @@ EXAMPLES = '''
      wait: yes
      wait_timeout: 600
      tags:
-         Name: pg1_test_name_tag 
+         Name: pg1_test_name_tag
   register: rds
 
 - local_action:

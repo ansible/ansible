@@ -26,8 +26,8 @@ description:
 version_added: "2.2"
 author: Pascal HERAUD @pascalheraud
 notes:
-    - Uses the python OVH Api U(https://github.com/ovh/python-ovh). 
-      You have to create an application (a key and secret) with a consummer 
+    - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
+      You have to create an application (a key and secret) with a consummer
       key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
 requirements:
     - ovh >  0.3.5
@@ -79,13 +79,13 @@ options:
         type: "int"
         default: 120
         description:
-            - The timeout in seconds used to wait for a task to be 
+            - The timeout in seconds used to wait for a task to be
               completed. Default is 120 seconds.
 
 '''
 
 EXAMPLES = '''
-# Adds or modify the backend '212.1.1.1' to a 
+# Adds or modify the backend '212.1.1.1' to a
 # loadbalancing 'ip-1.1.1.1'
 - ovh_ip_loadbalancing:
     name: ip-1.1.1.1

@@ -155,12 +155,12 @@ def grant_check(module, gs, obj):
             grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllUsers']
             if not grant:
                 obj.set_acl('public-read')
-                module.exit_json(changed=True, result="The objects permission as been set to public-read") 
+                module.exit_json(changed=True, result="The objects permission as been set to public-read")
         if module.params.get('permission') == 'authenticated-read':
             grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllAuthenticatedUsers']
             if not grant:
                 obj.set_acl('authenticated-read')
-                module.exit_json(changed=True, result="The objects permission as been set to authenticated-read") 
+                module.exit_json(changed=True, result="The objects permission as been set to authenticated-read")
     except gs.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
     return True
@@ -240,7 +240,7 @@ def create_dirkey(module, gs, bucket, obj):
 
 def path_check(path):
     if os.path.exists(path):
-        return True 
+        return True
     else:
         return False
 
@@ -262,7 +262,7 @@ def transform_headers(headers):
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
         bucket = gs.lookup(bucket)
-        key = bucket.new_key(obj)  
+        key = bucket.new_key(obj)
         key.set_contents_from_filename(
             filename=src,
             headers=transform_headers(module.params.get('headers'))
@@ -326,7 +326,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
         else:
             upload_gsfile(module, gs, bucket, obj, src, expiration)
 
-    if not bucket_rc:      
+    if not bucket_rc:
         create_bucket(module, gs, bucket)
         upload_gsfile(module, gs, bucket, obj, src, expiration)
 
@@ -352,7 +352,7 @@ def handle_delete(module, gs, bucket, obj):
         module.fail_json(msg="Bucket or Bucket & object  parameter is required.", failed=True)
 
 def handle_create(module, gs, bucket, obj):
-    if bucket and not obj: 
+    if bucket and not obj:
         if bucket_check(module, gs, bucket):
             module.exit_json(msg="Bucket already exists.", changed=False)
         else:
@@ -366,7 +366,7 @@ def handle_create(module, gs, bucket, obj):
         if bucket_check(module, gs, bucket):
             if key_check(module, gs, bucket, dirobj):
                 module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
-            else:      
+            else:
                 create_dirkey(module, gs, bucket, dirobj)
         else:
             create_bucket(module, gs, bucket)
@@ -431,7 +431,7 @@ def main():
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
         handle_put(module, gs, bucket, obj, overwrite, src, expiry)
 
-    # Support for deleting an object if we have both params.  
+    # Support for deleting an object if we have both params.
     if mode == 'delete':
         handle_delete(module, gs, bucket, obj)
 

@@ -135,7 +135,7 @@ def main():
                 if module.params['public_key'] and (module.params['public_key'] != key.public_key ):
                     module.fail_json(msg = "name {} present but key hash not the same as offered.  Delete key first.".format(key['name']))
                 else:
-                    module.exit_json(changed = False, result = "Key present")            
+                    module.exit_json(changed = False, result = "Key present")
         try:
             key = nova.keypairs.create(module.params['name'], module.params['public_key'])
         except Exception as e:

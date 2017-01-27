@@ -86,7 +86,7 @@ class CapabilitiesModule(object):
     distribution = None
 
     def __init__(self, module):
-        self.module         = module 
+        self.module         = module
         self.path           = module.params['path'].strip()
         self.capability     = module.params['capability'].strip().lower()
         self.state          = module.params['state']
@@ -124,7 +124,7 @@ class CapabilitiesModule(object):
     def getcap(self, path):
         rval = []
         cmd = "%s -v %s" % (self.getcap_cmd, path)
-        rc, stdout, stderr = self.module.run_command(cmd)    
+        rc, stdout, stderr = self.module.run_command(cmd)
         # If file xattrs are set but no caps are set the output will be:
         #   '/foo ='
         # If file xattrs are unset the output will be:
@@ -151,7 +151,7 @@ class CapabilitiesModule(object):
     def setcap(self, path, caps):
         caps = ' '.join([ ''.join(cap) for cap in caps ])
         cmd = "%s '%s' %s" % (self.setcap_cmd, caps, path)
-        rc, stdout, stderr = self.module.run_command(cmd)    
+        rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Unable to set capabilities of %s" % path, stdout=stdout, stderr=stderr)
         else:

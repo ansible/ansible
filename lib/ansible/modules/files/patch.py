@@ -72,7 +72,7 @@ options:
   backup:
     version_added: "2.0"
     description:
-      - passes --backup --version-control=numbered to patch, 
+      - passes --backup --version-control=numbered to patch,
         producing numbered backup copies
     choices: [ 'yes', 'no' ]
     default: 'no'

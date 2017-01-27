@@ -600,7 +600,7 @@ EXAMPLES = '''
     node        : sabrewulf
     state       : absent
 
-# Get VM current state 
+# Get VM current state
 - proxmox_kvm:
     api_user    : root@pam
     api_password: secret
@@ -638,7 +638,7 @@ vmid:
     type: int
     sample: 115
 status:
-    description: 
+    description:
       - The current virtual machine status.
       - Returned only when C(state=current)
     returned: success
@@ -646,7 +646,7 @@ status:
     sample: '{
       "changed": false,
       "msg": "VM kropta with vmid = 110 is running",
-      "status": "running" 
+      "status": "running"
     }'
 '''
 

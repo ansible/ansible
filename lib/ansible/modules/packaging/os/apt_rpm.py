@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Evgenii Terechkov
-# Written by Evgenii Terechkov <evg@altlinux.org> 
-# Based on urpmi module written by Philippe Makowski <philippem@mageia.org> 
+# Written by Evgenii Terechkov <evg@altlinux.org>
+# Based on urpmi module written by Philippe Makowski <philippem@mageia.org>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

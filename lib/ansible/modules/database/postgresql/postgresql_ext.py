@@ -143,7 +143,7 @@ def main():
     state = module.params["state"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so 
+    # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {

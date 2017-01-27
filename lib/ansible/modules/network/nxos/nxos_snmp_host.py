@@ -101,7 +101,7 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"community": "TESTING", "snmp_host": "3.3.3.3", 
+    sample: {"community": "TESTING", "snmp_host": "3.3.3.3",
             "snmp_type": "trap", "version": "v2c", "vrf_filter": "one_more_vrf"}
 existing:
     description: k/v pairs of existing snmp host

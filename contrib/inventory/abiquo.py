@@ -18,7 +18,7 @@ This script generates an Ansible hosts file with these host groups:
 
 ABQ_xxx: Defines a hosts itself by Abiquo VM name label
 all: Contains all hosts defined in Abiquo user's enterprise
-virtualdatecenter: Creates a host group for each virtualdatacenter containing all hosts defined on it 
+virtualdatecenter: Creates a host group for each virtualdatacenter containing all hosts defined on it
 virtualappliance: Creates a host group for each virtualappliance containing all hosts defined on it
 imagetemplate: Creates a host group for each image template containing all hosts using it
 
@@ -110,7 +110,7 @@ def cache_available(config):
 
     return False
 
-def generate_inv_from_api(enterprise_entity,config):    
+def generate_inv_from_api(enterprise_entity,config):
     try:
         inventory['all'] = {}
         inventory['all']['children'] = []
@@ -165,7 +165,7 @@ def generate_inv_from_api(enterprise_entity,config):
                     meta_entity = next(link for link in (vmcollection['links']) if (link['rel']=='metadata'))
                     try:
                         metadata = api_get(meta_entity,config)
-                        if (config.getfloat("api","version") >= 3.0):                           
+                        if (config.getfloat("api","version") >= 3.0):
                             vm_metadata = metadata['metadata']
                         else:
                             vm_metadata = metadata['metadata']['metadata']

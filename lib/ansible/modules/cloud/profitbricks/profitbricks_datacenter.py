@@ -76,7 +76,7 @@ EXAMPLES = '''
     datacenter: Tardis One
     wait_timeout: 500
 
-# Destroy a Datacenter. This will remove all servers, volumes, and other objects in the datacenter. 
+# Destroy a Datacenter. This will remove all servers, volumes, and other objects in the datacenter.
 - profitbricks_datacenter:
     datacenter: Tardis One
     wait_timeout: 500
@@ -177,7 +177,7 @@ def remove_datacenter(module, profitbricks):
     """
     Removes a Datacenter.
 
-    This will remove a datacenter. 
+    This will remove a datacenter.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.

@@ -65,21 +65,21 @@ author: "Hugh Ma <Hugh.Ma@flextronics.com>"
 
 EXAMPLES = '''
 - name: Add a host named test-1
-  stacki_host: 
-    name: test-1 
-    stacki_user: usr 
-    stacki_password: pwd 
+  stacki_host:
+    name: test-1
+    stacki_user: usr
+    stacki_password: pwd
     stacki_endpoint: url
-    prim_intf_mac: mac_addr 
-    prim_intf_ip: x.x.x.x 
+    prim_intf_mac: mac_addr
+    prim_intf_ip: x.x.x.x
     prim_intf: eth0
 
 - name: Remove a host named test-1
-  stacki_host: 
+  stacki_host:
     name: test-1
-    stacki_user: usr 
-    stacki_password: pwd 
-    stacki_endpoint: url 
+    stacki_user: usr
+    stacki_password: pwd
+    stacki_endpoint: url
     state: absent
 '''
 
@@ -129,7 +129,7 @@ class StackiHost:
                        'PASSWORD': module.params['stacki_password']}
 
         # Get Intial CSRF
-        cred_a = self.do_request(self.module, self.endpoint, method="GET") 
+        cred_a = self.do_request(self.module, self.endpoint, method="GET")
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
         init_csrftoken = None
         for c in cookie_a:
@@ -147,7 +147,7 @@ class StackiHost:
 
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
-                                    payload=urllib.urlencode(auth_creds), method="POST") 
+                                    payload=urllib.urlencode(auth_creds), method="POST")
 
         cookie_f = login_req.headers.get('Set-Cookie').split(';')
         csrftoken = None
@@ -177,7 +177,7 @@ class StackiHost:
     def stack_check_host(self):
 
         res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "list host"}),
-                              headers=self.header, method="POST") 
+                              headers=self.header, method="POST")
 
         if self.hostname in res.read():
             return True
@@ -215,7 +215,7 @@ class StackiHost:
 
         data['cmd'] = "add host interface {0} interface={1} ip={2} network={3} mac={4} default=true"\
             .format(self.hostname, self.prim_intf, self.prim_intf_ip, self.network, self.prim_intf_mac)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
+        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
 
@@ -226,7 +226,7 @@ class StackiHost:
 
         data['cmd'] = "add host {0} rack={1} rank={2} appliance={3}"\
             .format(self.hostname, self.rack, self.rank, self.appliance)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
+        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()
@@ -241,7 +241,7 @@ class StackiHost:
 
         data['cmd'] = "remove host {0}"\
             .format(self.hostname)
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data), 
+        res = self.do_request(self.module, self.endpoint, payload=json.dumps(data),
                               headers=self.header, method="POST")
 
         self.stack_sync()

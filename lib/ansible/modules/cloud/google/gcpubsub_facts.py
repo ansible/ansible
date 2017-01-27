@@ -45,7 +45,7 @@ options:
   state:
     description:
        - list is the only valid option.
-    required: False 
+    required: False
 '''
 
 EXAMPLES = '''
@@ -72,7 +72,7 @@ subscriptions:
     returned: When view is set to subscriptions.
     type: list
     sample: ["mysubscription", "mysubscription2"]
-topic: 
+topic:
     description: Name of topic. Used to filter subscriptions.
     returned: Always
     type: str

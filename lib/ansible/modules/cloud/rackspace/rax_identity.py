@@ -34,7 +34,7 @@ options:
     choices: ['present', 'absent']
     default: present
     required: false
-author: 
+author:
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace.openstack

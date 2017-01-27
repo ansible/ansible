@@ -87,7 +87,7 @@ options:
     description:
       - Optional attribute which with to sort the results.
       - If specifying 'tag', the 'tag_name' parameter is required.
-      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id, platform, root_device_name, root_device_type, state, and virtualization_type are supported.  
+      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id, platform, root_device_name, root_device_type, state, and virtualization_type are supported.
     choices: ['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']
     default: null
     required: false
