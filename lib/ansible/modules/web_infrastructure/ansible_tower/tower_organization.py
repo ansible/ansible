@@ -57,9 +57,10 @@ options:
         default: null
     verify_ssl:
         description:
-          - Dis/allow insecure connections to Tower.
+          - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
+            This should only be used on personally controlled sites using self-signed certificates.
         required: False
-        default: null
+        default: 'yes'
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
@@ -112,8 +113,8 @@ def main():
             description = dict(),
             host = dict(),
             username = dict(),
-            password = dict(),
-            verify_ssl = dict(type='bool'),
+            password = dict(no_log=True),
+            verify_ssl = dict(type='bool', default='yes'),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),
