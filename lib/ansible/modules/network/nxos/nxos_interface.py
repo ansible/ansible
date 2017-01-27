@@ -554,7 +554,7 @@ def get_interfaces_dict(module):
         }
 
     interface_list = body.get('TABLE_interface')['ROW_interface']
-    for index  in interface_list:
+    for index in interface_list:
         intf = index ['interface']
         intf_type = get_interface_type(intf)
 

@@ -32,7 +32,8 @@ Tested with Zabbix Server 2.0.6.
 
 from __future__ import print_function
 
-import os, sys
+import os
+import sys
 import argparse
 import ConfigParser
 
