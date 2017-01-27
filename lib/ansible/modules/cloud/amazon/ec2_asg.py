@@ -302,9 +302,9 @@ def get_properties(autoscaling_group):
                 properties['unhealthy_instances'] += 1
             if i.lifecycle_state == 'InService':
                 properties['in_service_instances'] += 1
-            if i.lifecycle_state == 'Terminating':
+            if i.lifecycle_state in ['Terminating','Terminating:Wait','Terminating:Proceed']:
                 properties['terminating_instances'] += 1
-            if i.lifecycle_state == 'Pending':
+            if i.lifecycle_state in ['Pending','Pending:Wait','Pending:Proceed']:
                 properties['pending_instances'] += 1
     properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
@@ -641,13 +641,20 @@ def replace(connection, module):
     as_group = connection.get_all_groups(names=[group_name])[0]
     wait_for_new_inst(module, connection, group_name, wait_timeout, as_group.min_size, 'viable_instances')
     props = get_properties(as_group)
-    instances = props['instances']
+    instances = []
     if replace_instances:
         instances = replace_instances
-        
+    elif 'instances' in props:
+        instances = props['instances']
+
+    # No instances to be replaced (initial configuration or currently 0 sized)
+    if not instances:
+        changed = False
+        return(changed, props)
+
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
-        min_size = as_group.min_size
+        min_size = as_group.min_size or 0
     if max_size is None:
         max_size = as_group.max_size
     if desired_capacity is None:
@@ -660,7 +667,7 @@ def replace(connection, module):
     if lc_check:
         if num_new_inst_needed == 0 and old_instances:
             log.debug("No new instances needed, but old instances are present. Removing old instances")
-            terminate_batch(connection, module, old_instances, instances, True)
+            terminate_batch(connection, module, old_instances, instances, desired_capacity, True)
             as_group = connection.get_all_groups(names=[group_name])[0]
             props = get_properties(as_group)
             changed = True
@@ -674,23 +681,25 @@ def replace(connection, module):
     if not old_instances:
         changed = False
         return(changed, props)
-      
+
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     update_size(as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(module, connection, group_name, wait_timeout, as_group.min_size, 'viable_instances')
+    wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity + batch_size, 'viable_instances')
     wait_for_elb(connection, module, group_name)
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
     instances = props['instances']
+    new_instances, old_instances = get_instances_by_lc(props, lc_check, instances)
     if replace_instances:
         instances = replace_instances
     log.debug("beginning main loop")
-    for i in get_chunks(instances, batch_size):
+    for i in get_chunks(old_instances, batch_size):
         # break out of this loop if we have enough new instances
-        break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, False)
+        log.debug("chunk: {0}".format(i))
+        break_early, desired_size, term_instances = terminate_batch(connection, module, i, instances, desired_capacity, False)
         wait_for_term_inst(connection, module, term_instances)
         wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size, 'viable_instances')
         wait_for_elb(connection, module, group_name)
@@ -746,10 +755,9 @@ def list_purgeable_instances(props, lc_check, replace_instances, initial_instanc
                 instances_to_terminate.append(i)
     return instances_to_terminate
 
-def terminate_batch(connection, module, replace_instances, initial_instances, leftovers=False):
+def terminate_batch(connection, module, replace_instances, initial_instances, desired_capacity, leftovers=False):
     batch_size = module.params.get('replace_batch_size')
     min_size =  module.params.get('min_size')
-    desired_capacity =  module.params.get('desired_capacity')
     group_name = module.params.get('name')
     wait_timeout = int(module.params.get('wait_timeout'))
     lc_check = module.params.get('lc_check')
@@ -758,7 +766,10 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
 
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
-    desired_size = as_group.min_size
+    desired_size = as_group.desired_capacity
+    # as_group.min_size can return None rather than 0 :/
+    if min_size is None:
+        min_size = as_group.min_size or 0
 
     new_instances, old_instances = get_instances_by_lc(props, lc_check, initial_instances)
     num_new_inst_needed = desired_capacity - len(new_instances)
@@ -784,7 +795,6 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
             decrement_capacity = False
         break_loop = True
         instances_to_terminate = old_instances
-        desired_size = min_size
         log.debug("No new instances needed")
 
     if num_new_inst_needed < batch_size and num_new_inst_needed !=0 :
@@ -797,8 +807,10 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
 
     for instance_id in instances_to_terminate:
         elb_dreg(connection, module, group_name, instance_id)
-        log.debug("terminating instance: {0}".format(instance_id))
+        log.debug("terminating instance: {0}, {1}".format(instance_id,decrement_capacity))
         connection.terminate_instance(instance_id, decrement_capacity=decrement_capacity)
+        if decrement_capacity:
+            desired_size -= 1
 
     # we wait to make sure the machines we marked as Unhealthy are
     # no longer in the list
@@ -827,7 +839,7 @@ def wait_for_term_inst(connection, module, term_instances):
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
             log.debug("Instance {0} has state of {1},{2}".format(i,lifecycle,health ))
-            if  lifecycle == 'Terminating' or health == 'Unhealthy':
+            if  lifecycle in ['Terminating','Terminating:Wait','Terminating:Proceed'] or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 
