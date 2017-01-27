@@ -91,6 +91,14 @@ options:
         version_added: "2.0"
 '''
 
+RETURN = '''
+packages:
+    description: a list of packages that have been changed
+    returned: when upgrade is set to yes
+    type: list of strings
+    sample: ['package', 'other-package']
+'''
+
 EXAMPLES = '''
 # Install package foo
 - pacman:
