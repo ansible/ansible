@@ -19,10 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action import ActionBase
-from ansible.plugins.action.net_config import ActionModule as NetActionModule
+from ansible.plugins.action.net_config import ActionModule as NetworkActionModule
 
-class ActionModule(NetActionModule, ActionBase):
-    pass
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
+class ActionModule(NetworkActionModule):
 
+    def run(self, tmp=None, task_vars=None):
+        display.vvvvv('Using connection plugin %s' % self._play_context.connection)
+        return NetworkActionModule.run(self, tmp, task_vars)
