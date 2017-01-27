@@ -688,7 +688,7 @@ def main():
             module.fail_json(msg=str(e))
     else:
         if user_exists(cursor, user):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['user_removed'] = True
             else:

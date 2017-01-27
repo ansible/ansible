@@ -495,10 +495,10 @@ def get_interface_mode(interface, intf_type, module):
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module,
                                 command_type='cli_show_ascii', text=True)
-    
+
     if body:
         if 'not running' not in body[0]:
             body = execute_show_command(command, module)
@@ -552,7 +552,7 @@ def get_pim_interface(module, interface):
         return {}
 
     command = 'show run interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
     jp_configs = []

@@ -918,7 +918,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     interface_dict['properties'] = nic_dict['properties']
 
         # Expand public IPs to include config properties
-        for interface in  result['properties']['networkProfile']['networkInterfaces']:
+        for interface in result['properties']['networkProfile']['networkInterfaces']:
             for config in interface['properties']['ipConfigurations']:
                 if config['properties'].get('publicIPAddress'):
                     pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])

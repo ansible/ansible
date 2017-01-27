@@ -72,7 +72,7 @@ def get_vpc_info(vpc):
         classic_link = vpc.classic_link_enabled
     except AttributeError:
         classic_link = False
-      
+
     vpc_info = { 'id': vpc.id,
                  'instance_tenancy': vpc.instance_tenancy,
                  'classic_link_enabled': classic_link,

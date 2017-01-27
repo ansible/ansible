@@ -289,7 +289,7 @@ class ConsulInventory(object):
         and the node name add each entry in the dictionary to the the node's
         metadata '''
     node = node_data['Node']
-    if  self.config.has_config('kv_metadata'):
+    if self.config.has_config('kv_metadata'):
       key = "%s/%s/%s" % (self.config.kv_metadata, self.current_dc, node['Node'])
       index, metadata = self.consul_api.kv.get(key)
       if metadata and metadata['Value']:
@@ -305,7 +305,7 @@ class ConsulInventory(object):
         kv_groups config value and the node name add the node address to each
         group found '''
     node = node_data['Node']
-    if  self.config.has_config('kv_groups'):
+    if self.config.has_config('kv_groups'):
       key = "%s/%s/%s" % (self.config.kv_groups, self.current_dc, node['Node'])
       index, groups = self.consul_api.kv.get(key)
       if groups and groups['Value']:

@@ -69,7 +69,7 @@ class RoleMetadata(Base):
         if ds:
             if not isinstance(ds, list):
                 raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds) 
-                
+
             for role_def in ds: 
                  if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
                      roles.append(role_def)   
@@ -86,7 +86,7 @@ class RoleMetadata(Base):
         current_role_path = None
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
-       
+
         try:
             return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError:

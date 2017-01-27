@@ -120,7 +120,7 @@ class TestGalaxy(unittest.TestCase):
         with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
             with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
                 gc.run()
-                
+
                 # testing
                 self.assertEqual(mock_run.call_count, 1)
                 self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))

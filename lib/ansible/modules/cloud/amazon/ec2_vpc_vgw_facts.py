@@ -133,7 +133,7 @@ def list_virtual_gateways(client, module):
 
     snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
                                 for vgw in all_virtual_gateways['VpnGateways']]
-    
+
     module.exit_json(virtual_gateways=snaked_vgws)
 
 

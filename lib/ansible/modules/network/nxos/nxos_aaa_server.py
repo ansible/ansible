@@ -492,7 +492,7 @@ def main():
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
-    
+
     server_type = module.params['server_type']
     global_key = module.params['global_key']
     encrypt_type = module.params['encrypt_type']

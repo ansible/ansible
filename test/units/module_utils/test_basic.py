@@ -176,10 +176,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
                         return ("Bar", "2", "Two")
                     else:
                         return ("", "", "")
-                
+
                 with patch('platform.linux_distribution', side_effect=_dist):
                     self.assertEqual(get_distribution(), "Bar")
-                
+
             with patch('platform.linux_distribution', side_effect=Exception("boo")):
                 with patch('platform.dist', return_value=("bar", "2", "Two")):
                     self.assertEqual(get_distribution(), "Bar")
@@ -699,7 +699,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertRaises(SystemExit, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
             am.is_special_selinux_path = MagicMock(return_value=(True, ['sp_u', 'sp_r', 'sp_t', 's0']))
-            
+
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
                 m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')

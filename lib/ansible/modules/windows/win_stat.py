@@ -192,7 +192,7 @@ stat:
             type: string
             sample: BUILTIN\\Administrators
         sharename:
-            description: the name of share if folder is shared 
+            description: the name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True
             type: string
             sample: file-share

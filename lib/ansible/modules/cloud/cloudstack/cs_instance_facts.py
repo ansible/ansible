@@ -232,7 +232,7 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         if not instance:
             self.module.fail_json(msg="Instance not found: %s" % self.module.params.get('name'))
         self.facts['cloudstack_instance'] = self.get_result(instance)
-        return  self.facts
+        return self.facts
 
 
     def get_result(self, instance):

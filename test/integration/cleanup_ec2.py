@@ -75,10 +75,10 @@ def prompt_and_delete(item, prompt, assumeyes):
         assumeyes = raw_input(prompt).lower() == 'y'
     assert hasattr(item, 'delete') or hasattr(item, 'terminate') , "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
-        if  hasattr(item, 'delete'):
+        if hasattr(item, 'delete'):
             item.delete()
             print ("Deleted %s" % item)
-        if  hasattr(item, 'terminate'):
+        if hasattr(item, 'terminate'):
             item.terminate()
             print ("Terminated %s" % item)
 

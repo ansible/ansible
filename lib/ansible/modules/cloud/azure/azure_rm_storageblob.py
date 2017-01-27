@@ -372,7 +372,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.log('Create container %s' % self.container)
 
         tags = None
-        if not self.blob and  self.tags:
+        if not self.blob and self.tags:
             # when a blob is present, then tags are assigned at the blob level
             tags = self.tags
 

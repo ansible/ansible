@@ -327,7 +327,7 @@ class Interfaces(FactsBase):
                     return match.group(3)
         if flag==1:
             return "null"
-          
+
     def parse_type(self, key, properties):
         type_val, type_val_next = properties.split('--------- ------- --------------------- --------------------- --------------')
         flag=1

@@ -391,7 +391,7 @@ class CloudflareAPI(object):
                 error_msg += "; Failed to parse API response: {0}".format(content)
 
         # received an error status but no data with details on what failed
-        if  (info['status'] not in [200,304]) and (result is None):
+        if (info['status'] not in [200,304]) and (result is None):
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:

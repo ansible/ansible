@@ -93,7 +93,7 @@ EXAMPLES = '''
 # Basic zone creation example.
 - name: Create a basic zone with the minimum number of parameters.
   gcdns_zone: zone=example.com
-  
+
 # Zone removal example.
 - name: Remove a zone.
   gcdns_zone: zone=example.com state=absent

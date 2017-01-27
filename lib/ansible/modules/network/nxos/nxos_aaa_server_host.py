@@ -428,7 +428,7 @@ def _match_dict(match_list, key_map):
 def get_aaa_host_info(module, server_type, address):
     aaa_host_info = {}
     command = 'show run | inc {0}-server.host.{1}'.format(server_type, address)
-    
+
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
     if body:
@@ -574,7 +574,7 @@ def main():
     results['updates'] = cmds
     results['changed'] = changed
     results['end_state'] = end_state
- 
+
     module.exit_json(**results)
 
 

@@ -108,7 +108,7 @@ class IncludeRole(Task):
         # build options for role includes
         for key in ['tasks', 'vars', 'defaults']:
             from_key ='%s_from' % key
-            if  ir.args.get(from_key):
+            if ir.args.get(from_key):
                 ir._from_files[key] = basename(ir.args.get(from_key))
 
         #FIXME: find a way to make this list come from object ( attributes does not work as per below)

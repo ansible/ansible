@@ -999,7 +999,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             except (KeyError, ValueError):
                 vsphere_client.disconnect()
                 module.fail_json(msg="Error in '%s' definition. Size needs to be specified as an integer." % disk)
-            
+
             # Make sure the new disk size is higher than the current value
             dev = dev_list[disk_num]
             if disksize < int(dev.capacityInKB):

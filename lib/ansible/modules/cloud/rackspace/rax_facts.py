@@ -101,9 +101,9 @@ def rax_facts(module, address, name, server_id):
             servers.append(cs.servers.get(server_id))
         except Exception as e:
             pass
-    
+
     servers[:] = [server for server in servers if server.status != "DELETED"]
-    
+
     if len(servers) > 1:
         module.fail_json(msg='Multiple servers found matching provided '
                              'search parameters')

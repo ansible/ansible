@@ -209,7 +209,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
         'Content-Type' : 'application/json',
     }
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
-    
+
     if requester_id:
         request_data['requester_id'] = requester_id
     else:
@@ -235,7 +235,7 @@ def absent(module, name, user, passwd, token, requester_id, service):
         'Content-Type' : 'application/json',
     }
     request_data = {}
-    
+
     if requester_id:
         request_data['requester_id'] = requester_id
     else:

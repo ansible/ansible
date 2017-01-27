@@ -47,7 +47,7 @@ __metaclass__ = type
 # /tmp/staging/foo
 #              ${inventory_hostname}
 #              bar
-                  
+
 #  - name: copy first existing file found to /some/file
 #    action: copy src=$item dest=/some/file
 #    with_first_found: 

@@ -103,7 +103,7 @@ class TestTemplar(unittest.TestCase):
     def test_template_jinja2_extensions(self):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
-        
+
         old_exts = C.DEFAULT_JINJA2_EXTENSIONS
         try:
             C.DEFAULT_JINJA2_EXTENSIONS = "foo,bar"

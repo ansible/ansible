@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'), task_vars=task_vars)
             display.debug("Facts %s" % facts)
-            if 'ansible_facts' in facts and  'ansible_pkg_mgr' in facts['ansible_facts']:
+            if 'ansible_facts' in facts and 'ansible_pkg_mgr' in facts['ansible_facts']:
                 module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
 
         if module != 'auto':

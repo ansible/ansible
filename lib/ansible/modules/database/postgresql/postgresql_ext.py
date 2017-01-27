@@ -178,7 +178,7 @@ def main():
         else:
             if state == "absent":
                 changed = ext_delete(cursor, ext)
-    
+
             elif state == "present":
                 changed = ext_create(cursor, ext)
     except NotSupportedError:

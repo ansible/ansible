@@ -161,7 +161,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def remove_plugin(module, plugin_bin, plugin_name):
@@ -177,7 +177,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def main():

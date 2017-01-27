@@ -52,7 +52,7 @@ class TestGCETag(unittest.TestCase):
         want = ['one']
         got = _get_changed_items(tags_to_add, existing_tags)
         self.assertEqual(want, got)
-        
+
         # simulate removing tags
         # specifying one tag on right that doesn't exist
         tags_to_remove = ['one', 'two']
@@ -63,6 +63,6 @@ class TestGCETag(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    
 
-    
+
+

@@ -18,7 +18,7 @@ def initialize():
     except AttributeError:
         #FreeIPA < 4.0 compatibility
         api.Backend.xmlclient.connect()
-    
+
     return api
 
 def list_groups(api):
@@ -39,7 +39,7 @@ def list_groups(api):
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:
-            members += (host for host in  hostgroup['memberindirect_host'])
+            members += (host for host in hostgroup['memberindirect_host'])
         inventory[hostgroup['cn'][0]] = {'hosts': [host for host in members]}
 
         for member in members:
@@ -48,7 +48,7 @@ def list_groups(api):
     inventory['_meta'] = {'hostvars': hostvars}
     inv_string = json.dumps(inventory, indent=1, sort_keys=True)
     print(inv_string)
-    
+
     return None
 
 def parse_args():

@@ -181,7 +181,7 @@ def install_plugin(module, plugin_bin, plugin_name, url, timeout):
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def remove_plugin(module, plugin_bin, plugin_name):
@@ -191,12 +191,12 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     if module.check_mode:
         return True, cmd, "check mode", ""
-        
+
     rc, out, err = module.run_command(cmd)
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def main():

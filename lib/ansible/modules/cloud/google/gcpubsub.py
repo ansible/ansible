@@ -194,7 +194,7 @@ def publish_messages(message_list, topic):
             attrs = message['attributes']
          batch.publish(bytes(msg), **attrs)
    return True
-   
+
 def pull_messages(pull_params, sub):
    """
    :rtype: tuple (output, changed)
@@ -203,7 +203,7 @@ def pull_messages(pull_params, sub):
    max_messages=pull_params.get('max_messages', None)
    message_ack = pull_params.get('message_ack', 'no')
    return_immediately = pull_params.get('return_immediately', False)
-                  
+
    output= []
    pulled = sub.pull(return_immediately=return_immediately,
                    max_messages=max_messages)
@@ -237,7 +237,7 @@ def main():
    if not HAS_PYTHON26:
       module.fail_json(
          msg="GCE module requires python's 'ast' module, python v2.6+")
-      
+
    if not HAS_GOOGLE_CLOUD_PUBSUB:
      module.fail_json(msg="Please install google-cloud-pubsub library.")
 

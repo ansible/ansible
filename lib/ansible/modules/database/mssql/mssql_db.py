@@ -181,7 +181,7 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-    
+
     login_querystring = login_host
     if login_port != "1433":
         login_querystring = "%s:%s" % (login_host, login_port)

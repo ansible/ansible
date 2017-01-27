@@ -283,7 +283,7 @@ def map_config_to_obj(module):
         'state': parse_state(out)
     }
 
-def  map_params_to_obj(module):
+def map_params_to_obj(module):
     obj = {
         'http': module.params['http'],
         'http_port': module.params['http_port'],
@@ -310,7 +310,7 @@ def collect_facts(module, result):
     for each in out[0]['urls']:
         intf, url = each.split(' : ')
         key = str(intf).strip()
-        if  key not in facts['eos_eapi_urls']:
+        if key not in facts['eos_eapi_urls']:
             facts['eos_eapi_urls'][key] = list()
         facts['eos_eapi_urls'][key].append(str(url).strip())
     result['ansible_facts'] = facts

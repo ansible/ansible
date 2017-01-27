@@ -179,7 +179,7 @@ def main():
     ring_size = stats['ring_creation_size']
     rc, out, err = module.run_command([riak_bin, 'version'] )
     version = out.strip()
-    
+
     result = dict(node_name=node_name,
               nodes=nodes,
               ring_size=ring_size,

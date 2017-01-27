@@ -347,7 +347,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         try:
             poller = self.network_client.virtual_networks.create_or_update(self.resource_group, self.name, vnet)
             new_vnet = self.get_poller_result(poller)
-        except Exception as  exc:
+        except Exception as exc:
             self.fail("Error creating or updating virtual network {0} - {1}".format(self.name, str(exc)))
         return virtual_network_to_dict(new_vnet)
 

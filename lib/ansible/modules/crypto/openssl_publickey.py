@@ -163,7 +163,7 @@ class PublicKey(object):
         }
 
         return result
-        
+
 
 def main():
 

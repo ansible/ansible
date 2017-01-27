@@ -3,10 +3,10 @@
 import optparse
 from jinja2 import Environment, FileSystemLoader
 
-from ansible.playbook import  Play
-from ansible.playbook.block import  Block
-from ansible.playbook.role import  Role
-from ansible.playbook.task import  Task
+from ansible.playbook import Play
+from ansible.playbook.block import Block
+from ansible.playbook.role import Role
+from ansible.playbook.task import Task
 
 template_file = 'playbooks_directives.rst.j2'
 oblist = {}

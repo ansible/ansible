@@ -44,12 +44,12 @@ class GalaxyLogin(object):
     ''' Class to handle authenticating user with Galaxy API prior to performing CUD operations '''
 
     GITHUB_AUTH = 'https://api.github.com/authorizations'
-    
+
     def __init__(self, galaxy, github_token=None):
         self.galaxy = galaxy
         self.github_username = None
         self.github_password = None
-        
+
         if github_token == None:
             self.get_credentials()
 
@@ -61,7 +61,7 @@ class GalaxyLogin(object):
         display.display("The password will not be displayed." + u'\n\n', screen_only=True)
         display.display("Use " + stringc("--github-token",'yellow') + 
             " if you do not want to enter your password." + u'\n\n', screen_only=True)
-        
+
         try:
             self.github_username = raw_input("Github Username: ")
         except:

@@ -243,7 +243,7 @@ class NailGun(object):
             return True
         except Exception:
             e = get_exception()
-            
+
             if "Import is the same as existing data" in e.message:
                 return False
             else:
@@ -263,7 +263,7 @@ class NailGun(object):
             product.create()
 
         return True
-        
+
     def sync_product(self, params):
         org = self.find_organization(params['organization'])
         product = self.find_product(params['name'], org.name)
@@ -287,7 +287,7 @@ class NailGun(object):
             repository.create()
 
         return True
-        
+
     def sync_repository(self, params):
         org = self.find_organization(params['organization'])
         repository = self.find_repository(params['name'], params['product'], org.name)
@@ -357,7 +357,7 @@ class NailGun(object):
             for name in products:
                 product = self.find_product(name, org.name)
                 ids.append(product.id)
-            
+
             sync_plan.add_products(data={'product_ids': ids})
 
         return True
@@ -373,7 +373,7 @@ class NailGun(object):
             content_view.update()
         else:
             content_view = content_view.create()
-        
+
         if params['repositories']:
             repos = []
 

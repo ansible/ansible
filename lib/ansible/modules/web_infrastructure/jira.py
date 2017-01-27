@@ -417,7 +417,7 @@ def main():
 
     # Dispatch
     try:
-        
+
         # Lookup the corresponding method for this operation. This is
         # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]

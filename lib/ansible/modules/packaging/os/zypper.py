@@ -373,7 +373,7 @@ def package_present(m, name, want_latest):
 
 def package_update_all(m):
     "run update or patch on all available packages"
-    
+
     retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     if m.params['type'] == 'patch':
         cmdname = 'patch'

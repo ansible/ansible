@@ -119,10 +119,10 @@ def update_package_db(module):
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
-         
+
 
 def remove_packages(module, packages):
-    
+
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -135,7 +135,7 @@ def remove_packages(module, packages):
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -189,7 +189,7 @@ def main():
                 force         = dict(default=True, type='bool'),
                 no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
                 package       = dict(aliases=['pkg', 'name'], required=True)))
-                
+
 
     if not os.path.exists(URPMI_PATH):
         module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
@@ -212,6 +212,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-    
+
 if __name__ == '__main__':
     main()

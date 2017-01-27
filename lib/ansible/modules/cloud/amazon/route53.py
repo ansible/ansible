@@ -470,7 +470,7 @@ def main():
     if command_in == 'create':
         if ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
           module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
-        elif  ( weight_in==None and region_in==None and failover_in==None ) and identifier_in!=None:
+        elif ( weight_in==None and region_in==None and failover_in==None ) and identifier_in!=None:
           module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
 
 

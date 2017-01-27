@@ -114,12 +114,12 @@ class MockLPass(LPass):
 
 
 class DisconnectedMockLPass(MockLPass):
-    
+
     _mock_disconnected = True
 
 
 class LoggedOutMockLPass(MockLPass):
-    
+
     _mock_logged_out = True
 
 

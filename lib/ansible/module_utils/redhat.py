@@ -127,7 +127,7 @@ class Rhsm(RegistrationBase):
         for k,v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_','.'), v))
-        
+
         self.module.run_command(args, check_rc=True)
 
     @property

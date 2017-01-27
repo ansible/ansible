@@ -215,7 +215,7 @@ class ElbInformation(object):
                         elb_array.append(existing_lb)
             else:
                 elb_array = all_elbs
-                    
+
         return list(map(self._get_elb_info, elb_array))
 
 def main():

@@ -322,7 +322,7 @@ def main():
             e = get_exception()
             module.fail_json(msg="unable to connect to database: %s" % e)
 
-        
+
         try:
             old_value = r.config_get(name)[name]
         except Exception:

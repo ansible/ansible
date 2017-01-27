@@ -395,7 +395,7 @@ def parse_service(module):
         module.fail_json( msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure the 'port' argument meaning 'service_port'?")
 
 
-class  ConsulService():
+class ConsulService():
 
     def __init__(self, service_id=None, name=None, address=None, port=-1,
                  tags=None, loaded=None):

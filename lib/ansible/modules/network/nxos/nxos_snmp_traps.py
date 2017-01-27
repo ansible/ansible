@@ -463,7 +463,7 @@ def main():
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
-    
+
     group = module.params['group'].lower()
     state = module.params['state']
 

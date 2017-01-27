@@ -158,7 +158,7 @@ def install_overlay(module, name, list_url=None):
 
     if layman.is_installed(name):
         return False    
-    
+
     if module.check_mode:
         mymsg = 'Would add layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)
@@ -195,7 +195,7 @@ def uninstall_overlay(module, name):
 
     if not layman.is_installed(name):
         return False
-    
+
     if module.check_mode:
         mymsg = 'Would remove layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)

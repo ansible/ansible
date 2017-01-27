@@ -182,7 +182,7 @@ def main():
 
     # patch need an absolute file name
     p.src = os.path.abspath(p.src)
-    
+
     changed = False
     if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, binary=p.binary, strip=p.strip):
         try:

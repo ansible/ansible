@@ -98,7 +98,7 @@ except ImportError as e:
 def list_func(data, member='name'):
    """Used for state=list."""
    return [getattr(x, member) for x in data]
-   
+
 
 def main():
    module = AnsibleModule(argument_spec=dict(
@@ -112,7 +112,7 @@ def main():
    if not HAS_PYTHON26:
       module.fail_json(
          msg="GCE module requires python's 'ast' module, python v2.6+")
-      
+
    if not HAS_GOOGLE_CLOUD_PUBSUB:
      module.fail_json(msg="Please install google-cloud-pubsub library.")
 

@@ -333,7 +333,7 @@ class AzureRMModuleBase(object):
     def _get_credentials(self, params):
         # Get authentication credentials.
         # Precedence: module parameters-> environment variables-> default profile in ~/.azure/credentials.
-        
+
         self.log('Getting credentials')
 
         arg_credentials = dict()
@@ -345,11 +345,11 @@ class AzureRMModuleBase(object):
             self.log('Retrieving credentials with profile parameter.')
             credentials = self._get_profile(arg_credentials['profile'])
             return credentials
-        
+
         if arg_credentials['subscription_id']:
             self.log('Received credentials from parameters.')
             return arg_credentials
-        
+
         # try environment
         env_credentials = self._get_env_credentials()
         if env_credentials:

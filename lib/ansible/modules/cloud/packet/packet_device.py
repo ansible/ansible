@@ -346,7 +346,7 @@ def get_hostname_list(module):
         _msg = ("If you set count>1, you should only specify one hostname "
                 "with the %d formatter, not a list of hostnames.")
         raise Exception(_msg)
-        
+
     if (len(hostnames) == 1) and (count > 0):
         hostname_spec = hostnames[0]
         count_range = range(count_offset, count_offset + count)
@@ -382,7 +382,7 @@ def get_device_id_list(module):
         raise Exception("You specified too many devices, max is %d" %
                          MAX_DEVICES)
     return device_ids
-     
+
 
 def create_single_device(module, packet_conn, hostname):
 
@@ -430,7 +430,7 @@ def wait_for_ips(module, packet_conn, created_devices):
         if all_have_public_ip(refreshed):
             return refreshed
         time.sleep(5)
-    
+
     raise Exception("Waiting for IP assignment timed out. Hostnames: %s"
                      % [d.hostname for d in created_devices])
 

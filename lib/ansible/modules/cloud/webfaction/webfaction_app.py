@@ -148,7 +148,7 @@ def main():
     existing_app = app_map.get(app_name)
 
     result = {}
-    
+
     # Here's where the real stuff happens
 
     if app_state == 'present':

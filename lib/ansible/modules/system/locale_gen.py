@@ -154,14 +154,14 @@ def apply_change(targetState, name):
     else:
         # Delete locale.
         set_locale(name, enabled=False)
-    
+
     localeGenExitValue = call("locale-gen")
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 def apply_change_ubuntu(targetState, name):
     """Create or remove locale.
-    
+
     Keyword arguments:
     targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
@@ -188,7 +188,7 @@ def apply_change_ubuntu(targetState, name):
         # Purge locales and regenerate.
         # Please provide a patch if you know how to avoid regenerating the locales to keep!
         localeGenExitValue = call(["locale-gen", "--purge"])
-    
+
     if localeGenExitValue!=0:
         raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
@@ -227,7 +227,7 @@ def main():
     else:
         prev_state = "absent"
     changed = (prev_state!=state)
-    
+
     if module.check_mode:
         module.exit_json(changed=changed)
     else:

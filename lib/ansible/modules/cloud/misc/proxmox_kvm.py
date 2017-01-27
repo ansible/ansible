@@ -1038,7 +1038,7 @@ def main():
         time.sleep(1)
     except Exception as e:
       module.fail_json(msg="deletion of VM %s failed with exception: %s" % ( vmid, e ))
-  
+
   elif state == 'current':
     status = {}
     try:

@@ -457,7 +457,7 @@ def delete_group(module=None, iam=None, name=None):
                 iam.delete_group_policy(name, policy)
             try:
                 iam.delete_group(name)
-            except boto.exception.BotoServerError as  err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
                       module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"

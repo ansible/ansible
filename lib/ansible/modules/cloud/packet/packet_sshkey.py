@@ -204,7 +204,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
             new_key_response = packet_conn.create_ssh_key(
                                         newkey['label'], newkey['key'])
             changed = True
-                              
+
             matching_sshkeys.append(new_key_response)
     else:
         # state is 'absent' => delete mathcing keys
