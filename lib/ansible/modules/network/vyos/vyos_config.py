@@ -181,7 +181,7 @@ def get_candidate(module):
 
 
 def diff_config(commands, config):
-    config = [str(c).replace("'", '') for c in config]
+    config = [str(c).replace("'", '') for c in config.splitlines()]
 
     updates = list()
     visited = set()
@@ -220,7 +220,7 @@ def sanitize_config(config, result):
 def run(module, result):
     # get the current active config from the node or passed in via
     # the config param
-    config = get_config(module)
+    config = module.params['config'] or get_config(module)
 
     # create the candidate config object from the arguments
     candidate = get_candidate(module)
