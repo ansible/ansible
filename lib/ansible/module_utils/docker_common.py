@@ -349,7 +349,7 @@ class AnsibleDockerClient(Client):
         try:
             for container in self.containers(all=True):
                 self.log("testing container: %s" % (container['Names']))
-                if search_name in container['Names']:
+                if isinstance(container['Names'], list) and search_name in container['Names']:
                     result = container
                     break
                 if container['Id'].startswith(name):
