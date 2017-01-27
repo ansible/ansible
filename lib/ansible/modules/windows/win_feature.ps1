@@ -42,15 +42,34 @@ $includesubfeatures = Get-Attr $params "include_sub_features" $false | ConvertTo
 $includemanagementtools = Get-Attr $params "include_management_tools" $false | ConvertTo-Bool
 $source = Get-Attr $params "source" $false
 
-If ($state -eq "present") {
-    if ($source)
-    {
-        if (!(test-path $source))
-        {
-            Fail-Json $result "Failed to find source path $source"
-        }
+# Determine which cmdlets we need to work with. Then we can set options appropriate for the cmdlet
+$installWF= $false
+$addWF = $false
+
+try {
+	# We can infer uninstall/remove if install/add cmdlets exist
+    if (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {		
+        $addCmdlet = "Install-WindowsFeature"        
+        $removeCmdlet = "Uninstall-WindowsFeature"        
+        $installWF = $true        
     }
+    elseif (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
+        $addCmdlet = "Add-WindowsFeature"
+        $removeCmdlet = "Remove-WindowsFeature"
+        $addWF = $true        
+    }
+    else {
+        throw [System.Exception] "Not supported on this version of Windows"        
+    }
+}
+catch {
+    Fail-Json $result $_.Exception.Message
+}
+
+
+If ($state -eq "present") {    
     
+	# Base params to cover both Add/Install-WindowsFeature
     $InstallParams = @{
         "Name"=$name;
         "Restart"=$Restart;
@@ -58,48 +77,39 @@ If ($state -eq "present") {
         "ErrorAction"="SilentlyContinue"
     }
     
-    if ($IncludeManagementTools -eq $true)
-    {
-        $InstallParams.add("IncludeManagementTools",$includemanagementtools)
+    # IncludeManagementTools and source are options only for Install-WindowsFeature
+    if ($installWF) {
+        
+        if ($source) {
+            if (!(test-path $source)) {            
+                Fail-Json $result "Failed to find source path $source"
+            }
+            
+            $InstallParams.add("Source",$source)
+        }
+
+        if ($IncludeManagementTools) {
+            $InstallParams.add("IncludeManagementTools",$includemanagementtools)
+        }
     }
-    
-    if ($source)
-    {
-        $InstallParams.add("Source",$source)
-    }
-    
-    
     
     try {
-        If (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Install-WindowsFeature @InstallParams
-        }
-        ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
-            if ($IncludeManagementTools)
-            {
-                $InstallParams.Remove("IncludeManagementTools")
-            }
-            $featureresult = Add-WindowsFeature @InstallParams
-        }
-        Else {
-            Fail-Json $result "Not supported on this version of Windows"
-        }
+        $featureresult = Invoke-Expression "$addCmdlet @InstallParams"        
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
 }
 ElseIf ($state -eq "absent") {
-    try {
-        If (Get-Command "Uninstall-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Uninstall-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
-        }
-        ElseIf (Get-Command "Remove-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
-        }
-        Else {
-            Fail-Json $result "Not supported on this version of Windows"
-        }
+
+	$UninstallParams = @{
+        "Name"=$name;
+        "Restart"=$Restart;        
+        "ErrorAction"="SilentlyContinue"
+    }
+	
+    try {        
+            $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams"
     }
     catch {
         Fail-Json $result $_.Exception.Message
