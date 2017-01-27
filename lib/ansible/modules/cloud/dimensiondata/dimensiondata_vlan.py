@@ -41,6 +41,17 @@ options:
       - Note that the default value "na" stands for "North America".
       - The module prepends 'dd-' to the region choice.
     default: na
+  mcp_user:
+    description:
+      - The username used to authenticate to the CloudControl API.
+      - If not specified, will fall back to C(MCP_USER) from environment variable or C(~/.dimensiondata).
+    required: false
+  mcp_password:
+    description:
+      - The password used to authenticate to the CloudControl API.
+      - If not specified, will fall back to C(MCP_PASSWORD) from environment variable or C(~/.dimensiondata).
+      - Required if mcp_user is specified.
+    required: false
   location:
     description:
       - The target datacenter.
