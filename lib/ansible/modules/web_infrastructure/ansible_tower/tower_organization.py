@@ -74,7 +74,7 @@ requirements:
 notes:
   - If no I(tower_config_file) is provided we will attempt to use the tower-cli library
     defaults to find your Tower host information.
-  - I(tower_config_file) should contain Tower configuration in the following format:
+  - I(tower_config_file) should contain Tower configuration in the following format
       host=hostname
       username=username
       password=password
