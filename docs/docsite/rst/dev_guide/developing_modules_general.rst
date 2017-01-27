@@ -244,7 +244,7 @@ As mentioned, if you are writing a module in Python, there are some very powerfu
 Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
 only shorter in terms of code, they are actually FASTER in terms of execution time.
 
-Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible-modules-core>`_ that come with Ansible.
+Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ that come with Ansible.
 
 The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 

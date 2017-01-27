@@ -19,7 +19,8 @@ as we work through this tutorial.
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
-by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
+by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or 
+in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.   
 
 .. _module_dev_should_you:
 
@@ -36,7 +37,7 @@ There are a lot of existing modules available, and more that are in development.
 
 Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary. 
 
-For more information about action plugins, go here: (TODO: link here)
+For more information about action plugins, go `here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_. 
 
 3. Should you use a role instead?
 
@@ -56,7 +57,7 @@ The following topics will discuss how to develop and work with modules:
     How to include in-line documentation in your module.
 :doc:`developing_modules_best_practices`
     Best practices, recommendations, and things to avoid.
-:doc:`developing_modules_contributing`
+:doc:`developing_modules_checklist`
      Checklist for contributing your module to Ansible.
 
 :doc:`developing_modules_python3`
@@ -71,10 +72,8 @@ The following topics will discuss how to develop and work with modules:
        Learn about developing plugins
    :doc:`developing_api`
        Learn about the Python API for playbook and task execution
-   `GitHub Core modules directory <https://github.com/ansible/ansible-modules-core/tree/devel>`_
-       Browse source of core modules
-   `Github Extras modules directory <https://github.com/ansible/ansible-modules-extras/tree/devel>`_
-       Browse source of extras modules.
+   `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_
+       Browse module source code
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
