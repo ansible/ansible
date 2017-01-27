@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # encoding: utf-8
 
-# (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
+# (c) 2017, Jiri Tyr <jiri.tyr@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -24,6 +24,7 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes
 import os
 import re
+import socket
 import tempfile
 
 
@@ -131,9 +132,40 @@ class EtcHosts:
             'after': ''
         }
 
+        # Validate the IP address
+        if (
+                not (
+                    self._is_valid_ipv4_address(self.params['ip']) or
+                    self._is_valid_ipv6_address(self.params['ip']))):
+            self.module.fail_json(
+                msg="The %s is not a valid IP address." % self.params['ip'])
+
         # Read the file
         if os.path.isfile(self.params['path']):
             self._read()
+
+    def _is_valid_ipv4_address(self, address):
+        try:
+            socket.inet_pton(socket.AF_INET, address)
+        except AttributeError:
+            try:
+                socket.inet_aton(address)
+            except socket.error:
+                return False
+
+            return address.count('.') == 3
+        except socket.error:
+            return False
+
+        return True
+
+    def _is_valid_ipv6_address(self, address):
+        try:
+            socket.inet_pton(socket.AF_INET6, address)
+        except socket.error:
+            return False
+
+        return True
 
     def _read(self):
         # Open the hosts file
@@ -312,7 +344,7 @@ def main():
         supports_check_mode=True
     )
 
-    # Make shorter variables
+    # Make shorter variable
     state = module.params['state']
 
     if state == 'present' and module.params['hostname'] is None:
