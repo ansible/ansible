@@ -146,7 +146,7 @@ def convert_size(size):
 
         if match.group(1) == "G":
             size_factor=1024
-        if match.group(1) == "G":
+        if match.group(1) == "T":
             size_factor=1024*1024
 
     if base_size is None:
