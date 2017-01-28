@@ -90,6 +90,7 @@ EXAMPLES = '''
         action: drop
         controller: '{{ inventory_hostname }}'
         state: present
+        validate_certs: false
 '''
 
 RETURN = '''
