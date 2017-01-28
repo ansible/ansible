@@ -409,7 +409,7 @@ class CloudFrontServiceManager:
             distributions = self.list_distributions(False)
             distributions += self.list_streaming_distributions(False)
             for dist in distributions:
-		if 'Items' in dist['Aliases']:
+                if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
                         if str(alias).lower() == domain_name.lower():
                             distribution_id = dist['Id']
@@ -456,7 +456,7 @@ class CloudFrontServiceManager:
         for item in list_to_key:
             distribution_id = item['Id']
             if 'Items' in item['Aliases']:
-	        aliases = item['Aliases']['Items']
+            aliases = item['Aliases']['Items']
                 for alias in aliases:
                     keyed_list.update( { alias: item } )
             keyed_list.update( { distribution_id: item } )
