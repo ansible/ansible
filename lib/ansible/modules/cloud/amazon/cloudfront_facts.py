@@ -512,7 +512,6 @@ def main():
     streaming_distribution_config     = module.params.get('streaming_distribution_config')
     list_origin_access_identities     = module.params.get('list_origin_access_identities')
     list_distributions                = module.params.get('list_distributions')
-
     list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id');
     list_invalidations                = module.params.get('list_invalidations')
     list_streaming_distributions      = module.params.get('list_streaming_distributions')
