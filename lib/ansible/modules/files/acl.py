@@ -329,7 +329,7 @@ def main():
             module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
 
         default_flag, etype, entity, permissions = split_entry(entry)
-        if default_flag != None:
+        if default_flag is not None:
             default = default_flag
 
     if get_platform().lower() == 'freebsd':

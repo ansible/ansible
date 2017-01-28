@@ -88,7 +88,7 @@ try:
    from ast import literal_eval
    HAS_PYTHON26 = True
 except ImportError:
-   HAS_PYTHON26 = False;
+   HAS_PYTHON26 = False
 
 try:
     from google.cloud import pubsub

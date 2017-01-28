@@ -515,10 +515,10 @@ def main():
 
 
     ## Verify required params are provided
-    if module.params['source'] == None and module.params['permanent'] == None:
+    if module.params['source'] is None and module.params['permanent'] is None:
         module.fail_json(msg='permanent is a required parameter')
 
-    if module.params['interface'] != None and module.params['zone'] == None:
+    if module.params['interface'] is not None and module.params['zone'] is None:
         module.fail(msg='zone is a required parameter')
 
     if module.params['immediate'] and fw_offline:
@@ -531,14 +531,14 @@ def main():
     rich_rule = module.params['rich_rule']
     source = module.params['source']
 
-    if module.params['port'] != None:
+    if module.params['port'] is not None:
         port, protocol = module.params['port'].split('/')
-        if protocol == None:
+        if protocol is None:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
         port = None
 
-    if module.params['zone'] != None:
+    if module.params['zone'] is not None:
         zone = module.params['zone']
     else:
         if fw_offline:
@@ -554,21 +554,21 @@ def main():
     masquerade = module.params['masquerade']
 
     modification_count = 0
-    if service != None:
+    if service is not None:
         modification_count += 1
-    if port != None:
+    if port is not None:
         modification_count += 1
-    if rich_rule != None:
+    if rich_rule is not None:
         modification_count += 1
-    if interface != None:
+    if interface is not None:
         modification_count += 1
-    if masquerade != None:
+    if masquerade is not None:
         modification_count += 1
 
     if modification_count > 1:
         module.fail_json(msg='can only operate on port, service, rich_rule or interface at once')
 
-    if service != None:
+    if service is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_service_enabled_permanent,
@@ -676,7 +676,7 @@ def main():
 
     # FIXME - source type does not handle non-permanent mode, this was an
     #         oversight in the past.
-    if source != None:
+    if source is not None:
         is_enabled = action_handler(get_source, (zone, source))
         if desired_state == "enabled":
             if is_enabled == False:
@@ -695,7 +695,7 @@ def main():
                 changed=True
                 msgs.append("Removed %s from zone %s" % (source, zone))
 
-    if port != None:
+    if port is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_port_enabled_permanent,
@@ -800,7 +800,7 @@ def main():
             msgs.append("Changed port %s to %s" % ("%s/%s" % (port, protocol), \
                         desired_state))
 
-    if rich_rule != None:
+    if rich_rule is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_rich_rule_enabled_permanent,
@@ -903,7 +903,7 @@ def main():
         if changed == True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
 
-    if interface != None:
+    if interface is not None:
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_interface_permanent,
@@ -986,7 +986,7 @@ def main():
                     changed=True
                     msgs.append("Removed %s from zone %s" % (interface, zone))
 
-    if masquerade != None:
+    if masquerade is not None:
 
         if immediate and permanent:
             is_enabled_permanent = action_handler(

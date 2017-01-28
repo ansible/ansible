@@ -325,7 +325,7 @@ def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
-        if private_zone == want_private and ((zone.name == zone_name and zone_id == None) or zone.id.replace('/hostedzone/', '') == zone_id):
+        if private_zone == want_private and ((zone.name == zone_name and zone_id is None) or zone.id.replace('/hostedzone/', '') == zone_id):
             if want_vpc_id:
                 # NOTE: These details aren't available in other boto methods, hence the necessary
                 # extra API call
@@ -464,13 +464,13 @@ def main():
                 module.fail_json(msg = "parameter 'value' must contain a single dns name for alias create/delete")
             elif not alias_hosted_zone_id_in:
                 module.fail_json(msg = "parameter 'alias_hosted_zone_id' required for alias create/delete")
-        elif ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
+        elif ( weight_in is not None or region_in is not None or failover_in is not None ) and identifier_in is None:
             module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
 
     if command_in == 'create':
-        if ( weight_in!=None or region_in!=None or failover_in!=None ) and identifier_in==None:
+        if ( weight_in is not None or region_in is not None or failover_in is not None ) and identifier_in is None:
           module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
-        elif ( weight_in==None and region_in==None and failover_in==None ) and identifier_in!=None:
+        elif ( weight_in is None and region_in is None and failover_in is None ) and identifier_in is not None:
           module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
 
 

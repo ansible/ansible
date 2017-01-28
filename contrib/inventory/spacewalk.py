@@ -110,9 +110,9 @@ parser.add_option('-H', '--human', dest="human",
                   default=False, action="store_true",
                   help="Produce a friendlier version of either server list or host detail")
 parser.add_option('-o', '--org', default=None, dest="org_number",
-		  help="Limit to spacewalk organization number")
+                  help="Limit to spacewalk organization number")
 parser.add_option('-p', default=False, dest="prefix_org_name", action="store_true",
-		  help="Prefix the group name with the organization number")
+                  help="Prefix the group name with the organization number")
 (options, args) = parser.parse_args()
 
 
@@ -133,13 +133,13 @@ if os.path.exists(INI_FILE):
 #------------------------------
 org_groups = {}
 try:
-	for group in spacewalk_report('system-groups'):
-	    org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
+    for group in spacewalk_report('system-groups'):
+        org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
 
 except (OSError) as e:
-	print('Problem executing the command "%s system-groups": %s' %
+    print('Problem executing the command "%s system-groups": %s' %
           (SW_REPORT, str(e)), file=sys.stderr)
-	sys.exit(2)
+    sys.exit(2)
 
 
 # List out the known server from Spacewalk

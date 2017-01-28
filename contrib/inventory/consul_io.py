@@ -399,7 +399,7 @@ class ConsulInventory(object):
 
     new_dict = {}
     for k, v in d.items():
-      if v != None:
+      if v is not None:
         new_dict[self.to_safe(str(k))] = self.to_safe(str(v))
     return new_dict
 

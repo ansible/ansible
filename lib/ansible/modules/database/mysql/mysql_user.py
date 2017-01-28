@@ -238,7 +238,7 @@ class InvalidPrivsError(Exception):
 # User Authentication Management was change in MySQL 5.7
 # This is a generic check for if the server version is less than version 5.7
 def server_version_check(cursor):
-    cursor.execute("SELECT VERSION()");
+    cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
     version_str = result[0]
     version = version_str.split('.')

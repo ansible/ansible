@@ -1953,7 +1953,7 @@ class AIX(User):
         else:
             (rc2, out2, err2) = (None, '', '')
 
-        if rc != None:
+        if rc is not None:
             return (rc, out+out2, err+err2)
         else:
             return (rc2, out+out2, err+err2)

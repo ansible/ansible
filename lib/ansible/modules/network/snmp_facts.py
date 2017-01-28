@@ -209,10 +209,10 @@ def main():
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":
-        if m_args['username'] == None:
+        if m_args['username'] is None:
             module.fail_json(msg='Username not set when using snmp version 3')
 
-        if m_args['level'] == "authPriv" and m_args['privacy'] == None:
+        if m_args['level'] == "authPriv" and m_args['privacy'] is None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
 
 

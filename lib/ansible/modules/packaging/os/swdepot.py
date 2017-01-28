@@ -140,7 +140,7 @@ def main():
     changed = False
     msg = "No changed"
     rc = 0
-    if ( state == 'present' or state == 'latest' ) and depot == None:
+    if ( state == 'present' or state == 'latest' ) and depot is None:
         output = "depot parameter is mandatory in present or latest task"
         module.fail_json(name=name, msg=output, rc=rc)
 

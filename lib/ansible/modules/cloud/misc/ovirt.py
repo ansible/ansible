@@ -382,7 +382,7 @@ def vm_status(conn, vmname):
 # Get VM object and return it's name if object exists
 def get_vm(conn, vmname):
     vm = conn.vms.get(name=vmname)
-    if vm == None:
+    if vm is None:
         name = "empty"
     else:
         name = vm.get_name()

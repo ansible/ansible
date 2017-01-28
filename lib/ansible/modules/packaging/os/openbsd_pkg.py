@@ -161,9 +161,9 @@ def get_package_state(names, pkg_spec, module):
             # find multiple packages with that name.
             pkg_spec[name]['installed_names'] = [installed_name for installed_name in stdout.splitlines()]
             module.debug("get_package_state(): installed_names = %s" % pkg_spec[name]['installed_names'])
-            pkg_spec[name]['installed_state'] = True;
+            pkg_spec[name]['installed_state'] = True
         else:
-            pkg_spec[name]['installed_state'] = False;
+            pkg_spec[name]['installed_state'] = False
 
 # Function used to make sure a package is present.
 def package_present(names, pkg_spec, module):

@@ -374,7 +374,7 @@ def main():
     if HAS_BEAUTIFULSOUP is False:
         module.fail_json(msg="python module 'BeautifulSoup' is required!")
 
-    if module.params['state'] != None:
+    if module.params['state'] is not None:
         states = module.params['state'].split(',')
         if (len(states) > 1) and (("present" in states) or ("enabled" in states)):
             module.fail_json(msg="state present/enabled is mutually exclusive with other states!")

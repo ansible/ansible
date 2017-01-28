@@ -95,7 +95,7 @@ class SoftLayerInventory(object):
         '''Push an element onto an array that may not have been defined in the dict'''
 
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 

@@ -270,9 +270,9 @@ def create_virtual_instance(module):
 
 
   # Check if OS or Image Template is provided (Can't be both, defaults to OS)
-  if (module.params.get('os_code') != None and module.params.get('os_code') != ''):
+  if (module.params.get('os_code') is not None and module.params.get('os_code') != ''):
     module.params['image_id'] = ''
-  elif (module.params.get('image_id') != None and module.params.get('image_id') != ''):
+  elif (module.params.get('image_id') is not None and module.params.get('image_id') != ''):
     module.params['os_code'] = ''
     module.params['disks'] = [] # Blank out disks since it will use the template
   else:
@@ -302,7 +302,7 @@ def create_virtual_instance(module):
     post_uri = module.params.get('post_uri'),
     tags = tags)
 
-  if instance != None and instance['id'] > 0:
+  if instance is not None and instance['id'] > 0:
     return True, instance
   else:
     return False, None
@@ -325,7 +325,7 @@ def wait_for_instance(module,id):
 
 def cancel_instance(module):
   canceled = True
-  if module.params.get('instance_id') == None and (module.params.get('tags') or module.params.get('hostname') or module.params.get('domain')):
+  if module.params.get('instance_id') is None and (module.params.get('tags') or module.params.get('hostname') or module.params.get('domain')):
     tags = module.params.get('tags')
     if isinstance(tags, basestring):
       tags = [module.params.get('tags')]

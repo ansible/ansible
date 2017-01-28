@@ -82,7 +82,7 @@ class CallbackModule(CallbackBase):
         self.task_output_limit = os.getenv('PROFILE_TASKS_TASK_OUTPUT_LIMIT', 20)
 
         if self.sort_order == 'ascending':
-            self.sort_order = False;
+            self.sort_order = False
 
         if self.task_output_limit == 'all':
             self.task_output_limit = None

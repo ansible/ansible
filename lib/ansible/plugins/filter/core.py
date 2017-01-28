@@ -265,7 +265,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             encrypted = crypt.crypt(password, saltstring)
         else:
             if hashtype == 'blowfish':
-                cls = passlib.hash.bcrypt;
+                cls = passlib.hash.bcrypt
             else:
                 cls = getattr(passlib.hash, '%s_crypt' % hashtype)
 

@@ -50,7 +50,7 @@ class GalaxyLogin(object):
         self.github_username = None
         self.github_password = None
 
-        if github_token == None:
+        if github_token is None:
             self.get_credentials()
 
     def get_credentials(self):

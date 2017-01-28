@@ -65,11 +65,11 @@ def union(a, b):
 
 def min(a):
     _min = __builtins__.get('min')
-    return _min(a);
+    return _min(a)
 
 def max(a):
     _max = __builtins__.get('max')
-    return _max(a);
+    return _max(a)
 
 
 def logarithm(x, base=math.e):

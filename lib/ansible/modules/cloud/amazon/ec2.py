@@ -1040,7 +1040,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     running_instances = []
     count_remaining = int(count)
 
-    if id != None:
+    if id is not None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:

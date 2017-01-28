@@ -374,7 +374,7 @@ class VMWareInventory(object):
         if cfm is not None and cfm.field:
             for f in cfm.field:
                 if f.managedObjectType == vim.VirtualMachine:
-                    self.custom_fields[f.key] = f.name;
+                    self.custom_fields[f.key] = f.name
             self.debugl('%d custom fieds collected' % len(self.custom_fields))
         return instance_tuples
 

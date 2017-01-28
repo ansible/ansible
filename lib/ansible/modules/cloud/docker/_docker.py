@@ -1553,12 +1553,12 @@ class DockerManager(object):
 
                 image_matches = running_image in repo_tags
 
-                if command == None:
+                if command is None:
                     command_matches = True
                 else:
                     command_matches = (command == details['Config']['Cmd'])
 
-                if entrypoint == None:
+                if entrypoint is None:
                     entrypoint_matches = True
                 else:
                     entrypoint_matches = (

@@ -227,7 +227,8 @@ def sizefilter(st, size):
 
 def contentfilter(fsname, pattern):
     '''filter files which contain the given expression'''
-    if pattern is None: return True
+    if pattern is None:
+        return True
 
     try:
        f = open(fsname)
