@@ -181,12 +181,12 @@ def main():
             pem_file=dict(type='path'),
             project_id=dict(),
         ),
-         mutually_exclusive=[
+        mutually_exclusive=[
              [ 'instance_name', 'instance_pattern' ]
-         ],
+        ],
         required_one_of=[
              [ 'instance_name', 'instance_pattern' ]
-         ]
+        ]
     )
 
     instance_name = module.params.get('instance_name')

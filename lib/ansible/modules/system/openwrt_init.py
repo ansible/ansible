@@ -115,8 +115,8 @@ def main():
                 enabled = dict(type='bool'),
                 pattern = dict(required=False, default=None),
             ),
-            supports_check_mode=True,
-            required_one_of=[['state', 'enabled']],
+        supports_check_mode=True,
+        required_one_of=[['state', 'enabled']],
         )
 
     # initialize

@@ -297,7 +297,7 @@ def main():
 
     # First check if we were given a dhcp_options_id
     if not params['dhcp_options_id']:
-    # No, so create new_options from the parameters
+        # No, so create new_options from the parameters
         if params['dns_servers'] is not None:
             new_options['domain-name-servers'] = params['dns_servers']
         if params['netbios_name_servers'] is not None:

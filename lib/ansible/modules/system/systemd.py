@@ -267,8 +267,8 @@ def main():
                 user = dict(type='bool', default=False),
                 no_block = dict(type='bool', default=False),
             ),
-            supports_check_mode=True,
-            required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        supports_check_mode=True,
+        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
         )
 
     systemctl = module.get_bin_path('systemctl')

@@ -635,7 +635,7 @@ class TgzArchive(object):
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
-#            filename = filename.decode('string_escape')
+            # filename = filename.decode('string_escape')
             filename = codecs.escape_decode(filename)[0]
             if filename and filename not in self.excludes:
                 self._files_in_archive.append(to_native(filename))

@@ -313,7 +313,7 @@ def main():
             size_unit = ''
 
         if not '%' in size:
-        # LVCREATE(8) -L --size option unit
+            # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
                size_unit = size[-1].lower()
                size = size[0:-1]
