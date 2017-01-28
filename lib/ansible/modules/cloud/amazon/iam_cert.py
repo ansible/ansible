@@ -27,7 +27,7 @@ version_added: "2.0"
 options:
   name:
     description:
-      - Name of certificate to add, update or remove.
+      - Name of certificate to add, update, remove or ping.
     required: true
     aliases: []
   new_name:
@@ -42,10 +42,10 @@ options:
     aliases: []
   state:
     description:
-      - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified.
+      - Whether to create, delete certificate. When present is specified it will attempt to make an update if new_path or new_name is specified. The ping state permit to retrieve informations about the certificate name.
     required: true
     default: null
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "ping"]
     aliases: []
   path:
     description:
@@ -128,26 +128,18 @@ def boto_exception(err):
     return error
 
 def cert_meta(iam, name):
-    opath       = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 path
-    ocert       = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 certificate_body
-    ocert_id    = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 server_certificate_id
-    upload_date = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 upload_date
-    exp         = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 expiration
-    return opath, ocert, ocert_id, upload_date, exp
+    certificate = iam.get_server_certificate(name).get_server_certificate_result.server_certificate
+    certificate_meta = certificate.server_certificate_metadata
+
+    opath = certificate_meta.path
+    ocert = certificate.certificate_body
+    ocert_id = certificate_meta.server_certificate_id
+    upload_date = certificate_meta.upload_date
+    exp = certificate_meta.expiration
+    arn = certificate_meta.arn
+
+    return opath, ocert, ocert_id, upload_date, exp, arn
+
 
 def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodies, dup_ok):
     update=False
@@ -190,13 +182,13 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
         update = dup_check(module, iam, name, new_name, cert, orig_cert_names,
                            orig_cert_bodies, dup_ok)
         if update:
-            opath, ocert, ocert_id, upload_date, exp = cert_meta(iam, name)
+            opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
             changed=True
             if new_name and new_path:
                 iam.update_server_cert(name, new_cert_name=new_name, new_path=new_path)
                 module.exit_json(changed=changed, original_name=name, new_name=new_name,
                                  original_path=opath, new_path=new_path, cert_body=ocert,
-                                 upload_date=upload_date, expiration_date=exp)
+                                 upload_date=upload_date, expiration_date=exp, arn=arn)
             elif new_name and not new_path:
                 iam.update_server_cert(name, new_cert_name=new_name)
                 module.exit_json(changed=changed, original_name=name, new_name=new_name,
@@ -215,9 +207,9 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
         else:
             changed=True
             iam.upload_server_cert(name, cert, key, cert_chain=chain, path=cpath)
-            opath, ocert, ocert_id, upload_date, exp = cert_meta(iam, name)
+            opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
             module.exit_json(changed=changed, name=name, cert_path=opath, cert_body=ocert,
-                                 upload_date=upload_date, expiration_date=exp)
+                                 upload_date=upload_date, expiration_date=exp, arn=arn)
     elif state == 'absent':
         if name in orig_cert_names:
             changed=True
@@ -226,12 +218,20 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
         else:
             changed=False
             module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
+    elif state == 'ping':
+        try:
+            opath, ocert, ocert_id, upload_date, exp, arn = cert_meta(iam, name)
+            module.exit_json(changed=False, name=name, cert_path=opath, cert_body=ocert,
+                upload_date=upload_date, expiration_date=exp, arn=arn)
+        except Exception as err:
+            module.exit_json(changed=False, name=name, message=err.error_message)
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(
-            default=None, required=True, choices=['present', 'absent']),
+            default=None, required=True, choices=['present', 'absent', 'ping']),
         name=dict(default=None, required=False),
         cert=dict(default=None, required=False, type='path'),
         key=dict(default=None, required=False, type='path'),
