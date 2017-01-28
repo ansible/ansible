@@ -19,7 +19,7 @@
 
 class ModuleDocFragment(object):
 
-	# Standard Infinibox documentation fragment
+    # Standard Infinibox documentation fragment
     DOCUMENTATION = '''
 options:
   system:
