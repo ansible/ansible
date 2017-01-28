@@ -518,7 +518,7 @@ def main():
     list_streaming_distributions      = module.params.get('list_streaming_distributions')
     summary                           = module.params.get('summary')
 
-    result = { 'cloudfront': {} } 
+    result = { 'cloudfront': {} }
     facts = {}
     aliases = []
 
@@ -589,7 +589,7 @@ def main():
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
         facts = set_facts_for_distribution_id_and_alias(invalidations, facts, distribution_id, aliases)
- 
+
     # get list based on options
     if all_lists or list_origin_access_identities:
         facts['origin_access_identities'] = service_mgr.list_origin_access_identities()
