@@ -131,7 +131,7 @@ options:
         should be set. If one of the two values is missing, the --tcp-flags option
         will be ignored.
     required: false
-    default: null
+    default: {}
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
