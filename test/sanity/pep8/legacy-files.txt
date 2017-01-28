@@ -7,7 +7,6 @@ contrib/inventory/digital_ocean.py
 contrib/inventory/docker.py
 contrib/inventory/ec2.py
 contrib/inventory/gce.py
-contrib/inventory/linode.py
 contrib/inventory/mdt_dynamic_inventory.py
 contrib/inventory/openvz.py
 contrib/inventory/rax.py
@@ -15,8 +14,6 @@ contrib/inventory/softlayer.py
 contrib/inventory/spacewalk.py
 contrib/inventory/ssh_config.py
 contrib/inventory/vbox.py
-contrib/inventory/vmware_inventory.py
-contrib/inventory/windows_azure.py
 contrib/inventory/zabbix.py
 contrib/inventory/zone.py
 docs/api/conf.py
@@ -180,7 +177,6 @@ lib/ansible/modules/cloud/openstack/_quantum_subnet.py
 lib/ansible/modules/cloud/openstack/os_auth.py
 lib/ansible/modules/cloud/openstack/os_nova_host_aggregate.py
 lib/ansible/modules/cloud/openstack/os_object.py
-lib/ansible/modules/cloud/openstack/os_project.py
 lib/ansible/modules/cloud/openstack/os_quota.py
 lib/ansible/modules/cloud/openstack/os_recordset.py
 lib/ansible/modules/cloud/openstack/os_zone.py
@@ -446,15 +442,12 @@ lib/ansible/plugins/callback/dense.py
 lib/ansible/plugins/callback/foreman.py
 lib/ansible/plugins/callback/logentries.py
 lib/ansible/plugins/callback/oneline.py
-lib/ansible/plugins/callback/profile_tasks.py
 lib/ansible/plugins/callback/selective.py
 lib/ansible/plugins/connection/accelerate.py
 lib/ansible/plugins/connection/paramiko_ssh.py
 lib/ansible/plugins/connection/ssh.py
 lib/ansible/plugins/connection/winrm.py
-lib/ansible/plugins/filter/core.py
 lib/ansible/plugins/filter/ipaddr.py
-lib/ansible/plugins/filter/mathstuff.py
 lib/ansible/plugins/lookup/dig.py
 lib/ansible/plugins/lookup/dnstxt.py
 lib/ansible/plugins/lookup/first_found.py
