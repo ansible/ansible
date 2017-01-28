@@ -193,7 +193,7 @@ def main():
             authkey=dict(required=False),
             privkey=dict(required=False),
             removeplaceholder=dict(required=False)),
-            required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
+        required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
         supports_check_mode=False)
 
     m_args = module.params

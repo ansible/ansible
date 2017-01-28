@@ -314,8 +314,8 @@ def main():
             results['task']=existing
         else:
             if not module.check_mode:
-            # it exists, so we should delete it and mark changed.
-            # return info about the cluster deleted
+                # it exists, so we should delete it and mark changed.
+                # return info about the cluster deleted
                 results['task'] = service_mgr.stop_task(
                     module.params['cluster'],
                     module.params['task']

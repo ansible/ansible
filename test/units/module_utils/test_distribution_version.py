@@ -147,7 +147,7 @@ CODENAME = Malachite
             "distribution_version": "42.1",
         }
     },
-                {
+    {
         'name': 'openSUSE 13.2',
         'input': {'/etc/SuSE-release': """openSUSE 13.2 (x86_64)
 VERSION = 13.2

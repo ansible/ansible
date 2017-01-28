@@ -208,7 +208,7 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
         matching_issue_list_len = len(matching_issue_list)
 
         if matching_issue_list_len == 0:
-        # The issue does not exist in the project
+            # The issue does not exist in the project
             if state == "present":
                 # This implies a change
                 changed = True
@@ -226,7 +226,7 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
                 return (True, changed, "Issue does not exist", {})
 
         elif matching_issue_list_len == 1:
-        # The issue exists in the project
+            # The issue exists in the project
             if state == "absent":
                 # This implies a change
                 changed = True
