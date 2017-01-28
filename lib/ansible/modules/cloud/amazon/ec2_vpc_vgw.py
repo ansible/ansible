@@ -387,8 +387,8 @@ def find_vgw(client, module, vpn_gateway_id=None):
 
 def ensure_vgw_present(client, module):
 
-# If an existing vgw name and type matches our args, then a match is considered to have been
-# found and we will not create another vgw.
+    # If an existing vgw name and type matches our args, then a match is considered to have been
+    # found and we will not create another vgw.
 
     changed = False
     params = dict()
@@ -472,8 +472,8 @@ def ensure_vgw_present(client, module):
 
 def ensure_vgw_absent(client, module):
 
-# If an existing vgw name and type matches our args, then a match is considered to have been
-# found and we will take steps to delete it.
+    # If an existing vgw name and type matches our args, then a match is considered to have been
+    # found and we will take steps to delete it.
 
     changed = False
     params = dict()

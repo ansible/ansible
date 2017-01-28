@@ -145,7 +145,7 @@ def main():
             exists = len(matching_groups) > 0
         except boto.exception.JSONResponseError as e:
             if e.body['Error']['Code'] != 'ClusterSubnetGroupNotFoundFault':
-            #if e.code != 'ClusterSubnetGroupNotFoundFault':
+                # if e.code != 'ClusterSubnetGroupNotFoundFault':
                 module.fail_json(msg=str(e))
 
         if state == 'absent':
