@@ -26,7 +26,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Understand that all modules shipped with Ansible MUST be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory must be under the FIXME license.
 * Have a look at the existing modules, especially in the same functional area (such as cloud, networking, databases) in the :doc:`../list_of_all_modules` for a list of existing modules and how they've been named.
 
-# FIXME Add details about docs_fragments and module_utils (once the other docs are tidied up this can be simplified as a link to those existing sections
+# FIXME Add details about `docs_fragments` and `module_utils` (once the other docs are tidied up this can be simplified as a link to those existing sections
 
 Naming Convention
 `````````````````
@@ -53,7 +53,7 @@ We've found that writing a list of your proposed module names and a one or two l
 
 FIXME: How do we want to know the above, will everyone had a named contact at Ansible, what about if it's the community, rather than a vendor?
 FIXME: Some light weight review process of the above
-FIXME: I (gundalow) isn't sure if we want to preasure the Public Core Meetings with this, though that is one recommended way for the community to reach the Core Team.
+FIXME: I (gundalow) isn't sure if we want to use the Public Core Meetings with this, though that is one recommended way for the community to reach the Core Team.
 
 Where to get support
 ````````````````````
@@ -81,7 +81,7 @@ The first PR is slightly different to the rest as:
 
 
 The first PR should include the following files:
-* `lib/ansible/modules/$area/$prefix/__init__.py` - An empty file to initilize namespace and allow Python to import the files. *Required new file*
+* `lib/ansible/modules/$area/$prefix/__init__.py` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
 * `lib/ansible/modules/$area/$prefix/$yourfirstmodule.py` - A single module. *Required new file*
 * `lib/ansible/utils/module_docs_fragments/$prefix.py` - Code documentation, such as details regarding common arguments. *Optional new file*
 * `lib/ansible/module_utils/$prefix.py` - Code shared between more than one module, such as common arguments. *Optional new file*
@@ -91,7 +91,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again
 
-After (pushing and publishing your PR on https://github.com/ansible/ansible a Shippable CI test should run (generally within a few minutes), check the results (at the end of the PR page) and ensure it's passing (green), if not inspect each of the results. Most of the errors should be self explanitory and are generally related to badly formatted documentation (FIXME yamlonline validator) or code that isn't valid Python 2.4 & Python 2.6 (FIXME porting page). If you aren't sure what a Shippable test message means copy it into the PR and add as a comment and we will review.
+After (pushing and publishing your PR on https://github.com/ansible/ansible a Shippable CI test should run (generally within a few minutes), check the results (at the end of the PR page) and ensure it's passing (green), if not inspect each of the results. Most of the errors should be self explanatory and are generally related to badly formatted documentation (FIXME yamlonline validator) or code that isn't valid Python 2.4 & Python 2.6 (FIXME porting page). If you aren't sure what a Shippable test message means copy it into the PR and add as a comment and we will review.
 
 If you need further advice join the `#ansible-devel` IRC channel (details in "Where to get support")
 
@@ -103,8 +103,8 @@ We have a "ansibot" helper that comments on GitHub Issues and PRs which should h
 
 
 
-Subsiquent PRs
-``````````````````````
+Subsequent PRs
+``````````````
 
 Then one module per PR
 * Why
