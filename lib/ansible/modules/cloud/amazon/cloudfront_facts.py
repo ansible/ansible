@@ -455,7 +455,7 @@ class CloudFrontServiceManager:
         for item in list_to_key:
             distribution_id = item['Id']
             if 'Items' in item['Aliases']:
-            aliases = item['Aliases']['Items']
+                aliases = item['Aliases']['Items']
                 for alias in aliases:
                     keyed_list.update( { alias: item } )
             keyed_list.update( { distribution_id: item } )
