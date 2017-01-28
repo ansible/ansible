@@ -200,7 +200,7 @@ streaming_distribution_configuration:
     returned: only if streaming_distribution_configuration is true
     type: dict
 summary:
-    description: Gives a summary of distributions (distribution ids, aliases and invalidation ids), streaming distributions (distribution ids and aliases) and origin access identities (origin access identity ids).
+    description: Gives a summary of distributions, streaming distributions and origin access identities.
     returned: as default or if summary is true
     type: dict
 '''
@@ -291,7 +291,7 @@ class CloudFrontServiceManager:
               return origin_access_identity_list['Items']
             return {}
         except Exception as e:
-            self.module.fail_json(msg="Error listing cloud front origin access identities = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e), exception=traceback.format_exc(e))
 
     def list_distributions(self, keyed=True):
         try:
@@ -305,7 +305,7 @@ class CloudFrontServiceManager:
                 return distribution_list
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing distributions = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing distributions - " + str(e), exception=traceback.format_exc(e))
 
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
@@ -317,7 +317,7 @@ class CloudFrontServiceManager:
                 distribution_list = distribution_list['Items']
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing distributions by web acl id = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e), exception=traceback.format_exc(e))
 
     def list_invalidations(self, distribution_id):
         try:
@@ -327,7 +327,7 @@ class CloudFrontServiceManager:
                 return invalidation_list['Items']
             return {}
         except Exception as e:
-            self.module.fail_json(msg="Error listing invalidations = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing invalidations - " + str(e), exception=traceback.format_exc(e))
 
     def list_streaming_distributions(self, keyed=True):
         try:
@@ -341,7 +341,7 @@ class CloudFrontServiceManager:
                 return streaming_distribution_list
             return self.keyed_list_helper(streaming_distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing streaming distributions = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing streaming distributions - " + str(e), exception=traceback.format_exc(e))
 
     def summary(self):
         summary_dict = {}
@@ -358,7 +358,7 @@ class CloudFrontServiceManager:
                 origin_access_identity_list['origin_access_identities'].append(origin_access_identity['Id'])
             return origin_access_identity_list
         except Exception as e:
-            self.module.fail_json(msg="Error generating summary of origin access identities = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e), exception=traceback.format_exc(e))
 
     def summary_get_distribution_list(self, streaming=False):
         try:
@@ -390,7 +390,7 @@ class CloudFrontServiceManager:
                 distribution_list[list_name].append(temp_distribution)
             return distribution_list
         except Exception as e:
-            self.module.fail_json(msg="Error generating summary of distributions = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error generating summary of distributions - " + str(e), exception=traceback.format_exc(e))
 
     def get_list_of_invalidation_ids_from_distribution_id(self, distribution_id):
         try:
@@ -400,12 +400,13 @@ class CloudFrontServiceManager:
                 invalidation_ids.append(invalidation['Id'])
             return invalidation_ids
         except Exception as e:
-            self.module.fail_json(msg="Error getting list of invalidation ids = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e), exception=traceback.format_exc(e))
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
             distribution_id = ""
             distributions = self.list_distributions(False)
+            distributions += self.list_streaming_distributions(False)
             for dist in distributions:
 		if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
@@ -414,7 +415,7 @@ class CloudFrontServiceManager:
                             break
             return distribution_id
         except Exception as e:
-            self.module.fail_json(msg="Error getting distribution id from domain name = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e), exception=traceback.format_exc(e))
 
     def get_aliases_from_distribution_id(self, distribution_id):
         aliases = []
@@ -427,7 +428,7 @@ class CloudFrontServiceManager:
                     break
             return aliases
         except Exception as e:
-            self.module.fail_json(msg="Error getting list of aliases from distribution_id = " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e), exception=traceback.format_exc(e))
 
     def paginated_response(self, func, result_key=""):
         '''
@@ -511,6 +512,7 @@ def main():
     streaming_distribution_config     = module.params.get('streaming_distribution_config')
     list_origin_access_identities     = module.params.get('list_origin_access_identities')
     list_distributions                = module.params.get('list_distributions')
+
     list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id');
     list_invalidations                = module.params.get('list_invalidations')
     list_streaming_distributions      = module.params.get('list_streaming_distributions')
@@ -563,7 +565,7 @@ def main():
     elif web_acl_id:
         facts = { web_acl_id: {} }
 
-# get details based on options
+    # get details based on options
     if distribution:
         distribution_details = service_mgr.get_distribution(distribution_id)
         facts = set_facts_for_distribution_id_and_alias(distribution_details, facts, distribution_id, aliases)
@@ -587,6 +589,7 @@ def main():
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
         facts = set_facts_for_distribution_id_and_alias(invalidations, facts, distribution_id, aliases)
+    
     # get list based on options
     if all_lists or list_origin_access_identities:
         facts['origin_access_identities'] = service_mgr.list_origin_access_identities()
