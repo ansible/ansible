@@ -74,6 +74,7 @@ Your First PR
 Assuming you've been through the rest of this document, and not just skipped ahead, you should now be ready to raise your first PR.
 
 The first PR is slightly different to the rest as:
+
 * it defines the namespace
 * it provides a bases for detailed review that will help shape your future PRs
 * it may include shared documentation (`docs_fragments`) that multiple modules require
@@ -81,6 +82,7 @@ The first PR is slightly different to the rest as:
 
 
 The first PR should include the following files:
+
 * `lib/ansible/modules/$area/$prefix/__init__.py` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
 * `lib/ansible/modules/$area/$prefix/$yourfirstmodule.py` - A single module. *Required new file*
 * `lib/ansible/utils/module_docs_fragments/$prefix.py` - Code documentation, such as details regarding common arguments. *Optional new file*
