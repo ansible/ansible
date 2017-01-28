@@ -229,9 +229,7 @@ class CloudFrontServiceManager:
 
         try:
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            self.client = boto3_conn(module, conn_type='client',
-                                     resource='cloudfront', region=region,
-                                     endpoint=ec2_url, **aws_connect_kwargs)
+            self.client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
@@ -358,10 +356,10 @@ class CloudFrontServiceManager:
             origin_access_identity_list = { 'origin_access_identities': [] }
             origin_access_identities = self.list_origin_access_identities()
             for origin_access_identity in origin_access_identities:
-                origin_access_identity_list['origin_access_identities'].append( origin_access_identity['Id'] )
+                origin_access_identity_list['origin_access_identities'].append(origin_access_identity['Id'])
             return origin_access_identity_list
         except Exception as e:
-            self.module.fail_json(msg="Error generating summary of origin_access_identity= " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error generating summary of origin access identities = " + str(e), exception=traceback.format_exc(e))
 
     def summary_get_distribution_list(self, streaming=False):
         try:
@@ -384,13 +382,13 @@ class CloudFrontServiceManager:
                     } )
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
-                        temp_distribution['Aliases'].append( alias )
+                        temp_distribution['Aliases'].append(alias)
                 if not streaming:
                     temp_distribution.update( { 'WebACLId': dist['WebACLId'] } )
-                    invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id( dist['Id'] )
+                    invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(dist['Id'])
                     if invalidation_ids:
                         temp_distribution.update( { 'Invalidations': invalidation_ids } )
-                distribution_list[list_name].append( temp_distribution )
+                distribution_list[list_name].append(temp_distribution)
             return distribution_list
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of distributions = " + str(e), exception=traceback.format_exc(e))
@@ -459,8 +457,8 @@ class CloudFrontServiceManager:
             if 'Items' in item['Aliases']:
 	        aliases = item['Aliases']['Items']
                 for alias in aliases:
-                    keyed_list.update({alias: item})
-            keyed_list.update({distribution_id: item})
+                    keyed_list.update( { alias: item } )
+            keyed_list.update( { distribution_id: item } )
         return keyed_list
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
@@ -523,15 +521,14 @@ def main():
     facts = {}
     aliases = []
     
-    require_distribution_id = (distribution or distribution_config or invalidation or
-            streaming_distribution or streaming_distribution_config or list_invalidations)
+    require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or 
+        streaming_distribution_config or list_invalidations)
 
     # set default to summary if no option specified
-    summary = summary or not (distribution or distribution_config or
-            origin_access_identity or origin_access_identity_config or invalidation or
-            streaming_distribution or streaming_distribution_config or list_origin_access_identities or
-            list_distributions_by_web_acl_id or list_invalidations or list_streaming_distributions or
-            list_distributions)
+    summary = summary or not (distribution or distribution_config or origin_access_identity or 
+        origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or 
+        list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or 
+        list_streaming_distributions or list_distributions)
 
     # validations
     if require_distribution_id and distribution_id is None and domain_name_alias is None:
@@ -566,7 +563,6 @@ def main():
         facts = { origin_access_identity_id: {} }
     elif web_acl_id:
         facts = { web_acl_id: {} }
-
 
 # get details based on options
     if distribution:
