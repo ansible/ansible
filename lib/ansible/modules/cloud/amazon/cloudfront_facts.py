@@ -368,17 +368,17 @@ class CloudFrontServiceManager:
             distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
             for dist in distributions:
                 temp_distribution = {}
-                temp_distribution.update( 
-                    { 
-                        'Id': dist['Id'], 
-                        'ARN': dist['ARN'], 
-                        'Status': dist['Status'], 
-                        'LastModifiedTime': dist['LastModifiedTime'], 
-                        'DomainName': dist['DomainName'], 
-                        'Comment':  dist['Comment'], 
-                        'PriceClass': dist['PriceClass'], 
-                        'Enabled': dist['Enabled'], 
-                        'Aliases': [] 
+                temp_distribution.update(
+                    {
+                        'Id': dist['Id'],
+                        'ARN': dist['ARN'],
+                        'Status': dist['Status'],
+                        'LastModifiedTime': dist['LastModifiedTime'],
+                        'DomainName': dist['DomainName'],
+                        'Comment':  dist['Comment'],
+                        'PriceClass': dist['PriceClass'],
+                        'Enabled': dist['Enabled'],
+                        'Aliases': []
                     } )
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
@@ -513,7 +513,7 @@ def main():
     streaming_distribution_config     = module.params.get('streaming_distribution_config')
     list_origin_access_identities     = module.params.get('list_origin_access_identities')
     list_distributions                = module.params.get('list_distributions')
-    list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id');
+    list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id')
     list_invalidations                = module.params.get('list_invalidations')
     list_streaming_distributions      = module.params.get('list_streaming_distributions')
     summary                           = module.params.get('summary')
@@ -521,14 +521,14 @@ def main():
     result = { 'cloudfront': {} } 
     facts = {}
     aliases = []
-    
-    require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or 
+
+    require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or
         streaming_distribution_config or list_invalidations)
 
     # set default to summary if no option specified
-    summary = summary or not (distribution or distribution_config or origin_access_identity or 
-        origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or 
-        list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or 
+    summary = summary or not (distribution or distribution_config or origin_access_identity or
+        origin_access_identity_config or invalidation or streaming_distribution or streaming_distribution_config or
+        list_origin_access_identities or list_distributions_by_web_acl_id or list_invalidations or
         list_streaming_distributions or list_distributions)
 
     # validations
@@ -589,7 +589,7 @@ def main():
     if list_invalidations:
         invalidations = service_mgr.list_invalidations(distribution_id)
         facts = set_facts_for_distribution_id_and_alias(invalidations, facts, distribution_id, aliases)
-    
+ 
     # get list based on options
     if all_lists or list_origin_access_identities:
         facts['origin_access_identities'] = service_mgr.list_origin_access_identities()
