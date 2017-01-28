@@ -126,12 +126,12 @@ CHANEGLOG.md
        #ansible-devel IRC chat channel
 
 
-# FIXME: Fix heading levels (Before you start, (sub, sub), Your first PR
-# FIXME: Link from developing_modules.rst
-# FIXME: Review all links
-# FIXME: Review all anchors
-# FIXME: What's a better filename and title for this page?
-# NOTE:  Do we want to guide partners into the standard community work flow? (How can we title/aim this page so it does that)
-# FIXME: Review all my "Network Partner" emails
-# FIXME: Do we want to put anything about submission dates, or will that come from the Ansible member of staff looking after the relationship?
-# FIXME: Note about forking & creating a separate branch?
+* FIXME: Fix heading levels (Before you start, (sub, sub), Your first PR
+* FIXME: Link from developing_modules.rst
+* FIXME: Review all links
+* FIXME: Review all anchors
+* FIXME: What's a better filename and title for this page?
+* NOTE:  Do we want to guide partners into the standard community work flow? (How can we title/aim this page so it does that)
+* FIXME: Review all my "Network Partner" emails
+* FIXME: Do we want to put anything about submission dates, or will that come from the Ansible member of staff looking after the relationship?
+* FIXME: Note about forking & creating a separate branch?
