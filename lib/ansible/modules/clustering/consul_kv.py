@@ -234,7 +234,7 @@ def remove_value(module):
     index, existing = consul_api.kv.get(
         key, recurse=module.params.get('recurse'))
 
-    changed = existing != None
+    changed = existing is not None
     if changed and not module.check_mode:
         consul_api.kv.delete(key, module.params.get('recurse'))
 

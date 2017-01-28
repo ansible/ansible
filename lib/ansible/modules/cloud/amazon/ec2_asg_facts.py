@@ -210,7 +210,8 @@ def match_asg_tags(tags_to_match, asg):
         for tag in asg['Tags']:
             if key == tag['Key'] and value == tag['Value']:
                 break
-        else: return False
+        else:
+            return False
     return True
 
 def find_asgs(conn, module, name=None, tags=None):

@@ -1169,9 +1169,12 @@ class AnsibleModule(object):
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
         if operator  ==  '=':
-            if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
-            elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
-            elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
+            if user == 'u':
+                mask = stat.S_IRWXU | stat.S_ISUID
+            elif user == 'g':
+                mask = stat.S_IRWXG | stat.S_ISGID
+            elif user == 'o':
+                mask = stat.S_IRWXO | stat.S_ISVTX
 
             # mask out u, g, or o permissions from current_mode and apply new permissions
             inverse_mask = mask ^ PERM_BITS
@@ -2361,7 +2364,7 @@ class AnsibleModule(object):
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished
                 # NOTE: Actually cmd.poll() is always None here if rpipes is empty
-                elif not rpipes and cmd.poll() == None:
+                elif not rpipes and cmd.poll() is None:
                     cmd.wait()
                     # The process is terminated. Since no pipes to read from are
                     # left, there is no need to call select() again.

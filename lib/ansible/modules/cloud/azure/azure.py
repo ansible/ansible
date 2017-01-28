@@ -276,7 +276,8 @@ from types import MethodType
 import json
 
 def _wait_for_completion(azure, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         operation_result = azure.get_operation_status(promise.request_id)

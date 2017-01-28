@@ -2186,7 +2186,8 @@ class AIX(Hardware):
                         # nfs or cifs based mount
                         # in case of nfs if no mount options are provided on command line
                         # add into fields empty string...
-                        if len(fields) < 8: fields.append("")
+                        if len(fields) < 8:
+                            fields.append("")
                         self.facts['mounts'].append({'mount': fields[2],
                                                  'device': '%s:%s' % (fields[0], fields[1]),
                                                  'fstype' : fields[3],

@@ -179,7 +179,7 @@ class CloudStackInventory(object):
                     })
                     if nic['isdefault']:
                         data['default_ip'] = nic['ipaddress']
-                break;
+                break
         return data
 
 

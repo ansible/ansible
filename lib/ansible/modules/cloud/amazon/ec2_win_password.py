@@ -163,7 +163,7 @@ def main():
     except ValueError as e:
         decrypted = None
 
-    if decrypted == None:
+    if decrypted is None:
         module.exit_json(win_password='', changed=False)
     else:
         if wait:
