@@ -638,8 +638,8 @@ def main():
                 ('type','NS',['value']),
                 ('type','SPF',['value'])
             ]
-       ),
-       required_one_of = (
+        ),
+        required_one_of = (
             [['record','value','type']]
         )
     )

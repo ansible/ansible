@@ -419,8 +419,7 @@ def validate_feature(module, mode='show'):
                 'ethernet-link-oam': 'elo',
                 'port-security': 'eth_port_sec'
                 },
-        'config':
-                {
+        'config': {
                 'nve': 'nv overlay',
                 'vnseg_vlan': 'vn-segment-vlan-based',
                 'hsrp_engine': 'hsrp',
@@ -435,7 +434,7 @@ def validate_feature(module, mode='show'):
                 'elo': 'ethernet-link-oam',
                 'eth_port_sec': 'port-security'
                 }
-        }
+         }
 
     if feature in feature_to_be_mapped[mode]:
         feature = feature_to_be_mapped[mode][feature]

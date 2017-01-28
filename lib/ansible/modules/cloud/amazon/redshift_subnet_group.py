@@ -158,17 +158,17 @@ def main():
                 new_group = conn.create_cluster_subnet_group(group_name, group_description, group_subnets)
                 group = {
                     'name': new_group['CreateClusterSubnetGroupResponse']['CreateClusterSubnetGroupResult']
-                            ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
+                    ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
                     'vpc_id': new_group['CreateClusterSubnetGroupResponse']['CreateClusterSubnetGroupResult']
-                              ['ClusterSubnetGroup']['VpcId'],
+                    ['ClusterSubnetGroup']['VpcId'],
                 }
             else:
                 changed_group = conn.modify_cluster_subnet_group(group_name, group_subnets, description=group_description)
                 group = {
                     'name': changed_group['ModifyClusterSubnetGroupResponse']['ModifyClusterSubnetGroupResult']
-                            ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
+                    ['ClusterSubnetGroup']['ClusterSubnetGroupName'],
                     'vpc_id': changed_group['ModifyClusterSubnetGroupResponse']['ModifyClusterSubnetGroupResult']
-                              ['ClusterSubnetGroup']['VpcId'],
+                    ['ClusterSubnetGroup']['VpcId'],
                 }
 
             changed = True

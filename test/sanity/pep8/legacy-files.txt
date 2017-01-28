@@ -107,7 +107,6 @@ lib/ansible/modules/cloud/amazon/rds.py
 lib/ansible/modules/cloud/amazon/rds_param_group.py
 lib/ansible/modules/cloud/amazon/rds_subnet_group.py
 lib/ansible/modules/cloud/amazon/redshift.py
-lib/ansible/modules/cloud/amazon/redshift_subnet_group.py
 lib/ansible/modules/cloud/amazon/route53.py
 lib/ansible/modules/cloud/amazon/route53_health_check.py
 lib/ansible/modules/cloud/amazon/route53_zone.py
@@ -442,7 +441,6 @@ lib/ansible/plugins/lookup/dnstxt.py
 lib/ansible/plugins/lookup/first_found.py
 lib/ansible/plugins/lookup/hashi_vault.py
 lib/ansible/plugins/lookup/mongodb.py
-lib/ansible/plugins/lookup/sequence.py
 lib/ansible/plugins/shell/fish.py
 lib/ansible/plugins/shell/sh.py
 lib/ansible/plugins/strategy/__init__.py
