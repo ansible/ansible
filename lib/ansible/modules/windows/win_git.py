@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# 
-# 
+#
+#
 # Anatoliy Ivashina <tivrobo@gmail.com>
 #
 #
