@@ -80,7 +80,7 @@ options:
   access_token:
     description:
      - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
-''' 
+'''
 
 EXAMPLES = '''
 - name: policy to aggregate filter and deliver data center (DC) 1 traffic
