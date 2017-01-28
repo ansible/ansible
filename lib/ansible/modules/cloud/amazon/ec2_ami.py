@@ -506,7 +506,7 @@ def deregister_image(module, ec2):
     wait_timeout = int(module.params.get('wait_timeout'))
 
     img = ec2.get_image(image_id)
-    if img == None:
+    if img is None:
         module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable
@@ -562,7 +562,7 @@ def update_image(module, ec2, image_id):
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
 
     img = ec2.get_image(image_id)
-    if img == None:
+    if img is None:
         module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
 
     try:

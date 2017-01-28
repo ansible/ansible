@@ -35,7 +35,6 @@ lib/ansible/errors/__init__.py
 lib/ansible/executor/play_iterator.py
 lib/ansible/executor/stats.py
 lib/ansible/executor/task_executor.py
-lib/ansible/galaxy/login.py
 lib/ansible/galaxy/role.py
 lib/ansible/inventory/dir.py
 lib/ansible/inventory/script.py
@@ -233,7 +232,6 @@ lib/ansible/modules/messaging/rabbitmq_binding.py
 lib/ansible/modules/messaging/rabbitmq_exchange.py
 lib/ansible/modules/messaging/rabbitmq_queue.py
 lib/ansible/modules/monitoring/boundary_meter.py
-lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/monitoring/datadog_monitor.py
 lib/ansible/modules/monitoring/librato_annotation.py
 lib/ansible/modules/monitoring/logicmonitor.py
@@ -340,7 +338,6 @@ lib/ansible/modules/packaging/os/homebrew.py
 lib/ansible/modules/packaging/os/openbsd_pkg.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
-lib/ansible/modules/packaging/os/pkg5_publisher.py
 lib/ansible/modules/packaging/os/pkgin.py
 lib/ansible/modules/packaging/os/pkgng.py
 lib/ansible/modules/packaging/os/portinstall.py
@@ -455,7 +452,6 @@ lib/ansible/plugins/strategy/__init__.py
 lib/ansible/plugins/strategy/debug.py
 lib/ansible/plugins/strategy/linear.py
 lib/ansible/template/__init__.py
-lib/ansible/utils/cmd_functions.py
 lib/ansible/utils/encrypt.py
 lib/ansible/utils/module_docs.py
 lib/ansible/utils/module_docs_fragments/aws.py

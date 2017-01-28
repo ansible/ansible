@@ -50,12 +50,12 @@ class HashiVault:
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
 
         self.token = kwargs.get('token')
-        if self.token==None:
+        if self.token is None:
             raise AnsibleError("No Vault Token specified")
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
-        if s==None:
+        if s is None:
             raise AnsibleError("No secret specified")
 
         s_f = s.split(':')

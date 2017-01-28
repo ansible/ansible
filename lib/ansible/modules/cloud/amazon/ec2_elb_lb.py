@@ -886,7 +886,7 @@ class ElbManager(object):
                 self._disable_zones(zones_to_disable)
 
     def _set_security_groups(self):
-        if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
+        if self.security_group_ids is not None and set(self.elb.security_groups) != set(self.security_group_ids):
             self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
             self.changed = True
 

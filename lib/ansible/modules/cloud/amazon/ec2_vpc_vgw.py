@@ -312,14 +312,14 @@ def check_tags(client, module, existing_vgw, vpn_gateway_id):
             tags_list[tags['Key']] = tags['Value']
 
     # if existing tags don't match the tags arg, delete existing and recreate with new list
-    if params['Tags'] != None and tags_list != params['Tags']:
+    if params['Tags'] is not None and tags_list != params['Tags']:
         delete_tags(client, module, vpn_gateway_id)
         create_tags(client, module, vpn_gateway_id)
         vgw = find_vgw(client, module)
         changed = True
 
     #if no tag args are supplied, delete any existing tags with the exception of the name tag
-    if params['Tags'] == None and tags_list != {}:
+    if params['Tags'] is None and tags_list != {}:
         tags_to_delete = []
         for tags in existing_vgw[0]['Tags']:
             if tags['Key'] != 'Name':
