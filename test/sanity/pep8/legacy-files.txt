@@ -1,5 +1,4 @@
 contrib/inventory/abiquo.py
-contrib/inventory/apache-libcloud.py
 contrib/inventory/azure_rm.py
 contrib/inventory/cloudstack.py
 contrib/inventory/consul_io.py
@@ -11,10 +10,8 @@ contrib/inventory/mdt_dynamic_inventory.py
 contrib/inventory/openvz.py
 contrib/inventory/rax.py
 contrib/inventory/softlayer.py
-contrib/inventory/spacewalk.py
 contrib/inventory/ssh_config.py
 contrib/inventory/vbox.py
-contrib/inventory/zabbix.py
 contrib/inventory/zone.py
 docs/api/conf.py
 docs/docsite/conf.py
@@ -458,7 +455,6 @@ lib/ansible/utils/module_docs_fragments/aws.py
 lib/ansible/utils/module_docs_fragments/azure_tags.py
 lib/ansible/utils/module_docs_fragments/ec2.py
 lib/ansible/utils/module_docs_fragments/files.py
-lib/ansible/utils/module_docs_fragments/infinibox.py
 lib/ansible/utils/module_docs_fragments/netapp.py
 lib/ansible/utils/module_docs_fragments/ovirt.py
 lib/ansible/utils/module_docs_fragments/ovirt_facts.py
