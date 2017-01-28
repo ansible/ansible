@@ -19,7 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import os
 import tempfile
 
 from ansible.module_utils._text import to_text, to_bytes
