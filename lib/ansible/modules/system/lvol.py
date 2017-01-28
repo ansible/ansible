@@ -320,7 +320,8 @@ def main():
 
             try:
                float(size)
-               if not size[0].isdigit(): raise ValueError()
+               if not size[0].isdigit():
+                   raise ValueError()
             except ValueError:
                module.fail_json(msg="Bad size specification of '%s'" % size)
 

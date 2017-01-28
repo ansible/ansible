@@ -184,9 +184,6 @@ lib/ansible/modules/cloud/packet/packet_device.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
-lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py
-lib/ansible/modules/cloud/profitbricks/profitbricks_volume.py
-lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/vmware/vca_fw.py
 lib/ansible/modules/cloud/vmware/vmware_guest.py
@@ -334,14 +331,12 @@ lib/ansible/modules/packaging/language/bundler.py
 lib/ansible/modules/packaging/language/composer.py
 lib/ansible/modules/packaging/language/cpanm.py
 lib/ansible/modules/packaging/language/maven_artifact.py
-lib/ansible/modules/packaging/language/pear.py
 lib/ansible/modules/packaging/os/apt.py
 lib/ansible/modules/packaging/os/apt_key.py
 lib/ansible/modules/packaging/os/apt_rpm.py
 lib/ansible/modules/packaging/os/dnf.py
 lib/ansible/modules/packaging/os/dpkg_selections.py
 lib/ansible/modules/packaging/os/homebrew.py
-lib/ansible/modules/packaging/os/layman.py
 lib/ansible/modules/packaging/os/openbsd_pkg.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py

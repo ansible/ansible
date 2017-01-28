@@ -349,8 +349,10 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
-            if len(pcs[6]) != 15: continue
+            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+                continue
+            if len(pcs[6]) != 15:
+                continue
 
             # Possible entries:
             #   -rw-rws---  1.9 unx    2802 t- defX 11-Aug-91 13:48 perms.2660

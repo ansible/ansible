@@ -1190,7 +1190,8 @@ def _find_path_in_tree(tree, path):
 
 def _get_folderid_for_path(vsphere_client, datacenter, path):
     content = vsphere_client._retrieve_properties_traversal(property_names=['name', 'parent'], obj_type=MORTypes.Folder)
-    if not content: return {}
+    if not content:
+        return {}
 
     node_list = [
         {
