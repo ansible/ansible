@@ -555,10 +555,10 @@ def main():
         if invalidation_id:
             facts.update( { invalidation_id: {} } )
     elif distribution_id and list_invalidations:
-        facts = { 'invalidations': {} }
+        facts = { distribution_id: {} }
         aliases = service_mgr.get_aliases_from_distribution_id(distribution_id)
         for alias in aliases:
-            facts['invalidations'].update( { alias: {} } )
+            facts.update( { alias: {} } )
     elif origin_access_identity_id:
         facts = { origin_access_identity_id: {} }
     elif web_acl_id:
@@ -566,28 +566,24 @@ def main():
 
     # get details based on options
     if distribution:
-        distribution_details = service_mgr.get_distribution(distribution_id)
-        facts = set_facts_for_distribution_id_and_alias(distribution_details, facts, distribution_id, aliases)
+        facts_to_set = service_mgr.get_distribution(distribution_id)
     if distribution_config:
-        distribution_config_details = service_mgr.get_distribution_config(distribution_id)
-        facts = set_facts_for_distribution_id_and_alias(distribution_config_details, facts, distribution_id, aliases)
+        facts_to_set = service_mgr.get_distribution_config(distribution_id)
     if origin_access_identity:
         facts[origin_access_identity_id].update(service_mgr.get_origin_access_identity(origin_access_identity_id))
     if origin_access_identity_config:
         facts[origin_access_identity_id].update(service_mgr.get_origin_access_identity_config(origin_access_identity_id))
     if invalidation:
-        invalidation = service_mgr.get_invalidation(distribution_id, invalidation_id)
-        facts[invalidation_id].update(invalidation)
-        facts = set_facts_for_distribution_id_and_alias(invalidation, facts, distribution_id, aliases)
+        facts_to_set = service_mgr.get_invalidation(distribution_id, invalidation_id)
+        facts[invalidation_id].update(facts_to_set)
     if streaming_distribution:
-        streaming_distribution_details = service_mgr.get_streaming_distribution(distribution_id)
-        facts = set_facts_for_distribution_id_and_alias(streaming_distribution_details, facts, distribution_id, aliases)
+        facts_to_set = service_mgr.get_streaming_distribution(distribution_id)
     if streaming_distribution_config:
-        streaming_distribution_config_details = service_mgr.get_streaming_distribution_config(distribution_id)
-        facts = set_facts_for_distribution_id_and_alias(streaming_distribution_config_details, facts, distribution_id, aliases)
+        facts_to_set = service_mgr.get_streaming_distribution_config(distribution_id)
     if list_invalidations:
-        invalidations = service_mgr.list_invalidations(distribution_id)
-        facts = set_facts_for_distribution_id_and_alias(invalidations, facts, distribution_id, aliases)
+        facts_to_set = {'invalidations': service_mgr.list_invalidations(distribution_id) }
+    if 'facts_to_set' in vars():
+        facts = set_facts_for_distribution_id_and_alias(facts_to_set, facts, distribution_id, aliases)
 
     # get list based on options
     if all_lists or list_origin_access_identities:
