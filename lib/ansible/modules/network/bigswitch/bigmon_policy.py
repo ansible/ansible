@@ -37,7 +37,7 @@ options:
     required: true
   policy_description:
     description:
-     - description of policy.
+     - Description of policy.
   action:
     description:
      - Forward matching packets to delivery interfaces, Drop is for measure rate of matching packets,
@@ -80,9 +80,6 @@ options:
   access_token:
     description:
      - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
-
-notes:
-  - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
 ''' 
 
 EXAMPLES = '''
@@ -200,7 +197,7 @@ def main():
             delivery_packet_count=dict(type='int', default=0),
             controller=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present'),
-            validate_certs=dict(type='bool', default='False'),
+            validate_certs=dict(type='bool', default='True'),
             access_token=dict(type='str', no_log=True)
         )
     )
