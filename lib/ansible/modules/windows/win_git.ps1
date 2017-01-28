@@ -17,6 +17,7 @@ $result = New-Object psobject @{
         replace_dest      = $false
         accept_hostkey    = $false
     }
+    msg = $null
     changed = $false
 }
 
@@ -177,7 +178,7 @@ Else {
     Fail-Json $result $error_msg
 }
 
-Set-Attr $result.win_git "msg" $cmd_msg
-Set-Attr $result.win_git "changed" $changed
+Set-Attr $result "msg" $cmd_msg
+Set-Attr $result "changed" $changed
 
 Exit-Json $result
