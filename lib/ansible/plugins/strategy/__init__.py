@@ -913,4 +913,6 @@ class StrategyBase:
         else:
             result['changed'] = False
 
+        display.vv("META: %s" % msg)
+
         return [TaskResult(target_host, task, result)]
