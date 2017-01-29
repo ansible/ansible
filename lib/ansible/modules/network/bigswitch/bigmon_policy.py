@@ -50,8 +50,7 @@ options:
     default: 100
   duration:
     description:
-     - Run policy for duration duration or until delivery_packet_count packets are delivered, 
-       whichever comes first.
+     - Run policy for duration duration or until delivery_packet_count packets are delivered, whichever comes first.
     default: 0
   start_time:
     description:
