@@ -440,17 +440,17 @@ def upload_files(s3, bucket, filelist, params):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            mode = dict(choices=['push'], default='push'),
-            file_change_strategy = dict(choices=['force','date_size','checksum'], default='date_size'),
-            bucket = dict(required=True),
-            key_prefix = dict(required=False, default=''),
-            file_root = dict(required=True, type='path'),
-            permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
-            retries = dict(required=False),
-            mime_map = dict(required=False, type='dict'),
-            exclude = dict(required=False, default=".*"),
-            include = dict(required=False, default="*"),
-            # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
+        mode = dict(choices=['push'], default='push'),
+        file_change_strategy = dict(choices=['force','date_size','checksum'], default='date_size'),
+        bucket = dict(required=True),
+        key_prefix = dict(required=False, default=''),
+        file_root = dict(required=True, type='path'),
+        permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
+        retries = dict(required=False),
+        mime_map = dict(required=False, type='dict'),
+        exclude = dict(required=False, default=".*"),
+        include = dict(required=False, default="*"),
+        # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
     )
     )
 

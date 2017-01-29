@@ -372,8 +372,8 @@ def get_snmp_location(module):
 
 def main():
     argument_spec = dict(
-            location=dict(required=True, type='str'),
-            state=dict(choices=['absent', 'present'],
+        location=dict(required=True, type='str'),
+        state=dict(choices=['absent', 'present'],
                        default='present')
     )
     module = get_network_module(argument_spec=argument_spec,

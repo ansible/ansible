@@ -130,9 +130,9 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            resource = dict(required=True),
-            tags = dict(type='dict'),
-            state = dict(default='present', choices=['present', 'absent', 'list']),
+        resource = dict(required=True),
+        tags = dict(type='dict'),
+        state = dict(default='present', choices=['present', 'absent', 'list']),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)

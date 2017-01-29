@@ -226,7 +226,7 @@ class CallbackModule(CallbackBase):
                 color = 'ok'
 
             msg = '{}    : ok={}\tchanged={}\tfailed={}\tunreachable={}'.format(
-                                    host, s['ok'], s['changed'], s['failures'], s['unreachable'])
+                host, s['ok'], s['changed'], s['failures'], s['unreachable'])
             print(colorize(msg, color))
 
     def v2_runner_on_skipped(self, result, **kwargs):

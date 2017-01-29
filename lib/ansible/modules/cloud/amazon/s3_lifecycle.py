@@ -377,11 +377,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive = [
-                                                 [ 'expiration_days', 'expiration_date' ],
-                                                 [ 'expiration_days', 'transition_date' ],
-                                                 [ 'transition_days', 'transition_date' ],
-                                                 [ 'transition_days', 'expiration_date' ]
-                                                 ]
+                               [ 'expiration_days', 'expiration_date' ],
+                               [ 'expiration_days', 'transition_date' ],
+                               [ 'transition_days', 'transition_date' ],
+                               [ 'transition_days', 'expiration_date' ]
+                               ]
                            )
 
     if not HAS_BOTO:

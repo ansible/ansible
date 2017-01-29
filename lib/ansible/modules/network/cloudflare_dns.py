@@ -628,15 +628,15 @@ def main():
         ),
         supports_check_mode = True,
         required_if = ([
-                ('state','present',['record','type']),
-                ('type','MX',['priority','value']),
-                ('type','SRV',['port','priority','proto','service','value','weight']),
-                ('type','A',['value']),
-                ('type','AAAA',['value']),
-                ('type','CNAME',['value']),
-                ('type','TXT',['value']),
-                ('type','NS',['value']),
-                ('type','SPF',['value'])
+            ('state','present',['record','type']),
+            ('type','MX',['priority','value']),
+            ('type','SRV',['port','priority','proto','service','value','weight']),
+            ('type','A',['value']),
+            ('type','AAAA',['value']),
+            ('type','CNAME',['value']),
+            ('type','TXT',['value']),
+            ('type','NS',['value']),
+            ('type','SPF',['value'])
         ]
         ),
         required_one_of = (

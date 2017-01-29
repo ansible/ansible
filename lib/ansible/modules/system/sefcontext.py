@@ -225,13 +225,13 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-                target  = dict(required=True, aliases=['path']),
-                ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
-                setype  = dict(required=True),
-                seuser  = dict(required=False, default=None),
-                selevel = dict(required=False, default=None, aliases=['serange']),
-                state   = dict(required=False, choices=['present', 'absent'], default='present'),
-                reload  = dict(required=False, type='bool', default='yes'),
+            target  = dict(required=True, aliases=['path']),
+            ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
+            setype  = dict(required=True),
+            seuser  = dict(required=False, default=None),
+            selevel = dict(required=False, default=None, aliases=['serange']),
+            state   = dict(required=False, choices=['present', 'absent'], default='present'),
+            reload  = dict(required=False, type='bool', default='yes'),
         ),
         supports_check_mode = True,
     )

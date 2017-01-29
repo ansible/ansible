@@ -390,17 +390,17 @@ def get_stack_facts(cfn, stack_name):
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-            stack_name=dict(required=True),
-            template_parameters=dict(required=False, type='dict', default={}),
-            state=dict(default='present', choices=['present', 'absent']),
-            template=dict(default=None, required=False, type='path'),
-            notification_arns=dict(default=None, required=False),
-            stack_policy=dict(default=None, required=False),
-            disable_rollback=dict(default=False, type='bool'),
-            template_url=dict(default=None, required=False),
-            template_format=dict(default=None, choices=['json', 'yaml'], required=False),
-            role_arn=dict(default=None, required=False),
-            tags=dict(default=None, type='dict')
+        stack_name=dict(required=True),
+        template_parameters=dict(required=False, type='dict', default={}),
+        state=dict(default='present', choices=['present', 'absent']),
+        template=dict(default=None, required=False, type='path'),
+        notification_arns=dict(default=None, required=False),
+        stack_policy=dict(default=None, required=False),
+        disable_rollback=dict(default=False, type='bool'),
+        template_url=dict(default=None, required=False),
+        template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        role_arn=dict(default=None, required=False),
+        tags=dict(default=None, type='dict')
     )
     )
 

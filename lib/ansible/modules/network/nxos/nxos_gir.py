@@ -408,7 +408,7 @@ def get_commands(module, state, mode):
         commands.append('no system mode maintenance')
 
     elif (module.params[
-         'system_mode_maintenance_dont_generate_profile'] is True and
+        'system_mode_maintenance_dont_generate_profile'] is True and
             mode == 'normal'):
         commands.append('system mode maintenance dont-generate-profile')
     elif (module.params[
@@ -456,16 +456,16 @@ def get_commands(module, state, mode):
 
 def main():
     argument_spec = dict(
-            system_mode_maintenance=dict(required=False, type='bool'),
-            system_mode_maintenance_dont_generate_profile=dict(required=False,
+        system_mode_maintenance=dict(required=False, type='bool'),
+        system_mode_maintenance_dont_generate_profile=dict(required=False,
                                                                type='bool'),
-            system_mode_maintenance_timeout=dict(required=False, type='str'),
-            system_mode_maintenance_shutdown=dict(required=False, type='bool'),
-            system_mode_maintenance_on_reload_reset_reason=dict(required=False,
+        system_mode_maintenance_timeout=dict(required=False, type='str'),
+        system_mode_maintenance_shutdown=dict(required=False, type='bool'),
+        system_mode_maintenance_on_reload_reset_reason=dict(required=False,
                 choices=['hw_error','svc_failure','kern_failure',
                          'wdog_timeout','fatal_error','lc_failure',
                          'match_any','manual_reload']),
-            state=dict(choices=['absent', 'present', 'default'],
+        state=dict(choices=['absent', 'present', 'default'],
                        default='present', required=False)
     )
     module = get_network_module(argument_spec=argument_spec,

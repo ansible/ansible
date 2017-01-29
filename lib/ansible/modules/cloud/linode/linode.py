@@ -282,13 +282,13 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 size = servers[0]['TOTALHD'] - swap
                 if ssh_pub_key:
                     res = api.linode_disk_createfromdistribution(
-                              LinodeId=linode_id, DistributionID=distribution,
-                              rootPass=password, rootSSHKey=ssh_pub_key,
-                              Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        LinodeId=linode_id, DistributionID=distribution,
+                        rootPass=password, rootSSHKey=ssh_pub_key,
+                        Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
                 else:
                     res = api.linode_disk_createfromdistribution(
-                              LinodeId=linode_id, DistributionID=distribution, rootPass=password,
-                              Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
+                        LinodeId=linode_id, DistributionID=distribution, rootPass=password,
+                        Label='%s data disk (lid: %s)' % (name, linode_id), Size=size)
                 jobs.append(res['JobID'])
                 # Create SWAP disk
                 res = api.linode_disk_create(LinodeId=linode_id, Type='swap',

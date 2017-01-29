@@ -195,10 +195,10 @@ def install_packages(module, packages, use_packages):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True),
-                use_packages = dict(type='bool', default='yes')))
+        argument_spec    = dict(
+            state        = dict(default="present", choices=["present","absent"]),
+            name         = dict(aliases=["pkg"], required=True),
+            use_packages = dict(type='bool', default='yes')))
 
     p = module.params
 

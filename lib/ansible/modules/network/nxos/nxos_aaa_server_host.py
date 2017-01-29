@@ -485,15 +485,15 @@ def config_aaa_host(server_type, address, params, clear=False):
 
 def main():
     argument_spec = dict(
-            server_type=dict(choices=['radius', 'tacacs'], required=True),
-            address=dict(type='str', required=True),
-            key=dict(type='str'),
-            encrypt_type=dict(type='str', choices=['0', '7']),
-            host_timeout=dict(type='str'),
-            auth_port=dict(type='str'),
-            acct_port=dict(type='str'),
-            tacacs_port=dict(type='str'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        server_type=dict(choices=['radius', 'tacacs'], required=True),
+        address=dict(type='str', required=True),
+        key=dict(type='str'),
+        encrypt_type=dict(type='str', choices=['0', '7']),
+        host_timeout=dict(type='str'),
+        auth_port=dict(type='str'),
+        acct_port=dict(type='str'),
+        tacacs_port=dict(type='str'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -543,7 +543,7 @@ def main():
                     msg='host_timeout must be an integer between 1 and 60')
 
         delta = dict(
-                set(proposed.items()).difference(existing.items()))
+            set(proposed.items()).difference(existing.items()))
         if delta:
             union = existing.copy()
             union.update(delta)
@@ -553,10 +553,10 @@ def main():
 
     elif state == 'absent':
         intersect = dict(
-                set(proposed.items()).intersection(existing.items()))
+            set(proposed.items()).intersection(existing.items()))
         if intersect.get('address') and intersect.get('server_type'):
             command = 'no {0}-server host {1}'.format(
-                        intersect.get('server_type'), intersect.get('address'))
+                intersect.get('server_type'), intersect.get('address'))
             commands.append(command)
 
     cmds = flatten_list(commands)

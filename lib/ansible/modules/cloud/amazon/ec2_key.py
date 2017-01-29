@@ -108,11 +108,11 @@ import string
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(required=True),
-            key_material=dict(required=False),
-            state = dict(default='present', choices=['present', 'absent']),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
+        name=dict(required=True),
+        key_material=dict(required=False),
+        state = dict(default='present', choices=['present', 'absent']),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=300),
     )
     )
     module = AnsibleModule(

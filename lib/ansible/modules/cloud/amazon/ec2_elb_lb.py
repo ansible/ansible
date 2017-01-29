@@ -650,7 +650,7 @@ class ElbManager(object):
         status_achieved = False
 
         elb_interfaces = self.ec2_conn.get_all_network_interfaces(
-                    filters={'attachment.instance-owner-id': 'amazon-elb',
+            filters={'attachment.instance-owner-id': 'amazon-elb',
                         'description': 'ELB {0}'.format(self.name) })
 
         for x in range(0, max_retries):
@@ -1227,28 +1227,28 @@ class ElbManager(object):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True, 'choices': ['present', 'absent']},
-            name={'required': True},
-            listeners={'default': None, 'required': False, 'type': 'list'},
-            purge_listeners={'default': True, 'required': False, 'type': 'bool'},
-            instance_ids={'default': None, 'required': False, 'type': 'list'},
-            purge_instance_ids={'default': False, 'required': False, 'type': 'bool'},
-            zones={'default': None, 'required': False, 'type': 'list'},
-            purge_zones={'default': False, 'required': False, 'type': 'bool'},
-            security_group_ids={'default': None, 'required': False, 'type': 'list'},
-            security_group_names={'default': None, 'required': False, 'type': 'list'},
-            health_check={'default': None, 'required': False, 'type': 'dict'},
-            subnets={'default': None, 'required': False, 'type': 'list'},
-            purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-            scheme={'default': 'internet-facing', 'required': False},
-            connection_draining_timeout={'default': None, 'required': False},
-            idle_timeout={'default': None, 'required': False},
-            cross_az_load_balancing={'default': None, 'required': False},
-            stickiness={'default': None, 'required': False, 'type': 'dict'},
-            access_logs={'default': None, 'required': False, 'type': 'dict'},
-            wait={'default': False, 'type': 'bool', 'required': False},
-            wait_timeout={'default': 60, 'type': 'int', 'required': False},
-            tags={'default': None, 'required': False, 'type': 'dict'}
+        state={'required': True, 'choices': ['present', 'absent']},
+        name={'required': True},
+        listeners={'default': None, 'required': False, 'type': 'list'},
+        purge_listeners={'default': True, 'required': False, 'type': 'bool'},
+        instance_ids={'default': None, 'required': False, 'type': 'list'},
+        purge_instance_ids={'default': False, 'required': False, 'type': 'bool'},
+        zones={'default': None, 'required': False, 'type': 'list'},
+        purge_zones={'default': False, 'required': False, 'type': 'bool'},
+        security_group_ids={'default': None, 'required': False, 'type': 'list'},
+        security_group_names={'default': None, 'required': False, 'type': 'list'},
+        health_check={'default': None, 'required': False, 'type': 'dict'},
+        subnets={'default': None, 'required': False, 'type': 'list'},
+        purge_subnets={'default': False, 'required': False, 'type': 'bool'},
+        scheme={'default': 'internet-facing', 'required': False},
+        connection_draining_timeout={'default': None, 'required': False},
+        idle_timeout={'default': None, 'required': False},
+        cross_az_load_balancing={'default': None, 'required': False},
+        stickiness={'default': None, 'required': False, 'type': 'dict'},
+        access_logs={'default': None, 'required': False, 'type': 'dict'},
+        wait={'default': False, 'type': 'bool', 'required': False},
+        wait_timeout={'default': 60, 'type': 'int', 'required': False},
+        tags={'default': None, 'required': False, 'type': 'dict'}
     )
     )
 

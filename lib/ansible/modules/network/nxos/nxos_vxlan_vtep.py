@@ -445,18 +445,18 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            description=dict(required=False, type='str'),
-            host_reachability=dict(required=False, type='bool'),
-            shutdown=dict(required=False, type='bool'),
-            source_interface=dict(required=False, type='str'),
-            source_interface_hold_down_time=dict(required=False, type='str'),
-            m_facts=dict(required=False, default=False, type='bool'),
-            state=dict(choices=['present', 'absent'], default='present',
+        interface=dict(required=True, type='str'),
+        description=dict(required=False, type='str'),
+        host_reachability=dict(required=False, type='bool'),
+        shutdown=dict(required=False, type='bool'),
+        source_interface=dict(required=False, type='str'),
+        source_interface_hold_down_time=dict(required=False, type='str'),
+        m_facts=dict(required=False, default=False, type='bool'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -465,12 +465,12 @@ def main():
     interface = module.params['interface'].lower()
 
     args =  [
-            'interface',
-            'description',
-            'host_reachability',
-            'shutdown',
-            'source_interface',
-            'source_interface_hold_down_time'
+        'interface',
+        'description',
+        'host_reachability',
+        'shutdown',
+        'source_interface',
+        'source_interface_hold_down_time'
     ]
 
     existing = invoke('get_existing', module, args)

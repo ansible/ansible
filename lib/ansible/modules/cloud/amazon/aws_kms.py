@@ -236,13 +236,13 @@ def assert_policy_shape(policy):
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-            mode = dict(choices=['grant', 'deny'], default='grant'),
-            key_alias = dict(required=False, type='str'),
-            key_arn = dict(required=False, type='str'),
-            role_name = dict(required=False, type='str'),
-            role_arn = dict(required=False, type='str'),
-            grant_types = dict(required=False, type='list'),
-            clean_invalid_entries = dict(type='bool', default=True),
+        mode = dict(choices=['grant', 'deny'], default='grant'),
+        key_alias = dict(required=False, type='str'),
+        key_arn = dict(required=False, type='str'),
+        role_name = dict(required=False, type='str'),
+        role_arn = dict(required=False, type='str'),
+        grant_types = dict(required=False, type='list'),
+        clean_invalid_entries = dict(type='bool', default=True),
     )
     )
 

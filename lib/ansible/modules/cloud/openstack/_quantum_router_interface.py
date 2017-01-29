@@ -132,8 +132,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -171,8 +171,8 @@ def _get_router_id(module, neutron):
 def _get_subnet_id(module, neutron):
     subnet_id = None
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['subnet_name'],
+        'tenant_id': _os_tenant_id,
+        'name': module.params['subnet_name'],
     }
     try:
         subnets = neutron.list_subnets(**kwargs)
@@ -184,8 +184,8 @@ def _get_subnet_id(module, neutron):
 
 def _get_port_id(neutron, module, router_id, subnet_id):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'device_id': router_id,
+        'tenant_id': _os_tenant_id,
+        'device_id': router_id,
     }
     try:
         ports = neutron.list_ports(**kwargs)
@@ -222,10 +222,10 @@ def _remove_interface_router(neutron, module, router_id, subnet_id):
 def main():
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name                     = dict(required=True),
-            subnet_name                     = dict(required=True),
-            tenant_name                     = dict(default=None),
-            state                           = dict(default='present', choices=['absent', 'present']),
+        router_name                     = dict(required=True),
+        subnet_name                     = dict(required=True),
+        tenant_name                     = dict(default=None),
+        state                           = dict(default='present', choices=['absent', 'present']),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:

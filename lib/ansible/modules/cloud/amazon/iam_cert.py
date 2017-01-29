@@ -129,9 +129,9 @@ def boto_exception(err):
 
 def cert_meta(iam, name):
     opath       = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 path
+        server_certificate.\
+        server_certificate_metadata.\
+        path
     ocert       = iam.get_server_certificate(name).get_server_certificate_result.\
                                                  server_certificate.\
                                                  certificate_body

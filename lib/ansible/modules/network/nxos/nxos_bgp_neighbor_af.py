@@ -684,7 +684,7 @@ def get_existing(module, args):
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
         parents.append('address-family {0} {1}'.format(
-                            module.params['afi'], module.params['safi']))
+            module.params['afi'], module.params['safi']))
         config = netcfg.get_section(parents)
 
         if config:
@@ -722,7 +722,7 @@ def apply_key_map(key_map, table):
 
 def get_address_family_command(key, value, module):
     command = "address-family {0} {1}".format(
-                    module.params['afi'], module.params['safi'])
+        module.params['afi'], module.params['safi'])
     return command
 
 
@@ -746,13 +746,13 @@ def get_capability_additional_paths_send_command(key, value, module):
 
 def get_advertise_map_exist_command(key, value, module):
     command = 'advertise-map {0} exist-map {1}'.format(
-                                                value[0], value[1])
+        value[0], value[1])
     return command
 
 
 def get_advertise_map_non_exist_command(key, value, module):
     command = 'advertise-map {0} non-exist-map {1}'.format(
-                                                value[0], value[1])
+        value[0], value[1])
     return command
 
 
@@ -846,7 +846,7 @@ def get_default_command(key, value, existing_commands):
                 command = 'no route-map {0} out'.format(existing_value)
             elif key.startswith('maximum-prefix'):
                 command = 'no maximum-prefix {0}'.format(
-                                    existing_commands.get('maximum-prefix'))
+                    existing_commands.get('maximum-prefix'))
             elif key == 'allowas-in max':
                 command = ['no allowas-in {0}'.format(existing_value)]
                 command.append('allowas-in')
@@ -936,11 +936,11 @@ def state_present(module, existing, proposed, candidate):
             candidate.add(commands, parents=parents)
         elif len(commands) > 1:
             af_command = 'address-family {0} {1}'.format(
-                                module.params['afi'], module.params['safi'])
+                module.params['afi'], module.params['safi'])
             if af_command in commands:
                 commands.remove(af_command)
                 parents.append('address-family {0} {1}'.format(
-                                module.params['afi'], module.params['safi']))
+                    module.params['afi'], module.params['safi']))
                 candidate.add(commands, parents=parents)
 
 
@@ -952,57 +952,57 @@ def state_absent(module, existing, proposed, candidate):
 
     parents.append('neighbor {0}'.format(module.params['neighbor']))
     commands.append('no address-family {0} {1}'.format(
-                        module.params['afi'], module.params['safi']))
+        module.params['afi'], module.params['safi']))
     candidate.add(commands, parents=parents)
 
 
 def main():
     argument_spec = dict(
-            asn=dict(required=True, type='str'),
-            vrf=dict(required=False, type='str', default='default'),
-            neighbor=dict(required=True, type='str'),
-            afi=dict(required=True, type='str'),
-            safi=dict(required=True, type='str'),
-            additional_paths_receive=dict(required=False, type='str',
+        asn=dict(required=True, type='str'),
+        vrf=dict(required=False, type='str', default='default'),
+        neighbor=dict(required=True, type='str'),
+        afi=dict(required=True, type='str'),
+        safi=dict(required=True, type='str'),
+        additional_paths_receive=dict(required=False, type='str',
                                 choices=['enable', 'disable', 'inherit']),
-            additional_paths_send=dict(required=False, type='str',
+        additional_paths_send=dict(required=False, type='str',
                                 choices=['enable', 'disable', 'inherit']),
-            advertise_map_exist=dict(required=False, type='list'),
-            advertise_map_non_exist=dict(required=False, type='list'),
-            allowas_in=dict(required=False, type='bool'),
-            allowas_in_max=dict(required=False, type='str'),
-            as_override=dict(required=False, type='bool'),
-            default_originate=dict(required=False, type='bool'),
-            default_originate_route_map=dict(required=False, type='str'),
-            filter_list_in=dict(required=False, type='str'),
-            filter_list_out=dict(required=False, type='str'),
-            max_prefix_limit=dict(required=False, type='str'),
-            max_prefix_interval=dict(required=False, type='str'),
-            max_prefix_threshold=dict(required=False, type='str'),
-            max_prefix_warning=dict(required=False, type='bool'),
-            next_hop_self=dict(required=False, type='bool'),
-            next_hop_third_party=dict(required=False, type='bool'),
-            prefix_list_in=dict(required=False, type='str'),
-            prefix_list_out=dict(required=False, type='str'),
-            route_map_in=dict(required=False, type='str'),
-            route_map_out=dict(required=False, type='str'),
-            route_reflector_client=dict(required=False, type='bool'),
-            send_community=dict(required=False, choices=['none',
+        advertise_map_exist=dict(required=False, type='list'),
+        advertise_map_non_exist=dict(required=False, type='list'),
+        allowas_in=dict(required=False, type='bool'),
+        allowas_in_max=dict(required=False, type='str'),
+        as_override=dict(required=False, type='bool'),
+        default_originate=dict(required=False, type='bool'),
+        default_originate_route_map=dict(required=False, type='str'),
+        filter_list_in=dict(required=False, type='str'),
+        filter_list_out=dict(required=False, type='str'),
+        max_prefix_limit=dict(required=False, type='str'),
+        max_prefix_interval=dict(required=False, type='str'),
+        max_prefix_threshold=dict(required=False, type='str'),
+        max_prefix_warning=dict(required=False, type='bool'),
+        next_hop_self=dict(required=False, type='bool'),
+        next_hop_third_party=dict(required=False, type='bool'),
+        prefix_list_in=dict(required=False, type='str'),
+        prefix_list_out=dict(required=False, type='str'),
+        route_map_in=dict(required=False, type='str'),
+        route_map_out=dict(required=False, type='str'),
+        route_reflector_client=dict(required=False, type='bool'),
+        send_community=dict(required=False, choices=['none',
                                                          'both',
                                                          'extended',
                                                          'standard',
                                                          'default']),
-            soft_reconfiguration_in=dict(required=False, type='str',
+        soft_reconfiguration_in=dict(required=False, type='str',
                                 choices=['enable', 'always', 'inherit']),
-            soo=dict(required=False, type='str'),
-            suppress_inactive=dict(required=False, type='bool'),
-            unsuppress_map=dict(required=False, type='str'),
-            weight=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        soo=dict(required=False, type='str'),
+        suppress_inactive=dict(required=False, type='bool'),
+        unsuppress_map=dict(required=False, type='str'),
+        weight=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[['advertise_map_exist',
@@ -1021,39 +1021,39 @@ def main():
         module.fail_json(msg='SOO is only allowed in non-default VRF')
 
     args =  [
-            'afi',
-            'asn',
-            'neighbor',
-            'additional_paths_receive',
-            'additional_paths_send',
-            'advertise_map_exist',
-            'advertise_map_non_exist',
-            'allowas_in',
-            'allowas_in_max',
-            'as_override',
-            'default_originate',
-            'default_originate_route_map',
-            'filter_list_in',
-            'filter_list_out',
-            'max_prefix_limit',
-            'max_prefix_interval',
-            'max_prefix_threshold',
-            'max_prefix_warning',
-            'next_hop_self',
-            'next_hop_third_party',
-            'prefix_list_in',
-            'prefix_list_out',
-            'route_map_in',
-            'route_map_out',
-            'soft_reconfiguration_in',
-            'soo',
-            'suppress_inactive',
-            'unsuppress_map',
-            'weight',
-            'route_reflector_client',
-            'safi',
-            'send_community',
-            'vrf'
+        'afi',
+        'asn',
+        'neighbor',
+        'additional_paths_receive',
+        'additional_paths_send',
+        'advertise_map_exist',
+        'advertise_map_non_exist',
+        'allowas_in',
+        'allowas_in_max',
+        'as_override',
+        'default_originate',
+        'default_originate_route_map',
+        'filter_list_in',
+        'filter_list_out',
+        'max_prefix_limit',
+        'max_prefix_interval',
+        'max_prefix_threshold',
+        'max_prefix_warning',
+        'next_hop_self',
+        'next_hop_third_party',
+        'prefix_list_in',
+        'prefix_list_out',
+        'route_map_in',
+        'route_map_out',
+        'soft_reconfiguration_in',
+        'soo',
+        'suppress_inactive',
+        'unsuppress_map',
+        'weight',
+        'route_reflector_client',
+        'safi',
+        'send_community',
+        'vrf'
     ]
 
     existing = invoke('get_existing', module, args)

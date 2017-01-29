@@ -465,11 +465,11 @@ def get_default_commands(existing, proposed, existing_commands, key, module):
             elif existing['message_digest_encryption_type'] == 'cisco_type_7':
                 encryption_type = '7'
             command = 'no {0} {1} {2} {3} {4}'.format(
-                        key,
-                        existing['message_digest_key_id'],
-                        existing['message_digest_algorithm_type'],
-                        encryption_type,
-                        existing['message_digest_password'])
+                key,
+                existing['message_digest_key_id'],
+                existing['message_digest_algorithm_type'],
+                encryption_type,
+                existing['message_digest_password'])
             commands.append(command)
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
@@ -493,11 +493,11 @@ def get_custom_command(existing_cmd, proposed, key, module):
             elif proposed['message_digest_encryption_type'] == 'cisco_type_7':
                 encryption_type = '7'
             command = '{0} {1} {2} {3} {4}'.format(
-                                key,
-                                proposed['message_digest_key_id'],
-                                proposed['message_digest_algorithm_type'],
-                                encryption_type,
-                                proposed['message_digest_password'])
+                key,
+                proposed['message_digest_key_id'],
+                proposed['message_digest_algorithm_type'],
+                encryption_type,
+                proposed['message_digest_password'])
             commands.append(command)
     return commands
 
@@ -545,11 +545,11 @@ def state_absent(module, existing, proposed, candidate):
                     elif existing['message_digest_encryption_type'] == 'cisco_type_7':
                         encryption_type = '7'
                     command = 'no {0} {1} {2} {3} {4}'.format(
-                                        key,
-                                        existing['message_digest_key_id'],
-                                        existing['message_digest_algorithm_type'],
-                                        encryption_type,
-                                        existing['message_digest_password'])
+                        key,
+                        existing['message_digest_key_id'],
+                        existing['message_digest_algorithm_type'],
+                        encryption_type,
+                        existing['message_digest_password'])
                     commands.append(command)
             elif key in ['ip ospf authentication message-digest',
                          'ip ospf passive-interface']:
@@ -580,25 +580,25 @@ def normalize_area(area, module):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            ospf=dict(required=True, type='str'),
-            area=dict(required=True, type='str'),
-            cost=dict(required=False, type='str'),
-            hello_interval=dict(required=False, type='str'),
-            dead_interval=dict(required=False, type='str'),
-            passive_interface=dict(required=False, type='bool'),
-            message_digest=dict(required=False, type='bool'),
-            message_digest_key_id=dict(required=False, type='str'),
-            message_digest_algorithm_type=dict(required=False, type='str',
+        interface=dict(required=True, type='str'),
+        ospf=dict(required=True, type='str'),
+        area=dict(required=True, type='str'),
+        cost=dict(required=False, type='str'),
+        hello_interval=dict(required=False, type='str'),
+        dead_interval=dict(required=False, type='str'),
+        passive_interface=dict(required=False, type='bool'),
+        message_digest=dict(required=False, type='bool'),
+        message_digest_key_id=dict(required=False, type='str'),
+        message_digest_algorithm_type=dict(required=False, type='str',
                                                choices=['md5']),
-            message_digest_encryption_type=dict(required=False, type='str',
+        message_digest_encryption_type=dict(required=False, type='str',
                                                 choices=['cisco_type_7','3des']),
-            message_digest_password=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        message_digest_password=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_together=[['message_digest_key_id',
@@ -616,18 +616,18 @@ def main():
 
     state = module.params['state']
     args =  [
-            'interface',
-            'ospf',
-            'area',
-            'cost',
-            'hello_interval',
-            'dead_interval',
-            'passive_interface',
-            'message_digest',
-            'message_digest_key_id',
-            'message_digest_algorithm_type',
-            'message_digest_encryption_type',
-            'message_digest_password'
+        'interface',
+        'ospf',
+        'area',
+        'cost',
+        'hello_interval',
+        'dead_interval',
+        'passive_interface',
+        'message_digest',
+        'message_digest_key_id',
+        'message_digest_algorithm_type',
+        'message_digest_encryption_type',
+        'message_digest_password'
     ]
 
     existing = invoke('get_existing', module, args)

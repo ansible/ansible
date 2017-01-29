@@ -575,24 +575,24 @@ def write_on_file(content, filename, module):
 
 def main():
     argument_spec = dict(
-            action=dict(required=True, choices=['create', 'add',
+        action=dict(required=True, choices=['create', 'add',
                                                 'compare', 'delete',
                                                 'delete_all']),
-            snapshot_name=dict(required=False, type='str'),
-            description=dict(required=False, type='str'),
-            snapshot1=dict(required=False, type='str'),
-            snapshot2=dict(required=False, type='str'),
-            compare_option=dict(required=False,
+        snapshot_name=dict(required=False, type='str'),
+        description=dict(required=False, type='str'),
+        snapshot1=dict(required=False, type='str'),
+        snapshot2=dict(required=False, type='str'),
+        compare_option=dict(required=False,
                         choices=['summary', 'ipv4routes', 'ipv6routes']),
-            comparison_results_file=dict(required=False, type='str'),
-            section=dict(required=False, type='str'),
-            show_command=dict(required=False, type='str'),
-            row_id=dict(required=False, type='str'),
-            element_key1=dict(required=False, type='str'),
-            element_key2=dict(required=False, type='str'),
-            save_snapshot_locally=dict(required=False, type='bool',
+        comparison_results_file=dict(required=False, type='str'),
+        section=dict(required=False, type='str'),
+        show_command=dict(required=False, type='str'),
+        row_id=dict(required=False, type='str'),
+        element_key1=dict(required=False, type='str'),
+        element_key2=dict(required=False, type='str'),
+        save_snapshot_locally=dict(required=False, type='bool',
                                        default=False),
-            path=dict(required=False, type='str', default='./')
+        path=dict(required=False, type='str', default='./')
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[['delete_all',
@@ -608,7 +608,7 @@ def main():
 
     if not os.path.isdir(module.params['path']):
         module.fail_json(msg='{0} is not a valid directory name.'.format(
-                module.params['path']))
+            module.params['path']))
 
     if action == 'create':
         for param in CREATE_PARAMS:
@@ -643,7 +643,7 @@ def main():
         if action == 'compare':
             written_file = write_on_file(action_results,
                           module.params['comparison_results_file'],
-                          module)
+                module)
             result['updates'] = []
         else:
             if action_results:

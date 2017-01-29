@@ -316,7 +316,7 @@ def check_interface(module, netcfg):
 
 def get_custom_value(arg, config, module):
     REGEX = re.compile(r'\s+member vni {0} associate-vrf\s*$'.format(
-                                                module.params['vni']), re.M)
+        module.params['vni']), re.M)
     value = False
     try:
         if REGEX.search(config):
@@ -529,7 +529,7 @@ def config_portchannel(proposed, mode, group):
         command = 'interface port-channel {0}'.format(group)
         commands.append(command)
         commands.append(config_args.get('min_links').format(
-                                                    min_links=min_links))
+            min_links=min_links))
 
     return commands
 
@@ -641,18 +641,18 @@ def flatten_list(command_lists):
 
 def main():
     argument_spec = dict(
-            group=dict(required=True, type='str'),
-            mode=dict(required=False, choices=['on', 'active', 'passive'],
+        group=dict(required=True, type='str'),
+        mode=dict(required=False, choices=['on', 'active', 'passive'],
                       default='on', type='str'),
-            min_links=dict(required=False, default=None, type='str'),
-            members=dict(required=False, default=None, type='list'),
-            force=dict(required=False, default='false', type='str',
+        min_links=dict(required=False, default=None, type='str'),
+        members=dict(required=False, default=None, type='list'),
+        force=dict(required=False, default='false', type='str',
                        choices=['true', 'false']),
-            state=dict(required=False, choices=['absent', 'present'],
+        state=dict(required=False, choices=['absent', 'present'],
                        default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -675,10 +675,10 @@ def main():
 
     changed = False
     args =  [
-            'group',
-            'members',
-            'min_links',
-            'mode'
+        'group',
+        'members',
+        'min_links',
+        'mode'
     ]
 
     existing, interface_exist = invoke('get_existing', module, args)

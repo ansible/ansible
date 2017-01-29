@@ -215,10 +215,10 @@ def main():
                                                zone, pre_update_recordset)
                 if changed:
                     zone = cloud.update_recordset(
-                                zone, name + '.' + zone,
-                                records=records,
-                                description=description,
-                                ttl=ttl)
+                        zone, name + '.' + zone,
+                        records=records,
+                        description=description,
+                        ttl=ttl)
             module.exit_json(changed=changed, recordset=recordset)
 
         elif state == 'absent':

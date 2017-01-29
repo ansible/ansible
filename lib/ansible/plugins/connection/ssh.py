@@ -202,7 +202,7 @@ class Connection(ConnectionBase):
         if user:
             self._add_args(b_command,
                     (b"-o", b"User=" + to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
-                    u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
+                u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
         self._add_args(b_command,
