@@ -49,7 +49,8 @@ options:
       - Change from which to do action. (verify)
   verify:
     description:
-      - Run verify scripts after each change. Set to false to disable verification. There is no default, if not set it depends on the content od the conf file.
+      - Run verify scripts after each change. Set to false to disable verification.
+        There is no default, if not set it depends on the content od the conf file.
     required: no
   mode:
     description:
@@ -57,12 +58,15 @@ options:
     required: no
   set:
     description:
-      - Attach a list of a variables name and value for use by the database engine client, if it supports variables. The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values loaded from the deploy.variables configuration.
+      - Attach a list of a variables name and value for use by the database engine client, if it supports variables.
+        The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values loaded from the deploy.variables configuration.
     required: no
     default: []
   log_only:
     description:
-      - Log the changes as if they were deployed, but without actually running the deploy scripts. Useful for an existing database that is being converted to Sqitch, and you need to log changes as deployed because they have been deployed by other means in the past.
+      - Log the changes as if they were deployed, but without actually running the deploy scripts. 
+        Useful for an existing database that is being converted to Sqitch, and you need to log changes as deployed 
+        because they have been deployed by other means in the past.
     required: no
   onto:
     description:
@@ -74,12 +78,16 @@ options:
     required: no
   set_revert:
     description:
-      - Attach a list of a variables name and value to be used by the database engine client when reverting, if it supports variables. The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values from set or loaded from the deploy.variables and revert.variables configurations. (rebase)
+      - Attach a list of a variables name and value to be used by the database engine client when reverting, if it supports variables. 
+        The format must be name=value, e.g., defuser='Homer Simpson'.
+        Overrides any values from set or loaded from the deploy.variables and revert.variables configurations. (rebase)
     required: no
     default: []
   set_deploy:
     description:
-      - Attach a list of a variables name and value for use by the database engine client when deploying, if it supports variables. The format must be name=value, e.g., defuser='Homer Simpson'. Overrides any values from set or loaded from the deploy.variables configuration. (rebase)
+      - Attach a list of a variables name and value for use by the database engine client when deploying, if it supports variables. 
+        The format must be name=value, e.g., defuser='Homer Simpson'.
+        Overrides any values from set or loaded from the deploy.variables configuration. (rebase)
     required: no
     default: []
 '''
