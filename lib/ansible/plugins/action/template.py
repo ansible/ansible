@@ -180,7 +180,7 @@ class ActionModule(ActionBase):
                         dest=dest,
                         original_basename=os.path.basename(source),
                         follow=True,
-                   ),
+                        ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 

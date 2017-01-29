@@ -306,7 +306,7 @@ def gather_files(fileroot, include=None, exclude=None):
                 'chopped_path':chopped_path,
                 'modified_epoch': f_modified_epoch,
                 'bytes': f_size
-        })
+                })
         # dirpath = path *to* the directory
         # dirnames = subdirs *in* our directory
         # filenames

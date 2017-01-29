@@ -135,7 +135,7 @@ def main():
             user = dict(required=True),
             password = dict(required=True, aliases=['pwd']),
         )
-#        supports_check_mode=True
+        #        supports_check_mode=True
     )
 
     state = module.params['state']

@@ -557,7 +557,7 @@ def main():
                 existing['vni'] != module.params['vni']):
                 module.fail_json(msg="ERROR: VNI delete failed: Could not find"
                                      " vni node for {0}".format(
-                                     module.params['vni']),
+                                         module.params['vni']),
                                      existing_vni=existing['vni'])
         else:
             candidate = CustomNetworkConfig(indent=3)

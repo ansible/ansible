@@ -485,13 +485,13 @@ def action_add(module, existing_snapshots):
     if proposed not in sections:
         if module.params['element_key2']:
             commands.append('snapshot section add {0} "{1}" {2} {3} {4}'.format(
-            module.params['section'], module.params['show_command'],
-            module.params['row_id'], module.params['element_key1'],
-            module.params['element_key2']))
+                module.params['section'], module.params['show_command'],
+                module.params['row_id'], module.params['element_key1'],
+                module.params['element_key2']))
         else:
             commands.append('snapshot section add {0} "{1}" {2} {3}'.format(
-            module.params['section'], module.params['show_command'],
-            module.params['row_id'], module.params['element_key1']))
+                module.params['section'], module.params['show_command'],
+                module.params['row_id'], module.params['element_key1']))
 
     return commands
 

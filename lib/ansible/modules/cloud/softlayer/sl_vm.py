@@ -351,28 +351,28 @@ def main():
   module = AnsibleModule(
       argument_spec=dict(
           instance_id=dict(),
-      hostname=dict(),
-      domain=dict(),
-      datacenter=dict(choices=DATACENTERS),
-      tags=dict(),
-      hourly=dict(type='bool', default=True),
-      private=dict(type='bool', default=False),
-      dedicated=dict(type='bool', default=False),
-      local_disk=dict(type='bool', default=True),
-      cpus=dict(type='int', choices=CPU_SIZES),
-      memory=dict(type='int', choices=MEMORY_SIZES),
-      disks=dict(type='list', default=[25]),
-      os_code=dict(),
-      image_id=dict(),
-      nic_speed=dict(type='int', choices=NIC_SPEEDS),
-      public_vlan=dict(),
-      private_vlan=dict(),
-      ssh_keys=dict(type='list', default=[]),
-      post_uri=dict(),
-      state=dict(default='present', choices=STATES),
-      wait=dict(type='bool', default=True),
-      wait_time=dict(type='int', default=600)
-    )
+          hostname=dict(),
+          domain=dict(),
+          datacenter=dict(choices=DATACENTERS),
+          tags=dict(),
+          hourly=dict(type='bool', default=True),
+          private=dict(type='bool', default=False),
+          dedicated=dict(type='bool', default=False),
+          local_disk=dict(type='bool', default=True),
+          cpus=dict(type='int', choices=CPU_SIZES),
+          memory=dict(type='int', choices=MEMORY_SIZES),
+          disks=dict(type='list', default=[25]),
+          os_code=dict(),
+          image_id=dict(),
+          nic_speed=dict(type='int', choices=NIC_SPEEDS),
+          public_vlan=dict(),
+          private_vlan=dict(),
+          ssh_keys=dict(type='list', default=[]),
+          post_uri=dict(),
+          state=dict(default='present', choices=STATES),
+          wait=dict(type='bool', default=True),
+          wait_time=dict(type='int', default=600)
+          )
   )
 
   if not HAS_SL:

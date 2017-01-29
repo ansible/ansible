@@ -9,7 +9,6 @@ contrib/inventory/rax.py
 contrib/inventory/softlayer.py
 contrib/inventory/vbox.py
 contrib/inventory/zone.py
-docs/api/conf.py
 hacking/metadata-tool.py
 hacking/module_formatter.py
 lib/ansible/cli/__init__.py
@@ -115,7 +114,6 @@ lib/ansible/modules/cloud/cloudstack/cs_portforward.py
 lib/ansible/modules/cloud/cloudstack/cs_sshkeypair.py
 lib/ansible/modules/cloud/digital_ocean/digital_ocean.py
 lib/ansible/modules/cloud/docker/_docker.py
-lib/ansible/modules/cloud/docker/docker_container.py
 lib/ansible/modules/cloud/docker/docker_image.py
 lib/ansible/modules/cloud/docker/docker_service.py
 lib/ansible/modules/cloud/google/gc_storage.py
@@ -152,7 +150,6 @@ lib/ansible/modules/crypto/openssl_publickey.py
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py
 lib/ansible/modules/database/misc/mongodb_parameter.py
 lib/ansible/modules/database/misc/mongodb_user.py
-lib/ansible/modules/database/misc/riak.py
 lib/ansible/modules/database/mssql/mssql_db.py
 lib/ansible/modules/database/mysql/mysql_db.py
 lib/ansible/modules/database/mysql/mysql_replication.py
@@ -180,9 +177,7 @@ lib/ansible/modules/monitoring/datadog_monitor.py
 lib/ansible/modules/monitoring/librato_annotation.py
 lib/ansible/modules/monitoring/logicmonitor.py
 lib/ansible/modules/monitoring/nagios.py
-lib/ansible/modules/monitoring/pagerduty.py
 lib/ansible/modules/monitoring/pagerduty_alert.py
-lib/ansible/modules/monitoring/pingdom.py
 lib/ansible/modules/monitoring/sensu_check.py
 lib/ansible/modules/monitoring/zabbix_screen.py
 lib/ansible/modules/network/a10/a10_server.py
@@ -279,7 +274,6 @@ lib/ansible/modules/packaging/os/openbsd_pkg.py
 lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
 lib/ansible/modules/packaging/os/redhat_subscription.py
-lib/ansible/modules/packaging/os/rhn_channel.py
 lib/ansible/modules/packaging/os/rhn_register.py
 lib/ansible/modules/packaging/os/swdepot.py
 lib/ansible/modules/packaging/os/yum.py
@@ -353,10 +347,8 @@ lib/ansible/plugins/action/async.py
 lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/synchronize.py
-lib/ansible/plugins/action/template.py
 lib/ansible/plugins/cache/jsonfile.py
 lib/ansible/plugins/callback/default.py
-lib/ansible/plugins/callback/dense.py
 lib/ansible/plugins/callback/logentries.py
 lib/ansible/plugins/callback/oneline.py
 lib/ansible/plugins/connection/accelerate.py

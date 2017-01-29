@@ -543,8 +543,8 @@ def get_custom_list_value(config, arg, module):
                 copy_attributes = False
                 inject_map_command = ('inject-map {0} exist-map {1} '
                                       'copy-attributes'.format(
-                                      inject_group['inject_map'],
-                                      inject_group['exist_map']))
+                                          inject_group['inject_map'],
+                                          inject_group['exist_map']))
 
                 REGEX = re.compile(r'\s+{0}\s*$'.format(
                     inject_map_command), re.M)
@@ -787,7 +787,7 @@ def default_existing(existing_value, key, value):
             elif len(maps) == 3:
                 commands.append('no inject-map {0} exist-map {1} '
                                 'copy-attributes'.format(
-                                maps[0], maps[1]))
+                                    maps[0], maps[1]))
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands

@@ -534,7 +534,7 @@ def main():
                     module.fail_json(msg="A peer link already exists on"
                                          " the device.  Remove it first",
                                      current_peer_link='Po{0}'.format(
-                                     active_peer_link))
+                                         active_peer_link))
         config_value = 'peer-link'
 
 
