@@ -62,13 +62,10 @@ I'd Like To Report A Bug
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
-Bugs related to the core language should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
+Ansible bugs should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
 signing up for a free GitHub account.  Before reporting a bug, please use the bug/issue search
 to see if the issue has already been reported.
-
-MODULE related bugs however should go to `ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
-
-When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/.github/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+This is listed on the bottom of the docs page for any module.
 
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
@@ -105,7 +102,7 @@ documenting a new feature, submit a GitHub pull request to  the code that
 lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
-Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on GitHub, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
+Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in `/lib/ansible/modules/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/>`_.
 
 Aside from modules, the main docs are in restructured text
 format.  
@@ -132,10 +129,7 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps its source on GitHub at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ for
-the core application, and two sub repos `github.com/ansible/ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_
-and `ansible/ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ for module related items.
-If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
+The Ansible project keeps its source on GitHub at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_.
 
 The project takes contributions through `github pull requests <https://help.github.com/articles/using-pull-requests>`_.
 
