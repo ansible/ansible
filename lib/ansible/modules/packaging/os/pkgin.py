@@ -336,16 +336,16 @@ def clean_cache(module):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], type='list'),
-                update_cache = dict(default='no', type='bool'),
-                upgrade      = dict(default='no', type='bool'),
-                full_upgrade = dict(default='no', type='bool'),
-                clean        = dict(default='no', type='bool'),
-                force        = dict(default='no', type='bool')),
-            required_one_of = [['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
-            supports_check_mode = True)
+        argument_spec    = dict(
+            state        = dict(default="present", choices=["present","absent"]),
+            name         = dict(aliases=["pkg"], type='list'),
+            update_cache = dict(default='no', type='bool'),
+            upgrade      = dict(default='no', type='bool'),
+            full_upgrade = dict(default='no', type='bool'),
+            clean        = dict(default='no', type='bool'),
+            force        = dict(default='no', type='bool')),
+        required_one_of = [['name', 'update_cache', 'upgrade', 'full_upgrade', 'clean']],
+        supports_check_mode = True)
 
     global PKGIN_PATH
     PKGIN_PATH = module.get_bin_path('pkgin', True, ['/opt/local/bin'])

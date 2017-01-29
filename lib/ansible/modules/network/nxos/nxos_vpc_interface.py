@@ -477,13 +477,13 @@ def get_commands_to_config_vpc_interface(portchannel, delta, config_value, exist
 
 def main():
     argument_spec = dict(
-            portchannel=dict(required=True, type='str'),
-            vpc=dict(required=False, type='str'),
-            peer_link=dict(required=False, type='bool'),
-            state=dict(choices=['absent', 'present'], default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        portchannel=dict(required=True, type='str'),
+        vpc=dict(required=False, type='str'),
+        peer_link=dict(required=False, type='bool'),
+        state=dict(choices=['absent', 'present'], default='present'),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[['vpc', 'peer_link']],
@@ -534,7 +534,7 @@ def main():
                     module.fail_json(msg="A peer link already exists on"
                                          " the device.  Remove it first",
                                      current_peer_link='Po{0}'.format(
-                                     active_peer_link))
+                                         active_peer_link))
         config_value = 'peer-link'
 
 

@@ -150,7 +150,7 @@ def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
             subnet = None
         else:
             raise AnsibleVPCSubnetCreationException(
-              'Unable to create subnet {0}, error: {1}'.format(cidr, e))
+                'Unable to create subnet {0}, error: {1}'.format(cidr, e))
 
     return subnet
 

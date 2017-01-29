@@ -446,7 +446,7 @@ class AzureInventory(object):
     def _parse_cli_args(self):
         # Parse command line arguments
         parser = argparse.ArgumentParser(
-                description='Produce an Ansible Inventory file for an Azure subscription')
+            description='Produce an Ansible Inventory file for an Azure subscription')
         parser.add_argument('--list', action='store_true', default=True,
                            help='List instances (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,

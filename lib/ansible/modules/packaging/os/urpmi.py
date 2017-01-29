@@ -183,12 +183,12 @@ def install_packages(module, pkgspec, force=True, no_recommends=True):
 
 def main():
     module = AnsibleModule(
-            argument_spec     = dict(
-                state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-                update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
-                force         = dict(default=True, type='bool'),
-                no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
-                package       = dict(aliases=['pkg', 'name'], required=True)))
+        argument_spec     = dict(
+            state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
+            force         = dict(default=True, type='bool'),
+            no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
+            package       = dict(aliases=['pkg', 'name'], required=True)))
 
 
     if not os.path.exists(URPMI_PATH):

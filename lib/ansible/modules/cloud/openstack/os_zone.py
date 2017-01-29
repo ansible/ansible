@@ -212,9 +212,9 @@ def main():
                                                masters, pre_update_zone)
                 if changed:
                     zone = cloud.update_zone(
-                                name, email=email,
-                                description=description,
-                                ttl=ttl, masters=masters)
+                        name, email=email,
+                        description=description,
+                        ttl=ttl, masters=masters)
             module.exit_json(changed=changed, zone=zone)
 
         elif state == 'absent':

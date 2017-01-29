@@ -655,7 +655,7 @@ def get_interface_config_commands(interface, intf, existing):
             commands.append('no ip forward')
 
     fabric_forwarding_anycast_gateway = interface.get(
-                                    'fabric_forwarding_anycast_gateway')
+        'fabric_forwarding_anycast_gateway')
     if fabric_forwarding_anycast_gateway is not None:
         if fabric_forwarding_anycast_gateway is True:
             commands.append('fabric forwarding mode anycast-gateway')

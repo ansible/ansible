@@ -173,7 +173,7 @@ def lookup_sessions(module):
             node = module.params.get('node')
             if not node:
                 module.fail_json(
-                  msg="node name is required to retrieve sessions for node")
+                    msg="node name is required to retrieve sessions for node")
             sessions = consul_client.session.node(node, dc=datacenter)
             module.exit_json(changed=True,
                              node=node,
@@ -182,7 +182,7 @@ def lookup_sessions(module):
             session_id = module.params.get('id')
             if not session_id:
                 module.fail_json(
-                  msg="session_id is required to retrieve indvidual session info")
+                    msg="session_id is required to retrieve indvidual session info")
 
             session_by_id = consul_client.session.info(session_id, dc=datacenter)
             module.exit_json(changed=True,
@@ -276,7 +276,7 @@ def main():
         execute(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-                            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), str(e)))
     except Exception as e:
         module.fail_json(msg=str(e))
 

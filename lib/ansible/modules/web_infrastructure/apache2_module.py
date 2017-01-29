@@ -120,8 +120,8 @@ def _get_ctl_binary(module):
             return ctl_binary
 
     module.fail_json(
-      msg="Neither of apache2ctl nor apachctl found."
-          " At least one apache control binary is necessary."
+        msg="Neither of apache2ctl nor apachctl found."
+            " At least one apache control binary is necessary."
     )
 
 def _module_is_enabled(module):

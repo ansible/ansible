@@ -202,7 +202,7 @@ def act_on_sshkeys(target_state, module, packet_conn):
                     raise Exception(_msg)
             matching_sshkeys = []
             new_key_response = packet_conn.create_ssh_key(
-                                        newkey['label'], newkey['key'])
+                newkey['label'], newkey['key'])
             changed = True
 
             matching_sshkeys.append(new_key_response)

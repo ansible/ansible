@@ -335,13 +335,13 @@ def apply_key_map(key_map, table):
 
 def main():
     argument_spec = dict(
-            flush_routes=dict(type='bool'),
-            enforce_rtr_alert=dict(type='bool'),
-            restart=dict(type='bool', default=False),
-            state=dict(choices=['present', 'default'], default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        flush_routes=dict(type='bool'),
+        enforce_rtr_alert=dict(type='bool'),
+        restart=dict(type='bool', default=False),
+        state=dict(choices=['present', 'default'], default='present'),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -354,9 +354,9 @@ def main():
         module.fail_json(msg='When state=default other params have no effect.')
 
     args =  [
-            "flush_routes",
-            "enforce_rtr_alert",
-        ]
+        "flush_routes",
+        "enforce_rtr_alert",
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

@@ -225,7 +225,7 @@ def main():
     try:
         gcelb = get_driver_lb(Provider_lb.GCE)(gce_driver=gce)
         gcelb.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 

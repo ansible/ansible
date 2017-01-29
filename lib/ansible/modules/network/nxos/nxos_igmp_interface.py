@@ -552,7 +552,7 @@ def get_igmp_interface(module, interface):
     command = 'show run interface {0} | inc oif'.format(interface)
 
     body = execute_show_command(
-                        command, module, command_type='cli_show_ascii')[0]
+        command, module, command_type='cli_show_ascii')[0]
 
     staticoif = []
     if body:
@@ -573,7 +573,7 @@ def get_igmp_interface(module, interface):
 
             try:
                 match_prefix_source = re.match(
-                                        prefix_source_regex, line, re.DOTALL)
+                    prefix_source_regex, line, re.DOTALL)
                 prefix_source_group = match_prefix_source.groupdict()
                 prefix = prefix_source_group['prefix']
                 source = prefix_source_group['source']
@@ -694,7 +694,7 @@ def config_remove_oif(existing, existing_oif_prefix_source):
     command = None
     if existing.get('routemap'):
         command = 'no ip igmp static-oif route-map {0}'.format(
-                                                    existing.get('routemap'))
+            existing.get('routemap'))
     if existing_oif_prefix_source:
         for each in existing_oif_prefix_source:
             if each.get('prefix') and each.get('source'):
@@ -732,28 +732,28 @@ def execute_config_command(commands, module):
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            version=dict(required=False, type='str'),
-            startup_query_interval=dict(required=False, type='str'),
-            startup_query_count=dict(required=False, type='str'),
-            robustness=dict(required=False, type='str'),
-            querier_timeout=dict(required=False, type='str'),
-            query_mrt=dict(required=False, type='str'),
-            query_interval=dict(required=False, type='str'),
-            last_member_qrt=dict(required=False, type='str'),
-            last_member_query_count=dict(required=False, type='str'),
-            group_timeout=dict(required=False, type='str'),
-            report_llg=dict(type='bool'),
-            immediate_leave=dict(type='bool'),
-            oif_routemap=dict(required=False, type='str'),
-            oif_prefix=dict(required=False, type='str'),
-            oif_source=dict(required=False, type='str'),
-            restart=dict(type='bool', default=False),
-            state=dict(choices=['present', 'absent', 'default'],
+        interface=dict(required=True, type='str'),
+        version=dict(required=False, type='str'),
+        startup_query_interval=dict(required=False, type='str'),
+        startup_query_count=dict(required=False, type='str'),
+        robustness=dict(required=False, type='str'),
+        querier_timeout=dict(required=False, type='str'),
+        query_mrt=dict(required=False, type='str'),
+        query_interval=dict(required=False, type='str'),
+        last_member_qrt=dict(required=False, type='str'),
+        last_member_query_count=dict(required=False, type='str'),
+        group_timeout=dict(required=False, type='str'),
+        report_llg=dict(type='bool'),
+        immediate_leave=dict(type='bool'),
+        oif_routemap=dict(required=False, type='str'),
+        oif_prefix=dict(required=False, type='str'),
+        oif_source=dict(required=False, type='str'),
+        restart=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent', 'default'],
                        default='present'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

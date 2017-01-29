@@ -248,11 +248,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['present', 'absent']),
-        name=dict(required=False),
-        apikey=dict(required=True),
-        apiid=dict(required=True),
-        validate_certs = dict(default='yes', type='bool'),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=False),
+            apikey=dict(required=True),
+            apiid=dict(required=True),
+            validate_certs = dict(default='yes', type='bool'),
         )
     )
 

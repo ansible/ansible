@@ -92,28 +92,28 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset = (
-            (dict(username='person', password='$ecret k3y'),
+        (dict(username='person', password='$ecret k3y'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', changed=False, msg='here',
                     invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
-            (dict(username='person', password='password12345'),
+        (dict(username='person', password='password12345'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
                     not_secret='following the leader', changed=False, msg='here',
                     invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
-            (dict(username='person', password='$ecret k3y'),
+        (dict(username='person', password='$ecret k3y'),
                 dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
                     not_secret='following the leader', msg='here'),
                 dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
                     not_secret='following the leader', changed=False, msg='here',
                     invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
                 ),
-            )
+        )
 
     def test_exit_json_removes_values(self):
         self.maxDiff = None

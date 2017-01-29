@@ -141,7 +141,7 @@ class Rhsm(RegistrationBase):
         # Quick version...
         if False:
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-                   os.path.isfile('/etc/pki/consumer/key.pem')
+                os.path.isfile('/etc/pki/consumer/key.pem')
 
         args = ['subscription-manager', 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)

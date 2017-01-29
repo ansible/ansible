@@ -378,15 +378,15 @@ def get_ping_results(command, module, transport):
 
 def main():
     argument_spec = dict(
-            dest=dict(required=True),
-            count=dict(required=False, default=2),
-            vrf=dict(required=False),
-            source=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'],
+        dest=dict(required=True),
+        count=dict(required=False, default=2),
+        vrf=dict(required=False),
+        source=dict(required=False),
+        state=dict(required=False, choices=['present', 'absent'],
                        default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -417,7 +417,7 @@ def main():
             ping_command += ' {0} {1}'.format(command, arg)
 
     ping_results, summary, rtt, ping_pass = get_ping_results(
-                    ping_command, module, module.params['transport'])
+        ping_command, module, module.params['transport'])
 
     packet_loss = summary['packet_loss']
     packets_rx = summary['packets_rx']

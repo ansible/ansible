@@ -305,24 +305,24 @@ class TestParseContent(unittest.TestCase):
 class TestFormatContent(unittest.TestCase):
     def test_no_encrypt(self):
         self.assertEqual(
-                password._format_content(password=u'hunter42',
+            password._format_content(password=u'hunter42',
                                          salt=u'87654321',
                                          encrypt=False),
-                u'hunter42 salt=87654321')
+            u'hunter42 salt=87654321')
 
     def test_no_encrypt_no_salt(self):
         self.assertEqual(
-                password._format_content(password=u'hunter42',
+            password._format_content(password=u'hunter42',
                                          salt=None,
                                          encrypt=False),
-                u'hunter42')
+            u'hunter42')
 
     def test_encrypt(self):
         self.assertEqual(
-                password._format_content(password=u'hunter42',
+            password._format_content(password=u'hunter42',
                                          salt=u'87654321',
                                          encrypt='pbkdf2_sha256'),
-                u'hunter42 salt=87654321')
+            u'hunter42 salt=87654321')
 
     def test_encrypt_no_salt(self):
         self.assertRaises(AssertionError, password._format_content,

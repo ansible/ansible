@@ -166,13 +166,13 @@ def _delete(module, hookurl, oauthkey, repo, user, hookid):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-        action=dict(required=True, choices=['list','clean504','cleanall','create']),
-        hookurl=dict(required=False),
-        oauthkey=dict(required=True, no_log=True),
-        repo=dict(required=True),
-        user=dict(required=True),
-        validate_certs=dict(default='yes', type='bool'),
-        content_type=dict(default='json', choices=['json', 'form']),
+            action=dict(required=True, choices=['list','clean504','cleanall','create']),
+            hookurl=dict(required=False),
+            oauthkey=dict(required=True, no_log=True),
+            repo=dict(required=True),
+            user=dict(required=True),
+            validate_certs=dict(default='yes', type='bool'),
+            content_type=dict(default='json', choices=['json', 'form']),
         )
     )
 

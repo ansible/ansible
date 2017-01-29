@@ -15,9 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {
-  'version': '1.0',
-  'status': ['preview'],
-  'supported_by': 'committer'
+    'version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'committer'
 }
 
 DOCUMENTATION = '''
@@ -236,14 +236,14 @@ def assert_policy_shape(policy):
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-            mode = dict(choices=['grant', 'deny'], default='grant'),
-            key_alias = dict(required=False, type='str'),
-            key_arn = dict(required=False, type='str'),
-            role_name = dict(required=False, type='str'),
-            role_arn = dict(required=False, type='str'),
-            grant_types = dict(required=False, type='list'),
-            clean_invalid_entries = dict(type='bool', default=True),
-        )
+        mode = dict(choices=['grant', 'deny'], default='grant'),
+        key_alias = dict(required=False, type='str'),
+        key_arn = dict(required=False, type='str'),
+        role_name = dict(required=False, type='str'),
+        role_arn = dict(required=False, type='str'),
+        grant_types = dict(required=False, type='list'),
+        clean_invalid_entries = dict(type='bool', default=True),
+    )
     )
 
     module = AnsibleModule(

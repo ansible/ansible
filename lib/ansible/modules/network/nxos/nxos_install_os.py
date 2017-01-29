@@ -381,8 +381,8 @@ def set_boot_options(module, image_name, kickstart=None):
 
 def main():
     argument_spec = dict(
-            system_image_file=dict(required=True),
-            kickstart_image_file=dict(required=False),
+        system_image_file=dict(required=True),
+        kickstart_image_file=dict(required=False),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

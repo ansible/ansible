@@ -203,7 +203,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible 2.2 Documentation', AUTHOR, 'manual'),
+    ('index', 'ansible.tex', 'Ansible 2.2 Documentation', AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

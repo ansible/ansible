@@ -784,7 +784,7 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
     # returns a dict
     defaults = get_pim_interface_defaults()
     delta = dict(set(defaults.items()).difference(
-                                                     existing.items()))
+        existing.items()))
     if delta:
         # returns a list
         command = config_pim_interface(delta, existing,
@@ -799,19 +799,19 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 
 def main():
     argument_spec=dict(
-            interface=dict(required=True),
-            sparse=dict(type='bool', default=True),
-            dr_prio=dict(type='str'),
-            hello_auth_key=dict(type='str'),
-            hello_interval=dict(type='int'),
-            jp_policy_out=dict(type='str'),
-            jp_policy_in=dict(type='str'),
-            jp_type_out=dict(choices=['prefix', 'routemap']),
-            jp_type_in=dict(choices=['prefix', 'routemap']),
-            border=dict(type='bool'),
-            neighbor_policy=dict(type='str'),
-            neighbor_type=dict(choices=['prefix', 'routemap']),
-            state=dict(choices=['present', 'absent', 'default'],
+        interface=dict(required=True),
+        sparse=dict(type='bool', default=True),
+        dr_prio=dict(type='str'),
+        hello_auth_key=dict(type='str'),
+        hello_interval=dict(type='int'),
+        jp_policy_out=dict(type='str'),
+        jp_policy_in=dict(type='str'),
+        jp_type_out=dict(choices=['prefix', 'routemap']),
+        jp_type_in=dict(choices=['prefix', 'routemap']),
+        border=dict(type='bool'),
+        neighbor_policy=dict(type='str'),
+        neighbor_type=dict(choices=['prefix', 'routemap']),
+        state=dict(choices=['present', 'absent', 'default'],
                        default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,

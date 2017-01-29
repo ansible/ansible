@@ -89,10 +89,10 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-                argument_spec = dict(
-                    revision = dict(default='latest', required=False, aliases=["version"]),
-                ),
-            )
+        argument_spec = dict(
+            revision = dict(default='latest', required=False, aliases=["version"]),
+            ),
+        )
 
     # Verify that the platform is atomic host
     if not os.path.exists("/run/ostree-booted"):

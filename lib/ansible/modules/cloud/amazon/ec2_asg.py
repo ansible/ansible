@@ -473,21 +473,21 @@ def create_autoscaling_group(connection, module):
         if len(launch_configs) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = AutoScalingGroup(
-                 group_name=group_name,
-                 load_balancers=load_balancers,
-                 availability_zones=availability_zones,
-                 launch_config=launch_configs[0],
-                 min_size=min_size,
-                 max_size=max_size,
-                 placement_group=placement_group,
-                 desired_capacity=desired_capacity,
-                 vpc_zone_identifier=vpc_zone_identifier,
-                 connection=connection,
-                 tags=asg_tags,
-                 health_check_period=health_check_period,
-                 health_check_type=health_check_type,
-                 default_cooldown=default_cooldown,
-                 termination_policies=termination_policies)
+            group_name=group_name,
+            load_balancers=load_balancers,
+            availability_zones=availability_zones,
+            launch_config=launch_configs[0],
+            min_size=min_size,
+            max_size=max_size,
+            placement_group=placement_group,
+            desired_capacity=desired_capacity,
+            vpc_zone_identifier=vpc_zone_identifier,
+            connection=connection,
+            tags=asg_tags,
+            health_check_period=health_check_period,
+            health_check_type=health_check_type,
+            default_cooldown=default_cooldown,
+            termination_policies=termination_policies)
 
         try:
             connection.create_auto_scaling_group(ag)

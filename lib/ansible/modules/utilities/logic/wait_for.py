@@ -382,12 +382,12 @@ def _timedelta_total_seconds(timedelta):
 
 def get_connection_state_id(state):
     connection_state_id = {
-       'ESTABLISHED': '01',
-       'SYN_SENT': '02',
-       'SYN_RECV': '03',
-       'FIN_WAIT1': '04',
-       'FIN_WAIT2': '05',
-       'TIME_WAIT': '06',
+        'ESTABLISHED': '01',
+        'SYN_SENT': '02',
+        'SYN_RECV': '03',
+        'FIN_WAIT1': '04',
+        'FIN_WAIT2': '05',
+        'TIME_WAIT': '06',
     }
     return connection_state_id[state]
 

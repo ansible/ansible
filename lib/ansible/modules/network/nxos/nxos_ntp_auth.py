@@ -393,7 +393,7 @@ def get_ntp_trusted_key(module):
     command = 'show run | inc ntp.trusted-key'
 
     trusted_key_str = execute_show_command(
-                command, module, command_type='cli_show_ascii')[0]
+        command, module, command_type='cli_show_ascii')[0]
     if trusted_key_str:
         trusted_keys = trusted_key_str.splitlines()
 
@@ -496,12 +496,12 @@ def remove_ntp_auth_key(key_id, md5string, auth_type, trusted_key, authenticatio
 
 def main():
     argument_spec = dict(
-            key_id=dict(required=True, type='str'),
-            md5string=dict(required=True, type='str'),
-            auth_type=dict(choices=['text', 'encrypt'], default='text'),
-            trusted_key=dict(choices=['true', 'false'], default='false'),
-            authentication=dict(choices=['on', 'off']),
-            state=dict(choices=['absent', 'present'], default='present'),
+        key_id=dict(required=True, type='str'),
+        md5string=dict(required=True, type='str'),
+        auth_type=dict(choices=['text', 'encrypt'], default='text'),
+        trusted_key=dict(choices=['true', 'false'], default='false'),
+        authentication=dict(choices=['on', 'off']),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

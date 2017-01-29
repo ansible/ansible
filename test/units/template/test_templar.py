@@ -34,7 +34,7 @@ class TestTemplar(unittest.TestCase):
 
     def setUp(self):
         fake_loader = DictDataLoader({
-          "/path/to/my_file.txt": "foo\n",
+            "/path/to/my_file.txt": "foo\n",
         })
         shared_loader = SharedPluginLoaderObj()
         variables = dict(

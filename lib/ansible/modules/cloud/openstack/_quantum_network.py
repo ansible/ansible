@@ -167,8 +167,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -192,8 +192,8 @@ def _set_tenant_id(module):
 
 def _get_net_id(neutron, module):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
+        'name': module.params['name'],
     }
     try:
         networks = neutron.list_networks(**kwargs)
@@ -251,15 +251,15 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            name                            = dict(required=True),
-            tenant_name                     = dict(default=None),
-            provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
-            provider_physical_network       = dict(default=None),
-            provider_segmentation_id        = dict(default=None),
-            router_external                 = dict(default=False, type='bool'),
-            shared                          = dict(default=False, type='bool'),
-            admin_state_up                  = dict(default=True, type='bool'),
-            state                           = dict(default='present', choices=['absent', 'present'])
+        name                            = dict(required=True),
+        tenant_name                     = dict(default=None),
+        provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
+        provider_physical_network       = dict(default=None),
+        provider_segmentation_id        = dict(default=None),
+        router_external                 = dict(default=False, type='bool'),
+        shared                          = dict(default=False, type='bool'),
+        admin_state_up                  = dict(default=True, type='bool'),
+        state                           = dict(default='present', choices=['absent', 'present'])
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 

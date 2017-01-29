@@ -309,7 +309,7 @@ def main():
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+            cursor_factory=psycopg2.extras.DictCursor)
 
     except TypeError:
         e = get_exception()

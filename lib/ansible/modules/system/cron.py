@@ -605,9 +605,9 @@ def main():
         ),
         supports_check_mode = True,
         mutually_exclusive=[
-                ['reboot', 'special_time'],
-                ['insertafter', 'insertbefore'],
-            ]
+            ['reboot', 'special_time'],
+            ['insertafter', 'insertbefore'],
+        ]
     )
 
     name         = module.params['name']

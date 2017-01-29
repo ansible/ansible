@@ -428,12 +428,12 @@ def _create_server(module, nova):
     flavor_id = _get_flavor_id(module, nova)
     bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
-                'nics' : module.params['nics'],
-                'meta' : module.params['meta'],
-                'security_groups': module.params['security_groups'].split(','),
-                #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
-                'userdata': module.params['user_data'],
-                'config_drive': module.params['config_drive'],
+        'nics' : module.params['nics'],
+        'meta' : module.params['meta'],
+        'security_groups': module.params['security_groups'].split(','),
+        #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
+        'userdata': module.params['user_data'],
+        'config_drive': module.params['config_drive'],
     }
 
     for optional_param in ('region_name', 'key_name', 'availability_zone', 'scheduler_hints'):

@@ -409,28 +409,28 @@ def execute_config(module, candidate):
 
 def main():
     argument_spec = dict(
-            vni=dict(required=True, type='str'),
-            route_distinguisher=dict(required=False, type='str'),
-            route_target_both=dict(required=False, type='list'),
-            route_target_import=dict(required=False, type='list'),
-            route_target_export=dict(required=False, type='list'),
-            state=dict(choices=['present', 'absent'], default='present',
+        vni=dict(required=True, type='str'),
+        route_distinguisher=dict(required=False, type='str'),
+        route_target_both=dict(required=False, type='list'),
+        route_target_import=dict(required=False, type='list'),
+        route_target_export=dict(required=False, type='list'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                         supports_check_mode=True)
 
     state = module.params['state']
     args =  [
-            'vni',
-            'route_distinguisher',
-            'route_target_both',
-            'route_target_import',
-            'route_target_export'
-        ]
+        'vni',
+        'route_distinguisher',
+        'route_target_both',
+        'route_target_import',
+        'route_target_export'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing
@@ -461,9 +461,9 @@ def main():
                                          'It is highly recommended to use a task '
                                          '(with default as value) to explicitly '
                                          'unconfigure it.'.format(
-                                            existing['route_distinguisher']))
+                                             existing['route_distinguisher']))
                     remove_commands = ['no rd {0}'.format(
-                                            existing['route_distinguisher'])]
+                        existing['route_distinguisher'])]
 
                     candidate.add(remove_commands, parents=parents)
                     result = execute_config(module, candidate)

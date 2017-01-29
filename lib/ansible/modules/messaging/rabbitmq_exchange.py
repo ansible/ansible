@@ -189,17 +189,17 @@ def main():
     if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
-                    url,
-                    auth = (module.params['login_user'],module.params['login_password']),
-                    headers = { "content-type": "application/json"},
-                    data = json.dumps({
-                        "durable": module.params['durable'],
-                        "auto_delete": module.params['auto_delete'],
-                        "internal": module.params['internal'],
-                        "type": module.params['exchange_type'],
-                        "arguments": module.params['arguments']
+                url,
+                auth = (module.params['login_user'],module.params['login_password']),
+                headers = { "content-type": "application/json"},
+                data = json.dumps({
+                    "durable": module.params['durable'],
+                    "auto_delete": module.params['auto_delete'],
+                    "internal": module.params['internal'],
+                    "type": module.params['exchange_type'],
+                    "arguments": module.params['arguments']
                     })
-                )
+            )
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 

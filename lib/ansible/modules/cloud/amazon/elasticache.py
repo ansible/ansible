@@ -483,22 +483,22 @@ class ElastiCacheManager(object):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
-            name                  ={'required': True},
-            engine                ={'required': False, 'default': 'memcached'},
-            cache_engine_version  ={'required': False},
-            node_type             ={'required': False, 'default': 'cache.m1.small'},
-            num_nodes             ={'required': False, 'default': None, 'type': 'int'},
-            # alias for compat with the original PR 1950
-            cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
-            cache_port            ={'required': False, 'type': 'int'},
-            cache_subnet_group    ={'required': False, 'default': None},
-            cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
-            security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
-            zone                  ={'required': False, 'default': None},
-            wait                  ={'required': False, 'type' : 'bool', 'default': True},
-            hard_modify           ={'required': False, 'type': 'bool', 'default': False}
-        )
+        state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
+        name                  ={'required': True},
+        engine                ={'required': False, 'default': 'memcached'},
+        cache_engine_version  ={'required': False},
+        node_type             ={'required': False, 'default': 'cache.m1.small'},
+        num_nodes             ={'required': False, 'default': None, 'type': 'int'},
+        # alias for compat with the original PR 1950
+        cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
+        cache_port            ={'required': False, 'type': 'int'},
+        cache_subnet_group    ={'required': False, 'default': None},
+        cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
+        security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
+        zone                  ={'required': False, 'default': None},
+        wait                  ={'required': False, 'type' : 'bool', 'default': True},
+        hard_modify           ={'required': False, 'type': 'bool', 'default': False}
+    )
     )
 
     module = AnsibleModule(

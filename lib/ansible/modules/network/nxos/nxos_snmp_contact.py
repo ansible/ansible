@@ -353,8 +353,8 @@ def get_snmp_contact(module):
 
 def main():
     argument_spec = dict(
-            contact=dict(required=True, type='str'),
-            state=dict(choices=['absent', 'present'],
+        contact=dict(required=True, type='str'),
+        state=dict(choices=['absent', 'present'],
                        default='present')
     )
     module = get_network_module(argument_spec=argument_spec,

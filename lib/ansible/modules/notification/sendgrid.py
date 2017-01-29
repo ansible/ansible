@@ -230,9 +230,9 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive = [
-                              ['api_key', 'password'],
-                              ['api_key', 'username']
-                              ],
+            ['api_key', 'password'],
+            ['api_key', 'username']
+            ],
         required_together = [['username', 'password']],
     )
 

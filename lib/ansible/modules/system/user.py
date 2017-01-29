@@ -2112,10 +2112,10 @@ class HPUX(User):
 
 def main():
     ssh_defaults = {
-            'bits': 0,
-            'type': 'rsa',
-            'passphrase': None,
-            'comment': 'ansible-generated on %s' % socket.gethostname()
+        'bits': 0,
+        'type': 'rsa',
+        'passphrase': None,
+        'comment': 'ansible-generated on %s' % socket.gethostname()
     }
     module = AnsibleModule(
         argument_spec = dict(

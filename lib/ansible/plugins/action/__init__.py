@@ -441,11 +441,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Get information from remote file.
         '''
         module_args=dict(
-           path=path,
-           follow=follow,
-           get_md5=False,
-           get_checksum=True,
-           checksum_algo='sha1',
+            path=path,
+            follow=follow,
+            get_md5=False,
+            get_checksum=True,
+            checksum_algo='sha1',
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None))
 

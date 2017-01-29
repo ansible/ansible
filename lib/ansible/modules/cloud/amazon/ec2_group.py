@@ -241,16 +241,16 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(type='str', required=True),
-            description=dict(type='str', required=True),
-            vpc_id=dict(type='str'),
-            rules=dict(type='list'),
-            rules_egress=dict(type='list'),
-            state = dict(default='present', type='str', choices=['present', 'absent']),
-            purge_rules=dict(default=True, required=False, type='bool'),
-            purge_rules_egress=dict(default=True, required=False, type='bool'),
+        name=dict(type='str', required=True),
+        description=dict(type='str', required=True),
+        vpc_id=dict(type='str'),
+        rules=dict(type='list'),
+        rules_egress=dict(type='list'),
+        state = dict(default='present', type='str', choices=['present', 'absent']),
+        purge_rules=dict(default=True, required=False, type='bool'),
+        purge_rules_egress=dict(default=True, required=False, type='bool'),
 
-        )
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -427,12 +427,12 @@ def main():
 
                         if not module.check_mode:
                             ec2.authorize_security_group_egress(
-                                    group_id=group.id,
-                                    ip_protocol=rule['proto'],
-                                    from_port=rule['from_port'],
-                                    to_port=rule['to_port'],
-                                    src_group_id=grantGroup,
-                                    cidr_ip=thisip)
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=thisip)
                         changed = True
         elif vpc_id:
             # when using a vpc, but no egress rules are specified,
@@ -462,12 +462,12 @@ def main():
                     grantGroup = groups[grant.group_id].id
                 if not module.check_mode:
                     ec2.revoke_security_group_egress(
-                            group_id=group.id,
-                            ip_protocol=rule.ip_protocol,
-                            from_port=rule.from_port,
-                            to_port=rule.to_port,
-                            src_group_id=grantGroup,
-                            cidr_ip=grant.cidr_ip)
+                        group_id=group.id,
+                        ip_protocol=rule.ip_protocol,
+                        from_port=rule.from_port,
+                        to_port=rule.to_port,
+                        src_group_id=grantGroup,
+                        cidr_ip=grant.cidr_ip)
                 changed = True
 
     if group:

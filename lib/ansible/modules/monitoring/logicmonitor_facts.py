@@ -29,8 +29,8 @@ try:
     # Look for simplejson if that's the case
     try:
         if (
-         not isinstance(json.loads, types.FunctionType) or
-         not isinstance(json.dumps, types.FunctionType)
+            not isinstance(json.loads, types.FunctionType) or
+            not isinstance(json.dumps, types.FunctionType)
         ):
             raise ImportError
     except AttributeError:

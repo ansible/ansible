@@ -441,16 +441,16 @@ def state_present(module, existing, proposed, candidate):
         else:
             if key == 'timers throttle lsa':
                 command = '{0} {1} {2} {3}'.format(
-                                        key,
-                                        proposed['timer_throttle_lsa_start'],
-                                        proposed['timer_throttle_lsa_hold'],
-                                        proposed['timer_throttle_lsa_max'])
+                    key,
+                    proposed['timer_throttle_lsa_start'],
+                    proposed['timer_throttle_lsa_hold'],
+                    proposed['timer_throttle_lsa_max'])
             elif key == 'timers throttle spf':
                 command = '{0} {1} {2} {3}'.format(
-                                        key,
-                                        proposed['timer_throttle_spf_start'],
-                                        proposed['timer_throttle_spf_hold'],
-                                        proposed['timer_throttle_spf_max'])
+                    key,
+                    proposed['timer_throttle_spf_start'],
+                    proposed['timer_throttle_spf_hold'],
+                    proposed['timer_throttle_spf_max'])
             elif key == 'log-adjacency-changes':
                 if value == 'log':
                     command = key
@@ -485,16 +485,16 @@ def state_absent(module, existing, proposed, candidate):
             if value:
                 if key == 'timers throttle lsa':
                     command = 'no {0} {1} {2} {3}'.format(
-                                        key,
-                                        existing['timer_throttle_lsa_start'],
-                                        existing['timer_throttle_lsa_hold'],
-                                        existing['timer_throttle_lsa_max'])
+                        key,
+                        existing['timer_throttle_lsa_start'],
+                        existing['timer_throttle_lsa_hold'],
+                        existing['timer_throttle_lsa_max'])
                 elif key == 'timers throttle spf':
                     command = 'no {0} {1} {2} {3}'.format(
-                                        key,
-                                        existing['timer_throttle_spf_start'],
-                                        existing['timer_throttle_spf_hold'],
-                                        existing['timer_throttle_spf_max'])
+                        key,
+                        existing['timer_throttle_spf_start'],
+                        existing['timer_throttle_spf_hold'],
+                        existing['timer_throttle_spf_max'])
                 else:
                     existing_value = existing_commands.get(key)
                     command = 'no {0} {1}'.format(key, existing_value)
@@ -508,43 +508,43 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            vrf=dict(required=False, type='str', default='default'),
-            ospf=dict(required=True, type='str'),
-            router_id=dict(required=False, type='str'),
-            default_metric=dict(required=False, type='str'),
-            log_adjacency=dict(required=False, type='str',
+        vrf=dict(required=False, type='str', default='default'),
+        ospf=dict(required=True, type='str'),
+        router_id=dict(required=False, type='str'),
+        default_metric=dict(required=False, type='str'),
+        log_adjacency=dict(required=False, type='str',
                                choices=['log', 'detail', 'default']),
-            timer_throttle_lsa_start=dict(required=False, type='str'),
-            timer_throttle_lsa_hold=dict(required=False, type='str'),
-            timer_throttle_lsa_max=dict(required=False, type='str'),
-            timer_throttle_spf_start=dict(required=False, type='str'),
-            timer_throttle_spf_hold=dict(required=False, type='str'),
-            timer_throttle_spf_max=dict(required=False, type='str'),
-            auto_cost=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        timer_throttle_lsa_start=dict(required=False, type='str'),
+        timer_throttle_lsa_hold=dict(required=False, type='str'),
+        timer_throttle_lsa_max=dict(required=False, type='str'),
+        timer_throttle_spf_start=dict(required=False, type='str'),
+        timer_throttle_spf_hold=dict(required=False, type='str'),
+        timer_throttle_spf_max=dict(required=False, type='str'),
+        auto_cost=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                         supports_check_mode=True)
 
     state = module.params['state']
     args =  [
-            'vrf',
-            'ospf',
-            'router_id',
-            'default_metric',
-            'log_adjacency',
-            'timer_throttle_lsa_start',
-            'timer_throttle_lsa_hold',
-            'timer_throttle_lsa_max',
-            'timer_throttle_spf_start',
-            'timer_throttle_spf_hold',
-            'timer_throttle_spf_max',
-            'auto_cost'
-        ]
+        'vrf',
+        'ospf',
+        'router_id',
+        'default_metric',
+        'log_adjacency',
+        'timer_throttle_lsa_start',
+        'timer_throttle_lsa_hold',
+        'timer_throttle_lsa_max',
+        'timer_throttle_spf_start',
+        'timer_throttle_spf_hold',
+        'timer_throttle_spf_max',
+        'auto_cost'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

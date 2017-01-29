@@ -129,8 +129,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -154,8 +154,8 @@ def _set_tenant_id(module):
 
 def _get_router_id(module, neutron):
     kwargs = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
+        'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
     }
     try:
         routers = neutron.list_routers(**kwargs)
@@ -167,9 +167,9 @@ def _get_router_id(module, neutron):
 
 def _create_router(module, neutron):
     router = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
-            'admin_state_up': module.params['admin_state_up'],
+        'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
+        'admin_state_up': module.params['admin_state_up'],
     }
     try:
         new_router = neutron.create_router(dict(router=router))

@@ -437,10 +437,10 @@ def config_ntp_options(delta, flip=False):
 
 def main():
     argument_spec = dict(
-            master=dict(required=False, type='bool'),
-            stratum=dict(type='str'),
-            logging=dict(required=False, type='bool'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        master=dict(required=False, type='bool'),
+        stratum=dict(type='str'),
+        logging=dict(required=False, type='bool'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_one_of=[['master', 'logging']],

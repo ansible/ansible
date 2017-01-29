@@ -176,8 +176,8 @@ def main():
     argument_spec = url_argument_spec()
 
     module = AnsibleModule(
-            argument_spec=argument_spec,
-            supports_check_mode=True,
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     ec2_facts = Ec2Metadata(module).run()

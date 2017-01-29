@@ -408,7 +408,7 @@ def get_igmp_snooping(module):
     command = 'show run all | include igmp.snooping'
     existing = {}
     body = execute_show_command(
-                        command, module, command_type='cli_show_ascii')[0]
+        command, module, command_type='cli_show_ascii')[0]
 
     if body:
         split_body = body.splitlines()
@@ -485,12 +485,12 @@ def get_igmp_snooping_defaults():
 
 def main():
     argument_spec = dict(
-            snooping=dict(required=False, type='bool'),
-            group_timeout=dict(required=False, type='str'),
-            link_local_grp_supp=dict(required=False, type='bool'),
-            report_supp=dict(required=False, type='bool'),
-            v3_report_supp=dict(required=False, type='bool'),
-            state=dict(choices=['present', 'default'], default='present'),
+        snooping=dict(required=False, type='bool'),
+        group_timeout=dict(required=False, type='str'),
+        link_local_grp_supp=dict(required=False, type='bool'),
+        report_supp=dict(required=False, type='bool'),
+        v3_report_supp=dict(required=False, type='bool'),
+        state=dict(choices=['present', 'default'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -516,8 +516,8 @@ def main():
     commands = []
     if state == 'present':
         delta = dict(
-                    set(proposed.items()).difference(existing.items())
-                    )
+            set(proposed.items()).difference(existing.items())
+            )
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
@@ -525,8 +525,8 @@ def main():
     elif state == 'default':
         proposed = get_igmp_snooping_defaults()
         delta = dict(
-                     set(proposed.items()).difference(existing.items())
-                    )
+            set(proposed.items()).difference(existing.items())
+            )
         if delta:
             command = config_igmp_snooping(delta, existing, default=True)
             if command:

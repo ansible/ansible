@@ -306,7 +306,7 @@ def gather_files(fileroot, include=None, exclude=None):
                 'chopped_path':chopped_path,
                 'modified_epoch': f_modified_epoch,
                 'bytes': f_size
-        })
+                })
         # dirpath = path *to* the directory
         # dirnames = subdirs *in* our directory
         # filenames
@@ -428,7 +428,7 @@ def upload_files(s3, bucket, filelist, params):
     ret = []
     for entry in filelist:
         args = {
-          'ContentType': entry['mime_type']
+            'ContentType': entry['mime_type']
         }
         if params.get('permission'):
             args['ACL'] = params['permission']
@@ -440,18 +440,18 @@ def upload_files(s3, bucket, filelist, params):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            mode = dict(choices=['push'], default='push'),
-            file_change_strategy = dict(choices=['force','date_size','checksum'], default='date_size'),
-            bucket = dict(required=True),
-            key_prefix = dict(required=False, default=''),
-            file_root = dict(required=True, type='path'),
-            permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
-            retries = dict(required=False),
-            mime_map = dict(required=False, type='dict'),
-            exclude = dict(required=False, default=".*"),
-            include = dict(required=False, default="*"),
-            # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
-        )
+        mode = dict(choices=['push'], default='push'),
+        file_change_strategy = dict(choices=['force','date_size','checksum'], default='date_size'),
+        bucket = dict(required=True),
+        key_prefix = dict(required=False, default=''),
+        file_root = dict(required=True, type='path'),
+        permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
+        retries = dict(required=False),
+        mime_map = dict(required=False, type='dict'),
+        exclude = dict(required=False, default=".*"),
+        include = dict(required=False, default="*"),
+        # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
+    )
     )
 
     module = AnsibleModule(

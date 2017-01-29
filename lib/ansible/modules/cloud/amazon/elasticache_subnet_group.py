@@ -80,11 +80,11 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state             = dict(required=True,  choices=['present', 'absent']),
-            name              = dict(required=True),
-            description       = dict(required=False),
-            subnets           = dict(required=False, type='list'),
-        )
+        state             = dict(required=True,  choices=['present', 'absent']),
+        name              = dict(required=True),
+        description       = dict(required=False),
+        subnets           = dict(required=False, type='list'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

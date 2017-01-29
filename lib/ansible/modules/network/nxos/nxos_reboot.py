@@ -269,10 +269,10 @@ def disable_confirmation(module):
 
 def main():
     argument_spec = dict(
-            confirm=dict(required=True, type='bool'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        confirm=dict(required=True, type='bool'),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

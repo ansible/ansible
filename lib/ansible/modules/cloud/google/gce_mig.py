@@ -829,7 +829,7 @@ def main():
             if not autoscaler:
                 module.fail_json(msg='Unable to fetch autoscaler %s to delete \
                 in zone: %s' % (params['autoscaling']['name'], params['zone']),
-                                 changed=False)
+                    changed=False)
 
             changed = delete_autoscaler(autoscaler)
             json_output['deleted_autoscaler'] = changed

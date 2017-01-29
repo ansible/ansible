@@ -216,7 +216,7 @@ def write_changes(module, b_lines, dest):
     if valid:
         module.atomic_move(tmpfile,
                 to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
-                unsafe_writes=module.params['unsafe_writes'])
+            unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):

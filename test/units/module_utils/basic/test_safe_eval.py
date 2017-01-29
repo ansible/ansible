@@ -30,27 +30,27 @@ from units.mock.generator import add_method
 
 # Strings that should be converted into a typed value
 VALID_STRINGS = (
-        [("'a'", 'a')],
-        [("'1'", '1')],
-        [("1", 1)],
-        [("True", True)],
-        [("False", False)],
-        [("{}", {})],
-        )
+    [("'a'", 'a')],
+    [("'1'", '1')],
+    [("1", 1)],
+    [("True", True)],
+    [("False", False)],
+    [("{}", {})],
+    )
 
 # Passing things that aren't strings should just return the object
 NONSTRINGS = (
-        [({'a':1}, {'a':1})],
-        )
+    [({'a':1}, {'a':1})],
+    )
 
 # These strings are not basic types.  For security, these should not be
 # executed.  We return the same string and get an exception for some
 INVALID_STRINGS = (
-        [("a=1", "a=1", SyntaxError)],
-        [("a.foo()", "a.foo()", None)],
-        [("import foo", "import foo", None)],
-        [("__import__('foo')", "__import__('foo')", ValueError)],
-        )
+    [("a=1", "a=1", SyntaxError)],
+    [("a.foo()", "a.foo()", None)],
+    [("import foo", "import foo", None)],
+    [("__import__('foo')", "__import__('foo')", ValueError)],
+    )
 
 
 def _check_simple_types(self, code, expected):

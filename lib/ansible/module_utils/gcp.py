@@ -77,7 +77,7 @@ def _get_gcp_ansible_credentials(module):
 def _get_gcp_environ_var(var_name, default_value):
     """Wrapper around os.environ.get call."""
     return os.environ.get(
-            var_name, default_value)
+        var_name, default_value)
 
 def _get_gcp_environment_credentials(service_account_email, credentials_file, project_id):
     """Helper to look in environment variables for credentials."""
@@ -315,7 +315,7 @@ def get_google_cloud_credentials(module, scopes=[]):
                 credentials = credentials.with_scopes(scopes)
         else:
             credentials = google.auth.default(
-                    scopes=scopes)[0]
+                scopes=scopes)[0]
 
         return (credentials, conn_params)
     except Exception as e:

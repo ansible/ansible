@@ -408,9 +408,9 @@ class PyVmomiDeviceHelper(object):
     @staticmethod
     def is_scsi_controller(device):
         return isinstance(device, vim.vm.device.VirtualLsiLogicController) or \
-               isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
-               isinstance(device, vim.vm.device.VirtualBusLogicController) or \
-               isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
+            isinstance(device, vim.vm.device.ParaVirtualSCSIController) or \
+            isinstance(device, vim.vm.device.VirtualBusLogicController) or \
+            isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
 
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()

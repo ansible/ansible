@@ -35,26 +35,26 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 SIZE_RANGES = { 'Y': 1<<80, 'Z': 1<<70, 'E': 1<<60, 'P': 1<<50, 'T': 1<<40, 'G': 1<<30, 'M': 1<<20, 'K': 1<<10, 'B': 1 }
 
 FILE_ATTRIBUTES = {
-  'A': 'noatime',
-  'a': 'append',
-  'c': 'compressed',
-  'C': 'nocow',
-  'd': 'nodump',
-  'D': 'dirsync',
-  'e': 'extents',
-  'E': 'encrypted',
-  'h': 'blocksize',
-  'i': 'immutable',
-  'I': 'indexed',
-  'j': 'journalled',
-  'N': 'inline',
-  's': 'zero',
-  'S': 'synchronous',
-  't': 'notail',
-  'T': 'blockroot',
-  'u': 'undelete',
-  'X': 'compressedraw',
-  'Z': 'compresseddirty',
+    'A': 'noatime',
+    'a': 'append',
+    'c': 'compressed',
+    'C': 'nocow',
+    'd': 'nodump',
+    'D': 'dirsync',
+    'e': 'extents',
+    'E': 'encrypted',
+    'h': 'blocksize',
+    'i': 'immutable',
+    'I': 'indexed',
+    'j': 'journalled',
+    'N': 'inline',
+    's': 'zero',
+    'S': 'synchronous',
+    't': 'notail',
+    'T': 'blockroot',
+    'u': 'undelete',
+    'X': 'compressedraw',
+    'Z': 'compresseddirty',
 }
 
 # ansible modules can be written in any language.  To simplify
@@ -728,19 +728,19 @@ class AnsibleModule(object):
         self._set_defaults(pre=True)
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-                'str': self._check_type_str,
-                'list': self._check_type_list,
-                'dict': self._check_type_dict,
-                'bool': self._check_type_bool,
-                'int': self._check_type_int,
-                'float': self._check_type_float,
-                'path': self._check_type_path,
-                'raw': self._check_type_raw,
-                'jsonarg': self._check_type_jsonarg,
-                'json': self._check_type_jsonarg,
-                'bytes': self._check_type_bytes,
-                'bits': self._check_type_bits,
-            }
+            'str': self._check_type_str,
+            'list': self._check_type_list,
+            'dict': self._check_type_dict,
+            'bool': self._check_type_bool,
+            'int': self._check_type_int,
+            'float': self._check_type_float,
+            'path': self._check_type_path,
+            'raw': self._check_type_raw,
+            'jsonarg': self._check_type_jsonarg,
+            'json': self._check_type_jsonarg,
+            'bytes': self._check_type_bytes,
+            'bits': self._check_type_bits,
+        }
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()

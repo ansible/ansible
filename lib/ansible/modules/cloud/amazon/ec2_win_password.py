@@ -106,12 +106,12 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance_id = dict(required=True),
-            key_file = dict(required=True),
-            key_passphrase = dict(no_log=True, default=None, required=False),
-            wait = dict(type='bool', default=False, required=False),
-            wait_timeout = dict(default=120, required=False),
-        )
+        instance_id = dict(required=True),
+        key_file = dict(required=True),
+        key_passphrase = dict(no_log=True, default=None, required=False),
+        wait = dict(type='bool', default=False, required=False),
+        wait_timeout = dict(default=120, required=False),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

@@ -91,8 +91,8 @@ class VMwareLocalUserManager(object):
         try:
             local_account_manager_states = {
                 'absent': {
-                   'present': self.state_remove_user,
-                   'absent': self.state_exit_unchanged,
+                    'present': self.state_remove_user,
+                    'absent': self.state_exit_unchanged,
                 },
                 'present': {
                     'present': self.state_update_user,

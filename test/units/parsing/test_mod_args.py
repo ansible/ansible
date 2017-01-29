@@ -47,9 +47,9 @@ class TestModArgsDwim(unittest.TestCase):
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
-                                _raw_params = 'echo hi',
-                                _uses_shell = True,
-                        ))
+            _raw_params = 'echo hi',
+            _uses_shell = True,
+            ))
         self.assertIsNone(to)
 
     def test_basic_command(self):
@@ -58,8 +58,8 @@ class TestModArgsDwim(unittest.TestCase):
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
-                                _raw_params = 'echo hi',
-                        ))
+            _raw_params = 'echo hi',
+            ))
         self.assertIsNone(to)
 
     def test_shell_with_modifiers(self):
@@ -68,11 +68,11 @@ class TestModArgsDwim(unittest.TestCase):
         self._debug(mod, args, to)
         self.assertEqual(mod, 'command')
         self.assertEqual(args, dict(
-                                creates     = '/tmp/baz',
-                                removes     = '/tmp/bleep',
-                                _raw_params = '/bin/foo',
-                                _uses_shell = True,
-                        ))
+            creates     = '/tmp/baz',
+            removes     = '/tmp/bleep',
+            _raw_params = '/bin/foo',
+            _uses_shell = True,
+            ))
         self.assertIsNone(to)
 
     def test_normal_usage(self):

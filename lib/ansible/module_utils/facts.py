@@ -1078,22 +1078,22 @@ class LinuxHardware(Hardware):
             memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
 
         self.facts['memory_mb'] = {
-                     'real' : {
-                         'total': memstats.get('memtotal'),
-                         'used': memstats.get('real:used'),
-                         'free': memstats.get('memfree'),
-                     },
-                     'nocache' : {
-                         'free': memstats.get('nocache:free'),
-                         'used': memstats.get('nocache:used'),
-                     },
-                     'swap' : {
-                         'total': memstats.get('swaptotal'),
-                         'free': memstats.get('swapfree'),
-                         'used': memstats.get('swap:used'),
-                         'cached': memstats.get('swapcached'),
-                     },
-                 }
+            'real' : {
+                'total': memstats.get('memtotal'),
+                'used': memstats.get('real:used'),
+                'free': memstats.get('memfree'),
+                },
+            'nocache' : {
+                'free': memstats.get('nocache:free'),
+                'used': memstats.get('nocache:used'),
+                },
+            'swap' : {
+                'total': memstats.get('swaptotal'),
+                'free': memstats.get('swapfree'),
+                'used': memstats.get('swap:used'),
+                'cached': memstats.get('swapcached'),
+                },
+            }
 
     def get_cpu_facts(self):
         i = 0
@@ -1212,15 +1212,15 @@ class LinuxHardware(Hardware):
                             "CompactPCI", "AdvancedTCA", "Blade" ]
 
             DMI_DICT = {
-                    'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
-                    'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
-                    'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
-                    'product_name': '/sys/devices/virtual/dmi/id/product_name',
-                    'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
-                    'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
-                    'product_version': '/sys/devices/virtual/dmi/id/product_version',
-                    'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
-                    }
+                'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+                'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
+                'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
+                'product_name': '/sys/devices/virtual/dmi/id/product_name',
+                'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
+                'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
+                'product_version': '/sys/devices/virtual/dmi/id/product_version',
+                'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
+                }
 
             for (key,path) in DMI_DICT.items():
                 data = get_file_content(path)
@@ -1239,15 +1239,15 @@ class LinuxHardware(Hardware):
             # Fall back to using dmidecode, if available
             dmi_bin = self.module.get_bin_path('dmidecode')
             DMI_DICT = {
-                    'bios_date': 'bios-release-date',
-                    'bios_version': 'bios-version',
-                    'form_factor': 'chassis-type',
-                    'product_name': 'system-product-name',
-                    'product_serial': 'system-serial-number',
-                    'product_uuid': 'system-uuid',
-                    'product_version': 'system-version',
-                    'system_vendor': 'system-manufacturer'
-                    }
+                'bios_date': 'bios-release-date',
+                'bios_version': 'bios-version',
+                'form_factor': 'chassis-type',
+                'product_name': 'system-product-name',
+                'product_serial': 'system-serial-number',
+                'product_uuid': 'system-uuid',
+                'product_version': 'system-version',
+                'system_vendor': 'system-manufacturer'
+                }
             for (k, v) in DMI_DICT.items():
                 if dmi_bin is not None:
                     (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))

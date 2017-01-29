@@ -138,11 +138,11 @@ from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            zone=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            vpc_id=dict(default=None),
-            vpc_region=dict(default=None),
-            comment=dict(default='')))
+        zone=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        vpc_id=dict(default=None),
+        vpc_region=dict(default=None),
+        comment=dict(default='')))
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:

@@ -325,7 +325,7 @@ def build_command(param_dict, command):
     for param in ['group_list', 'prefix_list', 'route_map']:
         if param_dict.get(param):
             command += ' {0} {1}'.format(
-                                    param.replace('_', '-'), param_dict.get(param))
+                param.replace('_', '-'), param_dict.get(param))
     if param_dict.get('bidir'):
         command += ' bidir'
     return [command]
@@ -346,16 +346,16 @@ def state_absent(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            rp_address=dict(required=True, type='str'),
-            group_list=dict(required=False, type='str'),
-            prefix_list=dict(required=False, type='str'),
-            route_map=dict(required=False, type='str'),
-            bidir=dict(required=False, type='bool'),
-            state=dict(choices=['present', 'absent'], default='present',
+        rp_address=dict(required=True, type='str'),
+        group_list=dict(required=False, type='str'),
+        prefix_list=dict(required=False, type='str'),
+        route_map=dict(required=False, type='str'),
+        bidir=dict(required=False, type='bool'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[['group_list', 'route_map'],
@@ -366,12 +366,12 @@ def main():
     state = module.params['state']
 
     args =  [
-            'rp_address',
-            'group_list',
-            'prefix_list',
-            'route_map',
-            'bidir'
-        ]
+        'rp_address',
+        'group_list',
+        'prefix_list',
+        'route_map',
+        'bidir'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

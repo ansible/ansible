@@ -237,8 +237,8 @@ class TestVariableManager(unittest.TestCase):
         inv1.set_playbook_basedir('./')
 
         play1 = Play.load(dict(
-           hosts=['all'],
-           roles=['defaults_only1', 'defaults_only2'],
+            hosts=['all'],
+            roles=['defaults_only1', 'defaults_only2'],
         ), loader=fake_loader, variable_manager=v)
 
         # first we assert that the defaults as viewed as a whole are the merged results
@@ -341,8 +341,8 @@ class TestVariableManager(unittest.TestCase):
         })
 
         play1 = Play.load(dict(
-           hosts=['all'],
-           roles=['role1', 'role2'],
+            hosts=['all'],
+            roles=['role1', 'role2'],
         ), loader=fake_loader, variable_manager=v)
 
         # The task defined by common-role exists twice because role1
