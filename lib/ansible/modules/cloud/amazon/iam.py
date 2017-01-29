@@ -297,9 +297,9 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
         error_msg = boto_exception(err)
         if 'cannot be found' in error_msg and updated:
             current_keys, status = \
-            [ck['access_key_id'] for ck in
+                [ck['access_key_id'] for ck in
              iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata],\
-            [ck['status'] for ck in
+                [ck['status'] for ck in
                 iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata]
             name = new_name
         else:

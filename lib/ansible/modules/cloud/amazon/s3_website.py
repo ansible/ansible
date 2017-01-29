@@ -267,9 +267,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive = [
-                               ['redirect_all_requests', 'suffix'],
-                               ['redirect_all_requests', 'error_key']
-                             ])
+            ['redirect_all_requests', 'suffix'],
+            ['redirect_all_requests', 'error_key']
+            ])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

@@ -166,21 +166,21 @@ def main():
     # Setup the Ansible module
     module = AnsibleModule(
         argument_spec=dict(
-                           key=dict(required=True, default=None, type='str'),
-                           value_type=dict(required=False,
+            key=dict(required=True, default=None, type='str'),
+            value_type=dict(required=False,
                                            choices=['int', 'bool',
                                                     'float', 'string'],
                                            type='str'),
-                           value=dict(required=False, default=None,
+            value=dict(required=False, default=None,
                                       type='str'),
-                           state=dict(required=True, default=None,
+            state=dict(required=True, default=None,
                                       choices=['present', 'get', 'absent'],
                                       type='str'),
-                           direct=dict(required=False,
+            direct=dict(required=False,
                                        default=False, type='bool'),
-                           config_source=dict(required=False,
+            config_source=dict(required=False,
                                               default=None, type='str')
-                           ),
+            ),
         supports_check_mode=True
     )
 

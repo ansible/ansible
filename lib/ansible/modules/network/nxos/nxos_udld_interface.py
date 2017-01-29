@@ -461,10 +461,10 @@ def get_commands_remove_udld_interface(delta, interface, module, existing):
 
 def main():
     argument_spec = dict(
-            mode=dict(choices=['enabled', 'disabled', 'aggressive'],
+        mode=dict(choices=['enabled', 'disabled', 'aggressive'],
                       required=True),
-            interface=dict(type='str', required=True),
-            state=dict(choices=['absent', 'present'], default='present'),
+        interface=dict(type='str', required=True),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

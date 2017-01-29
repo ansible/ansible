@@ -273,7 +273,7 @@ class Rhsm(RegistrationBase):
         # Quick version...
         if False:
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-                   os.path.isfile('/etc/pki/consumer/key.pem')
+                os.path.isfile('/etc/pki/consumer/key.pem')
 
         args = [SUBMAN_CMD, 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)
@@ -469,26 +469,26 @@ def main():
     rhsm = Rhsm(None)
 
     module = AnsibleModule(
-                argument_spec = dict(
-                    state = dict(default='present', choices=['present', 'absent']),
-                    username = dict(default=None, required=False),
-                    password = dict(default=None, required=False, no_log=True),
-                    server_hostname = dict(default=rhsm.config.get_option('server.hostname'), required=False),
-                    server_insecure = dict(default=rhsm.config.get_option('server.insecure'), required=False),
-                    rhsm_baseurl = dict(default=rhsm.config.get_option('rhsm.baseurl'), required=False),
-                    autosubscribe = dict(default=False, type='bool'),
-                    activationkey = dict(default=None, required=False),
-                    org_id = dict(default=None, required=False),
-                    environment = dict(default=None, required=False, type='str'),
-                    pool = dict(default='^$', required=False, type='str'),
-                    consumer_type = dict(default=None, required=False),
-                    consumer_name = dict(default=None, required=False),
-                    consumer_id = dict(default=None, required=False),
-                    force_register = dict(default=False, type='bool'),
-                ),
-                required_together = [ ['username', 'password'], ['activationkey', 'org_id'] ],
-                mutually_exclusive = [ ['username', 'activationkey'] ],
-            )
+        argument_spec = dict(
+            state = dict(default='present', choices=['present', 'absent']),
+            username = dict(default=None, required=False),
+            password = dict(default=None, required=False, no_log=True),
+            server_hostname = dict(default=rhsm.config.get_option('server.hostname'), required=False),
+            server_insecure = dict(default=rhsm.config.get_option('server.insecure'), required=False),
+            rhsm_baseurl = dict(default=rhsm.config.get_option('rhsm.baseurl'), required=False),
+            autosubscribe = dict(default=False, type='bool'),
+            activationkey = dict(default=None, required=False),
+            org_id = dict(default=None, required=False),
+            environment = dict(default=None, required=False, type='str'),
+            pool = dict(default='^$', required=False, type='str'),
+            consumer_type = dict(default=None, required=False),
+            consumer_name = dict(default=None, required=False),
+            consumer_id = dict(default=None, required=False),
+            force_register = dict(default=False, type='bool'),
+            ),
+        required_together = [ ['username', 'password'], ['activationkey', 'org_id'] ],
+        mutually_exclusive = [ ['username', 'activationkey'] ],
+        )
 
     rhsm.module = module
     state = module.params['state']

@@ -182,10 +182,10 @@ def main():
             project_id=dict(),
         ),
         mutually_exclusive=[
-             [ 'instance_name', 'instance_pattern' ]
+            [ 'instance_name', 'instance_pattern' ]
         ],
         required_one_of=[
-             [ 'instance_name', 'instance_pattern' ]
+            [ 'instance_name', 'instance_pattern' ]
         ]
     )
 

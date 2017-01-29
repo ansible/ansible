@@ -698,19 +698,19 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            cidr_block = dict(),
-            instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
-            dns_support = dict(type='bool', default=True),
-            dns_hostnames = dict(type='bool', default=True),
-            subnets = dict(type='list'),
-            vpc_id = dict(),
-            internet_gateway = dict(type='bool', default=False),
-            resource_tags = dict(type='dict', required=True),
-            route_tables = dict(type='list'),
-            state = dict(choices=['present', 'absent'], default='present'),
-        )
+        cidr_block = dict(),
+        instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=300),
+        dns_support = dict(type='bool', default=True),
+        dns_hostnames = dict(type='bool', default=True),
+        subnets = dict(type='list'),
+        vpc_id = dict(),
+        internet_gateway = dict(type='bool', default=False),
+        resource_tags = dict(type='dict', required=True),
+        route_tables = dict(type='list'),
+        state = dict(choices=['present', 'absent'], default='present'),
+    )
     )
 
     module = AnsibleModule(

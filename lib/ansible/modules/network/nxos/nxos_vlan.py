@@ -555,17 +555,17 @@ def execute_show_command(command, module, command_type='cli_show'):
 
 def main():
     argument_spec = dict(
-            vlan_id=dict(required=False, type='str'),
-            vlan_range=dict(required=False),
-            name=dict(required=False),
-            vlan_state=dict(choices=['active', 'suspend'], required=False),
-            mapped_vni=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        vlan_id=dict(required=False, type='str'),
+        vlan_range=dict(required=False),
+        name=dict(required=False),
+        vlan_state=dict(choices=['active', 'suspend'], required=False),
+        mapped_vni=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            admin_state=dict(choices=['up', 'down'], required=False),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        admin_state=dict(choices=['up', 'down'], required=False),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                  mutually_exclusive=[['vlan_range', 'name'],

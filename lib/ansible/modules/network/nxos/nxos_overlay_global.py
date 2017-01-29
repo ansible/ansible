@@ -370,18 +370,18 @@ def normalize_mac(proposed_mac, module):
 
 def main():
     argument_spec = dict(
-            anycast_gateway_mac=dict(required=True, type='str'),
-            m_facts=dict(required=False, default=False, type='bool'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        anycast_gateway_mac=dict(required=True, type='str'),
+        m_facts=dict(required=False, default=False, type='bool'),
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
 
     args =  [
-            'anycast_gateway_mac'
-        ]
+        'anycast_gateway_mac'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

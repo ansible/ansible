@@ -326,13 +326,13 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True},
-            instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
-            wait={'required': False, 'default': True, 'type': 'bool'},
-            wait_timeout={'required': False, 'default': 0, 'type': 'int'}
-        )
+        state={'required': True},
+        instance_id={'required': True},
+        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
+        wait={'required': False, 'default': True, 'type': 'bool'},
+        wait_timeout={'required': False, 'default': 0, 'type': 'int'}
+    )
     )
 
     module = AnsibleModule(

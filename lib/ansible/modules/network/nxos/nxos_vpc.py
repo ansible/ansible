@@ -436,7 +436,7 @@ def get_vpc(module):
     body = execute_show_command(command, module)[0]
     domain = str(body['vpc-domain-id'])
     auto_recovery = get_autorecovery(str(
-            body['vpc-auto-recovery-status']))
+        body['vpc-auto-recovery-status']))
 
     if domain != 'not configured':
         delay_restore = None
@@ -563,19 +563,19 @@ def get_commands_to_remove_vpc_interface(portchannel, config_value):
 
 def main():
     argument_spec = dict(
-            domain=dict(required=True, type='str'),
-            role_priority=dict(required=False, type='str'),
-            system_priority=dict(required=False, type='str'),
-            pkl_src=dict(required=False),
-            pkl_dest=dict(required=False),
-            pkl_vrf=dict(required=False, default='management'),
-            peer_gw=dict(required=True, type='bool'),
-            auto_recovery=dict(required=True, type='bool'),
-            delay_restore=dict(required=False, type='str'),
-            state=dict(choices=['absent', 'present'], default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        domain=dict(required=True, type='str'),
+        role_priority=dict(required=False, type='str'),
+        system_priority=dict(required=False, type='str'),
+        pkl_src=dict(required=False),
+        pkl_dest=dict(required=False),
+        pkl_vrf=dict(required=False, default='management'),
+        peer_gw=dict(required=True, type='bool'),
+        auto_recovery=dict(required=True, type='bool'),
+        delay_restore=dict(required=False, type='str'),
+        state=dict(choices=['absent', 'present'], default='present'),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

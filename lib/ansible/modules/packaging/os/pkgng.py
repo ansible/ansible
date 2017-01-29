@@ -305,17 +305,17 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 
 def main():
     module = AnsibleModule(
-            argument_spec       = dict(
-                state           = dict(default="present", choices=["present","absent"], required=False),
-                name            = dict(aliases=["pkg"], required=True, type='list'),
-                cached          = dict(default=False, type='bool'),
-                annotation      = dict(default="", required=False),
-                pkgsite         = dict(default="", required=False),
-                rootdir         = dict(default="", required=False, type='path'),
-                chroot          = dict(default="", required=False, type='path'),
-                autoremove      = dict(default=False, type='bool')),
-            supports_check_mode = True,
-            mutually_exclusive  =[["rootdir", "chroot"]])
+        argument_spec       = dict(
+            state           = dict(default="present", choices=["present","absent"], required=False),
+            name            = dict(aliases=["pkg"], required=True, type='list'),
+            cached          = dict(default=False, type='bool'),
+            annotation      = dict(default="", required=False),
+            pkgsite         = dict(default="", required=False),
+            rootdir         = dict(default="", required=False, type='path'),
+            chroot          = dict(default="", required=False, type='path'),
+            autoremove      = dict(default=False, type='bool')),
+        supports_check_mode = True,
+        mutually_exclusive  =[["rootdir", "chroot"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 

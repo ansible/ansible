@@ -178,8 +178,8 @@ def main():
         if not module.check_mode:
             # If this isn't a dry run, create or modify the site
             result.update(
-                    webfaction.create_website(
-                        *positional_args
+                webfaction.create_website(
+                    *positional_args
                     ) if not existing_site else webfaction.update_website (
                         *positional_args
                     )

@@ -158,10 +158,10 @@ def install_packages(module, pkgspec):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-                update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-                package      = dict(aliases=['pkg', 'name'], required=True)))
+        argument_spec    = dict(
+            state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
+            package      = dict(aliases=['pkg', 'name'], required=True)))
 
 
     if not os.path.exists(APT_PATH) or not os.path.exists(RPM_PATH):

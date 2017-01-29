@@ -572,20 +572,20 @@ def validate_params(param, module):
 
 def main():
     argument_spec = dict(
-            group=dict(required=True, type='str'),
-            interface=dict(required=True),
-            priority=dict(required=False, type='str'),
-            preempt=dict(required=False, type='bool'),
-            vip=dict(required=False, type='str'),
-            admin_state=dict(required=False, type='str',
+        group=dict(required=True, type='str'),
+        interface=dict(required=True),
+        priority=dict(required=False, type='str'),
+        preempt=dict(required=False, type='bool'),
+        vip=dict(required=False, type='str'),
+        admin_state=dict(required=False, type='str',
                                 choices=['shutdown', 'no shutdown'],
                                 default='no shutdown'),
-            authentication=dict(required=False, type='str'),
-            state=dict(choices=['absent', 'present'],
+        authentication=dict(required=False, type='str'),
+        state=dict(choices=['absent', 'present'],
                        required=False, default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

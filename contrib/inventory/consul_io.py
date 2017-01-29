@@ -252,10 +252,10 @@ class ConsulInventory(object):
                       ok = 'passing' == check['Status']
                       if ok:
                         suffix = self.config.get_availability_suffix(
-                                    'available_suffix', '_available')
+                            'available_suffix', '_available')
                       else:
                         suffix = self.config.get_availability_suffix(
-                                    'unavailable_suffix', '_unavailable')
+                            'unavailable_suffix', '_unavailable')
                       self.add_node_to_map(self.nodes_by_availability,
                                             service_name + suffix, node['Node'])
 

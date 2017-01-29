@@ -445,17 +445,17 @@ def get_vrf(vrf, module):
 
 def main():
     argument_spec = dict(
-            vrf=dict(required=True),
-            description=dict(default=None, required=False),
-            vni=dict(required=False, type='str'),
-            rd=dict(required=False, type='str'),
-            admin_state=dict(default='up', choices=['up', 'down'],
+        vrf=dict(required=True),
+        description=dict(default=None, required=False),
+        vni=dict(required=False, type='str'),
+        rd=dict(required=False, type='str'),
+        admin_state=dict(default='up', choices=['up', 'down'],
                              required=False),
-            state=dict(default='present', choices=['present', 'absent'],
+        state=dict(default='present', choices=['present', 'absent'],
                        required=False),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

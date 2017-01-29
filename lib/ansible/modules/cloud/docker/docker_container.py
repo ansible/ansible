@@ -1475,10 +1475,10 @@ class Container(DockerBaseClass):
             else:
                 expected_devices.append(
                     dict(
-                    CgroupPermissions=parts[2],
-                    PathInContainer=parts[1],
-                    PathOnHost=parts[0]
-                ))
+                        CgroupPermissions=parts[2],
+                        PathInContainer=parts[1],
+                        PathOnHost=parts[0]
+                        ))
         return expected_devices
 
     def _get_expected_entrypoint(self):

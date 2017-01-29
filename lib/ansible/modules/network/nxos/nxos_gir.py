@@ -408,7 +408,7 @@ def get_commands(module, state, mode):
         commands.append('no system mode maintenance')
 
     elif (module.params[
-         'system_mode_maintenance_dont_generate_profile'] is True and
+        'system_mode_maintenance_dont_generate_profile'] is True and
             mode == 'normal'):
         commands.append('system mode maintenance dont-generate-profile')
     elif (module.params[
@@ -434,20 +434,20 @@ def get_commands(module, state, mode):
         reset_reasons = get_reset_reasons(module)
         if (state == 'present' and
             module.params[
-            'system_mode_maintenance_on_reload_reset_reason'].lower() not
+                'system_mode_maintenance_on_reload_reset_reason'].lower() not
             in reset_reasons.lower()):
             commands.append('system mode maintenance on-reload '
                             'reset-reason {0}'.format(
-                module.params[
-                    'system_mode_maintenance_on_reload_reset_reason']))
+                                module.params[
+                                    'system_mode_maintenance_on_reload_reset_reason']))
         elif (state == 'absent' and
               module.params[
-              'system_mode_maintenance_on_reload_reset_reason'].lower() in
+                  'system_mode_maintenance_on_reload_reset_reason'].lower() in
               reset_reasons.lower()):
             commands.append('no system mode maintenance on-reload '
                             'reset-reason {0}'.format(
-                module.params[
-                    'system_mode_maintenance_on_reload_reset_reason']))
+                                module.params[
+                                    'system_mode_maintenance_on_reload_reset_reason']))
 
     if commands:
         commands.insert(0, 'terminal dont-ask')
@@ -456,32 +456,32 @@ def get_commands(module, state, mode):
 
 def main():
     argument_spec = dict(
-            system_mode_maintenance=dict(required=False, type='bool'),
-            system_mode_maintenance_dont_generate_profile=dict(required=False,
+        system_mode_maintenance=dict(required=False, type='bool'),
+        system_mode_maintenance_dont_generate_profile=dict(required=False,
                                                                type='bool'),
-            system_mode_maintenance_timeout=dict(required=False, type='str'),
-            system_mode_maintenance_shutdown=dict(required=False, type='bool'),
-            system_mode_maintenance_on_reload_reset_reason=dict(required=False,
+        system_mode_maintenance_timeout=dict(required=False, type='str'),
+        system_mode_maintenance_shutdown=dict(required=False, type='bool'),
+        system_mode_maintenance_on_reload_reset_reason=dict(required=False,
                 choices=['hw_error','svc_failure','kern_failure',
                          'wdog_timeout','fatal_error','lc_failure',
                          'match_any','manual_reload']),
-            state=dict(choices=['absent', 'present', 'default'],
+        state=dict(choices=['absent', 'present', 'default'],
                        default='present', required=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[[
-                                'system_mode_maintenance',
-                                'system_mode_maintenance_dont_generate_profile',
-                                'system_mode_maintenance_timeout',
-                                'system_mode_maintenance_shutdown',
-                                'system_mode_maintenance_on_reload_reset_reason'
+                                    'system_mode_maintenance',
+                                    'system_mode_maintenance_dont_generate_profile',
+                                    'system_mode_maintenance_timeout',
+                                    'system_mode_maintenance_shutdown',
+                                    'system_mode_maintenance_on_reload_reset_reason'
                                 ]],
                                 required_one_of=[[
-                                'system_mode_maintenance',
-                                'system_mode_maintenance_dont_generate_profile',
-                                'system_mode_maintenance_timeout',
-                                'system_mode_maintenance_shutdown',
-                                'system_mode_maintenance_on_reload_reset_reason'
+                                    'system_mode_maintenance',
+                                    'system_mode_maintenance_dont_generate_profile',
+                                    'system_mode_maintenance_timeout',
+                                    'system_mode_maintenance_shutdown',
+                                    'system_mode_maintenance_on_reload_reset_reason'
                                 ]],
                                 supports_check_mode=True)
 

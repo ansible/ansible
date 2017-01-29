@@ -123,7 +123,7 @@ def setvariable(cursor, mysqlvar, value):
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
+        argument_spec = dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),

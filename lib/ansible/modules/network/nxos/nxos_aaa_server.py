@@ -391,7 +391,7 @@ def get_aaa_server_info(server_type, module):
     aaa_regex = '.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
 
     server_body = execute_show_command(
-                server_command, module, command_type='cli_show_ascii')[0]
+        server_command, module, command_type='cli_show_ascii')[0]
 
     split_server = server_body.splitlines()
 
@@ -403,11 +403,11 @@ def get_aaa_server_info(server_type, module):
             aaa_server_info['deadtime'] = line.split(':')[1]
 
     request_body = execute_show_command(
-                request_command, module, command_type='cli_show_ascii')[0]
+        request_command, module, command_type='cli_show_ascii')[0]
     aaa_server_info['directed_request'] = request_body.replace('\n', '')
 
     key_body = execute_show_command(
-                global_key_command, module, command_type='cli_show_ascii')[0]
+        global_key_command, module, command_type='cli_show_ascii')[0]
 
     try:
         match_global_key = re.match(aaa_regex, key_body, re.DOTALL)
@@ -480,15 +480,15 @@ def default_aaa_server(existing, params, server_type):
 
 def main():
     argument_spec = dict(
-            server_type=dict(type='str',
+        server_type=dict(type='str',
                              choices=['radius', 'tacacs'], required=True),
-            global_key=dict(type='str'),
-            encrypt_type=dict(type='str', choices=['0', '7']),
-            deadtime=dict(type='str'),
-            server_timeout=dict(type='str'),
-            directed_request=dict(type='str',
+        global_key=dict(type='str'),
+        encrypt_type=dict(type='str', choices=['0', '7']),
+        deadtime=dict(type='str'),
+        server_timeout=dict(type='str'),
+        directed_request=dict(type='str',
                                   choices=['enabled', 'disabled', 'default']),
-            state=dict(choices=['default', 'present'], default='present'),
+        state=dict(choices=['default', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -522,7 +522,7 @@ def main():
                     raise ValueError
             except ValueError:
                 module.fail_json(
-                        msg='deadtime must be an integer between 0 and 1440')
+                    msg='deadtime must be an integer between 0 and 1440')
 
         if server_timeout:
             try:
@@ -533,7 +533,7 @@ def main():
                     msg='server_timeout must be an integer between 1 and 60')
 
         delta = dict(set(proposed.items()).difference(
-                                                    existing.items()))
+            existing.items()))
         if delta:
             command = config_aaa_server(delta, server_type)
             if command:

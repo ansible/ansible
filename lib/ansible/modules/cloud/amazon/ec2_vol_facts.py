@@ -79,24 +79,24 @@ def get_volume_info(volume):
     attachment = volume.attach_data
 
     volume_info = {
-                    'create_time': volume.create_time,
-                    'id': volume.id,
-                    'encrypted': volume.encrypted,
-                    'iops': volume.iops,
-                    'size': volume.size,
-                    'snapshot_id': volume.snapshot_id,
-                    'status': volume.status,
-                    'type': volume.type,
-                    'zone': volume.zone,
-                    'region': volume.region.name,
-                    'attachment_set': {
-                        'attach_time': attachment.attach_time,
-                        'device': attachment.device,
-                        'instance_id': attachment.instance_id,
-                        'status': attachment.status
-                    },
-                    'tags': volume.tags
-                }
+        'create_time': volume.create_time,
+        'id': volume.id,
+        'encrypted': volume.encrypted,
+        'iops': volume.iops,
+        'size': volume.size,
+        'snapshot_id': volume.snapshot_id,
+        'status': volume.status,
+        'type': volume.type,
+        'zone': volume.zone,
+        'region': volume.region.name,
+        'attachment_set': {
+            'attach_time': attachment.attach_time,
+            'device': attachment.device,
+            'instance_id': attachment.instance_id,
+            'status': attachment.status
+            },
+        'tags': volume.tags
+        }
 
     return volume_info
 
