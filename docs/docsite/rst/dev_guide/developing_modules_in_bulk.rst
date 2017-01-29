@@ -37,7 +37,8 @@ The directory name should represent the **product** or **OS** name, not the comp
 
 Each module should have the above (or similar) prefix, see existing :doc:`../list_of_all_modules` for existing examples.
 
-Note
+**Note:**
+
 * File and directory names are always in lower case
 * Words are separated with an underscore (`_`) character
 
@@ -52,7 +53,9 @@ After reading the "Before you start coding" section you will hopefully have a re
 We've found that writing a list of your proposed module names and a one or two line description of what they will achive and having that reviewed by Ansible is a great way to ensure the modules fit the way people have used Ansible Modules before, and therefore make them easier to use
 
 FIXME: How do we want to know the above, will everyone had a named contact at Ansible, what about if it's the community, rather than a vendor?
+
 FIXME: Some light weight review process of the above
+
 FIXME: I (gundalow) isn't sure if we want to use the Public Core Meetings with this, though that is one recommended way for the community to reach the Core Team.
 
 Where to get support
@@ -60,12 +63,12 @@ Where to get support
 Ansible has a very strong community, and we trust you as module developers will help grow.
 
 The community is a great pool of resource and knowledge.
-# FIXME Links to page that has community info in
 
-Subscribe to (at least) announce and devel. This is so you will be aware of deadlines regarding codefreeze in the lead upto releases and other important information
+On :doc:`community` you can find how to:
 
-We have found that IRC `#ansible-devel` works best for module developers so we can have an interactive dialogue.
-Code and questions can be put into pastebin/gist.github.com, then you can reference that URL in chat.
+* Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
+* `#ansible-devel` - We have found that IRC `#ansible-devel` works best for module developers so we can have an interactive dialogue.
+* Join the various weekly IRC meetings
 
 
 Your First PR
@@ -93,7 +96,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again
 
-After (pushing and publishing your PR on https://github.com/ansible/ansible a Shippable CI test should run (generally within a few minutes), check the results (at the end of the PR page) and ensure it's passing (green), if not inspect each of the results. Most of the errors should be self explanatory and are generally related to badly formatted documentation (FIXME yamlonline validator) or code that isn't valid Python 2.4 & Python 2.6 (FIXME porting page). If you aren't sure what a Shippable test message means copy it into the PR and add as a comment and we will review.
+After publishing your PR on https://github.com/ansible/ansible a Shippable CI test should run (generally within a few minutes), check the results (at the end of the PR page) and ensure it's passing (green), if not inspect each of the results. Most of the errors should be self explanatory and are generally related to badly formatted documentation (see :doc:`YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means copy it into the PR and add as a comment and we will review.
 
 If you need further advice join the `#ansible-devel` IRC channel (details in "Where to get support")
 
@@ -103,20 +106,41 @@ Please don't force push your PRs, we prefer individual commits in the same PR, t
 We have a "ansibot" helper that comments on GitHub Issues and PRs which should highlight important information.
 
 
-
-
 Subsequent PRs
 ``````````````
 
-Then one module per PR
-* Why
+By this point you first PR that defined the module namespace should have been merged. You can take the lessons learned from the first PR and apply it to the rest of the modules.
+
+Raise exactly one PR per module for the remaining modules.
+
+Over the years we've experimented with different sized PRs, some containing one module, some containing five, some even containing many tens of modules in, we've found the following:
+
+* A PR with a single file gets a higher quality review
+* PRs with multiple modules are harder for the creator to ensure all feedback has been applied
+* Lower priority to review. People generally review the easier things first, what would you review first a PR with one file, or five?
+
+FIXME, should we tell people to only raise one at a time, or (say) 5 PRs at once?
+
+As with your first PR, please don't "force push" updates to GitHub as it makes the reviewers (and submitters) life a lot harder.
+
+After each PR has been merged please update the `CHANGELOG.md <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_ so your module is listed under the "New Modules" section for the new release.
 
 Finally
-````````````````````````````
-Ansibullbot
-Once your module is accepted, you become responsible for maintenance of that module, which means responding to pull requests and issues in a reasonably timely manner.
+```````
 
-CHANEGLOG.md
+Now that your modules are integrated there are a few bits of housekeeping to be done
+
+**Maintainers**
+Update `Ansibullbot` so it knows who to notify if/when bugs or PRs are raised against your modules
+`MAINTAINERS.txt <https://github.com/ansible/ansibullbot/blob/master/MAINTAINERS.txt>`_.
+
+If there are multiple people that can be notified, please list them. That avoids waiting on a single person who may be unavailable for any reason. Note that in `MAINTAINERS.txt` you can take ownership of an entire directory.
+
+
+**Review Module web docs**
+Review the autogenerated module documentation for each of your modules, found in `Module Docs <http://docs.ansible.com/ansible/modules_by_category.html>`_ to ensure they are correctly formatted. If there are any issues please fix by raising a single PR.
+
+If the module documentation hasn't been put live yet let a member of the Ansible Core Team know in `#ansible-devel` IRC channel.
 
 
 .. seealso::
@@ -127,7 +151,6 @@ CHANEGLOG.md
 
 
 * FIXME: Fix heading levels (Before you start, (sub, sub), Your first PR
-* FIXME: Link from developing_modules.rst
 * FIXME: Review all links
 * FIXME: Review all anchors
 * FIXME: What's a better filename and title for this page?
