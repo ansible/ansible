@@ -284,7 +284,7 @@ def main():
             string_match        = dict(),
             request_interval    = dict(type='int', choices=[10, 30], default=30),
             failure_threshold   = dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

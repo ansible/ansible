@@ -15,9 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {
-  'version': '1.0',
-  'status': ['preview'],
-  'supported_by': 'committer'
+    'version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'committer'
 }
 
 DOCUMENTATION = '''
@@ -243,7 +243,7 @@ def main():
             role_arn = dict(required=False, type='str'),
             grant_types = dict(required=False, type='list'),
             clean_invalid_entries = dict(type='bool', default=True),
-        )
+    )
     )
 
     module = AnsibleModule(

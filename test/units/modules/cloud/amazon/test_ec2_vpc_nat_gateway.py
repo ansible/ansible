@@ -63,7 +63,7 @@ def run(play):
                 options=options,
                 passwords=passwords,
                 stdout_callback='default',
-            )
+        )
         results = tqm.run(play)
     finally:
         if tqm is not None:

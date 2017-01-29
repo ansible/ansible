@@ -285,8 +285,8 @@ def load_mongocnf():
     try:
         config.readfp(open(mongocnf))
         creds = dict(
-          user=config.get('client', 'user'),
-          password=config.get('client', 'pass')
+            user=config.get('client', 'user'),
+            password=config.get('client', 'pass')
         )
     except (ConfigParser.NoOptionError, IOError):
         return False

@@ -311,7 +311,7 @@ def create_maintenance(auth_headers, url, statuspage, host_ids,
                 "maintenance_notify_72_hr": str(int(maintenance_notify_72_hr)),
                 "maintenance_notify_24_hr": str(int(maintenance_notify_24_hr)),
                 "maintenance_notify_1_hr": str(int(maintenance_notify_1_hr))
-            })
+        })
         response = open_url(
                 url + "/v2/maintenance/schedule", data=values,
                 headers=auth_headers)

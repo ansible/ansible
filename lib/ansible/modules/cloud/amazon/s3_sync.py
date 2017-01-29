@@ -428,7 +428,7 @@ def upload_files(s3, bucket, filelist, params):
     ret = []
     for entry in filelist:
         args = {
-          'ContentType': entry['mime_type']
+            'ContentType': entry['mime_type']
         }
         if params.get('permission'):
             args['ACL'] = params['permission']
@@ -451,7 +451,7 @@ def main():
             exclude = dict(required=False, default=".*"),
             include = dict(required=False, default="*"),
             # future options: cache_control (string or map, perhaps), encoding, metadata, storage_class, retries
-        )
+    )
     )
 
     module = AnsibleModule(

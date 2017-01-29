@@ -795,8 +795,8 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 
 def main():
   module = AnsibleModule(
-    argument_spec = dict(
-      acpi = dict(type='bool', default='yes'),
+      argument_spec = dict(
+          acpi = dict(type='bool', default='yes'),
       agent = dict(type='bool'),
       args = dict(type='str', default=None),
       api_host = dict(required=True),

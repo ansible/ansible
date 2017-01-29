@@ -402,8 +402,8 @@ def umount_instance(module, proxmox, vm, vmid, timeout):
 
 def main():
   module = AnsibleModule(
-    argument_spec = dict(
-      api_host = dict(required=True),
+      argument_spec = dict(
+          api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
       vmid = dict(required=False),

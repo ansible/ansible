@@ -45,7 +45,7 @@ class TestVariableUtils(unittest.TestCase):
                 b=dict(b=2, c=dict(baz='bam')),
                 result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
             ),
-        )
+    )
     test_replace_data = (
             dict(
                 a=dict(a=1),
@@ -62,7 +62,7 @@ class TestVariableUtils(unittest.TestCase):
                 b=dict(b=2, c=defaultdict(baz='bam')),
                 result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
             ),
-        )
+    )
 
     def setUp(self):
         pass

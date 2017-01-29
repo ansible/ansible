@@ -471,7 +471,7 @@ def main():
             'shutdown',
             'source_interface',
             'source_interface_hold_down_time'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

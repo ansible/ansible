@@ -1062,7 +1062,7 @@ def main():
             publicly_accessible = dict(required=False),
             character_set_name = dict(required=False),
             force_failover    = dict(type='bool', required=False, default=False)
-        )
+    )
     )
 
     module = AnsibleModule(

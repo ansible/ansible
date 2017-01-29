@@ -498,7 +498,7 @@ def main():
             zone                  ={'required': False, 'default': None},
             wait                  ={'required': False, 'type' : 'bool', 'default': True},
             hard_modify           ={'required': False, 'type': 'bool', 'default': False}
-        )
+    )
     )
 
     module = AnsibleModule(

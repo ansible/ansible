@@ -301,7 +301,7 @@ def main():
 
     args =  [
             'ssm_range'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

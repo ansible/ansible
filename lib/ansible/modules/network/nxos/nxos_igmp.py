@@ -356,7 +356,7 @@ def main():
     args =  [
             "flush_routes",
             "enforce_rtr_alert",
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

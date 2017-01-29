@@ -409,7 +409,7 @@ def main():
             vpc_id                       = dict(required=False),
             wait                         = dict(required=False, type='bool', default=False),
             wait_timeout                 = dict(required=False, type='int', default=300),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

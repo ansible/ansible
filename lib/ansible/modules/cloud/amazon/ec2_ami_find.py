@@ -318,7 +318,7 @@ def main():
             virtualization_type = dict(required=False),
             no_result_action = dict(required=False, default='success',
                 choices = ['success', 'fail']),
-        )
+    )
     )
 
     module = AnsibleModule(

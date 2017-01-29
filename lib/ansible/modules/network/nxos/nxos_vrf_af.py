@@ -388,7 +388,7 @@ def main():
             'safi',
             'afi',
             'route_target_both_auto_evpn'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

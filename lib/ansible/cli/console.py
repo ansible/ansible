@@ -206,7 +206,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                         stdout_callback=cb,
                         run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                         run_tree=False,
-                    )
+                )
 
                 result = self._tqm.run(play)
             finally:

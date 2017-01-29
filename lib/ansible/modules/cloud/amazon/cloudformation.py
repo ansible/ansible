@@ -401,7 +401,7 @@ def main():
             template_format=dict(default=None, choices=['json', 'yaml'], required=False),
             role_arn=dict(default=None, required=False),
             tags=dict(default=None, type='dict')
-        )
+    )
     )
 
     module = AnsibleModule(
@@ -413,7 +413,7 @@ def main():
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-      'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
     }
     state = module.params['state']
     stack_params['StackName'] = module.params['stack_name']

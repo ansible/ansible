@@ -48,7 +48,7 @@ class TestReturnValues(unittest.TestCase):
                 frozenset(['1', 'dos', 'amigos', 'musketeers', 'pong', 'balls', 'raquets'])),
             (u'Toshio くらとみ', frozenset(['Toshio くらとみ'])),
             ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
-        )
+    )
 
     def test_return_values(self):
         for data, expected in self.dataset:

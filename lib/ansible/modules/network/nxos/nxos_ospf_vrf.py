@@ -544,7 +544,7 @@ def main():
             'timer_throttle_spf_hold',
             'timer_throttle_spf_max',
             'auto_cost'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

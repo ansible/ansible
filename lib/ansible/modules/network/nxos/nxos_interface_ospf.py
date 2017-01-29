@@ -628,7 +628,7 @@ def main():
             'message_digest_algorithm_type',
             'message_digest_encryption_type',
             'message_digest_password'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

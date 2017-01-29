@@ -164,7 +164,7 @@ def main():
                 gem_path=dict(default=None, required=False, type='path'),
                 binstub_directory=dict(default=None, required=False, type='path'),
                 extra_args=dict(default=None, required=False),
-            ),
+        ),
         supports_check_mode=True
         )
 

@@ -203,7 +203,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
+    ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
    AUTHOR, 'manual'),
 ]
 

@@ -347,7 +347,7 @@ def _system_state_change(module, project_quota_output):
     changes_required, quota_change_request = _system_state_change_details(
             module,
             project_quota_output
-        )
+    )
 
     if changes_required:
         return True
@@ -454,7 +454,7 @@ def main():
             changes_required, quota_change_request = _system_state_change_details(
                     module,
                     project_quota_output
-                )
+            )
 
             if changes_required:
                 for quota_type in quota_change_request.keys():

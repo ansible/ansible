@@ -528,7 +528,7 @@ def main():
             'multicast_group',
             'peer_list',
             'suppress_arp'
-        ]
+    ]
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing

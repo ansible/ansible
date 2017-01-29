@@ -199,7 +199,7 @@ def main():
                         "type": module.params['exchange_type'],
                         "arguments": module.params['arguments']
                     })
-                )
+            )
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 

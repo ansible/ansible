@@ -451,7 +451,7 @@ def main():
             s3_url         = dict(aliases=['S3_URL']),
             rgw            = dict(default='no', type='bool'),
             src            = dict(),
-        ),
+    ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

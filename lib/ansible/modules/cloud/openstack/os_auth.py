@@ -64,8 +64,8 @@ def main():
         module.exit_json(
             changed=False,
             ansible_facts=dict(
-              auth_token=cloud.auth_token,
-              service_catalog=cloud.service_catalog))
+                auth_token=cloud.auth_token,
+                service_catalog=cloud.service_catalog))
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 

@@ -509,7 +509,7 @@ def main():
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
             state = dict(choices=['absent', 'present', 'list'], default='present')
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

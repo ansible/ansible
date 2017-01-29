@@ -430,7 +430,7 @@ def main():
             'route_target_both',
             'route_target_import',
             'route_target_export'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing
@@ -461,7 +461,7 @@ def main():
                                          'It is highly recommended to use a task '
                                          '(with default as value) to explicitly '
                                          'unconfigure it.'.format(
-                                            existing['route_distinguisher']))
+                                             existing['route_distinguisher']))
                     remove_commands = ['no rd {0}'.format(
                                             existing['route_distinguisher'])]
 

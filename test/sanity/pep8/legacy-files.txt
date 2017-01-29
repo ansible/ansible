@@ -14,8 +14,6 @@ contrib/inventory/ssh_config.py
 contrib/inventory/vbox.py
 contrib/inventory/zone.py
 docs/api/conf.py
-docs/docsite/conf.py
-docs/docsite/rst/conf.py
 docs/docsite/rst/dev_guide/conf.py
 examples/scripts/uptime.py
 hacking/metadata-tool.py
@@ -87,7 +85,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_net.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table_facts.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_subnet.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_subnet_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw_facts.py
@@ -157,7 +154,6 @@ lib/ansible/modules/cloud/misc/proxmox.py
 lib/ansible/modules/cloud/misc/proxmox_kvm.py
 lib/ansible/modules/cloud/misc/proxmox_template.py
 lib/ansible/modules/cloud/misc/serverless.py
-lib/ansible/modules/cloud/misc/virt.py
 lib/ansible/modules/cloud/misc/xenserver_facts.py
 lib/ansible/modules/cloud/openstack/_glance_image.py
 lib/ansible/modules/cloud/openstack/_keystone_user.py
@@ -169,7 +165,6 @@ lib/ansible/modules/cloud/openstack/_quantum_router.py
 lib/ansible/modules/cloud/openstack/_quantum_router_gateway.py
 lib/ansible/modules/cloud/openstack/_quantum_router_interface.py
 lib/ansible/modules/cloud/openstack/_quantum_subnet.py
-lib/ansible/modules/cloud/openstack/os_auth.py
 lib/ansible/modules/cloud/openstack/os_nova_host_aggregate.py
 lib/ansible/modules/cloud/openstack/os_object.py
 lib/ansible/modules/cloud/openstack/os_quota.py
@@ -182,7 +177,6 @@ lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
 lib/ansible/modules/cloud/softlayer/sl_vm.py
 lib/ansible/modules/cloud/vmware/vca_fw.py
 lib/ansible/modules/cloud/vmware/vmware_guest.py
-lib/ansible/modules/cloud/vmware/vmware_local_user_manager.py
 lib/ansible/modules/cloud/vmware/vsphere_guest.py
 lib/ansible/modules/cloud/webfaction/webfaction_app.py
 lib/ansible/modules/cloud/webfaction/webfaction_db.py
@@ -193,7 +187,6 @@ lib/ansible/modules/clustering/consul.py
 lib/ansible/modules/clustering/consul_acl.py
 lib/ansible/modules/clustering/consul_kv.py
 lib/ansible/modules/clustering/consul_session.py
-lib/ansible/modules/commands/command.py
 lib/ansible/modules/commands/script.py
 lib/ansible/modules/crypto/openssl_publickey.py
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py
@@ -220,7 +213,6 @@ lib/ansible/modules/files/copy.py
 lib/ansible/modules/files/find.py
 lib/ansible/modules/files/ini_file.py
 lib/ansible/modules/files/lineinfile.py
-lib/ansible/modules/files/stat.py
 lib/ansible/modules/files/synchronize.py
 lib/ansible/modules/files/tempfile.py
 lib/ansible/modules/files/unarchive.py
@@ -231,7 +223,6 @@ lib/ansible/modules/monitoring/boundary_meter.py
 lib/ansible/modules/monitoring/datadog_monitor.py
 lib/ansible/modules/monitoring/librato_annotation.py
 lib/ansible/modules/monitoring/logicmonitor.py
-lib/ansible/modules/monitoring/logicmonitor_facts.py
 lib/ansible/modules/monitoring/nagios.py
 lib/ansible/modules/monitoring/pagerduty.py
 lib/ansible/modules/monitoring/pagerduty_alert.py
@@ -357,7 +348,6 @@ lib/ansible/modules/storage/netapp/netapp_e_snapshot_group.py
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_volume.py
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py
 lib/ansible/modules/storage/netapp/netapp_e_storagepool.py
-lib/ansible/modules/system/authorized_key.py
 lib/ansible/modules/system/cron.py
 lib/ansible/modules/system/debconf.py
 lib/ansible/modules/system/filesystem.py
@@ -384,7 +374,6 @@ lib/ansible/modules/utilities/logic/pause.py
 lib/ansible/modules/utilities/logic/set_fact.py
 lib/ansible/modules/utilities/logic/wait_for.py
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py
-lib/ansible/modules/web_infrastructure/apache2_module.py
 lib/ansible/modules/web_infrastructure/django_manage.py
 lib/ansible/modules/web_infrastructure/jenkins_job.py
 lib/ansible/modules/web_infrastructure/jira.py
@@ -479,13 +468,9 @@ test/units/module_utils/test_text.py
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py
 test/units/parsing/test_mod_args.py
 test/units/parsing/yaml/test_loader.py
-test/units/playbook/test_block.py
 test/units/playbook/test_helpers.py
 test/units/playbook/test_play_context.py
-test/units/playbook/test_task.py
 test/units/plugins/lookup/test_ini.py
 test/units/plugins/lookup/test_password.py
-test/units/template/test_templar.py
 test/units/template/test_template_utilities.py
 test/units/utils/test_vars.py
-test/units/vars/test_variable_manager.py

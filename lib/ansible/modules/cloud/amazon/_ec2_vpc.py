@@ -710,7 +710,7 @@ def main():
             resource_tags = dict(type='dict', required=True),
             route_tables = dict(type='list'),
             state = dict(choices=['present', 'absent'], default='present'),
-        )
+    )
     )
 
     module = AnsibleModule(

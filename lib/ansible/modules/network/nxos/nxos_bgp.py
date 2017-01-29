@@ -948,7 +948,7 @@ def main():
             "timer_bgp_hold",
             "timer_bgp_keepalive",
             "vrf"
-        ]
+    ]
 
     if module.params['vrf'] != 'default':
         for param, inserted_value in module.params.items():

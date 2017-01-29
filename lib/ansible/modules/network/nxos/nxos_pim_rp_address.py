@@ -371,7 +371,7 @@ def main():
             'prefix_list',
             'route_map',
             'bidir'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

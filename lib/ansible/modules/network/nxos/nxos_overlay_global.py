@@ -381,7 +381,7 @@ def main():
 
     args =  [
             'anycast_gateway_mac'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

@@ -607,7 +607,7 @@ def main():
         mutually_exclusive=[
                 ['reboot', 'special_time'],
                 ['insertafter', 'insertbefore'],
-            ]
+        ]
     )
 
     name         = module.params['name']

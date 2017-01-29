@@ -117,14 +117,14 @@ if HAVE_SEOBJECT:
 
 ### Make backward compatible
 option_to_file_type_str = dict(
-  a = 'all files',
-  b = 'block device',
-  c = 'character device',
-  d = 'directory',
-  f = 'regular file',
-  l = 'symbolic link',
-  p = 'named pipe',
-  s = 'socket file',
+    a = 'all files',
+    b = 'block device',
+    c = 'character device',
+    d = 'directory',
+    f = 'regular file',
+    l = 'symbolic link',
+    p = 'named pipe',
+    s = 'socket file',
 )
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -232,7 +232,7 @@ def main():
                 selevel = dict(required=False, default=None, aliases=['serange']),
                 state   = dict(required=False, choices=['present', 'absent'], default='present'),
                 reload  = dict(required=False, type='bool', default='yes'),
-            ),
+        ),
         supports_check_mode = True,
     )
     if not HAVE_SELINUX:

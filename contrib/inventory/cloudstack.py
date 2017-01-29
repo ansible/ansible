@@ -200,7 +200,7 @@ class CloudStackInventory(object):
                 if group_name and not group_name in data:
                     data[group_name] = {
                             'hosts': []
-                        }
+                    }
 
         hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
         if not hosts:

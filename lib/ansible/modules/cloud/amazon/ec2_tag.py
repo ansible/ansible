@@ -133,7 +133,7 @@ def main():
             resource = dict(required=True),
             tags = dict(type='dict'),
             state = dict(default='present', choices=['present', 'absent', 'list']),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

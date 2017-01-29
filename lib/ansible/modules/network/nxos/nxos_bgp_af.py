@@ -1048,7 +1048,7 @@ def main():
             "table_map",
             "table_map_filter",
             "vrf"
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
 

@@ -714,7 +714,7 @@ def main():
             'transport_passive_only',
             'update_source',
             'vrf'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):

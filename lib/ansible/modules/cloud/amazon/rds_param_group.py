@@ -225,7 +225,7 @@ def main():
             description       = dict(required=False),
             params            = dict(required=False, aliases=['parameters'], type='dict'),
             immediate         = dict(required=False, type='bool'),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

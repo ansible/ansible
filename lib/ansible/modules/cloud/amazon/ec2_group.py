@@ -250,7 +250,7 @@ def main():
             purge_rules=dict(default=True, required=False, type='bool'),
             purge_rules_egress=dict(default=True, required=False, type='bool'),
 
-        )
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

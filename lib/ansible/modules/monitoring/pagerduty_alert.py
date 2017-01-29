@@ -192,7 +192,7 @@ def main():
             'triggered': 'trigger',
             'acknowledged': 'acknowledge',
             'resolved': 'resolve'
-        }
+    }
 
     event_type = state_event_dict[state]
 

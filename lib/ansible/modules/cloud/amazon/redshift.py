@@ -434,7 +434,7 @@ def main():
             new_cluster_identifier              = dict(aliases=['new_identifier']),
             wait                                = dict(type='bool', default=False),
             wait_timeout                        = dict(default=300),
-        )
+    )
     )
 
     module = AnsibleModule(

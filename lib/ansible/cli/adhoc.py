@@ -195,7 +195,7 @@ class AdHocCLI(CLI):
                     stdout_callback=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=run_tree,
-                )
+            )
 
             result = self._tqm.run(play)
         finally:

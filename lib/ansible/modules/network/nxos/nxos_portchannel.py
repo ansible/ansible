@@ -679,7 +679,7 @@ def main():
             'members',
             'min_links',
             'mode'
-        ]
+    ]
 
     existing, interface_exist = invoke('get_existing', module, args)
     end_state = existing

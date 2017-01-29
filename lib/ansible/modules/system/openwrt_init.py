@@ -114,7 +114,7 @@ def main():
                 state = dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
                 enabled = dict(type='bool'),
                 pattern = dict(required=False, default=None),
-            ),
+        ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled']],
         )

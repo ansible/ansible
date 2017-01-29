@@ -1249,7 +1249,7 @@ def main():
             wait={'default': False, 'type': 'bool', 'required': False},
             wait_timeout={'default': 60, 'type': 'int', 'required': False},
             tags={'default': None, 'required': False, 'type': 'dict'}
-        )
+    )
     )
 
     module = AnsibleModule(

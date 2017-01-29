@@ -84,7 +84,7 @@ def main():
             name              = dict(required=True),
             description       = dict(required=False),
             subnets           = dict(required=False, type='list'),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

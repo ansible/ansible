@@ -1054,7 +1054,7 @@ def main():
             'safi',
             'send_community',
             'vrf'
-        ]
+    ]
 
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):

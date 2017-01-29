@@ -177,7 +177,7 @@ class PlayIterator:
         setup_task.name = 'Gathering Facts'
         setup_task.tags   = ['always']
         setup_task.args   = {
-          'gather_subset': gather_subset,
+            'gather_subset': gather_subset,
         }
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout

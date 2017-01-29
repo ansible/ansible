@@ -600,7 +600,7 @@ def main():
             device_mapping = dict(type='list'),
             tags = dict(type='dict'),
             launch_permissions = dict(type='dict')
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

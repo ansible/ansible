@@ -332,7 +332,7 @@ def main():
             enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
             wait={'required': False, 'default': True, 'type': 'bool'},
             wait_timeout={'required': False, 'default': 0, 'type': 'int'}
-        )
+    )
     )
 
     module = AnsibleModule(

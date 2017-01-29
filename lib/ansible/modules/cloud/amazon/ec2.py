@@ -1135,18 +1135,18 @@ def create_instances(module, ec2, vpc, override_count=None):
             if not spot_price:
                 if assign_public_ip and private_ip:
                     params.update(dict(
-                      min_count          = count_remaining,
-                      max_count          = count_remaining,
-                      client_token       = id,
-                      placement_group    = placement_group,
+                        min_count          = count_remaining,
+                        max_count          = count_remaining,
+                        client_token       = id,
+                        placement_group    = placement_group,
                     ))
                 else:
                     params.update(dict(
-                      min_count          = count_remaining,
-                      max_count          = count_remaining,
-                      client_token       = id,
-                      placement_group    = placement_group,
-                      private_ip_address = private_ip,
+                        min_count          = count_remaining,
+                        max_count          = count_remaining,
+                        client_token       = id,
+                        placement_group    = placement_group,
+                        private_ip_address = private_ip,
                     ))
 
                 # For ordinary (not spot) instances, we can select 'stop'
@@ -1572,7 +1572,7 @@ def main():
             ebs_optimized = dict(type='bool', default=False),
             tenancy = dict(default='default'),
             network_interfaces = dict(type='list', aliases=['network_interface'])
-        )
+    )
     )
 
     module = AnsibleModule(

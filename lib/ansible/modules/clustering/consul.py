@@ -377,7 +377,7 @@ def parse_check(module):
             module.params.get('http'),
             module.params.get('timeout'),
             module.params.get('service_id'),
-        )
+       )
 
 
 def parse_service(module):

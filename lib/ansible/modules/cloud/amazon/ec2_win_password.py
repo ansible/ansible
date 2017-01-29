@@ -111,7 +111,7 @@ def main():
             key_passphrase = dict(no_log=True, default=None, required=False),
             wait = dict(type='bool', default=False, required=False),
             wait_timeout = dict(default=120, required=False),
-        )
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

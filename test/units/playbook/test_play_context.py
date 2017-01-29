@@ -245,7 +245,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-        )
+    )
 
     def setUp(self):
         parser = CLI.base_parser(

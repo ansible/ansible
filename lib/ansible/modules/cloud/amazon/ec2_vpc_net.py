@@ -195,7 +195,7 @@ def main():
             tags = dict(type='dict', required=False, default=None, aliases=['resource_tags']),
             state = dict(choices=['present', 'absent'], default='present'),
             multi_ok = dict(type='bool', default=False)
-        )
+    )
     )
 
     module = AnsibleModule(

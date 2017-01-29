@@ -61,7 +61,7 @@ def make_rdata_dict(rdata):
             SSHFP       : ['algorithm', 'fp_type', 'fingerprint'],
             TLSA        : ['usage', 'selector', 'mtype', 'cert'],
             TXT         : ['strings'],
-        }
+    }
 
     rd = {}
 

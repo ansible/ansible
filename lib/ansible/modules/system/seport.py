@@ -285,7 +285,7 @@ def main():
                     'type': 'bool',
                     'default': 'yes',
                 },
-            },
+        },
         supports_check_mode=True
     )
     if not HAVE_SELINUX:

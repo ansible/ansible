@@ -179,8 +179,8 @@ def delete_template(module, proxmox, node, storage, content_type, template, time
 
 def main():
   module = AnsibleModule(
-    argument_spec = dict(
-      api_host = dict(required=True),
+      argument_spec = dict(
+          api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
       validate_certs = dict(type='bool', default='no'),
