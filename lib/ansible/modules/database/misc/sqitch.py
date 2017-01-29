@@ -64,8 +64,8 @@ options:
     default: []
   log_only:
     description:
-      - Log the changes as if they were deployed, but without actually running the deploy scripts. 
-        Useful for an existing database that is being converted to Sqitch, and you need to log changes as deployed 
+      - Log the changes as if they were deployed, but without actually running the deploy scripts.
+        Useful for an existing database that is being converted to Sqitch, and you need to log changes as deployed
         because they have been deployed by other means in the past.
     required: no
   onto:
@@ -78,14 +78,14 @@ options:
     required: no
   set_revert:
     description:
-      - Attach a list of a variables name and value to be used by the database engine client when reverting, if it supports variables. 
+      - Attach a list of a variables name and value to be used by the database engine client when reverting, if it supports variables.
         The format must be name=value, e.g., defuser='Homer Simpson'.
         Overrides any values from set or loaded from the deploy.variables and revert.variables configurations. (rebase)
     required: no
     default: []
   set_deploy:
     description:
-      - Attach a list of a variables name and value for use by the database engine client when deploying, if it supports variables. 
+      - Attach a list of a variables name and value for use by the database engine client when deploying, if it supports variables.
         The format must be name=value, e.g., defuser='Homer Simpson'.
         Overrides any values from set or loaded from the deploy.variables configuration. (rebase)
     required: no
@@ -197,7 +197,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             command     = dict(default='deploy', choices=["deploy", "rebase", "revert",
-                                                                         "status", "verify"]),
+                                                          "status", "verify"]),
             plan_file   = dict(),
             target      = dict(),
             engine      = dict(),
@@ -244,7 +244,7 @@ def main():
 
     cmd.append(command)
 
-    #command options
+    # command options
     if command == 'deploy':
         if engine is None and target is None:
             module.fail_json(msg="You have to specify engine or target to deploy")
@@ -289,7 +289,7 @@ def main():
 
     (rc, out, err) = module.run_command(cmd, cwd=cwd)
 
-    if rc is not None and rc!=0:
+    if rc is not None and rc != 0:
         module.fail_json(msg=err, rc=rc)
 
     result = {}
@@ -320,6 +320,7 @@ def main():
         result['stderr'] = err
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
