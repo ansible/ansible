@@ -102,9 +102,9 @@ class LookupModule(LookupBase):
         vault_conn = HashiVault(**vault_dict)
 
         for term in terms:
-           key = term.split()[0]
-           value = vault_conn.get()
-           ret.append(value)
+            key = term.split()[0]
+            value = vault_conn.get()
+            ret.append(value)
 
         return ret
 
