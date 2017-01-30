@@ -37,6 +37,7 @@ When run against a specific host, this script returns the following variables:
  - ec2_attachTime
  - ec2_attachment
  - ec2_attachmentId
+ - ec2_block_device
  - ec2_client_token
  - ec2_deleteOnTermination
  - ec2_description
@@ -130,6 +131,15 @@ from boto import rds
 from boto import elasticache
 from boto import route53
 import six
+
+from ansible.module_utils import ec2 as ec2_utils
+
+HAS_BOTO3 = False
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    pass
 
 from six.moves import configparser
 from collections import defaultdict
@@ -542,7 +552,12 @@ class Ec2Inventory(object):
             instance_ids = []
             for reservation in reservations:
                 instance_ids.extend([instance.id for instance in reservation.instances])
-            tags = conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids})
+
+                max_filter_value = 199
+                tags = []
+                for i in range(0, len(instance_ids), max_filter_value):
+                  tags.extend(conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[i:i+max_filter_value]}))
+
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
                 tags_by_instance_id[tag.res_id][tag.name] = tag.value
@@ -584,6 +599,65 @@ class Ec2Inventory(object):
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
 
+    def include_rds_clusters_by_region(self, region):
+        if not HAS_BOTO3:
+            self.fail_with_error("Working with RDS clusters requires boto3 - please install boto3 and try again",
+                                 "getting RDS clusters")
+
+        client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
+
+        marker, clusters = '', []
+        while marker is not None:
+            resp = client.describe_db_clusters(Marker=marker)
+            clusters.extend(resp["DBClusters"])
+            marker = resp.get('Marker', None)
+
+        account_id = boto.connect_iam().get_user().arn.split(':')[4]
+        c_dict = {}
+        for c in clusters:
+            # remove these datetime objects as there is no serialisation to json
+            # currently in place and we don't need the data yet
+            if 'EarliestRestorableTime' in c:
+                del c['EarliestRestorableTime']
+            if 'LatestRestorableTime' in c:
+                del c['LatestRestorableTime']
+
+            if self.ec2_instance_filters == {}:
+                matches_filter = True
+            else:
+                matches_filter = False
+
+            try:
+                # arn:aws:rds:<region>:<account number>:<resourcetype>:<name>
+                tags = client.list_tags_for_resource(
+                    ResourceName='arn:aws:rds:' + region + ':' + account_id + ':cluster:' + c['DBClusterIdentifier'])
+                c['Tags'] = tags['TagList']
+
+                if self.ec2_instance_filters:
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        # get AWS tag key e.g. tag:env will be 'env'
+                        tag_name = filter_key.split(":", 1)[1]
+                        # Filter values is a list (if you put multiple values for the same tag name)
+                        matches_filter = any(d['Key'] == tag_name and d['Value'] in filter_values for d in c['Tags'])
+
+                        if matches_filter:
+                            # it matches a filter, so stop looking for further matches
+                            break
+
+            except Exception as e:
+                if e.message.find('DBInstanceNotFound') >= 0:
+                    # AWS RDS bug (2016-01-06) means deletion does not fully complete and leave an 'empty' cluster.
+                    # Ignore errors when trying to find tags for these
+                    pass
+
+            # ignore empty clusters caused by AWS bug
+            if len(c['DBClusterMembers']) == 0:
+                continue
+            elif matches_filter:
+                c_dict[c['DBClusterIdentifier']] = c
+
+        self.inventory['db_clusters'] = c_dict
+
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
         nodes' info) in a particular region.'''
@@ -609,7 +683,7 @@ class Ec2Inventory(object):
 
         try:
             # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that wo can't make use of the get_list
+            # CacheNodes. Because of that we can't make use of the get_list
             # method in the AWSQueryConnection. Let's do the work manually
             clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
 
@@ -666,30 +740,30 @@ class Ec2Inventory(object):
                 reservations = []
                 autoscale_groups = conn_autoscale.get_all_groups()
                 for autoscale_group in autoscale_groups:
-                  if autoscale_group.name:
-                    tags = {}
-                    for tag in autoscale_group.tags:
-                      if tag.propagate_at_launch:
-                          tags[tag.key] = tag.value
+                    if autoscale_group.name:
+                        tags = {}
+                        for tag in autoscale_group.tags:
+                            if tag.propagate_at_launch:
+                                tags[tag.key] = tag.value
 
-                    for autoscale_group_instance in autoscale_group.instances:
+                        for autoscale_group_instance in autoscale_group.instances:
 
-                      if self.ec2_instance_filters:
-                          for filter_key, filter_values in self.ec2_instance_filters.items():
-                              reservations.extend(conn_ec2.get_all_instances(
-                                  filters = {
-                                      filter_key : filter_values,
-                                      'instance-id': [ autoscale_group_instance.instance_id ]
-                                  }
-                              ))
-                      else:
-                          reservations = conn_ec2.get_all_instances(
-                              filters = { 'instance-id': [ autoscale_group_instance.instance_id ] })
+                            if self.ec2_instance_filters:
+                                for filter_key, filter_values in self.ec2_instance_filters.items():
+                                    reservations.extend(conn_ec2.get_all_instances(
+                                        filters = {
+                                            filter_key : filter_values,
+                                            'instance-id': [ autoscale_group_instance.instance_id ]
+                                        }
+                                    ))
+                            else:
+                                reservations = conn_ec2.get_all_instances(
+                                    filters = { 'instance-id': [ autoscale_group_instance.instance_id ] })
 
-                      for reservation in reservations:
-                        for reservation_instance in reservation.instances:
-                          reservation_instance.tags = tags
-                          self.add_instance(reservation_instance, region)
+                            for reservation in reservations:
+                                for reservation_instance in reservation.instances:
+                                  reservation_instance.tags = tags
+                                  self.add_instance(reservation_instance, region)
 
         except boto.exception.BotoServerError as e:
             if e.error_code == 'AuthFailure':
@@ -1291,7 +1365,7 @@ class Ec2Inventory(object):
             elif key == 'ec2_tags':
                 for k, v in value.items():
                     if self.expand_csv_tags and ',' in v:
-                        v = map(lambda x: x.strip(), v.split(','))
+                        v = list(map(lambda x: x.strip(), v.split(',')))
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':
@@ -1302,6 +1376,10 @@ class Ec2Inventory(object):
                     group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
                 instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
+            elif key == 'ec2_block_device_mapping':
+                instance_vars["ec2_block_devices"] = {}
+                for k, v in value.items():
+                    instance_vars["ec2_block_devices"][ os.path.basename(k) ] = v.volume_id
             else:
                 pass
                 # TODO Product codes if someone finds them useful
