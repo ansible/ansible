@@ -373,7 +373,7 @@ class CloudFrontServiceManager:
                 temp_distribution = {}
                 for key_name in key_list:
                     temp_distribution.update( { key_name: dist[key_name] } )
-                temp_distribution.update( { 'Aliases': [] } ) 
+                temp_distribution.update( { 'Aliases': [] } )
                 temp_distribution.update( { 'ETag': self.get_etag_from_distribution_id(dist['Id'], streaming) } )
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
