@@ -21,10 +21,10 @@ import re
 import json
 import sys
 import copy
-
 from distutils.version import LooseVersion
-from urlparse import urlparse
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = None
