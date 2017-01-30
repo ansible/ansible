@@ -243,7 +243,7 @@ def search_for_host_key(module,host,key,hash_host,path,sshkeygen):
 
     sshkeygen_command.insert(1,'-H')
     rc,stdout,stderr=module.run_command(sshkeygen_command,check_rc=False)
-    if rc!=0: #something went wrong
+    if rc not in (0, 1) or stderr != '': #something went wrong
         module.fail_json(msg="ssh-keygen failed to hash host (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
     hashed_lines=stdout.split('\n')
 
