@@ -356,7 +356,10 @@ class CloudFrontServiceManager:
             origin_access_identity_list = { 'origin_access_identities': [] }
             origin_access_identities = self.list_origin_access_identities()
             for origin_access_identity in origin_access_identities:
-                origin_access_identity_list['origin_access_identities'].append(origin_access_identity['Id'])
+                oai_id = origin_access_identity['Id']
+                oai_full_response = self.get_origin_access_identity(oai_id)
+                oai_summary = { 'Id': oai_id, 'ETag': oai_full_response['ETag'] }
+                origin_access_identity_list['origin_access_identities'].append( oai_summary )
             return origin_access_identity_list
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e), exception=traceback.format_exc(e))
@@ -380,6 +383,7 @@ class CloudFrontServiceManager:
                         'Enabled': dist['Enabled'],
                         'Aliases': []
                     } )
+                temp_distribution.update( { 'ETag': self.get_etag_from_distribution_id(dist['Id'], streaming) } )
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
                         temp_distribution['Aliases'].append(alias)
@@ -392,6 +396,14 @@ class CloudFrontServiceManager:
             return distribution_list
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of distributions - " + str(e), exception=traceback.format_exc(e))
+
+    def get_etag_from_distribution_id(self, distribution_id, streaming):
+        distribution = {}
+        if not streaming:
+            distribution = self.get_distribution(distribution_id)
+        else:
+            distribution = self.get_streaming_distribution(distribution_id)
+        return distribution['ETag']
 
     def get_list_of_invalidation_ids_from_distribution_id(self, distribution_id):
         try:
