@@ -217,14 +217,15 @@ def format_allowed_section(allowed):
 
 def format_allowed(allowed):
     """Format the 'allowed' value so that it is GCE compatible."""
-    return_value = []
-    if allowed.count(";") == 0:
-        return [format_allowed_section(allowed)]
+    lst_proto = allowed.split(':')
+    protocol = lst_proto[0]
+    if len(lst_proto) > 1:
+        lst_ports = lst_proto[1].split(',')
+        return_val={'IPProtocol': protocol, 'ports': lst_ports}
     else:
-        sections = allowed.split(";")
-        for section in sections:
-            return_value.append(format_allowed_section(section))
-    return return_value
+        return_val={'IPProtocol': protocol}
+
+    return return_val
 
 def sorted_allowed_list(allowed_list):
     """Sort allowed_list (output of format_allowed) by protocol and port."""
