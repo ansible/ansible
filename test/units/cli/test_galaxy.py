@@ -32,7 +32,7 @@ import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
 from ansible.cli.galaxy import GalaxyCLI
-
+from ansible.utils.display import Display
 
 class TestGalaxy(unittest.TestCase):
     @classmethod
@@ -44,7 +44,7 @@ class TestGalaxy(unittest.TestCase):
             shutil.rmtree("./delete_me")
 
         # creating framework for a role
-        gc = GalaxyCLI(args=["init", "-c", "--offline", "delete_me"])
+        gc = GalaxyCLI(args=["init", "--offline", "delete_me"])
         gc.parse()
         gc.run()
         cls.role_dir = "./delete_me"
@@ -114,9 +114,8 @@ class TestGalaxy(unittest.TestCase):
 
     def test_run(self):
         ''' verifies that the GalaxyCLI object's api is created and that execute() is called. '''
-        gc = GalaxyCLI(args=["install"])
-        with patch('sys.argv', ["-c", "-v", '--ignore-errors', 'imaginary_role']):
-            galaxy_parser = gc.parse()
+        gc = GalaxyCLI(args=["install", "--ignore-errors", "imaginary_role"])
+        gc.parse()
         with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
             with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
                 gc.run()
@@ -129,7 +128,7 @@ class TestGalaxy(unittest.TestCase):
     def test_execute_remove(self):
         # installing role
         gc = GalaxyCLI(args=["install", "--offline", "-p", self.role_path, "-r", self.role_req])
-        galaxy_parser = gc.parse()
+        gc.parse()
         gc.run()
 
         # checking that installation worked
@@ -137,30 +136,28 @@ class TestGalaxy(unittest.TestCase):
         self.assertTrue(os.path.exists(role_file))
 
         # removing role
-        gc = GalaxyCLI(args=["remove", "-c", "-p", self.role_path, self.role_name])
-        galaxy_parser = gc.parse()
-        super(GalaxyCLI, gc).run()
-        gc.api = ansible.galaxy.api.GalaxyAPI(gc.galaxy)
-        completed_task = gc.execute_remove()
+        gc = GalaxyCLI(args=["remove", "-p", role_file, self.role_name])
+        gc.parse()
+        gc.run()
 
         # testing role was removed
-        self.assertTrue(completed_task == 0)
-        self.assertTrue(not os.path.exists(role_file))
+        removed_role = not os.path.exists(role_file)
+        self.assertTrue(removed_role)
 
     def test_exit_without_ignore(self):
         ''' tests that GalaxyCLI exits with the error specified unless the --ignore-errors flag is used '''
-        gc = GalaxyCLI(args=["install", "--server=None", "-c", "fake_role_name"])
+        gc = GalaxyCLI(args=["install", "--server=None", "fake_role_name"])
 
         # testing without --ignore-errors flag
-        galaxy_parser = gc.parse()
+        gc.parse()
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             # testing that error expected is raised
             self.assertRaises(AnsibleError, gc.run)
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
 
         # testing with --ignore-errors flag
-        gc = GalaxyCLI(args=["install", "--server=None", "-c", "fake_role_name", "--ignore-errors"])
-        galalxy_parser = gc.parse()
+        gc = GalaxyCLI(args=["install", "--server=None", "fake_role_name", "--ignore-errors"])
+        gc.parse()
         with patch.object(ansible.utils.display.Display, "display", return_value=None) as mocked_display:
             # testing that error expected is not raised with --ignore-errors flag in use
             gc.run()
