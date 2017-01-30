@@ -5,6 +5,7 @@ nose
 passlib
 pycrypto
 pytest
+pytest-mock
 python-memcached
 pyyaml
 redis
