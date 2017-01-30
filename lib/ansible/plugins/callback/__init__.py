@@ -29,6 +29,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars import strip_internal_keys
+from ansible.compat.six import string_types
 
 try:
     from __main__ import display as global_display
@@ -100,7 +101,11 @@ class CallbackBase:
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
         if C.COMMAND_WARNINGS and 'warnings' in res and res['warnings']:
-            for warning in res['warnings']:
+            warnings = res['warnings']
+            # ensure we're not iterating a string
+            if isinstance(warnings, string_types):
+                warnings = [warnings]
+            for warning in warnings:
                 self._display.warning(warning)
 
     def _get_diff(self, difflist):
