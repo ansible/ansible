@@ -128,6 +128,7 @@ Ansible Changes By Release
 - packet:
   * packet_device
   * packet_sshkey
+- runit
 - smartos:
   * imgadm
   * vmadm

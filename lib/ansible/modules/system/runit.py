@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 
 DOCUMENTATION = '''
 ---
-module: sv
+module: runit
 author: "James Sumners (@jsumners)"
 version_added: "2.3"
 short_description:  Manage runit services.
@@ -45,7 +45,7 @@ options:
               commands unless necessary.  C(restarted) will always bounce the
               service (sv restart) and C(killed) will always bounce the service (sv force-stop).
               C(reloaded) will send a HUP (sv reload).
-              C(once) will run a normally downed svc once (sv once), not really
+              C(once) will run a normally downed sv once (sv once), not really
               an idempotent operation.
     enabled:
         required: false
