@@ -281,7 +281,11 @@ class FileSystemMavenClient:
         return sorted(versions, key=distutils.version.LooseVersion)[-1]
 
     def download(self, artifact, destination):
-        return shutil.copy2(artifact.url, destination)
+        try:
+            src = posixpath.join(self.repo, artifact.url).replace('file:/', '').replace('//', '/')
+            return shutil.copy2(src, destination)
+        except (IOError, os.error) as why:
+            self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension, artifact.url, destination, str(why)])))
 
     def checksum(self, artifact, dest):
         self.module.fail_json(msg=artifact.url)
