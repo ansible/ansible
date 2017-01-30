@@ -37,7 +37,7 @@ When run against a specific host, this script returns the following variables:
  - ec2_attachTime
  - ec2_attachment
  - ec2_attachmentId
- - ec2_block_device
+ - ec2_block_devices
  - ec2_client_token
  - ec2_deleteOnTermination
  - ec2_description
@@ -553,10 +553,10 @@ class Ec2Inventory(object):
             for reservation in reservations:
                 instance_ids.extend([instance.id for instance in reservation.instances])
 
-                max_filter_value = 199
-                tags = []
-                for i in range(0, len(instance_ids), max_filter_value):
-                  tags.extend(conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[i:i+max_filter_value]}))
+            max_filter_value = 199
+            tags = []
+            for i in range(0, len(instance_ids), max_filter_value):
+                tags.extend(conn.get_all_tags(filters={'resource-type': 'instance', 'resource-id': instance_ids[i:i+max_filter_value]}))
 
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
