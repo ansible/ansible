@@ -131,12 +131,12 @@ from ansible.module_utils.network import NetworkModule
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -502,8 +502,8 @@ def main():
             command = get_commands_to_config_vrf(delta, vrf)
             commands.extend(command)
         elif delta:
-                command = get_commands_to_config_vrf(delta, vrf)
-                commands.extend(command)
+            command = get_commands_to_config_vrf(delta, vrf)
+            commands.extend(command)
 
     if commands:
         if proposed.get('vni'):

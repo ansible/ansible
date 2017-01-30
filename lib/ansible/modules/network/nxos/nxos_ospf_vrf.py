@@ -183,12 +183,12 @@ from ansible.module_utils.shell import ShellError
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -394,8 +394,8 @@ def get_existing(module, args):
             vrf_index = False
             for index in range(0, len(splitted_config) - 1):
                 if 'vrf' in splitted_config[index].strip():
-                        vrf_index = index
-                        break
+                    vrf_index = index
+                    break
             if vrf_index:
                 config = '\n'.join(splitted_config[0:vrf_index])
 
