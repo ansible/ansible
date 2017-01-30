@@ -258,7 +258,7 @@ class Connection(ConnectionBase):
             fh.write(to_bytes(in_data))
             fh.close()
         except (OSError, IOError):
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host \"%s\". Make sure this host can be reached over ssh' % self.host)
 
         display.debug('Sent initial data (%d bytes)' % len(in_data))
 
@@ -571,7 +571,7 @@ class Connection(ConnectionBase):
             raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
 
         if p.returncode == 255 and in_data and checkrc:
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+            raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host \"%s\". Make sure this host can be reached over ssh' % self.host)
 
         return (p.returncode, b_stdout, b_stderr)
 
