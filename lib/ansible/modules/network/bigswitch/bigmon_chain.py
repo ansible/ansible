@@ -61,11 +61,11 @@ options:
 
 EXAMPLES = '''
 - name: bigmon inline service chain
-  bigmon_chain:
-    name: MyChain
-    controller: '{{ inventory_hostname }}'
-    state: present
-    validate_certs: false
+      bigmon_chain:
+        name: MyChain
+        controller: '{{ inventory_hostname }}'
+        state: present
+        validate_certs: false
 '''
 
 
@@ -108,7 +108,7 @@ def chain(module):
 
     if state in ('absent') and not config_present:
         module.exit_json(changed=False)
-
+        
     if state in ('present'):
         response = rest.put('chain[name="%s"]' % name, data={'name': name})
         if response.status_code == 204:
