@@ -15,15 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0',
+}
 
 DOCUMENTATION = """
 ---
 module: vyos_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author: "Nathaniel Case (@qalthos)"
 short_description: Collect facts from remote devices running OS
 description:
   - Collects a base set of device facts from a remote device that
@@ -46,15 +48,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: vyos
-    password: vyos
-    transport: cli
-
 - name: collect all facts from the device
   vyos_facts:
     gather_subset: all
