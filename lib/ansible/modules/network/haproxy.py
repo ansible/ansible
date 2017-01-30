@@ -186,7 +186,7 @@ WAIT_INTERVAL=5
 
 ######################################################################
 class TimeoutException(Exception):
-  pass
+    pass
 
 class HAProxy(object):
     """
@@ -356,8 +356,8 @@ class HAProxy(object):
 
         # Report change status
         if state_before != state_after:
-           self.command_results['changed'] = True
-           self.module.exit_json(**self.command_results)
+            self.command_results['changed'] = True
+            self.module.exit_json(**self.command_results)
         else:
             self.command_results['changed'] = False
             self.module.exit_json(**self.command_results)

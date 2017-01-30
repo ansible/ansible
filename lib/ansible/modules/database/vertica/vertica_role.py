@@ -139,7 +139,7 @@ def update_roles(role_facts, cursor, role,
 def check(role_facts, role, assigned_roles):
     role_key = role.lower()
     if role_key not in role_facts:
-       return False
+        return False
     if assigned_roles and cmp(sorted(assigned_roles), sorted(role_facts[role_key]['assigned_roles'])) != 0:
         return False
     return True

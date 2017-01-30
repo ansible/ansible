@@ -134,9 +134,9 @@ class StackiHost:
         init_csrftoken = None
         for c in cookie_a:
             if "csrftoken" in c:
-                 init_csrftoken = c.replace("csrftoken=", "")
-                 init_csrftoken = init_csrftoken.rstrip("\r\n")
-                 break
+                init_csrftoken = c.replace("csrftoken=", "")
+                init_csrftoken = init_csrftoken.rstrip("\r\n")
+                break
 
         # Make Header Dictionary with initial CSRF
         header = {'csrftoken': init_csrftoken, 'X-CSRFToken': init_csrftoken,

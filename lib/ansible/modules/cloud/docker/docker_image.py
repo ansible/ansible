@@ -291,8 +291,8 @@ class ImageManager(DockerBaseClass):
         # If name contains a tag, it takes precedence over tag parameter.
         repo, repo_tag = parse_repository_tag(self.name)
         if repo_tag:
-           self.name = repo
-           self.tag = repo_tag
+            self.name = repo
+            self.tag = repo_tag
 
         if self.state in ['present', 'build']:
             self.present()

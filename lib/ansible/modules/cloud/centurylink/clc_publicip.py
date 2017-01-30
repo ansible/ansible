@@ -286,7 +286,7 @@ class ClcPublicIp(object):
         result = None
         try:
             for ip_address in server.PublicIPs().public_ips:
-                    result = ip_address.Delete()
+                result = ip_address.Delete()
         except CLCException as ex:
             self.module.fail_json(msg='Failed to remove public ip from the server : {0}. {1}'.format(
                 server.id, ex.response_text

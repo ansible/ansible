@@ -252,7 +252,7 @@ class GalaxyRole(object):
                 tmp_file = self.fetch(role_data)
 
         else:
-           raise AnsibleError("No valid role data found")
+            raise AnsibleError("No valid role data found")
 
 
         if tmp_file:

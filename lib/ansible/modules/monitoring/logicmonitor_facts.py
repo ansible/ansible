@@ -567,8 +567,8 @@ def selector(module):
     to take given the right parameters"""
 
     if module.params["target"] == "host":
-            target = Host(module.params, module)
-            target.site_facts()
+        target = Host(module.params, module)
+        target.site_facts()
     elif module.params["target"] == "hostgroup":
         # Validate target specific required parameters
         if module.params["fullpath"] is not None:

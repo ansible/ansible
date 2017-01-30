@@ -223,7 +223,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 
 def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     if not db_exists(cursor, db):
-       return False
+        return False
     else:
         db_info = get_db_info(cursor, db)
         if (encoding and

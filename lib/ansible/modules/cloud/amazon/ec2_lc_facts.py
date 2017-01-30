@@ -178,7 +178,7 @@ def list_launch_configs(connection, module):
             launch_config['CreatedTime'] = str(launch_config['CreatedTime'])
 
     if sort:
-      snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
+        snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
 
     try:
         if sort and sort_start and sort_end:

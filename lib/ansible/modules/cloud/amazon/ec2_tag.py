@@ -176,12 +176,12 @@ def main():
             module.fail_json(msg="tags argument is required when state is absent")
         for (key, value) in set(tags.items()):
             if (key, value) not in set(tagdict.items()):
-                    baddict[key] = value
-                    if set(baddict) == set(tags):
-                        module.exit_json(msg="Nothing to remove here. Move along.", changed=False)
+                baddict[key] = value
+                if set(baddict) == set(tags):
+                    module.exit_json(msg="Nothing to remove here. Move along.", changed=False)
         for (key, value) in set(tags.items()):
             if (key, value) in set(tagdict.items()):
-                    dictremove[key] = value
+                dictremove[key] = value
         tagger = ec2.delete_tags(resource, dictremove)
         gettags = ec2.get_all_tags(filters=filters)
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)

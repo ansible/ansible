@@ -176,7 +176,7 @@ def _can_update(subnet, module, cloud):
         else:
             module.fail_json(msg='No network found for %s' % network_name)
         if netid != subnet['network_id']:
-                module.fail_json(msg='Cannot update network_name in existing \
+            module.fail_json(msg='Cannot update network_name in existing \
                                       subnet')
     if ip_version and subnet['ip_version'] != ip_version:
         module.fail_json(msg='Cannot update ip_version in existing subnet')

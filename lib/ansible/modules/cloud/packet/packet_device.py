@@ -500,7 +500,7 @@ def act_on_devices(target_state, module, packet_conn):
         created_devices = [create_single_device(module, packet_conn, n)
                            for n in create_hostnames]
         if module.params.get('wait'):
-             created_devices = wait_for_ips(module, packet_conn, created_devices)
+            created_devices = wait_for_ips(module, packet_conn, created_devices)
         changed = True
 
     processed_devices = created_devices + process_devices

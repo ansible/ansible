@@ -319,10 +319,10 @@ class SnsTopicManager(object):
     def ensure_gone(self):
         self.arn_topic = self._arn_topic_lookup()
         if self.arn_topic:
-           self._get_topic_subs()
-           if self.subscriptions_existing:
-               self._delete_subscriptions()
-           self._delete_topic()
+            self._get_topic_subs()
+            if self.subscriptions_existing:
+                self._delete_subscriptions()
+            self._delete_topic()
 
 
     def get_info(self):

@@ -332,7 +332,7 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
 
     # If bucket exists but key doesn't, just upload.
     if bucket_rc and not key_rc:
-            upload_gsfile(module, gs, bucket, obj, src, expiration)
+        upload_gsfile(module, gs, bucket, obj, src, expiration)
 
 def handle_delete(module, gs, bucket, obj):
     if bucket and not obj:

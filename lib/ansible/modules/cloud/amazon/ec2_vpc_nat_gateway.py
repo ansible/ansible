@@ -387,7 +387,7 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
             err_msg = '{0} Retrieving gateways'.format(DRY_RUN_MSGS)
 
     except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+        err_msg = str(e)
 
     return gateways_retrieved, err_msg, existing_gateways
 
@@ -592,7 +592,7 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
             )
 
     except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+        err_msg = str(e)
 
     return allocation_id, err_msg
 

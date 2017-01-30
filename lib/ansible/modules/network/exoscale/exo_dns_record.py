@@ -343,7 +343,7 @@ class ExoDnsRecord(ExoDns):
             self.result['diff']['before'] = record
             self.result['changed'] = True
             if not self.module.check_mode:
-                 self.api_query("/domains/%s/records/%s" % (self.domain, record['record']['id']), "DELETE")
+                self.api_query("/domains/%s/records/%s" % (self.domain, record['record']['id']), "DELETE")
         return record
 
     def get_result(self, resource):

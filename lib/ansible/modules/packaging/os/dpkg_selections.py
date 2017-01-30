@@ -72,7 +72,7 @@ def main():
     changed = current != selection
 
     if module.check_mode or not changed:
-      module.exit_json(changed=changed, before=current, after=selection)
+        module.exit_json(changed=changed, before=current, after=selection)
 
     module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, selection), check_rc=True)
     module.exit_json(changed=changed, before=current, after=selection)

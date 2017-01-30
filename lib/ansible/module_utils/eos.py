@@ -68,7 +68,7 @@ def run_commands(module, commands):
             module.fail_json(msg=err)
 
         try:
-           out = module.from_json(out)
+            out = module.from_json(out)
         except ValueError:
             out = str(out).strip()
 

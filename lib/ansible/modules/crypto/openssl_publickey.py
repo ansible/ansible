@@ -123,11 +123,11 @@ class PublicKey(object):
 
         if not os.path.exists(self.path) or self.force:
             try:
-                 privatekey_content = open(self.privatekey_path, 'r').read()
-                 privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-                 publickey_file = open(self.path, 'w')
-                 publickey_file.write(crypto.dump_publickey(crypto.FILETYPE_PEM, privatekey))
-                 publickey_file.close()
+                privatekey_content = open(self.privatekey_path, 'r').read()
+                privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
+                publickey_file = open(self.path, 'w')
+                publickey_file.write(crypto.dump_publickey(crypto.FILETYPE_PEM, privatekey))
+                publickey_file.close()
             except (IOError, OSError):
                 e = get_exception()
                 raise PublicKeyError(e)

@@ -344,7 +344,7 @@ def validate_index(index, module):
             module.fail_json(msg='%s is not a valid option for an index' % key)
     for required_option in INDEX_REQUIRED_OPTIONS:
         if required_option not in index:
-           module.fail_json(msg='%s is a required option for an index' % required_option)
+            module.fail_json(msg='%s is a required option for an index' % required_option)
     if index['type'] not in INDEX_TYPE_OPTIONS:
         module.fail_json(msg='%s is not a valid index type, must be one of %s' % (index['type'], INDEX_TYPE_OPTIONS))
 

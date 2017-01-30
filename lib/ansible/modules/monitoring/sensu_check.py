@@ -286,29 +286,29 @@ def sensu_check(module, path, name, state='present', backup=False):
                     reasons.append('`{opt}\' was removed'.format(opt=opt))
 
         if module.params['custom']:
-          # Convert to json
-          custom_params = module.params['custom']
-          overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
-          if overwrited_fields:
-            msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
-            module.fail_json(msg=msg)
+            # Convert to json
+            custom_params = module.params['custom']
+            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
+            if overwrited_fields:
+                msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
+                module.fail_json(msg=msg)
 
-          for k,v in custom_params.items():
-            if k in config['checks'][name]:
-              if not config['checks'][name][k] == v:
-                changed = True
-                reasons.append('`custom param {opt}\' was changed'.format(opt=k))
-            else:
-              changed = True
-              reasons.append('`custom param {opt}\' was added'.format(opt=k))
-            check[k] = v
-          simple_opts += custom_params.keys()
+            for k,v in custom_params.items():
+                if k in config['checks'][name]:
+                    if not config['checks'][name][k] == v:
+                        changed = True
+                        reasons.append('`custom param {opt}\' was changed'.format(opt=k))
+                else:
+                    changed = True
+                    reasons.append('`custom param {opt}\' was added'.format(opt=k))
+                check[k] = v
+            simple_opts += custom_params.keys()
 
         # Remove obsolete custom params
         for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue','subdue_begin','subdue_end']):
-          changed = True
-          reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
-          del check[opt]
+            changed = True
+            reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
+            del check[opt]
 
         if module.params['metric']:
             if 'type' not in check or check['type'] != 'metric':

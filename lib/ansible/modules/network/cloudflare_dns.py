@@ -514,10 +514,10 @@ class CloudflareAPI(object):
     def ensure_dns_record(self,**kwargs):
         params = {}
         for param in ['port','priority','proto','proxied','service','ttl','type','record','value','weight','zone']:
-          if param in kwargs:
-              params[param] = kwargs[param]
-          else:
-              params[param] = getattr(self,param)
+            if param in kwargs:
+                params[param] = kwargs[param]
+            else:
+                params[param] = getattr(self,param)
 
         search_value = params['value']
         search_record = params['record']

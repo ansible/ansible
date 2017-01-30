@@ -352,7 +352,7 @@ class RDSConnection:
         try:
             self.connection  = connect_to_aws(boto.rds, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
-             module.fail_json(msg=e.error_message)
+            module.fail_json(msg=e.error_message)
 
     def get_db_instance(self, instancename):
         try:
@@ -438,7 +438,7 @@ class RDS2Connection:
         try:
             self.connection  = connect_to_aws(boto.rds2, region, **aws_connect_params)
         except boto.exception.BotoServerError as e:
-             module.fail_json(msg=e.error_message)
+            module.fail_json(msg=e.error_message)
 
     def get_db_instance(self, instancename):
         try:

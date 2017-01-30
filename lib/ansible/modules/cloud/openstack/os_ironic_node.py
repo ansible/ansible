@@ -208,7 +208,7 @@ def _check_set_power_state(module, cloud, node):
     if 'power off' in str(node['power_state']):
         if (_is_false(module.params['power']) and
                 _is_false(module.params['state'])):
-                    return False
+            return False
         if (_is_false(module.params['power']) and
                 _is_false(module.params['state'])):
             module.exit_json(

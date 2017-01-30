@@ -314,7 +314,7 @@ def main():
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
             if len(vpc_subnet_ids) < 1:
-                    module.fail_json(msg='At least 1 subnet is required')
+                module.fail_json(msg='At least 1 subnet is required')
 
             if len(vpc_security_group_ids) < 1:
                 module.fail_json(msg='At least 1 security group is required')

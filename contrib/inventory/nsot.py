@@ -151,7 +151,7 @@ from click.exceptions import UsageError
 from six import string_types
 
 def warning(*objs):
-        print("WARNING: ", *objs, file=sys.stderr)
+    print("WARNING: ", *objs, file=sys.stderr)
 
 
 class NSoTInventory(object):

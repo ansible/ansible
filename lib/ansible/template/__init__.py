@@ -453,7 +453,7 @@ class Templar:
         try:
             self.template(data)
         except:
-           templatable = False
+            templatable = False
         return templatable
 
     def _contains_vars(self, data):

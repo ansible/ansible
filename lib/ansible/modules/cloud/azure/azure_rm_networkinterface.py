@@ -508,7 +508,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                             id=pip.id,
                             location=pip.location,
                             resource_guid=pip.resource_guid)
-                     #name=pip.name,
+                    #name=pip.name,
 
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])

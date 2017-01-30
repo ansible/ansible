@@ -279,7 +279,7 @@ def set_port_disabled_permanent(zone, port, protocol):
 def get_source(zone, source):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
     if source in fw_settings.getSources():
-       return True
+        return True
     else:
         return False
 
@@ -317,7 +317,7 @@ def get_interface_permanent(zone, interface):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
 
     if interface in fw_settings.getInterfaces():
-       return True
+        return True
     else:
         return False
 

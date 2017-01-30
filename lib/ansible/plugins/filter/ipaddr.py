@@ -332,7 +332,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         _ret = []
         for element in value:
             if ipaddr(element, str(query), version):
-                    _ret.append(ipaddr(element, str(query), version))
+                _ret.append(ipaddr(element, str(query), version))
 
         if _ret:
             return _ret
@@ -587,7 +587,7 @@ def nthhost(value, query=''):
     try:
         nth = int(query)
         if value.size > nth:
-          return value[nth]
+            return value[nth]
 
     except ValueError:
         return False

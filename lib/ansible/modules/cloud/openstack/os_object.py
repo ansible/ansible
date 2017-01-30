@@ -100,7 +100,7 @@ def process_object(
         if container_obj:
             if name:
                 if cloud_obj.get_object_metadata(container, name):
-                  cloud_obj.delete_object(container, name)
+                    cloud_obj.delete_object(container, name)
                 changed= True
             else:
                 cloud_obj.delete_container(container)

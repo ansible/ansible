@@ -154,7 +154,7 @@ def get_vms(session):
 
     vms = change_keys(recs, key='uuid')
     for vm in vms.values():
-       xs_vms[vm['name_label']] = vm
+        xs_vms[vm['name_label']] = vm
     return xs_vms
 
 
@@ -165,7 +165,7 @@ def get_srs(session):
         return None
     srs = change_keys(recs, key='uuid')
     for sr in srs.values():
-       xs_srs[sr['name_label']] = sr
+        xs_srs[sr['name_label']] = sr
     return xs_srs
 
 def main():

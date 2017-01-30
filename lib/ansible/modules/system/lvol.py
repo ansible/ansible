@@ -315,15 +315,15 @@ def main():
         if not '%' in size:
             # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
-               size_unit = size[-1].lower()
-               size = size[0:-1]
+                size_unit = size[-1].lower()
+                size = size[0:-1]
 
             try:
-               float(size)
-               if not size[0].isdigit():
-                   raise ValueError()
+                float(size)
+                if not size[0].isdigit():
+                    raise ValueError()
             except ValueError:
-               module.fail_json(msg="Bad size specification of '%s'" % size)
+                module.fail_json(msg="Bad size specification of '%s'" % size)
 
     # when no unit, megabytes by default
     if size_opt == 'l':

@@ -342,7 +342,7 @@ def main():
     if monitors:
         monitors = []
         for monitor in module.params['monitors']:
-                monitors.append(fq_name(partition, monitor))
+            monitors.append(fq_name(partition, monitor))
 
     # sanity check user supplied values
     if state == 'absent' and host is not None:

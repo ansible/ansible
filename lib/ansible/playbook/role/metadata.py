@@ -71,17 +71,17 @@ class RoleMetadata(Base):
                 raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds)
 
             for role_def in ds:
-                 if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
-                     roles.append(role_def)
-                     continue
-                 try:
+                if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                    roles.append(role_def)
+                    continue
+                try:
                     # role_def is new style: { src: 'galaxy.role,version,name', other_vars: "here" }
                     def_parsed = RoleRequirement.role_yaml_parse(role_def)
                     if def_parsed.get('name'):
                         role_def['name'] = def_parsed['name']
                     roles.append(role_def)
-                 except AnsibleError as exc:
-                     raise AnsibleParserError(str(exc), obj=role_def)
+                except AnsibleError as exc:
+                    raise AnsibleParserError(str(exc), obj=role_def)
 
         current_role_path = None
         if self._owner:

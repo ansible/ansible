@@ -112,10 +112,10 @@ CL_LICENSE_PATH='/usr/cumulus/bin/cl-license'
 
 def install_license(module):
     # license is not installed, install it
-        _url = module.params.get('src')
-        (_rc, out, _err) = module.run_command("%s -i %s" % (CL_LICENSE_PATH, _url))
-        if _rc > 0:
-            module.fail_json(msg=_err)
+    _url = module.params.get('src')
+    (_rc, out, _err) = module.run_command("%s -i %s" % (CL_LICENSE_PATH, _url))
+    if _rc > 0:
+        module.fail_json(msg=_err)
 
 
 def main():

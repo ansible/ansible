@@ -201,7 +201,7 @@ def _get_net_id(neutron, module):
     except Exception as e:
         module.fail_json("Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
-            return None
+        return None
     return networks['networks'][0]['id']
 
 

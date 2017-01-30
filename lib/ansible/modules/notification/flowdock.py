@@ -163,7 +163,7 @@ def main():
             if type == 'chat':
                 module.fail_json(msg="%s is not valid for the 'chat' type" % item)
             else:
-                    params[item] = module.params[item]
+                params[item] = module.params[item]
         elif type == 'inbox':
             module.fail_json(msg="%s is required for the 'inbox' type" % item)
 

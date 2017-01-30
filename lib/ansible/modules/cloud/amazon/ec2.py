@@ -1033,7 +1033,7 @@ def create_instances(module, ec2, vpc, override_count=None):
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
     except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
+        module.fail_json(msg = str(e))
 
     # Lookup any instances that much our run id.
 
@@ -1065,11 +1065,11 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'user_data': user_data}
 
             if ebs_optimized:
-              params['ebs_optimized'] = ebs_optimized
+                params['ebs_optimized'] = ebs_optimized
 
             # 'tenancy' always has a default value, but it is not a valid parameter for spot instance request
             if not spot_price:
-              params['tenancy'] = tenancy
+                params['tenancy'] = tenancy
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -1184,8 +1184,8 @@ def create_instances(module, ec2, vpc, override_count=None):
                 if boto_supports_param_in_spot_request(ec2, 'placement_group'):
                     params['placement_group'] = placement_group
                 elif placement_group :
-                        module.fail_json(
-                            msg="placement_group parameter requires Boto version 2.3.0 or higher.")
+                    module.fail_json(
+                        msg="placement_group parameter requires Boto version 2.3.0 or higher.")
 
                 # You can't tell spot instances to 'stop'; they will always be
                 # 'terminate'd. For convenience, we'll ignore the latter value.

@@ -195,7 +195,7 @@ def check(user_facts, user, profile, resource_pool,
     locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
-       return False
+        return False
     if profile and profile != user_facts[user_key]['profile']:
         return False
     if resource_pool and resource_pool != user_facts[user_key]['resource_pool']:

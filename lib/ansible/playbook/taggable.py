@@ -82,7 +82,7 @@ class Taggable:
             should_run = False
 
             if 'always' in tags or 'all' in only_tags:
-                 should_run = True
+                should_run = True
             elif not tags.isdisjoint(only_tags):
                 should_run = True
             elif 'tagged' in only_tags and tags != self.untagged:

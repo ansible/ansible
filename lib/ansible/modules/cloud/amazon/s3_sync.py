@@ -282,8 +282,8 @@ def gather_files(fileroot, include=None, exclude=None):
             if include:
                 found = False
                 for x in include.split(','):
-                   if fnmatch.fnmatch(fn, x):
-                       found = True
+                    if fnmatch.fnmatch(fn, x):
+                        found = True
                 if not found:
                     # not on the include list, so we don't want it.
                     continue
@@ -376,7 +376,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
     keeplist = list(s3filelist)
 
     for e in keeplist:
-      e['_strategy'] = strategy
+        e['_strategy'] = strategy
 
     # init/fetch info from S3 if we're going to use it for comparisons
     if not strategy == 'force':
