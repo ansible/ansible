@@ -26,6 +26,7 @@ from ansible.compat.six import PY2
 
 from ansible.executor import module_common as amc
 
+
 class TestStripComments(object):
     def test_no_changes(self):
         no_comments = u"""def some_code():
@@ -48,7 +49,7 @@ class TestStripComments(object):
 
                 
 \t\t\r\n
-            """ # nopep8
+            """  # nopep8
         assert amc._strip_comments(all_whitespace) == u""
 
     def test_somewhat_normal(self):
@@ -115,9 +116,3 @@ class TestGetShebang(object):
     def test_python_via_env(self):
         assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/env python'}) == \
                (u'#!/usr/bin/env python', u'/usr/bin/env python')
-
-
-class TestRecursiveFinder(object):
-    def test_no_module_utils(self, mocker):
-        #module_common.recursive_finder(name, data,py_module_names, py_module_cache, zf)
-        pass
