@@ -40,7 +40,7 @@ except ImportError:
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = frozenset((
-   'async_wrapper',
+    'async_wrapper',
 ))
 
 def get_docstring(filename, verbose=False):

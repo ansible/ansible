@@ -351,7 +351,7 @@ def transfer_file(module, dest):
     except:
         time.sleep(10)
         temp_size = verify_remote_file_exists(
-                    module, dest, file_system=module.params['file_system'])
+            module, dest, file_system=module.params['file_system'])
         if int(temp_size) == int(file_size):
             pass
         else:
@@ -365,12 +365,12 @@ def transfer_file(module, dest):
 
 def main():
     argument_spec = dict(
-            local_file=dict(required=True),
-            remote_file=dict(required=False),
-            file_system=dict(required=False, default='bootflash:'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        local_file=dict(required=True),
+        remote_file=dict(required=False),
+        file_system=dict(required=False, default='bootflash:'),
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

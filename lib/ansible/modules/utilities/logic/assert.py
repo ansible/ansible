@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: assert
-short_description: Asserts given expressions are true 
+short_description: Asserts given expressions are true
 description:
      - This module asserts that given expressions are true with an optional custom message.
 version_added: "1.5"
@@ -39,7 +39,7 @@ options:
     description:
       - "The customized message used for a failing assertion"
     required: false
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 '''
@@ -47,13 +47,13 @@ author:
 EXAMPLES = '''
 - assert: { that: "ansible_os_family != 'RedHat'" }
 
-- assert: 
-    that: 
-      - "'foo' in some_command_result.stdout" 
+- assert:
+    that:
+      - "'foo' in some_command_result.stdout"
       - "number_of_the_counting == 3"
 
-- assert: 
-    that: 
+- assert:
+    that:
       - "my_param <= 100"
       - "my_param >= 0"
     msg: "'my_param' must be between 0 and 100"

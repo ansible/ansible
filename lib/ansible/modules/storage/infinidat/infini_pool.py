@@ -76,11 +76,11 @@ EXAMPLES = '''
     system: ibox001
 
 - name: Disable SSD Cache on pool
-  infini_pool: 
-    name: foo 
-    ssd_cache: no 
-    user: admin 
-    password: secret 
+  infini_pool:
+    name: foo
+    ssd_cache: no
+    user: admin
+    password: secret
     system: ibox001
 '''
 

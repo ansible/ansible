@@ -272,7 +272,7 @@ def main():
         nf.close()
     except:
         pass
-   
+
     res_args = dict(
         changed = changed, msg = message
     )

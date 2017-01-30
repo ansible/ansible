@@ -87,19 +87,19 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"authentication": "md5", "group": "network-operator", 
+    sample: {"authentication": "md5", "group": "network-operator",
             "pwd": "test_password", "user": "ntc"}
 existing:
     description:
         - k/v pairs of existing configuration
     type: dict
-    sample: {"authentication": "no", "encrypt": "none", 
+    sample: {"authentication": "no", "encrypt": "none",
              "group": ["network-operator"], "user": "ntc"}
 end_state:
     description: k/v pairs configuration vtp after module execution
     returned: always
     type: dict
-    sample: {"authentication": "md5", "encrypt": "none", 
+    sample: {"authentication": "md5", "encrypt": "none",
              "group": ["network-operator"], "user": "ntc"}
 updates:
     description: command sent to the device
@@ -454,13 +454,13 @@ def config_snmp_user(proposed, user, reset, new):
 
 def main():
     argument_spec = dict(
-            user=dict(required=True, type='str'),
-            group=dict(type='str', required=True),
-            pwd=dict(type='str'),
-            privacy=dict(type='str'),
-            authentication=dict(choices=['md5', 'sha']),
-            encrypt=dict(type='bool'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        user=dict(required=True, type='str'),
+        group=dict(type='str', required=True),
+        pwd=dict(type='str'),
+        privacy=dict(type='str'),
+        authentication=dict(choices=['md5', 'sha']),
+        encrypt=dict(type='bool'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_together=[['authentication', 'pwd'],
@@ -522,7 +522,7 @@ def main():
                 proposed['encrypt'] = 'aes-128'
 
             delta = dict(
-                    set(proposed.items()).difference(existing.items()))
+                set(proposed.items()).difference(existing.items()))
 
             if delta.get('pwd'):
                 delta['authentication'] = authentication

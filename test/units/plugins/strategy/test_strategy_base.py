@@ -163,7 +163,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._failed_hosts = []
         mock_tqm._unreachable_hosts = []
         self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts)
-        
+
         mock_tqm._failed_hosts = ["host01"]
         self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts[1:])
         self.assertEqual(strategy_base.get_failed_hosts(play=mock_play), [mock_hosts[0]])
@@ -186,7 +186,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_inventory = MagicMock()
         mock_options = MagicMock()
         mock_options.module_path = None
-        
+
         tqm = TaskQueueManager(
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
@@ -210,7 +210,7 @@ class TestStrategyBase(unittest.TestCase):
             self.assertEqual(strategy_base._pending_results, 3)
         finally:
             tqm.cleanup()
-        
+
 
     def test_strategy_base_process_pending_results(self):
         mock_tqm = MagicMock()
@@ -240,7 +240,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._stats = MagicMock()
         mock_tqm._stats.increment.return_value = None
-        
+
         mock_play = MagicMock()
 
         mock_host = MagicMock()
@@ -311,7 +311,7 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._blocked_hosts = dict()
 
         def _has_dead_workers():
-            return False            
+            return False
 
         strategy_base._tqm.has_dead_workers.side_effect = _has_dead_workers
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)

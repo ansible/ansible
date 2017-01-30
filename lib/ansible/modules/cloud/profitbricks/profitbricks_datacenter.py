@@ -76,7 +76,7 @@ EXAMPLES = '''
     datacenter: Tardis One
     wait_timeout: 500
 
-# Destroy a Datacenter. This will remove all servers, volumes, and other objects in the datacenter. 
+# Destroy a Datacenter. This will remove all servers, volumes, and other objects in the datacenter.
 - profitbricks_datacenter:
     datacenter: Tardis One
     wait_timeout: 500
@@ -105,7 +105,8 @@ uuid_match = re.compile(
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -177,7 +178,7 @@ def remove_datacenter(module, profitbricks):
     """
     Removes a Datacenter.
 
-    This will remove a datacenter. 
+    This will remove a datacenter.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.

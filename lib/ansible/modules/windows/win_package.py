@@ -100,7 +100,7 @@ EXAMPLES = r'''
     path: https://download.microsoft.com/download/A/F/0/AF0071F3-B198-4A35-AA90-C68D103BDCCF/rdcman.msi
     product_id: '{0240359E-6A4C-4884-9E94-B397A02D893C}'
     state: absent
-    
+
 # Specify the expected non-zero return code when successful
 # In this case 3010 indicates 'reboot required'
 - name: 'Microsoft .NET Framework 4.5.1'
@@ -109,7 +109,7 @@ EXAMPLES = r'''
       productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
       arguments: '/q /norestart'
       ensure: present
-      expected_return_code: 3010    
+      expected_return_code: 3010
 
 # Specify multiple non-zero return codes when successful
 # In this case we can say that both 0 (SUCCESSFUL) and 3010 (REBOOT REQUIRED) codes are acceptable

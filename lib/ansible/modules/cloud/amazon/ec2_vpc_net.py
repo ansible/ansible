@@ -186,16 +186,16 @@ def get_vpc_values(vpc_obj):
 def main():
     argument_spec=ec2_argument_spec()
     argument_spec.update(dict(
-            name = dict(type='str', default=None, required=True),
-            cidr_block = dict(type='str', default=None, required=True),
-            tenancy = dict(choices=['default', 'dedicated'], default='default'),
-            dns_support = dict(type='bool', default=True),
-            dns_hostnames = dict(type='bool', default=True),
-            dhcp_opts_id = dict(type='str', default=None, required=False),
-            tags = dict(type='dict', required=False, default=None, aliases=['resource_tags']),
-            state = dict(choices=['present', 'absent'], default='present'),
-            multi_ok = dict(type='bool', default=False)
-        )
+        name = dict(type='str', default=None, required=True),
+        cidr_block = dict(type='str', default=None, required=True),
+        tenancy = dict(choices=['default', 'dedicated'], default='default'),
+        dns_support = dict(type='bool', default=True),
+        dns_hostnames = dict(type='bool', default=True),
+        dhcp_opts_id = dict(type='str', default=None, required=False),
+        tags = dict(type='dict', required=False, default=None, aliases=['resource_tags']),
+        state = dict(choices=['present', 'absent'], default='present'),
+        multi_ok = dict(type='bool', default=False)
+    )
     )
 
     module = AnsibleModule(

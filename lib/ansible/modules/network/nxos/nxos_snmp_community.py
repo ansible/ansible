@@ -429,11 +429,11 @@ def config_snmp_community(delta, community):
 
 def main():
     argument_spec = dict(
-            community=dict(required=True, type='str'),
-            access=dict(choices=['ro', 'rw']),
-            group=dict(type='str'),
-            acl=dict(type='str'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        community=dict(required=True, type='str'),
+        access=dict(choices=['ro', 'rw']),
+        group=dict(type='str'),
+        acl=dict(type='str'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_one_of=[['access', 'group']],

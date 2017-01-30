@@ -400,15 +400,15 @@ def get_ntp_peer(module):
     command = 'show run | inc ntp.(server|peer)'
     ntp_peer_list = []
     ntp = execute_show_command(
-                command, module, command_type='cli_show_ascii')
+        command, module, command_type='cli_show_ascii')
     if ntp:
         ntp = ntp[0]
 
         ntp_regex = (
-                    ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
-                    "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
-                    "(key\s(?P<key_id>\d+))?.*"
-                    )
+            ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
+            "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
+            "(key\s(?P<key_id>\d+))?.*"
+            )
 
         split_ntp = ntp.splitlines()
         for peer_line in split_ntp:
@@ -521,14 +521,14 @@ def config_ntp(delta, existing):
 
 def main():
     argument_spec = dict(
-            server=dict(type='str'),
-            peer=dict(type='str'),
-            key_id=dict(type='str'),
-            prefer=dict(type='str', choices=['enabled', 'disabled']),
-            vrf_name=dict(type='str'),
-            source_addr=dict(type='str'),
-            source_int=dict(type='str'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        server=dict(type='str'),
+        peer=dict(type='str'),
+        key_id=dict(type='str'),
+        prefer=dict(type='str', choices=['enabled', 'disabled']),
+        vrf_name=dict(type='str'),
+        source_addr=dict(type='str'),
+        source_int=dict(type='str'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 mutually_exclusive=[
@@ -606,7 +606,7 @@ def main():
             if proposed_source_type == existing_source_type:
                 if proposed_source == existing_source:
                     command = 'no ntp {0} {1}'.format(
-                                existing_source_type, existing_source)
+                        existing_source_type, existing_source)
                     if command:
                         commands.append([command])
 

@@ -48,11 +48,11 @@ def main():
 
     # create play with tasks
     play_source = dict(
-            name = "Ansible Play",
-            hosts = host_list,
-            gather_facts = 'no',
-            tasks = [ dict(action=dict(module='command', args=dict(cmd='/usr/bin/uptime'))) ]
-        )
+        name = "Ansible Play",
+        hosts = host_list,
+        gather_facts = 'no',
+        tasks = [ dict(action=dict(module='command', args=dict(cmd='/usr/bin/uptime'))) ]
+    )
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 
     # actually run it
@@ -60,12 +60,12 @@ def main():
     callback = ResultsCollector()
     try:
         tqm = TaskQueueManager(
-                inventory=inventory,
-                variable_manager=variable_manager,
-                loader=loader,
-                options=options,
-                passwords=passwords,
-            )
+            inventory=inventory,
+            variable_manager=variable_manager,
+            loader=loader,
+            options=options,
+            passwords=passwords,
+        )
         tqm._stdout_callback = callback
         result = tqm.run(play)
     finally:

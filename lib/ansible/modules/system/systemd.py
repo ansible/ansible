@@ -259,16 +259,16 @@ def main():
     # initialize
     module = AnsibleModule(
         argument_spec = dict(
-                name = dict(required=True, type='str', aliases=['unit', 'service']),
-                state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
-                enabled = dict(type='bool'),
-                masked = dict(type='bool'),
-                daemon_reload = dict(type='bool', default=False, aliases=['daemon-reload']),
-                user = dict(type='bool', default=False),
-                no_block = dict(type='bool', default=False),
-            ),
-            supports_check_mode=True,
-            required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+            name = dict(required=True, type='str', aliases=['unit', 'service']),
+            state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            enabled = dict(type='bool'),
+            masked = dict(type='bool'),
+            daemon_reload = dict(type='bool', default=False, aliases=['daemon-reload']),
+            user = dict(type='bool', default=False),
+            no_block = dict(type='bool', default=False),
+        ),
+        supports_check_mode=True,
+        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
         )
 
     systemctl = module.get_bin_path('systemctl')

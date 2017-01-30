@@ -299,9 +299,9 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
     def _icmp_match(self, rule, protocol, icmp_code, icmp_type):
         return protocol == 'icmp' \
-           and protocol == rule['protocol'] \
-           and icmp_code == rule['icmpcode'] \
-           and icmp_type == rule['icmptype']
+            and protocol == rule['protocol'] \
+            and icmp_code == rule['icmpcode'] \
+            and icmp_type == rule['icmptype']
 
 
     def _type_cidr_match(self, rule, cidr):

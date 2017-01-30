@@ -36,86 +36,86 @@ import ansible.module_utils.facts as facts
 # to generate the testcase data, you can use the script gen_distribution_version_testcase.py in hacking/tests
 TESTSETS = [
     {
-    "platform.dist": [
-        "centos",
-        "7.2.1511",
-        "Core"
-    ],
-    "input": {
-        "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
-        "/etc/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"7 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\nPRETTY_NAME=\"CentOS Linux 7 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:7\"\nHOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-7\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"7\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7\"\n\n",
-        "/etc/system-release": "CentOS Linux release 7.2.1511 (Core) \n"
-    },
-    "name": "CentOS 7.2.1511",
-    "result": {
-        "distribution_release": "Core",
-        "distribution": "CentOS",
-        "distribution_major_version": "7",
-        "os_family": "RedHat",
-        "distribution_version": "7.2.1511"
-    }
-},
+        "platform.dist": [
+            "centos",
+            "7.2.1511",
+            "Core"
+            ],
+        "input": {
+            "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
+            "/etc/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"7 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\nPRETTY_NAME=\"CentOS Linux 7 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:7\"\nHOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-7\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"7\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7\"\n\n",
+            "/etc/system-release": "CentOS Linux release 7.2.1511 (Core) \n"
+            },
+        "name": "CentOS 7.2.1511",
+        "result": {
+            "distribution_release": "Core",
+            "distribution": "CentOS",
+            "distribution_major_version": "7",
+            "os_family": "RedHat",
+            "distribution_version": "7.2.1511"
+            }
+        },
     {
-    "name": "CentOS 6.7",
-    "platform.dist": [
-        "centos",
-        "6.7",
-        "Final"
-    ],
-    "input": {
-        "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
-        "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
-        "/etc/system-release": "CentOS release 6.7 (Final)\n"
-    },
-    "result": {
-        "distribution_release": "Final",
-        "distribution": "CentOS",
-        "distribution_major_version": "6",
-        "os_family": "RedHat",
-        "distribution_version": "6.7"
-    }
-},
+        "name": "CentOS 6.7",
+        "platform.dist": [
+            "centos",
+            "6.7",
+            "Final"
+            ],
+        "input": {
+            "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
+            "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+            "/etc/system-release": "CentOS release 6.7 (Final)\n"
+            },
+        "result": {
+            "distribution_release": "Final",
+            "distribution": "CentOS",
+            "distribution_major_version": "6",
+            "os_family": "RedHat",
+            "distribution_version": "6.7"
+            }
+        },
     {
-    "name": "RedHat 7.2",
-    "platform.dist": [
-        "redhat",
-        "7.2",
-        "Maipo"
-    ],
-    "input": {
-        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
-        "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n",
-        "/etc/system-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n"
-    },
-    "result": {
-        "distribution_release": "Maipo",
-        "distribution": "RedHat",
-        "distribution_major_version": "7",
-        "os_family": "RedHat",
-        "distribution_version": "7.2"
-    }
-},
-{
-    "name": "RedHat 6.7",
-    "platform.dist": [
-        "redhat",
-        "6.7",
-        "Santiago"
-    ],
-    "input": {
-        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
-        "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
-        "/etc/system-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n"
-    },
-    "result": {
-        "distribution_release": "Santiago",
-        "distribution": "RedHat",
-        "distribution_major_version": "6",
-        "os_family": "RedHat",
-        "distribution_version": "6.7"
-    }
-},
-{
+        "name": "RedHat 7.2",
+        "platform.dist": [
+            "redhat",
+            "7.2",
+            "Maipo"
+            ],
+        "input": {
+            "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
+            "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n",
+            "/etc/system-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n"
+            },
+        "result": {
+            "distribution_release": "Maipo",
+            "distribution": "RedHat",
+            "distribution_major_version": "7",
+            "os_family": "RedHat",
+            "distribution_version": "7.2"
+            }
+        },
+    {
+        "name": "RedHat 6.7",
+        "platform.dist": [
+            "redhat",
+            "6.7",
+            "Santiago"
+            ],
+        "input": {
+            "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
+            "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+            "/etc/system-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n"
+            },
+        "result": {
+            "distribution_release": "Santiago",
+            "distribution": "RedHat",
+            "distribution_major_version": "6",
+            "os_family": "RedHat",
+            "distribution_version": "6.7"
+            }
+        },
+    {
         "name" : "openSUSE Leap 42.1",
         "input": {
             "/etc/os-release":
@@ -147,7 +147,7 @@ CODENAME = Malachite
             "distribution_version": "42.1",
         }
     },
-                {
+    {
         'name': 'openSUSE 13.2',
         'input': {'/etc/SuSE-release': """openSUSE 13.2 (x86_64)
 VERSION = 13.2
@@ -174,19 +174,19 @@ ID_LIKE="suse"
     },
     {
         "platform.dist": [
-            "", 
-            "", 
+            "",
+            "",
             ""
-        ], 
+        ],
         "input": {
             "/etc/os-release": "NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\nPRETTY_NAME=\"openSUSE Tumbleweed\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:tumbleweed:20160917\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
-        }, 
-        "name": "openSUSE Tumbleweed 20160917", 
+        },
+        "name": "openSUSE Tumbleweed 20160917",
         "result": {
-            "distribution_release": "NA", 
-            "distribution": "openSUSE Tumbleweed", 
-            "distribution_major_version": "NA", 
-            "os_family": "Suse", 
+            "distribution_release": "NA",
+            "distribution": "openSUSE Tumbleweed",
+            "distribution_major_version": "NA",
+            "os_family": "Suse",
             "distribution_version": "20160917"
         }
     },
@@ -604,84 +604,84 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "platform.system": "SunOS"
     },
 
-{
-    "name": "Solaris 11.3",
-    "platform.dist": [
-        "",
-        "",
-        ""
-    ],
-    "input": {
-        "/etc/release": "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 06 October 2015\n"
-    },
-    "platform.system": "SunOS",
-    "result": {
-        "distribution_release": "Oracle Solaris 11.3 X86",
-        "distribution": "Solaris",
-        "os_family": "Solaris",
-        "distribution_version": "11.3"
-    }
-},
+    {
+        "name": "Solaris 11.3",
+        "platform.dist": [
+            "",
+            "",
+            ""
+            ],
+        "input": {
+            "/etc/release": "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 06 October 2015\n"
+            },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 11.3 X86",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_version": "11.3"
+            }
+        },
 
-{
-    "name": "Solaris 10",
-    "platform.dist": [
-        "",
-        "",
-        ""
-    ],
-    "input": {
-        "/etc/release": "                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. All rights reserved.\n                            Assembled 17 January 2013\n"
-    },
-    "platform.system": "SunOS",
-    "result": {
-        "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
-        "distribution": "Solaris",
-        "os_family": "Solaris",
-        "distribution_version": "10"
-    }
-},
+    {
+        "name": "Solaris 10",
+        "platform.dist": [
+            "",
+            "",
+            ""
+            ],
+        "input": {
+            "/etc/release": "                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. All rights reserved.\n                            Assembled 17 January 2013\n"
+            },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_version": "10"
+            }
+        },
 
-{
-    "name": "Fedora 22",
-    "platform.dist": [
-        "fedora",
-        "22",
-        "Twenty Two"
-    ],
-    "input": {
-        "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
-        "/etc/os-release": "NAME=Fedora\nVERSION=\"22 (Twenty Two)\"\nID=fedora\nVERSION_ID=22\nPRETTY_NAME=\"Fedora 22 (Twenty Two)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:22\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=22\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=22\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n",
-        "/etc/system-release": "Fedora release 22 (Twenty Two)\n"
-    },
-    "result": {
-        "distribution_release": "Twenty Two",
-        "distribution": "Fedora",
-        "distribution_major_version": "22",
-        "os_family": "RedHat",
-        "distribution_version": "22"
-    }
-},
-{
-    "platform.dist": [
-        "fedora",
-        "25",
-        "Rawhide"
-    ],
-    "input": {
-        "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
-        "/etc/os-release": "NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\nPRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
-        "/etc/system-release": "Fedora release 25 (Rawhide)\n"
-    },
-    "name": "Fedora 25",
-    "result": {
-        "distribution_release": "Rawhide",
-        "distribution": "Fedora",
-        "distribution_major_version": "25",
-        "os_family": "RedHat",
-        "distribution_version": "25"
-    }
-},
+    {
+        "name": "Fedora 22",
+        "platform.dist": [
+            "fedora",
+            "22",
+            "Twenty Two"
+            ],
+        "input": {
+            "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
+            "/etc/os-release": "NAME=Fedora\nVERSION=\"22 (Twenty Two)\"\nID=fedora\nVERSION_ID=22\nPRETTY_NAME=\"Fedora 22 (Twenty Two)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:22\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=22\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=22\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n",
+            "/etc/system-release": "Fedora release 22 (Twenty Two)\n"
+            },
+        "result": {
+            "distribution_release": "Twenty Two",
+            "distribution": "Fedora",
+            "distribution_major_version": "22",
+            "os_family": "RedHat",
+            "distribution_version": "22"
+            }
+        },
+    {
+        "platform.dist": [
+            "fedora",
+            "25",
+            "Rawhide"
+            ],
+        "input": {
+            "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
+            "/etc/os-release": "NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\nPRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
+            "/etc/system-release": "Fedora release 25 (Rawhide)\n"
+            },
+        "name": "Fedora 25",
+        "result": {
+            "distribution_release": "Rawhide",
+            "distribution": "Fedora",
+            "distribution_major_version": "25",
+            "os_family": "RedHat",
+            "distribution_version": "25"
+            }
+        },
 
 
 ]

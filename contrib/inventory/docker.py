@@ -525,7 +525,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                 % (self.auth_params['tls_hostname'], match.group(1))
+                % (self.auth_params['tls_hostname'], match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
@@ -676,7 +676,7 @@ class DockerInventory(object):
             # use hosts from config file
             for host in hosts_list:
                 docker_host = host.get('host') or def_host or self._args.docker_host or \
-                              self._env_args.docker_host or DEFAULT_DOCKER_HOST
+                    self._env_args.docker_host or DEFAULT_DOCKER_HOST
                 api_version = host.get('version') or def_version or self._args.api_version or \
                     self._env_args.api_version or DEFAULT_DOCKER_API_VERSION
                 tls_hostname = host.get('tls_hostname') or def_tls_hostname or self._args.tls_hostname or \
@@ -816,7 +816,7 @@ class DockerInventory(object):
         default_config = basename + '.yml'
 
         parser = argparse.ArgumentParser(
-                description='Return Ansible inventory for one or more Docker hosts.')
+            description='Return Ansible inventory for one or more Docker hosts.')
         parser.add_argument('--list', action='store_true', default=True,
                            help='List all containers (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,

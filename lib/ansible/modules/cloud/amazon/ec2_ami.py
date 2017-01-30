@@ -506,7 +506,7 @@ def deregister_image(module, ec2):
     wait_timeout = int(module.params.get('wait_timeout'))
 
     img = ec2.get_image(image_id)
-    if img == None:
+    if img is None:
         module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
 
     # Get all associated snapshot ids before deregistering image otherwise this information becomes unavailable
@@ -562,7 +562,7 @@ def update_image(module, ec2, image_id):
         launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
 
     img = ec2.get_image(image_id)
-    if img == None:
+    if img is None:
         module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
 
     try:
@@ -584,23 +584,23 @@ def update_image(module, ec2, image_id):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance_id = dict(),
-            image_id = dict(),
-            architecture = dict(default="x86_64"),
-            kernel_id = dict(),
-            virtualization_type = dict(default="hvm"),
-            root_device_name = dict(),
-            delete_snapshot = dict(default=False, type='bool'),
-            name = dict(),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=900),
-            description = dict(default=""),
-            no_reboot = dict(default=False, type='bool'),
-            state = dict(default='present'),
-            device_mapping = dict(type='list'),
-            tags = dict(type='dict'),
-            launch_permissions = dict(type='dict')
-        )
+        instance_id = dict(),
+        image_id = dict(),
+        architecture = dict(default="x86_64"),
+        kernel_id = dict(),
+        virtualization_type = dict(default="hvm"),
+        root_device_name = dict(),
+        delete_snapshot = dict(default=False, type='bool'),
+        name = dict(),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=900),
+        description = dict(default=""),
+        no_reboot = dict(default=False, type='bool'),
+        state = dict(default='present'),
+        device_mapping = dict(type='list'),
+        tags = dict(type='dict'),
+        launch_permissions = dict(type='dict')
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

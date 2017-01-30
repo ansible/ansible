@@ -7,7 +7,7 @@ import json
 def initialize():
     '''
     This function initializes the FreeIPA/IPA API. This function requires
-    no arguments. A kerberos key must be present in the users keyring in 
+    no arguments. A kerberos key must be present in the users keyring in
     order for this to work.
     '''
 
@@ -18,7 +18,7 @@ def initialize():
     except AttributeError:
         #FreeIPA < 4.0 compatibility
         api.Backend.xmlclient.connect()
-    
+
     return api
 
 def list_groups(api):
@@ -39,7 +39,7 @@ def list_groups(api):
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:
-            members += (host for host in  hostgroup['memberindirect_host'])
+            members += (host for host in hostgroup['memberindirect_host'])
         inventory[hostgroup['cn'][0]] = {'hosts': [host for host in members]}
 
         for member in members:
@@ -48,7 +48,7 @@ def list_groups(api):
     inventory['_meta'] = {'hostvars': hostvars}
     inv_string = json.dumps(inventory, indent=1, sort_keys=True)
     print(inv_string)
-    
+
     return None
 
 def parse_args():
@@ -68,8 +68,8 @@ def parse_args():
 
 def print_host(host):
     '''
-    This function is really a stub, it could return variables to be used in 
-    a playbook. However, at this point there are no variables stored in 
+    This function is really a stub, it could return variables to be used in
+    a playbook. However, at this point there are no variables stored in
     FreeIPA/IPA.
 
     This function expects one string, this hostname to lookup variables for.

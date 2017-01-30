@@ -45,7 +45,7 @@ options:
   state:
     description:
        - list is the only valid option.
-    required: False 
+    required: False
 '''
 
 EXAMPLES = '''
@@ -72,7 +72,7 @@ subscriptions:
     returned: When view is set to subscriptions.
     type: list
     sample: ["mysubscription", "mysubscription2"]
-topic: 
+topic:
     description: Name of topic. Used to filter subscriptions.
     returned: Always
     type: str
@@ -88,7 +88,7 @@ try:
    from ast import literal_eval
    HAS_PYTHON26 = True
 except ImportError:
-   HAS_PYTHON26 = False;
+   HAS_PYTHON26 = False
 
 try:
     from google.cloud import pubsub
@@ -98,21 +98,21 @@ except ImportError as e:
 def list_func(data, member='name'):
    """Used for state=list."""
    return [getattr(x, member) for x in data]
-   
+
 
 def main():
    module = AnsibleModule(argument_spec=dict(
-      view=dict(choices=['topics', 'subscriptions'], default='topics'),
-      topic=dict(required=False),
-      state=dict(choices=['list'], default='list'),
-      service_account_email=dict(),
-      credentials_file=dict(),
-      project_id=dict(), ),)
+       view=dict(choices=['topics', 'subscriptions'], default='topics'),
+       topic=dict(required=False),
+       state=dict(choices=['list'], default='list'),
+       service_account_email=dict(),
+       credentials_file=dict(),
+       project_id=dict(), ),)
 
    if not HAS_PYTHON26:
       module.fail_json(
-         msg="GCE module requires python's 'ast' module, python v2.6+")
-      
+          msg="GCE module requires python's 'ast' module, python v2.6+")
+
    if not HAS_GOOGLE_CLOUD_PUBSUB:
      module.fail_json(msg="Please install google-cloud-pubsub library.")
 

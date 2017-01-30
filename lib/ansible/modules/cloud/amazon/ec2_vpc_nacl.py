@@ -357,11 +357,11 @@ def remove_network_acl(client, module):
             changed = True
             result[nacl_id] = "Successfully deleted"
             return changed, result
-        if not assoc_ids: 
+        if not assoc_ids:
             delete_network_acl(nacl_id, client, module)
             changed = True
             result[nacl_id] = "Successfully deleted"
-            return changed, result            
+            return changed, result
     return changed, result
 
 
@@ -510,7 +510,7 @@ def subnets_to_associate(nacl, client, module):
                 {'Name': 'tag:Name', 'Values': params}])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
-    return [s['SubnetId'] for s in subnets['Subnets'] if s['SubnetId']]    
+    return [s['SubnetId'] for s in subnets['Subnets'] if s['SubnetId']]
 
 
 def main():

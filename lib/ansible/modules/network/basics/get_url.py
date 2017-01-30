@@ -173,39 +173,39 @@ author: "Jan-Piet Mens (@jpmens)"
 
 EXAMPLES='''
 - name: download foo.conf
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     mode: 0440
 
 - name: download file and force basic auth
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     force_basic_auth: yes
 
 - name: download file with custom HTTP headers
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     headers: 'key:value,key:value'
 
 - name: download file with check (sha256)
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     checksum: sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
 
 - name: download file with check (md5)
-  get_url: 
-    url: http://example.com/path/file.conf 
+  get_url:
+    url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
 
 - name: download file from a file path
-  get_url: 
-    url: "file:///tmp/afile.txt" 
-    dest: /tmp/afilecopy.txt  
+  get_url:
+    url: "file:///tmp/afile.txt"
+    dest: /tmp/afilecopy.txt
 '''
 
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
@@ -427,7 +427,7 @@ def main():
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
-        except Exception: 
+        except Exception:
             err = get_exception()
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))

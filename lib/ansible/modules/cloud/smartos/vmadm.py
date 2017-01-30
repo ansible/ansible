@@ -32,6 +32,11 @@ description:
 version_added: "2.3"
 author: Jasper Lievisse Adriaanse (@jasperla)
 options:
+  archive_on_delete:
+    required: false
+    description:
+      - When enabled, the zone dataset will be mounted on C(/zones/archive)
+        upon removal.
   autoboot:
     required: false
     description:
@@ -41,7 +46,11 @@ options:
     choices: [ joyent, joyent-minimal, kvm, lx ]
     default: joyent
     description:
-      - Type for of virtual machine.
+      - Type of virtual machine.
+  boot:
+    required: false
+    description:
+      - Set the boot order for KVM VMs.
   cpu_cap:
     required: false
     description:
@@ -52,6 +61,12 @@ options:
     description:
       - Sets a limit on the number of fair share scheduler (FSS) CPU shares for
         a VM. This limit is relative to all other VMs on the system.
+  cpu_type:
+    required: false
+    choices: [ qemu64, host ]
+    default: qemu64
+    description:
+      - Control the type of virtual CPU exposed to KVM VMs.
   customer_metadata:
     required: false
     description:
@@ -97,6 +112,10 @@ options:
     required: false
     description:
       - Image UUID.
+  indestructible_delegated:
+    required: false
+    description:
+      - Adds an C(@indestructible) snapshot to delegated datasets.
   indestructible_zoneroot:
     required: false
     description:
@@ -106,15 +125,32 @@ options:
     description:
       - Metadata to be set and associated with this VM, this contains operator
         generated keys.
+  internal_metadata_namespace:
+    required: false
+    description:
+      - List of namespaces to be set as I(internal_metadata-only); these namespaces
+        will come from I(internal_metadata) rather than I(customer_metadata).
   kernel_version:
     required: false
     description:
       - Kernel version to emulate for LX VMs.
+  limit_priv:
+    required: false
+    description:
+      - Set (comma separated) list of privileges the zone is allowed to use.
   maintain_resolvers:
     required: false
     description:
       - Resolvers in C(/etc/resolv.conf) will be updated when updating
         the I(resolvers) property.
+  max_locked_memory:
+    required: false
+    description:
+      - Total amount of memory (in MiBs) on the host that can be locked by this VM.
+  max_lwps:
+    required: false
+    description:
+      - Maximum number of lightweight processes this VM is allowed to have running.
   max_physical_memory:
     required: false
     description:
@@ -123,6 +159,11 @@ options:
     required: false
     description:
       - Maximum amount of virtual memory (in MiBs) the VM is allowed to use.
+  mdata_exec_timeout:
+    required: false
+    description:
+      - Timeout in seconds (or 0 to disable) for the C(svc:/smartdc/mdata:execute) service
+        that runs user-scripts in the zone.
   name:
     required: false
     aliases: [ alias ]
@@ -136,6 +177,16 @@ options:
     required: false
     description:
       - A list of nics to add, valid properties are documented in vmadm(1M).
+  nowait:
+    required: false
+    description:
+      - Consider the provisioning complete when the VM first starts, rather than
+        when the VM has rebooted.
+  qemu_opts:
+    required: false
+    description:
+      - Additional qemu arguments for KVM guests. This overwrites the default arguments
+        provided by vmadm(1M) and should only be used for debugging.
   qemu_extra_opts:
     required: false
     description:
@@ -152,6 +203,20 @@ options:
     required: false
     description:
       - List of resolvers to be put into C(/etc/resolv.conf).
+  routes:
+    required: false
+    description:
+      - Dictionary that maps destinations to gateways, these will be set as static
+        routes in the VM.
+  spice_opts:
+    required: false
+    description:
+      - Addition options for SPICE-enabled KVM VMs.
+  spice_password:
+    required: false
+    description:
+      - Password required to connect to SPICE. By default no password is set.
+        Please note this can be read from the Global Zone.
   state:
     required: true
     choices: [ present, absent, stopped, restarted ]
@@ -162,6 +227,10 @@ options:
         shutdown the zone before removing it.
         C(stopped) means the zone will be created if it doesn't exist already, before shutting
         it down.
+  tmpfs:
+    required: false
+    description:
+      - Amount of memory (in MiBs) that will be available in the VM for the C(/tmp) filesystem.
   uuid:
     required: false
     description:
@@ -170,15 +239,58 @@ options:
     required: false
     description:
       - Number of virtual CPUs for a KVM guest.
+  vga:
+    required: false
+    description:
+      - Specify VGA emulation used by KVM VMs.
+  virtio_txburst:
+    required: false
+    description:
+      - Number of packets that can be sent in a single flush of the tx queue of virtio NICs.
+  virtio_txtimer:
+    required: false
+    description:
+      - Timeout (in nanoseconds) for the TX timer of virtio NICs.
+  vnc_password:
+    required: false
+    description:
+      - Password required to connect to VNC. By default no password is set.
+        Please note this can be read from the Global Zone.
   vnc_port:
     required: false
     description:
       - TCP port to listen of the VNC server. Or set C(0) for random,
         or C(-1) to disable.
+  zfs_data_compression:
+    required: false
+    description:
+      - Specifies compression algorithm used for this VMs data dataset. This option
+        only has effect on delegated datasets.
+  zfs_data_recsize:
+    required: false
+    description:
+      - Suggested block size (power of 2) for files in the delegated dataset's filesystem.
+  zfs_filesystem_limit:
+    required: false
+    description:
+      - Maximum number of filesystems the VM can have.
   zfs_io_priority:
     required: false
     description:
       - IO throttle priority value relative to other VMs.
+  zfs_root_compression:
+    required: false
+    description:
+      - Specifies compression algorithm used for this VMs root dataset. This option
+        only has effect on the zoneroot dataset.
+  zfs_root_recsize:
+    required: false
+    description:
+      - Suggested block size (power of 2) for files in the zoneroot dataset's filesystem.
+  zfs_snapshot_limit:
+    required: false
+    description:
+      - Number of snapshots the VM can have.
   zpool:
     required: false
     description:
@@ -503,18 +615,26 @@ def main():
     # They're not required and have a default of None.
     properties = {
         'str': [
-            'disk_driver', 'dns_domain', 'fs_allowed', 'hostname', 'image_uuid',
-            'kernel_version', 'nic_driver', 'qemu_extra_opts', 'uuid', 'zpool'
+            'boot', 'disk_driver', 'dns_domain', 'fs_allowed', 'hostname',
+            'image_uuid', 'internal_metadata_namespace', 'kernel_version',
+            'limit_priv', 'nic_driver', 'qemu_opts', 'qemu_extra_opts',
+            'spice_opts', 'uuid', 'vga', 'zfs_data_compression',
+            'zfs_root_compression', 'zpool'
         ],
         'bool': [
-            'autoboot', 'debug', 'delegate_dataset', 'firewall_enabled',
-            'force', 'indestructible_zoneroot', 'maintain_resolvers',
+            'archive_on_delete', 'autoboot', 'debug', 'delegate_dataset',
+            'firewall_enabled', 'force', 'indestructible_delegated',
+            'indestructible_zoneroot', 'maintain_resolvers', 'nowait'
         ],
         'int': [
-            'cpu_cap', 'cpu_shares', 'max_physical_memory', 'max_swap',
-            'quota', 'ram', 'vcpus', 'vnc_port', 'zfs_io_priority',
+            'cpu_cap', 'cpu_shares', 'max_locked_memory', 'max_lwps',
+            'max_physical_memory', 'max_swap', 'mdata_exec_timeout',
+            'quota', 'ram', 'tmpfs', 'vcpus', 'virtio_txburst',
+            'virtio_txtimer', 'vnc_port', 'zfs_data_recsize',
+            'zfs_filesystem_limit', 'zfs_io_priority', 'zfs_root_recsize',
+            'zfs_snapshot_limit'
         ],
-        'dict': ['customer_metadata', 'internal_metadata'],
+        'dict': ['customer_metadata', 'internal_metadata', 'routes'],
         'list': ['disks', 'nics', 'resolvers', 'filesystems']
     }
 
@@ -534,6 +654,14 @@ def main():
             type='str',
             choices=['joyent', 'joyent-minimal', 'kvm', 'lx']
         ),
+        cpu_type=dict(
+            default='qemu64',
+            type='str',
+            choices=['host','qemu64']
+        ),
+        # Regular strings, however these require additional options.
+        spice_password=dict(type='str', no_log=True),
+        vnc_password=dict(type='str', no_log=True),
     )
 
     # Add our 'simple' options to options dict.

@@ -193,22 +193,22 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
         severity_id = severity_list[0].id
 
         issue = {
-                 "project": project_name,
-                 "subject": issue_subject,
-                 "priority": issue_priority,
-                 "status": issue_status,
-                 "type": issue_type,
-                 "severity": issue_severity,
-                 "description": issue_description,
-                 "tags": issue_tags,
-                }
+            "project": project_name,
+            "subject": issue_subject,
+            "priority": issue_priority,
+            "status": issue_status,
+            "type": issue_type,
+            "severity": issue_severity,
+            "description": issue_description,
+            "tags": issue_tags,
+            }
 
         # An issue is identified by the project_name, the issue_subject and the issue_type
         matching_issue_list = filter(lambda x: x.subject == issue_subject and x.type == type_id, project.list_issues())
         matching_issue_list_len = len(matching_issue_list)
 
         if matching_issue_list_len == 0:
-        # The issue does not exist in the project
+            # The issue does not exist in the project
             if state == "present":
                 # This implies a change
                 changed = True
@@ -226,7 +226,7 @@ def manage_issue(module, taiga_host, project_name, issue_subject, issue_priority
                 return (True, changed, "Issue does not exist", {})
 
         elif matching_issue_list_len == 1:
-        # The issue exists in the project
+            # The issue exists in the project
             if state == "absent":
                 # This implies a change
                 changed = True
@@ -288,21 +288,21 @@ def main():
     state = module.params['state']
 
     return_status, changed, msg, issue_attr_dict = manage_issue(
-                                                                module,
-                                                                taiga_host,
-                                                                project_name,
-                                                                issue_subject,
-                                                                issue_priority,
-                                                                issue_status,
-                                                                issue_type,
-                                                                issue_severity,
-                                                                issue_description,
-                                                                issue_attachment,
-                                                                issue_attachment_description,
-                                                                issue_tags,
-                                                                state,
-                                                                check_mode=module.check_mode
-                                                               )
+        module,
+        taiga_host,
+        project_name,
+        issue_subject,
+        issue_priority,
+        issue_status,
+        issue_type,
+        issue_severity,
+        issue_description,
+        issue_attachment,
+        issue_attachment_description,
+        issue_tags,
+        state,
+        check_mode=module.check_mode
+        )
     if return_status:
         if len(issue_attr_dict) > 0:
             module.exit_json(changed=changed, msg=msg, issue=issue_attr_dict)

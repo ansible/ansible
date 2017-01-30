@@ -63,8 +63,8 @@ class CallbackModule(CallbackBase):
                                   "/etc/foreman/client_key.pem"))
     FOREMAN_SSL_VERIFY = os.getenv('FOREMAN_SSL_VERIFY', "1")
     FOREMAN_HEADERS = {
-      "Content-Type": "application/json",
-      "Accept": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S %f"
 
@@ -155,7 +155,7 @@ class CallbackModule(CallbackBase):
                     "status": status,
                     "logs": log,
                     }
-                 }
+                }
             # To be changed to /api/v2/config_reports in 1.11.  Maybe we
             # could make a GET request to get the Foreman version & do
             # this automatically.

@@ -189,10 +189,10 @@ def main():
     incident_key = module.params['incident_key']
 
     state_event_dict = {
-            'triggered': 'trigger',
-            'acknowledged': 'acknowledge',
-            'resolved': 'resolve'
-        }
+        'triggered': 'trigger',
+        'acknowledged': 'acknowledge',
+        'resolved': 'resolve'
+    }
 
     event_type = state_event_dict[state]
 

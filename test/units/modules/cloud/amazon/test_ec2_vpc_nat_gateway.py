@@ -57,13 +57,13 @@ def run(play):
     results = None
     try:
         tqm = TaskQueueManager(
-                inventory=inventory,
-                variable_manager=variable_manager,
-                loader=loader,
-                options=options,
-                passwords=passwords,
-                stdout_callback='default',
-            )
+            inventory=inventory,
+            variable_manager=variable_manager,
+            loader=loader,
+            options=options,
+            passwords=passwords,
+            stdout_callback='default',
+        )
         results = tqm.run(play)
     finally:
         if tqm is not None:
