@@ -23,7 +23,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Read though all the pages linked off :doc:`developing_modules`, paying particular focus to the :doc:`developing_modules_checklist`.
 * For new modules going into Ansible 2.4 we are raising the bar so they must pass `pep8 --ignore=E402 --max-line-length=160` cleanly.
 * All new modules going into Ansible 2.3 must support Python 2.4+ and Python 3.5+. For Ansible 2.4 the requirement will change to Python and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
-* Understand that all modules shipped with Ansible MUST be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory must be under the FIXME license.
+* Understand that all modules shipped with Ansible MUST be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should generally be done so under the BSD license (or GPLv3).
 * Have a look at the existing modules, especially in the same functional area (such as cloud, networking, databases) in the :doc:`../list_of_all_modules` for a list of existing modules and how they've been named.
 
 # FIXME Add details about `docs_fragments` and `module_utils` (once the other docs are tidied up this can be simplified as a link to those existing sections
@@ -54,9 +54,8 @@ We've found that writing a list of your proposed module names and a one or two l
 
 FIXME: How do we want to know the above, will everyone had a named contact at Ansible, what about if it's the community, rather than a vendor?
 
-FIXME: Some light weight review process of the above
+FIXME: Some light weight review process of the above, maybe in IRC Core Meetings?
 
-FIXME: I (gundalow) isn't sure if we want to use the Public Core Meetings with this, though that is one recommended way for the community to reach the Core Team.
 
 Where to get support
 ````````````````````
@@ -101,7 +100,7 @@ After publishing your PR on https://github.com/ansible/ansible a Shippable CI te
 If you need further advice join the `#ansible-devel` IRC channel (details in "Where to get support")
 
 
-Please don't force push your PRs, we prefer individual commits in the same PR, the PR will be squashed and merged by the Ansible Core Team when it's ready to be accepted. This is required to allow reviews to see what's changed since they started looking at your PR.
+Please don't "squash" your PRs, we prefer individual commits in the same PR, the PR will be squashed and merged by the Ansible Core Team when it's ready to be accepted. This is required to allow reviews to see what's changed since they started looking at your PR.
 
 We have a "ansibot" helper that comments on GitHub Issues and PRs which should highlight important information.
 
@@ -121,9 +120,8 @@ Over the years we've experimented with different sized PRs, some containing one 
 
 FIXME, should we tell people to only raise one at a time, or (say) 5 PRs at once?
 
-As with your first PR, please don't "force push" updates to GitHub as it makes the reviewers (and submitters) life a lot harder.
+As with your first PR, please don't "squash" updates to GitHub as it makes the reviewers (and submitters) life a lot harder.
 
-After each PR has been merged please update the `CHANGELOG.md <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_ so your module is listed under the "New Modules" section for the new release.
 
 Finally
 ```````
