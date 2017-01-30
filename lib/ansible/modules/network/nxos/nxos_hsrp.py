@@ -155,12 +155,12 @@ from ansible.module_utils.network import NetworkModule
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -574,8 +574,8 @@ def is_default(interface, module):
 def validate_config(body, vip, module):
     new_body = ''.join(body)
     if "invalid ip address" in new_body.lower():
-            module.fail_json(msg="Invalid VIP. Possible duplicate IP address.",
-                             vip=vip)
+        module.fail_json(msg="Invalid VIP. Possible duplicate IP address.",
+                         vip=vip)
 
 
 def validate_params(param, module):
