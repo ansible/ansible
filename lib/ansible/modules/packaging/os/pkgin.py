@@ -318,7 +318,7 @@ def do_upgrade_packages(module, full=False):
         module.fail_json(msg="could not %s packages" % cmd)
 
 def upgrade_packages(module):
-        do_upgrade_packages(module)
+    do_upgrade_packages(module)
 
 def full_upgrade_packages(module):
     do_upgrade_packages(module, True)

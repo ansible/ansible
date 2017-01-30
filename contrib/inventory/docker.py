@@ -735,7 +735,7 @@ class DockerInventory(object):
 
             cert_path = def_cert_path or self._args.cert_path or self._env_args.cert_path
             if cert_path and cert_path == self._env_args.cert_path:
-                    cert_path = os.path.join(cert_path, 'cert.pem')
+                cert_path = os.path.join(cert_path, 'cert.pem')
 
             cacert_path = def_cacert_path or self._args.cacert_path or self._env_args.cert_path
             if cacert_path and cacert_path == self._env_args.cert_path:

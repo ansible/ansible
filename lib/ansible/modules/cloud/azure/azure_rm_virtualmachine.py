@@ -605,7 +605,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Using image version {0}".format(self.image['version']))
 
             if not self.storage_blob_name:
-                    self.storage_blob_name = self.name + '.vhd'
+                self.storage_blob_name = self.name + '.vhd'
 
             if self.storage_account_name:
                 self.get_storage_account(self.storage_account_name)

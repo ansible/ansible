@@ -273,7 +273,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         args['projectid'] = self.get_project('id')
         sgs = self.cs.listSecurityGroups(**args)
         if not sgs or 'securitygroup' not in sgs:
-                self.module.fail_json(msg="security group '%s' not found" % security_group_name)
+            self.module.fail_json(msg="security group '%s' not found" % security_group_name)
         return sgs['securitygroup'][0]
 
 

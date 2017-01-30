@@ -101,7 +101,7 @@ def get_fqdn(repo_url):
     return result
 
 def check_hostkey(module, fqdn):
-   return not not_in_host_file(module, fqdn)
+    return not not_in_host_file(module, fqdn)
 
 # this is a variant of code found in connection_plugins/paramiko.py and we should modify
 # the paramiko code to import and use this.

@@ -226,7 +226,7 @@ def connect_to_api(module, disconnect_atexit=True):
 
 def get_all_objs(content, vimtype, folder=None, recurse=True):
     if not folder:
-      folder = content.rootFolder
+        folder = content.rootFolder
 
     obj = {}
     container = content.viewManager.CreateContainerView(folder, vimtype, recurse)
