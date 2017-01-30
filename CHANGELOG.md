@@ -132,6 +132,8 @@ Ansible Changes By Release
 - smartos:
   * imgadm
   * vmadm
+- tower:
+  * tower_organization
 - web_infrastructure
   * jenkins_script
 - windows:
