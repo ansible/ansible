@@ -44,9 +44,9 @@ options:
         description:
             - Indicates the desired bundle state. C(present) ensures the bundle
               is installed while C(absent) ensures the bundle is not installed.
-            required: false
-            default: present
-            choices: ["present", "absent"]
+        required: false
+        default: present
+        choices: ["present", "absent"]
     update:
         description:
             - Updates the OS to the latest version
