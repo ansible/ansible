@@ -41,6 +41,8 @@
 /lib/ansible/module_utils/rax.py
 /lib/ansible/module_utils/vca.py
 /lib/ansible/module_utils/vmware.py
+/lib/ansible/module_utils/netconf.py
+/lib/ansible/module_utils/junos.py
 /lib/ansible/parsing/
 /lib/ansible/playbook/
 /lib/ansible/plugins/
