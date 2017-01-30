@@ -97,11 +97,9 @@ ansible_net_gather_subset:
 """
 import re
 
-import ansible.module_utils.vyos
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.vyos import run_commands
 
 
 class FactsBase(object):
@@ -204,7 +202,7 @@ class Neighbors(FactsBase):
         parsed = list()
         values = None
         for line in data.split('\n'):
-            if len(line) == 0:
+            if not line:
                 continue
             elif line[0] == ' ':
                 values += '\n%s' % line
