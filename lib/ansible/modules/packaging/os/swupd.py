@@ -187,6 +187,9 @@ def swupd_install(module, bundle):
     if rc == 0:
         module.exit_json(changed=True, msg="Bundle %s installed" % bundle, stdout=stdout, stderr=stderr)
 
+    if rc == 18:
+        module.exit_json(Changed=False, msg="Bundle name %s is invalid" % bundle, stdout=stdout, stderr=stderr)
+
     module.fail_json(msg="Unkown Error", stdout=stdout, stderr=stderr)
 
 
