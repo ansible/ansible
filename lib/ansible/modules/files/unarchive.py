@@ -591,7 +591,7 @@ class TgzArchive(object):
         self.opts = module.params['extra_opts']
         self.module = module
         if self.module.check_mode:
-             self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
+            self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
         self.excludes = [ path.rstrip('/') for path in self.module.params['exclude']]
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         self.cmd_path = self.module.get_bin_path('gtar', None)

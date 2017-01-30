@@ -333,7 +333,7 @@ def main():
         supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id':params['dhcp_options_id']})
         if len(supplied_options) != 1:
             if params['state'] != 'absent':
-              module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")
+                module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")
         else:
             found = True
             dhcp_option = supplied_options[0]

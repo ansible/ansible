@@ -178,7 +178,7 @@ class LookupModule(LookupBase):
             except (AnsibleUndefinedVariable, UndefinedError):
                 continue
 
-             # get subdir if set by task executor, default to files otherwise
+            # get subdir if set by task executor, default to files otherwise
             subdir = getattr(self, '_subdir', 'files')
             path = None
             path = self.find_file_in_search_path(variables, subdir, fn, ignore_missing=True)

@@ -452,9 +452,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
             if not msg:
-              msg = mystat.get('module_stdout')
+                msg = mystat.get('module_stdout')
             if not msg:
-              msg = mystat.get('msg')
+                msg = mystat.get('msg')
             raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, msg))
 
         if not mystat['stat']['exists']:

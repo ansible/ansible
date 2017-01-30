@@ -130,18 +130,18 @@ def generate_inv_from_api(enterprise_entity,config):
             if (config.getboolean('defaults', 'public_ip_only')) == True:
                 for link in vmcollection['links']:
                     if (link['type']=='application/vnd.abiquo.publicip+json' and link['rel']=='ip'):
-                      vm_nic = link['title']
-                      break
+                        vm_nic = link['title']
+                        break
                     else:
-                      vm_nic = None
+                        vm_nic = None
             # Otherwise, assigning defined network interface IP address
             else:
                 for link in vmcollection['links']:
                     if (link['rel']==config.get('defaults', 'default_net_interface')):
-                      vm_nic = link['title']
-                      break
+                        vm_nic = link['title']
+                        break
                     else:
-                      vm_nic = None
+                        vm_nic = None
 
             vm_state = True
             # From abiquo.ini: Only adding to inventory VMs deployed

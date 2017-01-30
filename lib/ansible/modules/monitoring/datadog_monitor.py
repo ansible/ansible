@@ -307,7 +307,7 @@ def delete_monitor(module):
 def mute_monitor(module):
     monitor = _get_monitor(module)
     if not monitor:
-         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
+        module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
     elif (module.params['silenced'] is not None
@@ -327,7 +327,7 @@ def mute_monitor(module):
 def unmute_monitor(module):
     monitor = _get_monitor(module)
     if not monitor:
-         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
+        module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif not monitor['options']['silenced']:
         module.exit_json(changed=False)
     try:

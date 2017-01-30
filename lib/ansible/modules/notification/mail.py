@@ -285,7 +285,7 @@ def main():
                     e = get_exception()
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
             else:
-                    module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
+                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
 
 
     if (secure == 'always'):

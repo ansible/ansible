@@ -147,7 +147,7 @@ def _get_server_state(module, nova):
                     server_info = info
                     break
     except Exception as e:
-            module.fail_json(msg = "Error in getting the server list: %s" % e.message)
+        module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     return server_info, server
 
 def _get_port_id(neutron, module, instance_id):

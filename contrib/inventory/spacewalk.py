@@ -187,7 +187,7 @@ if options.list:
 
                 groups[group_name].add(system['spacewalk_server_name'])
                 if system['spacewalk_server_name'] in host_vars and not system['spacewalk_server_name'] in meta[ "hostvars" ]:
-                        meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
+                    meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
 
     except (OSError) as e:
         print('Problem executing the command "%s system-groups-systems": %s' %

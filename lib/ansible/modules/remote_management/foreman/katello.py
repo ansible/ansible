@@ -320,7 +320,7 @@ class NailGun(object):
 
             if len(repository) == 0:
                 if 'releasever' in params:
-                     reposet.enable(data={'basearch': params['basearch'], 'releasever': params['releasever']})
+                    reposet.enable(data={'basearch': params['basearch'], 'releasever': params['releasever']})
                 else:
                     reposet.enable(data={'basearch': params['basearch']})
 

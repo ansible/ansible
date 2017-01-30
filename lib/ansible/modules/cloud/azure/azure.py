@@ -258,11 +258,11 @@ try:
     import azure as windows_azure
 
     if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.11.1":
-      from azure import WindowsAzureError as AzureException
-      from azure import WindowsAzureMissingResourceError as AzureMissingException
+        from azure import WindowsAzureError as AzureException
+        from azure import WindowsAzureMissingResourceError as AzureMissingException
     else:
-      from azure.common import AzureException as AzureException
-      from azure.common import AzureMissingResourceHttpError as AzureMissingException
+        from azure.common import AzureException as AzureException
+        from azure.common import AzureMissingResourceHttpError as AzureMissingException
 
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,

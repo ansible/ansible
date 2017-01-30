@@ -102,13 +102,13 @@ def parse_vgs(data):
     return vgs
 
 def find_mapper_device_name(module, dm_device):
-        dmsetup_cmd = module.get_bin_path('dmsetup', True)
-        mapper_prefix = '/dev/mapper/'
-        rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
-        if rc != 0:
-            module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
-        mapper_device = mapper_prefix + dm_name.rstrip()
-        return mapper_device
+    dmsetup_cmd = module.get_bin_path('dmsetup', True)
+    mapper_prefix = '/dev/mapper/'
+    rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+    if rc != 0:
+        module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
+    mapper_device = mapper_prefix + dm_name.rstrip()
+    return mapper_device
 
 def parse_pvs(module, data):
     pvs = []

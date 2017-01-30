@@ -184,12 +184,12 @@ def update_roles(schema_facts, cursor, schema,
         cursor.execute("create role {0}".format(role))
         cursor.execute("grant usage on schema {0} to {1}".format(schema, role))
     for role in set(create_required) - set(create_existing):
-         cursor.execute("grant create on schema {0} to {1}".format(schema, role))
+        cursor.execute("grant create on schema {0} to {1}".format(schema, role))
 
 def check(schema_facts, schema, usage_roles, create_roles, owner):
     schema_key = schema.lower()
     if schema_key not in schema_facts:
-       return False
+        return False
     if owner and owner.lower() == schema_facts[schema_key]['owner'].lower():
         return False
     if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0:

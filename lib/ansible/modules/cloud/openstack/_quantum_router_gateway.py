@@ -141,7 +141,7 @@ def _get_router_id(module, neutron):
     except Exception as e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
-            return None
+        return None
     return routers['routers'][0]['id']
 
 def _get_net_id(neutron, module):

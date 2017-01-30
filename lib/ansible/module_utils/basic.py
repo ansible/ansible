@@ -1399,7 +1399,7 @@ class AnsibleModule(object):
                                                                                                                  ','.join(sorted(list(unsupported_parameters))),
                                                                                                                  ','.join(sorted(self.argument_spec.keys()))))
         if self.check_mode and not self.supports_check_mode:
-                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check):
         count = 0
