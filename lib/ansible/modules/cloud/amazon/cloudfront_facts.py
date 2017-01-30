@@ -370,18 +370,10 @@ class CloudFrontServiceManager:
             distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
             for dist in distributions:
                 temp_distribution = {}
-                temp_distribution.update(
-                    {
-                        'Id': dist['Id'],
-                        'ARN': dist['ARN'],
-                        'Status': dist['Status'],
-                        'LastModifiedTime': dist['LastModifiedTime'],
-                        'DomainName': dist['DomainName'],
-                        'Comment':  dist['Comment'],
-                        'PriceClass': dist['PriceClass'],
-                        'Enabled': dist['Enabled'],
-                        'Aliases': []
-                    } )
+                key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
+                for key_name in key_list:
+                    temp_distribution.update( { key_name: dist[key_name] } )
+                temp_distribution.update( { 'Aliases': [] } ) 
                 temp_distribution.update( { 'ETag': self.get_etag_from_distribution_id(dist['Id'], streaming) } )
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
