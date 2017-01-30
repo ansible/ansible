@@ -147,7 +147,7 @@ def generate_cert(module, ip_address, key_filename, password,
     buff = wait_with_timeout(module, shell, ">")
     stdout += buff
 
-     # exit
+    # exit
     shell.send('exit\n')
 
     if 'Success' not in buff:
