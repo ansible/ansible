@@ -22,7 +22,7 @@ __metaclass__ = type
 import pytest
 
 import ansible.errors
-from ansible.compat.six.moves import builtins
+from ansible.compat.six import PY2
 
 from ansible.executor import module_common as amc
 
@@ -76,13 +76,19 @@ class TestSlurp(object):
     def test_slurp_file(self, mocker):
         mocker.patch('os.path.exists', side_effect=lambda x: True)
         m = mocker.mock_open(read_data='This is a test')
-        mocker.patch('builtins.open', m)
+        if PY2:
+            mocker.patch('__builtin__.open', m)
+        else:
+            mocker.patch('builtins.open', m)
         assert amc._slurp('some_file') == 'This is a test'
 
     def test_slurp_file_with_newlines(self, mocker):
         mocker.patch('os.path.exists', side_effect=lambda x: True)
         m = mocker.mock_open(read_data='#!/usr/bin/python\ndef test(args):\nprint("hi")\n')
-        mocker.patch('builtins.open', m)
+        if PY2:
+            mocker.patch('__builtin__.open', m)
+        else:
+            mocker.patch('builtins.open', m)
         assert amc._slurp('some_file') == '#!/usr/bin/python\ndef test(args):\nprint("hi")\n'
 
 
