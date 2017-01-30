@@ -27,19 +27,12 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import hmac
+import re
 
 try:
     import urlparse
 except ImportError:
     import urllib.parse as urlparse
-
-try:
-    from hashlib import sha1
-except ImportError:
-    import sha as sha1
-
-HASHED_KEY_MAGIC = "|1|"
 
 def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
@@ -48,12 +41,15 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
     if is_ssh_url(url):
 
         fqdn = get_fqdn(url)
+        ssh_port = get_ssh_port(url)
 
         if fqdn:
-            known_host = check_hostkey(module, fqdn)
+            known_host = check_hostkey(module, fqdn, ssh_port)
+
             if not known_host:
+
                 if accept_hostkey:
-                    rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
+                    rc, out, err = add_host_key(module, fqdn, ssh_port, create_dir=create_dir)
                     if rc != 0:
                         module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
                 else:
@@ -100,14 +96,22 @@ def get_fqdn(repo_url):
                 result = result.split(":")[0]
     return result
 
-def check_hostkey(module, fqdn):
-   return not not_in_host_file(module, fqdn)
+def get_ssh_port(url):
 
-# this is a variant of code found in connection_plugins/paramiko.py and we should modify
-# the paramiko code to import and use this.
+    """ get possible custom ssh port in urls like ssh://[user@]domain.com:[port]/<project_name> """
 
-def not_in_host_file(self, host):
+    port = 22
+    if url.startswith('ssh://'):
+        result = url.split(":")[2]
+        custom_port = re.match("(^\d+)\/", result)
+        if custom_port:
+            port = custom_port.group(1)
 
+    return port
+
+def check_hostkey(module, fqdn, ssh_port):
+
+    """ check if we have ssh host key """
 
     if 'USER' in os.environ:
         user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
@@ -121,45 +125,25 @@ def not_in_host_file(self, host):
     host_file_list.append("/etc/ssh/ssh_known_hosts2")
     host_file_list.append("/etc/openssh/ssh_known_hosts")
 
-    hfiles_not_found = 0
     for hf in host_file_list:
         if not os.path.exists(hf):
-            hfiles_not_found += 1
             continue
+        #Find the ssh-keygen binary
+        sshkeygen = module.get_bin_path("ssh-keygen", True)
 
-        try:
-            host_fh = open(hf)
-        except IOError:
-            hfiles_not_found += 1
-            continue
-        else:
-            data = host_fh.read()
-            host_fh.close()
+        #openssh >=6.4 has changed ssh-keygen behaviour such that it returns
+        #1 if no host is found, whereas previously it returned 0
+        # Host key present if returned code = 0, present output on stdout and absent output on stderr
+        rc, stdout, stderr = module.run_command([sshkeygen, '-F', fqdn, '-f', hf], check_rc = False)
 
-        for line in data.split("\n"):
-            if line is None or " " not in line:
-                continue
-            tokens = line.split()
-            if tokens[0].find(HASHED_KEY_MAGIC) == 0:
-                # this is a hashed known host entry
-                try:
-                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
-                    hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                    hash.update(host)
-                    if hash.digest() == kn_host.decode('base64'):
-                        return False
-                except:
-                    # invalid hashed host key, skip it
-                    continue
-            else:
-                # standard host file entry
-                if host in tokens[0]:
-                    return False
+        if stdout != '' and stderr == '' and rc == 0:
+            return True # host key present
+        if rc != 0 and rc != 1: #something went wrong
+            module.fail_json(msg = "ssh-keygen failed (rc = %d, stdout = '%s', stderr = '%s')" % (rc, stdout, stderr))
 
-    return True
+    return False
 
-
-def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
+def add_host_key(module, fqdn, ssh_port, create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
@@ -184,8 +168,8 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     elif not os.path.isdir(user_ssh_dir):
         module.fail_json(msg="%s is not a directory" % user_ssh_dir)
 
-    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
-
+    # I don't use -H for hash because with this option I've got strange results
+    this_cmd = "%s -p %s -t rsa,ecdsa %s" % (keyscan_cmd, ssh_port, fqdn)
     rc, out, err = module.run_command(this_cmd)
     # ssh-keyscan gives a 0 exit code and prints nothins on timeout
     if rc != 0 or not out:
@@ -193,4 +177,3 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     module.append_to_file(user_host_file, out)
 
     return rc, out, err
-
