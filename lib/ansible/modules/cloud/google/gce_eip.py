@@ -127,7 +127,6 @@ def get_address(gce, name, region):
     except ResourceNotFoundError:
         return None
 
-    
 def create_address(gce, params):
     """
     Create a new Address.
