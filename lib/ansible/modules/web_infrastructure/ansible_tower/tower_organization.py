@@ -31,7 +31,7 @@ options:
       required: True
     description:
       description:
-        - String to use for the organization.
+        - The description to use for the organization.
       required: False
       default: null
     state:
