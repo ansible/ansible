@@ -70,7 +70,7 @@ function Date_To_Timestamp($start_date, $end_date) {
 function Get-Hash($path, $algorithm) {
     # Using PowerShell V4 and above we can use some powershell cmdlets instead of .net
     if ($PSVersionTable.PSVersion.Major -ge 4) {
-        $hash = (Get-FileHash $path -Algorithm $algorithm).Hash
+        $hash = (Get-FileHash -Path $path -Algorithm $algorithm).Hash
     } else {
         $net_algorithm = [Security.Cryptography.HashAlgorithm]::Create($algorithm)
         $raw_hash = [System.BitConverter]::ToString($net_algorithm.ComputeHash([System.IO.File]::ReadAllBytes($path)))
@@ -85,11 +85,16 @@ $params = Parse-Args $args -supports_check_mode $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
 $get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $true
 $get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
-$checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "sha1","sha256","sha384","sha512"
+$checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
 
 $result = @{
     changed = $false
     stat = @{}
+}
+
+# Backward compatibility
+if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
+    Deprecate $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
 }
 
 If (Test-Path -Path $path) {
