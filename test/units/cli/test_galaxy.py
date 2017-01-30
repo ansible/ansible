@@ -32,7 +32,6 @@ import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError
 
 from ansible.cli.galaxy import GalaxyCLI
-from ansible.utils.display import Display
 
 class TestGalaxy(unittest.TestCase):
     @classmethod
