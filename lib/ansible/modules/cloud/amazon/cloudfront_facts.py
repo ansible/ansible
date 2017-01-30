@@ -366,11 +366,11 @@ class CloudFrontServiceManager:
     def summary_get_distribution_list(self, streaming=False):
         try:
             list_name = 'streaming_distributions' if streaming else 'distributions'
+            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
             distribution_list = { list_name: [] }
             distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
             for dist in distributions:
                 temp_distribution = {}
-                key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
                 for key_name in key_list:
                     temp_distribution.update( { key_name: dist[key_name] } )
                 temp_distribution.update( { 'Aliases': [] } ) 
