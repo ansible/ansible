@@ -224,6 +224,8 @@ Ansible Changes By Release
 * 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
 * made any_errors_fatal inheritable from play to task and all other objects in between.
 * many small performance improvements in inventory and variable handling and in task execution.
+* The AWS Lambda module previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
+* Added 'prefix' attribute to all the RabbitMQ modules that can support it.
 
 ### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
