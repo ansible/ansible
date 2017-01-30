@@ -309,12 +309,9 @@ def main():
         )
     )
 
-    repository_url = module.params["repository_url"]
-    if not repository_url:
-        repository_url = "http://repo1.maven.org/maven2"
 
     try:
-        parsed_url = urlparse(repository_url)
+        parsed_url = urlparse(url_repository)
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
