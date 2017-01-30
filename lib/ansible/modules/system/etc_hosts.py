@@ -45,31 +45,33 @@ short_description: Manages records in the /etc/hosts file
 description:
   - Add, remove and modify records in the /etc/hosts file.
 options:
-  ip:
-    required: true
-    description:
-      - IP address.
-  hostname:
-    required: false
-    description:
-      - Canonical hostname of the IP address. Required if I(state=present).
   alias:
     required: false
     default: null
     description:
       - Alias(es) of the IP address. Multiple aliases can be either a normal
         YAML list or a string containing comma separated list.
+  hostname:
+    required: false
+    description:
+      - Canonical hostname of the IP address. Required if I(state=present).
+  ip:
+    required: true
+    description:
+      - IP address.
   path:
     required: false
     default: /etc/hosts
     description:
-      - Path to the hosts file.
+      - Path to the hosts file. Required if I(state=present).
   state:
     required: false
     choices: [absent, present]
     default: present
     description:
       - State of the record in the hosts file.
+      - If C(present), I(ip) and I(hostname) are required.
+      - If C(absent), I(ip) or I(hostname) is required.
 
 extends_documentation_fragment:
   - files
@@ -81,29 +83,53 @@ EXAMPLES = '''
     ip: 10.0.0.1
     hostname: some.domain1.com
 
-- name: Add a new record with an alias
+- name: Add a new record with hostname for the same IP
   etc_hosts:
     ip: 10.0.0.1
     hostname: some.domain2.com
+
+- name: Add a new record with another IP for the same hostname
+  etc_hosts:
+    ip: 10.0.0.2
+    hostname: some.domain3.com
+
+- name: Add a new record with hostname and alias for the same IP
+  etc_hosts:
+    ip: 10.0.0.3
+    hostname: some.domain3.com
     alias: some
 
 - name: Add a new record with multiple aliases
   etc_hosts:
-    ip: 10.0.0.2
-    hostname: some.domain3.com
+    ip: 10.0.0.4
+    hostname: some.domain4.com
     alias:
       - some
       - other
+
+- name: Update the list of aliases for the existing IP and hostname
+  etc_hosts:
+    ip: 10.0.0.4
+    hostname: some.domain4.com
+    alias:
+      - some
+      - other
+      - alias
 
 - name: Remove all records with the specified IP
   etc_hosts:
     ip: 10.0.0.1
     state: absent
 
+- name: Remove all records with the specified hostname
+  etc_hosts:
+    hostname: some.domain3.com
+    state: absent
+
 - name: Remove record with specified IP and hostname
   etc_hosts:
-    ip: 10.0.0.2
-    hostname: some.domain3.com
+    ip: 10.0.0.4
+    hostname: some.domain4.com
     state: absent
 '''
 
@@ -134,6 +160,7 @@ class EtcHosts:
 
         # Validate the IP address
         if (
+                self.params['ip'] is not None and
                 not (
                     self._is_valid_ipv4_address(self.params['ip']) or
                     self._is_valid_ipv6_address(self.params['ip']))):
@@ -209,6 +236,8 @@ class EtcHosts:
                         record['alias'] = [items[2], ]
                     elif len(items) > 3:
                         record['alias'] = sorted(items[2:])
+                    else:
+                        record['alias'] = []
 
             self.lines.append(record)
 
@@ -245,20 +274,36 @@ class EtcHosts:
 
         # Check if the same record already is in the file
         for idx, line in enumerate(self.lines):
-            if (
-                    line['valid'] and
-                    line['ip'] == self.params['ip'] and (
-                        self.params['hostname'] is None or
-                        line['hostname'] == self.params['hostname'])):
-                if action == 'add':
-                    found = idx
+            match = None
 
-                    break
-                else:
-                    if found is None:
-                        found = []
+            if line['valid']:
+                if (
+                        self.params['ip'] is not None and
+                        line['ip'] == self.params['ip']):
+                    match = True
+                elif self.params['ip'] is not None:
+                    match = False
 
-                    found.append(idx)
+                if (
+                        self.params['hostname'] is not None and
+                        line['hostname'] == self.params['hostname']):
+                    if match is None:
+                        match = True
+                    else:
+                        match &= True
+                elif self.params['hostname'] is not None:
+                    match = False
+
+                if match:
+                    if action == 'add':
+                        found = idx
+
+                        break
+                    else:
+                        if found is None:
+                            found = []
+
+                        found.append(idx)
 
         if action == 'add':
             if found is None:
@@ -334,9 +379,9 @@ def main():
     # Module settings
     module = AnsibleModule(
         argument_spec=dict(
-            ip=dict(required=True),
-            hostname=dict(),
             alias=dict(type='list'),
+            hostname=dict(),
+            ip=dict(),
             path=dict(default='/etc/hosts'),
             state=dict(choices=['present', 'absent'], default='present')
         ),
@@ -347,8 +392,18 @@ def main():
     # Make shorter variable
     state = module.params['state']
 
-    if state == 'present' and module.params['hostname'] is None:
-        module.fail_json(msg="Option 'hostname' is required.")
+    # Check presence of the input options
+    if (
+            state == 'present' and (
+                module.params['ip'] is None or
+                module.params['hostname'] is None)):
+        module.fail_json(msg="Options 'hostname' and 'ip' are required.")
+
+    if (
+            state == 'absent' and
+            module.params['ip'] is None and
+            module.params['hostname'] is None):
+        module.fail_json(msg="Option 'hostname' or 'ip' is required.")
 
     # Read the hosts file
     hosts = EtcHosts(module)
