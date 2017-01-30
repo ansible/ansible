@@ -69,3 +69,4 @@ def load_config(module, commands):
             module.fail_json(msg=err, command=command, rc=rc)
 
     module.exec_command('end')
+
