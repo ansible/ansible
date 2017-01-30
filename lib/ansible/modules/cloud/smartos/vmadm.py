@@ -618,8 +618,8 @@ def main():
             'boot', 'disk_driver', 'dns_domain', 'fs_allowed', 'hostname',
             'image_uuid', 'internal_metadata_namespace', 'kernel_version',
             'limit_priv', 'nic_driver', 'qemu_opts', 'qemu_extra_opts',
-            'spice_opts', 'spice_password', 'uuid', 'vga', 'vnc_password',
-            'zfs_data_compression', 'zfs_root_compression', 'zpool'
+            'spice_opts', 'uuid', 'vga', 'zfs_data_compression',
+            'zfs_root_compression', 'zpool'
         ],
         'bool': [
             'archive_on_delete', 'autoboot', 'debug', 'delegate_dataset',
@@ -659,6 +659,9 @@ def main():
             type='str',
             choices=['host','qemu64']
         ),
+        # Regular strings, however these require additional options.
+        spice_password=dict(type='str', no_log=True),
+        vnc_password=dict(type='str', no_log=True),
     )
 
     # Add our 'simple' options to options dict.
