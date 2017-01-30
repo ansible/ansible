@@ -55,7 +55,7 @@
     that:
     - 'result.changed'
     - 'known_hosts.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts.stdout_lines[4].startswith("example.net")'
+    - 'known_hosts.stdout_lines[4].startswith("# example.net")'
     - 'known_hosts.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
 
 # test idempotence of addition
@@ -130,7 +130,7 @@
     - 'result.changed'
     - '"example.org" not in known_hosts_v3.stdout'
     - 'known_hosts_v3.stdout_lines[0].startswith("example.com")'
-    - 'known_hosts_v3.stdout_lines[-1].startswith("example.net")'
+    - 'known_hosts_v3.stdout_lines[-1].startswith("# example.net")'
 
 # test idempotence of removal
 
