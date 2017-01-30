@@ -107,7 +107,7 @@ def main():
     existing_mailbox = mailbox_name in mailbox_list
 
     result = {}
-    
+
     # Here's where the real stuff happens
 
     if site_state == 'present':

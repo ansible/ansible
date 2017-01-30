@@ -153,31 +153,31 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"interface": "eth1/33", "neighbor_policy": "test", 
+    sample: {"interface": "eth1/33", "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 existing:
     description:
         - k/v pairs of existing configuration
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test1", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test1",
             "neighbor_type": "prefix", "sparse": true}
 end_state:
     description: k/v pairs of configuration after module execution
     returned: always
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface eth1/33", "ip pim neighbor-policy test", 
+    sample: ["interface eth1/33", "ip pim neighbor-policy test",
             "ip pim neighbor-policy test"]
 changed:
     description: check to see if a change was made on the device
@@ -495,10 +495,10 @@ def get_interface_mode(interface, intf_type, module):
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module,
                                 command_type='cli_show_ascii', text=True)
-    
+
     if body:
         if 'not running' not in body[0]:
             body = execute_show_command(command, module)
@@ -552,7 +552,7 @@ def get_pim_interface(module, interface):
         return {}
 
     command = 'show run interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
     jp_configs = []
@@ -784,7 +784,7 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
     # returns a dict
     defaults = get_pim_interface_defaults()
     delta = dict(set(defaults.items()).difference(
-                                                     existing.items()))
+        existing.items()))
     if delta:
         # returns a list
         command = config_pim_interface(delta, existing,
@@ -799,19 +799,19 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 
 def main():
     argument_spec=dict(
-            interface=dict(required=True),
-            sparse=dict(type='bool', default=True),
-            dr_prio=dict(type='str'),
-            hello_auth_key=dict(type='str'),
-            hello_interval=dict(type='int'),
-            jp_policy_out=dict(type='str'),
-            jp_policy_in=dict(type='str'),
-            jp_type_out=dict(choices=['prefix', 'routemap']),
-            jp_type_in=dict(choices=['prefix', 'routemap']),
-            border=dict(type='bool'),
-            neighbor_policy=dict(type='str'),
-            neighbor_type=dict(choices=['prefix', 'routemap']),
-            state=dict(choices=['present', 'absent', 'default'],
+        interface=dict(required=True),
+        sparse=dict(type='bool', default=True),
+        dr_prio=dict(type='str'),
+        hello_auth_key=dict(type='str'),
+        hello_interval=dict(type='int'),
+        jp_policy_out=dict(type='str'),
+        jp_policy_in=dict(type='str'),
+        jp_type_out=dict(choices=['prefix', 'routemap']),
+        jp_type_in=dict(choices=['prefix', 'routemap']),
+        border=dict(type='bool'),
+        neighbor_policy=dict(type='str'),
+        neighbor_type=dict(choices=['prefix', 'routemap']),
+        state=dict(choices=['present', 'absent', 'default'],
                        default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,

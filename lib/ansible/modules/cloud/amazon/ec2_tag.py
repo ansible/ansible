@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 
 DOCUMENTATION = '''
 ---
-module: ec2_tag 
+module: ec2_tag
 short_description: create and remove tag(s) to ec2 resources.
 description:
     - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
@@ -28,9 +28,9 @@ version_added: "1.3"
 options:
   resource:
     description:
-      - The EC2 resource id. 
+      - The EC2 resource id.
     required: true
-    default: null 
+    default: null
     aliases: []
   state:
     description:
@@ -97,10 +97,10 @@ EXAMPLES = '''
     region:  eu-west-1
     resource: '{{ item.id }}'
     state: present
-    tags: 
+    tags:
       Name: dbserver
       Env: production
-  with_subelements: 
+  with_subelements:
     - ec2_vol.results
     - volumes
 
@@ -130,10 +130,10 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            resource = dict(required=True),
-            tags = dict(type='dict'),
-            state = dict(default='present', choices=['present', 'absent', 'list']),
-        )
+        resource = dict(required=True),
+        tags = dict(type='dict'),
+        state = dict(default='present', choices=['present', 'absent', 'list']),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -143,14 +143,14 @@ def main():
     resource = module.params.get('resource')
     tags = module.params.get('tags')
     state = module.params.get('state')
-  
+
     ec2 = ec2_connect(module)
-    
+
     # We need a comparison here so that we can accurately report back changed status.
     # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
     filters = {'resource-id' : resource}
     gettags = ec2.get_all_tags(filters=filters)
-   
+
     dictadd = {}
     dictremove = {}
     baddict = {}
@@ -164,13 +164,13 @@ def main():
         if set(tags.items()).issubset(set(tagdict.items())):
             module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
         else:
-            for (key, value) in set(tags.items()): 
+            for (key, value) in set(tags.items()):
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
         tagger = ec2.create_tags(resource, dictadd)
         gettags = ec2.get_all_tags(filters=filters)
         module.exit_json(msg="Tags %s created for resource %s." % (dictadd,resource), changed=True)
- 
+
     if state == 'absent':
         if not tags:
             module.fail_json(msg="tags argument is required when state is absent")

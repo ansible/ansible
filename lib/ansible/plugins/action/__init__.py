@@ -221,7 +221,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if use_system_tmp:
             tmpdir = None
         else:
-            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP)
+            tmpdir =  self._remote_expand_user(C.DEFAULT_REMOTE_TMP, sudoable=False)
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode, tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
@@ -441,11 +441,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Get information from remote file.
         '''
         module_args=dict(
-           path=path,
-           follow=follow,
-           get_md5=False,
-           get_checksum=True,
-           checksum_algo='sha1',
+            path=path,
+            follow=follow,
+            get_md5=False,
+            get_checksum=True,
+            checksum_algo='sha1',
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None))
 
@@ -495,7 +495,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         finally:
             return x
 
-    def _remote_expand_user(self, path):
+    def _remote_expand_user(self, path, sudoable=True):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'):  # FIXME: Windows paths may start with "~ instead of just ~
             return path
@@ -503,13 +503,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # FIXME: Can't use os.path.sep for Windows paths.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
-        if expand_path == '~':
-            if self._play_context.become and self._play_context.become_user:
-                expand_path = '~%s' % self._play_context.become_user
+        if sudoable and expand_path == '~' and self._play_context.become and self._play_context.become_user:
+            expand_path = '~%s' % self._play_context.become_user
 
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
-        #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
         if not initial_fragment:

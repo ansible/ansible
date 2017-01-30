@@ -123,8 +123,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -134,7 +134,7 @@ def _get_neutron_client(module, kwargs):
 
 def _get_router_id(module, neutron):
     kwargs = {
-            'name': module.params['router_name'],
+        'name': module.params['router_name'],
     }
     try:
         routers = neutron.list_routers(**kwargs)
@@ -180,7 +180,7 @@ def _add_gateway_router(neutron, module, router_id, network_id):
         module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
     return True
 
-def  _remove_gateway_router(neutron, module, router_id):
+def _remove_gateway_router(neutron, module, router_id):
     try:
         neutron.remove_gateway_router(router_id)
     except Exception as e:
@@ -191,9 +191,9 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name        = dict(required=True),
-            network_name       = dict(required=True),
-            state              = dict(default='present', choices=['absent', 'present']),
+        router_name        = dict(required=True),
+        network_name       = dict(required=True),
+        state              = dict(default='present', choices=['absent', 'present']),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:

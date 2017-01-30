@@ -36,7 +36,7 @@ options:
     default: None
   vpn_gateway_ids:
     description:
-      - Get details of a specific Virtual Gateway ID. This value should be provided as a list. 
+      - Get details of a specific Virtual Gateway ID. This value should be provided as a list.
     required: false
     default: None
 author: "Nick Aslanidis (@naslanidis)"
@@ -66,7 +66,7 @@ EXAMPLES = '''
   ec2_vpc_vgw_facts:
     region: ap-southeast-2
     profile: production
-    vpn_gateway_ids: vgw-c432f6a7 
+    vpn_gateway_ids: vgw-c432f6a7
   register: vgw_facts
 '''
 
@@ -83,7 +83,7 @@ virtual_gateways:
                     "key": "Name",
                     "value": "TEST-VGW"
                 }
-            ], 
+            ],
             "type": "ipsec.1",
             "vpc_attachments": [
                 {
@@ -133,7 +133,7 @@ def list_virtual_gateways(client, module):
 
     snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
                                 for vgw in all_virtual_gateways['VpnGateways']]
-    
+
     module.exit_json(virtual_gateways=snaked_vgws)
 
 
@@ -148,7 +148,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-     # Validate Requirements
+    # Validate Requirements
     if not HAS_BOTO3:
         module.fail_json(msg='json and boto3 is required.')
 
@@ -160,7 +160,7 @@ def main():
 
     # call your function here
     results = list_virtual_gateways(connection, module)
-    
+
     module.exit_json(result=results)
 
 

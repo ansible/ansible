@@ -30,7 +30,7 @@ options:
     description:
       - "Name of the s3 bucket"
     required: true
-    default: null 
+    default: null
   error_key:
     description:
       - "The object key name to use when a 4XX class error occurs. To remove an error key, set to None."
@@ -57,7 +57,7 @@ options:
       - "Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash character."
     required: false
     default: index.html
-    
+
 extends_documentation_fragment:
   - aws
   - ec2
@@ -76,14 +76,14 @@ EXAMPLES = '''
 - s3_website:
     name: mybucket.com
     state: absent
-    
+
 # Configure an s3 bucket as a website with index and error pages
 - s3_website:
     name: mybucket.com
     suffix: home.htm
     error_key: errors/404.htm
     state: present
-    
+
 '''
 
 RETURN = '''
@@ -170,7 +170,7 @@ def _create_website_configuration(suffix, error_key, redirect_all_requests):
 
 
 def enable_or_update_bucket_as_website(client_connection, resource_connection, module):
-    
+
     bucket_name = module.params.get("name")
     redirect_all_requests = module.params.get("redirect_all_requests")
     # If redirect_all_requests is set then don't use the default suffix that has been set
@@ -263,17 +263,17 @@ def main():
             redirect_all_requests=dict(type='str', required=False)
         )
     )
-    
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive = [
-                               ['redirect_all_requests', 'suffix'],
-                               ['redirect_all_requests', 'error_key']
-                             ])
+            ['redirect_all_requests', 'suffix'],
+            ['redirect_all_requests', 'error_key']
+            ])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
-    
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
@@ -288,7 +288,7 @@ def main():
         enable_or_update_bucket_as_website(client_connection, resource_connection, module)
     elif state == 'absent':
         disable_bucket_as_website(client_connection, module)
-        
+
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *

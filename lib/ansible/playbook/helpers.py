@@ -133,8 +133,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                                (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
+                        (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
                 if is_static:
                     if t.loop is not None:
@@ -179,13 +179,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable:
                             raise AnsibleParserError(
-                                      "Error when evaluating variable in include name: %s.\n\n" \
-                                      "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
-                                      "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n" \
-                                      "sources like group or host vars." % t.args['_raw_params'],
-                                      obj=task_ds,
-                                      suppress_extended_error=True,
-                                  )
+                                "Error when evaluating variable in include name: %s.\n\n" \
+                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
+                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n" \
+                                "sources like group or host vars." % t.args['_raw_params'],
+                                obj=task_ds,
+                                suppress_extended_error=True,
+                                )
                         if t._role:
                             include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
                         else:
@@ -269,13 +269,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             elif 'include_role' in task_ds:
 
                 ir = IncludeRole.load(
-                            task_ds,
-                            block=block,
-                            role=role,
-                            task_include=None,
-                            variable_manager=variable_manager,
-                            loader=loader
-                     )
+                    task_ds,
+                    block=block,
+                    role=role,
+                    task_include=None,
+                    variable_manager=variable_manager,
+                    loader=loader
+                    )
 
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
@@ -293,7 +293,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 needs_templating = True
                                 break
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)  or \
+                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
                                 (not needs_templating and ir.all_parents_static() and not ir.loop)
                     display.debug('Determined that if include_role static is %s' % str(is_static))
                 if is_static:

@@ -236,7 +236,7 @@ class Interfaces(FactsBase):
             fact['address'] = matc.group(2)
             fact['masklen'] = matc.group(3)
             facts[intf].append(fact)
-        return facts                                         
+        return facts
 
     def populate_interfaces(self, interfaces, desc, properties):
         facts = dict()
@@ -327,7 +327,7 @@ class Interfaces(FactsBase):
                     return match.group(3)
         if flag==1:
             return "null"
-          
+
     def parse_type(self, key, properties):
         type_val, type_val_next = properties.split('--------- ------- --------------------- --------------------- --------------')
         flag=1

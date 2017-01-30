@@ -29,27 +29,33 @@ short_description: returns information about a Windows file
 description:
      - Returns information about a Windows file
 options:
-  path:
-    description:
-      - The full path of the file/object to get the facts of; both forward and
-        back slashes are accepted.
-    required: true
-    default: null
-    aliases: []
-  get_md5:
-    description:
-      - Whether to return the checksum sum of the file. As of Ansible 1.9 this
-        is no longer a MD5, but a SHA1 instead.
-    required: false
-    default: yes
-    aliases: []
-  get_checksum:
-    description:
-      - Whether to return a checksum of the file
-        (only sha1 currently supported)
-    required: false
-    default: yes
-    version_added: "2.1"
+    path:
+        description:
+            - The full path of the file/object to get the facts of; both forward and
+              back slashes are accepted.
+        required: yes
+    get_md5:
+        description:
+            - Whether to return the checksum sum of the file. Between Ansible 1.9
+              and 2.2 this is no longer an MD5, but a SHA1 isntead. As of Ansible
+              2.3 this is back to an MD5. Will return None if host is unable to
+              use specified algorithm
+        required: no
+        default: True
+    get_checksum:
+        description:
+            - Whether to return a checksum of the file (default sha1)
+        required: no
+        default: True
+        version_added: "2.1"
+    checksum_algorithm:
+        description:
+            - Algorithm to determine checksum of file. Will throw an error if
+              the host is unable to use specified algorithm.
+        required: no
+        default: sha1
+        choices: ['sha1', 'sha256', 'sha384', 'sha512']
+        version_added: "2.3"
 author: "Chris Church (@cchurch)"
 '''
 
@@ -59,7 +65,140 @@ EXAMPLES = r'''
     path: C:\foo.ini
   register: file_info
 
+# Obtain information about a folder
+- win_stat:
+    path: C:\\bar
+  register: folder_info
+
+# Get MD5 checksum of a file
+- win_stat:
+    path: C:\\foo.ini
+    get_md5: True
+  register: md5_checksum
+
 - debug:
-    var: file_info
+    var: md5_checksum.stat.md5
+
+# Get SHA1 checksum of file
+- win_stat:
+    path: C:\\foo.ini
+    get_checksum: True
+  register: sha1_checksum
+
+- debug:
+    var: sha1_checksum.stat.checksum
+
+# Get SHA256 checksum of file
+- win_stat:
+    path: C:\\foo.ini
+    get_checksum: True
+    checksum_algorithm: sha256
+  register: sha256_checksum
+
+- debug:
+    var: sha256_checksum.stat.checksum
 '''
 
+RETURN = '''
+changed:
+    description: Whether anything was changed
+    returned: always
+    type: boolean
+    sample: True
+stat:
+    description: dictionary containing all the stat data
+    returned: success
+    type: dictionary
+    contains:
+        attributes:
+            description: attributes of the file at path in raw form
+            returned: success, path exists
+            type: string
+            sample: "Archive, Hidden"
+        checksum:
+            description: The checksum of a file based on checksum_algorithm specified
+            returned: success, path exist, path is a file, get_checksum == True
+              checksum_algorithm specified is supported
+            type: string
+            sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
+        creationtime:
+            description: the create time of the file represented in seconds since epoch
+            returned: success, path exists
+            type: float
+            sample: 1477984205.15
+        extension:
+            description: the extension of the file at path
+            returned: success, path exists, path is a file
+            type: string
+            sample: ".ps1"
+        isarchive:
+            description: if the path is ready for archiving or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isdir:
+            description: if the path is a directory or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        ishidden:
+            description: if the path is hidden or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        islink:
+            description: if the path is a symbolic link or junction or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isreadonly:
+            description: if the path is read only or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        isshared:
+            description: if the path is shared or not
+            returned: success, path exists
+            type: boolean
+            sample: True
+        lastaccesstime:
+            description: the last access time of the file represented in seconds since epoch
+            returned: success, path exists
+            type: float
+            sample: 1477984205.15
+        lastwritetime:
+            description: the last modification time of the file represented in seconds since epoch
+            returned: success, path exists
+            type: float
+            sample: 1477984205.15
+        lnk_source:
+            description: the target of the symbolic link, will return null if not a link or the link is broken
+            return: success, path exists, file is a symbolic link
+            type: string
+            sample: C:\\temp
+        md5:
+            description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash)
+            returned: success, path exist, path is a file, get_md5 == True, md5 is supported
+            type: string
+            sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
+        owner:
+            description: the owner of the file
+            returned: success, path exists
+            type: string
+            sample: BUILTIN\\Administrators
+        path:
+            description: the full absolute path to the file
+            returned: success, path exists
+            type: string
+            sample: BUILTIN\\Administrators
+        sharename:
+            description: the name of share if folder is shared
+            returned: success, path exists, file is a directory and isshared == True
+            type: string
+            sample: file-share
+        size:
+            description: the size in bytes of a file or folder
+            returned: success, path exists, file is not a link
+            type: int
+            sample: 1024
+'''

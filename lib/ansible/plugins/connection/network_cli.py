@@ -69,6 +69,8 @@ class Connection(_Connection):
         """Connections to the device and sets the terminal type"""
         super(Connection, self)._connect()
 
+        display.debug('starting network_cli._connect()')
+
         network_os = self._play_context.network_os
         if not network_os:
             for cls in terminal_loader.all(class_only=True):
@@ -94,7 +96,7 @@ class Connection(_Connection):
         if not self._terminal:
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
-        return (0, 'connected', '')
+        self._connected = True
 
     @ensure_connect
     def open_shell(self):
@@ -115,6 +117,7 @@ class Connection(_Connection):
         display.vvv('closing connection', host=self._play_context.remote_addr)
         self.close_shell()
         super(Connection, self).close()
+        self._connected = False
 
     def close_shell(self):
         """Closes the vty shell if the device supports multiplexing"""
@@ -226,7 +229,7 @@ class Connection(_Connection):
         """
         try:
             obj = json.loads(cmd)
-        except ValueError:
+        except (ValueError, TypeError):
             obj = {'command': str(cmd).strip()}
 
         if obj['command'] == 'close_shell()':

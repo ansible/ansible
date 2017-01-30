@@ -120,9 +120,9 @@ class Server():
         self._start_time = datetime.datetime.now()
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
-        rc, out, err = self.conn._connect()
-        if rc != 0:
-            raise AnsibleConnectionFailure(err)
+        self.conn._connect()
+        if not self.conn.connected:
+            raise AnsibleConnectionFailure('unable to connect to remote host')
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
@@ -283,8 +283,6 @@ def main():
         if pid == 0:
             try:
                 server = Server(sf_path, pc)
-            except AnsibleConnectionFailure as exc:
-                log(str(exc), pc.remote_addr)
             except Exception as exc:
                 log(traceback.format_exc(), pc.remote_addr)
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)

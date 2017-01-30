@@ -34,21 +34,21 @@ from ansible.module_utils.basic import return_values, remove_values
 
 class TestReturnValues(unittest.TestCase):
     dataset = (
-            ('string', frozenset(['string'])),
-            ('', frozenset()),
-            (1, frozenset(['1'])),
-            (1.0, frozenset(['1.0'])),
-            (False, frozenset()),
-            (['1', '2', '3'], frozenset(['1', '2', '3'])),
-            (('1', '2', '3'), frozenset(['1', '2', '3'])),
-            ({'one': 1, 'two': 'dos'}, frozenset(['1', 'dos'])),
-            ({'one': 1, 'two': 'dos',
+        ('string', frozenset(['string'])),
+        ('', frozenset()),
+        (1, frozenset(['1'])),
+        (1.0, frozenset(['1.0'])),
+        (False, frozenset()),
+        (['1', '2', '3'], frozenset(['1', '2', '3'])),
+        (('1', '2', '3'), frozenset(['1', '2', '3'])),
+        ({'one': 1, 'two': 'dos'}, frozenset(['1', 'dos'])),
+        ({'one': 1, 'two': 'dos',
                 'three': ['amigos', 'musketeers', None,
                     {'ping': 'pong', 'base': ('balls', 'raquets')}]},
                 frozenset(['1', 'dos', 'amigos', 'musketeers', 'pong', 'balls', 'raquets'])),
-            (u'Toshio くらとみ', frozenset(['Toshio くらとみ'])),
-            ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
-        )
+        (u'Toshio くらとみ', frozenset(['Toshio くらとみ'])),
+        ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
+    )
 
     def test_return_values(self):
         for data, expected in self.dataset:
@@ -61,46 +61,46 @@ class TestReturnValues(unittest.TestCase):
 class TestRemoveValues(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset_no_remove = (
-            ('string', frozenset(['nope'])),
-            (1234, frozenset(['4321'])),
-            (False, frozenset(['4321'])),
-            (1.0, frozenset(['4321'])),
-            (['string', 'strang', 'strung'], frozenset(['nope'])),
-            ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['nope'])),
-            ({'one': 1, 'two': 'dos',
+        ('string', frozenset(['nope'])),
+        (1234, frozenset(['4321'])),
+        (False, frozenset(['4321'])),
+        (1.0, frozenset(['4321'])),
+        (['string', 'strang', 'strung'], frozenset(['nope'])),
+        ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['nope'])),
+        ({'one': 1, 'two': 'dos',
                 'three': ['amigos', 'musketeers', None,
                     {'ping': 'pong', 'base': ['balls', 'raquets']}]},
                 frozenset(['nope'])),
-            ('Toshio くら', frozenset(['とみ'])),
-            (u'Toshio くら', frozenset(['とみ'])),
-            )
+        ('Toshio くら', frozenset(['とみ'])),
+        (u'Toshio くら', frozenset(['とみ'])),
+        )
     dataset_remove = (
-            ('string', frozenset(['string']), OMIT),
-            (1234, frozenset(['1234']), OMIT),
-            (1234, frozenset(['23']), OMIT),
-            (1.0, frozenset(['1.0']), OMIT),
-            (['string', 'strang', 'strung'], frozenset(['strang']), ['string', OMIT, 'strung']),
-            (['string', 'strang', 'strung'], frozenset(['strang', 'string', 'strung']), [OMIT, OMIT, OMIT]),
-            (('string', 'strang', 'strung'), frozenset(['string', 'strung']), [OMIT, 'strang', OMIT]),
-            ((1234567890, 345678, 987654321), frozenset(['1234567890']), [OMIT, 345678, 987654321]),
-            ((1234567890, 345678, 987654321), frozenset(['345678']), [OMIT, OMIT, 987654321]),
-            ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key']),
+        ('string', frozenset(['string']), OMIT),
+        (1234, frozenset(['1234']), OMIT),
+        (1234, frozenset(['23']), OMIT),
+        (1.0, frozenset(['1.0']), OMIT),
+        (['string', 'strang', 'strung'], frozenset(['strang']), ['string', OMIT, 'strung']),
+        (['string', 'strang', 'strung'], frozenset(['strang', 'string', 'strung']), [OMIT, OMIT, OMIT]),
+        (('string', 'strang', 'strung'), frozenset(['string', 'strung']), [OMIT, 'strang', OMIT]),
+        ((1234567890, 345678, 987654321), frozenset(['1234567890']), [OMIT, 345678, 987654321]),
+        ((1234567890, 345678, 987654321), frozenset(['345678']), [OMIT, OMIT, 987654321]),
+        ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key']),
                 {'one': 1, 'two': 'dos', 'secret': OMIT}),
-            ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key', 'dos', '1']),
+        ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key', 'dos', '1']),
                 {'one': OMIT, 'two': OMIT, 'secret': OMIT}),
-            ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key', 'dos', '1']),
+        ({'one': 1, 'two': 'dos', 'secret': 'key'}, frozenset(['key', 'dos', '1']),
                 {'one': OMIT, 'two': OMIT, 'secret': OMIT}),
-            ({'one': 1, 'two': 'dos', 'three': ['amigos', 'musketeers', None,
+        ({'one': 1, 'two': 'dos', 'three': ['amigos', 'musketeers', None,
                 {'ping': 'pong', 'base': ['balls', 'raquets']}]},
                 frozenset(['balls', 'base', 'pong', 'amigos']),
                 {'one': 1, 'two': 'dos', 'three': [OMIT, 'musketeers',
                     None, {'ping': OMIT, 'base': [OMIT, 'raquets']}]}),
-            ('This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
+        ('This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
                 frozenset(['enigma', 'mystery', 'secret']),
                 'This sentence has an ******** wrapped in a ******** inside of a ********. - mr ********'),
-            ('Toshio くらとみ', frozenset(['くらとみ']), 'Toshio ********'),
-            (u'Toshio くらとみ', frozenset(['くらとみ']), u'Toshio ********'),
-            )
+        ('Toshio くらとみ', frozenset(['くらとみ']), 'Toshio ********'),
+        (u'Toshio くらとみ', frozenset(['くらとみ']), u'Toshio ********'),
+        )
 
     def test_no_removal(self):
         for value, no_log_strings in self.dataset_no_remove:

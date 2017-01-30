@@ -297,9 +297,9 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
         error_msg = boto_exception(err)
         if 'cannot be found' in error_msg and updated:
             current_keys, status = \
-            [ck['access_key_id'] for ck in
+                [ck['access_key_id'] for ck in
              iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata],\
-            [ck['status'] for ck in
+                [ck['status'] for ck in
                 iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata]
             name = new_name
         else:
@@ -457,7 +457,7 @@ def delete_group(module=None, iam=None, name=None):
                 iam.delete_group_policy(name, policy)
             try:
                 iam.delete_group(name)
-            except boto.exception.BotoServerError as  err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
                       module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"

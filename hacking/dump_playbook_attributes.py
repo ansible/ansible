@@ -3,10 +3,10 @@
 import optparse
 from jinja2 import Environment, FileSystemLoader
 
-from ansible.playbook import  Play
-from ansible.playbook.block import  Block
-from ansible.playbook.role import  Role
-from ansible.playbook.task import  Task
+from ansible.playbook import Play
+from ansible.playbook.block import Block
+from ansible.playbook.role import Role
+from ansible.playbook.task import Task
 
 template_file = 'playbooks_directives.rst.j2'
 oblist = {}
@@ -29,7 +29,7 @@ for aclass in class_list:
 
     # build ordered list to loop over and dict with attributes
     clist.append(name)
-    oblist[name] = dict((x, aobj.__dict__['_attributes'][x]) for x in aobj.__dict__['_attributes']  if 'private' not in x or not x.private)
+    oblist[name] = dict((x, aobj.__dict__['_attributes'][x]) for x in aobj.__dict__['_attributes'] if 'private' not in x or not x.private)
 
     # loop is really with_ for users
     if name == 'Task':

@@ -349,8 +349,10 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
-            if len(pcs[6]) != 15: continue
+            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+                continue
+            if len(pcs[6]) != 15:
+                continue
 
             # Possible entries:
             #   -rw-rws---  1.9 unx    2802 t- defX 11-Aug-91 13:48 perms.2660
@@ -559,10 +561,10 @@ class ZipArchive(object):
         if self.opts:
             cmd.extend(self.opts)
         cmd.append(self.src)
-         # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
-#        if self.includes:
-            # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
-#            cmd.extend(map(shell_escape, self.includes))
+        # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
+        # if self.includes:
+        # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
+        # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend([ '-x' ] + self.excludes)
         cmd.extend([ '-d', self.dest ])
@@ -633,7 +635,7 @@ class TgzArchive(object):
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
-#            filename = filename.decode('string_escape')
+            # filename = filename.decode('string_escape')
             filename = codecs.escape_decode(filename)[0]
             if filename and filename not in self.excludes:
                 self._files_in_archive.append(to_native(filename))

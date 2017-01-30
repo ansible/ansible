@@ -39,7 +39,7 @@ options:
   pvs:
     description:
     - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
-    - The module will take care of running pvcreate if needed. 
+    - The module will take care of running pvcreate if needed.
     required: false
   pesize:
     description:

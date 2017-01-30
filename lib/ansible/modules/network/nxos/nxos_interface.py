@@ -554,7 +554,7 @@ def get_interfaces_dict(module):
         }
 
     interface_list = body.get('TABLE_interface')['ROW_interface']
-    for index  in interface_list:
+    for index in interface_list:
         intf = index ['interface']
         intf_type = get_interface_type(intf)
 
@@ -655,7 +655,7 @@ def get_interface_config_commands(interface, intf, existing):
             commands.append('no ip forward')
 
     fabric_forwarding_anycast_gateway = interface.get(
-                                    'fabric_forwarding_anycast_gateway')
+        'fabric_forwarding_anycast_gateway')
     if fabric_forwarding_anycast_gateway is not None:
         if fabric_forwarding_anycast_gateway is True:
             commands.append('fabric forwarding mode anycast-gateway')

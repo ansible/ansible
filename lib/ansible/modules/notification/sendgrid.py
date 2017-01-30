@@ -230,9 +230,9 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive = [
-                              ['api_key', 'password'],
-                              ['api_key', 'username']
-                              ],
+            ['api_key', 'password'],
+            ['api_key', 'username']
+            ],
         required_together = [['username', 'password']],
     )
 
@@ -252,7 +252,7 @@ def main():
 
     sendgrid_lib_args = [api_key, bcc, cc, headers, from_name, html_body, attachments]
 
-    if any(lib_arg != None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
+    if any(lib_arg is not None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
         module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: api_key, bcc, cc, headers, from_name, html_body, attachments')
 
     response, info = post_sendgrid_api(module, username, password,

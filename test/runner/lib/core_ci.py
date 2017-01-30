@@ -72,7 +72,7 @@ class AnsibleCoreCI(object):
             elif is_shippable():
                 # split Shippable jobs across multiple regions to maximize use of launch credits
                 if self.platform == 'windows':
-                    region = 'us-east-2'
+                    region = 'us-east-1'
                 else:
                     region = 'us-east-1'
             else:
@@ -104,8 +104,7 @@ class AnsibleCoreCI(object):
 
                 self.connection = self.get(always_raise_on=[404])
 
-                display.info('Loaded existing %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                             verbosity=1)
+                display.info('Loaded existing %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
             except HttpError as ex:
                 if ex.status != 404:
                     raise
@@ -238,7 +237,8 @@ class AnsibleCoreCI(object):
 
         status = 'running' if self.connection.running else 'starting'
 
-        display.info('Retrieved %s %s/%s instance %s.' % (status, self.platform, self.version, self.instance_id),
+        display.info('Status update: %s/%s on instance %s is %s.' %
+                     (self.platform, self.version, self.instance_id, status),
                      verbosity=1)
 
         return self.connection
@@ -307,8 +307,7 @@ class AnsibleCoreCI(object):
         self.started = True
         self._save()
 
-        display.info('Started %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                     verbosity=1)
+        display.info('Started %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
 
     def _clear(self):
         """Clear instance information."""

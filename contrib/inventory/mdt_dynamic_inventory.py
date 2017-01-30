@@ -69,9 +69,9 @@ class MDTInventory(object):
         Gets host from MDT Database
         '''
         if hostname:
-        	query = "SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID where t1.Description = '%s'" % hostname
+            query = "SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID where t1.Description = '%s'" % hostname
         else:
-        	query = 'SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID'
+            query = 'SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID'
         self._connect(query)
 
         # Configure to group name configured in Ansible Tower for this inventory

@@ -87,7 +87,7 @@ EXAMPLES = '''
     name: acme
 
 # Create a new schema "acme" with a user "bob" who will own it
-- postgresql_schema: 
+- postgresql_schema:
     name: acme
     owner: bob
 
@@ -228,7 +228,7 @@ def main():
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+            cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" %(text, str(e)))

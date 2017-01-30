@@ -119,12 +119,12 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-                argument_spec = dict(
-                    name    = dict(default=None, required=True),
-                    state   = dict(default='latest', choices=['present', 'absent', 'latest']),
-                    started = dict(default='yes', type='bool'),
-                ),
-            )
+        argument_spec = dict(
+            name    = dict(default=None, required=True),
+            state   = dict(default='latest', choices=['present', 'absent', 'latest']),
+            started = dict(default='yes', type='bool'),
+            ),
+        )
 
     # Verify that the platform supports atomic command
     rc, out, err = module.run_command('atomic -v', check_rc=False)

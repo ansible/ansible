@@ -66,7 +66,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         self._clean_results(result._result, result._task.action)
         self.debug = self._dump_results(result._result)
-        
+
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.task = task
 

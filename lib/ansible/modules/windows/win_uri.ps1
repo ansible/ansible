@@ -19,43 +19,44 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-
-$result = New-Object psobject @{
-    win_uri = New-Object psobject
-}
+$ErrorActionPreference = "Stop"
 
 # Functions ###############################################
 
 Function ConvertTo-SnakeCase($input_string) {
     $snake_case = $input_string -csplit "(?<!^)(?=[A-Z])" -join "_"
-    $snake_case = $snake_case.ToLower()
-
-    return $snake_case
+    return $snake_case.ToLower()
 }
 
 # Build Arguments
-$webrequest_opts = @{}
+$params = Parse-Args $args -supports_check_mode $true
 
-$url = Get-AnsibleParam -obj $params -name "url" -failifempty $true
-$method = Get-AnsibleParam -obj $params "method" -default "GET"
-$content_type = Get-AnsibleParam -obj $params -name "content_type"
-$headers = Get-AnsibleParam -obj $params -name "headers"
-$body = Get-AnsibleParam -obj $params -name "body"
-$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -default $null
-$use_basic_parsing = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "use_basic_parsing" -default $true)
+$url = Get-AnsibleParam -obj $params -name "url" -type "string" -failifempty $true
+$method = Get-AnsibleParam -obj $params "method" -type "string" -default "GET" -validateset "GET","POST","PUT","HEAD","DELETE","OPTIONS","PATCH","TRACE","CONNECT","REFRESH"
+$content_type = Get-AnsibleParam -obj $params -name "content_type" -type "string"
+# TODO: Why is this not a normal dictionary ?
+$headers = Get-AnsibleParam -obj $params -name "headers" -type "string"
+# TODO: Why is this not a normal dictionary ?
+$body = Get-AnsibleParam -obj $params -name "body" -type "string"
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path"
+$use_basic_parsing = Get-AnsibleParam -obj $params -name "use_basic_parsing" -type "bool" -default $true
 
-$webrequest_opts.Uri = $url
-Set-Attr $result.win_uri "url" $url
+$result = @{
+    changed = $false
+    win_uri = @{
+        content_type = $content_type
+        method = $method
+        url = $url
+        use_basic_parsing = $use_basic_parsing
+    }
+}
 
-$webrequest_opts.Method = $method
-Set-Attr $result.win_uri "method" $method
-
-$webrequest_opts.ContentType = $content_type
-Set-Attr $result.win_uri "content_type" $content_type
-
-$webrequest_opts.UseBasicParsing = $use_basic_parsing
-Set-Attr $result.win_uri "use_basic_parsing" $use_basic_parsing
+$webrequest_opts = @{
+    ContentType = $content_type
+    Method = $method
+    Uri = $url
+    UseBasicParsing = $use_basic_parsing
+}
 
 if ($headers -ne $null) {
     $req_headers = @{}
@@ -68,25 +69,31 @@ if ($headers -ne $null) {
 
 if ($body -ne $null) {
     $webrequest_opts.Body = $body
-    Set-Attr $result.win_uri "body" $body
+    $result.win_uri.body = $body
 }
 
 if ($dest -ne $null) {
     $webrequest_opts.OutFile = $dest
-    Set-Attr $result.win_uri "dest" $dest
+    $result.win_uri.dest = $dest
 }
 
-try {
-    $response = Invoke-WebRequest @webrequest_opts
-} catch {
-    $ErrorMessage = $_.Exception.Message
-    Fail-Json $result $ErrorMessage
+# TODO: When writing to a file, this is not idempotent !
+if ($check_mode -ne $true -or $dest -eq $null) {
+    try {
+        $response = Invoke-WebRequest @webrequest_opts
+    } catch {
+        Fail-Json $result $_.Exception.Message
+    }
+}
+
+# Assume a change when we are writing to a file
+if ($dest -ne $null) {
+    $result.changed = $true
 }
 
 ForEach ($prop in $response.psobject.properties) {
     $result_key = ConvertTo-SnakeCase $prop.Name
-    $result_value = $prop.Value
-    Set-Attr $result $result_key $result_value
+    $result.$result_key = $prop.Value
 }
 
 Exit-Json $result

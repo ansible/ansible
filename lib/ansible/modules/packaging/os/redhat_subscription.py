@@ -28,7 +28,7 @@ description:
 version_added: "1.2"
 author: "Barnaby Court (@barnabycourt)"
 notes:
-    - In order to register a system, subscription-manager requires either a username and password, or an activationkey.
+    - In order to register a system, subscription-manager requires either a username and password, or an activationkey and an Organization ID.
 requirements:
     - subscription-manager
 options:
@@ -136,6 +136,7 @@ EXAMPLES = '''
 - redhat_subscription:
     state: present
     activationkey: 1-222333444
+    org_id: 222333444
     pool: '^(Red Hat Enterprise Server|Red Hat Virtualization)$'
 
 # Update the consumed subscriptions from the previous example (remove the Red
@@ -143,6 +144,7 @@ EXAMPLES = '''
 - redhat_subscription:
     state: present
     activationkey: 1-222333444
+    org_id: 222333444
     pool: '^Red Hat Enterprise Server$'
 
 # Register as user credentials into given environment (against Red Hat
@@ -249,7 +251,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'config']
+        args = [SUBMAN_CMD, 'config']
 
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
@@ -271,9 +273,9 @@ class Rhsm(RegistrationBase):
         # Quick version...
         if False:
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-                   os.path.isfile('/etc/pki/consumer/key.pem')
+                os.path.isfile('/etc/pki/consumer/key.pem')
 
-        args = ['subscription-manager', 'identity']
+        args = [SUBMAN_CMD, 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)
         if rc == 0:
             return True
@@ -287,13 +289,15 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'register']
+        args = [SUBMAN_CMD, 'register']
 
         # Generate command arguments
+        if force_register:
+            args.extend(['--force'])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
-            if org_id:
-                args.extend(['--org', org_id])
+            args.extend(['--org', org_id])
         else:
             if autosubscribe:
                 args.append('--autosubscribe')
@@ -307,8 +311,6 @@ class Rhsm(RegistrationBase):
                 args.extend(['--name', consumer_name])
             if consumer_id:
                 args.extend(['--consumerid', consumer_id])
-            if force_register:
-                args.extend(['--force'])
             if environment:
                 args.extend(['--environment', environment])
 
@@ -331,7 +333,7 @@ class Rhsm(RegistrationBase):
             items = ["--all"]
 
         if items:
-            args = ['subscription-manager', 'unsubscribe'] + items
+            args = [SUBMAN_CMD, 'unsubscribe'] + items
             rc, stderr, stdout = self.module.run_command(args, check_rc=True)
         return serials
 
@@ -341,7 +343,7 @@ class Rhsm(RegistrationBase):
             Raises:
               * Exception - if error occurs while running command
         '''
-        args = ['subscription-manager', 'unregister']
+        args = [SUBMAN_CMD, 'unregister']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def subscribe(self, regexp):
@@ -467,24 +469,26 @@ def main():
     rhsm = Rhsm(None)
 
     module = AnsibleModule(
-                argument_spec = dict(
-                    state = dict(default='present', choices=['present', 'absent']),
-                    username = dict(default=None, required=False),
-                    password = dict(default=None, required=False, no_log=True),
-                    server_hostname = dict(default=rhsm.config.get_option('server.hostname'), required=False),
-                    server_insecure = dict(default=rhsm.config.get_option('server.insecure'), required=False),
-                    rhsm_baseurl = dict(default=rhsm.config.get_option('rhsm.baseurl'), required=False),
-                    autosubscribe = dict(default=False, type='bool'),
-                    activationkey = dict(default=None, required=False),
-                    org_id = dict(default=None, required=False),
-                    environment = dict(default=None, required=False, type='str'),
-                    pool = dict(default='^$', required=False, type='str'),
-                    consumer_type = dict(default=None, required=False),
-                    consumer_name = dict(default=None, required=False),
-                    consumer_id = dict(default=None, required=False),
-                    force_register = dict(default=False, type='bool'),
-                )
-            )
+        argument_spec = dict(
+            state = dict(default='present', choices=['present', 'absent']),
+            username = dict(default=None, required=False),
+            password = dict(default=None, required=False, no_log=True),
+            server_hostname = dict(default=rhsm.config.get_option('server.hostname'), required=False),
+            server_insecure = dict(default=rhsm.config.get_option('server.insecure'), required=False),
+            rhsm_baseurl = dict(default=rhsm.config.get_option('rhsm.baseurl'), required=False),
+            autosubscribe = dict(default=False, type='bool'),
+            activationkey = dict(default=None, required=False),
+            org_id = dict(default=None, required=False),
+            environment = dict(default=None, required=False, type='str'),
+            pool = dict(default='^$', required=False, type='str'),
+            consumer_type = dict(default=None, required=False),
+            consumer_name = dict(default=None, required=False),
+            consumer_id = dict(default=None, required=False),
+            force_register = dict(default=False, type='bool'),
+            ),
+        required_together = [ ['username', 'password'], ['activationkey', 'org_id'] ],
+        mutually_exclusive = [ ['username', 'activationkey'] ],
+        )
 
     rhsm.module = module
     state = module.params['state']
@@ -503,14 +507,15 @@ def main():
     consumer_id = module.params["consumer_id"]
     force_register = module.params["force_register"]
 
+    global SUBMAN_CMD
+    SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
+
     # Ensure system is registered
     if state == 'present':
 
         # Check for missing parameters ...
-        if not (activationkey or username or password):
-            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, username, password))
-        if not activationkey and not (username and password):
-            module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
+        if not (activationkey or org_id or username or password):
+            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) and Organization ID (%s) or username (%s) and password (%s)" % (activationkey, org_id, username, password))
 
         # Register system
         if rhsm.is_registered and not force_register:

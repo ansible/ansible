@@ -103,7 +103,7 @@ class Nxapi(NxapiConfigMixin):
             command_type = self.OUTPUT_TO_COMMAND_TYPE[output]
         except KeyError:
             msg = 'invalid format, received %s, expected one of %s' % \
-                    (output, ','.join(self.OUTPUT_TO_COMMAND_TYPE.keys()))
+                (output, ','.join(self.OUTPUT_TO_COMMAND_TYPE.keys()))
             self._error(msg=msg)
 
         if isinstance(commands, (list, set, tuple)):

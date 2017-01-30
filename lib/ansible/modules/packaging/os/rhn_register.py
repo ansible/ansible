@@ -358,19 +358,19 @@ def main():
     rhn = Rhn()
 
     module = AnsibleModule(
-                argument_spec = dict(
-                    state = dict(default='present', choices=['present', 'absent']),
-                    username = dict(default=None, required=False),
-                    password = dict(default=None, required=False, no_log=True),
-                    server_url = dict(default=None, required=False),
-                    activationkey = dict(default=None, required=False, no_log=True),
-                    profilename = dict(default=None, required=False),
-                    sslcacert = dict(default=None, required=False, type='path'),
-                    systemorgid = dict(default=None, required=False),
-                    enable_eus = dict(default=False, type='bool'),
-                    channels = dict(default=[], type='list'),
-                )
+        argument_spec = dict(
+            state = dict(default='present', choices=['present', 'absent']),
+            username = dict(default=None, required=False),
+            password = dict(default=None, required=False, no_log=True),
+            server_url = dict(default=None, required=False),
+            activationkey = dict(default=None, required=False, no_log=True),
+            profilename = dict(default=None, required=False),
+            sslcacert = dict(default=None, required=False, type='path'),
+            systemorgid = dict(default=None, required=False),
+            enable_eus = dict(default=False, type='bool'),
+            channels = dict(default=[], type='list'),
             )
+        )
 
     if not HAS_UP2DATE_CLIENT:
         module.fail_json(msg="Unable to import up2date_client.  Is 'rhn-client-tools' installed?")

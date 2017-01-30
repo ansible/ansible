@@ -77,7 +77,8 @@ def get_local_version(pear_output):
     for line in lines:
         if 'Installed ' in line:
             installed = line.rsplit(None, 1)[-1].strip()
-            if installed == '-': continue
+            if installed == '-':
+                continue
             return installed
     return None
 

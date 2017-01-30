@@ -332,9 +332,9 @@ class ExoDnsRecord(ExoDns):
     def present_record(self):
         record = self.get_record()
         if not record:
-            record = self._create_record(record);
+            record = self._create_record(record)
         else:
-            record = self._update_record(record);
+            record = self._update_record(record)
         return record
 
     def absent_record(self):

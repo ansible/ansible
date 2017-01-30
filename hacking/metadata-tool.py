@@ -91,7 +91,7 @@ def seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_no
 
         ANSIBLE_METADATA = {}EOF
     """
-    if next_node_line == None:
+    if next_node_line is None:
         # The dict is the last statement in the file
         snippet = module_data.splitlines()[start_line:]
         next_node_col = 0

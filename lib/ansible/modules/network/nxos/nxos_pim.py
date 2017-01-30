@@ -285,23 +285,23 @@ def get_commands(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-            ssm_range=dict(required=True, type='str'),
-            m_facts=dict(required=False, default=False, type='bool'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        ssm_range=dict(required=True, type='str'),
+        m_facts=dict(required=False, default=False, type='bool'),
+        include_defaults=dict(default=False),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
 
     splitted_ssm_range = module.params['ssm_range'].split('.')
-    if len(splitted_ssm_range) != 4 and  module.params['ssm_range'] != 'none':
+    if len(splitted_ssm_range) != 4 and module.params['ssm_range'] != 'none':
         module.fail_json(msg="Valid ssm_range values are multicast addresses "
                              "or the keyword 'none'.")
 
     args =  [
-            'ssm_range'
-        ]
+        'ssm_range'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing

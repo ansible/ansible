@@ -43,7 +43,7 @@ options:
   name:
     description:
       - Name of the customer gateway.
-    required: true 
+    required: true
   state:
     description:
       - Create or terminate the Customer Gateway.
@@ -108,7 +108,7 @@ gateway.customer_gateways:
         type:
             description: encryption type.
             returned: when gateway exists and is available.
-            sample: ipsec.1 
+            sample: ipsec.1
             type: string
 '''
 
@@ -148,7 +148,7 @@ class Ec2CustomerGatewayManager:
             CustomerGatewayId=gw_id
         )
         return response
-            
+
     def ensure_cgw_present(self, bgp_asn, ip_address):
         response = self.ec2.create_customer_gateway(
             DryRun=False,
@@ -178,13 +178,13 @@ class Ec2CustomerGatewayManager:
             DryRun=False,
             Filters=[
                 {
-                    'Name': 'state', 
+                    'Name': 'state',
                     'Values': [
                         'available',
                     ]
                 },
                 {
-                    'Name': 'ip-address', 
+                    'Name': 'ip-address',
                     'Values': [
                         ip_address,
                     ]

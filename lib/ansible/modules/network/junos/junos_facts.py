@@ -49,7 +49,7 @@ options:
         format of the configuration file.  Devices support three
         configuration file formats.  By default, the configuration
         from the device is returned as text.  The other option xml.
-        If the xml option is chosen, the configuration file is 
+        If the xml option is chosen, the configuration file is
         returned as both xml and json.
     required: false
     default: text

@@ -219,13 +219,13 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state             = dict(required=True,  choices=['present', 'absent']),
-            name              = dict(required=True),
-            engine            = dict(required=False, choices=VALID_ENGINES),
-            description       = dict(required=False),
-            params            = dict(required=False, aliases=['parameters'], type='dict'),
-            immediate         = dict(required=False, type='bool'),
-        )
+        state             = dict(required=True,  choices=['present', 'absent']),
+        name              = dict(required=True),
+        engine            = dict(required=False, choices=VALID_ENGINES),
+        description       = dict(required=False),
+        params            = dict(required=False, aliases=['parameters'], type='dict'),
+        immediate         = dict(required=False, type='bool'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

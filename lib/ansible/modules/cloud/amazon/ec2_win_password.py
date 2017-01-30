@@ -28,7 +28,7 @@ author: "Rick Mendes (@rickmendes)"
 options:
   instance_id:
     description:
-      - The instance id to get the password data from. 
+      - The instance id to get the password data from.
     required: true
   key_file:
     description:
@@ -37,7 +37,7 @@ options:
   key_passphrase:
     version_added: "2.0"
     description:
-      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3. 
+      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
     required: false
     default: null
   wait:
@@ -106,12 +106,12 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance_id = dict(required=True),
-            key_file = dict(required=True),
-            key_passphrase = dict(no_log=True, default=None, required=False),
-            wait = dict(type='bool', default=False, required=False),
-            wait_timeout = dict(default=120, required=False),
-        )
+        instance_id = dict(required=True),
+        key_file = dict(required=True),
+        key_passphrase = dict(no_log=True, default=None, required=False),
+        wait = dict(type='bool', default=False, required=False),
+        wait_timeout = dict(default=120, required=False),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -163,7 +163,7 @@ def main():
     except ValueError as e:
         decrypted = None
 
-    if decrypted == None:
+    if decrypted is None:
         module.exit_json(win_password='', changed=False)
     else:
         if wait:

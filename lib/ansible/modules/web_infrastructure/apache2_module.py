@@ -120,8 +120,8 @@ def _get_ctl_binary(module):
             return ctl_binary
 
     module.fail_json(
-      msg="Neither of apache2ctl nor apachctl found."
-          " At least one apache control binary is necessary."
+        msg="Neither of apache2ctl nor apachctl found."
+            " At least one apache control binary is necessary."
     )
 
 def _module_is_enabled(module):
@@ -130,12 +130,6 @@ def _module_is_enabled(module):
     ignore_configcheck = module.params['ignore_configcheck']
 
     result, stdout, stderr = module.run_command("%s -M" % control_binary)
-
-    """
-    Work around for Ubuntu Xenial listing php7_module as php7.0
-    """
-    if name == "php7.0":
-        name = "php7"
 
     if result != 0:
         error_msg = "Error executing %s: %s" % (control_binary, stderr)
@@ -150,6 +144,19 @@ def _module_is_enabled(module):
             return False
         else:
             module.fail_json(msg=error_msg)
+
+    """
+    Work around for php modules; php7.x are always listed as php7_module
+    """
+    php_module = re.search(r'^(php\d)\.', name)
+    if php_module:
+        name = php_module.group(1)
+
+    """
+    Workaround for shib2; module is listed as mod_shib
+    """
+    if re.search(r'shib2', name):
+        return bool(re.search(r' mod_shib', stdout))
 
     return bool(re.search(r' ' + name + r'_module', stdout))
 

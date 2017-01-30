@@ -4,7 +4,7 @@
 # (c) 2013, bleader
 # Written by bleader <bleader@ratonland.org>
 # Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+# that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -86,7 +86,7 @@ options:
         required: false
         choices: [ "yes", "no" ]
         default: no
-author: "bleader (@bleader)" 
+author: "bleader (@bleader)"
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''
@@ -102,7 +102,7 @@ EXAMPLES = '''
     name: foo,bar
     annotation: '+test1=baz,-test2,:test3=foobar'
 
-# Remove packages foo and bar 
+# Remove packages foo and bar
 - pkgng:
     name: foo,bar
     state: absent
@@ -175,8 +175,9 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite, dir_arg):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
-    batch_var = 'env BATCH=yes' # This environment variable skips mid-install prompts,
-                                # setting them to their default values.
+    # This environment variable skips mid-install prompts,
+    # setting them to their default values.
+    batch_var = 'env BATCH=yes'
 
     if not module.check_mode and not cached:
         if old_pkgng:
@@ -304,17 +305,17 @@ def autoremove_packages(module, pkgng_path, dir_arg):
 
 def main():
     module = AnsibleModule(
-            argument_spec       = dict(
-                state           = dict(default="present", choices=["present","absent"], required=False),
-                name            = dict(aliases=["pkg"], required=True, type='list'),
-                cached          = dict(default=False, type='bool'),
-                annotation      = dict(default="", required=False),
-                pkgsite         = dict(default="", required=False),
-                rootdir         = dict(default="", required=False, type='path'),
-                chroot          = dict(default="", required=False, type='path'),
-                autoremove      = dict(default=False, type='bool')),
-            supports_check_mode = True,
-            mutually_exclusive  =[["rootdir", "chroot"]])
+        argument_spec       = dict(
+            state           = dict(default="present", choices=["present","absent"], required=False),
+            name            = dict(aliases=["pkg"], required=True, type='list'),
+            cached          = dict(default=False, type='bool'),
+            annotation      = dict(default="", required=False),
+            pkgsite         = dict(default="", required=False),
+            rootdir         = dict(default="", required=False, type='path'),
+            chroot          = dict(default="", required=False, type='path'),
+            autoremove      = dict(default=False, type='bool')),
+        supports_check_mode = True,
+        mutually_exclusive  =[["rootdir", "chroot"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 

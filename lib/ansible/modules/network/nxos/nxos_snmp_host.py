@@ -101,7 +101,7 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"community": "TESTING", "snmp_host": "3.3.3.3", 
+    sample: {"community": "TESTING", "snmp_host": "3.3.3.3",
             "snmp_type": "trap", "version": "v2c", "vrf_filter": "one_more_vrf"}
 existing:
     description: k/v pairs of existing snmp host
@@ -529,16 +529,16 @@ def flatten_list(command_lists):
 
 def main():
     argument_spec = dict(
-            snmp_host=dict(required=True, type='str'),
-            community=dict(type='str'),
-            udp=dict(type='str'),
-            version=dict(choices=['v2c', 'v3'], default='v2c'),
-            src_intf=dict(type='str'),
-            v3=dict(choices=['noauth', 'auth', 'priv']),
-            vrf_filter=dict(type='str'),
-            vrf=dict(type='str'),
-            snmp_type=dict(choices=['trap', 'inform'], default='trap'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        snmp_host=dict(required=True, type='str'),
+        community=dict(type='str'),
+        udp=dict(type='str'),
+        version=dict(choices=['v2c', 'v3'], default='v2c'),
+        src_intf=dict(type='str'),
+        v3=dict(choices=['noauth', 'auth', 'priv']),
+        vrf_filter=dict(type='str'),
+        vrf=dict(type='str'),
+        snmp_type=dict(choices=['trap', 'inform'], default='trap'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
@@ -586,16 +586,16 @@ def main():
             existing['vrf_filter'] = vrf_filter
 
     args = dict(
-            community=community,
-            snmp_host=snmp_host,
-            udp=udp,
-            version=version,
-            src_intf=src_intf,
-            vrf_filter=vrf_filter,
-            v3=v3,
-            vrf=vrf,
-            snmp_type=snmp_type
-            )
+        community=community,
+        snmp_host=snmp_host,
+        udp=udp,
+        version=version,
+        src_intf=src_intf,
+        vrf_filter=vrf_filter,
+        v3=v3,
+        vrf=vrf,
+        snmp_type=snmp_type
+        )
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 

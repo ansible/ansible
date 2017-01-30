@@ -35,26 +35,26 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 SIZE_RANGES = { 'Y': 1<<80, 'Z': 1<<70, 'E': 1<<60, 'P': 1<<50, 'T': 1<<40, 'G': 1<<30, 'M': 1<<20, 'K': 1<<10, 'B': 1 }
 
 FILE_ATTRIBUTES = {
-  'A': 'noatime',
-  'a': 'append',
-  'c': 'compressed',
-  'C': 'nocow',
-  'd': 'nodump',
-  'D': 'dirsync',
-  'e': 'extents',
-  'E': 'encrypted',
-  'h': 'blocksize',
-  'i': 'immutable',
-  'I': 'indexed',
-  'j': 'journalled',
-  'N': 'inline',
-  's': 'zero',
-  'S': 'synchronous',
-  't': 'notail',
-  'T': 'blockroot',
-  'u': 'undelete',
-  'X': 'compressedraw',
-  'Z': 'compresseddirty',
+    'A': 'noatime',
+    'a': 'append',
+    'c': 'compressed',
+    'C': 'nocow',
+    'd': 'nodump',
+    'D': 'dirsync',
+    'e': 'extents',
+    'E': 'encrypted',
+    'h': 'blocksize',
+    'i': 'immutable',
+    'I': 'indexed',
+    'j': 'journalled',
+    'N': 'inline',
+    's': 'zero',
+    'S': 'synchronous',
+    't': 'notail',
+    'T': 'blockroot',
+    'u': 'undelete',
+    'X': 'compressedraw',
+    'Z': 'compresseddirty',
 }
 
 # ansible modules can be written in any language.  To simplify
@@ -728,19 +728,19 @@ class AnsibleModule(object):
         self._set_defaults(pre=True)
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
-                'str': self._check_type_str,
-                'list': self._check_type_list,
-                'dict': self._check_type_dict,
-                'bool': self._check_type_bool,
-                'int': self._check_type_int,
-                'float': self._check_type_float,
-                'path': self._check_type_path,
-                'raw': self._check_type_raw,
-                'jsonarg': self._check_type_jsonarg,
-                'json': self._check_type_jsonarg,
-                'bytes': self._check_type_bytes,
-                'bits': self._check_type_bits,
-            }
+            'str': self._check_type_str,
+            'list': self._check_type_list,
+            'dict': self._check_type_dict,
+            'bool': self._check_type_bool,
+            'int': self._check_type_int,
+            'float': self._check_type_float,
+            'path': self._check_type_path,
+            'raw': self._check_type_raw,
+            'jsonarg': self._check_type_jsonarg,
+            'json': self._check_type_jsonarg,
+            'bytes': self._check_type_bytes,
+            'bits': self._check_type_bits,
+        }
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_types()
@@ -1169,9 +1169,12 @@ class AnsibleModule(object):
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
         if operator  ==  '=':
-            if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
-            elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
-            elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
+            if user == 'u':
+                mask = stat.S_IRWXU | stat.S_ISUID
+            elif user == 'g':
+                mask = stat.S_IRWXG | stat.S_ISGID
+            elif user == 'o':
+                mask = stat.S_IRWXO | stat.S_ISVTX
 
             # mask out u, g, or o permissions from current_mode and apply new permissions
             inverse_mask = mask ^ PERM_BITS
@@ -2361,7 +2364,7 @@ class AnsibleModule(object):
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished
                 # NOTE: Actually cmd.poll() is always None here if rpipes is empty
-                elif not rpipes and cmd.poll() == None:
+                elif not rpipes and cmd.poll() is None:
                     cmd.wait()
                     # The process is terminated. Since no pipes to read from are
                     # left, there is no need to call select() again.

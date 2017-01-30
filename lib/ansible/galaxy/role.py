@@ -208,7 +208,7 @@ class GalaxyRole(object):
             # create tar file from scm url
             tmp_file = RoleRequirement.scm_archive_role(**self.spec)
         elif self.src:
-            if  os.path.isfile(self.src):
+            if os.path.isfile(self.src):
                 # installing a local tar.gz
                 local_file = True
                 tmp_file = self.src
@@ -244,7 +244,7 @@ class GalaxyRole(object):
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
-                        self.version = 'master' 
+                        self.version = 'master'
                 elif self.version != 'master':
                     if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))

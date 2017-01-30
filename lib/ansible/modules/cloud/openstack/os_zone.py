@@ -205,16 +205,16 @@ def main():
             else:
                 if masters is None:
                     masters = []
-                
+
                 pre_update_zone = zone
                 changed = _system_state_change(state, email,
                                                description, ttl,
                                                masters, pre_update_zone)
                 if changed:
                     zone = cloud.update_zone(
-                                name, email=email,
-                                description=description,
-                                ttl=ttl, masters=masters)
+                        name, email=email,
+                        description=description,
+                        ttl=ttl, masters=masters)
             module.exit_json(changed=changed, zone=zone)
 
         elif state == 'absent':

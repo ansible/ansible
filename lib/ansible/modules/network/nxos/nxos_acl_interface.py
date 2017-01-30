@@ -466,14 +466,14 @@ def execute_config_command(commands, module):
 
 def main():
     argument_spec = dict(
-            name=dict(required=False, type='str'),
-            interface=dict(required=True),
-            direction=dict(required=True, choices=['egress', 'ingress']),
-            state=dict(choices=['absent', 'present'],
+        name=dict(required=False, type='str'),
+        interface=dict(required=True),
+        direction=dict(required=True, choices=['egress', 'ingress']),
+        state=dict(choices=['absent', 'present'],
                        default='present'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)

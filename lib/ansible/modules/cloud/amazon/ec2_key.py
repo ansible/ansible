@@ -108,12 +108,12 @@ import string
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(required=True),
-            key_material=dict(required=False),
-            state = dict(default='present', choices=['present', 'absent']),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
-        )
+        name=dict(required=True),
+        key_material=dict(required=False),
+        state = dict(default='present', choices=['present', 'absent']),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(default=300),
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -163,7 +163,7 @@ def main():
         if key:
             # existing key found
             if key_material:
-                # EC2's fingerprints are non-trivial to generate, so push this key 
+                # EC2's fingerprints are non-trivial to generate, so push this key
                 # to a temporary name and make ec2 calculate the fingerprint for us.
                 #
                 # http://blog.jbrowne.com/?p=23
@@ -186,7 +186,7 @@ def main():
                 if key.fingerprint != tmpfingerprint:
                     if not module.check_mode:
                         key.delete()
-                        key = ec2.import_key_pair(name, key_material)    
+                        key = ec2.import_key_pair(name, key_material)
 
                         if wait:
                             start = time.time()
@@ -211,7 +211,7 @@ def main():
                     key = ec2.import_key_pair(name, key_material)
                 else:
                     '''
-                    No material provided, let AWS handle the key creation and 
+                    No material provided, let AWS handle the key creation and
                     retrieve the private key
                     '''
                     key = ec2.create_key_pair(name)

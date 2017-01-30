@@ -433,25 +433,25 @@ def is_walrus(s3_url):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            bucket         = dict(required=True),
-            dest           = dict(default=None),
-            encrypt        = dict(default=True, type='bool'),
-            expiry         = dict(default=600, aliases=['expiration']),
-            headers        = dict(type='dict'),
-            marker         = dict(default=None),
-            max_keys       = dict(default=1000),
-            metadata       = dict(type='dict'),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
-            object         = dict(),
-            permission     = dict(type='list', default=['private']),
-            version        = dict(default=None),
-            overwrite      = dict(aliases=['force'], default='always'),
-            prefix         = dict(default=None),
-            retries        = dict(aliases=['retry'], type='int', default=0),
-            s3_url         = dict(aliases=['S3_URL']),
-            rgw            = dict(default='no', type='bool'),
-            src            = dict(),
-        ),
+        bucket         = dict(required=True),
+        dest           = dict(default=None),
+        encrypt        = dict(default=True, type='bool'),
+        expiry         = dict(default=600, aliases=['expiration']),
+        headers        = dict(type='dict'),
+        marker         = dict(default=None),
+        max_keys       = dict(default=1000),
+        metadata       = dict(type='dict'),
+        mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
+        object         = dict(),
+        permission     = dict(type='list', default=['private']),
+        version        = dict(default=None),
+        overwrite      = dict(aliases=['force'], default='always'),
+        prefix         = dict(default=None),
+        retries        = dict(aliases=['retry'], type='int', default=0),
+        s3_url         = dict(aliases=['S3_URL']),
+        rgw            = dict(default='no', type='bool'),
+        src            = dict(),
+    ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -601,7 +601,7 @@ def main():
     if mode == 'put':
 
         # Use this snippet to debug through conditionals:
-#       module.exit_json(msg="Bucket return %s"%bucketrtn)
+        # module.exit_json(msg="Bucket return %s"%bucketrtn)
 
         # Lets check the src path.
         pathrtn = path_check(src)
@@ -643,7 +643,7 @@ def main():
     # Delete an object from a bucket, not the entire bucket
     if mode == 'delobj':
         if obj is None:
-            module.fail_json(msg="object parameter is required", failed=True);
+            module.fail_json(msg="object parameter is required", failed=True)
         if bucket:
             bucketrtn = bucket_check(module, s3, bucket)
             if bucketrtn is True:

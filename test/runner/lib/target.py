@@ -284,6 +284,9 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
         if root.endswith('/__pycache__'):
             continue
 
+        if '/.tox/' in root:
+            continue
+
         if path is None:
             root = root[2:]
 

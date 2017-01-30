@@ -156,10 +156,10 @@ def decode_mac(hexstring):
 
 def lookup_adminstatus(int_adminstatus):
     adminstatus_options = {
-                            1: 'up',
-                            2: 'down',
-                            3: 'testing'
-                          }
+        1: 'up',
+        2: 'down',
+        3: 'testing'
+        }
     if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
@@ -167,14 +167,14 @@ def lookup_adminstatus(int_adminstatus):
 
 def lookup_operstatus(int_operstatus):
     operstatus_options = {
-                           1: 'up',
-                           2: 'down',
-                           3: 'testing',
-                           4: 'unknown',
-                           5: 'dormant',
-                           6: 'notPresent',
-                           7: 'lowerLayerDown'
-                         }
+        1: 'up',
+        2: 'down',
+        3: 'testing',
+        4: 'unknown',
+        5: 'dormant',
+        6: 'notPresent',
+        7: 'lowerLayerDown'
+        }
     if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
@@ -193,7 +193,7 @@ def main():
             authkey=dict(required=False),
             privkey=dict(required=False),
             removeplaceholder=dict(required=False)),
-            required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
+        required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
         supports_check_mode=False)
 
     m_args = module.params
@@ -209,10 +209,10 @@ def main():
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":
-        if m_args['username'] == None:
+        if m_args['username'] is None:
             module.fail_json(msg='Username not set when using snmp version 3')
 
-        if m_args['level'] == "authPriv" and m_args['privacy'] == None:
+        if m_args['level'] == "authPriv" and m_args['privacy'] is None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
 
 
@@ -354,9 +354,9 @@ def main():
     for ipv4_network in ipv4_networks:
         current_interface = ipv4_networks[ipv4_network]['interface']
         current_network = {
-                            'address':  ipv4_networks[ipv4_network]['address'],
-                            'netmask':  ipv4_networks[ipv4_network]['netmask']
-                          }
+            'address':  ipv4_networks[ipv4_network]['address'],
+            'netmask':  ipv4_networks[ipv4_network]['netmask']
+            }
         if not current_interface in interface_to_ipv4:
             interface_to_ipv4[current_interface] = []
             interface_to_ipv4[current_interface].append(current_network)
