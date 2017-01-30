@@ -222,7 +222,7 @@ class CloudFormationServiceManager:
         result = response.get(result_key)
         next_token = response.get('NextToken')
         if not next_token:
-           return result
+            return result
         return result + self.paginated_response(func, result_key, next_token)
 
 def to_dict(items, key, value):
@@ -246,7 +246,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_BOTO3:
-      module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='boto3 is required.')
 
     # Describe the stack
     service_mgr = CloudFormationServiceManager(module)
