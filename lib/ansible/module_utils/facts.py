@@ -332,7 +332,7 @@ class Facts(object):
                     self.facts['pkg_mgr'] = pkg['name']
 
     def get_service_mgr_facts(self):
-        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, runit, etc
+        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, etc
         # also other OSs other than linux might need to check across several possible candidates
 
         # Mapping of proc_1 values to more useful names
@@ -340,6 +340,7 @@ class Facts(object):
             'procd': 'openwrt_init',
             'runit-init': 'runit',
             'svscan': 'svc',
+            'openrc-init': 'openrc',
         }
 
         # try various forms of querying pid 1
@@ -377,7 +378,7 @@ class Facts(object):
             else:
                 self.facts['service_mgr'] = 'systemstarter'
         elif 'BSD' in self.facts['system'] or self.facts['system'] in ['Bitrig', 'DragonFly']:
-            #FIXME: we might want to break out to individual BSDs
+            #FIXME: we might want to break out to individual BSDs or 'rc'
             self.facts['service_mgr'] = 'bsdinit'
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
@@ -391,7 +392,7 @@ class Facts(object):
                 self.facts['service_mgr'] = 'systemd'
             elif self.module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
-            elif os.path.realpath('/sbin/rc') == '/sbin/openrc':
+            elif os.path.exists('/sbin/openrc'):
                 self.facts['service_mgr'] = 'openrc'
             elif os.path.exists('/etc/init.d/'):
                 self.facts['service_mgr'] = 'sysvinit'
