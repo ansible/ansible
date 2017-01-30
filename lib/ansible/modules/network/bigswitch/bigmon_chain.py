@@ -121,7 +121,7 @@ def chain(module):
 
     if state in ('absent') and not config_present:
         module.exit_json(changed=False)
-        
+ 
     if state in ('present'):
         response = rest.put('chain[name="%s"]' % name, data={'name': name})
         if response.status_code == 204:
@@ -155,3 +155,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
