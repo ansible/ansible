@@ -139,7 +139,7 @@ def _system_state_change(module, project):
         else:
             changed=True
 
-    return changed;
+    return changed
 
 def main():
 

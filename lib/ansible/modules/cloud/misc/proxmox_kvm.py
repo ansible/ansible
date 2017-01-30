@@ -600,7 +600,7 @@ EXAMPLES = '''
     node        : sabrewulf
     state       : absent
 
-# Get VM current state 
+# Get VM current state
 - proxmox_kvm:
     api_user    : root@pam
     api_password: secret
@@ -638,7 +638,7 @@ vmid:
     type: int
     sample: 115
 status:
-    description: 
+    description:
       - The current virtual machine status.
       - Returned only when C(state=current)
     returned: success
@@ -646,7 +646,7 @@ status:
     sample: '{
       "changed": false,
       "msg": "VM kropta with vmid = 110 is running",
-      "status": "running" 
+      "status": "running"
     }'
 '''
 
@@ -795,71 +795,71 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 
 def main():
   module = AnsibleModule(
-    argument_spec = dict(
-      acpi = dict(type='bool', default='yes'),
-      agent = dict(type='bool'),
-      args = dict(type='str', default=None),
-      api_host = dict(required=True),
-      api_user = dict(required=True),
-      api_password = dict(no_log=True),
-      autostart = dict(type='bool', default='no'),
-      balloon = dict(type='int',default=0),
-      bios = dict(choices=['seabios', 'ovmf']),
-      boot = dict(type='str', default='cnd'),
-      bootdisk = dict(type='str'),
-      cores = dict(type='int', default=1),
-      cpu = dict(type='str', default='kvm64'),
-      cpulimit = dict(type='int'),
-      cpuunits = dict(type='int', default=1000),
-      delete = dict(type='str'),
-      description = dict(type='str'),
-      digest = dict(type='str'),
-      force = dict(type='bool', default=None),
-      freeze = dict(type='bool'),
-      hostpci = dict(type='dict'),
-      hotplug = dict(type='str'),
-      hugepages = dict(choices=['any', '2', '1024']),
-      ide = dict(type='dict', default=None),
-      keyboard = dict(type='str'),
-      kvm = dict(type='bool', default='yes'),
-      localtime = dict(type='bool'),
-      lock = dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
-      machine = dict(type='str'),
-      memory = dict(type='int', default=512),
-      migrate_downtime = dict(type='int'),
-      migrate_speed = dict(type='int'),
-      name = dict(type='str'),
-      net = dict(type='dict'),
-      node = dict(),
-      numa = dict(type='dict'),
-      onboot = dict(type='bool', default='yes'),
-      ostype = dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
-      parallel = dict(type='dict'),
-      protection = dict(type='bool'),
-      reboot = dict(type='bool'),
-      revert = dict(),
-      sata = dict(type='dict'),
-      scsi = dict(type='dict'),
-      scsihw = dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
-      serial = dict(type='dict'),
-      shares = dict(type='int'),
-      skiplock = dict(type='bool'),
-      smbios = dict(type='str'),
-      sockets = dict(type='int', default=1),
-      startdate = dict(type='str'),
-      startup = dict(),
-      state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
-      tablet = dict(type='bool', default='no'),
-      tdf = dict(type='bool'),
-      template = dict(type='bool', default='no'),
-      timeout = dict(type='int', default=30),
-      validate_certs = dict(type='bool', default='no'),
-      vcpus = dict(type='int', default=None),
-      vga = dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
-      virtio = dict(type='dict', default=None),
-      vmid = dict(type='int', default=None),
-      watchdog = dict(),
-    )
+      argument_spec = dict(
+          acpi = dict(type='bool', default='yes'),
+          agent = dict(type='bool'),
+          args = dict(type='str', default=None),
+          api_host = dict(required=True),
+          api_user = dict(required=True),
+          api_password = dict(no_log=True),
+          autostart = dict(type='bool', default='no'),
+          balloon = dict(type='int',default=0),
+          bios = dict(choices=['seabios', 'ovmf']),
+          boot = dict(type='str', default='cnd'),
+          bootdisk = dict(type='str'),
+          cores = dict(type='int', default=1),
+          cpu = dict(type='str', default='kvm64'),
+          cpulimit = dict(type='int'),
+          cpuunits = dict(type='int', default=1000),
+          delete = dict(type='str'),
+          description = dict(type='str'),
+          digest = dict(type='str'),
+          force = dict(type='bool', default=None),
+          freeze = dict(type='bool'),
+          hostpci = dict(type='dict'),
+          hotplug = dict(type='str'),
+          hugepages = dict(choices=['any', '2', '1024']),
+          ide = dict(type='dict', default=None),
+          keyboard = dict(type='str'),
+          kvm = dict(type='bool', default='yes'),
+          localtime = dict(type='bool'),
+          lock = dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
+          machine = dict(type='str'),
+          memory = dict(type='int', default=512),
+          migrate_downtime = dict(type='int'),
+          migrate_speed = dict(type='int'),
+          name = dict(type='str'),
+          net = dict(type='dict'),
+          node = dict(),
+          numa = dict(type='dict'),
+          onboot = dict(type='bool', default='yes'),
+          ostype = dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+          parallel = dict(type='dict'),
+          protection = dict(type='bool'),
+          reboot = dict(type='bool'),
+          revert = dict(),
+          sata = dict(type='dict'),
+          scsi = dict(type='dict'),
+          scsihw = dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
+          serial = dict(type='dict'),
+          shares = dict(type='int'),
+          skiplock = dict(type='bool'),
+          smbios = dict(type='str'),
+          sockets = dict(type='int', default=1),
+          startdate = dict(type='str'),
+          startup = dict(),
+          state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
+          tablet = dict(type='bool', default='no'),
+          tdf = dict(type='bool'),
+          template = dict(type='bool', default='no'),
+          timeout = dict(type='int', default=30),
+          validate_certs = dict(type='bool', default='no'),
+          vcpus = dict(type='int', default=None),
+          vga = dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
+          virtio = dict(type='dict', default=None),
+          vmid = dict(type='int', default=None),
+          watchdog = dict(),
+          )
   )
 
   if not HAS_PROXMOXER:
@@ -1038,7 +1038,7 @@ def main():
         time.sleep(1)
     except Exception as e:
       module.fail_json(msg="deletion of VM %s failed with exception: %s" % ( vmid, e ))
-  
+
   elif state == 'current':
     status = {}
     try:

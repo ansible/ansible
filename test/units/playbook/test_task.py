@@ -23,12 +23,12 @@ from ansible.playbook.task import Task
 from ansible.compat.tests import unittest
 
 basic_shell_task = dict(
-   name  = 'Test Task',
-   shell = 'echo hi'
+    name  = 'Test Task',
+    shell = 'echo hi'
 )
 
 kv_shell_task = dict(
-   action = 'shell echo hi'
+    action = 'shell echo hi'
 )
 
 class TestTask(unittest.TestCase):

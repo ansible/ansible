@@ -21,10 +21,10 @@ import re
 import json
 import sys
 import copy
-
 from distutils.version import LooseVersion
-from urlparse import urlparse
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
@@ -330,7 +330,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                 %  (self.auth_params['tls_hostname'], match.group(1))
+                %  (self.auth_params['tls_hostname'], match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
@@ -349,7 +349,7 @@ class AnsibleDockerClient(Client):
         try:
             for container in self.containers(all=True):
                 self.log("testing container: %s" % (container['Names']))
-                if search_name in container['Names']:
+                if isinstance(container['Names'], list) and search_name in container['Names']:
                     result = container
                     break
                 if container['Id'].startswith(name):

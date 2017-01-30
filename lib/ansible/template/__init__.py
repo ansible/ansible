@@ -414,12 +414,12 @@ class Templar:
 
             elif isinstance(variable, (list, tuple)):
                 return [self.template(
-                            v,
-                            preserve_trailing_newlines=preserve_trailing_newlines,
-                            fail_on_undefined=fail_on_undefined,
-                            overrides=overrides,
-                            disable_lookups=disable_lookups,
-                        ) for v in variable]
+                    v,
+                    preserve_trailing_newlines=preserve_trailing_newlines,
+                    fail_on_undefined=fail_on_undefined,
+                    overrides=overrides,
+                    disable_lookups=disable_lookups,
+                    ) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
@@ -427,12 +427,12 @@ class Templar:
                 for k in variable.keys():
                     if k not in static_vars:
                         d[k] = self.template(
-                                   variable[k],
-                                   preserve_trailing_newlines=preserve_trailing_newlines,
-                                   fail_on_undefined=fail_on_undefined,
-                                   overrides=overrides,
-                                   disable_lookups=disable_lookups,
-                               )
+                            variable[k],
+                            preserve_trailing_newlines=preserve_trailing_newlines,
+                            fail_on_undefined=fail_on_undefined,
+                            overrides=overrides,
+                            disable_lookups=disable_lookups,
+                            )
                     else:
                         d[k] = variable[k]
                 return d

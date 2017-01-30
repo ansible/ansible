@@ -260,7 +260,7 @@ class EcsServiceManager:
             cluster=cluster_name,
             services=[
                 service_name
-        ])
+                ])
         msg = ''
         if len(response['failures'])>0:
             c = self.find_in_array(response['failures'], service_name, 'arn')

@@ -450,12 +450,12 @@ def main():
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
-#                json_output['d4'] = 'deleting %s' % name
+                # json_output['d4'] = 'deleting %s' % name
                 try:
                     gce.ex_destroy_network(network)
                 except Exception as e:
                     module.fail_json(msg=unexpected_error_msg(e), changed=False)
-#                json_output['d5'] = 'deleted %s' % name
+                # json_output['d5'] = 'deleted %s' % name
                 changed = True
 
     json_output['changed'] = changed

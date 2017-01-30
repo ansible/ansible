@@ -129,7 +129,7 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) 
+            initial_state = self._get_instance_health(lb)
             if initial_state is None:
                 # Instance isn't registered with this load
                 # balancer. Ignore it and try the next one.
@@ -326,13 +326,13 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True},
-            instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
-            wait={'required': False, 'default': True, 'type': 'bool'},
-            wait_timeout={'required': False, 'default': 0, 'type': 'int'}
-        )
+        state={'required': True},
+        instance_id={'required': True},
+        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
+        wait={'required': False, 'default': True, 'type': 'bool'},
+        wait_timeout={'required': False, 'default': 0, 'type': 'int'}
+    )
     )
 
     module = AnsibleModule(

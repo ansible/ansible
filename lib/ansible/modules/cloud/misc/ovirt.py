@@ -306,7 +306,7 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         # define network parameters
         network_net = params.Network(name=vmnetwork)
         nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
-        
+
     try:
         conn.vms.add(vmparams)
     except:
@@ -382,7 +382,7 @@ def vm_status(conn, vmname):
 # Get VM object and return it's name if object exists
 def get_vm(conn, vmname):
     vm = conn.vms.get(name=vmname)
-    if vm == None:
+    if vm is None:
         name = "empty"
     else:
         name = vm.get_name()
@@ -446,7 +446,7 @@ def main():
     vmcpus        = module.params['instance_cpus']      # number of cpu
     vmnic         = module.params['instance_nic']       # network interface
     vmnetwork     = module.params['instance_network']   # logical network
-    vmmem         = module.params['instance_mem']       # mem size 
+    vmmem         = module.params['instance_mem']       # mem size
     vmdisk_alloc  = module.params['disk_alloc']         # thin, preallocated
     vmdisk_int    = module.params['disk_int']           # disk interface virtio or ide
     vmos          = module.params['instance_os']        # Operating System
@@ -502,7 +502,7 @@ def main():
         else:
             vm_stop(c, vmname)
             module.exit_json(changed=True, msg="VM %s is shutting down" % vmname)
-    
+
     if state == 'restart':
         if vm_status(c, vmname) == 'up':
             vm_restart(c, vmname)

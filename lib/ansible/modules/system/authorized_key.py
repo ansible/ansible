@@ -639,15 +639,15 @@ def enforce_state(module, params):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-           user        = dict(required=True, type='str'),
-           key         = dict(required=True, type='str'),
-           path        = dict(required=False, type='str'),
-           manage_dir  = dict(required=False, type='bool', default=True),
-           state       = dict(default='present', choices=['absent','present']),
-           key_options = dict(required=False, type='str'),
-           unique      = dict(default=False, type='bool'),
-           exclusive   = dict(default=False, type='bool'),
-           validate_certs = dict(default=True, type='bool'),
+            user        = dict(required=True, type='str'),
+            key         = dict(required=True, type='str'),
+            path        = dict(required=False, type='str'),
+            manage_dir  = dict(required=False, type='bool', default=True),
+            state       = dict(default='present', choices=['absent','present']),
+            key_options = dict(required=False, type='str'),
+            unique      = dict(default=False, type='bool'),
+            exclusive   = dict(default=False, type='bool'),
+            validate_certs = dict(default=True, type='bool'),
         ),
         supports_check_mode=True
     )

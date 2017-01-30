@@ -430,10 +430,10 @@ def get_udld_global(module):
 
 def main():
     argument_spec = dict(
-            aggressive=dict(required=False, choices=['enabled', 'disabled']),
-            msg_time=dict(required=False, type='str'),
-            reset=dict(required=False, type='bool'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        aggressive=dict(required=False, choices=['enabled', 'disabled']),
+        msg_time=dict(required=False, type='str'),
+        reset=dict(required=False, type='bool'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
     module = get_network_module(argument_spec=argument_spec,
                                 required_one_of=[['aggressive', 'msg_time', 'reset']],

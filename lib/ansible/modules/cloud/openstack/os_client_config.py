@@ -72,7 +72,7 @@ def main():
                 clouds.append(cloud.config)
         module.exit_json(ansible_facts=dict(openstack=dict(clouds=clouds)))
     except exceptions.OpenStackConfigException as e:
-        module.fail_json(msg=str(e)) 
+        module.fail_json(msg=str(e))
 
 # import module snippets
 from ansible.module_utils.basic import *

@@ -37,11 +37,11 @@ requirements:
 options:
     api_key:
         description:
-           - Circonus API key 
+           - Circonus API key
         required: true
     category:
         description:
-           - Annotation Category 
+           - Annotation Category
         required: true
     description:
         description:
@@ -109,15 +109,15 @@ def post_annotation(annotation, api_key):
 def create_annotation(module):
     ''' Takes ansible module object '''
     annotation = {}
-    if module.params['duration'] != None:
+    if module.params['duration'] is not None:
         duration = module.params['duration']
     else:
         duration = 0
-    if module.params['start'] != None:
+    if module.params['start'] is not None:
         start = module.params['start']
     else:
         start = int(time.time())
-    if module.params['stop'] != None:
+    if module.params['stop'] is not None:
         stop = module.params['stop']
     else:
         stop = int(time.time())+ duration

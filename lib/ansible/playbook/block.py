@@ -142,13 +142,13 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_always(self, attr, ds):
         try:
             return load_list_of_tasks(
-                ds, 
+                ds,
                 play=self._play,
-                block=self, 
-                role=self._role, 
+                block=self,
+                role=self._role,
                 task_include=None,
-                variable_manager=self._variable_manager, 
-                loader=self._loader, 
+                variable_manager=self._variable_manager,
+                loader=self._loader,
                 use_handlers=self._use_handlers,
             )
         except AssertionError:
@@ -349,8 +349,8 @@ class Block(Base, Become, Conditional, Taggable):
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
                 elif task.action == 'meta' \
-                or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
-                or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                    or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
+                    or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 

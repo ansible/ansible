@@ -195,8 +195,8 @@ class ElbInformation(object):
             elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
             elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
             elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
-                        float(elb_info['instances_inservice_count']) +
-                        float(elb_info['instances_outofservice_count']))*100
+                float(elb_info['instances_inservice_count']) +
+                float(elb_info['instances_outofservice_count']))*100
         return elb_info
 
 
@@ -215,14 +215,14 @@ class ElbInformation(object):
                         elb_array.append(existing_lb)
             else:
                 elb_array = all_elbs
-                    
+
         return list(map(self._get_elb_info, elb_array))
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            names={'default': [], 'type': 'list'}
-        )
+        names={'default': [], 'type': 'list'}
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

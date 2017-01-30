@@ -682,26 +682,26 @@ class DockerManager(object):
     # docker-py version is a tuple of ints because we have to compare them
     # server APIVersion is passed to a docker-py function that takes strings
     _cap_ver_req = {
-            'devices': ((0, 7, 0), '1.2'),
-            'dns': ((0, 3, 0), '1.10'),
-            'volumes_from': ((0, 3, 0), '1.10'),
-            'restart_policy': ((0, 5, 0), '1.14'),
-            'extra_hosts': ((0, 7, 0), '1.3.1'),
-            'pid': ((1, 0, 0), '1.17'),
-            'log_driver': ((1, 2, 0), '1.18'),
-            'log_opt': ((1, 2, 0), '1.18'),
-            'host_config': ((0, 7, 0), '1.15'),
-            'cpu_set': ((0, 6, 0), '1.14'),
-            'cap_add': ((0, 5, 0), '1.14'),
-            'cap_drop': ((0, 5, 0), '1.14'),
-            'read_only': ((1, 0, 0), '1.17'),
-            'labels': ((1, 2, 0), '1.18'),
-            'stop_timeout': ((0, 5, 0), '1.0'),
-            'ulimits': ((1, 2, 0), '1.18'),
-            # Clientside only
-            'insecure_registry': ((0, 5, 0), '0.0'),
-            'env_file': ((1, 4, 0), '0.0')
-            }
+        'devices': ((0, 7, 0), '1.2'),
+        'dns': ((0, 3, 0), '1.10'),
+        'volumes_from': ((0, 3, 0), '1.10'),
+        'restart_policy': ((0, 5, 0), '1.14'),
+        'extra_hosts': ((0, 7, 0), '1.3.1'),
+        'pid': ((1, 0, 0), '1.17'),
+        'log_driver': ((1, 2, 0), '1.18'),
+        'log_opt': ((1, 2, 0), '1.18'),
+        'host_config': ((0, 7, 0), '1.15'),
+        'cpu_set': ((0, 6, 0), '1.14'),
+        'cap_add': ((0, 5, 0), '1.14'),
+        'cap_drop': ((0, 5, 0), '1.14'),
+        'read_only': ((1, 0, 0), '1.17'),
+        'labels': ((1, 2, 0), '1.18'),
+        'stop_timeout': ((0, 5, 0), '1.0'),
+        'ulimits': ((1, 2, 0), '1.18'),
+        # Clientside only
+        'insecure_registry': ((0, 5, 0), '0.0'),
+        'env_file': ((1, 4, 0), '0.0')
+        }
 
     def __init__(self, module):
         self.module = module
@@ -1553,12 +1553,12 @@ class DockerManager(object):
 
                 image_matches = running_image in repo_tags
 
-                if command == None:
+                if command is None:
                     command_matches = True
                 else:
                     command_matches = (command == details['Config']['Cmd'])
 
-                if entrypoint == None:
+                if entrypoint is None:
                     entrypoint_matches = True
                 else:
                     entrypoint_matches = (

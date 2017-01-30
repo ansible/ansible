@@ -32,8 +32,8 @@ try:
     # Look for simplejson if that's the case
     try:
         if (
-         not isinstance(json.loads, types.FunctionType) or
-         not isinstance(json.dumps, types.FunctionType)
+            not isinstance(json.loads, types.FunctionType) or
+            not isinstance(json.dumps, types.FunctionType)
         ):
             raise ImportError
     except AttributeError:
@@ -274,7 +274,7 @@ EXAMPLES = '''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: commstring
         type: dev
 
@@ -340,7 +340,7 @@ EXAMPLES = '''
       password: '{{ password }}'
       collector: mycompany-Collector
       groups: /servers/production,/datacenter5
-      properties: 
+      properties:
         snmp.community: commstring
         dc: 5
     delegate_to: localhost
@@ -363,7 +363,7 @@ EXAMPLES = '''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: hg
         type: dev
         status: test
@@ -474,7 +474,7 @@ EXAMPLES = '''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: commstring
   - name: SDT a host group
     logicmonitor:

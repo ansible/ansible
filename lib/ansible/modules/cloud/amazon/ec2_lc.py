@@ -113,7 +113,7 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
-requires: 
+requires:
     - "boto >= 2.39.0"
 """
 
@@ -229,7 +229,7 @@ def create_launch_config(connection, module):
     result = dict(
                  ((a[0], a[1]) for a in vars(launch_configs[0]).items()
                   if a[0] not in ('connection', 'created_time', 'instance_monitoring', 'block_device_mappings'))
-                 )
+        )
     result['created_time'] = str(launch_configs[0].created_time)
     # Looking at boto's launchconfig.py, it looks like this could be a boolean
     # value or an object with an enabled attribute.  The enabled attribute

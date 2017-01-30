@@ -254,7 +254,7 @@ def main():
 
         if instance_name and inst is None:
             module.fail_json(msg='Instance %s does not exist in zone %s' % (
-                    instance_name, zone), changed=False)
+                instance_name, zone), changed=False)
 
         if not disk:
             if image is not None and snapshot is not None:

@@ -101,7 +101,7 @@ options:
     description:
       - The resource_id of an existing DHCP options set.
         If this is specified, then it will override other settings, except tags
-        (which will be updated to match) 
+        (which will be updated to match)
     required: False
     default: None
     version_added: "2.1"
@@ -289,7 +289,7 @@ def main():
     changed = False
     new_options = collections.defaultdict(lambda: None)
 
-  
+
     region, ec2_url, boto_params = get_aws_connection_info(module)
     connection = connect_to_aws(boto.vpc, region, **boto_params)
 
@@ -297,17 +297,17 @@ def main():
 
     # First check if we were given a dhcp_options_id
     if not params['dhcp_options_id']:
-    # No, so create new_options from the parameters
-        if params['dns_servers'] != None:
+        # No, so create new_options from the parameters
+        if params['dns_servers'] is not None:
             new_options['domain-name-servers'] = params['dns_servers']
-        if params['netbios_name_servers'] != None:
+        if params['netbios_name_servers'] is not None:
             new_options['netbios-name-servers'] = params['netbios_name_servers']
-        if params['ntp_servers'] != None:
+        if params['ntp_servers'] is not None:
             new_options['ntp-servers'] = params['ntp_servers']
-        if params['domain_name'] != None:
+        if params['domain_name'] is not None:
             # needs to be a list for comparison with boto objects later
             new_options['domain-name'] = [ params['domain_name'] ]
-        if params['netbios_node_type'] != None:
+        if params['netbios_node_type'] is not None:
             # needs to be a list for comparison with boto objects later
             new_options['netbios-node-type'] = [ str(params['netbios_node_type']) ]
         # If we were given a vpc_id then we need to look at the options on that
@@ -378,9 +378,9 @@ def main():
         # and remove old ones if that was requested
         if params['delete_old'] and existing_options:
             remove_dhcp_options_by_id(connection, existing_options.id)
-  
+
     module.exit_json(changed=changed, new_options=new_options, dhcp_options_id=dhcp_option.id)
-  
+
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *

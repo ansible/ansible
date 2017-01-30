@@ -26,7 +26,7 @@ short_description: Pause/unpause Pingdom alerts
 description:
     - This module will let you pause/unpause Pingdom alerts
 version_added: "1.2"
-author: 
+author:
     - "Dylan Silva (@thaumos)"
     - "Justin Johns"
 requirements:
@@ -125,11 +125,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
-        checkid=dict(required=True),
-        uid=dict(required=True),
-        passwd=dict(required=True),
-        key=dict(required=True)
+            state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
+            checkid=dict(required=True),
+            uid=dict(required=True),
+            passwd=dict(required=True),
+            key=dict(required=True)
         )
     )
 

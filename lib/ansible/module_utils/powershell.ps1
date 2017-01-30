@@ -168,7 +168,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         $value = $value | ConvertTo-Bool
     }
 
-    $value
+    return $value
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
@@ -193,13 +193,12 @@ Function ConvertTo-Bool
 
     if (($obj.GetType().Name -eq "Boolean" -and $obj) -or $boolean_strings -contains $obj_string.ToLower())
     {
-        $true
+        return $true
     }
     Else
     {
-        $false
+        return $false
     }
-    return
 }
 
 # Helper function to parse Ansible JSON arguments from a "file" passed as
@@ -207,38 +206,51 @@ Function ConvertTo-Bool
 # Example: $params = Parse-Args $args
 Function Parse-Args($arguments, $supports_check_mode = $false)
 {
-    $parameters = New-Object psobject
+    $params = New-Object psobject
     If ($arguments.Length -gt 0)
     {
-        $parameters = Get-Content $arguments[0] | ConvertFrom-Json
+        $params = Get-Content $arguments[0] | ConvertFrom-Json
     }
-    $check_mode = Get-Attr $parameters "_ansible_check_mode" $false | ConvertTo-Bool
+    $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
     If ($check_mode -and -not $supports_check_mode)
     {
-        $obj = New-Object psobject
-        Set-Attr $obj "skipped" $true
-        Set-Attr $obj "changed" $false
-        Set-Attr $obj "msg" "remote module does not support check mode"
-        Exit-Json $obj
+        Exit-Json @{
+            skipped = $true
+            changed = $false
+            msg = "remote module does not support check mode"
+        }
     }
-    $parameters
+    return $params
 }
 
 # Helper function to calculate a hash of a file in a way which powershell 3
 # and above can handle:
-Function Get-FileChecksum($path)
+Function Get-FileChecksum($path, $algorithm = 'sha1')
 {
-    $hash = ""
     If (Test-Path -PathType Leaf $path)
     {
-        $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
-        $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
-        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-        $fp.Dispose();
+        switch ($algorithm)
+        {
+            'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+            'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+            'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+            'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+            'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+            default { Fail-Json (New-Object PSObject) "Unsupported hash algorithm supplied '$algorithm'" }
+        }
+
+        If ($PSVersionTable.PSVersion.Major -ge 4) {
+            $raw_hash = Get-FileHash $path -Algorithm $algorithm
+            $hash = $raw_hash.Hash.ToLower()
+        } Else {
+            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
+            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+            $fp.Dispose();
+        }
     }
     ElseIf (Test-Path -PathType Container $path)
     {
-        $hash= "3";
+        $hash = "3";
     }
     Else
     {
@@ -262,5 +274,4 @@ Function Get-PendingRebootStatus
     {
         return $False
     }
-
 }

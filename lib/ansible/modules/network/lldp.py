@@ -31,14 +31,14 @@ description:
 options: {}
 author: "Andy Hill (@andyhky)"
 notes:
-  - Requires lldpd running and lldp enabled on switches 
+  - Requires lldpd running and lldp enabled on switches
 '''
 
 EXAMPLES = '''
 # Retrieve switch/port information
  - name: Gather information from lldp
    lldp:
- 
+
  - name: Print each switch/port
    debug:
     msg: "{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifalias'] }}"
@@ -73,7 +73,7 @@ def gather_lldp():
                 current_dict = current_dict[path_component]
             current_dict[final] = value
         return output_dict
-            
+
 
 def main():
     module = AnsibleModule({})
@@ -83,8 +83,8 @@ def main():
         data = {'lldp': lldp_output['lldp']}
         module.exit_json(ansible_facts=data)
     except TypeError:
-        module.fail_json(msg="lldpctl command failed. is lldpd running?")    
-   
+        module.fail_json(msg="lldpctl command failed. is lldpd running?")
+
 # import module snippets
 from ansible.module_utils.basic import *
 

@@ -382,12 +382,12 @@ def _timedelta_total_seconds(timedelta):
 
 def get_connection_state_id(state):
     connection_state_id = {
-       'ESTABLISHED': '01',
-       'SYN_SENT': '02',
-       'SYN_RECV': '03',
-       'FIN_WAIT1': '04',
-       'FIN_WAIT2': '05',
-       'TIME_WAIT': '06',
+        'ESTABLISHED': '01',
+        'SYN_SENT': '02',
+        'SYN_RECV': '03',
+        'FIN_WAIT1': '04',
+        'FIN_WAIT2': '05',
+        'TIME_WAIT': '06',
     }
     return connection_state_id[state]
 
@@ -433,7 +433,7 @@ def main():
     if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
     for _connection_state in params['active_connection_states']:
-        try: 
+        try:
             get_connection_state_id(_connection_state)
         except:
             module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")

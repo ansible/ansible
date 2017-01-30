@@ -37,7 +37,7 @@ extends_documentation_fragment: cloudengine
 options:
   commands:
     description:
-      - The commands to send to the remote HUAWEI CloudEngine device 
+      - The commands to send to the remote HUAWEI CloudEngine device
         over the configured provider.  The resulting output from the
         command is returned. If the I(wait_for) argument is provided,
         the module is not returned until the condition is satisfied

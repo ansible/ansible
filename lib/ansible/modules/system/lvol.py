@@ -262,7 +262,7 @@ def main():
 
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
-    if version_found == None:
+    if version_found is None:
         module.fail_json(msg="Failed to get LVM version number")
     version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
     if version_found >= version_yesopt:
@@ -313,14 +313,15 @@ def main():
             size_unit = ''
 
         if not '%' in size:
-        # LVCREATE(8) -L --size option unit
+            # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
                size_unit = size[-1].lower()
                size = size[0:-1]
 
             try:
                float(size)
-               if not size[0].isdigit(): raise ValueError()
+               if not size[0].isdigit():
+                   raise ValueError()
             except ValueError:
                module.fail_json(msg="Bad size specification of '%s'" % size)
 

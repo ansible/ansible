@@ -25,6 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
 import time
 
 from ansible.module_utils.network_common import to_list
@@ -74,6 +75,24 @@ def run_commands(module, commands):
         responses.append(out)
     return responses
 
+def send_config(module, commands):
+    multiline = False
+    for command in to_list(commands):
+        if command == 'end':
+            pass
+
+        if command.startswith('banner') or multiline:
+            multiline = True
+            command = module.jsonify({'command': command, 'sendonly': True})
+        elif command == 'EOF' and multiline:
+            multiline = False
+
+        rc, out, err = module.exec_command(command)
+        if rc != 0:
+            return (rc, out, err)
+    return (rc, 'ok','')
+
+
 def configure(module, commands):
     """Sends configuration commands to the remote device
     """
@@ -84,14 +103,12 @@ def configure(module, commands):
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', output=err)
 
-    for cmd in to_list(commands):
-        if cmd == 'end':
-            continue
-        rc, out, err = module.exec_command(cmd)
-        if rc != 0:
-            module.fail_json(msg=err)
+    rc, out, err = send_config(module, commands)
+    if rc != 0:
+        module.fail_json(msg=err)
 
     module.exec_command('end')
+    return {}
 
 def load_config(module, commands, commit=False, replace=False):
     """Loads the config commands onto the remote device
@@ -99,8 +116,14 @@ def load_config(module, commands, commit=False, replace=False):
     if not check_authorization(module):
         module.fail_json(msg='configuration operations require privilege escalation')
 
-    if not supports_sessions(module):
-        return configure(commands)
+    use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
+    try:
+        use_session = int(use_session)
+    except ValueError:
+        pass
+
+    if not all((bool(use_session), supports_sessions(module))):
+        return configure(module, commands)
 
     session = 'ansible_%s' % int(time.time())
 
@@ -113,24 +136,16 @@ def load_config(module, commands, commit=False, replace=False):
     if replace:
         module.exec_command('rollback clean-config', check_rc=True)
 
-    failed = False
-    for command in to_list(commands):
-        if command == 'end':
-            pass
-
-        rc, out, err = module.exec_command(command)
-        if rc != 0:
-            failed = True
-            break
+    rc, out, err = send_config(module, commands)
+    if rc != 0:
+        module.exec_command('abort')
+        module.fail_json(msg=err, commands=commands)
 
     rc, out, err = module.exec_command('show session-config diffs')
     if rc == 0:
-        result['diff'] = out
+        result['diff'] = out.strip()
 
-    if failed:
-        module.exec_command('abort')
-        module.fail_json(msg=err, commands=commands)
-    elif commit:
+    if commit:
         module.exec_command('commit')
     else:
         module.exec_command('abort')

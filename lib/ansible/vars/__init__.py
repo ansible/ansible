@@ -371,7 +371,7 @@ class VariableManager:
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
         if task:
-            if  'environment' not in all_vars:
+            if 'environment' not in all_vars:
                 all_vars['environment'] = task.environment
             else:
                 display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
