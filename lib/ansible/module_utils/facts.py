@@ -338,6 +338,8 @@ class Facts(object):
         # Mapping of proc_1 values to more useful names
         proc_1_map = {
             'procd': 'openwrt_init',
+            'runit-init': 'runit',
+            'svscan': 'svc',
         }
 
         # try various forms of querying pid 1
