@@ -100,6 +100,14 @@ EXAMPLES = """
     hosts: 'localhost:2181'
     name: /mypath
     state: absent
+
+# Creating or updating a znode with a given value on a remote Zookeeper
+- znode:
+    hosts: 'my-zookeeper-node:2181'
+    name: /mypath
+    value: myvalue
+    state: present
+  delegate_to: 127.0.0.1
 """
 
 try:
