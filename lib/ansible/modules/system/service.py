@@ -128,16 +128,21 @@ EXAMPLES = '''
 
 '''
 
-import platform
-import os
-import re
-import tempfile
-import shlex
-import select
-import time
-import string
 import glob
-from ansible.module_utils.service import fail_if_missing
+import os
+import platform
+import re
+import select
+import shlex
+import string
+import subprocess
+import tempfile
+import time
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -145,6 +150,12 @@ from ansible.module_utils.service import fail_if_missing
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
     from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.service import fail_if_missing
+from ansible.module_utils.six import PY2, b
+from ansible.module_utils._text import to_bytes, to_text
+
 
 class Service(object):
     """
@@ -242,11 +253,19 @@ class Service(object):
                 os._exit(0)
 
             # Start the command
-            if isinstance(cmd, basestring):
+            if PY2:
+                # Python 2.6's shlex.split can't handle text strings correctly
+                cmd = to_bytes(cmd, errors='surrogate_or_strict')
                 cmd = shlex.split(cmd)
+            else:
+                # Python3.x shex.split text strings.
+                cmd = to_text(cmd, errors='surrogate_or_strict')
+                cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(cmd)]
+            # In either of the above cases, pass a list of byte strings to Popen
+
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
-            stdout = ""
-            stderr = ""
+            stdout = b("")
+            stderr = b("")
             fds = [p.stdout, p.stderr]
             # Wait for all output, or until the main process is dead and its output is done.
             while fds:
@@ -265,7 +284,8 @@ class Service(object):
                     stderr += dat
             p.wait()
             # Return a JSON blob to parent
-            os.write(pipe[1], json.dumps([p.returncode, stdout, stderr]))
+            blob = json.dumps([p.returncode, to_text(stdout), to_text(stderr)])
+            os.write(pipe[1], to_bytes(blob, errors='surrogate_or_strict'))
             os.close(pipe[1])
             os._exit(0)
         elif pid == -1:
@@ -274,7 +294,7 @@ class Service(object):
             os.close(pipe[1])
             os.waitpid(pid, 0)
             # Wait for data from daemon process and process it.
-            data = ""
+            data = b("")
             while True:
                 rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
                 if pipe[0] in rfd:
@@ -282,7 +302,7 @@ class Service(object):
                     if not dat:
                         break
                     data += dat
-            return json.loads(data)
+            return json.loads(to_text(data, errors='surrogate_or_strict'))
 
     def check_ps(self):
         # Set ps flags
@@ -1582,8 +1602,6 @@ def main():
             result['state'] = 'stopped'
 
     module.exit_json(**result)
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
