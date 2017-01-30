@@ -103,16 +103,16 @@ class TestGetShebang(object):
 
     def test_interpreter_set_in_task_vars(self):
         assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/pypy'}) == \
-               (u'#!/usr/bin/pypy', u'/usr/bin/pypy')
+            (u'#!/usr/bin/pypy', u'/usr/bin/pypy')
 
     def test_non_python_interpreter_in_task_vars(self):
         assert amc._get_shebang(u'/usr/bin/ruby', {u'ansible_ruby_interpreter': u'/usr/local/bin/ruby'}) == \
-               (u'#!/usr/local/bin/ruby', u'/usr/local/bin/ruby')
+            (u'#!/usr/local/bin/ruby', u'/usr/local/bin/ruby')
 
     def test_with_args(self):
         assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/python3'}, args=('-tt', '-OO')) == \
-               (u'#!/usr/bin/python3 -tt -OO', u'/usr/bin/python3')
+            (u'#!/usr/bin/python3 -tt -OO', u'/usr/bin/python3')
 
     def test_python_via_env(self):
         assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/env python'}) == \
-               (u'#!/usr/bin/env python', u'/usr/bin/env python')
+            (u'#!/usr/bin/env python', u'/usr/bin/env python')
