@@ -170,12 +170,12 @@ except ImportError:
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):

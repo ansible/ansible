@@ -135,12 +135,12 @@ except ImportError:
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -548,8 +548,8 @@ def main():
     if sysmtu:
         if ((int(sysmtu) < 576 or int(sysmtu) > 9216 or
                 ((int(sysmtu) % 2) != 0))):
-                    module.fail_json(msg='Invalid MTU- needs to be an even '
-                                         'number between 576 and 9216')
+            module.fail_json(msg='Invalid MTU- needs to be an even '
+                                 'number between 576 and 9216')
 
     args = dict(mtu=mtu, sysmtu=sysmtu)
     proposed = dict((k, v) for k, v in args.items() if v is not None)

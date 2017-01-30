@@ -117,12 +117,12 @@ except ImportError:
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -440,8 +440,8 @@ def main():
                                      "state=present.")
         else:
             if not existing.get('domain'):
-                    module.fail_json(msg='Cannot remove a vtp password '
-                                         'before vtp domain is set.')
+                module.fail_json(msg='Cannot remove a vtp password '
+                                     'before vtp domain is set.')
 
             elif existing['vtp_password'] != ('\\'):
                 commands.append(['no vtp password'])

@@ -157,12 +157,12 @@ except ImportError:
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
@@ -555,10 +555,10 @@ def main():
                                  'the switch.')
         elif (existing and state == 'absent' and
                 existing['vni'] != module.params['vni']):
-                module.fail_json(msg="ERROR: VNI delete failed: Could not find"
-                                     " vni node for {0}".format(
-                                         module.params['vni']),
-                                     existing_vni=existing['vni'])
+            module.fail_json(msg="ERROR: VNI delete failed: Could not find"
+                                 " vni node for {0}".format(
+                                     module.params['vni']),
+                                 existing_vni=existing['vni'])
         else:
             candidate = CustomNetworkConfig(indent=3)
             invoke('state_%s' % state, module, existing, proposed, candidate)
