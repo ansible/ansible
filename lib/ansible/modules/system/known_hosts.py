@@ -148,7 +148,7 @@ def enforce_state(module, params):
                 module.fail_json(msg="Failed to read %s: %s" % \
                                      (path,str(e)))
         try:
-            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path))
+            outf = tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path))
             if inf is not None:
                 for line_number, line in enumerate(inf):
                     if found_line==(line_number + 1) and (replace_or_add or state=='absent'):
@@ -191,7 +191,7 @@ def sanity_check(module,host,key,sshkeygen):
     #The approach is to write the key to a temporary file,
     #and then attempt to look up the specified host in that file.
     try:
-        outf=tempfile.NamedTemporaryFile()
+        outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
         outf.flush()
     except IOError:
