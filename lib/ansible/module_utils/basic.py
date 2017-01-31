@@ -1633,7 +1633,12 @@ class AnsibleModule(object):
 
     def _check_type_path(self, value):
         value = self._check_type_str(value)
-        return os.path.expanduser(os.path.expandvars(value))
+        valid_path = os.path.expanduser(os.path.expandvars(value))
+
+        if valid_path == '':
+            raise TypeError("Path cannot be an empty string.")
+
+        return valid_path
 
     def _check_type_jsonarg(self, value):
         # Return a jsonified string.  Sometimes the controller turns a json
@@ -1687,7 +1692,10 @@ class AnsibleModule(object):
             try:
                 self.params[k] = type_checker(value)
             except (TypeError, ValueError):
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
+                e = get_exception()
+                self.fail_json(
+                    msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted),
+                    exception=str(e))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
