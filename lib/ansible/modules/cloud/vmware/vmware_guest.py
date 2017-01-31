@@ -1292,8 +1292,7 @@ class PyVmomiHelper(object):
 
         # Mark VM as Template
         if self.params['is_template']:
-            task = self.current_vm_obj.MarkAsTemplate()
-            self.wait_for_task(task)
+            self.current_vm_obj.MarkAsTemplate()
             change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
