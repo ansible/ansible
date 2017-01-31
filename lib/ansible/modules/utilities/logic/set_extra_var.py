@@ -44,12 +44,12 @@ EXAMPLES = '''
 - set_fact:
      name: my_var
      value: "{{ local_var * 2 }}"
-     
+
 # Example inventory : 
   group_all = { host_1, host_2, host_3 }
   group_one = { host_1 }
   group_two = { host_2, host3 }
-  
+
 # Example playbook
 ---
 - hosts: group_one
@@ -65,3 +65,4 @@ EXAMPLES = '''
 # Example command
 ansible-playbook  my_playbook.yml --limit group_all
 '''
+
