@@ -45,6 +45,54 @@ def _module_meta_info():
     return meta_info
 
 
+def module_info(module):
+    '''Gather info about the module and return a serializable dict containing it.
+
+    Used if a module is invoked with the _ansible_module_introspect parameter. The
+    data returned will be added to the json results under the top level 'introspect' key.'''
+
+    # TODO: support a introspect_subset ala gather_subset (and try to share the code)
+    data = {}
+    data['name'] = module._name
+    data['ansible_version'] = module.ansible_version
+
+    data['argument_spec'] = module.argument_spec
+    data['supports_check_mode'] = module.supports_check_mode
+    data['check_mode'] = module.check_mode
+
+    data['supported_params'] = module._public_legal_inputs
+
+    # The effective params used by the module. Include params supplied by user as
+    # well as any required defaults.
+
+    # The valid module parameters as well as the _ansible_* parameters used interally by ansible
+    data['params'] = module.params
+
+    data['aliases'] = module.aliases
+    data['legal_inputs'] = module._legal_inputs
+
+    data['used_fallbacks'] = module._used_fallbacks
+
+    # A list of params that were not provided by the user and the default was used.
+    data['used_defaults'] = module._used_defaults
+
+    data['no_log'] = module.no_log
+    data['no_log_values'] = list(module.no_log_values)
+
+    # module invocation options
+    data['cleanup_files'] = module.cleanup_files
+    data['debug'] = module._debug
+    data['diff'] = module._diff
+    data['verbosity'] = module._verbosity
+    data['run_command_environ_update'] = module.run_command_environ_update
+
+    # The DOCUMENTATION, EXAMPLES, METADATA, etc
+    module_meta_info = _module_meta_info()
+    data['metadata'] = module_meta_info
+
+    return data
+
+
 def process_info():
     process_info = {}
 

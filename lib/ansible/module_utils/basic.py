@@ -166,7 +166,13 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils import introspection
+
+HAS_INTROSPECTION = False
+try:
+    from ansible.module_utils import introspection
+    HAS_INTROSPECTION = True
+except ImportError:
+    HAS_INTROSPECTION = False
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -803,59 +809,14 @@ class AnsibleModule(object):
     def _introspect(self):
         data = {}
 
-        module_info = self._introspect_module()
+        if not HAS_INTROSPECTION:
+            return data
+
+        module_info = introspection.module_info(module=self)
+        module_info['module_path'] = get_module_path()
         data['module'] = module_info
 
-        module_invocation_info = introspection.module_invocation()
-        data['module_invocation'] = module_invocation_info
-        return data
-
-    def _introspect_module(self):
-        '''Gather info about the module and return a serializable dict containing it.
-
-        Used if a module is invoked with the _ansible_module_introspect parameter. The
-        data returned will be added to the json results under the top level 'introspect' key.'''
-
-        # TODO: support a introspect_subset ala gather_subset (and try to share the code)
-        data = {}
-        data['name'] = self._name
-        data['ansible_version'] = self.ansible_version
-
-        data['argument_spec'] = self.argument_spec
-        data['supports_check_mode'] = self.supports_check_mode
-        data['check_mode'] = self.check_mode
-
-        data['supported_params'] = self._public_legal_inputs
-
-        # The effective params used by the module. Include params supplied by user as
-        # well as any required defaults.
-
-        # The valid module parameters as well as the _ansible_* parameters used interally by ansible
-        data['params'] = self.params
-
-        data['aliases'] = self.aliases
-        data['legal_inputs'] = self._legal_inputs
-
-        data['used_fallbacks'] = self._used_fallbacks
-
-        # A list of params that were not provided by the user and the default was used.
-        data['used_defaults'] = self._used_defaults
-
-        data['module_path'] = get_module_path()
-
-        data['no_log'] = self.no_log
-        data['no_log_values'] = list(self.no_log_values)
-
-        # module invocation options
-        data['cleanup_files'] = self.cleanup_files
-        data['debug'] = self._debug
-        data['diff'] = self._diff
-        data['verbosity'] = self._verbosity
-        data['run_command_environ_update'] = self.run_command_environ_update
-
-        # The DOCUMENTATION, EXAMPLES, METADATA, etc
-        module_meta_info = introspection._module_meta_info()
-        data['metadata'] = module_meta_info
+        data['module_invocation'] = introspection.module_invocation()
 
         return data
 
