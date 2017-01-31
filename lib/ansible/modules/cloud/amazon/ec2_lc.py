@@ -181,19 +181,12 @@ def create_launch_config(connection, module):
     instance_monitoring = module.params.get('instance_monitoring')
     kernel_id = module.params.get('kernel_id')
     ramdisk_id = module.params.get('ramdisk_id')
+    assign_public_ip = module.params.get('assign_public_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
-    
-    if module.params.get('assign_public_ip'):
-        if module.params.get('assign_public_ip') == 'yes':
-            assign_public_ip = True
-        else:
-            assign_public_ip = False
-    else:
-        assign_public_ip = None
     
     if volumes:
         for volume in volumes:
