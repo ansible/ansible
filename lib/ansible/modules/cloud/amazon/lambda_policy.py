@@ -24,6 +24,10 @@ except ImportError:
     HAS_BOTO3 = False
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '0.1'}
+
 DOCUMENTATION = '''
 ---
 module: lambda_policy
@@ -35,7 +39,7 @@ description:
       such as Kinesis streams, M(lambda_invoke) to execute a lambda function and M(lambda_facts) to gather facts
       relating to one or more lambda functions.
 
-version_added: "2.2"
+version_added: "2.3"
 
 author: Pierre Jodouin (@pjodouin)
 options:
