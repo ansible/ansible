@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# (c) 2016, NetApp, Inc
+
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -16,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-#!/usr/bin/python
 
 DOCUMENTATION = '''
 
@@ -56,6 +55,7 @@ options:
         type: int
         description:
         - new account_id for the volume
+        default: None
 
     enable512e:
         required: false
@@ -68,11 +68,13 @@ options:
         required: false
         type: QoS object
         description: Initial quality of service settings for this volume.
+        default: None
 
     attributes:
         required: false
         type: dict
         description: List of Name/Value pairs in JSON object format.
+        default: None
 
     volume_id:
         required: false
@@ -81,6 +83,7 @@ options:
         - In order to create multiple volumes with the same name, but different volume_ids, please declare the volume_id
           parameter with an arbitary value. However, the specified volume_id will not be assigned to the newly created
           volume (since it's an auto-generated property).
+        default: None
 
     size:
         required: false
@@ -106,6 +109,7 @@ options:
         - locked: No reads or writes are allowed.
         - replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked.
         - If unspecified, the access settings of the clone will be the same as the source.
+        default: None
 
 '''
 
@@ -176,10 +180,6 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireVolume(object):
 
@@ -202,25 +202,25 @@ class SolidFireVolume(object):
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                account_id=dict(required=True, type='int'),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            account_id=dict(required=True, type='int'),
 
-                new_account_id=dict(required=False, type='int', default=None),
-                enable512e=dict(type='bool'),
-                qos=dict(required=False, type='str', default=None),
-                attributes=dict(required=False, type='dict', default=None),
+            new_account_id=dict(required=False, type='int', default=None),
+            enable512e=dict(type='bool'),
+            qos=dict(required=False, type='str', default=None),
+            attributes=dict(required=False, type='dict', default=None),
 
-                volume_id=dict(type='int', default=None),
-                size=dict(type='int'),
-                size_unit=dict(default='gb',
-                               choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
-                                        'pb', 'eb', 'zb', 'yb'], type='str'),
+            volume_id=dict(type='int', default=None),
+            size=dict(type='int'),
+            size_unit=dict(default='gb',
+                           choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
+                                    'pb', 'eb', 'zb', 'yb'], type='str'),
 
-                access=dict(required=False, type='str', default=None, choices=['readOnly', 'readWrite',
-                                                                               'locked', 'replicationTarget']),
+            access=dict(required=False, type='str', default=None, choices=['readOnly', 'readWrite',
+                                                                           'locked', 'replicationTarget']),
 
-            ))
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -248,7 +248,6 @@ class SolidFireVolume(object):
         else:
             self.size = None
         self.access = p['access']
-        
         if HAS_SF_SDK is False:
             self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
         else:
@@ -402,5 +401,6 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
-main()
+if __name__ == '__main__':
+    main()
 
