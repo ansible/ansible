@@ -68,11 +68,11 @@ options:
       - Back up to a destination, requires target as well. Supported formats are
         .gz, .tar, .bz, .xz, and .sql
     restore:
-      version_added: "2.2"
+      version_added: "2.3"
       description:
         - Restore from a destination. See backup for supported options
     target:
-      version_added: "2.2"
+      version_added: "2.3"
       description:
         - File to back up or restore from.
 author: "Ansible Core Team"
