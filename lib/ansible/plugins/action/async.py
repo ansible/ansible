@@ -74,7 +74,7 @@ class ActionModule(ActionBase):
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(module_args))
         elif module_style == 'old':
             args_data = ""
-            for k, v in iteritems(module_args):
+            for k, v in module_args.iteritems():
                 args_data += '%s="%s" ' % (k, shlex_quote(to_text(v)))
             argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), args_data)
 
