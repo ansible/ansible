@@ -157,6 +157,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
                  { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
+                 { 'path' : '/usr/sbin/sorcery',    'name' : 'sorcery' },
                 ]
 
     def __init__(self, module, load_on_init=True, cached_facts=None):
@@ -653,6 +654,7 @@ class Distribution(object):
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
+        {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
@@ -663,6 +665,7 @@ class Distribution(object):
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'SMGL': 'Source Mage GNU/Linux',
     }
 
     # A list with OS Family members
@@ -672,7 +675,7 @@ class Distribution(object):
         OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
         XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
         SLED = 'Suse', openSUSE = 'Suse', openSUSE_Tumbleweed = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', SUSE_LINUX = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-        Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
+        Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux', SMGL = 'SMGL',
         Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
         SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
         FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse', Neon = 'Debian'
@@ -833,6 +836,9 @@ class Distribution(object):
     def get_distribution_Alpine(self, name, data, path):
         self.facts['distribution'] = 'Alpine'
         self.facts['distribution_version'] = data
+
+    def get_distribution_SMGL(self):
+        self.facts['distribution'] = 'Source Mage GNU/Linux'
 
     def get_distribution_SunOS(self):
         data = get_file_content('/etc/release').splitlines()[0]
