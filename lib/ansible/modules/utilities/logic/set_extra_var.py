@@ -24,14 +24,14 @@ author: "Pieter Voet (pietervoet@nl.ibm.com)"
 module: set_extra_var
 short_description: Sets an extra variable from a playbook.
 description:
-     - This module allows setting new variables.  Variables are set on a global basis
-     - These variables will survive between plays during an Ansible run, even for different host groups 
+   - This module allows setting new variables.  Variables are set on a global basis
+   - These variables will survive between plays during an Ansible run, even for different host groups
 options:
-  key_value:
+    key_value:
     description:
-      - The C(set_extra_var) module takes name=var_name value=var_value pairs as variables to set
-        in the playbook scope. Or alternatively, accepts complex arguments
-        using the C(args:) statement.
+        - The C(set_extra_var) module takes name=var_name value=var_value pairs as variables to set
+            in the playbook scope. Or alternatively, accepts complex arguments
+            using the C(args:) statement.
     required: true
     default: null
 version_added: "1.2"
@@ -42,26 +42,26 @@ EXAMPLES = '''
 - set_extra_var: name="my_var" value="my_value"
 # Example setting host facts using other variables
 - set_fact:
-     name: my_var
-     value: "{{ local_var * 2 }}"
+    name: my_var
+    value: "{{ local_var * 2 }}"
 
 # Example inventory :
-  group_all = { host_1, host_2, host_3 }
-  group_one = { host_1 }
-  group_two = { host_2, host3 }
+    group_all = { host_1, host_2, host_3 }
+    group_one = { host_1 }
+    group_two = { host_2, host3 }
 
 # Example playbook
 ---
 - hosts: group_one
-  tasks:
-  - name: list /tmp
-    shell: ls /tmp
-    register: out
-  - name: set global variable
-    setglobal: name=myvar value="{{out}}"
+    tasks:
+        - name: list /tmp
+            shell: ls /tmp
+            register: out
+    - name: set global variable
+        setglobal: name=myvar value="{{out}}"
 - hosts: group_two
-  tasks:
-  - debug: msg="{{myvar}}"
+    tasks:
+        - debug: msg="{{myvar}}"
 # Example command
 ansible-playbook  my_playbook.yml --limit group_all
 '''
