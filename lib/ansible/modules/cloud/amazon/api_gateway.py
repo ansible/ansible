@@ -161,8 +161,16 @@ def main():
     try:
         client = boto3_conn(module, conn_type='client', resource='apigateway',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    except (botocore.exceptions.ValidationError) as e:
+        msg="Incorrect AWS configuration"
+        module.fail_json(msg=msg, exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError) as e:
+        msg="Client side failure connecting to AWS API"
+        module.fail_json(msg=msg, exception=traceback.format_exc())
+    except Exception as e:
+        msg="Unexpected exception configuring AWS API connection"
+        module.fail_json(msg=msg, exception=traceback.format_exc())
+
 
     if not api_id:
         desc="Incomplete API creation by ansible api_gateway module"
@@ -184,9 +192,18 @@ def main():
 
     try:
         create_response=client.put_rest_api(body=apidata, restApiId=api_id, mode="overwrite")
+    except botocore.exceptions.ClientError as e:
+        msg="Client side error configuring api {} - check definitions".format(api_id)
+        module.fail_json(msg=msg, exception=traceback.format_exc())
+    except botocore.exceptions.EndpointConnectionError as e:
+        msg="Connectivity problem configuring api {}. Check network.".format(api_id)
+        module.fail_json(msg=msg, exception=traceback.format_exc())
+    except botocore.exceptions.NoCredentialsError as e:
+        msg="AWS credentials missing configuring api {}. set up credentials.".format(api_id)
+        module.fail_json(msg=msg, exception=traceback.format_exc())
     except Exception as e:
-        module.fail_json(msg=str(e) + ": trying to create api {}".format(api_id),
-                         exception=traceback.format_exc())
+        msg="Unexpected exception configuring api {}".format(api_id)
+        module.fail_json(msg=msg, exception=traceback.format_exc())
 
     if deploy_desc is None:
         deploy_desc = "Automatic deployment by Ansible."
@@ -194,8 +211,14 @@ def main():
         try:
             deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
                                                      description=deploy_desc)
+        except (botocore.exceptions.ClientError) as e:
+            msg="Client side error deploying api {} to stage {}".format(api_id, stage)
+            module.fail_json(msg=msg, exception=traceback.format_exc())
+        except botocore.exceptions.EndpointConnectionError as e:
+            msg="Connectivity problem deploying api {} to stage {}".format(api_id, stage)
+            module.fail_json(msg=msg, exception=traceback.format_exc())
         except Exception as e:
-            msg=str(e) + ": deploying api {} to stage {}".format(api_id, stage)
+            msg="Unexpected exception deploying api {} to stage {}".format(api_id, stage)
             module.fail_json(msg=msg, exception=traceback.format_exc())
     changed=True
     module.exit_json(changed=changed, api_id=api_id,
