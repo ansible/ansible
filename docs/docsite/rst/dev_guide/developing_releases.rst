@@ -18,21 +18,20 @@ If you are on a release older than the last two major, stable releases, please s
 
 Release schedule
 ````````````````
-Ansible is on a 'flexible' 4 month release schedule, sometimes this can be extended if there is a major change that requires a longer cycle (i.e. 2.0 core rewrite).
-Recently the main Ansible repo `merged <https://docs.ansible.com/ansible/dev_guide/repomerge.html>`_ the separated ansible-modules-core and ansible-modules-extras, as such modules get released at the same time as the main Ansible repo.
+Ansible is on a 'flexible' 4 month release schedule. Sometimes the release cycle can be extended if there is a major change that requires more time (for example, a core rewrite).
+Recently the main Ansible repo `merged <https://docs.ansible.com/ansible/dev_guide/repomerge.html>`_ the separated ansible-modules-core and ansible-modules-extras repos, as such modules get released at the same time as the main Ansible repo.
 
-The major features and bugs fixed in a release should be reflected in the `CHANGELOG.md <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_, minor ones will be in the commit history. For example, `issue #19057 <https://github.com/ansible/ansible/pull/19057>`_ is reflected only in the commit hitsory.
-When a fix/feature gets added to the `devel` branch it will be part of the next release, some bugfixes can be backported to previous releases and will be part of a minor point release if such release is deemed necessary.
+The major features and bugs fixed in a release should be reflected in the `CHANGELOG.md <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_. Minor features and bug fixes will be shown in the commit history. For example, `issue #19057 <https://github.com/ansible/ansible/pull/19057>`_ is reflected only in the commit history.
+When a fix orfeature gets added to the `devel` branch it will be part of the next release. Some bugfixes can be backported to previous releases and will be part of a minor point release if such a release is deemed necessary.
 
-Sometimes an RC can be extended by a few days if a bugfix makes a change that can have far reaching consequences, so users have enough time to find any new issues that may stem from this.
+Sometimes a release candidate can be extended by a few days if a bug fix makes a change that can have far-reaching consequences, so users have enough time to find any new issues that may stem from this.
 
 .. _methods:
 
 Release methods
 ````````````````
 
-Ansible normally goes through a 'release candidate', issuing an RC1 for a release, if no major bugs are discovered in it after 5 business days we'll get a final release.
-Otherwise fixes will be applied and an RC2 will be provided for testing and if no bugs after 2 days, the final release will be made, iterating this last step and incrementing the candidate number as we find major bugs.
+Ansible normally goes through a 'release candidate', issuing an RC1 for a release. If no major bugs are discovered in the release candidate after 5 business days,  we'll get a final release. Otherwise, fixes will be applied and an RC2 will be provided for testing. If no bugs are discovered in RC2 after 2 days, the final release will be made, iterating this last step and incrementing the candidate number as we find major bugs.
 
 
 .. _freezing:
