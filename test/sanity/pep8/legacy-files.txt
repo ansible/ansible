@@ -61,7 +61,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_subnet_facts.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_vgw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw_facts.py
 lib/ansible/modules/cloud/amazon/ec2_win_password.py
 lib/ansible/modules/cloud/amazon/ecs_service.py

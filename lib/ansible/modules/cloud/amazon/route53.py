@@ -469,9 +469,9 @@ def main():
 
     if command_in == 'create':
         if ( weight_in is not None or region_in is not None or failover_in is not None ) and identifier_in is None:
-          module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
+            module.fail_json(msg= "If you specify failover, region or weight you must also specify identifier")
         elif ( weight_in is None and region_in is None and failover_in is None ) and identifier_in is not None:
-          module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
+            module.fail_json(msg= "You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
 
 
 
@@ -536,15 +536,15 @@ def main():
             if hosted_zone_id_in:
                 record['hosted_zone_id'] = hosted_zone_id_in
             if rset.alias_dns_name:
-              record['alias'] = True
-              record['value'] = rset.alias_dns_name
-              record['values'] = [rset.alias_dns_name]
-              record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
-              record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
+                record['alias'] = True
+                record['value'] = rset.alias_dns_name
+                record['values'] = [rset.alias_dns_name]
+                record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+                record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
             else:
-              record['alias'] = False
-              record['value'] = ','.join(sorted(rset.resource_records))
-              record['values'] = sorted(rset.resource_records)
+                record['alias'] = False
+                record['value'] = ','.join(sorted(rset.resource_records))
+                record['values'] = sorted(rset.resource_records)
             if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
                 module.exit_json(changed=False)
             break
@@ -578,9 +578,9 @@ def main():
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
         if "but it already exists" in txt:
-                module.exit_json(changed=False)
+            module.exit_json(changed=False)
         else:
-                module.fail_json(msg = txt)
+            module.fail_json(msg = txt)
     except TimeoutError:
         module.fail_json(msg='Timeout waiting for changes to replicate')
 

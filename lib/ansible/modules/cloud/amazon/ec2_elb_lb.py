@@ -577,13 +577,13 @@ class ElbManager(object):
 
             # instance state counts: InService or OutOfService
             if info['instance_health']:
-              for instance_state in info['instance_health']:
-                  if instance_state['state'] == "InService":
-                    info['in_service_count'] += 1
-                  elif instance_state['state'] == "OutOfService":
-                    info['out_of_service_count'] += 1
-                  else:
-                    info['unknown_instance_state_count'] += 1
+                for instance_state in info['instance_health']:
+                    if instance_state['state'] == "InService":
+                        info['in_service_count'] += 1
+                    elif instance_state['state'] == "OutOfService":
+                        info['out_of_service_count'] += 1
+                    else:
+                        info['unknown_instance_state_count'] += 1
 
             if check_elb.health_check:
                 info['health_check'] = {
@@ -940,7 +940,7 @@ class ElbManager(object):
         attributes = self.elb.get_attributes()
         if self.access_logs:
             if 's3_location' not in self.access_logs:
-              self.module.fail_json(msg='s3_location information required')
+                self.module.fail_json(msg='s3_location information required')
 
             access_logs_config = {
                 "enabled": True,
@@ -951,7 +951,7 @@ class ElbManager(object):
 
             update_access_logs_config = False
             for attr, desired_value in access_logs_config.items():
-              if getattr(attributes.access_log, attr) != desired_value:
+                if getattr(attributes.access_log, attr) != desired_value:
                     setattr(attributes.access_log, attr, desired_value)
                     update_access_logs_config = True
             if update_access_logs_config:

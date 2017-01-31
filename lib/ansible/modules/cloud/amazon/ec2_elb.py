@@ -257,7 +257,7 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         if not ec2_elbs:
-           ec2_elbs = self._get_auto_scaling_group_lbs()
+            ec2_elbs = self._get_auto_scaling_group_lbs()
 
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
@@ -293,24 +293,24 @@ class ElbManager:
            indirectly through its auto scaling group membership"""
 
         try:
-           asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
+            asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
 
         asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
         if len(asg_instances) > 1:
-           self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
+            self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
 
         if not asg_instances:
-           asg_elbs = []
+            asg_elbs = []
         else:
-           asg_name = asg_instances[0].group_name
+            asg_name = asg_instances[0].group_name
 
-           asgs = asg.get_all_groups([asg_name])
-           if len(asg_instances) != 1:
-              self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
+            asgs = asg.get_all_groups([asg_name])
+            if len(asg_instances) != 1:
+                self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
 
-           asg_elbs = asgs[0].load_balancers
+            asg_elbs = asgs[0].load_balancers
 
         return asg_elbs
 
