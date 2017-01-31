@@ -223,7 +223,12 @@ class OracleAccountClient(OracleClient):
         data['quotas'] = [{'tablespace': item[0], 'max_bytes': item[1]} for item in rows]
 
         # Table privileges granted
-        sql = 'SELECT owner, table_name, LISTAGG(privilege, \',\') WITHIN GROUP (ORDER BY privilege) FROM dba_tab_privs WHERE grantee = :name GROUP BY owner, table_name'
+        sql = '''\
+            SELECT owner, table_name, LISTAGG(privilege, \',\') WITHIN GROUP (ORDER BY privilege) \
+            FROM dba_tab_privs \
+            WHERE grantee = :name \
+            GROUP BY owner, table_name
+        '''
         rows = self.fetch_all(sql, {'name': name})
         data['tab_privs'] = [{'owner': row[0], 'table_name': row[1], 'privileges': row[2].split(',')} for row in rows]
 
