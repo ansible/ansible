@@ -8,8 +8,8 @@ Target: June/July 2017
 This is meant to be a living document, and is **DRAFT** until
 stated otherwise in the document.
 
-- **Python 2.4 support discontinuation**
-  - Python 2.4 will no longer be supported. Going forward, Python 2.6+ will be supported.
+- **Python 2.4 and 2.5 support discontinuation**
+  - Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already was the case for the controller.
 
 - **Ansible-Config**
   - New yaml format for config
