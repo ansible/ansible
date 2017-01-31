@@ -681,6 +681,7 @@ class AnsibleModule(object):
         self._debug = False
         self._diff = False
         self._verbosity = 0
+        self._deprecated_param_warnings = []
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
@@ -709,6 +710,12 @@ class AnsibleModule(object):
         self.no_log_values = set()
         # Use the argspec to determine which args are no_log
         for arg_name, arg_opts in self.argument_spec.items():
+            if arg_opts.get('deprecated_version') is not None and arg_name in self.params:
+                self._deprecated_param_warnings.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                    'version': arg_opts.get('deprecated_version'),
+                })
+
             if arg_opts.get('no_log', False):
                 # Find the value for the no_log'd param
                 no_log_object = self.params.get(arg_name, None)
@@ -1888,6 +1895,16 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
+    def _handle_deprecation_warnings(self, kwargs):
+        if self._deprecated_param_warnings:
+            if 'deprecation_warnings' not in kwargs:
+                kwargs['deprecation_warnings'] = list()
+            elif not isinstance(kwargs['deprecation_warnings'], list):
+                kwargs['deprecation_warnings'] = [kwargs['deprecation_warnings']]
+            kwargs['deprecation_warnings'].extend(self._deprecated_param_warnings)
+            del self._deprecated_param_warnings
+        return kwargs
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
@@ -1895,6 +1912,7 @@ class AnsibleModule(object):
             kwargs['changed'] = False
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
+        kwargs = self._handle_deprecation_warnings(kwargs)
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print('\n%s' % self.jsonify(kwargs))
@@ -1907,6 +1925,7 @@ class AnsibleModule(object):
         kwargs['failed'] = True
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
+        kwargs = self._handle_deprecation_warnings(kwargs)
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print('\n%s' % self.jsonify(kwargs))
@@ -2140,7 +2159,6 @@ class AnsibleModule(object):
         except (shutil.Error, OSError, IOError):
             e = get_exception()
             self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e), exception=traceback.format_exc())
-
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
