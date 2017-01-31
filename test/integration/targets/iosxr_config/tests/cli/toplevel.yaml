@@ -4,13 +4,11 @@
 - name: setup
   iosxr_config:
     commands: ['hostname {{ inventory_hostname_short }}']
-    provider: "{{ cli }}"
     match: none
 
 - name: configure top level command
   iosxr_config:
     commands: ['hostname foo']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -21,7 +19,6 @@
 - name: configure top level command idempotent check
   iosxr_config:
     commands: ['hostname foo']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,7 +28,6 @@
 - name: teardown
   iosxr_config:
     commands: ['hostname {{ inventory_hostname_short }}']
-    provider: "{{ cli }}"
     match: none
 
 - debug: msg="END cli/toplevel.yaml"
