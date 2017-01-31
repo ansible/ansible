@@ -86,21 +86,20 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
         # Copied
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
-        self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
-        self.stdin_swap.__enter__()
 
-        ansible.module_utils.basic._ANSIBLE_ARGS = None
-        self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
+        with swap_stdin_and_argv(stdin_data=args):
+            ansible.module_utils.basic._ANSIBLE_ARGS = None
+            self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
 
-        run_command = Mock()
-        run_command.return_value = (0, "Needs output, otherwise thinks ssh-keyscan timed out'", "")
-        self.module.run_command = run_command
+            run_command = Mock()
+            run_command.return_value = (0, "Needs output, otherwise thinks ssh-keyscan timed out'", "")
+            self.module.run_command = run_command
 
-        get_bin_path = Mock()
-        get_bin_path.return_value = keyscan_cmd = "/custom/path/ssh-keyscan"
-        self.module.get_bin_path = get_bin_path
+            get_bin_path = Mock()
+            get_bin_path.return_value = keyscan_cmd = "/custom/path/ssh-keyscan"
+            self.module.get_bin_path = get_bin_path
 
-        for u in self.urls:
-            if self.urls[u]['is_ssh_url']:
-                known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
-                run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
+            for u in self.urls:
+                if self.urls[u]['is_ssh_url']:
+                    known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
+                    run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
