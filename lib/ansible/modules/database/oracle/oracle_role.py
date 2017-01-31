@@ -170,7 +170,7 @@ def ensure(module, client):
             for item in roles_to_grant:
                 sql.append(client.get_grant_privilege_sql(priv=item, name=name))
 
-            roles_to_revoke = list(set(role.get('roles') if role else []) - set(roles))
+            roles_to_revoke = list(set(granted_roles) - set(roles))
             for item in roles_to_revoke:
                 sql.append(client.get_revoke_privilege_sql(priv=item, name=name))
 
