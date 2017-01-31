@@ -13,7 +13,6 @@
     before: ['no ipv4 access-list test']
     after: ['exit']
     match: none
-    provider: "{{ cli }}"
 
 - name: configure sub level command using exact match
   iosxr_config:
@@ -25,7 +24,6 @@
     parents: ['ipv4 access-list test']
     after: ['exit']
     match: exact
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -49,7 +47,6 @@
     parents: ['ipv4 access-list test']
     after: ['exit']
     match: exact
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -59,7 +56,6 @@
 - name: teardown
   iosxr_config:
     commands: ['no ipv4 access-list test']
-    provider: "{{ cli }}"
     match: none
 
 - debug: msg="END cli/sublevel_exact.yaml"
