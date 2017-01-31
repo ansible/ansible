@@ -628,6 +628,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         python_repred_params = repr(json.dumps(params))
 
+        include_introspection = module_args.get('_ansible_module_introspect', False)
+
         try:
             compression_method = getattr(zipfile, module_compression)
         except AttributeError:
@@ -676,6 +678,15 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
                     py_module_cache = { ('__init__',): b'' }
                     recursive_finder(module_name, b_module_data, py_module_names, py_module_cache, zf)
+                    if include_introspection:
+                        py_module_names.add(('introspection',))
+                    else:
+                        # FIXME: if there is a way to get recursive_finder to ignore a ansible.module_utils import
+                        try:
+                            py_module_names.remove(('introspection',))
+                        except KeyError:
+                            pass
+
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
 
