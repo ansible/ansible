@@ -683,6 +683,24 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             }
         },
 
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/sourcemage-release": "Source Mage GNU/Linux x86_64-pc-linux-gnu\nInstalled from tarball using chroot image (Grimoire 0.61-rc) on Thu May 17 17:31:37 UTC 2012\n"
+        },
+        "name": "SMGL NA",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "SMGL",
+            "distribution_major_version": "NA",
+            "os_family": "SMGL",
+            "distribution_version": "NA"
+            }
+        },
 
 ]
 
