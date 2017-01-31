@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import errno
 import fcntl
+import hashlib
 import os
 import pty
 import select
@@ -59,6 +60,8 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
+        self.port = self._play_context.port
+        self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
         self.control_path_success = False
@@ -69,6 +72,16 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         return self
+
+    @staticmethod
+    def _create_control_path(host, port, user):
+        '''Make a hash for the controlpath based on con attributes'''
+        pstring = '%s-%s-%s' % (host, port, user)
+        m = hashlib.sha1()
+        m.update(pstring)
+        digest = m.hexdigest()
+        cpath = '%(directory)s/' + digest[:10]
+        return cpath
 
     @staticmethod
     def _sshpass_available():
@@ -239,6 +252,12 @@ class Connection(ConnectionBase):
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
+                if not self.control_path:
+                    self.control_path = self._create_control_path(
+                        self.host,
+                        self.port,
+                        self.user
+                    )
                 b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
@@ -247,63 +266,6 @@ class Connection(ConnectionBase):
             b_command += [to_bytes(a) for a in other_args]
 
         return b_command
-
-    def _test_control_persist(self, ssh_executable, hostname):
-        '''Test ssh with control persist and alter the path to fix it'''
-        # https://github.com/ansible/ansible/issues/11536#issuecomment-188892237
-
-        if self.control_path_success:
-            return self.control_path_success
-
-        display.debug('validating ssh controlpath %s' % self.control_path)
-        count = 0
-        while count <= 3:
-            # try a simple echo
-            test_args = (ssh_executable, hostname, 'echo')
-            # _build_command adds the controlpersist args
-            test_cmd = self._build_command(*test_args)
-            (rc, so, se) = self._run(test_cmd, None, checkrc=False)
-
-            if 'too long for unix domain socket' not in se.lower():
-                # presume no failure because we don't care about anything
-                # besides the domain socket length error
-                self.control_path_success = True
-                break
-            else:
-                # Alter the args incrementally and re-test
-                cp_parts = self.control_path.split('/')
-                if not cp_parts:
-                    # give up if nothing left
-                    break
-                if '%%C' not in cp_parts:
-                    # try the hashing function first
-                    cp_parts[-1] = to_bytes('%%C')
-                else:
-                    cp_final = cp_parts[-1].split('-')
-                    if 'ansible' in cp_final or 'ssh' in cp_final:
-                        # remove ansible specific fields
-                        if 'ansible' in cp_final:
-                            cp_final.remove('ansible')
-                        if 'ssh' in cp_final:
-                            cp_final.remove('ssh')
-                    elif '%%r' in cp_final:
-                        # remove username
-                        cp_final.remove('%%r')
-                    elif '%%p' in cp_final:
-                        # remove port
-                        cp_final.remove('%%p')
-                    elif '%%h' in cp_final:
-                        # remove hostname
-                        cp_final.remove('%%h')
-
-                    # use /tmp as a last resort ...
-                    if not cp_final:
-                        cp_parts = ['/tmp', '%%h-%%p-%%r']
-
-                self.control_path = '/'.join(cp_parts)
-                display.warning('ssh control path is too long, re-trying with %s' % self.control_path)
-
-        return self.control_path_success
 
     def _send_initial_data(self, fh, in_data):
         '''
@@ -654,10 +616,6 @@ class Connection(ConnectionBase):
             args = (ssh_executable, '-tt', self.host, cmd)
         else:
             args = (ssh_executable, self.host, cmd)
-
-        # validate and alter the control path
-        if C.ANSIBLE_SSH_CONTROL_PATH_FIX:
-            self._test_control_persist(ssh_executable, self.host)
 
         cmd = self._build_command(*args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
