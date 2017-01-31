@@ -718,6 +718,12 @@ class AnsibleModule(object):
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
 
+            if arg_opts.get('deprecated_version') is not None and arg_name in self.params:
+                self._deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                    'version': arg_opts.get('deprecated_version')
+                 })
+
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
@@ -768,13 +774,15 @@ class AnsibleModule(object):
         else:
             raise TypeError("warn requires a string not a %s" % type(warning))
 
-    def deprecate(self, deprecate):
-
-        if isinstance(deprecate, string_types):
-            self._deprecations.append(deprecate)
-            self.log('[DEPRECATION WARNING] %s' % deprecate)
+    def deprecate(self, msg, version=None):
+        if isinstance(msg, string_types):
+            self._deprecations.append({
+                'msg': msg,
+                'version': version
+            })
+            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
         else:
-            raise TypeError("deprecate requires a string not a %s" % type(deprecate))
+            raise TypeError("deprecate requires a string not a %s" % type(msg))
 
     def load_file_common_arguments(self, params):
         '''
