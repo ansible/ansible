@@ -189,10 +189,14 @@ def main():
                          exception=traceback.format_exc())
 
     if deploy_desc is None:
-        deploy_desc = "Automatic deployment."
+        deploy_desc = "Automatic deployment by Ansible."
     if stage:
-        deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
-                                                 description=deploy_desc)
+        try:
+            deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
+                                                     description=deploy_desc)
+        except Exception as e:
+            msg=str(e) + ": deploying api {} to stage {}".format(api_id, stage)
+            module.fail_json(msg=msg, exception=traceback.format_exc())
     changed=True
     module.exit_json(changed=changed, api_id=api_id,
                      create_response=camel_dict_to_snake_dict(create_response),
