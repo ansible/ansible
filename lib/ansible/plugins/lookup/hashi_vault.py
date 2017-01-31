@@ -54,15 +54,10 @@ class HashiVault:
             raise AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-<<<<<<< HEAD
-
         self.token = kwargs.get('token')
         if self.token is None:
             raise AnsibleError("No Vault Token specified")
 
-=======
-        
->>>>>>> added ldap authentication capability
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
