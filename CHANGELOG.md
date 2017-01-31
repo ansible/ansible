@@ -151,6 +151,10 @@ Ansible Changes By Release
 
 * dense: minimal stdout output with fallback to default when verbose
 
+####New: lookups
+
+* keyring: allows getting password from system keyrings
+
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
 
