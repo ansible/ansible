@@ -540,7 +540,7 @@ def main():
 
     # First, we check to see if the bucket exists, we get "bucket" returned.
     bucketrtn = bucket_check(module, s3, bucket)
-    
+
     if not ignore_nonexistent_bucket:
         validate = True
         if mode not in ('create', 'put', 'delete') and not bucketrtn:
