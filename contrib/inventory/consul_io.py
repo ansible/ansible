@@ -321,7 +321,7 @@ class ConsulInventory(object):
     if self.is_service("ssh", service_name):
       self.add_metadata(node_data, "ansible_ssh_port", service['Port'])
 
-    if self.config.has_config('servers_suffix'):
+    if self.config.has_config('use_server_suffix') and self.config.has_config('servers_suffix'):
       service_name = service_name + self.config.servers_suffix
 
     self.add_node_to_map(self.nodes_by_service, service_name, node_data['Node'])
@@ -418,7 +418,11 @@ class ConsulConfig(dict):
 
   def has_config(self, name):
     if hasattr(self, name):
-      return getattr(self, name)
+      attr = getattr(self, name)
+      if attr in ['True', 'true', 'False', 'false']:
+         return self.str_to_bool(attr)
+      else:
+        return attr
     else:
       return False
 
@@ -430,7 +434,7 @@ class ConsulConfig(dict):
     config_options = ['host', 'token', 'datacenter', 'servers_suffix',
                       'tags', 'kv_metadata', 'kv_groups', 'availability',
                       'unavailable_suffix', 'available_suffix', 'url',
-                      'domain']
+                      'domain', 'use_server_suffix']
     for option in config_options:
       value = None
       if config.has_option('consul', option):
@@ -462,6 +466,11 @@ class ConsulConfig(dict):
         return self.has_config(suffix)
       return default
 
+  def str_to_bool(self, option):
+    if option == 'True' or option == 'true':
+         return True
+    else:
+         return False
 
   def get_consul_api(self):
       '''get an instance of the api based on the supplied configuration'''
