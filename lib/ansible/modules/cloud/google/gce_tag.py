@@ -220,7 +220,7 @@ def main():
     except ResourceNotFoundError:
         module.fail_json(msg='Instance %s not found in zone %s' % (instance_name, zone), changed=False)
     except GoogleBaseError as e:
-       module.fail_json(msg=str(e), changed=False, exception=traceback.format_exc())
+        module.fail_json(msg=str(e), changed=False, exception=traceback.format_exc())
 
     # Tag nodes
     instance_pattern_matches = []

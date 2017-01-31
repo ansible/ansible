@@ -169,7 +169,7 @@ class SoftLayerInventory(object):
 
         # Inventory: group by tag
         for tag in instance['tagReferences']:
-             self.push(self.inventory, tag['tag']['name'], dest)
+            self.push(self.inventory, tag['tag']['name'], dest)
 
     def get_virtual_servers(self):
         '''Get all the CCI instances'''

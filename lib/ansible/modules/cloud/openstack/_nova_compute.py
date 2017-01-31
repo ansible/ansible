@@ -443,14 +443,14 @@ def _create_server(module, nova):
         server = nova.servers.create(*bootargs, **bootkwargs)
         server = nova.servers.get(server.id)
     except Exception as e:
-            module.fail_json( msg = "Error in creating instance: %s " % e.message)
+        module.fail_json( msg = "Error in creating instance: %s " % e.message)
     if module.params['wait'] == 'yes':
         expire = time.time() + int(module.params['wait_for'])
         while time.time() < expire:
             try:
                 server = nova.servers.get(server.id)
             except Exception as e:
-                    module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
+                module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
             if server.status == 'ACTIVE':
                 server = _add_floating_ip(module, nova, server)
 
@@ -466,7 +466,7 @@ def _create_server(module, nova):
 
         module.fail_json(msg = "Timeout waiting for the server to come up.. Please check manually")
     if server.status == 'ERROR':
-            module.fail_json(msg = "Error in creating the server.. Please check manually")
+        module.fail_json(msg = "Error in creating the server.. Please check manually")
     private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
     public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 

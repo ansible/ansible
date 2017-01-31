@@ -25,6 +25,8 @@ import sys
 import time
 from io import BytesIO, StringIO
 
+import pytest
+
 from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
@@ -44,7 +46,8 @@ class OpenBytesIO(BytesIO):
 
 
 class TestAnsibleModuleRunCommand(unittest.TestCase):
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def run_command_mocked_env(self, mocker):
         self.cmd_out = {
             # os.read() is returning 'bytes', not strings
             sentinel.stdout: BytesIO(),
@@ -76,7 +79,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
         self.module.fail_json = MagicMock(side_effect=SystemExit)
 
-        self.os = patch('ansible.module_utils.basic.os').start()
+        self.os = mocker.patch('ansible.module_utils.basic.os')
         self.os.path.expandvars.side_effect = lambda x: x
         self.os.path.expanduser.side_effect = lambda x: x
         self.os.environ = {'PATH': '/bin'}
@@ -86,7 +89,7 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.os.read.side_effect = mock_os_read
         self.os.path.abspath.side_effect = mock_os_abspath
 
-        self.subprocess = patch('ansible.module_utils.basic.subprocess').start()
+        self.subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
         self.cmd = Mock()
         self.cmd.returncode = 0
         self.cmd.stdin = OpenBytesIO()
@@ -94,13 +97,10 @@ class TestAnsibleModuleRunCommand(unittest.TestCase):
         self.cmd.stderr.fileno.return_value = sentinel.stderr
         self.subprocess.Popen.return_value = self.cmd
 
-        self.select = patch('ansible.module_utils.basic.select').start()
+        self.select = mocker.patch('ansible.module_utils.basic.select')
         self.select.select.side_effect = mock_select
+        yield
 
-        self.addCleanup(patch.stopall)
-
-
-    def tearDown(self):
         # unittest doesn't have a clean place to use a context manager, so we have to enter/exit manually
         self.stdin_swap.__exit__(None, None, None)
 

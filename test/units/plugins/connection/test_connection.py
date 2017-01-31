@@ -52,7 +52,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_subclass_error(self):
         class ConnectionModule1(ConnectionBase):
-                pass
+            pass
         with self.assertRaises(TypeError):
             ConnectionModule1()
 

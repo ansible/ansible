@@ -21,10 +21,10 @@ import re
 import json
 import sys
 import copy
-
 from distutils.version import LooseVersion
-from urlparse import urlparse
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
@@ -249,7 +249,7 @@ class AnsibleDockerClient(Client):
             tls_config = TLSConfig(**kwargs)
             return tls_config
         except TLSParameterError as exc:
-           self.fail("TLS config error: %s" % exc)
+            self.fail("TLS config error: %s" % exc)
 
     def _get_connect_params(self):
         auth = self.auth_params
@@ -349,7 +349,7 @@ class AnsibleDockerClient(Client):
         try:
             for container in self.containers(all=True):
                 self.log("testing container: %s" % (container['Names']))
-                if search_name in container['Names']:
+                if isinstance(container['Names'], list) and search_name in container['Names']:
                     result = container
                     break
                 if container['Id'].startswith(name):

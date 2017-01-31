@@ -85,10 +85,10 @@ topics:
 '''
 
 try:
-   from ast import literal_eval
-   HAS_PYTHON26 = True
+    from ast import literal_eval
+    HAS_PYTHON26 = True
 except ImportError:
-   HAS_PYTHON26 = False
+    HAS_PYTHON26 = False
 
 try:
     from google.cloud import pubsub
@@ -96,52 +96,52 @@ try:
 except ImportError as e:
     HAS_GOOGLE_CLOUD_PUBSUB = False
 def list_func(data, member='name'):
-   """Used for state=list."""
-   return [getattr(x, member) for x in data]
+    """Used for state=list."""
+    return [getattr(x, member) for x in data]
 
 
 def main():
-   module = AnsibleModule(argument_spec=dict(
-       view=dict(choices=['topics', 'subscriptions'], default='topics'),
-       topic=dict(required=False),
-       state=dict(choices=['list'], default='list'),
-       service_account_email=dict(),
-       credentials_file=dict(),
-       project_id=dict(), ),)
+    module = AnsibleModule(argument_spec=dict(
+        view=dict(choices=['topics', 'subscriptions'], default='topics'),
+        topic=dict(required=False),
+        state=dict(choices=['list'], default='list'),
+        service_account_email=dict(),
+        credentials_file=dict(),
+        project_id=dict(), ),)
 
-   if not HAS_PYTHON26:
-      module.fail_json(
-          msg="GCE module requires python's 'ast' module, python v2.6+")
+    if not HAS_PYTHON26:
+        module.fail_json(
+            msg="GCE module requires python's 'ast' module, python v2.6+")
 
-   if not HAS_GOOGLE_CLOUD_PUBSUB:
-     module.fail_json(msg="Please install google-cloud-pubsub library.")
+    if not HAS_GOOGLE_CLOUD_PUBSUB:
+        module.fail_json(msg="Please install google-cloud-pubsub library.")
 
-   CLIENT_MINIMUM_VERSION = '0.22.0'
-   if not check_min_pkg_version('google-cloud-pubsub', CLIENT_MINIMUM_VERSION):
+    CLIENT_MINIMUM_VERSION = '0.22.0'
+    if not check_min_pkg_version('google-cloud-pubsub', CLIENT_MINIMUM_VERSION):
         module.fail_json(msg="Please install google-cloud-pubsub library version %s" % CLIENT_MINIMUM_VERSION)
 
-   mod_params = {}
-   mod_params['state'] = module.params.get('state')
-   mod_params['topic'] = module.params.get('topic')
-   mod_params['view'] = module.params.get('view')
+    mod_params = {}
+    mod_params['state'] = module.params.get('state')
+    mod_params['topic'] = module.params.get('topic')
+    mod_params['view'] = module.params.get('view')
 
-   creds, params = get_google_cloud_credentials(module)
-   pubsub_client = pubsub.Client(project=params['project_id'], credentials=creds, use_gax=False)
-   pubsub_client.user_agent = 'ansible-pubsub-0.1'
+    creds, params = get_google_cloud_credentials(module)
+    pubsub_client = pubsub.Client(project=params['project_id'], credentials=creds, use_gax=False)
+    pubsub_client.user_agent = 'ansible-pubsub-0.1'
 
-   json_output = {}
-   if mod_params['view'] == 'topics':
-      json_output['topics'] = list_func(pubsub_client.list_topics())
-   elif mod_params['view'] == 'subscriptions':
-      if mod_params['topic']:
-         t = pubsub_client.topic(mod_params['topic'])
-         json_output['subscriptions'] = list_func(t.list_subscriptions())
-      else:
-         json_output['subscriptions'] = list_func(pubsub_client.list_subscriptions())
+    json_output = {}
+    if mod_params['view'] == 'topics':
+        json_output['topics'] = list_func(pubsub_client.list_topics())
+    elif mod_params['view'] == 'subscriptions':
+        if mod_params['topic']:
+            t = pubsub_client.topic(mod_params['topic'])
+            json_output['subscriptions'] = list_func(t.list_subscriptions())
+        else:
+            json_output['subscriptions'] = list_func(pubsub_client.list_subscriptions())
 
-   json_output['changed'] = False
-   json_output.update(mod_params)
-   module.exit_json(**json_output)
+    json_output['changed'] = False
+    json_output.update(mod_params)
+    module.exit_json(**json_output)
 
 # import module snippets
 from ansible.module_utils.basic import *

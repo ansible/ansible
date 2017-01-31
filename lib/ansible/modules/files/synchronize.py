@@ -443,10 +443,10 @@ def main():
     ssh_opts = '-S none'
 
     if not verify_host:
-      ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
+        ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
 
     if ssh_args:
-      ssh_opts = '%s %s' % (ssh_opts, ssh_args)
+        ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
     if source.startswith('"rsync://') and dest.startswith('"rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)

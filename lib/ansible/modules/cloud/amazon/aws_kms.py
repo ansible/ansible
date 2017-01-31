@@ -184,9 +184,9 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         if not dry_run:
                             statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']: # not one the places the role should be
-                        changes_needed[granttype] = 'remove'
-                        if not dry_run:
-                            statement['Principal']['AWS'].remove(role_arn)
+                    changes_needed[granttype] = 'remove'
+                    if not dry_run:
+                        statement['Principal']['AWS'].remove(role_arn)
 
             elif mode == 'deny' and statement['Sid'] == statement_label[granttype] and role_arn in statement['Principal']['AWS']:
                 # we don't selectively deny. that's a grant with a

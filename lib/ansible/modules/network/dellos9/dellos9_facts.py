@@ -431,8 +431,8 @@ class Interfaces(FactsBase):
         match = re.search(r'Internet address is (\S+)', data)
         if match:
             if match.group(1) != "not":
-                    addr, masklen = match.group(1).split('/')
-                    return dict(address=addr, masklen=int(masklen))
+                addr, masklen = match.group(1).split('/')
+                return dict(address=addr, masklen=int(masklen))
 
     def parse_mtu(self, data):
         match = re.search(r'MTU (\d+)', data)
@@ -463,7 +463,7 @@ class Interfaces(FactsBase):
     def parse_lineprotocol(self, data):
         match = re.search(r'line protocol is (\w+[ ]?\w*)\(?.*\)?$', data, re.M)
         if match:
-                return match.group(1)
+            return match.group(1)
 
     def parse_operstatus(self, data):
         match = re.search(r'^(?:.+) is (.+),', data, re.M)

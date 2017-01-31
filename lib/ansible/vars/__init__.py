@@ -301,7 +301,7 @@ class VariableManager:
                 # the with_first_found mechanism.
                 vars_file_list = vars_file_item
                 if not isinstance(vars_file_list, list):
-                     vars_file_list = [ vars_file_list ]
+                    vars_file_list = [ vars_file_list ]
 
                 # now we iterate through the (potential) files, and break out
                 # as soon as we read one from the list. If none are found, we

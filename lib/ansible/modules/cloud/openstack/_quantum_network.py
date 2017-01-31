@@ -267,12 +267,12 @@ def main():
         module.fail_json(msg='python-keystoneclient and either python-neutronclient or python-quantumclient are required')
 
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
-            if not module.params['provider_physical_network']:
-                module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
+        if not module.params['provider_physical_network']:
+            module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
 
     if module.params['provider_network_type'] in ['vlan', 'gre']:
-            if not module.params['provider_segmentation_id']:
-                module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
+        if not module.params['provider_segmentation_id']:
+            module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
 
     neutron = _get_neutron_client(module, module.params)
 

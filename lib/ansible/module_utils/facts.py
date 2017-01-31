@@ -156,6 +156,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
+                 { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
                 ]
 
     def __init__(self, module, load_on_init=True, cached_facts=None):
@@ -324,7 +325,7 @@ class Facts(object):
 
     def get_pkg_mgr_facts(self):
         if self.facts['system'] == 'OpenBSD':
-                self.facts['pkg_mgr'] = 'openbsd_pkg'
+            self.facts['pkg_mgr'] = 'openbsd_pkg'
         else:
             self.facts['pkg_mgr'] = 'unknown'
             for pkg in Facts.PKG_MGRS:
@@ -332,12 +333,15 @@ class Facts(object):
                     self.facts['pkg_mgr'] = pkg['name']
 
     def get_service_mgr_facts(self):
-        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, runit, etc
+        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, etc
         # also other OSs other than linux might need to check across several possible candidates
 
         # Mapping of proc_1 values to more useful names
         proc_1_map = {
             'procd': 'openwrt_init',
+            'runit-init': 'runit',
+            'svscan': 'svc',
+            'openrc-init': 'openrc',
         }
 
         # try various forms of querying pid 1
@@ -375,7 +379,7 @@ class Facts(object):
             else:
                 self.facts['service_mgr'] = 'systemstarter'
         elif 'BSD' in self.facts['system'] or self.facts['system'] in ['Bitrig', 'DragonFly']:
-            #FIXME: we might want to break out to individual BSDs
+            #FIXME: we might want to break out to individual BSDs or 'rc'
             self.facts['service_mgr'] = 'bsdinit'
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
@@ -389,7 +393,7 @@ class Facts(object):
                 self.facts['service_mgr'] = 'systemd'
             elif self.module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
-            elif os.path.realpath('/sbin/rc') == '/sbin/openrc':
+            elif os.path.exists('/sbin/openrc'):
                 self.facts['service_mgr'] = 'openrc'
             elif os.path.exists('/etc/init.d/'):
                 self.facts['service_mgr'] = 'sysvinit'
@@ -472,9 +476,9 @@ class Facts(object):
     def get_apparmor_facts(self):
         self.facts['apparmor'] = {}
         if os.path.exists('/sys/kernel/security/apparmor'):
-             self.facts['apparmor']['status'] = 'enabled'
+            self.facts['apparmor']['status'] = 'enabled'
         else:
-             self.facts['apparmor']['status'] = 'disabled'
+            self.facts['apparmor']['status'] = 'disabled'
 
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
@@ -651,12 +655,14 @@ class Distribution(object):
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
+        'ClearLinux': 'Clear Linux Software for Intel Architecture',
     }
 
     # A list with OS Family members
@@ -878,7 +884,7 @@ class Distribution(object):
                 # example pattern are 13.04 13.0 13
                 distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
-                        self.facts['distribution_version'] = distribution_version.group(1)
+                    self.facts['distribution_version'] = distribution_version.group(1)
                 if 'open' in data.lower():
                     release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
                     if release:
@@ -1065,8 +1071,8 @@ class LinuxHardware(Hardware):
                 self.facts["%s_mb" % key.lower()] = int(val) // 1024
 
             if key in self.MEMORY_FACTS:
-                 val = data[1].strip().split(' ')[0]
-                 memstats[key.lower()] = int(val) // 1024
+                val = data[1].strip().split(' ')[0]
+                memstats[key.lower()] = int(val) // 1024
 
         if None not in (memstats.get('memtotal'), memstats.get('memfree')):
             memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
@@ -1805,8 +1811,8 @@ class OpenBSDHardware(Hardware):
         }
 
         for mib in sysctl_to_dmi:
-          if mib in self.sysctl:
-            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
+            if mib in self.sysctl:
+                self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class FreeBSDHardware(Hardware):
     """
@@ -2034,8 +2040,8 @@ class NetBSDHardware(Hardware):
         }
 
         for mib in sysctl_to_dmi:
-          if mib in self.sysctl:
-            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
+            if mib in self.sysctl:
+                self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class AIX(Hardware):
     """
@@ -2277,8 +2283,8 @@ class HPUX(Hardware):
                 if os.access("/dev/kmem", os.R_OK):
                     rc, out, err = self.module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
                     if not err:
-                      data = out
-                      self.facts['memtotal_mb'] = int(data) / 256
+                        data = out
+                        self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
@@ -2302,7 +2308,7 @@ class HPUX(Hardware):
             self.facts['firmware_version'] = out.split(separator)[1].strip()
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo |grep -i 'Machine serial number' ",use_unsafe_shell=True)
             if rc == 0 and out:
-              self.facts['product_serial'] = out.split(separator)[1].strip()
+                self.facts['product_serial'] = out.split(separator)[1].strip()
 
 class Darwin(Hardware):
     """
@@ -2920,18 +2926,18 @@ class HPUXNetwork(Network):
         interfaces = self.get_interfaces_info()
         self.facts['interfaces'] = interfaces.keys()
         for iface in interfaces:
-                self.facts[iface] = interfaces[iface]
+            self.facts[iface] = interfaces[iface]
         return self.facts
 
     def get_default_interfaces(self):
         rc, out, err = self.module.run_command("/usr/bin/netstat -nr")
         lines = out.splitlines()
         for line in lines:
-                words = line.split()
-                if len(words) > 1:
-                    if words[0] == 'default':
-                        self.facts['default_interface'] = words[4]
-                        self.facts['default_gateway'] = words[1]
+            words = line.split()
+            if len(words) > 1:
+                if words[0] == 'default':
+                    self.facts['default_interface'] = words[4]
+                    self.facts['default_gateway'] = words[1]
 
     def get_interfaces_info(self):
         interfaces = {}
@@ -3116,7 +3122,7 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork):
 
     # OpenBSD 'ifconfig -a' does not have information about aliases
     def get_interfaces_info(self, ifconfig_path, ifconfig_options='-aA'):
-       return super(OpenBSDNetwork, self).get_interfaces_info(ifconfig_path, ifconfig_options)
+        return super(OpenBSDNetwork, self).get_interfaces_info(ifconfig_path, ifconfig_options)
 
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):

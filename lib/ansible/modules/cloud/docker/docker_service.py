@@ -520,8 +520,8 @@ def get_stdout(path_name):
             new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
             full_stdout += new_line
             if new_line.strip():
-               # Assuming last line contains the error message
-               last_line = new_line.strip().encode('utf-8')
+                # Assuming last line contains the error message
+                last_line = new_line.strip().encode('utf-8')
     fd.close()
     os.remove(path_name)
     return full_stdout, last_line

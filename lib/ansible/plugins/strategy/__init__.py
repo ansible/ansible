@@ -466,11 +466,11 @@ class StrategyBase:
 
                                 # and if none were found, then we raise an error
                                 if not found:
-                                  msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
-                                  if C.ERROR_ON_MISSING_HANDLER:
-                                      raise AnsibleError(msg)
-                                  else:
-                                      display.warning(msg)
+                                    msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                    if C.ERROR_ON_MISSING_HANDLER:
+                                        raise AnsibleError(msg)
+                                    else:
+                                        display.warning(msg)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -912,5 +912,7 @@ class StrategyBase:
             result['skipped'] = True
         else:
             result['changed'] = False
+
+        display.vv("META: %s" % msg)
 
         return [TaskResult(target_host, task, result)]

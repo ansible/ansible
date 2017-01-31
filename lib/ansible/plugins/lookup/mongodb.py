@@ -161,7 +161,7 @@ class LookupModule(LookupBase):
                     ret.append(result)
 
             except ConnectionFailure as e:
-                 raise AnsibleError('unable to connect to database: %s' % str(e))
+                raise AnsibleError('unable to connect to database: %s' % str(e))
 
 
 

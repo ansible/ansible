@@ -70,11 +70,11 @@ class ActionModule(ActionBase):
         new_groups = []
         if groups:
             if isinstance(groups, list):
-               group_list = groups
+                group_list = groups
             elif isinstance(groups, string_types):
-               group_list = groups.split(",")
+                group_list = groups.split(",")
             else:
-               raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
+                raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
 
             for group_name in group_list:
                 if group_name not in new_groups:

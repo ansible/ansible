@@ -128,9 +128,12 @@ Ansible Changes By Release
 - packet:
   * packet_device
   * packet_sshkey
+- runit
 - smartos:
   * imgadm
   * vmadm
+- tower:
+  * tower_organization
 - web_infrastructure
   * jenkins_script
 - windows:

@@ -615,21 +615,21 @@ def main():
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn is True and keyrtn is True:
-                md5_remote = keysum(module, s3, bucket, obj)
-                md5_local = module.md5(src)
+            md5_remote = keysum(module, s3, bucket, obj)
+            md5_local = module.md5(src)
 
-                if md5_local == md5_remote:
-                    sum_matches = True
-                    if overwrite == 'always':
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
-                    else:
-                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
+            if md5_local == md5_remote:
+                sum_matches = True
+                if overwrite == 'always':
+                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
                 else:
-                    sum_matches = False
-                    if overwrite in ('always', 'different'):
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
-                    else:
-                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
+                    get_download_url(module, s3, bucket, obj, expiry, changed=False)
+            else:
+                sum_matches = False
+                if overwrite in ('always', 'different'):
+                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
+                else:
+                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:

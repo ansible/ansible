@@ -127,7 +127,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
 
         if v is None:
-           raise AnsibleParserError("include parameter is missing", obj=ds)
+            raise AnsibleParserError("include parameter is missing", obj=ds)
 
         # The include line must include at least one item, which is the filename
         # to include. Anything after that should be regarded as a parameter to the include

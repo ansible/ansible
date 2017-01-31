@@ -684,6 +684,9 @@ class AnsibleModule(object):
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
+        self._warnings = []
+        self._deprecations = []
+        self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
@@ -756,6 +759,22 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
+
+    def warn(self, warning):
+
+        if isinstance(warning, string_types):
+            self._warnings.append(warning)
+            self.log('[WARNING] %s' % warning)
+        else:
+            raise TypeError("warn requires a string not a %s" % type(warning))
+
+    def deprecate(self, deprecate):
+
+        if isinstance(deprecate, string_types):
+            self._deprecations.append(deprecate)
+            self.log('[DEPRECATION WARNING] %s' % deprecate)
+        else:
+            raise TypeError("deprecate requires a string not a %s" % type(deprecate))
 
     def load_file_common_arguments(self, params):
         '''
@@ -1399,7 +1418,7 @@ class AnsibleModule(object):
                                                                                                                  ','.join(sorted(list(unsupported_parameters))),
                                                                                                                  ','.join(sorted(self.argument_spec.keys()))))
         if self.check_mode and not self.supports_check_mode:
-                self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
+            self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check):
         count = 0
@@ -1668,7 +1687,8 @@ class AnsibleModule(object):
             try:
                 self.params[k] = type_checker(value)
             except (TypeError, ValueError):
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
+                e = get_exception()
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
@@ -1717,7 +1737,7 @@ class AnsibleModule(object):
 
     def debug(self, msg):
         if self._debug:
-            self.log(msg)
+            self.log('[debug] %s' % msg)
 
     def log(self, msg, log_args=None):
 
@@ -1860,7 +1880,7 @@ class AnsibleModule(object):
         elif arg in BOOLEANS_FALSE:
             return False
         else:
-            self.fail_json(msg='Boolean %s not in either boolean list' % arg)
+            self.fail_json(msg='%s is not a valid boolean. Valid booleans include: %s' % (to_text(arg), ','.join(['%s' % x for x in BOOLEANS])))
 
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
@@ -1888,28 +1908,53 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
-    def exit_json(self, **kwargs):
-        ''' return from the module, without error '''
+    def _return_formatted(self, kwargs):
+
         self.add_path_info(kwargs)
-        if not 'changed' in kwargs:
-            kwargs['changed'] = False
+
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
+
+        if 'warnings' in kwargs:
+            if isinstance(kwargs['warnings'], list):
+                for w in kwargs['warnings']:
+                    self.warn(w)
+            else:
+                self.warn(kwargs['warnings'])
+        if self._warnings:
+            kwargs['warnings'] = self._warnings
+
+        if 'deprecations' in kwargs:
+            if isinstance(kwargs['deprecations'], list):
+                for d in kwargs['deprecations']:
+                    self.warn(d)
+            else:
+                self.warn(kwargs['deprecations'])
+
+        if self._deprecations:
+            kwargs['deprecations'] = self._deprecations
+
         kwargs = remove_values(kwargs, self.no_log_values)
-        self.do_cleanup_files()
         print('\n%s' % self.jsonify(kwargs))
+
+    def exit_json(self, **kwargs):
+        ''' return from the module, without error '''
+
+        if not 'changed' in kwargs:
+            kwargs['changed'] = False
+
+        self.do_cleanup_files()
+        self._return_formatted(kwargs)
         sys.exit(0)
 
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
-        self.add_path_info(kwargs)
+
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
-        kwargs = remove_values(kwargs, self.no_log_values)
+
         self.do_cleanup_files()
-        print('\n%s' % self.jsonify(kwargs))
+        self._return_formatted(kwargs)
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):

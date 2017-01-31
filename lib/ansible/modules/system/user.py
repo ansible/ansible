@@ -1419,8 +1419,8 @@ class SunOS(User):
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:
@@ -1563,7 +1563,7 @@ class DarwinUser(User):
             if max_uid < current_uid:
                 max_uid = current_uid
             if max_system_uid < current_uid and current_uid < 500:
-                    max_system_uid = current_uid
+                max_system_uid = current_uid
 
         if system and (0 < max_system_uid < 499):
             return max_system_uid + 1
@@ -1923,8 +1923,8 @@ class AIX(User):
                 cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:

@@ -139,13 +139,13 @@ class CloudTrailManager:
         ret = self.conn.describe_trails(trail_name_list=[name])
         trailList = ret.get('trailList', [])
         if len(trailList) == 1:
-          return trailList[0]
+            return trailList[0]
         return None
 
     def exists(self, name=None):
         ret = self.view(name)
         if ret:
-          return True
+            return True
         return False
 
     def enable_logging(self, name):
@@ -180,7 +180,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 
     if not HAS_BOTO:
-      module.fail_json(msg='boto is required.')
+        module.fail_json(msg='boto is required.')
 
     ec2_url, access_key, secret_key, region = get_ec2_creds(module)
     aws_connect_params = dict(aws_access_key_id=access_key,

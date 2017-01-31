@@ -388,7 +388,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_BOTO3:
-      module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='boto3 is required.')
 
     service_mgr = CloudFrontServiceManager(module)
 

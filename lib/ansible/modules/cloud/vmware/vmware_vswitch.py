@@ -86,10 +86,10 @@ except ImportError:
 
 
 def find_vswitch_by_name(host, vswitch_name):
-        for vss in host.config.network.vswitch:
-            if vss.name == vswitch_name:
-                return vss
-        return None
+    for vss in host.config.network.vswitch:
+        if vss.name == vswitch_name:
+            return vss
+    return None
 
 
 class VMwareHostVirtualSwitch(object):

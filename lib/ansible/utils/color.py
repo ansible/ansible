@@ -40,7 +40,7 @@ else:
         ANSIBLE_COLOR=False
 
 if C.ANSIBLE_FORCE_COLOR:
-        ANSIBLE_COLOR=True
+    ANSIBLE_COLOR=True
 
 # --- begin "pretty"
 #
