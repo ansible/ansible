@@ -25,17 +25,17 @@ Lookup plugin to grab secrets from the OS keyring.
 
 Warning the secret will be output to the screen
 
-Example: 
+Example:
 ---
 - hosts: localhost
   tasks:
     - name : test
-      debug: 
+      debug:
         msg: "Password: {{item}}"
       with_keyring:
         - 'servicename username'
 
-ansible localhost -m debug -a "msg=\"{{item}}\" with_keyring= 'servicename username'"  
+ansible localhost -m debug -a "msg=\"{{item}}\" with_keyring= 'servicename username'"
 
 '''
 HAS_KEYRING = True
@@ -59,7 +59,7 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
-        if  not HAS_KEYRING:
+        if not HAS_KEYRING:
             raise AnsibleError(u"Can't LOOKUP(keyring): missing required python library 'keyring'")
 
         display.vvvv(u"keyring: %s" % keyring.get_keyring() )
