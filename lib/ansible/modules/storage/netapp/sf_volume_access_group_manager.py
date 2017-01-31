@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# (c) 2016, NetApp, Inc
+
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -16,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-#!/usr/bin/python
 
 DOCUMENTATION = '''
 
@@ -50,34 +49,40 @@ options:
         type: str[]
         description:
         - List of initiators to include in the volume access group. If unspecified, the access group will start out without configured initiators.
+        default: None
 
     volumes:
         required: false
         type: int[]
         description:
         - List of volumes to initially include in the volume access group. If unspecified, the access group will start without any volumes.
+        default: None
 
     virtual_network_id:
         required: false
         type: int[]
         description:
         - The ID of the SolidFire Virtual Network ID to associate the volume access group with.
+        default: None
 
     virtual_network_tags:
         required: false
         type: int[]
         description:
         - The ID of the VLAN Virtual Network Tag to associate the volume access group with.
+        default: None
 
     attributes:
         required: false
         type: dict
         description: List of Name/Value pairs in JSON object format.
+        default: None
 
     volume_access_group_id:
         required: false
         description:
         - The ID of the volume access group to modify or delete.
+        default: None
 
 '''
 
@@ -143,10 +148,6 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireVolumeAccessGroup(object):
 
@@ -154,16 +155,16 @@ class SolidFireVolumeAccessGroup(object):
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                volume_access_group_id=dict(required=False, type='int', default=None),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            volume_access_group_id=dict(required=False, type='int', default=None),
 
-                initiators=dict(required=False, type='list', default=None),
-                volumes=dict(required=False, type='list', default=None),
-                virtual_network_id=dict(required=False, type='list', default=None),
-                virtual_network_tags=dict(required=False, type='list', default=None),
-                attributes=dict(required=False, type='dict', default=None),
-            ))
+            initiators=dict(required=False, type='list', default=None),
+            volumes=dict(required=False, type='list', default=None),
+            virtual_network_id=dict(required=False, type='list', default=None),
+            virtual_network_tags=dict(required=False, type='list', default=None),
+            attributes=dict(required=False, type='dict', default=None),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -310,4 +311,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
-main()
+if __name__ == '__main__':
+    main()
