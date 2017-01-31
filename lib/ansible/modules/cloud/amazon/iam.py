@@ -167,7 +167,7 @@ try:
     import boto.ec2
     HAS_BOTO = True
 except ImportError:
-   HAS_BOTO = False
+    HAS_BOTO = False
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -253,10 +253,10 @@ def delete_user(module, iam, name):
         except boto.exception.BotoServerError as err:
             error_msg = boto_exception(err)
             if ('Cannot find Login Profile') in error_msg:
-               del_meta = iam.delete_user(name).delete_user_response
+                del_meta = iam.delete_user(name).delete_user_response
         else:
-          iam.delete_login_profile(name)
-          del_meta = iam.delete_user(name).delete_user_response
+            iam.delete_login_profile(name)
+            del_meta = iam.delete_user(name).delete_user_response
     except Exception as ex:
         module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
@@ -267,10 +267,10 @@ def delete_user(module, iam, name):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
+                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                          "that %s has Managed Polices. This is not "
+                                                          "currently supported by boto. Please detach the polices "
+                                                          "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(error_msg))
             else:
@@ -460,10 +460,10 @@ def delete_group(module=None, iam=None, name=None):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
+                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                          "that %s has Managed Polices. This is not "
+                                                          "currently supported by boto. Please detach the polices "
+                                                          "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(err))
             else:
@@ -527,25 +527,25 @@ def delete_role(module, iam, name, role_list, prof_list):
             for profile in cur_ins_prof:
                 iam.remove_role_from_instance_profile(profile, name)
             try:
-              iam.delete_role(name)
+                iam.delete_role(name)
             except boto.exception.BotoServerError as err:
-              error_msg = boto_exception(err)
-              if ('must detach all policies first') in error_msg:
-                for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
-                  iam.delete_role_policy(name, policy)
-              try:
-                iam_role_result = iam.delete_role(name)
-              except boto.exception.BotoServerError as err:
-                  error_msg = boto_exception(err)
-                  if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
-                  else:
-                      module.fail_json(changed=changed, msg=str(err))
-              else:
-                changed = True
+                error_msg = boto_exception(err)
+                if ('must detach all policies first') in error_msg:
+                    for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
+                        iam.delete_role_policy(name, policy)
+                try:
+                    iam_role_result = iam.delete_role(name)
+                except boto.exception.BotoServerError as err:
+                    error_msg = boto_exception(err)
+                    if ('must detach all policies first') in error_msg:
+                        module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                              "that %s has Managed Polices. This is not "
+                                                              "currently supported by boto. Please detach the polices "
+                                                              "through the console and try again." % name)
+                    else:
+                        module.fail_json(changed=changed, msg=str(err))
+                else:
+                    changed = True
 
             else:
                 changed = True
@@ -590,7 +590,7 @@ def main():
     )
 
     if not HAS_BOTO:
-       module.fail_json(msg='This module requires boto, please install it')
+        module.fail_json(msg='This module requires boto, please install it')
 
     state = module.params.get('state').lower()
     iam_type = module.params.get('iam_type').lower()
@@ -732,12 +732,12 @@ def main():
         elif state == 'absent':
             if user_exists:
                 try:
-                   set_users_groups(module, iam, name, '')
-                   del_meta, name, changed = delete_user(module, iam, name)
-                   module.exit_json(deleted_user=name, changed=changed)
+                    set_users_groups(module, iam, name, '')
+                    del_meta, name, changed = delete_user(module, iam, name)
+                    module.exit_json(deleted_user=name, changed=changed)
 
                 except Exception as ex:
-                       module.fail_json(changed=changed, msg=str(ex))
+                    module.fail_json(changed=changed, msg=str(ex))
             else:
                 module.exit_json(
                     changed=False, msg="User %s is already absent from your AWS IAM users" % name)
