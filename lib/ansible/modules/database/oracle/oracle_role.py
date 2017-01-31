@@ -176,11 +176,15 @@ def ensure(module, client):
 
         # System privileges
         if sys_privs is not None:
-            privs_to_grant = list(set(sys_privs) - set(role.get('sys_privs') if role else []))
+            if role:
+                granted_sys_privs = role.get('sys_privs')
+            else:
+                granted_sys_privs = []
+            privs_to_grant = list(set(sys_privs) - set(granted_sys_privs))
             for item in privs_to_grant:
                 sql.append(client.get_grant_privilege_sql(priv=item, name=name))
 
-            privs_to_revoke = list(set(role.get('sys_privs') if role else []) - set(sys_privs))
+            privs_to_revoke = list(set(granted_sys_privs) - set(sys_privs))
             for item in privs_to_revoke:
                 sql.append(client.get_revoke_privilege_sql(priv=item, name=name))
 
