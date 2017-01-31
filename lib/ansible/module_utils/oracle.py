@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #  -*- coding: utf-8 -*-
 
 # Copyright (c) 2017 Thomas Krahn (@Nosmoht)
