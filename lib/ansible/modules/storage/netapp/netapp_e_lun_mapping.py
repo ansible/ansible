@@ -29,16 +29,9 @@ short_description: Create or Remove LUN Mappings
 description:
      - Allows for the creation and removal of volume to host mappings for NetApp E-series storage arrays.
 version_added: "2.2"
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
-  ssid:
-    description:
-      - "The storage system array identifier."
-    required: False
   lun:
     description:
       - The LUN number you wish to give the mapping
@@ -67,19 +60,6 @@ options:
       - All parameters I(lun), I(target), I(target_type) and I(volume_name) must still be supplied.
     required: True
     choices: ["present", "absent"]
-  api_url:
-    description:
-      - "The full API url. Example: http://ENDPOINT:8080/devmgr/v2"
-      - This can optionally be set via an environment variable, API_URL
-    required: False
-  api_username:
-    description:
-      - The username used to authenticate against the API. This can optionally be set via an environment variable, API_USERNAME
-    required: False
-  api_password:
-    description:
-      - The password used to authenticate against the API. This can optionally be set via an environment variable, API_PASSWORD
-    required: False
 '''
 
 EXAMPLES = '''
@@ -103,49 +83,14 @@ msg: Mapping removed.
 import json
 
 from ansible.module_utils.api import basic_auth_argument_spec
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
+from ansible.module_utils.pycompat24 import get_exception
 
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
-
 
 def get_host_and_group_map(module, ssid, api_url, user, pwd):
     mapping = dict(host=dict(), group=dict())
@@ -281,16 +226,12 @@ def remove_mapping(module, ssid, lun_mapping, api_url, user, pwd):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
-        api_username=dict(type='str', required=True),
-        api_password=dict(type='str', required=True, no_log=True),
-        api_url=dict(type='str', required=True),
         state=dict(required=True, choices=['present', 'absent']),
         target=dict(required=False, default=None),
         target_type=dict(required=False, choices=['host', 'group']),
         lun=dict(required=False, type='int', default=0),
-        ssid=dict(required=False),
         volume_name=dict(required=True),
     ))
 

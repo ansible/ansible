@@ -28,26 +28,9 @@ description:
     - Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    api_username:
-        required: true
-        description:
-        - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_password:
-        required: true
-        description:
-        - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-    api_url:
-        required: true
-        description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
     name:
         description:
             - The name of the async array you wish to target, or create.
@@ -90,10 +73,6 @@ options:
             - The threshold (in minutes) for notifying the user that periodic synchronization has taken too long to complete.
         required: no
         default: 10
-    ssid:
-        description:
-            - The ID of the primary storage array for the async mirror action
-        required: yes
     state:
         description:
             - A C(state) of present will either create or update the async mirror group.
@@ -143,48 +122,13 @@ msg:
 
 import json
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
 }
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=False, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
-
 
 def has_match(module, ssid, api_url, api_pwd, api_usr, body):
     compare_keys = ['syncIntervalMinutes', 'syncWarnThresholdMinutes',
@@ -271,11 +215,8 @@ def remove_amg(module, ssid, api_url, pwd, user, async_id):
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
-        api_username=dict(type='str', required=True),
-        api_password=dict(type='str', required=True, no_log=True),
-        api_url=dict(type='str', required=True),
         name=dict(required=True, type='str'),
         new_name=dict(required=False, type='str'),
         secondaryArrayId=dict(required=True, type='str'),
@@ -284,7 +225,6 @@ def main():
         recoveryWarnThresholdMinutes=dict(required=False, default=20, type='int'),
         repoUtilizationWarnThreshold=dict(required=False, default=80, type='int'),
         interfaceType=dict(required=False, choices=['fibre', 'iscsi'], type='str'),
-        ssid=dict(required=True, type='str'),
         state=dict(required=True, choices=['present', 'absent']),
         syncWarnThresholdMinutes=dict(required=False, default=10, type='int')
     ))

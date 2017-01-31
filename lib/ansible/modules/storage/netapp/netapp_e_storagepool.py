@@ -28,30 +28,9 @@ short_description: Manage disk groups and disk pools
 version_added: '2.2'
 description:
     - Create or remove disk groups and disk pools for NetApp E-series storage arrays.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  api_username:
-      required: true
-      description:
-      - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
-      required: true
-      description:
-      - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
-      required: true
-      description:
-      - The url to the SANtricity WebServices Proxy or embedded REST API.
-      example:
-      - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-      required: false
-      default: true
-      description:
-      - Should https certificates be validated?
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage (as configured on the web services proxy).
   state:
     required: true
     description:
@@ -137,43 +116,9 @@ import json
 import logging
 from traceback import format_exc
 
-from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
 
 
 def select(predicate, iterable):
@@ -184,7 +129,7 @@ def select(predicate, iterable):
         if predicate(x):
             yield x
 
-
+#TODO fix
 class groupby(object):
     # python 2, 3 generic grouping.
     def __init__(self, iterable, key=None):
@@ -228,13 +173,10 @@ class NetAppESeriesStoragePool(object):
             yb=1024 ** 8
         )
 
-        argument_spec = basic_auth_argument_spec()
+        argument_spec = eseries_host_argument_spec()
         argument_spec.update(dict(
-            api_username=dict(type='str', required=True),
-            api_password=dict(type='str', required=True, no_log=True),
             api_url=dict(type='str', required=True),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
-            ssid=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             criteria_size_unit=dict(default='gb', type='str'),
             criteria_drive_count=dict(type='int'),
