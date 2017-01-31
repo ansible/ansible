@@ -60,7 +60,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
         if  not HAS_KEYRING:
-            raise AnsibleError(u"Can't LOOKUP(keyring): missing requried python library 'keyring'")
+            raise AnsibleError(u"Can't LOOKUP(keyring): missing required python library 'keyring'")
 
         display.vvvv(u"keyring: %s" % keyring.get_keyring() )
         ret = []
