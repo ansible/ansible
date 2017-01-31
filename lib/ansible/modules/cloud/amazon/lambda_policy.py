@@ -16,12 +16,6 @@
 
 import json
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
-try:
-    import boto
-except ImportError:
-    pass
-
 try:
     import boto3
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
