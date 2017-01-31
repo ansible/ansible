@@ -259,7 +259,7 @@ class Connection(ConnectionBase):
         count = 0
         while count <= 3:
             # try a simple echo
-            test_args = (ssh_executable, self.host, 'echo')
+            test_args = (ssh_executable, hostname, 'echo')
             # _build_command adds the controlpersist args
             test_cmd = self._build_command(*test_args)
             (rc, so, se) = self._run(test_cmd, None, checkrc=False)
