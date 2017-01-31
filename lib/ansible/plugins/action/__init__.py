@@ -680,6 +680,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if 'stdout' in data and 'stdout_lines' not in data:
             data['stdout_lines'] = data.get('stdout', u'').splitlines()
 
+        # remove bad/empty internal keys
+        for key in ['warnings', 'deprecations']:
+            if key in data and not data[key]:
+                del data[key]
+
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
