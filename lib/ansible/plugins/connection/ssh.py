@@ -77,7 +77,7 @@ class Connection(ConnectionBase):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
         m = hashlib.sha1()
-        m.update(pstring)
+        m.update(to_text(pstring))
         digest = m.hexdigest()
         cpath = '%(directory)s/' + digest[:10]
         return cpath
