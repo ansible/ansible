@@ -263,10 +263,10 @@ def db_dump(module, target,
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stderr, stdout
 
-def db_import(module, target,
-              db=None, host=None,
-              user=None, port=None,
-              password=None):
+def db_restore(module, target,
+               db=None, host=None,
+               user=None, port=None,
+               password=None):
     # set initial flags. These are the same in pg_restore as psql
 
     if password:
@@ -332,7 +332,7 @@ def main():
         encoding=dict(default=""),
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
-        state=dict(default="present", choices=["absent", "present", "dump", "import"]),
+        state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
         target=dict(default=""),
     ))
 
@@ -438,9 +438,9 @@ def main():
                 e = get_exception()
                 module.fail_json(msg=str(e))
 
-        elif state == "import":
+        elif state == "restore":
             try:
-                rc, stdout, stderr = db_import(module, target, db, **kw)
+                rc, stdout, stderr = db_restore(module, target, db, **kw)
                 if rc != 0:
                   module.fail_json(msg="{0}".format(stderr))
                 else:
