@@ -529,6 +529,10 @@ Here are some examples::
                 - "{{list2}}"
                 - [1,2,3,4,5,6]
 
+         - name: Added in 2.3 allows using the system's keyring
+           debug: msg={{lookup('keyring','myservice myuser')}}
+
+
 As an alternative, you can also assign lookup plugins to variables or use them elsewhere.
 These macros are evaluated each time they are used in a task (or template)::
 
