@@ -113,7 +113,7 @@ def python_paths_info():
     path_info['path'] = sys.path
     path_info['prefix'] = sys.prefix
     path_info['exec_prefix'] = sys.exec_prefix
-    path_info['meta_path'] = sys.meta_path
+    path_info['meta_path'] = [repr(x) for x in sys.meta_path]
 
     # items in path hooks can be custom types, namely zipimporter
     path_info['path_hooks'] = [repr(x) for x in sys.path_hooks]
