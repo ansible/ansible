@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,7 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#!/usr/bin/python
 
 DOCUMENTATION = '''
 
@@ -56,16 +55,19 @@ options:
         description: time interval in days
         required: false
         type: int
+        default: 1
 
     time_interval_hours:
         description: time interval in hours
         required: false
         type: int
+        default: 0
 
     time_interval_minutes:
         description: time interval in minutes
         required: false
         type: int
+        default: 0
 
     name:
         required: true
@@ -76,6 +78,7 @@ options:
         required: false
         description:
         - New name for the snapshot schedule
+        default: None
 
     snapshot_name:
         required: false
@@ -172,10 +175,6 @@ import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -448,4 +447,5 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
-main()
+if __name__ == '__main__':
+    main()
