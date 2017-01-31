@@ -52,7 +52,7 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, binary_type, text_type
 
 class AnsibleAWSError(Exception):
     pass
@@ -232,8 +232,8 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['validate_certs'] = validate_certs
 
     for param, value in boto_params.items():
-        if isinstance(value, str):
-            boto_params[param] = unicode(value, 'utf-8', 'strict')
+        if isinstance(value, binary_type):
+            boto_params[param] = text_type(value, 'utf-8', 'strict')
 
     return region, ec2_url, boto_params
 
