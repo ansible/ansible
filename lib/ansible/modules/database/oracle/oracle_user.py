@@ -456,19 +456,29 @@ def ensure(module, client):
                     name=name, temporary_tablespace=temporary_tablespace))
 
             if roles is not None:
-                priv_to_grant = list(set(roles) - set(user.get('roles') if user else []))
+                if user:
+                    granted_roles = user.get('roles')
+                else:
+                    granted_roles = []
+
+                priv_to_grant = list(set(roles) - set(granted_roles))
                 for priv in priv_to_grant:
                     sql.append(client.get_grant_privilege_sql(user=name, priv=priv))
-                priv_to_revoke = list(set(user.get('roles') if user else []) - set(roles))
+
+                priv_to_revoke = list(set(granted_roles) - set(roles))
                 for priv in priv_to_revoke:
                     sql.append(client.get_revoke_privilege_sql(user=name, priv=priv))
 
             # System privileges
             if sys_privs is not None:
-                privs_to_grant = list(set(sys_privs) - set(user.get('sys_privs') if user else []))
+                if user:
+                    granted_sys_privs = user.get('sys_privs')
+                else:
+                    granted_sys_privs = []
+                privs_to_grant = list(set(sys_privs) - set(granted_sys_privs))
                 for priv in privs_to_grant:
                     sql.append(client.get_grant_privilege_sql(user=name, priv=priv))
-                priv_to_revoke = list(set(user.get('sys_privs') if user else list()) - set(sys_privs))
+                priv_to_revoke = list(set(granted_sys_privs) - set(sys_privs))
                 for priv in priv_to_revoke:
                     sql.append(client.get_revoke_privilege_sql(user=name, priv=priv))
 

@@ -162,7 +162,11 @@ def ensure(module, client):
 
         # Roles
         if roles is not None:
-            roles_to_grant = list(set(roles) - set(role.get('roles') if role else []))
+            if role:
+                granted_roles = role.get('roles')
+            else:
+                granted_roles = []
+            roles_to_grant = list(set(roles) - set(granted_roles))
             for item in roles_to_grant:
                 sql.append(client.get_grant_privilege_sql(priv=item, name=name))
 

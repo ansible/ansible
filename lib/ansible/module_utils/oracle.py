@@ -84,8 +84,8 @@ class OracleClient(object):
         except cx_Oracle.DatabaseError:
             e = get_exception()
             self.module.fail_json(msg='"%s": %s' % (sql, e))
-        finally:
-            cur.close()
+
+        cur.close()
 
     def fetch_one(self, sql, where={}):
         cur = self.conn.cursor()
@@ -96,8 +96,8 @@ class OracleClient(object):
         except cx_Oracle.DatabaseError:
             e = get_exception()
             self.module.fail_json(msg='"%s": %s' % (sql, str(e)))
-        finally:
-            cur.close()
+
+        cur.close()
         return row
 
     def fetch_all(self, sql, where):
@@ -109,8 +109,8 @@ class OracleClient(object):
         except cx_Oracle.DatabaseError:
             e = get_exception()
             self.module.fail_json(msg='"%s": %s' % (sql, str(e)))
-        finally:
-            cur.close()
+
+        cur.close()
         return rows
 
     def is_rac(self):
