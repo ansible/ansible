@@ -485,7 +485,7 @@ module_loader = PluginLoader(
 module_utils_loader = PluginLoader(
     '',
     'ansible.module_utils',
-    'module_utils',
+    C.DEFAULT_MODULE_UTILS_PATH,
     'module_utils',
 )
 

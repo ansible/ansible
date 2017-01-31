@@ -498,7 +498,20 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         if module_info is None:
             msg = ['Could not find imported module support code for %s.  Looked for' % name]
             if idx == 2:
-                msg.append('either %s or %s' % (py_module_name[-1], py_module_name[-2]))
+                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+            else:
+                msg.append(py_module_name[-1])
+            raise AnsibleError(' '.join(msg))
+
+        # Found a byte compiled file rather than source.  We cannot send byte
+        # compiled over the wire as the python version might be different.
+        # imp.find_module seems to prefer to return source packages so we just
+        # error out if imp.find_module returns byte compiled files (This is
+        # fragile as it depends on undocumented imp.find_module behaviour)
+        if module_info[2][2] not in (imp.PY_SOURCE, imp.PKG_DIRECTORY):
+            msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
+            if idx == 2:
+                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
             else:
                 msg.append(py_module_name[-1])
             raise AnsibleError(' '.join(msg))
@@ -571,7 +584,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
     """
-
     module_substyle = module_style = 'old'
 
     # module_style is something important to calling code (ActionBase).  It
