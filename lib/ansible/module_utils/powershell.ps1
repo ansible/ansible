@@ -98,6 +98,38 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
+# Helper function to add warnings, even if the warnings attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Warn($obj, $message)
+{
+    if (Get-Member -InputObject $obj -Name "warnings") {
+        if ($obj.warnings -is [System.Array]) {
+            $obj.warnings += $message
+        } else {
+            throw "warnings attribute is not an array"
+        }
+    } else {
+        $obj.warnings = ,@( $message )
+    }
+}
+
+# Helper function to add deprecations, even if the deprecations attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Deprecate($obj, $message)
+{
+    if (Get-Member -InputObject $obj -Name "deprecations") {
+        if ($obj.deprecations -is [System.Array]) {
+            $obj.deprecations += $message
+        } else {
+            throw "deprecations attribute is not a list"
+        }
+    } else {
+        $obj.deprecations = ,@( $message )
+    }
+}
+
 Function Expand-Environment($value)
 {
     [System.Environment]::ExpandEnvironmentVariables($value)
