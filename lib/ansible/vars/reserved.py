@@ -19,10 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.playbook import  Play
-from ansible.playbook.block import  Block
-from ansible.playbook.role import  Role
-from ansible.playbook.task import  Task
+from ansible.playbook import Play
+from ansible.playbook.block import Block
+from ansible.playbook.role import Role
+from ansible.playbook.task import Task
 
 try:
     from __main__ import display
