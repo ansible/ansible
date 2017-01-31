@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# (c) 2016, NetApp, Inc
+
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -16,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-#!/usr/bin/python
 
 DOCUMENTATION = '''
 
@@ -39,18 +38,21 @@ options:
     description:
     - Skip checking connection to SVIP or MVIP.
     choices: ['svip', 'mvip']
+    default: None
 
   mvip:
     required: false
     description:
     - Optionally, use to test connection of a different MVIP.
     - This is not needed to test the connection to the target cluster.
+    default: None
 
   svip:
     required: false
     description:
     - Optionally, use to test connection of a different SVIP.
     - This is not needed to test the connection to the target cluster.
+    default: None
 
 '''
 
@@ -84,10 +86,6 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireConnection(object):
 
@@ -96,10 +94,10 @@ class SolidFireConnection(object):
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                skip=dict(required=False, type='str', default=None, choices=['mvip', 'svip']),
-                mvip=dict(required=False, type='str', default=None),
-                svip=dict(required=False, type='str', default=None)
-            ))
+            skip=dict(required=False, type='str', default=None, choices=['mvip', 'svip']),
+            mvip=dict(required=False, type='str', default=None),
+            svip=dict(required=False, type='str', default=None)
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -211,4 +209,5 @@ def main():
         logger.debug("Exception in check(): \n%s" % format_exc(err))
         raise
 
-main()
+if __name__ == '__main__':
+    main()
