@@ -22,11 +22,12 @@ Although it's tempting to get straight into coding, there are a few things to be
 
 * Read though all the pages linked off :doc:`developing_modules`, paying particular focus to the :doc:`developing_modules_checklist`.
 * For new modules going into Ansible 2.4 we are raising the bar so they must pass `pep8 --ignore=E402 --max-line-length=160` cleanly.
-* All new modules going into Ansible 2.3 must support Python 2.4+ and Python 3.5+. For Ansible 2.4 the requirement will change to Python and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
+* All new modules going into Ansible 2.3 must support Python 2.4+ and Python 3.5+. For Ansible 2.4 the requirement will change to Python 2.6 and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
 * Understand that all modules shipped with Ansible MUST be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should generally be done so under the BSD license (or GPLv3).
 * Have a look at the existing modules, especially in the same functional area (such as cloud, networking, databases) in the :doc:`../list_of_all_modules` for a list of existing modules and how they've been named.
+* Shared code can be places into `lib/ansible/module_utils/`
+* Shared documentation, for example describing common arguments, can be placed in `lib/ansible/utils/module_docs_fragments/`
 
-# FIXME Add details about `docs_fragments` and `module_utils` (once the other docs are tidied up this can be simplified as a link to those existing sections
 
 Naming Convention
 `````````````````
@@ -50,7 +51,7 @@ Circulating your ideas before coding is a good way to help you set off in the ri
 
 After reading the "Before you start coding" section you will hopefully have a reasonable idea of the structure of your modules.
 
-We've found that writing a list of your proposed module names and a one or two line description of what they will achive and having that reviewed by Ansible is a great way to ensure the modules fit the way people have used Ansible Modules before, and therefore make them easier to use
+We've found that writing a list of your proposed module names and a one or two line description of what they will achieve and having that reviewed by Ansible is a great way to ensure the modules fit the way people have used Ansible Modules before, and therefore make them easier to use.
 
 FIXME: How do we want to know the above, will everyone had a named contact at Ansible, what about if it's the community, rather than a vendor?
 
