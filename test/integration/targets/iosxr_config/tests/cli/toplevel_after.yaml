@@ -6,14 +6,12 @@
     commands:
       - "no cdp"
       - "hostname {{ inventory_hostname_short }}"
-    provider: "{{ cli }}"
     match: none
 
 - name: configure top level command with before
   iosxr_config:
     commands: ['hostname foo']
     after: ['cdp']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -26,7 +24,6 @@
   iosxr_config:
     commands: ['hostname foo']
     after: ['no cdp']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -38,7 +35,6 @@
     commands:
       - "no cdp"
       - "hostname {{ inventory_hostname_short }}"
-    provider: "{{ cli }}"
     match: none
 
 - debug: msg="END cli/toplevel_after.yaml"

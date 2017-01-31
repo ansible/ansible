@@ -9,13 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 # Defend against https://github.com/ansible/ansible-modules-core/issues/5146
 - name: Commit message too long
   iosxr_config:
     src: basic/config.j2
-    provider: "{{ cli }}"
     comment: "this is a really long message  aaaaabbbbbbcdde end-of-message"
   register: result
   ignore_errors: true

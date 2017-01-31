@@ -4,7 +4,6 @@
 - name: setup
   iosxr_config:
     commands: ['no ipv4 access-list test']
-    provider: "{{ cli }}"
     match: none
   ignore_errors: yes
 
@@ -12,7 +11,6 @@
   iosxr_config:
     commands: ['10 permit ipv4 any any log']
     parents: ['ipv4 access-list test']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -25,7 +23,6 @@
   iosxr_config:
     commands: ['10 permit ipv4 any any log']
     parents: ['ipv4 access-list test']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -35,7 +32,6 @@
 - name: teardown
   iosxr_config:
     commands: ['no ipv4 access-list test']
-    provider: "{{ cli }}"
     match: none
 
 - debug: msg="END cli/sublevel.yaml"
