@@ -126,7 +126,7 @@ class OracleRoleClient(OracleClient):
             from_to = 'FROM'
         else:
             from_to = 'TO'
-        sql = '%s %s %s "%s"' % s(action, priv, from_to, name)
+        sql = '%s %s %s "%s"' % (action, priv, from_to, name)
         return sql
 
     def get_grant_privilege_sql(self, name, priv):
