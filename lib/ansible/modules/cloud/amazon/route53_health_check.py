@@ -306,12 +306,12 @@ def main():
 
     # Default port
     if port_in is None:
-      if type_in in ['HTTP', 'HTTP_STR_MATCH']:
-        port_in = 80
-      elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
-        port_in = 443
-      else:
-        module.fail_json(msg="parameter 'port' is required for 'type' TCP")
+        if type_in in ['HTTP', 'HTTP_STR_MATCH']:
+            port_in = 80
+        elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
+            port_in = 443
+        else:
+            module.fail_json(msg="parameter 'port' is required for 'type' TCP")
 
     # string_match in relation with type
     if type_in in ['HTTP_STR_MATCH', 'HTTPS_STR_MATCH']:

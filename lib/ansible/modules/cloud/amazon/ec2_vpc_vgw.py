@@ -119,13 +119,13 @@ result:
 '''
 
 try:
-   import json
-   import time
-   import botocore
-   import boto3
-   HAS_BOTO3 = True
+    import json
+    import time
+    import botocore
+    import boto3
+    HAS_BOTO3 = True
 except ImportError:
-   HAS_BOTO3 = False
+    HAS_BOTO3 = False
 
 def get_vgw_info(vgws):
     if not isinstance(vgws, list):
