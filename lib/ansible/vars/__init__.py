@@ -92,6 +92,7 @@ def strip_internal_keys(dirty):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
 
+
 class VariableManager:
 
     def __init__(self):
@@ -315,10 +316,10 @@ class VariableManager:
                                 for item in data:
                                     all_vars = combine_vars(all_vars, item)
                             break
-                        except AnsibleFileNotFound as e:
+                        except AnsibleFileNotFound:
                             # we continue on loader failures
                             continue
-                        except AnsibleParserError as e:
+                        except AnsibleParserError:
                             raise
                     else:
                         # if include_delegate_to is set to False, we ignore the missing
@@ -456,7 +457,7 @@ class VariableManager:
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
-                except AnsibleUndefinedVariable as e:
+                except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]

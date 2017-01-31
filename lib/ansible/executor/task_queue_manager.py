@@ -36,6 +36,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
+from ansible.vars.reserved import warn_if_reserved
 
 try:
     from __main__ import display
@@ -209,6 +210,7 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
