@@ -19,7 +19,7 @@
 #
 # To authenticate with a username/password against the LDAP auth backend in Vault:
 #
-# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=thisdougb password=mypassword url=http://myvault:8200')}}
+# USAGE: {{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypassword url=http://myvault:8200')}}
 #
 # The mount_point param defaults to ldap, so is only required if you have a custom mount point.
 #
@@ -86,7 +86,7 @@ class HashiVault:
                 raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
         else:
             self.token = kwargs.get('token')
-            if self.token==None:
+            if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
             self.client = hvac.Client(url=self.url, token=self.token)
@@ -112,15 +112,15 @@ class HashiVault:
 
     def auth_ldap(self, **kwargs):
         username = kwargs.get('username')
-        if username==None:
+        if username is None:
             raise AnsibleError("Authentication method ldap requires a username")
 
         password = kwargs.get('password')
-        if password==None:
+        if password is None:
             raise AnsibleError("Authentication method ldap requires a password")
 
         mount_point = kwargs.get('mount_point')
-        if mount_point==None:
+        if mount_point is None:
             mount_point = 'ldap'
 
         self.client.auth_ldap(username, password, mount_point)
