@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# (c) 2016, NetApp, Inc
+
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#!/usr/bin/python
 
 DOCUMENTATION = '''
 
@@ -49,6 +49,7 @@ options:
         required: false
         description:
         - New name for the user account.
+        default: None
 
     initiator_secret:
         required: false
@@ -76,6 +77,7 @@ options:
         required: false
         description:
         - The ID of the account to manage or update
+        default: None
 
     status:
         required: false
@@ -145,26 +147,22 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireAccount(object):
 
     def __init__(self):
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                account_id=dict(required=False, type='int', default=None),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            account_id=dict(required=False, type='int', default=None),
 
-                new_name=dict(required=False, type='str', default=None),
-                initiator_secret=dict(required=False, type='str'),
-                target_secret=dict(required=False, type='str'),
-                attributes=dict(required=False, type='dict'),
-                status=dict(required=False, type='str'),
-            ))
+            new_name=dict(required=False, type='str', default=None),
+            initiator_secret=dict(required=False, type='str'),
+            target_secret=dict(required=False, type='str'),
+            attributes=dict(required=False, type='dict'),
+            status=dict(required=False, type='str'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -268,7 +266,7 @@ class SolidFireAccount(object):
                 # Check if we need to update the account
 
                 if account_detail.username is not None and self.new_name is not None and \
-                                account_detail.username != self.new_name:
+                        account_detail.username != self.new_name:
                     logger.debug("CHANGED: account username needs to be updated")
                     update_account = True
                     changed = True
@@ -331,5 +329,6 @@ def main():
         logger.debug("Exception in apply(): \n%s" % format_exc(err))
         raise
 
-main()
+if __name__ == '__main__':
+    main()
 
