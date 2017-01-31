@@ -718,10 +718,10 @@ class AnsibleModule(object):
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
 
-            if arg_opts.get('deprecated_version') is not None and arg_name in self.params:
+            if arg_opts.get('removed_in_version') is not None and arg_name in self.params:
                 self._deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
-                    'version': arg_opts.get('deprecated_version')
+                    'version': arg_opts.get('removed_in_version')
                  })
 
         # check the locale as set by the current environment, and reset to
