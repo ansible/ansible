@@ -38,6 +38,7 @@ from ansible.compat.tests.mock import patch, MagicMock, mock_open
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
+from ansible.vars.unsafe_proxy import AnsibleUnsafe
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
@@ -556,3 +557,132 @@ class TestActionBase(unittest.TestCase):
             play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable=None)
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user
+
+
+class TestActionBaseCleanReturnedData(unittest.TestCase):
+    def test(self):
+
+        fake_loader = DictDataLoader({
+        })
+        mock_module_loader = MagicMock()
+        mock_shared_loader_obj = MagicMock()
+        mock_shared_loader_obj.module_loader = mock_module_loader
+        connection_loader_paths = ['/tmp/asdfadf', '/usr/lib64/whatever',
+                                   'dfadfasf',
+                                   'foo.py',
+                                   '.*',
+                                   # FIXME: a path with parans breaks the regex
+                                   # '(.*)',
+                                   '/path/to/ansible/lib/ansible/plugins/connection/custom_connection.py',
+                                   '/path/to/ansible/lib/ansible/plugins/connection/ssh.py']
+
+        def fake_all(path_only=None):
+            for path in connection_loader_paths:
+                yield path
+
+        mock_connection_loader = MagicMock()
+        mock_connection_loader.all = fake_all
+
+        mock_shared_loader_obj.connection_loader = mock_connection_loader
+        mock_connection = MagicMock()
+        #mock_connection._shell.env_prefix.side_effect = env_prefix
+
+        #action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
+        action_base = DerivedActionBase(task=None,
+                                        connection=mock_connection,
+                                        play_context=None,
+                                        loader=fake_loader,
+                                        templar=None,
+                                        shared_loader_obj=mock_shared_loader_obj)
+        data = {'ansible_playbook_python': '/usr/bin/python',
+                #'ansible_rsync_path': '/usr/bin/rsync',
+                'ansible_python_interpreter': '/usr/bin/python',
+                'ansible_ssh_some_var': 'whatever',
+                'ansible_ssh_host_key_somehost': 'some key here',
+                'some_other_var': 'foo bar'}
+        res = action_base._clean_returned_data(data)
+        self.assertNotIn('ansible_playbook_python', data)
+        self.assertNotIn('ansible_python_interpreter', data)
+        self.assertIn('ansible_ssh_host_key_somehost', data)
+        self.assertIn('some_other_var', data)
+
+
+class TestActionBaseParseReturnedData(unittest.TestCase):
+
+    def _action_base(self):
+        fake_loader = DictDataLoader({
+        })
+        mock_module_loader = MagicMock()
+        mock_shared_loader_obj = MagicMock()
+        mock_shared_loader_obj.module_loader = mock_module_loader
+        mock_connection_loader = MagicMock()
+
+        mock_shared_loader_obj.connection_loader = mock_connection_loader
+        mock_connection = MagicMock()
+
+        action_base = DerivedActionBase(task=None,
+                                        connection=mock_connection,
+                                        play_context=None,
+                                        loader=fake_loader,
+                                        templar=None,
+                                        shared_loader_obj=mock_shared_loader_obj)
+        return action_base
+
+    def test_fail_no_json(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = 'foo\nbar\n'
+        err = 'oopsy'
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertFalse(res['_ansible_parsed'])
+        self.assertTrue(res['failed'])
+        self.assertEquals(res['module_stderr'], err)
+
+    def test_json_empty(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '{}\n'
+        err = ''
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertTrue(res['_ansible_parsed'])
+
+    def test_json_facts(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"}}\n'
+        err = ''
+
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertTrue(res['_ansible_parsed'])
+        # TODO: Should this be an AnsibleUnsafe?
+        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
+
+    def test_json_facts_add_host(self):
+        action_base = self._action_base()
+        rc = 0
+        stdout = '''{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
+        "add_host": {"host_vars": {"some_key": ["whatever the add_host object is"]}
+        }
+        }\n'''
+        err = ''
+
+        returned_data = {'rc': rc,
+                         'stdout': stdout,
+                         'stdout_lines': stdout.splitlines(),
+                         'stderr': err}
+        res = action_base._parse_returned_data(returned_data)
+        self.assertTrue(res['_ansible_parsed'])
+        # TODO: Should this be an AnsibleUnsafe?
+        #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
