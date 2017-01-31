@@ -1,5 +1,4 @@
 contrib/inventory/abiquo.py
-contrib/inventory/consul_io.py
 contrib/inventory/digital_ocean.py
 contrib/inventory/docker.py
 contrib/inventory/ec2.py
