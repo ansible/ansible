@@ -100,8 +100,6 @@ After publishing your PR on https://github.com/ansible/ansible a Shippable CI te
 If you need further advice join the `#ansible-devel` IRC channel (details in "Where to get support")
 
 
-Please don't "squash" your PRs, we prefer individual commits in the same PR, the PR will be squashed and merged by the Ansible Core Team when it's ready to be accepted. This is required to allow reviews to see what's changed since they started looking at your PR.
-
 We have a "ansibot" helper that comments on GitHub Issues and PRs which should highlight important information.
 
 
@@ -119,8 +117,6 @@ Over the years we've experimented with different sized PRs, some containing one 
 * Lower priority to review. People generally review the easier things first, what would you review first a PR with one file, or five?
 
 FIXME, should we tell people to only raise one at a time, or (say) 5 PRs at once?
-
-As with your first PR, please don't "squash" updates to GitHub as it makes the reviewers (and submitters) life a lot harder.
 
 
 Finally
