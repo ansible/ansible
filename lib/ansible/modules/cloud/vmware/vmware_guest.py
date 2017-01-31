@@ -1282,7 +1282,7 @@ class PyVmomiHelper(object):
                 return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Rename VM
-        if self.params['uuid'] and self.params['name'] and self.params['name'] != vm.config.name:
+        if self.params['uuid'] and self.params['name'] and self.params['name'] != self.current_vm_obj.config.name:
             task = self.current_vm_obj.Rename_Task(self.params['name'])
             self.wait_for_task(task)
             change_applied = True
