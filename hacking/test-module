@@ -199,11 +199,9 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
         if 'ansible_python_interpreter' in interpreters:
             invoke = "%s " % interpreters['ansible_python_interpreter']
-        else:
-            invoke = ""
     else:
         invoke = ""
-
+    
     os.system("chmod +x %s" % modfile)
 
     invoke = "%s%s" % (invoke, modfile)
