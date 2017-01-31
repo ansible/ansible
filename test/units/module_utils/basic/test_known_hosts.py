@@ -24,63 +24,58 @@ import ansible.module_utils.basic
 from ansible.compat.tests.mock import Mock
 from units.mock.procenv import swap_stdin_and_argv
 
+
 class TestAnsibleModuleKnownHosts(unittest.TestCase):
     urls = {
         'ssh://one.example.org/example.git':
             {'is_ssh_url': True, 'get_fqdn': 'one.example.org',
              'add_host_key_cmd': " -t rsa one.example.org",
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
+             'port': None},
         'ssh+git://two.example.org/example.git':
             {'is_ssh_url': True, 'get_fqdn': 'two.example.org',
-             'add_host_key_cmd': " -t rsa two.example.org", 
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
+             'add_host_key_cmd': " -t rsa two.example.org",
+             'port': None},
         'rsync://three.example.org/user/example.git':
-            {'is_ssh_url': False, 'get_fqdn': 'three.example.org', 
-             'add_host_key_cmd': None, # not called for non-ssh urls
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
+            {'is_ssh_url': False, 'get_fqdn': 'three.example.org',
+             'add_host_key_cmd': None,  # not called for non-ssh urls
+             'port': None},
         'git@four.example.org:user/example.git':
             {'is_ssh_url': True, 'get_fqdn': 'four.example.org',
-             'add_host_key_cmd': " -t rsa four.example.org", 
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
+             'add_host_key_cmd': " -t rsa four.example.org",
+             'port': None},
         'git+ssh://five.example.org/example.git':
-            {'is_ssh_url': True, 'get_fqdn': 'five.example.org', 
+            {'is_ssh_url': True, 'get_fqdn': 'five.example.org',
              'add_host_key_cmd': " -t rsa five.example.org",
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
-        'ssh://six.example.org:21/example.org': # ssh on FTP Port? 
+             'port': None},
+        'ssh://six.example.org:21/example.org':  # ssh on FTP Port?
             {'is_ssh_url': True, 'get_fqdn': 'six.example.org',
-             'add_host_key_cmd': " -t rsa six.example.org -p 21", # should add port param, since it's different from default
-             'port': "21"},
+             'add_host_key_cmd': " -t rsa -p 21 six.example.org",
+             'port': '21'},
         'ssh://[2001:DB8::abcd:abcd]/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
              'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]",
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
+             'port': None},
         'ssh://[2001:DB8::abcd:abcd]:22/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
-             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]", 
-             # even though it's explicitly specified we do not add port here (for backwards compatibility)'
-             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]",  
-             'port': "22"},
+             'add_host_key_cmd': " -t rsa -p 22 [2001:DB8::abcd:abcd]",
+             'port': '22'},
         'username@[2001:DB8::abcd:abcd]/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
-             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]", 
-             'port': known_hosts.SSH_KEYSCAN_DEFAULT_PORT},
-        'username@[2001:DB8::abcd:abcd]:22/example.git':
+             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]",
+             'port': None},
+        'username@[2001:DB8::abcd:abcd]:path/example.git':
             {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]',
-             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]", 
-             'port': "22"},
+             'add_host_key_cmd': " -t rsa [2001:DB8::abcd:abcd]",
+             'port': None},
         'ssh://internal.git.server:7999/repos/repo.git':
             {'is_ssh_url': True, 'get_fqdn': 'internal.git.server',
-             'add_host_key_cmd': " -t rsa internal.git.server -p 7999",
-             'port': "7999"}
+             'add_host_key_cmd': " -t rsa -p 7999 internal.git.server",
+             'port': '7999'}
     }
 
     def test_is_ssh_url(self):
         for u in self.urls:
             self.assertEqual(known_hosts.is_ssh_url(u), self.urls[u]['is_ssh_url'])
-
-    def test_get_fqdn(self):
-        for u in self.urls:
-            self.assertEqual(known_hosts.get_fqdn(u), self.urls[u]['get_fqdn'])
 
     def test_get_fqdn_and_port(self):
         for u in self.urls:
@@ -94,7 +89,7 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
         self.stdin_swap = swap_stdin_and_argv(stdin_data=args)
         self.stdin_swap.__enter__()
 
-        ansible.module_utils.basic._ANSIBLE_ARGS = None 
+        ansible.module_utils.basic._ANSIBLE_ARGS = None
         self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
 
         run_command = Mock()
@@ -109,5 +104,3 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
             if self.urls[u]['is_ssh_url']:
                 known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
                 run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
-
-

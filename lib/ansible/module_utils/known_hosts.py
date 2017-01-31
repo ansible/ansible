@@ -86,10 +86,10 @@ def get_fqdn_and_port(repo_url):
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
         match = ipv6_re.match(repo_url)
+        # For this type of URL, colon specifies the path, not the port
         if match:
-            fqdn, port = match.groups()
+            fqdn, path = match.groups()
         elif ":" in repo_url:
-            # Here, the colon specifies the path, not the port
             fqdn = repo_url.split(":")[0]
         elif "/" in repo_url:
             fqdn = repo_url.split("/")[0]
