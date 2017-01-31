@@ -179,7 +179,6 @@ def create_launch_config(connection, module):
     instance_type = module.params.get('instance_type')
     spot_price = module.params.get('spot_price')
     instance_monitoring = module.params.get('instance_monitoring')
-    assign_public_ip = module.params.get('assign_public_ip')
     kernel_id = module.params.get('kernel_id')
     ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
@@ -187,7 +186,15 @@ def create_launch_config(connection, module):
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
-
+    
+    if module.params.get('assign_public_ip'):
+        if module.params.get('assign_public_ip') == 'yes':
+            assign_public_ip = True
+        else:
+            assign_public_ip = False
+    else:
+        assign_public_ip = None
+    
     if volumes:
         for volume in volumes:
             if 'device_name' not in volume:
@@ -287,7 +294,7 @@ def main():
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
-            assign_public_ip=dict(type='bool'),
+            assign_public_ip=dict(default=None, type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(type='str')
         )
