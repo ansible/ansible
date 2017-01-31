@@ -722,7 +722,7 @@ class AnsibleModule(object):
                 self._deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
                     'version': arg_opts.get('removed_in_version')
-                 })
+                })
 
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
