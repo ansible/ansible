@@ -80,10 +80,10 @@ from subprocess import Popen, PIPE
 def netStatParse(raw):
     results = list()
     for line in iter(raw.splitlines()):
-        listening_search = re.search('[^ ]+:[^ ]+', line)
+        listening_search = re.search('[^ ]+:[0-9]+', line)
         if listening_search:
             splitted = line.split()
-            conns = re.search('[^ ]+:([^ ]+)', splitted[3])
+            conns = re.search('[^ ]+:([0-9]+)', splitted[3])
             pidstr = ''
             if 'tcp' in splitted[0]:
                 proto = 'tcp'
