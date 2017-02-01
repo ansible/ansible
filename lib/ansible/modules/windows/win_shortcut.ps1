@@ -79,6 +79,13 @@ If ($state -eq "absent") {
 
     # Compare existing values with new values, report as changed if required
 
+    If ($src -ne $null) {
+        # Windows translates executables to absolute path, so do we
+        If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
+            $src = (Get-Command -Name $src -Type Application).Definition
+        }
+    }
+
     If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
         $result.changed = $true
         $ShortCut.TargetPath = $src
