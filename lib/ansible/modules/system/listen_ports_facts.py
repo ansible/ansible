@@ -20,56 +20,35 @@
 
 DOCUMENTATION = '''
 ---
-module: portenforce
+module: listen_ports_facts
 author:
     - '"Nathan Davison (@ndavison)" <ndavison85@gmail.com>'
 version_added: "2.3"
 description:
-    - Kill processes listening on TCP and UDP ports not defined in the whitelists.
-short_description: Kill processes listening on TCP and UDP ports not defined in the whitelists.
+    - Gather facts on processes listening on TCP and UDP ports. Optionally provide 
+    a whitelist of TCP and/or UDP ports to gather facts on processes that violate 
+    the whitelists.
+short_description: Gather facts on processes listening on TCP and UDP ports.
 options:
   whitelist_tcp:
     description:
-      - A list of TCP ports to allow.
+      - A list of TCP port numbers that are expected to have processes listening.
     required: false
     type: "list"
   whitelist_udp:
     description:
-      - A list of UDP ports to allow.
+      - A list of UDP port numbers that are expected to have processes listening.
     required: false
     type: "list"
 '''
 
 EXAMPLES = '''
-- name: only allow TCP 80, 443, and 22
-  portenforce:
+- name: gather facts on listening ports, and populate the tcp_listen_violations fact with processes listening on TCP ports that are not 22, 80, or 443.
+  listen_ports_facts:
     whitelist_tcp:
       - 22
       - 80
       - 443
-'''
-
-RETURN = '''
-killed:
-  description: A list of pids that were killed.
-  type: list
-  contains:
-    pid:
-      description: The pid of a killed process.
-      type: int
-      sample: 1223
-    port:
-      description: The port the killed pid was listening on.
-      type: int
-      sample: 443
-    proto:
-      description: The protocol, TCP or UDP, of the listening connection.
-      type: string
-      sample: 'tcp'
-    stime:
-      description: The start time of the killed process.
-      type: string
-      sample: Thu Apr 21 17:30:16 2016
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -77,7 +56,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'version': '1.0'}
 
 import re
-import os
 import platform
 from subprocess import Popen, PIPE
 from ansible.module_utils.basic import AnsibleModule
@@ -92,17 +70,17 @@ def netStatParse(raw):
             conns = re.search('[^ ]+:([0-9]+)', splitted[3])
             pidstr = ''
             if 'tcp' in splitted[0]:
-                proto = 'tcp'
+                protocol = 'tcp'
                 pidstr = splitted[6]
             elif 'udp' in splitted[0]:
-                proto = 'udp'
+                protocol = 'udp'
                 pidstr = splitted[5]
             pids = re.search('([0-9]+)/(.*)', pidstr)
             if conns and pids:
                 port = conns.group(1)
                 pid = pids.group(1)
                 name = pids.group(2)
-                result = dict(pid=int(pid), port=int(port), proto=proto, name=name)
+                result = dict(pid=int(pid), port=int(port), protocol=protocol, name=name)
                 if result not in results:
                     results.append(result)
             elif not pids:
@@ -110,13 +88,13 @@ def netStatParse(raw):
     return results
 
 def applyWhitelist(portspids, whitelist=list()):
-    kill_pids = list()
+    processes = list()
     for p in portspids:
         if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
-            to_kill = dict(pid=p['pid'], port=p['port'], proto=p['proto'], name=p['name'], stime=p['stime'])
-            if to_kill not in kill_pids:
-                kill_pids.append(to_kill)
-    return kill_pids
+            process = dict(pid=p['pid'], port=p['port'], protocol=p['protocol'], name=p['name'], stime=p['stime'], user=p['user'])
+            if process not in processes:
+                processes.append(process)
+    return processes
 
 def main():
 
@@ -125,14 +103,11 @@ def main():
             whitelist_tcp = dict(required=False, type='list', default=list()),
             whitelist_udp = dict(required=False, type='list', default=list())
         ),
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     if platform.system() != 'Linux':
         module.fail_json(msg='This module requires Linux.')
-
-    if not module.params['whitelist_tcp'] and not module.params['whitelist_udp']:
-        module.fail_json(msg="You must supply either a 'whitelist_tcp' or 'whitelist_udp' argument.")
 
     def getPidSTime(pid):
         ps_cmd = module.get_bin_path('ps', True)
@@ -144,9 +119,19 @@ def main():
                 stime = line
         return stime
 
+    def getPidUser(pid):
+        ps_cmd = module.get_bin_path('ps', True)
+        p1 = Popen([ps_cmd, '-o', 'user', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
+        ps_output = p1.communicate()[0]
+        user = ''
+        for line in iter(ps_output.splitlines()):
+            if line != 'USER':
+                user = line
+        return user
+
     result = {}
     result['changed'] = False
-    result['killed'] = list()
+    result['ansible_facts'] = dict(tcp_listen_violations=list(), udp_listen_violations=list(), tcp_listen=list(), udp_listen=list())
 
     try:
         netstat_cmd = module.get_bin_path('netstat', True)
@@ -154,49 +139,42 @@ def main():
         # which TCP ports are listening for connections?
         p1 = Popen([netstat_cmd, '-plnt'], stdout=PIPE, stderr=PIPE)
         output_tcp = p1.communicate()[0]
-        kill_tcp = netStatParse(output_tcp)
-        for i, p in enumerate(kill_tcp):
+        tcp_ports = netStatParse(output_tcp)
+        for i, p in enumerate(tcp_ports):
             p['stime'] = getPidSTime(p['pid'])
-            kill_tcp[i] = p
+            p['user'] = getPidUser(p['pid'])
+            tcp_ports[i] = p
+        if tcp_ports:
+            result['ansible_facts']['tcp_listen'] = tcp_ports
 
         # which UDP ports are listening for connections?
         p1 = Popen([netstat_cmd, '-plnu'], stdout=PIPE, stderr=PIPE)
         output_udp = p1.communicate()[0]
-        kill_udp = netStatParse(output_udp)
-        for i, p in enumerate(kill_udp):
+        udp_ports = netStatParse(output_udp)
+        for i, p in enumerate(udp_ports):
             p['stime'] = getPidSTime(p['pid'])
-            kill_udp[i] = p
+            p['user'] = getPidUser(p['pid'])
+            udp_ports[i] = p
+        if udp_ports:
+            result['ansible_facts']['udp_listen'] = udp_ports
 
     except EnvironmentError:
         err = get_exception()
         module.fail_json(msg=str(err))
 
-    # gather details of the pids to kill
-    kill_pids_tcp = applyWhitelist(kill_tcp, module.params['whitelist_tcp'])
-    kill_pids_udp = applyWhitelist(kill_udp, module.params['whitelist_udp'])
-    kill_all = list(kill_pids_tcp)
-    kill_all.extend(x for x in kill_pids_udp if x not in kill_pids_tcp)
-
-    # get just the pids to avoid duplicates across protocols
-    kill_unique = list()
-    pids_seen = list()
-    for p in kill_all:
-        if p['pid'] not in pids_seen:
-            pids_seen.append(p['pid'])
-            kill_unique.append(p)
-
-    # kill! kill!
-    if not module.check_mode:
-        for p in kill_unique:
-            if p['stime'] == getPidSTime(p['pid']):
-                os.kill(p['pid'], 15)
-
-    if kill_all:
-        result['changed'] = True
-        result['killed'] = kill_all
+    # if a TCP whitelist was supplied, determine which if any pids violate it
+    if module.params['whitelist_tcp'] and tcp_ports:
+        tcp_violations = applyWhitelist(tcp_ports, module.params['whitelist_tcp'])
+        if tcp_violations:
+            result['ansible_facts']['tcp_listen_violations'] = tcp_violations
+    
+    # if a UDP whitelist was supplied, determine which if any pids violate it
+    if module.params['whitelist_udp'] and udp_ports:
+        udp_violations = applyWhitelist(udp_ports, module.params['whitelist_udp'])
+        if udp_violations:
+            result['ansible_facts']['udp_listen_violations'] = udp_violations
 
     module.exit_json(**result)
 
-# import module snippets
 if __name__ == '__main__':
     main()
