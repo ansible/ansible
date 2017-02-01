@@ -143,7 +143,10 @@ class Connection(ConnectionBase):
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
-        b_command += [to_bytes(binary, errors='surrogate_or_strict')]
+        if binary == 'ssh':
+            b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
+        else:
+            b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
         #
         # Next, additional arguments based on the configuration.
@@ -587,13 +590,10 @@ class Connection(ConnectionBase):
         # data into /usr/bin/python inside a tty automatically invokes the
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
-
-        ssh_executable = self._play_context.ssh_executable
-
         if not in_data and sudoable:
-            args = (ssh_executable, '-tt', self.host, cmd)
+            args = ('ssh', '-tt', self.host, cmd)
         else:
-            args = (ssh_executable, self.host, cmd)
+            args = ('ssh', self.host, cmd)
 
         cmd = self._build_command(*args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
@@ -726,7 +726,7 @@ class Connection(ConnectionBase):
         # temporarily disabled as we are forced to currently close connections after every task because of winrm
         # if self._connected and self._persistent:
         #     ssh_executable = self._play_context.ssh_executable
-        #     cmd = self._build_command(ssh_executable, '-O', 'stop', self.host)
+        #     cmd = self._build_command('ssh', '-O', 'stop', self.host)
         #
         #     cmd = map(to_bytes, cmd)
         #     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
