@@ -46,8 +46,9 @@ Ansible Changes By Release
   * ec2_lc_facts
   * aws_kms
   * ecs_ecr
-  * ec2_vpc_vgw_facts
+  * ec2_vpc_igw_facts
   * ec2_vpc_nat_gateway_facts
+  * ec2_vpc_vgw_facts
 - bigswitch:
   * bigmon_policy
 - cloudscale_server
