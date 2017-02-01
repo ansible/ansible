@@ -254,7 +254,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             return False
         elif isinstance(self._play_context.prompt, string_types):
             b_prompt = to_bytes(self._play_context.prompt)
-            return b_output.startswith(b_prompt)
+            b_lines = b_output.splitlines(True)
+            if not b_lines:
+                return False
+            return b_lines[-1].startswith(b_prompt)
         else:
             return self._play_context.prompt(b_output)
 
