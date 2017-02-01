@@ -24,7 +24,7 @@ from ansible.module_utils.basic import *
 try:
     from kubernetes import client, config
     from kubernetes.config.config_exception import ConfigException
-except ImportError as exc:
+except ImportError, exc:
     HAS_KUBE_EXC = str(exc)
     HAS_KUBE = False
 
@@ -70,7 +70,7 @@ class K8SClient(object):
             # The module needs the kubernetes client
             try:
                 config.load_kube_config()
-            except ConfigException as exc:
+            except ConfigException, exc:
                 self.module.fail_json(msg="Exception calling load_kube_config: {}".format(str(exc)))
 
             self.k8s_client = client.CoreV1Api()
