@@ -24,6 +24,7 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -default $null
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
