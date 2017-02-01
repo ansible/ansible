@@ -311,11 +311,15 @@ def _install_remote_rpms(base, filenames):
         base.package_install(pkg)
 
 
-def ensure(module, base, state, names):
+def ensure(module, base, state, names, exclude):
     # Accumulate failures.  Package management modules install what they can
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
+
+    if exclude:
+        base.conf.exclude_pkgs(exclude)
+
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -406,7 +410,7 @@ def ensure(module, base, state, names):
                     # Group is already uninstalled.
                     pass
 
-            for envioronment in environments:
+            for environment in environments:
                 try:
                     base.environment_remove(environment)
                 except dnf.exceptions.CompsError:
@@ -453,6 +457,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(aliases=['pkg'], type='list'),
+            exclude=dict(required=False, default=None),
             state=dict(
                 default='installed',
                 choices=[
@@ -485,7 +490,7 @@ def main():
             module, params['conf_file'], params['disable_gpg_check'],
             params['disablerepo'], params['enablerepo'], params['installroot'])
 
-        ensure(module, base, params['state'], params['name'])
+        ensure(module, base, params['state'], params['name'], params['exclude'])
 
 
 if __name__ == '__main__':
