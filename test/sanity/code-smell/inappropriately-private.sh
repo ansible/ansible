@@ -15,4 +15,4 @@
 # that violate this.
 #
 # 23-10-2015: Count was 508 lines
-grep -Pri '(?<!self)\._(?!_)' "$1" | grep -v modules
+git grep -Pi '(?<!self)\._(?!_)' "$1" | grep -v modules
