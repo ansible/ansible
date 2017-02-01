@@ -105,7 +105,7 @@ class CallbackBase:
                     self._display.warning(warning)
             if 'deprecations' in res and res['deprecations']:
                 for warning in res['deprecations']:
-                    self._display.deprecated(warning)
+                    self._display.deprecated(**warning)
 
     def _get_diff(self, difflist):
 
