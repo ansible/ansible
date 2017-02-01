@@ -386,7 +386,7 @@ def main():
             if not module.check_mode:
                 (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                 if rc != 0:
-                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+                    module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err), **result)
 
             result['enabled'] = not enabled
 
@@ -418,10 +418,10 @@ def main():
                 if not module.check_mode:
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
-                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err), **result)
         else:
             # this should not happen?
-            module.fail_json(msg="Service is in unknown state", status=result['status'])
+            module.fail_json(msg="Service is in unknown state", **result)
 
 
     module.exit_json(**result)
