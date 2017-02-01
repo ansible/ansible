@@ -48,6 +48,12 @@ EXAMPLES = '''
       - 22
       - 80
       - 443
+
+- name: TCP whitelist violation
+  debug:
+    msg: "TCP port {{item.port}} by pid {{item.pid}} violates the whitelist"
+  with_items: "{{ tcp_listen_violations }}"
+  when: tcp_listen_violations
 '''
 
 ANSIBLE_METADATA = {'status': ['preview'],
