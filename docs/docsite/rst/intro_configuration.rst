@@ -54,9 +54,7 @@ Environmental configuration
 
 Ansible also allows configuration of settings via environment variables.  If
 these environment variables are set, they will override any setting loaded
-from the configuration file.  These variables are for brevity not defined
-here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_
-in the source tree if you want to use these.
+from the configuration file.  These variables are defined in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_.
 
 .. _config_values_by_section:
 
@@ -524,7 +522,7 @@ This is the default location Ansible looks to find modules::
 
      library = /usr/share/ansible
 
-Ansible knows how to look in multiple locations if you feed it a colon
+Ansible can look in multiple locations if you feed it a colon
 separated path, and it also will look for modules in the :file:`./library`
 directory alongside a playbook.
 
@@ -659,7 +657,7 @@ modules when sending them to the remote machine.  Having custom module_utils
 is useful for extracting common code when developing a set of site-specific
 modules.
 
-Ansible knows how to look in multiple locations if you feed it a colon
+Ansible can look in multiple locations if you feed it a colon
 separated path, and it also will look for modules in the
 :file:`./module_utils` directory alongside a playbook.
 
