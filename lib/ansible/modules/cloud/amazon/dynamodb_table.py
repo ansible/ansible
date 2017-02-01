@@ -30,7 +30,7 @@ description:
 author: Alan Loi (@loia)
 requirements:
   - "boto >= 2.37.0"
-  - "boto3 >= 1.4.4" (for tagging)
+  - "boto3 >= 1.4.4 (for tagging)"
 options:
   state:
     description:
