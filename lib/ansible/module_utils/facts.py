@@ -943,6 +943,8 @@ class Distribution(object):
         elif 'Ubuntu' in data:
             self.facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
+        else:
+            return False
 
     def get_distribution_Mandriva(self, name, data, path):
         if 'Mandriva' in data:
