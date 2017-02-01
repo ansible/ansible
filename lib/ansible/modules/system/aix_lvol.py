@@ -144,9 +144,9 @@ def convert_size(size):
     match = re.search("(\w)", size)
     if match is not None:
 
-        if match.group(1) == "G":
+        if match.group(1).upper() == "G":
             size_factor=1024
-        if match.group(1) == "T":
+        if match.group(1).upper() == "T":
             size_factor=1024*1024
 
     if base_size is None:
@@ -225,13 +225,13 @@ def main():
         argument_spec=dict(
             vg=dict(required=True),
             lv=dict(required=True),
-            lv_type=dict(required=False),
+            lv_type=dict(default='jfs2'),
             size=dict(type='str'),
-            opts=dict(type='str'),
-            copies=dict(type='str'),
+            opts=dict(default=''),
+            copies=dict(default='1'),
             state=dict(choices=["absent", "present"], default='present'),
             policy=dict(choices=["maximum", "minimum"], default='maximum'),
-            pvs=dict(type='str')
+            pvs=dict(type='list',default=list())
         ),
         supports_check_mode=True,
     )
@@ -246,19 +246,7 @@ def main():
     state = module.params['state']
     pvs = module.params['pvs']
 
-    if pvs is None:
-        pvs = ""
-    else:
-        pvs = pvs.replace(",", " ")
-
-    if opts is None:
-        opts = ""
-
-    if copies is None:
-        copies = "1"
-
-    if lv_type is None:
-        lv_type = "jfs2"
+    pv_list = ' '.join(pvs)
 
     if policy == "maximum":
         lv_policy="x"
@@ -271,11 +259,9 @@ def main():
     else:
         test_opt = ''
 
-
     # Get information on volume group requested
     lsvg_cmd = module.get_bin_path("lsvg", required=True)
-    rc, vg_info, err = module.run_command(
-        "%s %s" % (lsvg_cmd, vg))
+    rc, vg_info, err = module.run_command("%s %s" % (lsvg_cmd, vg))
 
     if rc != 0:
         if state == 'absent':
@@ -315,7 +301,7 @@ def main():
             ### create LV
             mklv_cmd = module.get_bin_path("mklv", required=True)
 
-            cmd = "%s %s -t %s -y %s -c %s  -e %s %s %s %sM %s" % (test_opt, mklv_cmd, lv_type, lv, copies, lv_policy, opts, vg, lv_size, pvs)
+            cmd = "%s %s -t %s -y %s -c %s  -e %s %s %s %sM %s" % (test_opt, mklv_cmd, lv_type, lv, copies, lv_policy, opts, vg, lv_size, pv_list)
             rc, _, err = module.run_command(cmd)
             if rc == 0:
                 module.exit_json(changed=True, msg="Logical volume %s created." % lv)
@@ -337,15 +323,18 @@ def main():
                 rc, _, err = module.run_command("%s %s -e %s %s" % (test_opt, chlv_cmd, lv_policy, this_lv['name']))
                 if rc == 0:
                     module.exit_json(changed=True, msg="Logical volume %s policy changed: %s." % (lv, policy))
-            if not size:
-                pass
+
             if vg != this_lv['vg']:
                 module.fail_json(msg="Logical volume %s already exist in volume group %s" % (lv, this_lv['vg']))
+
+            # from here the last remaining action is to resize it, if no size parameter is passed we do nothing.
+            if not size:
+                module.exit_json(changed=False, msg="Logical volume %s already exist." % (lv))
 
             ### resize LV based on absolute values
             if int(lv_size) > this_lv['size']:
                 extendlv_cmd = module.get_bin_path("extendlv", required=True)
-                cmd = "%s %s %sM" % (extendlv_cmd, lv, lv_size - this_lv['size'])
+                cmd = "%s %s %s %sM" % (test_opt, extendlv_cmd, lv, lv_size - this_lv['size'])
                 rc, out, err = module.run_command(cmd)
                 if rc == 0:
                     module.exit_json(changed=True, msg="Logical volume %s size extended to %sMB." % (lv, lv_size))
@@ -355,7 +344,6 @@ def main():
                 module.fail_json(msg="No shrinking of Logical Volume %s permitted. Current size: %s MB" % (lv, this_lv['size']))
             else:
                 module.exit_json(changed=False, msg="Logical volume %s size is already %sMB." % (lv, lv_size))
-
 
 # import module snippets
 from ansible.module_utils.basic import *
