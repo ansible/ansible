@@ -251,7 +251,7 @@ class Ec2Inventory(object):
             self.regions = configRegions.split(",")
         if 'auto' in self.regions:
             env_region = os.environ.get('AWS_REGION')
-            if env_region == None:
+            if env_region is None:
                 env_region = os.environ.get('AWS_DEFAULT_REGION')
             self.regions = [ env_region ]
 
