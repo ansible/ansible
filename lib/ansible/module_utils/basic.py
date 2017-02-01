@@ -93,6 +93,8 @@ import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import repeat, chain
+# TODO: is this in all py2.4 versions? it is in 2.4.6
+from logging.handlers import BufferingHandler
 
 try:
     import syslog
@@ -252,6 +254,47 @@ EXEC_PERM_BITS = int('00111', 8)  # execute permission bits
 DEFAULT_PERM = int('0666', 8)    # default file permission bits
 
 log = logging.getLogger(__name__)
+
+
+class AnsibleBufferingHandler(BufferingHandler):
+    def flush(self):
+        # shallow copy
+        log_records = self.buffer[:]
+        serializable_log_records = []
+        for log_record in self.buffer:
+            serializable_log_records.append(self.prepare(log_record))
+
+        return serializable_log_records
+
+    def prepare(self, record):
+        '''prepare a LogRecord to be serialized.
+
+        NOTE: This modifies 'record'.'''
+        record_dict = {}
+        # These are known to be valid log record
+        # Could also try
+        record_attrs = ['name', 'msg', 'levelname', 'levelno', 'pathname',
+                        'filename', 'module', 'lineno', 'created', 'msecs', 'relativeCreated',
+                        'thread', 'threadName', 'process', 'funcName', 'processName']
+        for attr in record.__dict__:
+            if attr in record_attrs:
+                value = getattr(record, attr, None)
+                record_dict[attr] = value
+            # TODO: could also try handling extra records here
+
+        if record.exc_info:
+            exc_text = self.format(record)
+            record_dict['exc_text'] = exc_text
+
+        record_dict['message'] = record.getMessage()
+
+        # TODO: include record.args? needs to be serializable
+        arg_reprs = []
+        for arg in record.args:
+            arg_reprs.append(repr(arg))
+
+        record_dict['arg_reprs'] = arg_reprs
+        return record_dict
 
 
 def get_platform():
@@ -840,6 +883,9 @@ class AnsibleModule(object):
                     'version': arg_opts.get('removed_in_version')
                 })
 
+        self._setup_logging(level=logging.DEBUG)
+
+
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
@@ -881,6 +927,22 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
+
+    def _setup_logging(self, level=None):
+        level = level or logging.INFO
+        # TODO: would be useful to include the ansible module name in default log record attributes
+        self.logger = logging.getLogger('ansible.module_utils.basic.AnsibleModule')
+        self.logger.setLevel(level)
+        log.setLevel(level)
+
+        self.log_handler = AnsibleBufferingHandler(capacity=1)
+        self.log_handler.setLevel(logging.DEBUG)
+
+        # self.log propogates to 'log' and its handler, if the logger names are correct
+        log.addHandler(self.log_handler)
+
+        log.debug('logging was setup. log=%s, self.logger=%s, self.log_handler=%s', log, self.logger, self.log_handler, extra={'some_key': 'some_value', 'another_key': None})
+        self.logger.info("self.logger test")
 
     def warn(self, warning):
 
@@ -1929,6 +1991,9 @@ class AnsibleModule(object):
             if log_args is None:
                 log_args = dict()
 
+            # FIXME: kluge for testing, logging more useful if called directly
+            self.logger.info(msg, log_args)
+
             module = 'ansible-%s' % self._name
             if isinstance(module, binary_type):
                 module = module.decode('utf-8', 'replace')
@@ -2114,6 +2179,8 @@ class AnsibleModule(object):
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
+
+        kwargs['log_records'] = self.log_handler.flush()
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
