@@ -72,6 +72,7 @@ FILE_ATTRIBUTES = {
 # be used to do many common tasks
 
 import locale
+import logging
 import os
 import re
 import shlex
@@ -249,6 +250,8 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 PERM_BITS = int('07777', 8)      # file mode permission bits
 EXEC_PERM_BITS = int('00111', 8)  # execute permission bits
 DEFAULT_PERM = int('0666', 8)    # default file permission bits
+
+log = logging.getLogger(__name__)
 
 
 def get_platform():
