@@ -229,6 +229,7 @@ def run(module, result):
 
     # create loadable config that includes only the configuration updates
     commands = diff_config(candidate, config)
+    sanitize_config(commands, result)
 
     result['commands'] = commands
 
@@ -236,7 +237,7 @@ def run(module, result):
         load_config(module, commands, result)
 
         if result.get('filtered'):
-            result['warnings'].append('Some configuration commands where '
+            result['warnings'].append('Some configuration commands were '
                                       'removed, please see the filtered key')
 
         result['changed'] = True
