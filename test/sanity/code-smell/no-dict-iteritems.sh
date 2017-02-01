@@ -1,9 +1,6 @@
 #!/bin/sh
 
-ITERITEMS_USERS=$(grep -rI '\.iteritems' . \
-    --exclude-dir .git \
-    --exclude-dir .tox \
-    --exclude-dir docsite \
+ITERITEMS_USERS=$(git grep -I '\.iteritems' \
     | grep -v \
     -e 'six\.iteritems' \
     -e lib/ansible/compat/six/_six.py \
