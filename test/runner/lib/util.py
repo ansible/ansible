@@ -416,6 +416,7 @@ class CommonConfig(object):
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
+        self.debug = args.debug  # type: bool
 
 
 class EnvironmentConfig(CommonConfig):
