@@ -16,7 +16,6 @@
     # - shellout.stderr == ""
     - shellout.stdout == "hello from Ansible\r\n"
     - shellout.stdout_lines == ["hello from Ansible"]
-    - shellout.warnings == []
 
 - name: execute a powershell cmdlet with multi-line output
   win_shell: Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"
@@ -36,7 +35,6 @@
     # - shellout.stderr == ""
     - shellout.stdout == "hello from Ansible\r\nanother line\r\nyet another line\r\n"
     - shellout.stdout_lines == ["hello from Ansible","another line", "yet another line"]
-    - shellout.warnings == []
 
 - name: execute something nonexistent
   win_shell: bogus_command1234
@@ -56,7 +54,6 @@
     - shellout.stderr is search('not recognized')
     - shellout.stdout == ""
     - shellout.stdout_lines == []
-    - shellout.warnings == []
 
 - name: execute something with error output
   win_shell: Write-Error "it broke"; Write-Output "some output"
@@ -75,7 +72,6 @@
     - shellout.stderr is search('it broke')
     - shellout.stdout == "some output\r\n"
     - shellout.stdout_lines == ["some output"]
-    - shellout.warnings == []
 
 - name: ensure test file is absent
   win_file:
