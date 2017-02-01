@@ -21,13 +21,15 @@ __metaclass__ = type
 
 
 import math
-import collections
+from collections import Hashable, Mapping
 from ansible import errors
 from ansible.module_utils import basic
 
 def unique(a):
-    if isinstance(a,collections.Hashable):
+    if isinstance(a, Hashable):
         c = set(a)
+    elif isinstance(a, Mapping):
+        c = a
     else:
         c = []
         for x in a:
@@ -35,30 +37,66 @@ def unique(a):
                 c.append(x)
     return c
 
-def intersect(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+def intersect(a, b, strict=False):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
+    elif isinstance(a, Mapping) and isinstance(b, Mapping):
+        c = {}
+        for k in intersect(a.keys(),b.keys()):
+            if strict:
+                if a[k] == b[k]:
+                    c[k] = a[k]
+            else:
+                c[k] = a[k]
     else:
         c = unique(filter(lambda x: x in b, a))
     return c
 
-def difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+def difference(a, b, strict=False):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
+    elif isinstance(a, Mapping) and isinstance(b, Mapping):
+        c = {}
+        # get keys that are different
+        for k in difference(a.keys(),b.keys()):
+            c[k] = a[k]
+
+        if strict:
+            # get values that are different
+            for k in intersect(a.keys(), b.keys()):
+                if a[k] != b[k]:
+                    c[k] = a[k]
     else:
         c = unique(filter(lambda x: x not in b, a))
     return c
 
-def symmetric_difference(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+def symmetric_difference(a, b, strict=False):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
+    elif isinstance(a, Mapping) and isinstance(b, Mapping):
+        c={}
+        # get keys that are different
+        for k in symmetric_difference(a.keys(),b.keys()):
+            if k in b:
+                c[k] = b[k]
+            else:
+                c[k] = a[k]
+
+        if strict:
+            # get values that are different
+            for k in intersect(a.keys(), b.keys()):
+                if a[k] != b[k]:
+                    c[k] = a[k]
     else:
         c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
     return c
 
 def union(a, b):
-    if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
+    if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
+    elif isinstance(a, Mapping) and isinstance(b, Mapping):
+        c = b.copy()
+        c.update(a)
     else:
         c = unique(a + b)
     return c
