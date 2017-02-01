@@ -718,6 +718,12 @@ class AnsibleModule(object):
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
 
+            if arg_opts.get('removed_in_version') is not None and arg_name in self.params:
+                self._deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                    'version': arg_opts.get('removed_in_version')
+                })
+
         # check the locale as set by the current environment, and reset to
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
@@ -768,13 +774,15 @@ class AnsibleModule(object):
         else:
             raise TypeError("warn requires a string not a %s" % type(warning))
 
-    def deprecate(self, deprecate):
-
-        if isinstance(deprecate, string_types):
-            self._deprecations.append(deprecate)
-            self.log('[DEPRECATION WARNING] %s' % deprecate)
+    def deprecate(self, msg, version=None):
+        if isinstance(msg, string_types):
+            self._deprecations.append({
+                'msg': msg,
+                'version': version
+            })
+            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
         else:
-            raise TypeError("deprecate requires a string not a %s" % type(deprecate))
+            raise TypeError("deprecate requires a string not a %s" % type(msg))
 
     def load_file_common_arguments(self, params):
         '''
@@ -1467,14 +1475,26 @@ class AnsibleModule(object):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
             return
-        for (key, val, requirements) in spec:
+        for sp in spec:
             missing = []
+            max_missing_count = 0
+            is_one_of = False
+            if len(sp) == 4:
+                key, val, requirements, is_one_of = sp
+            else:
+                key, val, requirements = sp
+
+            # is_one_of is True at least one requirement should be
+            # present, else all requirements should be present.
+            if is_one_of:
+                max_missing_count = len(requirements)
+
             if key in self.params and self.params[key] == val:
                 for check in requirements:
                     count = self._count_terms((check,))
                     if count == 0:
                         missing.append(check)
-            if len(missing) > 0:
+            if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
     def _check_argument_values(self):

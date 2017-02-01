@@ -12,6 +12,8 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
+optional region environement variable if region is 'auto'
+
 This script also assumes there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
@@ -247,6 +249,11 @@ class Ec2Inventory(object):
                         self.regions.append(regionInfo.name)
         else:
             self.regions = configRegions.split(",")
+        if 'auto' in self.regions:
+            env_region = os.environ.get('AWS_REGION')
+            if env_region is None:
+                env_region = os.environ.get('AWS_DEFAULT_REGION')
+            self.regions = [ env_region ]
 
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')

@@ -195,12 +195,11 @@ def ansiballz_setup(modfile, modname, interpreters):
 
 def runtest(modfile, argspath, modname, module_style, interpreters):
     """Test run a module, piping it's output for reporting."""
+    invoke = ""
     if module_style == 'ansiballz':
         modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
         if 'ansible_python_interpreter' in interpreters:
             invoke = "%s " % interpreters['ansible_python_interpreter']
-        else:
-            invoke = ""
 
     os.system("chmod +x %s" % modfile)
 

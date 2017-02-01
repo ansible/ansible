@@ -16,6 +16,7 @@ Ansible Changes By Release
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
 * ansible-doc now displays path to module
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
+* default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -46,8 +47,9 @@ Ansible Changes By Release
   * ec2_lc_facts
   * aws_kms
   * ecs_ecr
-  * ec2_vpc_vgw_facts
+  * ec2_vpc_igw_facts
   * ec2_vpc_nat_gateway_facts
+  * ec2_vpc_vgw_facts
 - bigswitch:
   * bigmon_policy
 - cloudscale_server
@@ -72,6 +74,8 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- google
+  * gce_eip
 - icinga2_feature
 - illumos:
   * dladm_iptun
