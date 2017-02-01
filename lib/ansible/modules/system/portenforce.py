@@ -150,7 +150,7 @@ def main():
         output_tcp = p1.communicate()[0]
         kill_tcp = netStatParse(output_tcp)
         for i, p in enumerate(kill_tcp):
-            p['stime'] = getPidSTime(p['pid']) 
+            p['stime'] = getPidSTime(p['pid'])
             kill_tcp[i] = p
 
         # which UDP ports are listening for connections?
@@ -158,7 +158,7 @@ def main():
         output_udp = p1.communicate()[0]
         kill_udp = netStatParse(output_udp)
         for i, p in enumerate(kill_udp):
-            p['stime'] = getPidSTime(p['pid']) 
+            p['stime'] = getPidSTime(p['pid'])
             kill_udp[i] = p
 
     except EnvironmentError:
