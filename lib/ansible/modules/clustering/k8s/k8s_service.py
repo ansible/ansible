@@ -296,7 +296,7 @@ def create_service(module, kube):
     if not module.check_mode:
         try:
             api_response = kube.create_namespaced_service(module.params['namespace'], template)
-        except ApiException as exc:
+        except ApiException, exc:
             module.fail_json(msg="Exception when calling CoreV1Api->create_namespaced_service: {}".format(str(exc)))
 
     return api_response
@@ -340,7 +340,7 @@ def remove_service(module, kube):
     if not module.check_mode:
         try:
             kube.delete_namespaced_service(name, namespace)
-        except ApiException as exc:
+        except ApiException, exc:
             module.fail_json(msg="Exception when calling CoreV1Api->delete_namespaced_service: {}".format(str(exc)))
 
 
@@ -456,7 +456,7 @@ def patch_service(module, kube, service):
                                                              service.metadata.namespace,
                                                              template)
                 template = api_response
-            except ApiException as exc:
+            except ApiException, exc:
                 module.fail_json(msg="Exception when calling CoreV1Api->patch_namespaced_service: {}".format(str(exc)))
 
     return patch, template
@@ -529,7 +529,7 @@ def get_service_state(module, kube):
                 service = item
                 break
 
-    except ApiException as exc:
+    except ApiException, exc:
         module.fail_json(msg="Exception when calling CoreV1Api->list_namespaced_service: {}".format(str(exc)))
 
     return service
