@@ -235,7 +235,7 @@ def main():
             #private=args.private,
             private=True,
         )
-		
+
         if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
             inventory_args.update(dict(
                 config_key='ansible',
