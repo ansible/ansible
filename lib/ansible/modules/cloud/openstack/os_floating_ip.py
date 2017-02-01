@@ -128,16 +128,8 @@ EXAMPLES = '''
      server: cattle001
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule, remove_values
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _get_floating_ip(cloud, floating_ip_address):
@@ -167,13 +159,10 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['nat_destination'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-        module.fail_json(msg="To utilize nat_destination, the installed version of"
-                             "the shade library MUST be >= 1.8.0")
+    if module.params['nat_destination']:
+        min_version = '1.8.0'
+    else:
+        min_version = None
 
     server_name_or_id = module.params['server']
     state = module.params['state']
@@ -186,7 +175,7 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    cloud = shade.openstack_cloud(**module.params)
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
 
     try:
         server = cloud.get_server(server_name_or_id)
