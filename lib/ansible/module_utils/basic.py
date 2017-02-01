@@ -1598,10 +1598,10 @@ class AnsibleModule(object):
                 del self.params[k]
 
         if unsupported_parameters:
-            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ','.join(sorted(list(unsupported_parameters))))
+            msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
-            msg += " Supported parameters include: %s" % (','.join(sorted(spec.keys())))
+            msg += " Supported parameters include: %s" % (', '.join(sorted(spec.keys())))
             self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
@@ -1621,7 +1621,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count > 1:
-                msg = "parameters are mutually exclusive: %s" % (check,)
+                msg = "parameters are mutually exclusive: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1632,7 +1632,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check, param)
             if count == 0:
-                msg = "one of the following is required: %s" % ','.join(check)
+                msg = "one of the following is required: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1645,7 +1645,7 @@ class AnsibleModule(object):
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    msg = "parameters are required together: %s" % (check,)
+                    msg = "parameters are required together: %s" % ', '.join(check)
                     if self._options_context:
                         msg += " found in %s" % " -> ".join(self._options_context)
                     self.fail_json(msg=msg)
@@ -1662,7 +1662,7 @@ class AnsibleModule(object):
             if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
-            msg = "missing required arguments: %s" % ",".join(missing)
+            msg = "missing required arguments: %s" % ", ".join(missing)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
@@ -1686,6 +1686,9 @@ class AnsibleModule(object):
             # present, else all requirements should be present.
             if is_one_of:
                 max_missing_count = len(requirements)
+                term = 'any'
+            else:
+                term = 'all'
 
             if key in param and param[key] == val:
                 for check in requirements:
@@ -1693,7 +1696,7 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
+                msg = "%s is %s but %s of the following are missing: %s" % (key, val, ', '.join(missing))
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)
                 self.fail_json(msg=msg)
@@ -1729,7 +1732,7 @@ class AnsibleModule(object):
                                 (param[k],) = overlap
 
                         if param[k] not in choices:
-                            choices_str = ",".join([to_native(c) for c in choices])
+                            choices_str = ", ".join([to_native(c) for c in choices])
                             msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             if self._options_context:
                                 msg += " found in %s" % " -> ".join(self._options_context)
@@ -2267,7 +2270,7 @@ class AnsibleModule(object):
             if not self.params.get(required_param):
                 missing_params.append(required_param)
         if missing_params:
-            self.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
+            self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
