@@ -118,13 +118,28 @@ def get_host_groups(inventory, refresh=False):
     return groups
 
 
-def append_hostvars(hostvars, groups, key, server, namegroup=False):
+def append_hostvars(hostvars, groups, key, server, inventory, namegroup=False):
     hostvars[key] = dict(
         ansible_ssh_host=server['interface_ip'],
         openstack=server)
+    addwinrm = False
     for group in get_groups_from_server(server, namegroup=namegroup):
         groups[group].append(key)
-
+        if group.lower() == 'windows':
+            addwinrm = True
+    if addwinrm:
+        if hasattr(inventory, 'extra_config'):
+            admin_user=inventory.extra_config['winrm_admin_user']
+            if inventory.extra_config['winrm_ignore_certificate']:
+                hostvars[key]['ansible_winrm_server_cert_validation']='ignore'
+            if inventory.extra_config['winrm_password_lookup_string']:
+                lookupvar=inventory.extra_config['winrm_password_lookup_var']
+                lookupstring=inventory.extra_config['winrm_password_lookup_string']
+                hostvars[key]['ansible_password']=lookupstring.format(server[lookupvar])
+        else:
+            admin_user='administrator'
+        hostvars[key]['ansible_connection']='winrm'
+        hostvars[key]['ansible_user']=admin_user
 
 def get_host_groups_from_cloud(inventory):
     groups = collections.defaultdict(list)
@@ -147,18 +162,18 @@ def get_host_groups_from_cloud(inventory):
         firstpass[server['name']].append(server)
     for name, servers in firstpass.items():
         if len(servers) == 1 and use_hostnames:
-            append_hostvars(hostvars, groups, name, servers[0])
+            append_hostvars(hostvars, groups, name, servers[0], inventory)
         else:
             server_ids = set()
             # Trap for duplicate results
             for server in servers:
                 server_ids.add(server['id'])
             if len(server_ids) == 1 and use_hostnames:
-                append_hostvars(hostvars, groups, name, servers[0])
+                append_hostvars(hostvars, groups, name, servers[0], inventory)
             else:
                 for server in servers:
                     append_hostvars(
-                        hostvars, groups, server['id'], server,
+                        hostvars, groups, server['id'], server, inventory,
                         namegroup=True)
     groups['_meta'] = {'hostvars': hostvars}
     return groups
@@ -217,8 +232,10 @@ def main():
         inventory_args = dict(
             refresh=args.refresh,
             config_files=config_files,
-            private=args.private,
+            #private=args.private,
+            private=True,
         )
+		
         if hasattr(shade.inventory.OpenStackInventory, 'extra_config'):
             inventory_args.update(dict(
                 config_key='ansible',
@@ -226,6 +243,10 @@ def main():
                     'use_hostnames': False,
                     'expand_hostvars': True,
                     'fail_on_errors': True,
+                    'winrm_password_lookup_string': '',
+                    'winrm_password_lookup_var': 'name',
+                    'winrm_admin_user': 'administrator',
+                    'winrm_ignore_certificate': False
                 }
             ))
 
