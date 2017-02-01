@@ -225,3 +225,4 @@
   assert:
     that:
       - 'lookup("file", "{{ output_dir }}/ssl_client_verify") == "ansible.http.tests:SUCCESS"'
+  when: has_httptester
