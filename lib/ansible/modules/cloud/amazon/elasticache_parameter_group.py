@@ -69,21 +69,22 @@ EXAMPLES = """
 try:
     import boto3
     import botocore
-    HAS_BOTO = True
+    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO = False
+    HAS_BOTO3 = False
 
 """
 Helper functions
 """
 
 
-def get_es_client(params):
+def get_es_client(module):
     """Get elasticache client"""
-    session = boto3.Session(aws_access_key_id=params["aws_access_key"],
-                            aws_secret_access_key=params["aws_secret_key"],
-                            profile_name=params["profile"],
-                            region_name=params["region"])
+    region, ec2_url, aws_connect_kwargs = (
+        get_aws_connection_info(module, boto3=True)
+    )
+    session = boto3_conn(module, conn_type='client', resource='elasticache',
+            region=region, endpoint=ec2_url, **aws_connect_kwargs)
     cache = session.client("elasticache")
 
     return cache
@@ -213,11 +214,11 @@ def main():
         argument_spec=argument_spec
     )
 
-    if not HAS_BOTO:
+    if not HAS_BOTO3:
         module.fail_json(msg="boto3 required for this module")
 
     state = module.params.get("state")
-    es_client = get_es_client(module.params)
+    es_client = get_es_client(module)
     existing_pg = get_current_pg(es_client, module)
 
     if state == "absent":
@@ -227,10 +228,7 @@ def main():
         response, changed = upsert_elasticache_pg(
             es_client, existing_pg, module)
 
-    if changed:
-        module.exit_json(changed=True, parameter_groups=response)
-    else:
-        module.exit_json(changed=False, parameter_groups=response)
+    module.exit_json(changed=changed, parameter_groups=response)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
