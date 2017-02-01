@@ -135,7 +135,18 @@ Ansible Changes By Release
   * packet_sshkey
 - runit
 - panos:
+  * panos_admin
+  * panos_admpwd
+  * panos_check
+  * panos_commit
+  * panos_dag
   * panos_import
+  * panos_loadcfg
+  * panos_mgtconfig
+  * panos_nat_policy
+  * panos_pg
+  * panos_restart
+  * panos_service
 - smartos:
   * imgadm
   * vmadm
