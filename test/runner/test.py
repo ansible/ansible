@@ -132,6 +132,10 @@ def parse_args():
                         const='yes',
                         default='auto')
 
+    common.add_argument('--debug',
+                        action='store_true',
+                        help='run ansible commands in debug mode')
+
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
     test.add_argument('include',
