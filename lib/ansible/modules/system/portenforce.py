@@ -173,8 +173,10 @@ def main():
 
     # get just the pids to avoid duplicates across protocols
     kill_unique = list()
+    pids_seen = list()
     for p in kill_all:
-        if p['pid'] not in kill_unique:
+        if p['pid'] not in pids_seen:
+            pids_seen.append(p['pid'])
             kill_unique.append(p)
 
     # kill! kill!
