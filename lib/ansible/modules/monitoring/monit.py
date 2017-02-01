@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -61,6 +60,9 @@ EXAMPLES = '''
     name: httpd
     state: started
 '''
+
+import time
+
 
 def main():
     arg_spec = dict(

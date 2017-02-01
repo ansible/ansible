@@ -22,13 +22,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Import Datadog
-try:
-    from datadog import initialize, api
-    HAS_DATADOG = True
-except:
-    HAS_DATADOG = False
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -115,6 +108,13 @@ EXAMPLES = '''
 '''
 
 # Import Datadog
+try:
+    from datadog import initialize, api
+    HAS_DATADOG = True
+except:
+    HAS_DATADOG = False
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(

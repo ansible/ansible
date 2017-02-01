@@ -18,9 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-import shlex
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -110,6 +107,8 @@ changed:
   returned: always
   type: bool
 """
+
+import shlex
 
 NAME_EXISTS = None
 NODE1_EXISTS = None

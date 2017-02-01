@@ -18,16 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import platform
-import random
-import re
-import string
-
-from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.six import iteritems
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'committer',
                     'version': '1.0'}
@@ -88,6 +78,15 @@ EXAMPLES = '''
   timezone:
     name: Asia/Tokyo
 '''
+
+import os
+import platform
+import random
+import re
+import string
+
+from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six import iteritems
 
 
 class Timezone(object):

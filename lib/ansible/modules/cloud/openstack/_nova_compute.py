@@ -17,19 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import operator
-import os
-import time
-
-try:
-    from novaclient.v1_1 import client as nova_client
-    from novaclient.v1_1 import floating_ips
-    from novaclient import exceptions
-    from novaclient import utils
-    HAS_NOVACLIENT = True
-except ImportError:
-    HAS_NOVACLIENT = False
-
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -280,6 +267,18 @@ EXAMPLES = '''
       flavor_include: Performance
 '''
 
+import operator
+import os
+import time
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient.v1_1 import floating_ips
+    from novaclient import exceptions
+    from novaclient import utils
+    HAS_NOVACLIENT = True
+except ImportError:
+    HAS_NOVACLIENT = False
 
 
 def _delete_server(module, nova):

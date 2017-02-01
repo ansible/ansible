@@ -16,14 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from pyghmi.ipmi import command
-except ImportError:
-    command = None
-
-from ansible.module_utils.basic import *
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -94,7 +86,12 @@ EXAMPLES = '''
     state: on
 '''
 
-# ==================================================
+try:
+    from pyghmi.ipmi import command
+except ImportError:
+    command = None
+
+from ansible.module_utils.basic import *
 
 
 def main():

@@ -19,24 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
-
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-)
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -106,6 +88,23 @@ group:
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/group."
     returned: On success if group is found.
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+)
 
 
 def _group(connection, module):

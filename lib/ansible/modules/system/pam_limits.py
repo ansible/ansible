@@ -18,11 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import os.path
-import shutil
-import re
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -115,6 +110,12 @@ EXAMPLES = '''
     value: unlimited
     comment: unlimited memory lock for james
 '''
+
+import os
+import os.path
+import shutil
+import re
+
 
 def main():
 

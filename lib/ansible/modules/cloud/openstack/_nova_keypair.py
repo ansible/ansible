@@ -17,14 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-try:
-    from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions as exc
-    HAS_NOVACLIENT = True
-except ImportError:
-    HAS_NOVACLIENT = False
-
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -104,6 +96,15 @@ EXAMPLES = '''
     login_tenant_name: admin
     name: ansible_key
 '''
+
+import time
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient import exceptions as exc
+    HAS_NOVACLIENT = True
+except ImportError:
+    HAS_NOVACLIENT = False
+
 
 def main():
     argument_spec = openstack_argument_spec()

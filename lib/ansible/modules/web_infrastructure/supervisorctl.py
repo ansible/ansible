@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
-from ansible.module_utils.basic import AnsibleModule, is_executable
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -110,6 +107,9 @@ EXAMPLES = '''
     password: testpass
     server_url: http://localhost:9001
 '''
+
+import os
+from ansible.module_utils.basic import AnsibleModule, is_executable
 
 
 def main():
