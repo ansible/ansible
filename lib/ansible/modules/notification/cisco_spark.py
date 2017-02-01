@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=E0401, E0602, W0401, W0212, W0614, W0622, W0401, C0413, C0330, W0612,
-# C0330, E1101, W0212
 
 ANSIBLE_METADATA = {
     'status': ['stableinterface'],
@@ -29,6 +27,8 @@ DOCUMENTATION = '''
 ---
 module: cisco_spark
 short_description: Send a message to a Cisco Spark Room or Individual
+description:
+    - Send a message to a Cisco Spark Room or Individual, with options to control the formatting.
 version_added: "1.0"
 author: Drew Rusell (@drusse11)
 notes:
