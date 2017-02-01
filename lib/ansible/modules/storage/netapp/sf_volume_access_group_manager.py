@@ -29,7 +29,6 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update volume access groups on SolidFire
-    - auth_basic
 
 options:
 
@@ -94,7 +93,7 @@ EXAMPLES = """
        password: "{{ solidfire_password }}"
        state: present
        name: AnsibleVolumeAccessGroup
-       volumes: 7,8
+       volumes: [7,8]
 
    - name: Modify Volume Access Group
      sf_volume_access_group_manager:
@@ -104,6 +103,7 @@ EXAMPLES = """
        state: present
        volume_access_group_id: 1
        name: AnsibleVolumeAccessGroup-Renamed
+       attributes: {"volumes": [1,2,3], "virtual_network_id": 12345}
 
    - name: Delete Volume Access Group
      sf_volume_access_group_manager:
@@ -115,23 +115,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successful creation of Volume Access Group
-    returned: success
-    type: string
-    sample: '{"changed": true, "key": value}'
 
-msg:
-    description: Successful update of Volume Access Group
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successful removal of Volume Access Group
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
 
