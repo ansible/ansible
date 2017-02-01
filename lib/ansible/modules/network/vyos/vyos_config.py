@@ -165,6 +165,8 @@ def config_to_commands(config):
                     break
             commands.append(item)
 
+        commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
+
     else:
         commands = str(candidate).split('\n')
 

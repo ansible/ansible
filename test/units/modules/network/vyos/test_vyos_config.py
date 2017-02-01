@@ -110,6 +110,12 @@ class TestVyosConfigModule(unittest.TestCase):
         commands = ['set system host-name foo', 'delete interfaces ethernet eth0 address']
         self.execute_module(changed=True, commands=commands)
 
+    def test_vyos_config_src_brackets(self):
+        src = load_fixture('vyos_config_src_brackets.cfg')
+        set_module_args(dict(src=src))
+        commands = ['set interfaces ethernet eth0 address 10.10.10.10/24', 'set system host-name foo']
+        self.execute_module(changed=True, commands=commands)
+
     def test_vyos_config_backup(self):
         set_module_args(dict(backup=True))
         result = self.execute_module()
