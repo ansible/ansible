@@ -282,11 +282,21 @@ class CliBase(object):
             raise NetworkError(to_native(exc), commands=commands)
 
     def exec_command(self, command):
+
+        transform = ComplexDict(dict(
+            command=dict(key=True),
+            prompt=dict(),
+            response=dict()
+        ))
+
         try:
             cmdobj = json.loads(command)
-            return self.shell.send_command(cmdobj)
         except ValueError:
-            return (1, '', 'unable to parse request')
+            cmdobj = transform(command)
+
+        rc, out, err = self.shell.send_command(cmdobj)
+
+        return rc, out, err
 
     def run_commands(self, commands):
         return self.execute(to_list(commands))
