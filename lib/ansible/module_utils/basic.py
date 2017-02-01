@@ -1467,14 +1467,26 @@ class AnsibleModule(object):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
             return
-        for (key, val, requirements) in spec:
+        for sp in spec:
             missing = []
+            max_missing_count = 0
+            is_one_of = False
+            if len(sp) == 4:
+                key, val, requirements, is_one_of = sp
+            else:
+                key, val, requirements = sp
+
+            # is_one_of is True at least one requirement should be
+            # present, else all requirements should be present.
+            if is_one_of:
+                max_missing_count = len(requirements)
+
             if key in self.params and self.params[key] == val:
                 for check in requirements:
                     count = self._count_terms((check,))
                     if count == 0:
                         missing.append(check)
-            if len(missing) > 0:
+            if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
     def _check_argument_values(self):
