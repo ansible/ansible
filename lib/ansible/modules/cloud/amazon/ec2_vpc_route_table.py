@@ -13,6 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+
+
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'committer',
                     'version': '1.0'}
@@ -28,7 +34,9 @@ author: Robert Estelle (@erydo), Rob White (@wimnat)
 options:
   lookup:
     description:
-      - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail. If no tags are specifed then no lookup for an existing route table is performed and a new route table will be created. To change tags of a route table, you must look up by id."
+      - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
+        If no tags are specifed then no lookup for an existing route table is performed and a new
+        route table will be created. To change tags of a route table, you must look up by id."
     required: false
     default: tag
     choices: [ 'tag', 'id' ]
@@ -62,7 +70,8 @@ options:
     required: true
   tags:
     description:
-      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are used to uniquely identify route tables within a VPC when the route_table_id is not supplied."
+      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
+        used to uniquely identify route tables within a VPC when the route_table_id is not supplied."
     required: false
     default: null
     aliases: [ "resource_tags" ]
@@ -111,8 +120,6 @@ EXAMPLES = '''
 
 '''
 
-import re
-
 try:
     import boto.ec2
     import boto.vpc
@@ -122,9 +129,6 @@ except ImportError:
     HAS_BOTO = False
     if __name__ != '__main__':
         raise
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
 
 class AnsibleRouteTableException(Exception):
@@ -141,6 +145,7 @@ class AnsibleTagCreationException(AnsibleRouteTableException):
 
 class AnsibleSubnetSearchException(AnsibleRouteTableException):
     pass
+
 
 CIDR_RE = re.compile('^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$')
 SUBNET_RE = re.compile('^subnet-[A-z0-9]+$')
@@ -218,7 +223,7 @@ def find_igw(vpc_conn, vpc_id):
 
     if not igw:
         raise AnsibleIgwSearchException('No IGW found for VPC {0}'.
-                                         format(vpc_id))
+                                        format(vpc_id))
     elif len(igw) == 1:
         return igw[0].id
     else:
@@ -265,6 +270,7 @@ def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
         route_table = route_tables[0]
 
     return route_table
+
 
 def get_route_table_by_tags(vpc_conn, vpc_id, tags):
 
@@ -462,6 +468,8 @@ def ensure_route_table_absent(connection, module):
     if route_table is None:
         return {'changed': False}
 
+    # disassociate subnets before deleting route table
+    ensure_subnet_associations(connection, vpc_id, route_table, [], module.check_mode)
     try:
         connection.delete_route_table(route_table.id, dry_run=module.check_mode)
     except EC2ResponseError as e:
@@ -483,8 +491,7 @@ def get_route_table_info(route_table):
     route_table_info = { 'id': route_table.id,
                          'routes': routes,
                          'tags': route_table.tags,
-                         'vpc_id': route_table.vpc_id
-                       }
+                         'vpc_id': route_table.vpc_id }
 
     return route_table_info
 
