@@ -67,7 +67,7 @@ def netStatParse(raw):
         listening_search = re.search('[^ ]+:[0-9]+', line)
         if listening_search:
             splitted = line.split()
-            conns = re.search('[^ ]+:([0-9]+)', splitted[3])
+            conns = re.search('([^ ]+):([0-9]+)', splitted[3])
             pidstr = ''
             if 'tcp' in splitted[0]:
                 protocol = 'tcp'
@@ -77,10 +77,11 @@ def netStatParse(raw):
                 pidstr = splitted[5]
             pids = re.search('([0-9]+)/(.*)', pidstr)
             if conns and pids:
-                port = conns.group(1)
+                address = conns.group(1)
+                port = conns.group(2)
                 pid = pids.group(1)
                 name = pids.group(2)
-                result = dict(pid=int(pid), port=int(port), protocol=protocol, name=name)
+                result = dict(pid=int(pid), address=address, port=int(port), protocol=protocol, name=name)
                 if result not in results:
                     results.append(result)
             elif not pids:
@@ -91,7 +92,7 @@ def applyWhitelist(portspids, whitelist=list()):
     processes = list()
     for p in portspids:
         if int(p['port']) not in whitelist and str(p['port']) not in whitelist:
-            process = dict(pid=p['pid'], port=p['port'], protocol=p['protocol'], name=p['name'], stime=p['stime'], user=p['user'])
+            process = dict(pid=p['pid'], address=p['address'], port=p['port'], protocol=p['protocol'], name=p['name'], stime=p['stime'], user=p['user'])
             if process not in processes:
                 processes.append(process)
     return processes
