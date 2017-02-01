@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=E0401, E0602, W0401, W0212, W0614, W0622, W0401, C0413, C0330, W0612,
+# C0330, E1101, W0212
+
 ANSIBLE_METADATA = {
     'status': ['stableinterface'],
     'supported_by': 'community',
@@ -66,7 +69,7 @@ options:
 '''
 
 EXAMPLES = """
-# Note: The follow examples assume a variable file has been imported
+# Note: The following examples assume a variable file has been imported
 # that contains the appropriate information.
 
 - name: Cisco Spark - Markdown Message to a Room
@@ -109,24 +112,52 @@ status_code:
     - The Response Code returned by the Spark API
     - Full Responsde Code explanations can be found at https://developer.ciscospark.com/endpoint-messages-post.html
   returned: always
-  type: string
+  type: int
   sample: 200
 
-requests_error:
-  description: The error message provided by the Python Requests module
-  returned: failed
-  type: sting
-  sample: 404 Client Error
-
-api_error:
-  description: An error message related to the Cisco Spark API
-  returned: failed
-  type: sting
-  sample: Expect base64 ID or UUID.
+message:
+    description:
+      - The Response Message returned by the Spark API
+      - Full Responsde Code explanations can be found at https://developer.ciscospark.com/endpoint-messages-post.html
+    returned: always
+    type: string
+    sample: OK (585 bytes)
 """
 
-import json
-import requests
+
+def authenticated_user(module):
+    """ Establish a read only connection, that does not return any user specific
+    data, to validate connectivity when "check mode" is specified. """
+
+    # Ansible Specific Variables
+    results = {}
+    ansible = module.params
+
+    # Cisco Spark API Variables
+    url = "https://api.ciscospark.com/v1/people/me"
+
+    headers = {
+        'Authorization': 'Bearer {}'.format(ansible['personal_token']),
+        'content-type': 'application/json'
+    }
+
+    response, info = fetch_url(module, url, headers=headers)
+
+    status_code = info['status']
+    message = info['msg']
+
+    # Module will fail if the response is not 200
+    if status_code != 200:
+        results['failed'] = True
+        results['status_code'] = status_code
+        results['message'] = message
+
+    else:
+        results['failed'] = False
+        results['status_code'] = status_code
+        results['message'] = 'Authentication Successful'
+
+    return results
 
 
 def spark_message(module):
@@ -150,36 +181,23 @@ def spark_message(module):
         ansible['message_type']: ansible['message']
     }
 
-    try:
-        message = requests.request("POST", url, json=payload, headers=headers)
-    except requests.exceptions.RequestException as request_error:
-        results['failed'] = True
-        results['changed'] = False
-        results['requests_error'] = request_error
+    payload = module.jsonify(payload)
 
-    # Return an error message if there is no response
-    if message.text == "":
-        results['failed'] = True
-        results['changed'] = False
-        results['api_error'] = 'No response received. Verify your Spark personal access token'
+    response, info = fetch_url(module, url, data=payload, headers=headers)
 
-    status_code = str(message.status_code)
+    status_code = info['status']
+    message = info['msg']
 
-    # Return an error message if there is no response
-    if status_code != '200':
-        # Convert the message response to JSON for processing
-        error_message = json.loads(message.text)
-
-        # Iterate through the JSON response and pull out the message field
-        for key, value in error_message.iteritems():
-            if key == 'message':
-                results['api_error'] = value
-
+    # Module will fail if the response is not 200
+    if status_code != 200:
         results['failed'] = True
         results['status_code'] = status_code
+        results['message'] = message
+
     else:
         results['failed'] = False
         results['status_code'] = status_code
+        results['message'] = message
 
     return results
 
@@ -203,12 +221,13 @@ def main():
 
     # Add Check Mode Support
     if module.check_mode:
-        module.exit_json(changed=False)
-
-    results = spark_message(module)
+        results = authenticated_user(module)
+    else:
+        results = spark_message(module)
 
     module.exit_json(**results)
 
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 main()
