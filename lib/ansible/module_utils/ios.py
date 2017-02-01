@@ -25,6 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils.network_common import to_list
 
 _DEVICE_CONFIGS = {}
 
@@ -44,10 +45,8 @@ def get_config(module, flags=[]):
         return cfg
 
 def run_commands(module, commands, check_rc=True):
-    assert isinstance(commands, list), 'commands must be a list'
     responses = list()
-
-    for cmd in commands:
+    for cmd in to_list(commands):
         rc, out, err = module.exec_command(cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=err, rc=rc)
