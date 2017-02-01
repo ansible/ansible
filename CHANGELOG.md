@@ -73,6 +73,8 @@ Ansible Changes By Release
   * ipa_sudocmd
   * ipa_sudorule
   * ipa_user
+- google
+  * gce_eip
 - icinga2_feature
 - illumos:
   * dladm_iptun
