@@ -1,16 +1,14 @@
 #!/bin/sh
 
-grep '^#!' -rIn . \
-    --exclude-dir .git \
-    --exclude-dir .tox \
-    | grep ':1:' | sed 's/:1:/:/' | grep -v -E \
-    -e '^\./lib/ansible/modules/' \
-    -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
-    -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!/usr/bin/python$' \
-    -e '^\./test/sanity/validate-modules/validate-modules:#!/usr/bin/env python2$' \
-    -e '^\./hacking/cherrypick.py:#!/usr/bin/env python3$' \
+git grep -In '^#!' \
+    | grep ':1:' | sed 's/:1:/:/' | grep -v  \
+    -e '^lib/ansible/modules/' \
+    -e '^test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
+    -e '^test/integration/targets/[^/]*/library/[^/]*:#!/usr/bin/python$' \
+    -e '^test/sanity/validate-modules/validate-modules:#!/usr/bin/env python2$' \
+    -e '^hacking/cherrypick.py:#!/usr/bin/env python3$' \
     -e ':#!/bin/sh$' \
-    -e ':#!/bin/bash( -[eux]|$)' \
+    -e ':#!/bin/bash -[eux]' \
     -e ':#!/usr/bin/make -f$' \
     -e ':#!/usr/bin/env python$' \
     -e ':#!/usr/bin/env bash$' \
