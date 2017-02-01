@@ -18,7 +18,7 @@ module: ssm_send_command
 short_description: Execute commands through Simple System Manager (SSM) a.k.a. Run Command
 description:
   - This module allows you to execute commands through SSM/Run Command.
-version_added: "2.3"
+version_added: "2.2"
 extends_documentation_fragment:
   - aws
 author: "Joe Wozniak <woznij@amazon.com>"
@@ -93,8 +93,8 @@ status:
     sample: Success
 '''
 
-# import base64
-# import json
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 import traceback
 from time import sleep
 
@@ -108,19 +108,16 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name                 = dict(),
+        name                 = dict(required=True),
         wait                 = dict(choices=BOOLEANS, default=True, type='bool'),
         comment              = dict(),
-        instanceIds          = dict(default=[], type='list'),
+        instanceIds          = dict(required=True, type='list'),
         parameters           = dict(default={}, type='dict')
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=False
     )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     document_name = module.params.get('name')  # Needs to be an existing SSM document name
     comment = module.params.get('comment')
@@ -187,11 +184,12 @@ def main():
                 except Exception as e:
                     module.fail_json(msg="Error in checking on execution status",
                                      exception=traceback.format_exc(e))
-                if invoke_response['CommandInvocations'][0]['Status'] == 'Success':
-                    checking = False
-                if invoke_response['CommandInvocations'][0]['Status'] == 'Failed':
-                    checking = False
-                    module.fail_json(msg="SSM Command failed", exception=invoke_response)
+                if not invoke_response['CommandInvocations'] == []:
+                    if invoke_response['CommandInvocations'][0]['Status'] == 'Success':
+                        checking = False
+                    if invoke_response['CommandInvocations'][0]['Status'] == 'Failed':
+                        checking = False
+                        module.fail_json(msg="SSM Command failed")
                 sleep(5)
         else:
             module.fail_json(msg='A valid command invocation ID was not returned.'
@@ -207,10 +205,6 @@ def main():
         }
 
     module.exit_json(changed=True, result=results)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
