@@ -8,7 +8,7 @@ BASEDIR=${1-"lib"}
 #   message
 WHITELIST='(lib/ansible/modules/cloud/digital_ocean/digital_ocean.py)'
 
-SIX_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -wH six '{}' '+' \
+SIX_USERS=$(git ls-files "${BASEDIR}" | grep '.*\.py$' | xargs grep -wH six \
     | grep import \
     | grep -v ansible.compat \
     | grep -v ansible.module_utils.six \
