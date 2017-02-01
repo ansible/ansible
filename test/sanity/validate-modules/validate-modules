@@ -307,7 +307,6 @@ class ModuleValidator(Validator):
         return lineno or 0
 
     def _find_has_import(self):
-        try_except_imports = []
         for child in self.ast.body:
             found_try_except_import = False
             found_has = False
@@ -318,7 +317,6 @@ class ModuleValidator(Validator):
                 for grandchild in bodies:
                     if isinstance(grandchild, ast.Import):
                         found_try_except_import = True
-                        try_except_imports.append(grandchild.lineno)
                     if isinstance(grandchild, ast.Assign):
                         for target in grandchild.targets:
                             if target.id.lower().startswith('has_'):
@@ -326,9 +324,8 @@ class ModuleValidator(Validator):
             if found_try_except_import and not found_has:
                 self.warnings.append('Found Try/Except block without HAS_ '
                                      'assginment')
-        return try_except_imports
 
-    def _ensure_imports_below_docs(self, doc_info, try_except_imports):
+    def _ensure_imports_below_docs(self, doc_info):
         doc_lines = [doc_info[key]['lineno'] for key in doc_info]
 
         for child in self.ast.body:
@@ -633,9 +630,9 @@ class ModuleValidator(Validator):
             self._find_blacklist_imports()
             main = self._find_main_call()
             self._find_module_utils(main)
-            try_except_imports = self._find_has_import()
+            self._find_has_import()
             self._check_for_tabs()
-            self._ensure_imports_below_docs(doc_info, try_except_imports)
+            self._ensure_imports_below_docs(doc_info)
 
         if self._powershell_module():
             self._find_ps_replacers()
