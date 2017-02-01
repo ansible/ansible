@@ -72,6 +72,10 @@ killed:
       sample: Thu Apr 21 17:30:16 2016
 '''
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 import re
 import os
 import platform
