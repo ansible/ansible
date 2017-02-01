@@ -21,6 +21,7 @@ import re
 import socket
 import time
 import signal
+import json
 
 try:
     import paramiko
@@ -33,20 +34,13 @@ from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkError
 from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_native
+from ansible.module_utils.network_common import to_list, ComplexDict
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
     re.compile(r'\x08'),
     re.compile(r'\x1b[^m]*m')
 ]
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
 
 
 class ShellError(Exception):
@@ -127,6 +121,15 @@ class Shell(object):
             data = regex.sub('', data)
         return data
 
+    def to_command(self, obj):
+        cast = ComplexDict({
+            'command': dict(key=True),
+            'output': dict(),
+            'prompt': dict(),
+            'response': dict()
+        })
+        return cast(obj)
+
     def alarm_handler(self, signum, frame):
         self.shell.close()
         raise ShellError('timeout trying to send command: %s' % self._history[-1])
@@ -143,45 +146,57 @@ class Shell(object):
 
             window = self.strip(recv.read().decode('utf8'))
 
-            if hasattr(cmd, 'prompt') and not handled:
-                handled = self.handle_prompt(window, cmd)
+            if cmd:
+                if 'prompt' in cmd and not handled:
+                    handled = self.handle_prompt(window, cmd)
 
             try:
                 if self.find_prompt(window):
                     resp = self.strip(recv.getvalue().decode('utf8'))
-                    return self.sanitize(cmd, resp)
+                    if cmd:
+                        resp = self.sanitize(cmd, resp)
+                    return resp
             except ShellError:
                 exc = get_exception()
-                exc.command = cmd
+                exc.command = cmd['command']
                 raise
+
+    def send_command(self, command):
+        try:
+            obj = self.to_command(command)
+
+            self._history.append(str(obj['command']))
+            cmd = '%s\r' % str(obj['command'])
+
+            self.shell.sendall(cmd)
+
+            if self._timeout == 0:
+                return
+
+            signal.alarm(self._timeout)
+            out = self.receive(obj)
+            signal.alarm(0)
+
+            return (0, out, '')
+        except ShellError:
+            exc = get_exception()
+            return (1, '', to_native(exc))
 
     def send(self, commands):
         responses = list()
-        try:
-            for command in to_list(commands):
-                signal.alarm(self._timeout)
-                self._history.append(str(command))
-                cmd = '%s\r' % str(command)
-                self.shell.sendall(cmd)
-                if self._timeout == 0:
-                    return
-                responses.append(self.receive(command))
-
-        except socket.timeout:
-            raise ShellError("timeout trying to send command: %s" % cmd)
-
-        except socket.error:
-            exc = get_exception()
-            raise ShellError("problem sending command to host: %s" % to_native(exc))
-
+        for command in to_list(commands):
+            rc, out, err = self.send_command(command)
+            if rc != 0:
+                raise ShellError(err)
+            responses.append(out)
         return responses
 
     def close(self):
         self.shell.close()
 
     def handle_prompt(self, resp, cmd):
-        prompt = to_list(cmd.prompt)
-        response = to_list(cmd.response)
+        prompt = to_list(cmd['prompt'])
+        response = to_list(cmd['response'])
 
         for pr, ans in zip(prompt, response):
             match = pr.search(resp)
@@ -193,7 +208,7 @@ class Shell(object):
     def sanitize(self, cmd, resp):
         cleaned = []
         for line in resp.splitlines():
-            if line.lstrip().startswith(str(cmd)) or self.find_prompt(line):
+            if line.lstrip().startswith(cmd['command']) or self.find_prompt(line):
                 continue
             cleaned.append(line)
         return "\n".join(cleaned)
@@ -266,17 +281,12 @@ class CliBase(object):
             commands = [str(c) for c in commands]
             raise NetworkError(to_native(exc), commands=commands)
 
+    def exec_command(self, command):
+        try:
+            cmdobj = json.loads(command)
+            return self.shell.send_command(cmdobj)
+        except ValueError:
+            return (1, '', 'unable to parse request')
+
     def run_commands(self, commands):
         return self.execute(to_list(commands))
-
-    def configure(self, commands):
-        raise NotImplementedError
-
-    def get_config(self, **kwargs):
-        raise NotImplementedError
-
-    def load_config(self, commands, **kwargs):
-        raise NotImplementedError
-
-    def save_config(self):
-        raise NotImplementedError
