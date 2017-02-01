@@ -19,10 +19,10 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 
 DOCUMENTATION = '''
 module: ssm_parameter_store
-short_description: Manage key-vaule pairs in aws parameter store.
+short_description: Manage key-value pairs in aws parameter store.
 description:
   - Manage key-vaule pairs in aws parameter store.
-version_added: "2.2"
+version_added: "2.3"
 options:
   name:
     description:
@@ -181,7 +181,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name =        dict(required=True),
-        description = dict(required=False),
+        description = dict(),
         value =       dict(required=False),
         state =       dict(default='present', choices=['present', 'absent', 'show']),
         string_type = dict(default='String', choices=['String', 'StringList', 'SecureString']),
