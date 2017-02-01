@@ -18,7 +18,7 @@ module: ssm_send_command
 short_description: Execute commands through Simple System Manager (SSM) a.k.a. Run Command
 description:
   - This module allows you to execute commands through SSM/Run Command.
-version_added: "2.2"
+version_added: "2.3"
 extends_documentation_fragment:
   - aws
 author: "Joe Wozniak <woznij@amazon.com>"
@@ -93,13 +93,14 @@ status:
     sample: Success
 '''
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 import traceback
 from time import sleep
 
 try:
     import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
