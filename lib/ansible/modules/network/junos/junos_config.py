@@ -346,9 +346,9 @@ def main():
                           ('update', 'replace')]
 
     required_if = [('replace', True, ['src']),
-                   ('update', 'merge', ('src', 'lines')),
-                   ('update', 'overwrite', ('src', 'lines')),
-                   ('update', 'replace', ('src', 'lines'))]
+                   ('update', 'merge', ['src', 'lines'], True),
+                   ('update', 'overwrite', ['src', 'lines'], True),
+                   ('update', 'replace', ['src', 'lines'], True)]
 
     module = NetworkModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
