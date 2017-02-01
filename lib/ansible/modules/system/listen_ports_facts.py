@@ -168,7 +168,7 @@ def main():
         tcp_violations = applyWhitelist(tcp_ports, module.params['whitelist_tcp'])
         if tcp_violations:
             result['ansible_facts']['tcp_listen_violations'] = tcp_violations
-    
+
     # if a UDP whitelist was supplied, determine which if any pids violate it
     if module.params['whitelist_udp'] and udp_ports:
         udp_violations = applyWhitelist(udp_ports, module.params['whitelist_udp'])
