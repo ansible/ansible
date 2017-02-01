@@ -166,7 +166,7 @@ def upsert_elasticache_pg(es_client, existing_pg, module):
         if module.params.get("pg_params"):
             response["params"] = get_current_pg_params(es_client, module)
             is_param_changes = is_params_diff(
-                    response["params"], module.params.get("pg_params"))
+                response["params"], module.params.get("pg_params"))
             response = es_client.modify_cache_parameter_group(
                 CacheParameterGroupName=module.params.get("pg_name"),
                 ParameterNameValues=convert_params_format(
@@ -175,8 +175,8 @@ def upsert_elasticache_pg(es_client, existing_pg, module):
             if is_param_changes:
                 changed = True
             response["params"] = dict([
-                    (x["ParameterName"], x["ParameterValue"])
-                    for x in get_current_pg_params(es_client, module)])
+                (x["ParameterName"], x["ParameterValue"])
+                for x in get_current_pg_params(es_client, module)])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=e.message)
 
