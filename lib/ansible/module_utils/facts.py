@@ -931,11 +931,18 @@ class Distribution(object):
             release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
                 self.facts['distribution_release'] = release.groups()[0]
+
+            # Last resort: try to find release from tzdata as either lsb is missing or this is very old debian
+            if self.facts['distribution_release'] == 'NA' and 'Debian' in data:
+                dpkg_cmd = self.module.get_bin_path('dpkg')
+                if dpkg_cmd:
+                    cmd = "%s --status tzdata|grep Provides|cut -f2 -d'-'" % dpkg_cmd
+                    rc, out, err = self.module.run_command(cmd)
+                    if rc == 0:
+                        self.facts['distribution_release'] = out.strip()
         elif 'Ubuntu' in data:
             self.facts['distribution'] = 'Ubuntu'
-            pass  # Ubuntu gets correct info from python functions
-        else:
-            return False  # TODO: remove if tested without this
+            # nothing else to do, Ubuntu gets correct info from python functions
 
     def get_distribution_Mandriva(self, name, data, path):
         if 'Mandriva' in data:
