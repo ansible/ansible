@@ -258,8 +258,6 @@ log = logging.getLogger(__name__)
 
 class AnsibleBufferingHandler(BufferingHandler):
     def flush(self):
-        # shallow copy
-        log_records = self.buffer[:]
         serializable_log_records = []
         for log_record in self.buffer:
             serializable_log_records.append(self.prepare(log_record))
