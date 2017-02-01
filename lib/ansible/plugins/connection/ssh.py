@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import errno
 import fcntl
+import hashlib
 import os
 import pty
 import select
@@ -59,6 +60,10 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
+        self.port = self._play_context.port
+        self.user = self._play_context.remote_user
+        self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
+        self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -66,6 +71,16 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         return self
+
+    @staticmethod
+    def _create_control_path(host, port, user):
+        '''Make a hash for the controlpath based on con attributes'''
+        pstring = '%s-%s-%s' % (host, port, user)
+        m = hashlib.sha1()
+        m.update(to_bytes(pstring))
+        digest = m.hexdigest()
+        cpath = '%(directory)s/' + digest[:10]
+        return cpath
 
     @staticmethod
     def _sshpass_available():
@@ -228,7 +243,7 @@ class Connection(ConnectionBase):
             self._persistent = True
 
             if not controlpath:
-                cpdir = unfrackpath(C.ANSIBLE_SSH_CONTROL_PATH_DIR)
+                cpdir = unfrackpath(self.control_path_dir)
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
                 # The directory must exist and be writable.
@@ -236,7 +251,13 @@ class Connection(ConnectionBase):
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
-                b_args = (b"-o", b"ControlPath=" + to_bytes(C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=cpdir), errors='surrogate_or_strict'))
+                if not self.control_path:
+                    self.control_path = self._create_control_path(
+                        self.host,
+                        self.port,
+                        self.user
+                    )
+                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
