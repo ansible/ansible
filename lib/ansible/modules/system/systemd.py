@@ -334,6 +334,9 @@ def main():
             # Check for loading error
             if is_systemd and 'LoadError' in result['status']:
                 module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
+    else:
+        # Check for systemctl command
+        module.run_command(systemctl, check_rc=True)
 
     # Does service exist?
     found = is_systemd or is_initd
