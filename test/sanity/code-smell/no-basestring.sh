@@ -1,8 +1,6 @@
 #!/bin/sh
 
-BASESTRING_USERS=$(grep -r basestring . \
-    --exclude-dir .git \
-    --exclude-dir .tox \
+BASESTRING_USERS=$(git grep basestring  \
     | grep isinstance \
     | grep -v \
     -e test/results/ \
