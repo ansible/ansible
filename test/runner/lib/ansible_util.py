@@ -32,4 +32,7 @@ def ansible_environment(args):
 
     env.update(ansible)
 
+    if args.debug:
+        env.update(dict(ANSIBLE_DEBUG='true'))
+
     return env
