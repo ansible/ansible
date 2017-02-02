@@ -24,6 +24,7 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -default $null
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
@@ -77,6 +78,13 @@ If ($state -eq "absent") {
     $ShortCut = $Shell.CreateShortcut($dest)
 
     # Compare existing values with new values, report as changed if required
+
+    If ($src -ne $null) {
+        # Windows translates executables to absolute path, so do we
+        If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
+            $src = (Get-Command -Name $src -Type Application).Definition
+        }
+    }
 
     If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
         $result.changed = $true
