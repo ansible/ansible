@@ -34,6 +34,7 @@ from ansible.module_utils.ovirt import (
     convert_to_bytes,
     create_connection,
     equal,
+    get_entity,
     get_link_name,
     ovirt_full_argument_spec,
     search_by_name,
@@ -627,7 +628,7 @@ class VmsModule(BaseModule):
 
             # Attach disk to VM:
             disk_attachments_service = self._service.service(entity.id).disk_attachments_service()
-            if disk_attachments_service.attachment_service(disk_id).get() is None:
+            if get_entity(disk_attachments_service.attachment_service(disk_id)) is None:
                 if not self._module.check_mode:
                     disk_attachments_service.add(
                         otypes.DiskAttachment(
