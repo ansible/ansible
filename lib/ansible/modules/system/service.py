@@ -433,7 +433,8 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'telinit', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'telinit', 'systemctl', 'start', 'stop', 'restart',
+                     'insserv' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
