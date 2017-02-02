@@ -35,9 +35,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   commands:
     description:
@@ -149,13 +147,33 @@ delta:
 """
 import time
 
+from functools import partial
+
+from ansible.module_utils import ios
+from ansible.module_utils import ios_cli
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.ios import run_commands
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
 
-VALID_KEYS = ['command', 'output']
+SHARED_LIB = 'ios'
+
+def get_ansible_module():
+    if SHARED_LIB == 'ios':
+        return LocalAnsibleModule
+    return AnsibleModule
+
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+run_commands = partial(invoke, 'run_commands')
+
+def check_args(module, warnings):
+    if SHARED_LIB == 'ios_cli':
+        ios_cli.check_args(module)
 
 def to_lines(stdout):
     for item in stdout:
@@ -186,7 +204,9 @@ def parse_commands(module, warnings):
     return commands
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
@@ -197,10 +217,16 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec,
-                                supports_check_mode=True)
+    argument_spec.update(ios_cli.ios_cli_argument_spec)
+
+    cls = get_ansible_module()
+    module = cls(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False}
+
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
@@ -243,4 +269,5 @@ def main():
 
 
 if __name__ == '__main__':
+    SHARED_LIB = 'ios_cli'
     main()

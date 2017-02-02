@@ -46,15 +46,12 @@ ios_cli_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
 
-    'authorize': dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
 
     'timeout': dict(type='int', default=10),
 
     'provider': dict(type='dict'),
-
-    # deprecated in Ansible 2.3
-    'transport': dict(),
 }
 
 def check_args(module):
@@ -78,8 +75,6 @@ class Cli(CliBase):
         re.compile(r"connection timed out", re.I),
         re.compile(r"[^\r\n]+ not found", re.I),
     ]
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
     def __init__(self, module):
         self._module = module
@@ -106,7 +101,12 @@ class Cli(CliBase):
 
     def authorize(self):
         passwd = self._module.params['auth_pass']
-        self.execute(Command('enable', prompt=self.NET_PASSWD_RE, response=passwd))
+        if passwd:
+            prompt = "[\r\n]?Password: $"
+            self.exec_command(dict(command='enable', prompt=prompt, response=passwd))
+        else:
+            self.exec_command('enable')
+
 
 
 def connection(module):

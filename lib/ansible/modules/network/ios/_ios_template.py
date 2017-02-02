@@ -35,9 +35,7 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(ios_config) instead.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   src:
     description:
@@ -126,22 +124,35 @@ delta:
   type: str
   sample: "0:00:10.469466"
 """
+from functools import partial
+
+from ansible.module_utils import ios
+from ansible.module_utils import ios_cli
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.six import string_types
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
+SHARED_LIB = 'ios'
 
-def check_args(module):
-    warnings = list()
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
-    return warnings
+def get_ansible_module():
+    if SHARED_LIB == 'ios':
+        return LocalAnsibleModule
+    return AnsibleModule
+
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+load_config = partial(invoke, 'load_config')
+get_config = partial(invoke, 'get_config')
+
+def check_args(module, warnings):
+    if SHARED_LIB == 'ios_cli':
+        ios_cli.check_args(module)
 
 def get_current_config(module):
     if module.params['config']:
@@ -163,23 +174,23 @@ def main():
         config=dict(),
     )
 
-    # Removed the use of provider arguments in 2.3 due to network_cli
-    # connection plugin.  To be removed in 2.5
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(ios_cli.ios_cli_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                supports_check_mode=True)
+    cls = get_ansible_module()
+    module = cls(argument_spec=argument_spec,
+                 mutually_exclusive=mutually_exclusive,
+                 supports_check_mode=True)
 
-    warnings = check_args(module)
-
-    result = dict(changed=False, warnings=warnings)
+    warnings = list()
+    check_args(module, warnings)
 
     candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)
@@ -203,4 +214,5 @@ def main():
     module.exit_json(**result)
 
 if __name__ == '__main__':
+    SHARED_LIB = 'ios_cli'
     main()
