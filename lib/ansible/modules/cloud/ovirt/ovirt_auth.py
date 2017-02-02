@@ -190,6 +190,7 @@ def main():
             ('state', 'absent', ['ovirt_auth']),
             ('state', 'present', ['username', 'password', 'url']),
         ],
+        supports_check_mode=True,
     )
     check_sdk(module)
 
