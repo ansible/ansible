@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 
 try:
     from __main__ import display
@@ -38,7 +38,7 @@ except ImportError:
 class VaultCLI(CLI):
     """ Vault command line class """
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
+    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
 
     def __init__(self, args):
 
@@ -67,6 +67,9 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog view [options] file_name")
         elif self.action == "encrypt":
             self.parser.set_usage("usage: %prog encrypt [options] file_name")
+        # I have no prefence for either dash or underscore
+        elif self.action == "encrypt-string":
+            self.parser.set_usage("usage: %prog encrypt-string [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
@@ -135,6 +138,46 @@ class VaultCLI(CLI):
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
+
+    def format_ciphertext_yaml(self, b_ciphertext, indent=None):
+        indent = indent or 10
+        block_format_header = "!vault-encrypted |"
+        lines = []
+        vault_ciphertext = to_text(b_ciphertext)
+
+        lines.append(block_format_header)
+        for line in vault_ciphertext.splitlines():
+            lines.append('%s%s' % (' ' * indent, line))
+
+        yaml_ciphertext = '\n'.join(lines)
+        return yaml_ciphertext
+
+    def execute_encrypt_string(self):
+        if len(self.args) == 0 and sys.stdin.isatty():
+            display.display("Reading plaintext input from stdin", stderr=True)
+
+        b_plaintext = None
+        for plaintext in self.args or ['-']:
+            # encrypt_string
+            b_plaintext = to_bytes(plaintext)
+
+        if b_plaintext is None:
+            # exception?
+            return
+
+        b_ciphertext = self.editor.encrypt_bytes(b_plaintext)
+
+        yaml_text = self.format_ciphertext_yaml(b_ciphertext)
+        print(yaml_text)
+        # if '--prompt', prompt for string
+
+        if sys.stdout.isatty():
+            display.display("Encryption successful", stderr=True)
+
+        # TODO: write out the block of yaml to be cut and paste
+        # TODO: offer block or string ala eyaml
+        # TODO: or cli --block/--string for just one
+        # TODO: make sure stdout is clean and can be subbed into file by script
 
     def execute_decrypt(self):
 
