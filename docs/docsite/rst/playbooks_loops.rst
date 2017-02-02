@@ -463,7 +463,7 @@ That's how!
 Using register with a loop
 ``````````````````````````
 
-When using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
+After using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
 Here is an example of using ``register`` with ``with_items``::
 
@@ -519,6 +519,15 @@ Subsequent loops over the registered variable to inspect the results may look li
         msg: "The command ({{ item.cmd }}) did not have a 0 return code"
       when: item.rc != 0
       with_items: "{{ echo.results }}"
+
+During iteration, the result of the current item will be placed in the variable:
+
+    - shell: echo "{{ item }}"
+      with_items:
+        - one
+        - two
+      register: echo
+      changed_when: echo.stdout != "one"
 
 
 
