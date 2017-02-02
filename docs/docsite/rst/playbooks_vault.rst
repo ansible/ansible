@@ -123,7 +123,7 @@ This is something you may wish to do if using Ansible from a continuous integrat
 Single Encrypted Variable
 `````````````````````````
 
-Added in 2.3 is the ability for Ansible to use a vaulted varible that lives in an otherwise 'clear text' YAML file::
+As of version 2.3, Ansible can now use a vaulted variable that lives in an otherwise 'clear text' YAML file::
 
     notsecret: myvalue
     mysecret: !vault |
@@ -136,7 +136,7 @@ Added in 2.3 is the ability for Ansible to use a vaulted varible that lives in a
     other_plain_text: othervalue
 
 
-Which will be decrypted with the supplied vault secret and used as an normal variable. The `ansible-vault` command line support stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these entries. You just have to ensure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required as vault encryption results in a multi-line string.
+This vaulted variable be decrypted with the supplied vault secret and used as an normal variable. The `ansible-vault` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required, as vault encryption results in a multi-line string.
 
 
 .. _speeding_up_vault:
