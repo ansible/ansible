@@ -94,6 +94,13 @@ options:
             - "Kernel boot parameters changes require host deploy and restart. The host needs
                to be I(reinstalled) suceesfully and then to be I(rebooted) for kernel boot parameters
                to be applied."
+    hosted_engine:
+        description:
+            - "If I(deploy) it means this host should deploy also hosted engine
+               components."
+            - "If I(undeploy) it means this host should un-deploy hosted engine
+               components and this host will not function as part of the High
+               Availability cluster."
 extends_documentation_fragment: ovirt
 '''
 
@@ -116,6 +123,14 @@ EXAMPLES = '''
     cluster: Default
     name: myhost2
     address: 10.34.61.145
+
+# Deploy hosted engine host
+- ovirt_hosts:
+    cluster: Default
+    name: myhost2
+    password: secret
+    address: 10.34.61.145
+    hosted_engine: deploy
 
 # Maintenance
 - ovirt_hosts:
@@ -157,7 +172,6 @@ host:
     returned: On success if host is found.
 '''
 
-import time
 import traceback
 
 try:
@@ -311,6 +325,7 @@ def main():
         timeout=dict(default=600, type='int'),
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
+        hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -330,7 +345,11 @@ def main():
         state = module.params['state']
         control_state(hosts_module)
         if state == 'present':
-            hosts_module.create()
+            hosts_module.create(
+                deploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'deploy'
+                ) if module.params.get('hosted_engine') is not None else None,
+            )
             ret = hosts_module.action(
                 action='activate',
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
@@ -406,6 +425,12 @@ def main():
                 ssh=otypes.Ssh(
                     authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
                 ) if module.params['public_key'] else None,
+                deploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'deploy'
+                ) if module.params.get('hosted_engine') is not None else None,
+                undeploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'undeploy'
+                ) if module.params.get('hosted_engine') is not None else None,
             )
 
             # Activate host after reinstall:
@@ -415,7 +440,6 @@ def main():
                 wait_condition=lambda h: h.status == hoststate.UP,
                 fail_condition=failed_state,
             )
-
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
