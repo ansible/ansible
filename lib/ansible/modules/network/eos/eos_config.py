@@ -222,7 +222,7 @@ delta:
 from functools import partial
 
 from ansible.module_utils import eos
-from ansible.module_utils import eapi
+from ansible.module_utils import eos_local
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
@@ -245,8 +245,8 @@ load_config = partial(invoke, 'load_config')
 supports_sessions = partial(invoke, 'supports_sessions')
 
 def check_args(module, warnings):
-    if SHARED_LIB == 'eapi':
-        eapi.check_args(module)
+    if SHARED_LIB == 'eos_local':
+        eos_local.check_args(module)
 
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
@@ -330,7 +330,7 @@ def main():
         force=dict(default=False, type='bool'),
     )
 
-    argument_spec.update(eapi.eapi_argument_spec)
+    argument_spec.update(eos_local.eos_local_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -371,5 +371,5 @@ def main():
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eapi'
+    SHARED_LIB = 'eos_local'
     main()

@@ -33,7 +33,7 @@ description:
     read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-extends_documentation_fragment: eapi
+extends_documentation_fragment: eos_local
 options:
   commands:
     description:
@@ -128,7 +128,7 @@ import time
 from functools import partial
 
 from ansible.module_utils import eos
-from ansible.module_utils import eapi
+from ansible.module_utils import eos_local
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import string_types
@@ -153,8 +153,8 @@ def invoke(name, *args, **kwargs):
 run_commands = partial(invoke, 'run_commands')
 
 def check_args(module, warnings):
-    if SHARED_LIB == 'eapi':
-        eapi.check_args(module)
+    if SHARED_LIB == 'eos_local':
+        eos_local.check_args(module, warnings)
 
 def to_lines(stdout):
     lines = list()
@@ -202,7 +202,7 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(eapi.eapi_argument_spec)
+    argument_spec.update(eos_local.eos_local_argument_spec)
 
     cls = get_ansible_module()
     module = cls(argument_spec=argument_spec, supports_check_mode=True)
@@ -256,5 +256,5 @@ def main():
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eapi'
+    SHARED_LIB = 'eos_local'
     main()
