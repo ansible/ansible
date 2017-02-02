@@ -138,7 +138,7 @@ import re
 from functools import partial
 
 from ansible.module_utils import eos
-from ansible.module_utils import eapi
+from ansible.module_utils import eos_local
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
@@ -159,8 +159,8 @@ def invoke(name, *args, **kwargs):
 run_commands = partial(invoke, 'run_commands')
 
 def check_args(module, warnings):
-    if SHARED_LIB == 'eapi':
-        eapi.check_args(module)
+    if SHARED_LIB == 'eos_local':
+        eos_local.check_args(module, warnings)
 
 class FactsBase(object):
 
@@ -335,7 +335,7 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    argument_spec.update(eapi.eapi_argument_spec)
+    argument_spec.update(eos_local.eos_local_argument_spec)
 
     cls = get_ansible_module()
     module = cls(argument_spec=argument_spec, supports_check_mode=True)
@@ -397,5 +397,5 @@ def main():
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eapi'
+    SHARED_LIB = 'eos_local'
     main()
