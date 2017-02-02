@@ -35,6 +35,7 @@ from ansible.module_utils.network import NetworkError
 from ansible.module_utils.six import BytesIO
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network_common import to_list, ComplexDict
+from ansible.module_utils.netcli import Command
 
 ANSI_RE = [
     re.compile(r'(\x1b\[\?1h\x1b=)'),
@@ -121,15 +122,6 @@ class Shell(object):
             data = regex.sub('', data)
         return data
 
-    def to_command(self, obj):
-        cast = ComplexDict({
-            'command': dict(key=True),
-            'output': dict(),
-            'prompt': dict(),
-            'response': dict()
-        })
-        return cast(obj)
-
     def alarm_handler(self, signum, frame):
         self.shell.close()
         raise ShellError('timeout trying to send command: %s' % self._history[-1])
@@ -161,10 +153,8 @@ class Shell(object):
                 exc.command = cmd['command']
                 raise
 
-    def send_command(self, command):
+    def send(self, obj):
         try:
-            obj = self.to_command(command)
-
             self._history.append(str(obj['command']))
             cmd = '%s\r' % str(obj['command'])
 
@@ -181,15 +171,6 @@ class Shell(object):
         except ShellError:
             exc = get_exception()
             return (1, '', to_native(exc))
-
-    def send(self, commands):
-        responses = list()
-        for command in to_list(commands):
-            rc, out, err = self.send_command(command)
-            if rc != 0:
-                raise ShellError(err)
-            responses.append(out)
-        return responses
 
     def close(self):
         self.shell.close()
@@ -234,7 +215,6 @@ class CliBase(object):
 
         self.shell = None
         self._connected = False
-        self.default_output = 'text'
 
     def connect(self, params, kickstart=True):
         host = params['host']
@@ -267,42 +247,38 @@ class CliBase(object):
         self.shell.close()
         self._connected = False
 
-    def authorize(self, params, **kwargs):
-        pass
-
     def to_command(self, obj):
-        if isinstance(command, Command):
+        if isinstance(obj, Command):
             cmdobj = dict()
             cmdobj['command'] = obj.command
             cmdobj['response'] = obj.response
             cmdobj['prompt'] = [p.pattern for p in to_list(obj.prompt)]
             return cmdobj
-        return obj
+
+        elif not isinstance(obj, dict):
+            transform = ComplexDict(dict(
+                command=dict(key=True),
+                prompt=dict(),
+                response=dict()
+            ))
+            return transform(obj)
+
+        else:
+            return obj
 
     def execute(self, commands):
         try:
-            for index, item in enumerate(commands):
-                commands[index] = to_command(item)
-            return self.shell.send(commands)
+            responses = list()
+            for item in to_list(commands):
+                item = self.to_command(item)
+                rc, out, err = self.shell.send(item)
+                if rc != 0:
+                    raise ShellError(err)
+                responses.append(out)
+            return responses
         except ShellError:
             exc = get_exception()
-            commands = [str(c) for c in commands]
-            raise NetworkError(to_native(exc), commands=commands)
+            raise NetworkError(to_native(exc))
 
-    def exec_command(self, command):
-
-        transform = ComplexDict(dict(
-            command=dict(key=True),
-            prompt=dict(),
-            response=dict()
-        ))
-
-        if not isinstance(command, dict):
-            command = transform(command)
-
-        rc, out, err = self.shell.send_command(command)
-
-        return rc, out, err
-
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
+    run_commands = lambda self, x: self.execute(to_list(x))
+    exec_command = lambda self, x: self.shell.send(self.to_command(x))
