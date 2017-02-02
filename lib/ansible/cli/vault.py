@@ -197,7 +197,13 @@ class VaultCLI(CLI):
         args = [x for x in self.args if x != '-']
 
         if self.options.encrypt_string_prompt:
-            msg = "string to encrypt:"
+            msg = "String to encrypt: "
+
+            name_prompt_response = display.prompt('Variable name (enter for no name): ')
+            name = None
+            # TODO: enforce var naming rules?
+            if name_prompt_response != "":
+                name = name_prompt_response
 
             # could use private=True for shadowed input if useful
             prompt_response = display.prompt(msg)
@@ -206,7 +212,7 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
 
             b_plaintext = to_bytes(prompt_response)
-            b_plaintext_list.append((b_plaintext, self.FROM_PROMPT, None))
+            b_plaintext_list.append((b_plaintext, self.FROM_PROMPT, name))
 
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
