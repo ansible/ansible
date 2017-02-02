@@ -120,7 +120,7 @@ options:
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
-      "monitoring", "sql", "sql-admin", "storage-full", "storage-ro",
+      "monitoring", "sql-admin", "storage-full", "storage-ro",
       "storage-rw", "taskqueue", "userinfo-email"
     ]
   automatic_restart:
@@ -187,20 +187,19 @@ requirements:
       >= 0.20.0 if using preemptible option"
 notes:
   - JSON credentials strongly preferred.
-author: "Gwenael Pellen <gwenael.pellen@arkeup.com>"
+author: "Gwenael Pellen (@GwenaelPellenArkeup) <gwenael.pellen@arkeup.com>"
 '''
 
 EXAMPLES = '''
 # Usage
-
-    gce_template:
-      name: my-test-instance-template
-      size: n1-standard-1
-      image_family: ubuntu-1604-lts
-      state: present
-      project_id: "your-project-name"
-      credentials_file: "/path/to/your-key.json"
-      service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+gce_template:
+  name: my-test-instance-template
+  size: n1-standard-1
+  image_family: ubuntu-1604-lts
+  state: present
+  project_id: "your-project-name"
+  credentials_file: "/path/to/your-key.json"
+  service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
 
 # Example Playbook
 - name: Compute Engine Instance Template Examples
@@ -250,7 +249,7 @@ except ImportError:
 
 
 def get_info(inst):
-    """Retrieves instance template informations
+    """Retrieves instance template information
 
     """
     return({
@@ -260,14 +259,11 @@ def get_info(inst):
 
 
 def create_instance_template(module, gce):
-    """Create on instance template
-
+    """Create an instance template
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
-
     Returns:
         instance template information
-
     """
     # get info from module
     name = module.params.get('name')
@@ -430,7 +426,7 @@ def create_instance_template(module, gce):
     if instance:
         json_data = get_info(instance)
     else:
-        module.fail_json(msg="no instance template !")
+        module.fail_json(msg="no instance template!")
 
     return (changed, json_data, name)
 
