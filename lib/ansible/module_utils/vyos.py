@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -26,87 +26,63 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import re
-import os
+_DEVICE_CONFIGS = {}
 
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
+def get_config(module, target='commands'):
+    cmd = ' '.join(['show configuration', target])
 
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = module.exec_command(cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=err)
+        cfg = str(out).strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
-class Cli(CliBase):
+def run_commands(module, commands, check_rc=True):
+    responses = list()
 
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\@[\w\-\.]+:\S+?[>#\$] ?$")
-    ]
+    for cmd in to_list(commands):
+        rc, out, err = module.exec_command(cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=err, rc=rc)
+        responses.append(out)
+    return responses
 
-    CLI_ERRORS_RE = [
-        re.compile(r"\n\s*Invalid command:"),
-        re.compile(r"\nCommit failed"),
-        re.compile(r"\n\s+Set failed"),
-    ]
+def load_config(module, commands, commit=False, comment=None, save=False):
+    rc, out, err = module.exec_command('configure')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', output=err)
 
-    TERMINAL_LENGTH = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
-
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('set terminal length 0')
-        self.shell.send('set terminal length %s' % self.TERMINAL_LENGTH)
-
-
-    ### implementation of netcli.Cli ###
-
-    def run_commands(self, commands):
-        commands = to_list(commands)
-        return self.execute([str(c) for c in commands])
-
-    ### implementation of netcfg.Config ###
-
-    def configure(self, config):
-        commands = ['configure']
-        commands.extend(config)
-        commands.extend(['commit', 'exit'])
-        response = self.execute(commands)
-        return response[1:-2]
-
-    def load_config(self, config, commit=False, comment=None, save=False, **kwargs):
-        try:
-            config.insert(0, 'configure')
-            self.execute(config)
-        except NetworkError:
+    for cmd in to_list(commands):
+        rc, out, err = module.exec_command(cmd, check_rc=False)
+        if rc != 0:
             # discard any changes in case of failure
-            self.execute(['exit discard'])
-            raise
+            module.exec_command('exit discard')
+            module.fail_json(msg='configuration failed')
 
-        if not self.execute('compare')[0].startswith('No changes'):
-            diff = self.execute(['show'])[0]
-        else:
-            diff = None
+    diff = None
+    if module._diff:
+        rc, out, err = module.exec_command('compare')
+        if not out.startswith('No changes'):
+            rc, out, err = module.exec_command('show')
+            diff = str(out).strip()
 
-        if commit:
-            cmd = 'commit'
-            if comment:
-                cmd += ' comment "%s"' % comment
-            self.execute(cmd)
+    if commit:
+        cmd = 'commit'
+        if comment:
+            cmd += ' comment "%s"' % comment
+        module.exec_command(cmd)
 
-        if save:
-            self.execute(['save'])
+    if save:
+        module.exec_command(cmd)
 
-        if not commit:
-            self.execute(['exit discard'])
-        else:
-            self.execute(['exit'])
+    if not commit:
+        module.exec_command('exit discard')
+    else:
+        module.exec_command('exit')
 
+    if diff:
         return diff
-
-    def get_config(self, output='text', **kwargs):
-        if output not in ['text', 'set']:
-            raise ValueError('invalid output format specified')
-        if output == 'set':
-            return self.execute(['show configuration commands'])[0]
-        else:
-            return self.execute(['show configuration'])[0]
-
-Cli = register_transport('cli', default=True)(Cli)

@@ -152,7 +152,7 @@ from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
-from ansible.module_utils.vyos2 import run_commands
+from ansible.module_utils.vyos import run_commands
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
 
