@@ -132,11 +132,6 @@ options:
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
           - Add an optional C(device_type) to configure the virtual NIC (pcnet32, vmxnet2, vmxnet3, e1000, e1000e)
         version_added: "2.3"
-   snapshot_op:
-        description:
-          - A key, value pair of snapshot operation types and their additional required parameters.
-          - Beware that this functionality will disappear in v2.3 and move into module C(vmware_guest_snapshot)
-        version_added: "2.3"
    customization:
         description:
           - "Parameters to customize template"
@@ -163,17 +158,6 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Gather facts only
-  - name: gather the VM facts
-    vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      esxi_hostname: 192.168.1.117
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-    register: facts
-
 # Create a VM from a template
   - name: create the VM
     vmware_guest:
@@ -276,68 +260,6 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
-
-### Snapshot Operations
-
-# BEWARE: This functionality will move into vmware_guest_snapshot before release !
-
-# Create snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: create
-        name: snap1
-        description: snap1_description
-
-# Remove a snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: remove
-        name: snap1
-
-# Revert to a snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: revert
-        name: snap1
-
-# List all snapshots of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: list_all
-
-# List current snapshot of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: list_current
-
-# Remove all snapshots of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: remove_all
 '''
 
 RETURN = """
@@ -356,7 +278,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.vmware import get_all_objs, connect_to_api
+from ansible.module_utils.vmware import get_all_objs, connect_to_api, gather_vm_facts
 
 try:
     import json
@@ -611,66 +533,7 @@ class PyVmomiHelper(object):
         return result
 
     def gather_facts(self, vm):
-        """ Gather facts from vim.VirtualMachine object. """
-        facts = {
-            'module_hw': True,
-            'hw_name': vm.config.name,
-            'hw_power_status': vm.summary.runtime.powerState,
-            'hw_guest_full_name': vm.summary.guest.guestFullName,
-            'hw_guest_id': vm.summary.guest.guestId,
-            'hw_product_uuid': vm.config.uuid,
-            'hw_processor_count': vm.config.hardware.numCPU,
-            'hw_memtotal_mb': vm.config.hardware.memoryMB,
-            'hw_interfaces': [],
-            'ipv4': None,
-            'ipv6': None,
-            'annotation': vm.config.annotation,
-            'customvalues': {},
-        }
-
-        cfm = self.content.customFieldsManager
-        # Resolve customvalues
-        for value_obj in vm.summary.customValue:
-            kn = value_obj.key
-            if cfm is not None and cfm.field:
-                for f in cfm.field:
-                    if f.key == value_obj.key:
-                        kn = f.name
-                        # Exit the loop immediately, we found it
-                        break
-
-            facts['customvalues'][kn] = value_obj.value
-
-        netDict = {}
-        for device in vm.guest.net:
-            netDict[device.macAddress] = list(device.ipAddress)
-
-        for k, v in iteritems(netDict):
-            for ipaddress in v:
-                if ipaddress:
-                    if '::' in ipaddress:
-                        facts['ipv6'] = ipaddress
-                    else:
-                        facts['ipv4'] = ipaddress
-
-        ethernet_idx = 0
-        for idx, entry in enumerate(vm.config.hardware.device):
-            if not hasattr(entry, 'macAddress'):
-                continue
-
-            factname = 'hw_eth' + str(ethernet_idx)
-            facts[factname] = {
-                'addresstype': entry.addressType,
-                'label': entry.deviceInfo.label,
-                'macaddress': entry.macAddress,
-                'ipaddresses': netDict.get(entry.macAddress, None),
-                'macaddress_dash': entry.macAddress.replace(':', '-'),
-                'summary': entry.deviceInfo.summary,
-            }
-            facts['hw_interfaces'].append('eth' + str(ethernet_idx))
-            ethernet_idx += 1
-
-        return facts
+        return gather_vm_facts(self.content, vm)
 
     def remove_vm(self, vm):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
@@ -713,6 +576,7 @@ class PyVmomiHelper(object):
             # memory_mb is mandatory for VM creation
             elif vm_creation and not self.should_deploy_from_template():
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
+
 
     def get_vm_network_interfaces(self, vm=None):
         if vm is None:
@@ -1283,7 +1147,7 @@ class PyVmomiHelper(object):
                 return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Rename VM
-        if self.params['uuid'] and self.params['name'] and self.params['name'] != vm.config.name:
+        if self.params['uuid'] and self.params['name'] and self.params['name'] != self.current_vm_obj.config.name:
             task = self.current_vm_obj.Rename_Task(self.params['name'])
             self.wait_for_task(task)
             change_applied = True
@@ -1322,110 +1186,6 @@ class PyVmomiHelper(object):
                 thispoll += 1
 
         return facts
-
-    def list_snapshots_recursively(self, snapshots):
-        snapshot_data = []
-        for snapshot in snapshots:
-            snap_text = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s' % (snapshot.id, snapshot.name,
-                                                                                          snapshot.description,
-                                                                                          snapshot.createTime,
-                                                                                          snapshot.state)
-            snapshot_data.append(snap_text)
-            snapshot_data = snapshot_data + self.list_snapshots_recursively(snapshot.childSnapshotList)
-        return snapshot_data
-
-    def get_snapshots_by_name_recursively(self, snapshots, snapname):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.name == snapname:
-                snap_obj.append(snapshot)
-            else:
-                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
-        return snap_obj
-
-    def get_current_snap_obj(self, snapshots, snapob):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.snapshot == snapob:
-                snap_obj.append(snapshot)
-            snap_obj = snap_obj + self.get_current_snap_obj(snapshot.childSnapshotList, snapob)
-        return snap_obj
-
-    def snapshot_vm(self, vm, guest, snapshot_op):
-        """ To perform snapshot operations create/remove/revert/list_all/list_current/remove_all """
-
-        snapshot_op_name = None
-        try:
-            snapshot_op_name = snapshot_op['op_type']
-        except KeyError:
-            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
-
-        task = None
-        result = {}
-
-        if snapshot_op_name not in ['create', 'remove', 'revert', 'list_all', 'list_current', 'remove_all']:
-            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
-
-        if snapshot_op_name != 'create' and vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" % guest)
-
-        if snapshot_op_name == 'create':
-            try:
-                snapname = snapshot_op['name']
-            except KeyError:
-                self.module.fail_json(msg="specify name & description(optional) to create a snapshot")
-
-            if 'description' in snapshot_op:
-                snapdesc = snapshot_op['description']
-            else:
-                snapdesc = ''
-
-            dumpMemory = False
-            quiesce = False
-            task = vm.CreateSnapshot(snapname, snapdesc, dumpMemory, quiesce)
-
-        elif snapshot_op_name in ['remove', 'revert']:
-            try:
-                snapname = snapshot_op['name']
-            except KeyError:
-                self.module.fail_json(msg="specify snapshot name")
-
-            snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList, snapname)
-
-            # if len(snap_obj) is 0; then no snapshots with specified name
-            if len(snap_obj) == 1:
-                snap_obj = snap_obj[0].snapshot
-                if snapshot_op_name == 'remove':
-                    task = snap_obj.RemoveSnapshot_Task(True)
-                else:
-                    task = snap_obj.RevertToSnapshot_Task()
-            else:
-                self.module.exit_json(
-                    msg="Couldn't find any snapshots with specified name: %s on VM: %s" % (snapname, guest))
-
-        elif snapshot_op_name == 'list_all':
-            snapshot_data = self.list_snapshots_recursively(vm.snapshot.rootSnapshotList)
-            result['snapshot_data'] = snapshot_data
-
-        elif snapshot_op_name == 'list_current':
-            current_snapref = vm.snapshot.currentSnapshot
-            current_snap_obj = self.get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
-            result['current_snapshot'] = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s' % (
-                current_snap_obj[0].id,
-                current_snap_obj[0].name, current_snap_obj[0].description, current_snap_obj[0].createTime,
-                current_snap_obj[0].state)
-
-        elif snapshot_op_name == 'remove_all':
-            task = vm.RemoveAllSnapshots()
-
-        if task:
-            self.wait_for_task(task)
-            if task.info.state == 'error':
-                result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
-            else:
-                result = {'changed': True, 'failed': False}
-
-        return result
 
 
 def get_obj(content, vimtype, name):
@@ -1473,7 +1233,6 @@ def main():
                     'absent',
                     'restarted',
                     'suspended',
-                    'gatherfacts',
                 ],
                 default='present'),
             validate_certs=dict(required=False, type='bool', default=True),
@@ -1483,7 +1242,6 @@ def main():
             customvalues=dict(required=False, type='list', default=[]),
             name=dict(required=True, type='str'),
             name_match=dict(required=False, type='str', default='first'),
-            snapshot_op=dict(required=False, type='dict', default={}),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm'),
             guest_id=dict(required=False, type='str', default=None),
@@ -1538,15 +1296,6 @@ def main():
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
-        elif module.params['state'] == 'gatherfacts':
-            # Run for facts only
-            try:
-                module.exit_json(instance=pyv.gather_facts(vm))
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Fact gather failed with exception %s" % e)
-        elif module.params['snapshot_op']:
-            result = pyv.snapshot_vm(vm, module.params['name'], module.params['snapshot_op'])
         else:
             # This should not happen
             assert False
@@ -1555,8 +1304,6 @@ def main():
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             # Create it ...
             result = pyv.deploy_vm()
-        elif module.params['state'] == 'gatherfacts':
-            module.fail_json(msg="Unable to gather facts for non-existing VM %(name)s" % module.params)
 
     if 'failed' not in result:
         result['failed'] = False
