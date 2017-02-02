@@ -69,8 +69,12 @@ options:
   frequency:
     description:
       - The frequency of the command, not idempotent
+      - C(interval) added in Ansible 2.4
+      - C(hourly) added in Ansible 2.4
     choices:
       - once
+      - interval
+      - hourly
       - daily
       - weekly
   time:
@@ -79,6 +83,17 @@ options:
   days_of_week:
     description:
       - Days of the week to run a weekly task, not idempotent
+    required: false
+  interval:
+    description:
+      - When frequency is set to interval, time between executions, units are set by "interval_unit"
+    required: false
+    version_added: "2.4"
+  interval_unit:
+    description:
+      - Unit of time between interval, can be seconds, minutes, hours, days
+    default: minutes
+    version_added: "2.4"
   path:
     description:
       - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present),
@@ -99,4 +114,17 @@ EXAMPLES = r'''
     state: present
     enabled: yes
     user: SYSTEM
+
+# create an interval task to run every 12 minutes starting at 2pm
+- win_scheduled_task:
+    name: IntervalTask
+    execute: cmd
+    frequency: interval
+    interval: 12
+    time: 2pm
+    path: example
+    enable: yes
+    state: present
+    user: SYSTEM
+
 '''

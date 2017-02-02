@@ -3,6 +3,7 @@
 #
 # Copyright 2015, Peter Mounce <public@neverrunwithscissors.com>
 # Michael Perzel <michaelperzel@gmail.com>
+# Colin Heinzmann <colin@heinzmann.me>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,18 +85,26 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 # Vars conditionally required
 $present = $state -eq "present"
 $executable = Get-AnsibleParam -obj $params -name "executable" -type "str" -aliases "execute" -failifempty $present
-$frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -validateset "once","daily","weekly" -failifempty $present
+$frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -validateset "once","interval","hourly","daily","weekly" -failifempty $present
 $time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $present
 
 # TODO: We should default to the current user
 $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $present
 
-$weekly = $frequency -eq "weekly"
-$days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $weekly
+$frequency_weekly = $frequency -eq "weekly"
+$days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $frequency_weekly
 
+$frequency_interval = $frequency -eq "interval"
+$interval = Get-AnsibleParam $params -name "interval" -type "int" -failifempty $frequency_interval
+$interval_unit = Get-AnsibleParam $params -name "interval_unit" -type "str" -validateset "seconds","minutes","hours","days" -failifempty $frequency_interval
 
 try {
-    $task = Get-ScheduledTask | Where-Object {$_.TaskName -eq $name -and $_.TaskPath -eq $path}
+    try {
+        $task = Get-ScheduledTask -TaskPath "$path" -TaskName "$name"
+    } catch {
+        $task = $null
+    }
+
 
     # Correlate task state to enable variable, used to calculate if state needs to be changed
     $taskState = if ($task) { $task.State } else { $null }
@@ -135,6 +144,12 @@ try {
         if ($frequency -eq "once") {
             $trigger = New-ScheduledTaskTrigger -Once -At $time
         }
+        elseif ( $frequency -eq "interval"){
+            $trigger = New-ScheduledTaskTrigger -Once -RepetitionInterval (iex $("new-timespan -$interval_unit $interval")) -At $time -RepetitionDuration ([timespan]::MaxValue)
+        }
+        elseif ( $frequency -eq "hourly"){
+            $trigger = New-ScheduledTaskTrigger -Once -RepetitionInterval (new-timespan -hour 1) -At $time -RepetitionDuration ([timespan]::MaxValue)
+        }
         elseif ($frequency -eq "daily") {
             $trigger = New-ScheduledTaskTrigger -Daily -At $time
         }
@@ -142,7 +157,7 @@ try {
             $trigger = New-ScheduledTaskTrigger -Weekly -At $time -DaysOfWeek $days_of_week
         }
         else {
-            Fail-Json $result "frequency must be daily or weekly"
+            Fail-Json $result "frequency must be once, interval, hourly, daily or weekly"
         }
     }
 
