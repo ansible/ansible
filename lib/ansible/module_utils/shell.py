@@ -147,7 +147,7 @@ class Shell(object):
             window = self.strip(recv.read().decode('utf8'))
 
             if cmd:
-                if 'prompt' in cmd and not handled:
+                if cmd.get('prompt') and not handled:
                     handled = self.handle_prompt(window, cmd)
 
             try:
@@ -195,13 +195,10 @@ class Shell(object):
         self.shell.close()
 
     def handle_prompt(self, resp, cmd):
-        prompt = to_list(cmd['prompt'])
-        response = to_list(cmd['response'])
-
-        for pr, ans in zip(prompt, response):
-            match = pr.search(resp)
+        for prompt in to_list(cmd['prompt']):
+            match = re.search(prompt, resp)
             if match:
-                answer = '%s\r' % ans
+                answer = '%s\r' % cmd['response']
                 self.shell.sendall(answer)
                 return True
 
@@ -246,7 +243,7 @@ class CliBase(object):
         username = params['username']
         password = params.get('password')
         key_file = params.get('ssh_keyfile')
-        timeout = params['timeout']
+        timeout = params['timeout'] or 10
 
         try:
             self.shell = Shell(
@@ -273,8 +270,19 @@ class CliBase(object):
     def authorize(self, params, **kwargs):
         pass
 
+    def to_command(self, obj):
+        if isinstance(command, Command):
+            cmdobj = dict()
+            cmdobj['command'] = obj.command
+            cmdobj['response'] = obj.response
+            cmdobj['prompt'] = [p.pattern for p in to_list(obj.prompt)]
+            return cmdobj
+        return obj
+
     def execute(self, commands):
         try:
+            for index, item in enumerate(commands):
+                commands[index] = to_command(item)
             return self.shell.send(commands)
         except ShellError:
             exc = get_exception()
@@ -289,12 +297,10 @@ class CliBase(object):
             response=dict()
         ))
 
-        try:
-            cmdobj = json.loads(command)
-        except ValueError:
-            cmdobj = transform(command)
+        if not isinstance(command, dict):
+            command = transform(command)
 
-        rc, out, err = self.shell.send_command(cmdobj)
+        rc, out, err = self.shell.send_command(command)
 
         return rc, out, err
 
