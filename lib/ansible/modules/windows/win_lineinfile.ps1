@@ -101,8 +101,8 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate) {
 	Try {
 		Copy-Item $temppath $cleanpath -force;
 	}
-	catch {
-		Fail-Json "Cannot write to: $cleanpath"
+	Catch {
+		Fail-Json ("Cannot write to: $cleanpath (" + $_.Exception.Message + ")")
 	}
 
 	Remove-Item $temppath -force;
