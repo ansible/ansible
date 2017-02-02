@@ -53,8 +53,79 @@ class RoleRequirement(RoleDefinition):
     specified in meta/main.yml and requirements.yml files.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(RoleRequirement, self).__init__(*args,**kwargs)
+
+    def _get_valid_spec_keys(self):
+        return (
+            'name',
+            'role',
+            'scm',
+            'src',
+            'version',
+        )
+
+    def preprocess_data(self, ds):
+        new_ds, _, _  = self.parse(ds)
+        new_ds = super(RoleRequirement, self).preprocess_data(new_ds)
+        return new_ds
+
+    def parse(self, ds):
+        '''
+        FIXME: docstring
+        '''
+        assert type(ds) == dict or isinstance(ds, string_types)
+
+        role_name    = ''
+        role_params  = dict()
+        new_ds       = dict()
+
+        if isinstance(ds, string_types):
+            ds = dict(src=ds)
+
+        ds = self._preprocess_role_spec(ds)
+        (new_ds, role_params) = self._split_role_params(ds)
+
+        # pull the role name out of the ds
+        role_name = new_ds.get('role')
+
+        return (new_ds, role_name, role_params)
+
+    def _preprocess_role_spec(self, ds):
+        if 'role' in ds:
+            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+            role_info = RoleRequirement.role_spec_parse(ds['role'])
+            if isinstance(role_info, dict):
+                # Warning: Slight change in behaviour here.  name may be being
+                # overloaded.  Previously, name was only a parameter to the role.
+                # Now it is both a parameter to the role and the name that
+                # ansible-galaxy will install under on the local system.
+                if 'name' in ds and 'name' in role_info:
+                    del role_info['name']
+                ds.update(role_info)
+        else:
+            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+            if 'src' in ds:
+                if ('github.com' in ds["src"] and 'http' in ds["src"] and
+                    '+' not in ds["src"] and not ds["src"].endswith('.tar.gz')):
+                    ds["src"] = "git+" + ds["src"]
+
+                if '+' in ds["src"]:
+                    (scm, src) = ds["src"].split('+')
+                    ds["scm"] = scm
+                    ds["src"] = src
+
+            if 'name' in ds:
+                ds["role"] = ds["name"]
+                del ds["name"]
+            else:
+                ds["role"] = self.repo_url_to_role_name(ds["src"])
+
+            # set some values to a default value, if none were specified
+            ds.setdefault('version', '')
+            ds.setdefault('scm', None)
+
+        return ds
 
     @staticmethod
     def repo_url_to_role_name(repo_url):
@@ -64,12 +135,12 @@ class RoleRequirement(RoleDefinition):
         if '://' not in repo_url and '@' not in repo_url:
             return repo_url
         trailing_path = repo_url.split('/')[-1]
+        if ',' in trailing_path:
+            trailing_path = trailing_path.split(',')[0]
         if trailing_path.endswith('.git'):
             trailing_path = trailing_path[:-4]
         if trailing_path.endswith('.tar.gz'):
             trailing_path = trailing_path[:-7]
-        if ',' in trailing_path:
-            trailing_path = trailing_path.split(',')[0]
         return trailing_path
 
     @staticmethod
