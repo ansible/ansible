@@ -95,6 +95,11 @@ options:
         required: false
         default: null
         aliases: [ "aws_secret_access_key" ]
+    aws_session_token:
+        description:
+            - Provide the session token along with your S3 repository request if using AWS STS temporary credentials
+        required: false
+        default: null
     dest:
         description:
             - The path where the artifact should be written to
@@ -265,10 +270,19 @@ class MavenDownloader:
         url_to_use = url
         parsed_url = urlparse(url)
         if parsed_url.scheme=='s3':
+            s3_credentials = {
+                'aws_access_key_id': self.module.params.get('username', ''),
+                'aws_secret_access_key': self.module.params.get('password', ''),
+            }
+
+            session_token = self.module.params.get('aws_session_token', None)
+            if session_token:
+                s3_credentials['aws_session_token'] = session_token
+
             parsed_url = urlparse(url)
             bucket_name = parsed_url.netloc
             key_name = parsed_url.path[1:]
-            client = boto3.client('s3',aws_access_key_id=self.module.params.get('username', ''), aws_secret_access_key=self.module.params.get('password', ''))
+            client = boto3.client('s3', **s3_credentials)
             url_to_use = client.generate_presigned_url('get_object',Params={'Bucket':bucket_name,'Key':key_name},ExpiresIn=10)
 
         req_timeout = self.module.params.get('timeout')
@@ -360,6 +374,7 @@ def main():
             repository_url = dict(default=None),
             username = dict(default=None,aliases=['aws_secret_key']),
             password = dict(default=None, no_log=True,aliases=['aws_secret_access_key']),
+            aws_session_token = dict(default=None),
             state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
             timeout = dict(default=10, type='int'),
             dest = dict(type="path", default=None),
