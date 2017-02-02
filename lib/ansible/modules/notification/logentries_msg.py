@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.pycompat24 import get_exception
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -35,18 +37,15 @@ options:
     description:
       - The message body.
     required: true
-    default: null
     version_added: "2.1"
   api:
     description:
       - API endpoint
-    required: false
     default: data.logentries.com
     version_added: "2.1"
   port:
     description:
       - API endpoint port
-    required: false
     default: 80
     version_added: "2.1"
 author: "Jimmy Tang <jimmy_tang@rapid7.com>"
@@ -63,8 +62,13 @@ EXAMPLES = '''
 '''
 
 
+# import module snippets
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+import socket
+
+
 def send_msg(module, token, msg, api, port):
-    import socket
 
     message = "{} {}\n".format(token, msg)
 
@@ -73,39 +77,39 @@ def send_msg(module, token, msg, api, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((api_ip, port))
     try:
-        s.send(message)
+        if not module.check_mode:
+            s.send(message)
     except:
-        module.fail_json(msg="failed to send message, msg=%s" % str(message))
+        e = get_exception()
+        module.fail_json(msg="failed to send message, msg=%s" % e)
     s.close()
+
 
 def main():
     module = AnsibleModule(
-            argument_spec=dict(
-                token=dict(required=True),
-                msg=dict(required=True),
-                api=dict(default="data.logentries.com"),
-                port=dict(default=80)
-                ),
-            supports_check_mode=False
-            )
+        argument_spec=dict(
+            token=dict(type='str', required=True),
+            msg=dict(type='str', required=True),
+            api=dict(type='str', default="data.logentries.com"),
+            port=dict(type='int', default=80)),
+        supports_check_mode=True
+    )
 
     token = module.params["token"]
     msg = module.params["msg"]
     api = module.params["api"]
     port = module.params["port"]
 
+    changed = False
     try:
         send_msg(module, token, msg, api, port)
+        changed = True
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to send msg: %s" % e)
 
-    changed = True
     module.exit_json(changed=changed, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
