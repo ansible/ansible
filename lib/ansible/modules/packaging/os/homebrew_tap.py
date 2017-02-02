@@ -21,8 +21,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -78,6 +76,8 @@ EXAMPLES = '''
     name: telemachus/brew
     url: 'https://bitbucket.org/telemachus/brew'
 '''
+
+import re
 
 
 def a_valid_tap(tap):

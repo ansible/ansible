@@ -16,9 +16,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-import subprocess
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = """
 module: gconftool2
@@ -100,6 +101,10 @@ RETURN = '''
     sample: "Serif 12"
 ...
 '''
+
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
+from ansible.module_utils.pycompat24 import get_exception
+import subprocess
 
 
 class GConf2Preference(object):

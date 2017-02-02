@@ -14,16 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -118,6 +108,16 @@ lambda_stream_events:
     returned: success
     type: list
 '''
+
+import sys
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 
 # ---------------------------------------------------------------------------------------------------
 #

@@ -10,17 +10,17 @@
 #   2) source hacking/env-setup
 #   3) PYTHONPATH=./lib nosetests -d -w test -v --nocapture sanity/validate-modules
 
-import os
 import re
 from ansible.compat.tests import unittest
 
-#TYPE_REGEX = re.compile(r'.*\stype\(.*')
-#TYPE_REGEX = re.compile(r'.*(if|or)\stype\(.*')
-#TYPE_REGEX = re.compile(r'.*(if|or)(\s+.*|\s+)type\(.*')
-#TYPE_REGEX = re.compile(r'.*(if|or)(\s+.*|\s+)type\(.*')
-#TYPE_REGEX = re.compile(r'.*(if|\sor)(\s+.*|\s+)type\(.*')
-#TYPE_REGEX =  re.compile(r'.*(if|\sor)(\s+.*|\s+)(?<!_)type\(.*')
-TYPE_REGEX =  re.compile(r'.*(if|or)(\s+.*|\s+)(?<!_)(?<!str\()type\(.*')
+# TYPE_REGEX = re.compile(r'.*\stype\(.*')
+# TYPE_REGEX = re.compile(r'.*(if|or)\stype\(.*')
+# TYPE_REGEX = re.compile(r'.*(if|or)(\s+.*|\s+)type\(.*')
+# TYPE_REGEX = re.compile(r'.*(if|or)(\s+.*|\s+)type\(.*')
+# TYPE_REGEX = re.compile(r'.*(if|\sor)(\s+.*|\s+)type\(.*')
+# TYPE_REGEX =  re.compile(r'.*(if|\sor)(\s+.*|\s+)(?<!_)type\(.*')
+TYPE_REGEX = re.compile(r'.*(if|or)(\s+.*|\s+)(?<!_)(?<!str\()type\(.*')
+
 
 class TestValidateModulesRegex(unittest.TestCase):
 
@@ -42,18 +42,18 @@ class TestValidateModulesRegex(unittest.TestCase):
             ['if foo or type(bar) != Bar', True],
             ['x = type(foo)', False],
             ["error = err.message + ' ' + str(err) + ' - ' + str(type(err))", False],
-            #cloud/amazon/ec2_group.py
+            # cloud/amazon/ec2_group.py
             ["module.fail_json(msg='Invalid rule parameter type [%s].' % type(rule))", False],
-            #files/patch.py
-            ["p = type('Params', (), module.params)", False], #files/patch.py
-            #system/osx_defaults.py
+            # files/patch.py
+            ["p = type('Params', (), module.params)", False],  # files/patch.py
+            # system/osx_defaults.py
             ["if self.current_value is not None and not isinstance(self.current_value, type(self.value)):", True],
-            #system/osx_defaults.py
+            # system/osx_defaults.py
             ['raise OSXDefaultsException("Type mismatch. Type in defaults: " + type(self.current_value).__name__)', False],
-            #network/nxos/nxos_interface.py
+            # network/nxos/nxos_interface.py
             ["if get_interface_type(interface) == 'svi':", False],
         ]
-        for idc,check in enumerate(checks):
+        for idc, check in enumerate(checks):
             cstring = check[0]
             cexpected = check[1]
 
@@ -62,4 +62,3 @@ class TestValidateModulesRegex(unittest.TestCase):
                 assert False, "%s should have matched" % cstring
             elif not cexpected and match:
                 assert False, "%s should not have matched" % cstring
-

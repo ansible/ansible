@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import shutil
-from os import path
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -93,7 +90,8 @@ EXAMPLES = '''
     state: absent
 '''
 
-USERAGENT = 'ansible-httpget'
+import shutil
+from os import path
 
 try:
     from layman.api import LaymanAPI
@@ -101,6 +99,8 @@ try:
     HAS_LAYMAN_API = True
 except ImportError:
     HAS_LAYMAN_API = False
+
+USERAGENT = 'ansible-httpget'
 
 
 class ModuleError(Exception):

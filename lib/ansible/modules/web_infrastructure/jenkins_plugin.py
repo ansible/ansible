@@ -18,20 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_native
-import base64
-import hashlib
-import json
-import os
-import tempfile
-import time
-import urllib
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -306,6 +292,18 @@ state:
     type: string
     sample: "present"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils._text import to_native
+import base64
+import hashlib
+import json
+import os
+import tempfile
+import time
+import urllib
 
 
 class JenkinsPlugin(object):

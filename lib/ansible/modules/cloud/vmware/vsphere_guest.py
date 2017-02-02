@@ -19,24 +19,6 @@
 # TODO:
 # Ability to set CPU/Memory reservations
 
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-HAS_PYSPHERE = False
-try:
-    from pysphere import VIServer, VIProperty, MORTypes
-    from pysphere.resources import VimService_services as VI
-    from pysphere.vi_task import VITask
-    from pysphere import VIException, VIApiException, FaultTypes
-    HAS_PYSPHERE = True
-except ImportError:
-    pass
-
-import ssl
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -319,6 +301,24 @@ as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
     state: absent
     force: yes
 '''
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+HAS_PYSPHERE = False
+try:
+    from pysphere import VIServer, VIProperty, MORTypes
+    from pysphere.resources import VimService_services as VI
+    from pysphere.vi_task import VITask
+    from pysphere import VIException, VIApiException, FaultTypes
+    HAS_PYSPHERE = True
+except ImportError:
+    pass
+
+import ssl
+
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
     # add a scsi controller

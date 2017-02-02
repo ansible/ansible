@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-from distutils.version import StrictVersion
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -77,7 +78,11 @@ rc:
     type: bool
 '''
 
+import time
+from distutils.version import StrictVersion
+
 _PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
+
 
 def get_cluster_status(module):
     cmd = "pcs cluster status"

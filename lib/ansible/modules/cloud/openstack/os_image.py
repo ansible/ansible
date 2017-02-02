@@ -17,12 +17,6 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 #TODO(mordred): we need to support "location"(v1) and "locations"(v2)
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -120,6 +114,12 @@ EXAMPLES = '''
       cpu_arch: x86_64
       distro: ubuntu
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def main():

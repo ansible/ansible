@@ -20,19 +20,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from datetime import date
-import crypt
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.univention_umc import (
-    umc_module_for_add,
-    umc_module_for_edit,
-    ldap_search,
-    base_dn,
-)
-from dateutil.relativedelta import relativedelta
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -355,6 +342,17 @@ EXAMPLES = '''
 
 
 RETURN = '''# '''
+
+from datetime import date
+import crypt
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.univention_umc import (
+    umc_module_for_add,
+    umc_module_for_edit,
+    ldap_search,
+    base_dn,
+)
+from dateutil.relativedelta import relativedelta
 
 
 def main():

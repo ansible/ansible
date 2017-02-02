@@ -19,27 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
-import traceback
-
-try:
-    import ovirtsdk4.types as otypes
-
-    from ovirtsdk4.types import HostStatus as hoststate
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    wait,
-)
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -177,6 +156,26 @@ host:
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
     returned: On success if host is found.
 '''
+
+import time
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+
+    from ovirtsdk4.types import HostStatus as hoststate
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    wait,
+)
 
 
 class HostsModule(BaseModule):

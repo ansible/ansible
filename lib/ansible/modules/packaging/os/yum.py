@@ -21,35 +21,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import re
-import shutil
-import tempfile
-
-try:
-    import rpm
-    HAS_RPM_PYTHON = True
-except ImportError:
-    HAS_RPM_PYTHON = False
-
-try:
-    import yum
-    HAS_YUM_PYTHON = True
-except ImportError:
-    HAS_YUM_PYTHON = False
-
-try:
-    from yum.misc import find_unfinished_transactions, find_ts_remaining
-    from rpmUtils.miscutils import splitFilename
-    transaction_helpers = True
-except:
-    transaction_helpers = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url
-
-
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -236,11 +207,40 @@ EXAMPLES = '''
   register: result
 '''
 
+import os
+import re
+import shutil
+import tempfile
+
+try:
+    import rpm
+    HAS_RPM_PYTHON = True
+except ImportError:
+    HAS_RPM_PYTHON = False
+
+try:
+    import yum
+    HAS_YUM_PYTHON = True
+except ImportError:
+    HAS_YUM_PYTHON = False
+
+try:
+    from yum.misc import find_unfinished_transactions, find_ts_remaining
+    from rpmUtils.miscutils import splitFilename
+    transaction_helpers = True
+except:
+    transaction_helpers = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url
+
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
 BUFSIZE = 65536
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 rpmbin = None
+
 
 def yum_base(conf_file=None, installroot='/'):
 

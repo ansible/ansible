@@ -18,9 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-import shlex
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -101,6 +98,7 @@ changed:
   type: bool
 """
 
+import shlex
 
 VROUTER_EXISTS = None
 LB_INTERFACE_EXISTS = None

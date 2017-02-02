@@ -18,12 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import binascii
-import copy
-import locale
-import textwrap
-from datetime import datetime
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -167,6 +161,13 @@ authorizations:
         returned: success
         type: dict
 '''
+
+import binascii
+import copy
+import locale
+import textwrap
+from datetime import datetime
+
 
 def nopad_b64(data):
     return base64.urlsafe_b64encode(data).decode('utf8').replace("=", "")

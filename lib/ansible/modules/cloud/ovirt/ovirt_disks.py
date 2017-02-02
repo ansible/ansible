@@ -19,38 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import time
-import traceback
-import ssl
-
-from httplib import HTTPSConnection
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
-
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    convert_to_bytes,
-    equal,
-    follow_link,
-    ovirt_full_argument_spec,
-    search_by_name,
-    wait,
-)
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -211,6 +179,38 @@ disk_attachment:
                   https://ovirt.example.com/ovirt-engine/api/model#types/disk_attachment."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
 '''
+
+import os
+import time
+import traceback
+import ssl
+
+from httplib import HTTPSConnection
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    convert_to_bytes,
+    equal,
+    follow_link,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+)
 
 
 def _search_by_lun(disks_service, lun_id):

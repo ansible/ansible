@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -128,6 +129,9 @@ snapshots_absent:
     type: list
     sample: "[disk0-example-snapshot, disk1-example-snapshot]"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 try:
     from libcloud.compute.types import Provider

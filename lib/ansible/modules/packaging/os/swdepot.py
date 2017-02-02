@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import pipes
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -76,6 +73,10 @@ EXAMPLES = '''
     name: unzip
     state: absent
 '''
+
+import re
+import pipes
+
 
 def compare_package(version1, version2):
     """ Compare version packages.

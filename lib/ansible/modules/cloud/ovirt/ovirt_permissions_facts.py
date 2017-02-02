@@ -19,23 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
-
-try:
-    import ovirtsdk4 as sdk
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_link_name,
-    ovirt_facts_full_argument_spec,
-    search_by_name,
-)
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -89,6 +72,22 @@ ovirt_permissions:
     returned: On success.
     type: list
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4 as sdk
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_link_name,
+    ovirt_facts_full_argument_spec,
+    search_by_name,
+)
 
 
 def _permissions_service(connection, module):

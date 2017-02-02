@@ -19,13 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
-
-import os
-import stat
-import fnmatch
-import time
-import re
-
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -184,6 +177,13 @@ examined:
     type: string
     sample: 34
 '''
+
+import os
+import stat
+import fnmatch
+import time
+import re
+
 
 def pfilter(f, patterns=None, use_regex=False):
     '''filter using glob patterns'''

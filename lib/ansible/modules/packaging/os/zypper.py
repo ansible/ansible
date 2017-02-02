@@ -26,9 +26,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from xml.dom.minidom import parseString as parseXML
-import re
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'committer',
                     'version': '1.0'}
@@ -177,6 +174,9 @@ EXAMPLES = '''
   environment:
     ZYPP_LOCK_TIMEOUT: 20
 '''
+
+from xml.dom.minidom import parseString as parseXML
+import re
 
 
 def split_name_version(name):

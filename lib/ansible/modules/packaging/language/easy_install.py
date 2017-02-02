@@ -19,9 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import tempfile
-import os.path
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -103,6 +100,9 @@ EXAMPLES = '''
     name: bottle
     virtualenv: /webapps/myapp/venv
 '''
+
+import tempfile
+import os.path
 
 def _is_package_installed(module, name, easy_install, executable_arguments):
     executable_arguments = executable_arguments + ['--dry-run']

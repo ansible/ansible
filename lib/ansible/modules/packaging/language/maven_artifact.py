@@ -19,22 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-__author__ = 'cschmidt'
-
-from lxml import etree
-import os
-import hashlib
-import sys
-import posixpath
-import urlparse
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-try:
-    import boto3
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -152,6 +136,21 @@ EXAMPLES = '''
     repository_url: 'https://repo.company.com/maven'
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
+
+from lxml import etree
+import os
+import hashlib
+import sys
+import posixpath
+import urlparse
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+try:
+    import boto3
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
 
 class Artifact(object):
     def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
