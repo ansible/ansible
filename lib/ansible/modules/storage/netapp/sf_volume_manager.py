@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,7 +32,6 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update volumes on SolidFire
-    - auth_basic
 
 options:
 
@@ -59,10 +61,10 @@ options:
 
     enable512e:
         required: false
-        note: required when state == 'present'
         type: bool
         description:
-        - Should the volume provides 512-byte sector emulation?
+        - Should the volume provide 512-byte sector emulation?
+        - required when C(state=present)
 
     qos:
         required: false
@@ -87,9 +89,9 @@ options:
 
     size:
         required: false
-        note: required when state == 'present'
         description:
         - The size of the volume in (size_unit)
+        - required when C(state = present)
 
     size_unit:
         required: false
@@ -148,23 +150,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successful creation of Volume
-    returned: success
-    type: string
-    sample: '{"changed": true, "key": value}'
 
-msg:
-    description: Successful update of Volume
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successful removal of Volume
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
 
