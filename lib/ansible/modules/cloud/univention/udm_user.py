@@ -310,6 +310,7 @@ options:
         description:
             - "C(always) will update passwords if they differ.
                C(on_create) will only set the password for newly created users."
+        version_added: "2.3"
     ou:
         required: false
         default: ''
