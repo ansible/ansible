@@ -65,7 +65,7 @@ options:
     default: null
   vpc_id:
     description:
-      - A VPC id to terminate when I(state=absent).
+      - A VPC id to terminate when I(state) is C(absent).
     required: false
     default: null
   resource_tags:
@@ -74,7 +74,7 @@ options:
       - Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore,
         if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7,
         specifying a resource tag was optional.'
-    required: true
+    required: false
     version_added: "1.6"
   internet_gateway:
     description:
@@ -84,15 +84,19 @@ options:
     choices: [ "yes", "no" ]
   route_tables:
     description:
-      - >
-        A dictionary array of route tables to add of the form:
-        C({ subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }). Where the subnets list is
-        those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword
-        for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids,
-        interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: C({ "Name": "public", ... }).
-        This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated
-        subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes
-        will be modified.
+      - >-
+        A dictionary array of route tables to add of the form: C({ subnets: [172.22.2.0/24,
+        172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }).
+        Where the subnets list is those subnets the route table should be associated with,
+        and the routes list is a list of routes to be in the table.  The special value C(igw)
+        for the I(gw) specifies that you should the route should go through the
+        internet gateway attached to the VPC. I(gw) also accepts C(instance-ids), C(interface-ids),
+        and C(vpc-peering-connection-ids) in addition to C(igw). C(resource_tags) is optional and uses
+        dictionary form: C({ "Name": "public", ... }). This module is currently unable to
+        affect the "main" route table due to some limitations in boto, so you must explicitly
+        define the associated subnets or they will be attached to the main table implicitly.
+        As of 1.8, if the I(route_tables) parameter is not specified, no existing routes will be
+        modified.
     required: false
     default: null
   wait:
@@ -360,6 +364,7 @@ def create_vpc(module, vpc_conn):
     vpc_spec_tags = module.params.get('resource_tags')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    resource_tags = module.params.get('resource_tags')
     changed = False
 
     # Check for existing VPC by cidr_block + tags or id
@@ -713,24 +718,26 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        cidr_block = dict(),
-        instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
-        wait = dict(type='bool', default=False),
-        wait_timeout = dict(default=300),
-        dns_support = dict(type='bool', default=True),
-        dns_hostnames = dict(type='bool', default=True),
-        subnets = dict(type='list'),
-        vpc_id = dict(),
-        internet_gateway = dict(type='bool', default=False),
-        resource_tags = dict(type='dict', required=True),
-        route_tables = dict(type='list'),
-        state = dict(choices=['present', 'absent'], default='present'),
-    )
+    argument_spec.update(
+        dict(
+            cidr_block = dict(),
+            instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
+            wait = dict(type='bool', default=False),
+            wait_timeout = dict(default=300),
+            dns_support = dict(type='bool', default=True),
+            dns_hostnames = dict(type='bool', default=True),
+            subnets = dict(type='list'),
+            vpc_id = dict(),
+            internet_gateway = dict(type='bool', default=False),
+            resource_tags = dict(type='dict'),
+            route_tables = dict(type='list'),
+            state = dict(choices=['present', 'absent'], default='present'),
+        )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_one_of=[['vpc_id', 'resource_tags']],
     )
 
     if not HAS_BOTO:
