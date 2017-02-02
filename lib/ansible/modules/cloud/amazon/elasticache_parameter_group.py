@@ -22,7 +22,7 @@ short_description: Manage elasticache parameter group
 description:
   - Manage elasticache parameter group
   - Has the capabilities to create/destroy parameter group
-version_added: "2.2"
+version_added: "2.3"
 author: "Aditya Kurniawan (@akurniawan)"
 options:
   pg_family:
@@ -72,6 +72,9 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
 """
 Helper functions
@@ -134,14 +137,7 @@ def is_params_diff(before_params, after_params):
 
 
 def convert_params_format(params):
-    result = []
-    for k, v in list(params.items()):
-        result.append({
-            "ParameterName": str(k),
-            "ParameterValue": str(v)
-        })
-
-    return result
+    return [{"ParameterName": str(k), "ParameterValue": str(v)} for (k,v) in params.items]
 
 
 """
@@ -230,8 +226,6 @@ def main():
 
     module.exit_json(changed=changed, parameter_groups=response)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == "__main__":
     main()
