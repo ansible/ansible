@@ -79,6 +79,9 @@ class VaultCLI(CLI):
             self.parser.add_option('-p', '--prompt', dest='encrypt_string_prompt',
                                    action='store_true',
                                    help="Prompt for the string to encrypt")
+            self.parser.add_option('-n', '--name', dest='encrypt_string_names',
+                                   action='append',
+                                   help="Specify the variable name")
             self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
@@ -162,9 +165,14 @@ class VaultCLI(CLI):
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
 
-    def format_ciphertext_yaml(self, b_ciphertext, indent=None):
+    def format_ciphertext_yaml(self, b_ciphertext, indent=None, name=None):
         indent = indent or 10
-        block_format_header = "!vault-encrypted |"
+
+        block_format_var_name = ""
+        if name:
+            block_format_var_name = "%s: " % name
+
+        block_format_header = "%s!vault-encrypted |" % block_format_var_name
         lines = []
         vault_ciphertext = to_text(b_ciphertext)
 
@@ -181,7 +189,7 @@ class VaultCLI(CLI):
 
         b_plaintext = None
 
-        # Holds tuples (the_text, the_source_of_the_string).
+        # Holds tuples (the_text, the_source_of_the_string, the variable name if its provided).
         b_plaintext_list = []
 
         # remove the non-option '-' arg (used to indicate 'read from stdin') from the candidate args so
@@ -198,7 +206,7 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
 
             b_plaintext = to_bytes(prompt_response)
-            b_plaintext_list.append((b_plaintext, self.FROM_PROMPT))
+            b_plaintext_list.append((b_plaintext, self.FROM_PROMPT, None))
 
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
@@ -209,15 +217,32 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
 
             b_plaintext = to_bytes(stdin_text)
-            b_plaintext_list.append((b_plaintext, self.FROM_STDIN))
+            # TODO: add a --stdin-name
+            b_plaintext_list.append((b_plaintext, self.FROM_STDIN, None))
 
-        for plaintext in args:
+        if hasattr(self.options, 'encrypt_string_names') and self.options.encrypt_string_names:
+            name_and_text_list = zip(self.options.encrypt_string_names, args)
+
+            # Some but not enough --name's to name each var
+            if len(args) > len(name_and_text_list):
+                # Trying to avoid ever showing the plaintext in the output, so this warning is vague to avoid that.
+                display.display('The number of --name options do not match the number of args.', stderr=True)
+                display.display('The last named variable will be "%s". The will not have names.' % self.options.encrypt_string_names[-1], stderr=True)
+
+            for extra_arg in args[len(name_and_text_list):]:
+                name_and_text_list.append((None, extra_arg))
+
+        else:
+            name_and_text_list = [(None, x) for x in args]
+
+        for plaintext_info in name_and_text_list:
+            name, plaintext = plaintext_info
+
             if plaintext == '':
                 raise AnsibleOptionsError('The plaintext provided from the command line args was empty, not encrypting')
 
             b_plaintext = to_bytes(plaintext)
-            b_plaintext_list.append((b_plaintext, self.FROM_ARGS))
-
+            b_plaintext_list.append((b_plaintext, self.FROM_ARGS, name))
 
         show_delimiter = False
         if len(b_plaintext_list) > 1:
@@ -227,12 +252,16 @@ class VaultCLI(CLI):
         # Or maybe just only support one string...
         for index, b_plaintext_info in enumerate(b_plaintext_list):
             # (the text itself, which input it came from)
-            b_plaintext, src = b_plaintext_info
+            b_plaintext, src, name = b_plaintext_info
             b_ciphertext = self.editor.encrypt_bytes(b_plaintext)
 
-            yaml_text = self.format_ciphertext_yaml(b_ciphertext)
+            yaml_text = self.format_ciphertext_yaml(b_ciphertext, name=name)
             if show_delimiter:
-                sys.stderr.write('# The encrypted version of the string #%d from %s.\n' % ((index + 1), src))
+                if name:
+                    msg = '# The encrypted version of variable ("%s", the string #%d from %s).\n' % (name, (index + 1), src)
+                else:
+                    msg = '# The encrypted version of the string #%d from %s.)\n' % ((index + 1), src)
+                sys.stderr.write(msg)
             print(yaml_text)
         # if '--prompt', prompt for string
 
