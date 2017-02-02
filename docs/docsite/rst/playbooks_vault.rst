@@ -20,7 +20,7 @@ Ansible tasks, handlers, and so on are also data so these can be encrypted with 
 
 The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is given as the `src` argument to the `copy` module, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
 
-As of version 2.3, Ansible also support encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing, more details below.
+As of version 2.3, Ansible also supports encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing. This feature is covered in more details below.
 
 .. _creating_files:
 
@@ -136,7 +136,7 @@ As of version 2.3, Ansible can now use a vaulted variable that lives in an other
     other_plain_text: othervalue
 
 
-This vaulted variable be decrypted with the supplied vault secret and used as an normal variable. The `ansible-vault` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required, as vault encryption results in a multi-line string.
+This vaulted variable be decrypted with the supplied vault secret and used as a normal variable. The `ansible-vault` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required, as vault encryption results in a multi-line string.
 
 
 .. _speeding_up_vault:
