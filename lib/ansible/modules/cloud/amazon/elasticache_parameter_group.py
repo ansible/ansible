@@ -15,6 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    import boto3
+    import botocore
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+
 DOCUMENTATION = """
 ---
 module: elasticache_parameter_group
@@ -65,16 +75,6 @@ EXAMPLES = """
     state: "absent"
     pg_name: "testing-pg"
 """
-
-try:
-    import boto3
-    import botocore
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
 """
 Helper functions
