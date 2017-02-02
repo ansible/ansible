@@ -22,8 +22,11 @@
 #
 # Common methods to be used by versious module components
 import os
-from ansible.module_utils.six.moves.configparser import ConfigParser
+import re
+
+from ansible.compat.six.moves import configparser
 from ansible.module_utils.pycompat24 import get_exception
+from configparser import ConfigParser
 from os.path import expanduser
 from uuid import UUID
 
@@ -33,6 +36,9 @@ try:
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
+
+# MCP 2.x version patten for location (datacenter) names.
+MCP_2_LOCATION_NAME_PATTERN = re.compile(r".*MCP\s?2.*")
 
 
 # Custom Exceptions
@@ -200,8 +206,9 @@ def get_mcp_version(driver, location):
     """
     # Get location to determine if MCP 1.0 or 2.0
     location = driver.ex_get_location_by_id(location)
-    if 'MCP 2.0' in location.name:
+    if MCP_2_LOCATION_NAME_PATTERN.match(location.name):
         return '2.0'
+
     return '1.0'
 
 
