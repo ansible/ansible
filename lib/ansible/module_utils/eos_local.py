@@ -118,13 +118,13 @@ class Cli(CliBase):
 
     def connect(self):
         super(Cli, self).connect(self._module.params, kickstart=False)
-        self.shell.send('terminal length 0')
+        self.exec_command('terminal length 0')
 
     def authorize(self):
         passwd = self._module.params['auth_pass']
         if passwd:
             prompt = r"[\r\n]?Password: $"
-            self.execute(dict(command='enable', prompt=prompt, response=passwd))
+            self.exec_command(dict(command='enable', prompt=prompt, response=passwd))
         else:
             self.exec_command('enable')
 
@@ -334,23 +334,27 @@ class Eapi:
             return response['result']
 
         for item in to_list(commands):
-            if all((output == 'json', is_text(item))) or all((output =='text', is_json(item))):
+            if item['output'] == 'json' and not is_json(item['command']):
+                item['command'] = '%s | json' % item['command']
+
+            if item['output'] == 'text' and is_json(item['command']):
+                item['command'] = str(item['command']).split('|')[0]
+
+            if all((output == 'json', is_text(item['command']))) or all((output =='text', is_json(item['command']))):
                 responses.extend(_send(queue, output))
                 queue = list()
 
-            if is_json(item):
-                output = 'json'
-            else:
-                output = 'text'
-
-            queue.append(item)
+            output = item['output'] or 'json'
+            queue.append(item['command'])
 
         if queue:
             responses.extend(_send(queue, output))
 
         for index, item in enumerate(commands):
-            if is_text(item):
+            try:
                 responses[index] = responses[index]['output'].strip()
+            except KeyError:
+                pass
 
         return responses
 
