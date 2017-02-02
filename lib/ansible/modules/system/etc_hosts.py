@@ -19,15 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils._text import to_bytes
-import os
-import re
-import socket
-import tempfile
-
-
 ANSIBLE_METADATA = {
     'status': [
         'preview'
@@ -142,7 +133,16 @@ state:
 '''
 
 
-class EtcHosts:
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_bytes
+import os
+import re
+import socket
+import tempfile
+
+
+class EtcHosts(object):
     def __init__(self, module):
         # To be able to use fail_json
         self.module = module
