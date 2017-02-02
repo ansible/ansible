@@ -190,7 +190,7 @@ def get_link_name(connection, link):
         return None
 
 
-def equal(param1, param2):
+def equal(param1, param2, ignore_case=False):
     """
     Compare two parameters and return if they are equal.
     This parameter doesn't run equal operation if first parameter is None.
@@ -202,6 +202,8 @@ def equal(param1, param2):
     :return: True if parameters are equal or first parameter is None, otherwise False
     """
     if param1 is not None:
+        if ignore_case:
+            return param1.lower() == param2.lower()
         return param1 == param2
     return True
 
@@ -269,6 +271,19 @@ def get_entity(service):
         # of removing entity for example.
         pass
     return entity
+
+
+def get_id_by_name(service, name, raise_error=True, ignore_case=False):
+    """
+    Search an entity ID by it's name.
+    """
+    entity = search_by_name(service, name)
+
+    if entity is not None:
+        return entity.id
+
+    if raise_error:
+        raise Exception("Entity '%s' was not found." % name)
 
 
 def wait(
