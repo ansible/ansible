@@ -82,6 +82,9 @@ class VaultCLI(CLI):
             self.parser.add_option('-n', '--name', dest='encrypt_string_names',
                                    action='append',
                                    help="Specify the variable name")
+            self.parser.add_option('--stdin-name', dest='encrypt_string_stdin_name',
+                                   default=None,
+                                   help="Specify the variable name for stdin")
             self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
@@ -106,14 +109,14 @@ class VaultCLI(CLI):
             if self.options.output_file and len(self.args) > 1:
                 raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
-        #if '-' in self.args or len(self.args) == 0:
-        if '-' in self.args:
+        if '-' in self.args or len(self.args) == 0 or self.options.encrypt_string_stdin_name:
             self.encrypt_string_read_stdin = True
 
         # TODO: prompting from stdin and reading from stdin seem
         #       mutually exclusive, but verify that.
         if self.options.encrypt_string_prompt and self.encrypt_string_read_stdin:
             raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
+
 
     def run(self):
 
@@ -196,6 +199,7 @@ class VaultCLI(CLI):
         # we dont add it to the plaintext list
         args = [x for x in self.args if x != '-']
 
+        # We can prompt and read input, or read from stdin, but not both.
         if self.options.encrypt_string_prompt:
             msg = "String to encrypt: "
 
@@ -214,7 +218,7 @@ class VaultCLI(CLI):
             b_plaintext = to_bytes(prompt_response)
             b_plaintext_list.append((b_plaintext, self.FROM_PROMPT, name))
 
-        if self.encrypt_string_read_stdin:
+        else:
             if sys.stdout.isatty():
                 display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
 
@@ -223,8 +227,10 @@ class VaultCLI(CLI):
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
 
             b_plaintext = to_bytes(stdin_text)
-            # TODO: add a --stdin-name
-            b_plaintext_list.append((b_plaintext, self.FROM_STDIN, None))
+
+            # defaults to None
+            name = self.options.encrypt_string_stdin_name
+            b_plaintext_list.append((b_plaintext, self.FROM_STDIN, name))
 
         if hasattr(self.options, 'encrypt_string_names') and self.options.encrypt_string_names:
             name_and_text_list = zip(self.options.encrypt_string_names, args)
