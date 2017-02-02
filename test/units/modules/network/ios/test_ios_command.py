@@ -72,10 +72,10 @@ class test_iosCommandModule(unittest.TestCase):
 
             for item in commands:
                 try:
-                    obj = json.loads(item)
+                    obj = json.loads(item['command'])
                     command = obj['command']
                 except ValueError:
-                    command = item
+                    command = item['command']
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))
             return output
