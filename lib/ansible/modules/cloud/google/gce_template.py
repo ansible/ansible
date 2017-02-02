@@ -433,13 +433,10 @@ def create_instance_template(module, gce):
 
 def delete_instance_template(module, gce):
     """ Delete instance template.
-
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
-
     Returns:
         instance template information
-
     """
     name = module.params.get('name')
     current_state = "absent"
@@ -468,13 +465,10 @@ def delete_instance_template(module, gce):
 
 def module_controller(module, gce):
     ''' Control module state parameter.
-
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
-
     Returns:
         nothing
-
     Exit:
         AnsibleModule object exit with json data.
     '''
@@ -497,10 +491,8 @@ def module_controller(module, gce):
 
 def check_if_system_state_would_be_changed(module, gce):
     ''' check_if_system_state_would_be_changed !
-
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
-
     Returns:
         system_state changed
     '''
