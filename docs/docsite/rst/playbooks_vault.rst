@@ -20,6 +20,8 @@ Ansible tasks, handlers, and so on are also data so these can be encrypted with 
 
 The vault feature can also encrypt arbitrary files, even binary files.  If a vault-encrypted file is given as the `src` argument to the `copy` module, the file will be placed at the destination on the target host decrypted (assuming a valid vault password is supplied when running the play).
 
+As of version 2.3, Ansible also support encrypting single values inside a YAML file, using the `!vault` tag to let YAML and Ansible know it uses special processing, more details below.
+
 .. _creating_files:
 
 Creating Encrypted Files
@@ -114,6 +116,28 @@ If you are using a script instead of a flat file, ensure that it is marked as ex
 This is something you may wish to do if using Ansible from a continuous integration system like Jenkins.
 
 (The `--vault-password-file` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode).
+
+
+.. _single_encryptd_variable:
+
+Single Encrypted Variable
+`````````````````````````
+
+Added in 2.3 is the ability for Ansible to use a vaulted varible that lives in an otherwise 'clear text' YAML file::
+
+    notsecret: myvalue
+    mysecret: !vault |
+              $ANSIBLE_VAULT;1.1;AES256
+              66386439653236336462626566653063336164663966303231363934653561363964363833313662
+              6431626536303530376336343832656537303632313433360a626438346336353331386135323734
+              62656361653630373231613662633962316233633936396165386439616533353965373339616234
+              3430613539666330390a313736323265656432366236633330313963326365653937323833366536
+              34623731376664623134383463316265643436343438623266623965636363326136
+    other_plain_text: othervalue
+
+
+Which will be decrypted with the supplied vault secret and used as an normal variable. The `ansible-vault` command line support stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these entries. You just have to ensure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required as vault encryption results in a multi-line string.
+
 
 .. _speeding_up_vault:
 

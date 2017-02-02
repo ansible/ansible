@@ -156,6 +156,4 @@ AnsibleConstructor.add_constructor(
     u'!unsafe',
     AnsibleConstructor.construct_yaml_unsafe)
 
-AnsibleConstructor.add_constructor(
-    u'!vault-encrypted',
-    AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
