@@ -19,17 +19,29 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = """
 ---
 module: fortios_config
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
+<<<<<<< HEAD
 short_description: Manage config on Fortinet FortiOS firewall devices
+=======
+short_description: Manage fortios firewall config
+>>>>>>> 885db0c1c2... pull latest
 description:
   - This module provides management of FortiOS Devices configuration.
 extends_documentation_fragment: fortios
@@ -132,7 +144,11 @@ def main():
     f = FortiOS( module.params['host'],
         username=module.params['username'],
         password=module.params['password'],
+<<<<<<< HEAD
         timeout=module.params['timeout'],
+=======
+        timeout=module.params['username'],
+>>>>>>> 885db0c1c2... pull latest
         vdom=module.params['vdom'])
 
     #connect

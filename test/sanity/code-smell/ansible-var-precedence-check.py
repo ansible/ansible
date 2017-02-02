@@ -59,7 +59,11 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: %s\n' % self.name)
 
         if self.vars:
@@ -68,7 +72,11 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: %s\n' % self.name)
 
         if self.dependencies:
@@ -76,12 +84,19 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('dependencies:\n')
                 for dep in self.dependencies:
                     f.write('- { role: %s }\n' % dep)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 885db0c1c2... pull latest
 class DynamicInventory(object):
     BASESCRIPT = '''#!/usr/bin/python
 import json
@@ -141,18 +156,30 @@ print(json.dumps(data, indent=2, sort_keys=True))
                 'hosts': [xhost],
             }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
     def write_script(self):
         fdir = os.path.join(TESTDIR, 'inventory')
         if not os.path.isdir(fdir):
             os.makedirs(fdir)
         fpath = os.path.join(fdir, 'hosts')
+<<<<<<< HEAD
         # fpath = os.path.join(TESTDIR, 'inventory')
+=======
+        #fpath = os.path.join(TESTDIR, 'inventory')
+>>>>>>> 885db0c1c2... pull latest
         self.fpath = fpath
 
         data = json.dumps(self.inventory)
         t = self.ENV.from_string(self.BASESCRIPT)
         fdata = t.render(data=data)
+<<<<<<< HEAD
         with open(fpath, 'w') as f:
+=======
+        with open(fpath, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
             f.write(fdata + '\n')
         st = os.stat(fpath)
         os.chmod(fpath, st.st_mode | stat.S_IEXEC)
@@ -191,7 +218,11 @@ class VarTestMaker(object):
         if self.tasks:
             pb_copy['tasks'] = self.tasks
 
+<<<<<<< HEAD
         with open(fname, 'w') as f:
+=======
+        with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
             pb_yaml = yaml.dump([pb_copy], f, default_flow_style=False, indent=2)
 
     def build(self):
@@ -239,7 +270,11 @@ class VarTestMaker(object):
             if not os.path.isdir(ipath):
                 os.makedirs(ipath)
 
+<<<<<<< HEAD
             with open(invfile, 'w') as f:
+=======
+            with open(invfile, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write(self.inventory)
 
         hpath = os.path.join(TESTDIR, 'inventory', 'host_vars')
@@ -251,49 +286,81 @@ class VarTestMaker(object):
 
         if 'ini_host_vars_file' in self.features:
             hfile = os.path.join(hpath, 'testhost')
+<<<<<<< HEAD
             with open(hfile, 'w') as f:
+=======
+            with open(hfile, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: ini_host_vars_file\n')
 
         if 'ini_group_vars_file_all' in self.features:
             hfile = os.path.join(gpath, 'all')
+<<<<<<< HEAD
             with open(hfile, 'w') as f:
+=======
+            with open(hfile, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: ini_group_vars_file_all\n')
 
         if 'ini_group_vars_file_child' in self.features:
             hfile = os.path.join(gpath, 'child')
+<<<<<<< HEAD
             with open(hfile, 'w') as f:
+=======
+            with open(hfile, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: ini_group_vars_file_child\n')
 
         if 'ini_group_vars_file_parent' in self.features:
             hfile = os.path.join(gpath, 'parent')
+<<<<<<< HEAD
             with open(hfile, 'w') as f:
+=======
+            with open(hfile, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: ini_group_vars_file_parent\n')
 
         if 'pb_host_vars_file' in self.features:
             os.makedirs(os.path.join(TESTDIR, 'host_vars'))
             fname = os.path.join(TESTDIR, 'host_vars', 'testhost')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: pb_host_vars_file\n')
 
         if 'pb_group_vars_file_parent' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'parent')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: pb_group_vars_file_parent\n')
 
         if 'pb_group_vars_file_child' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'child')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: pb_group_vars_file_child\n')
 
         if 'pb_group_vars_file_all' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'all')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: pb_group_vars_file_all\n')
 
         if 'play_var' in self.features:
@@ -305,13 +372,21 @@ class VarTestMaker(object):
         if 'vars_file' in self.features:
             self.varsfiles.append('varsfile.yml')
             fname = os.path.join(TESTDIR, 'varsfile.yml')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: vars_file\n')
 
         if 'include_vars' in self.features:
             self.tasks.append(dict(include_vars='included_vars.yml'))
             fname = os.path.join(TESTDIR, 'included_vars.yml')
+<<<<<<< HEAD
             with open(fname, 'w') as f:
+=======
+            with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
                 f.write('findme: include_vars\n')
 
         if 'role_var' in self.features:
@@ -366,7 +441,11 @@ class VarTestMaker(object):
             self.tasks.append(dict(include='included_tasks.yml'))
 
         fname = os.path.join(TESTDIR, 'included_tasks.yml')
+<<<<<<< HEAD
         with open(fname, 'w') as f:
+=======
+        with open(fname, 'wb') as f:
+>>>>>>> 885db0c1c2... pull latest
             f.write(yaml.dump(block_wrapper))
 
         self.write_playbook()
@@ -381,7 +460,10 @@ class VarTestMaker(object):
         cmd = 'ansible-playbook -c local -i inventory site.yml'
         if 'extra_vars' in self.features:
             cmd += ' --extra-vars="findme=extra_vars"'
+<<<<<<< HEAD
         cmd = cmd + ' -vvvvv'
+=======
+>>>>>>> 885db0c1c2... pull latest
         self.ansible_command = cmd
         (rc, so, se) = run_command(cmd, cwd=TESTDIR)
         self.stdout = so
@@ -414,22 +496,38 @@ def main():
     features = [
         'extra_vars',
         'include_params',
+<<<<<<< HEAD
         # 'role_params',  # FIXME: we don't yet validate tasks within a role
         'set_fact',
         # 'registered_vars',  # FIXME: hard to simulate
         'include_vars',
         # 'role_dep_params',
+=======
+        #'role_params', # FIXME: we don't yet validate tasks within a role
+        'set_fact',
+        #'registered_vars', # FIXME: hard to simulate
+        'include_vars',
+        #'role_dep_params',
+>>>>>>> 885db0c1c2... pull latest
         'task_vars',
         'block_vars',
         'role_var',
         'vars_file',
         'play_var',
+<<<<<<< HEAD
         # 'host_facts',  # FIXME: hard to simulate
+=======
+        #'host_facts', # FIXME: hard to simulate
+>>>>>>> 885db0c1c2... pull latest
         'pb_host_vars_file',
         'ini_host_vars_file',
         'ini_host',
         'pb_group_vars_file_child',
+<<<<<<< HEAD
         # 'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
+=======
+        'ini_group_vars_file_child',
+>>>>>>> 885db0c1c2... pull latest
         'pb_group_vars_file_parent',
         'ini_group_vars_file_parent',
         'pb_group_vars_file_all',
@@ -489,7 +587,11 @@ def main():
     dinv = options.use_dynamic_inventory
     if dinv:
         # some features are specific to ini, so swap those
+<<<<<<< HEAD
         for (idx, x) in enumerate(features):
+=======
+        for idx,x in enumerate(features):
+>>>>>>> 885db0c1c2... pull latest
             if x.startswith('ini_') and 'vars_file' not in x:
                 features[idx] = x.replace('ini_', 'script_')
 
@@ -509,7 +611,11 @@ def main():
 
         try:
             print("CHECKING: %s (%s)" % (features[0], fdesc.get(features[0], '')))
+<<<<<<< HEAD
+            res = VTM.run()
+=======
             VTM.run()
+>>>>>>> 885db0c1c2... pull latest
             if options.show_stdout:
                 VTM.show_stdout()
 

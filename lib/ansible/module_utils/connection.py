@@ -79,7 +79,7 @@ def exec_command(module, command):
 
     sf.close()
 
-    return rc, to_native(stdout), to_native(stderr)
+    return rc, to_native(stdout, errors='surrogate_or_strict'), to_native(stderr, errors='surrogate_or_strict')
 
 
 def request_builder(method, *args, **kwargs):

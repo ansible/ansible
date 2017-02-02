@@ -2,6 +2,10 @@
   "name": "http_example",
   "partition": "Common",
   "template": "/Common/f5.http",
+  "inheritedDevicegroup": "true",
+  "deviceGroup": "none",
+  "inheritedTrafficGroup": "true",
+  "trafficGroup": "/Common/traffic-group-local-only",
   "lists": [
     {
       "name": "irules__irules",

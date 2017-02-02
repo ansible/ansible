@@ -1,0 +1,28 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "UnspecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeRepositories",
+                "ecr:CreateRepository"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SpecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetRepositoryPolicy",
+                "ecr:SetRepositoryPolicy",
+                "ecr:DeleteRepository",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:DeleteRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
+            ]
+        }
+    ]
+}

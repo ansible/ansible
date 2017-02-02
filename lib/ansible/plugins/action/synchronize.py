@@ -23,11 +23,10 @@ from collections import MutableSequence
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins import connection_loader
-
-boolean = C.mk_boolean
 
 
 class ActionModule(ActionBase):
@@ -310,18 +309,11 @@ class ActionModule(ActionBase):
         if src is None or dest is None:
             return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
+        # Determine if we need a user@
+        user = None
         if not dest_is_local:
-            # Private key handling
-            private_key = self._play_context.private_key_file
-
-            if private_key is not None:
-                private_key = os.path.expanduser(private_key)
-                _tmp_args['private_key'] = private_key
-
             # Src and dest rsync "path" handling
-            # Determine if we need a user@
-            user = None
-            if boolean(_tmp_args.get('set_remote_user', 'yes')):
+            if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
                     if not user:
@@ -329,6 +321,13 @@ class ActionModule(ActionBase):
 
                 else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
+            # Private key handling
+            private_key = self._play_context.private_key_file
+
+            if private_key is not None:
+                private_key = os.path.expanduser(private_key)
+                _tmp_args['private_key'] = private_key
 
             # use the mode to define src and dest's url
             if _tmp_args.get('mode', 'push') == 'pull':

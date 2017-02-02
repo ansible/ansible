@@ -60,6 +60,13 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
+
+requirements:
+    - cryptography
+
+notes:
+    - As of Ansible 2.4, this module requires the python cryptography module rather than the
+      older pycrypto module.
 '''
 
 EXAMPLES = '''
@@ -95,15 +102,20 @@ tasks:
 '''
 
 from base64 import b64decode
-from Crypto.Cipher import PKCS1_v1_5
-from Crypto.PublicKey import RSA
+from os.path import expanduser
 import datetime
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 try:
     import boto.ec2
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+BACKEND = default_backend()
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -122,7 +134,7 @@ def main():
 
     instance_id = module.params.get('instance_id')
     key_file = module.params.get('key_file')
-    key_passphrase = module.params.get('key_passphrase')
+    b_key_passphrase = to_bytes(module.params.get('key_passphrase'), errors='surrogate_or_strict')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -147,21 +159,18 @@ def main():
         module.fail_json(msg = "wait for password timeout after %d seconds" % wait_timeout)
 
     try:
-        f = open(key_file, 'r')
+        f = open(key_file, 'rb')
     except IOError as e:
         module.fail_json(msg = "I/O error (%d) opening key file: %s" % (e.errno, e.strerror))
     else:
         try:
             with f:
-                key = RSA.importKey(f.read(), key_passphrase)
-        except (ValueError, IndexError, TypeError) as e:
+                key = load_pem_private_key(f.read(), b_key_passphrase, BACKEND)
+        except (ValueError, TypeError) as e:
             module.fail_json(msg = "unable to parse key file")
 
-    cipher = PKCS1_v1_5.new(key)
-    sentinel = 'password decryption failed!!!'
-
     try:
-        decrypted = cipher.decrypt(decoded, sentinel)
+        decrypted = key.decrypt(decoded, PKCS1v15())
     except ValueError as e:
         decrypted = None
 

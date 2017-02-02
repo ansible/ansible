@@ -135,7 +135,6 @@ domain:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
@@ -178,8 +177,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         ip_address = None
         if not self.module.check_mode:
             res = self.cs.associateIpAddress(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
@@ -196,8 +193,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         self.result['changed'] = True
         if not self.module.check_mode:
             res = self.cs.disassociateIpAddress(id=ip_address['id'])
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 self.poll_job(res, 'ipaddress')
@@ -227,20 +223,15 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_ip_address = AnsibleCloudStackIPAddress(module)
+    acs_ip_address = AnsibleCloudStackIPAddress(module)
 
-        state = module.params.get('state')
-        if state in ['absent']:
-            ip_address = acs_ip_address.disassociate_ip_address()
-        else:
-            ip_address = acs_ip_address.associate_ip_address()
+    state = module.params.get('state')
+    if state in ['absent']:
+        ip_address = acs_ip_address.disassociate_ip_address()
+    else:
+        ip_address = acs_ip_address.associate_ip_address()
 
-        result = acs_ip_address.get_result(ip_address)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_ip_address.get_result(ip_address)
     module.exit_json(**result)
 
 

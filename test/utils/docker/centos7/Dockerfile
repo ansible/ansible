@@ -45,6 +45,7 @@ RUN yum clean all && \
     PyYAML \
     rpm-build \
     rubygems \
+    sshpass \
     subversion \
     sudo \
     unzip \

@@ -2,6 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Joris Weijters <joris.weijters@gmail.com>
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -18,10 +30,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 
 DOCUMENTATION = '''
@@ -34,6 +46,7 @@ description:
 version_added: "2.3"
 options:
   name:
+<<<<<<< HEAD
     description:
     - Name of the inittab entry.
     required: True
@@ -45,6 +58,16 @@ options:
   action:
     description:
     - Action what the init has to do with this entry.
+=======
+    description: Name of the inittab entry.
+    required: True
+    aliases: ['service']
+  runlevel:
+    description: Runlevel of the entry.
+    required: True
+  action:
+    description: Action what the init has to do with this entry.
+>>>>>>> 885db0c1c2... pull latest
     required: True
     choices: [
                'respawn',
@@ -61,6 +84,7 @@ options:
                'sysinit'
               ]
   command:
+<<<<<<< HEAD
     description:
     - What command has to run.
     required: True
@@ -70,6 +94,14 @@ options:
   state:
     description:
     - Whether the entry should be present or absent in the inittab file
+=======
+    description: What command has to run.
+    required: True
+  insertafter:
+    description: After which inittabline should the new entry inserted.
+  state:
+    description: Whether the entry should be present or absent in the inittab file
+>>>>>>> 885db0c1c2... pull latest
     choices: [ "present", "absent" ]
     default: present
 notes:
@@ -91,7 +123,11 @@ EXAMPLES = '''
     state: present
   become: yes
 
+<<<<<<< HEAD
 # Change inittab entry startmyservice to runlevel "2" and processaction "wait".
+=======
+# Change inittab enrty startmyservice to runlevel "2" and processaction "wait".
+>>>>>>> 885db0c1c2... pull latest
 - name: Change startmyservice to inittab
   aix_inittab:
     name: startmyservice
@@ -118,14 +154,22 @@ name:
     returned: always
     type: string
     sample: startmyservice
+<<<<<<< HEAD
 msg:
+=======
+mgs:
+>>>>>>> 885db0c1c2... pull latest
     description: action done with the inittab entry
     returned: changed
     type: string
     sample: changed inittab entry startmyservice
 changed:
     description: whether the inittab changed or not
+<<<<<<< HEAD
     returned: always
+=======
+    return: always
+>>>>>>> 885db0c1c2... pull latest
     type: boolean
     sample: true
 '''
@@ -235,8 +279,12 @@ def main():
                             [mkitab, new_entry])
 
                 if rc != 0:
+<<<<<<< HEAD
+                    module.fail_json(msg="could not adjust inittab", rc=rc, err=err)
+=======
                     module.fail_json(
                         "could not adjust inittab", rc=rc, err=err)
+>>>>>>> 885db0c1c2... pull latest
                 result['msg'] = "add inittab entry" + " " + module.params['name']
                 result['changed'] = True
 

@@ -14,6 +14,8 @@ import sys
 import time
 import yaml
 
+from ansible.module_utils.six.moves import input
+
 
 def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
@@ -29,7 +31,7 @@ def delete_autoscaling_group(get_func, attr, opts):
         group_name = getattr(item, attr)
         if re.search(opts.match_re, group_name):
             if not opts.assumeyes:
-                assumeyes = raw_input("Delete matching %s? [y/n]: " % (item).lower()) == 'y'
+                assumeyes = input("Delete matching %s? [y/n]: " % (item).lower()) == 'y'
             break
     if assumeyes and group_name:
         groups = asg.get_all_groups(names=[group_name])
@@ -77,7 +79,7 @@ def delete_aws_instances(reservation, opts):
 
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
-        assumeyes = raw_input(prompt).lower() == 'y'
+        assumeyes = input(prompt).lower() == 'y'
     assert hasattr(item, 'delete') or hasattr(item, 'terminate'), "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
         if hasattr(item, 'delete'):

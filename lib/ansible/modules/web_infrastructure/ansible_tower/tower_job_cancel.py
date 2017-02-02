@@ -1,5 +1,20 @@
 #!/usr/bin/python
+<<<<<<< HEAD
 # coding: utf-8 -*-
+
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
+#coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -16,10 +31,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -83,12 +98,21 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
+<<<<<<< HEAD
         job_id=dict(type='int', required=True),
         fail_if_not_running=dict(type='bool', default=False),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+=======
+        job_id = dict(type='int', required=True),
+        fail_if_not_running = dict(type='bool', default=False),
+    ))
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
+>>>>>>> 885db0c1c2... pull latest
         supports_check_mode=True,
     )
 

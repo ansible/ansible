@@ -34,13 +34,14 @@ description:
     defined accounts
 extends_documentation_fragment: junos
 options:
-  users:
+  aggregate:
     description:
-      - The C(users) argument defines a list of users to be configured
+      - The C(aggregate) argument defines a list of users to be configured
         on the remote device.  The list of users will be compared against
         the current users and only changes will be added or removed from
         the device configuration.  This argument is mutually exclusive with
         the name argument.
+    version_added: "2.4"
     required: False
     default: null
   name:
@@ -48,7 +49,7 @@ options:
       - The C(name) argument defines the username of the user to be created
         on the system.  This argument must follow appropriate usernaming
         conventions for the target device running JUNOS.  This argument is
-        mutually exclusive with the C(users) argument.
+        mutually exclusive with the C(aggregate) argument.
     required: false
     default: null
   full_name:
@@ -91,6 +92,12 @@ options:
     required: false
     default: present
     choices: ['present', 'absent']
+  active:
+    description:
+      - Specifies whether or not the configuration is active or deactivated
+    default: True
+    choices: [True, False]
+    version_added: "2.4"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -118,12 +125,23 @@ EXAMPLES = """
 """
 
 RETURN = """
+diff.prepared:
+  description: Configuration difference before and after applying change.
+  returned: when configuration is changed and diff option is enabled.
+  type: string
+  sample: >
+          [edit system login]
+          +    user test-user {
+          +        uid 2005;
+          +        class read-only;
+          +    }
 """
 from functools import partial
 
-from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load_config
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import commit_configuration, discard_changes
+from ansible.module_utils.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
@@ -150,6 +168,11 @@ def map_obj_to_ele(want):
         SubElement(user, 'name').text = item['name']
 
         if operation == 'replace':
+            if item['active']:
+                user.set('active', 'active')
+            else:
+                user.set('inactive', 'inactive')
+
             SubElement(user, 'class').text = item['role']
 
             if item.get('full_name'):
@@ -184,8 +207,8 @@ def get_param_value(key, item, module):
 
 
 def map_params_to_obj(module):
-    users = module.params['users']
-    if not users:
+    aggregate = module.params['aggregate']
+    if not aggregate:
         if not module.params['name'] and module.params['purge']:
             return list()
         elif not module.params['name']:
@@ -194,7 +217,7 @@ def map_params_to_obj(module):
             collection = [{'name': module.params['name']}]
     else:
         collection = list()
-        for item in users:
+        for item in aggregate:
             if not isinstance(item, dict):
                 collection.append({'username': item})
             elif 'name' not in item:
@@ -210,7 +233,8 @@ def map_params_to_obj(module):
             'full_name': get_value('full_name'),
             'role': get_value('role'),
             'sshkey': get_value('sshkey'),
-            'state': get_value('state')
+            'state': get_value('state'),
+            'active': get_value('active')
         })
 
         for key, value in iteritems(item):
@@ -228,7 +252,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', aliases=['collection']),
+        aggregate=dict(type='list', aliases=['collection', 'users']),
         name=dict(),
 
         full_name=dict(),
@@ -237,10 +261,11 @@ def main():
 
         purge=dict(type='bool'),
 
-        state=dict(choices=['present', 'absent'], default='present')
+        state=dict(choices=['present', 'absent'], default='present'),
+        active=dict(default=True, type='bool')
     )
 
-    mutually_exclusive = [('users', 'name')]
+    mutually_exclusive = [('aggregate', 'name')]
 
     argument_spec.update(junos_argument_spec)
 
@@ -256,17 +281,23 @@ def main():
     want = map_params_to_obj(module)
     ele = map_obj_to_ele(want)
 
-    kwargs = {'commit': not module.check_mode}
+    kwargs = {}
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load_config(module, tostring(ele), warnings, **kwargs)
+    with locked_config(module):
+        diff = load_config(module, tostring(ele), warnings, **kwargs)
 
-    if diff:
-        result.update({
-            'changed': True,
-            'diff': {'prepared': diff}
-        })
+        commit = not module.check_mode
+        if diff:
+            if commit:
+                commit_configuration(module)
+            else:
+                discard_changes(module)
+            result['changed'] = True
+
+            if module._diff:
+                result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
 

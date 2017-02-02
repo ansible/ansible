@@ -184,22 +184,19 @@ uploaded:
 
 '''
 
+import datetime
+import fnmatch
+import hashlib
+import mimetypes
 import os
 import stat as osstat  # os.stat constants
-import mimetypes
-import datetime
-from dateutil import tz
-import hashlib
-import fnmatch
 import traceback
+from dateutil import tz
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec
-
-# import a class, otherwise we'll use a fully qualified path
-# from ansible.module_utils.ec2 import AWSRetry
 import ansible.module_utils.ec2
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec
 
 
 try:

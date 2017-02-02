@@ -22,67 +22,66 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_host
 short_description: Add/remove ESXi host to/from vCenter
 description:
-    - This module can be used to add/remove an ESXi host to/from vCenter
-version_added: 2.0
-author: "Joseph Callen (@jcpowermac), Russell Teague (@mtnbikenc)"
+- This module can be used to add/remove an ESXi host to/from vCenter.
+version_added: '2.0'
+author:
+- Joseph Callen (@jcpowermac)
+- Russell Teague (@mtnbikenc)
 notes:
-    - Tested on vSphere 5.5
+- Tested on vSphere 5.5
 requirements:
-    - "python >= 2.6"
-    - PyVmomi
+- python >= 2.6
+- PyVmomi
 options:
-    datacenter_name:
-        description:
-            - Name of the datacenter to add the host
-        required: True
-    cluster_name:
-        description:
-            - Name of the cluster to add the host
-        required: True
-    esxi_hostname:
-        description:
-            - ESXi hostname to manage
-        required: True
-    esxi_username:
-        description:
-            - ESXi username
-        required: True
-    esxi_password:
-        description:
-            - ESXi password
-        required: True
-    state:
-        description:
-            - Add or remove the host
-        default: 'present'
-        choices:
-            - 'present'
-            - 'absent'
-        required: False
+  datacenter_name:
+    description:
+    - Name of the datacenter to add the host.
+    required: yes
+  cluster_name:
+    description:
+    - Name of the cluster to add the host.
+    required: yes
+  esxi_hostname:
+    description:
+    - ESXi hostname to manage.
+    required: yes
+  esxi_username:
+    description:
+    - ESXi username.
+    required: yes
+  esxi_password:
+    description:
+    - ESXi password.
+    required: yes
+  state:
+    description:
+    - Add or remove the host.
+    choices: [absent, present]
+    default: present
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
-# Example from Ansible playbook
+EXAMPLES = r'''
+- name: Add ESXi Host to vCenter
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter_name
+    cluster_name: cluster_name
+    esxi_hostname: '{{ esxi_hostname }}'
+    esxi_username: '{{ esxi_username }}'
+    esxi_password: '{{ esxi_password }}'
+    state: present
+  delegate_to: localhost
+'''
 
-    - name: Add ESXi Host to VCSA
-      local_action:
-        module: vmware_host
-        hostname: vcsa_host
-        username: vcsa_user
-        password: vcsa_pass
-        datacenter_name: datacenter_name
-        cluster_name: cluster_name
-        esxi_hostname: esxi_hostname
-        esxi_username: esxi_username
-        esxi_password: esxi_password
-        state: present
+RETURN = r'''
 '''
 
 try:
@@ -90,6 +89,16 @@ try:
     HAS_PYVMOMI = True
 except ImportError:
     HAS_PYVMOMI = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vmware import (
+    TaskError,
+    connect_to_api,
+    find_cluster_by_name,
+    find_datacenter_by_name,
+    vmware_argument_spec,
+    wait_for_task,
+)
 
 
 class VMwareHost(object):
@@ -131,7 +140,10 @@ class VMwareHost(object):
 
     def find_host_by_cluster_datacenter(self):
         self.dc = find_datacenter_by_name(self.content, self.datacenter_name)
-        self.cluster = find_cluster_by_name_datacenter(self.dc, self.cluster_name)
+        self.cluster = find_cluster_by_name(self.content, self.cluster_name, self.dc)
+
+        if self.cluster is None:
+            self.module.fail_json(msg="Unable to find cluster %(cluster_name)s" % self.module.params)
 
         for host in self.cluster.host:
             if host.name == self.esxi_hostname:
@@ -208,23 +220,25 @@ class VMwareHost(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter_name=dict(required=True, type='str'),
-                              cluster_name=dict(required=True, type='str'),
-                              esxi_hostname=dict(required=True, type='str'),
-                              esxi_username=dict(required=True, type='str'),
-                              esxi_password=dict(required=True, type='str', no_log=True),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(
+        datacenter_name=dict(type='str', required=True),
+        cluster_name=dict(type='str'),
+        esxi_hostname=dict(type='str', required=True),
+        esxi_username=dict(type='str', required=True),
+        esxi_password=dict(type='str', required=True, no_log=True),
+        state=dict(type='str', default='present', choices=['absent', 'present'])
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
     vmware_host = VMwareHost(module)
     vmware_host.process_state()
-
-from ansible.module_utils.vmware import *
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

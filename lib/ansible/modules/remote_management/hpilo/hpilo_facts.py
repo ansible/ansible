@@ -2,6 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2012 Dag Wieers <dag@wieers.com>
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -18,10 +30,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = r'''
 ---
@@ -47,6 +59,15 @@ options:
     description:
     - The password to authenticate to the HP iLO interface.
     default: admin
+<<<<<<< HEAD
+  ssl_version:
+    description:
+      - Change the ssl_version used.
+    default: TLSv1
+    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
+    version_added: '2.4'
+=======
+>>>>>>> 885db0c1c2... pull latest
 requirements:
 - hpilo
 notes:
@@ -85,7 +106,11 @@ hw_bios_version:
 hw_ethX:
     description: Interface information (for each interface)
     returned: always
+<<<<<<< HEAD
     type: dictionary
+=======
+    type: dictionary of information (macaddress)
+>>>>>>> 885db0c1c2... pull latest
     sample:
       - macaddress: 00:11:22:33:44:55
         macaddress_dash: 00-11-22-33-44-55
@@ -93,7 +118,11 @@ hw_ethX:
 hw_eth_ilo:
     description: Interface information (for the iLO network interface)
     returned: always
+<<<<<<< HEAD
     type: dictionary
+=======
+    type: dictionary of information (macaddress)
+>>>>>>> 885db0c1c2... pull latest
     sample:
       - macaddress: 00:11:22:33:44:BA
       - macaddress_dash: 00-11-22-33-44-BA
@@ -125,7 +154,10 @@ hw_uuid:
 
 import re
 import warnings
+<<<<<<< HEAD
+=======
 from ansible.module_utils.basic import AnsibleModule
+>>>>>>> 885db0c1c2... pull latest
 
 try:
     import hpilo
@@ -133,6 +165,11 @@ try:
 except ImportError:
     HAS_HPILO = False
 
+<<<<<<< HEAD
+from ansible.module_utils.basic import AnsibleModule
+
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 # Suppress warnings from hpilo
 warnings.simplefilter('ignore')
@@ -158,6 +195,10 @@ def main():
             host = dict(required=True, type='str'),
             login = dict(default='Administrator', type='str'),
             password = dict(default='admin', type='str', no_log=True),
+<<<<<<< HEAD
+            ssl_version = dict(default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
+=======
+>>>>>>> 885db0c1c2... pull latest
         ),
         supports_check_mode=True,
     )
@@ -168,8 +209,14 @@ def main():
     host = module.params['host']
     login = module.params['login']
     password = module.params['password']
+<<<<<<< HEAD
+    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V', 'v'))
+
+    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
+=======
 
     ilo = hpilo.Ilo(host, login=login, password=password)
+>>>>>>> 885db0c1c2... pull latest
 
     facts = {
         'module_hw': True,

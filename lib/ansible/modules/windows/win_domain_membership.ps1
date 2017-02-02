@@ -99,12 +99,21 @@ Function Join-Domain {
         [string] $dns_domain_name,
         [string] $new_hostname,
         [string] $domain_admin_user,
+<<<<<<< HEAD
+        [string] $domain_admin_password,
+        [string] $domain_ou_path
+=======
         [string] $domain_admin_password
+>>>>>>> 885db0c1c2... pull latest
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
     $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> 885db0c1c2... pull latest
     $add_args = @{
         ComputerName="."
         Credential=$domain_cred
@@ -117,7 +126,17 @@ Function Join-Domain {
         $add_args["NewName"] = $new_hostname
     }
 
+<<<<<<< HEAD
+
+    if($domain_ou_path){
+        Write-DebugLog "adding OU destination arg to Add-Computer args"
+        $add_args["OUPath"] = $domain_ou_path
+    }
+    $argstr = $add_args | Out-String
+    Write-DebugLog "calling Add-Computer with args: $argstr"
+=======
     Write-DebugLog "calling Add-Computer"
+>>>>>>> 885db0c1c2... pull latest
     $add_result = Add-Computer @add_args
 
     Write-DebugLog ("Add-Computer result was \n{0}" -f $add_result | Out-String)
@@ -172,6 +191,10 @@ $hostname = Get-AnsibleParam $params "hostname"
 $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
+<<<<<<< HEAD
+$domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -221,6 +244,13 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
+<<<<<<< HEAD
+                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                        Write-DebugLog "adding domain_ou_path to domain-join args"
+                        $join_args.domain_ou_path = $domain_ou_path
+                    }
+=======
+>>>>>>> 885db0c1c2... pull latest
 
                     $join_result = Join-Domain @join_args
                 }
@@ -276,4 +306,7 @@ Catch {
 
     Throw
 }
+<<<<<<< HEAD
+=======
 
+>>>>>>> 885db0c1c2... pull latest

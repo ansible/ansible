@@ -18,12 +18,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
+DOCUMENTATION='''
+>>>>>>> 885db0c1c2... pull latest
 module: win_disk_image
 short_description: Manage ISO/VHD/VHDX mounts on Windows hosts
 version_added: 2.3
@@ -47,7 +55,11 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
+<<<<<<< HEAD
 RETURN = r'''
+=======
+RETURN=r'''
+>>>>>>> 885db0c1c2... pull latest
 mount_path:
     description: filesystem path where the target image is mounted
     returned: when C(state) is C(present)
@@ -55,7 +67,11 @@ mount_path:
     sample: F:\
 '''
 
+<<<<<<< HEAD
 EXAMPLES = r'''
+=======
+EXAMPLES=r'''
+>>>>>>> 885db0c1c2... pull latest
 # ensure an iso is mounted
 - win_disk_image:
     image_path: C:\install.iso
@@ -74,3 +90,7 @@ EXAMPLES = r'''
     state: absent
 
 '''
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest

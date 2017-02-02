@@ -18,12 +18,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
+DOCUMENTATION='''
+>>>>>>> 885db0c1c2... pull latest
 module: win_domain_controller
 short_description: Manage domain controller/member server state for a Windows host
 version_added: 2.3
@@ -58,7 +66,11 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
+<<<<<<< HEAD
 RETURN = '''
+=======
+RETURN='''
+>>>>>>> 885db0c1c2... pull latest
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
@@ -67,7 +79,11 @@ reboot_required:
 
 '''
 
+<<<<<<< HEAD
 EXAMPLES = r'''
+=======
+EXAMPLES=r'''
+>>>>>>> 885db0c1c2... pull latest
 # ensure a server is a domain controller
 - hosts: winclient
   gather_facts: no
@@ -75,8 +91,13 @@ EXAMPLES = r'''
   - win_domain_controller:
       dns_domain_name: ansible.vagrant
       domain_admin_user: testguy@ansible.vagrant
+<<<<<<< HEAD
       domain_admin_password: password123!
       safe_mode_password: password123!
+=======
+      domain_admin_pass: password123!
+      safe_mode_pass: password123!
+>>>>>>> 885db0c1c2... pull latest
       state: domain_controller
       log_path: c:\ansible_win_domain_controller.txt
 
@@ -91,9 +112,18 @@ EXAMPLES = r'''
   tasks:
   - win_domain_controller:
       domain_admin_user: testguy@ansible.vagrant
+<<<<<<< HEAD
       domain_admin_password: password123!
       local_admin_password: password123!
+=======
+      domain_admin_pass: password123!
+      local_admin_pass: password123!
+>>>>>>> 885db0c1c2... pull latest
       state: member_server
       log_path: c:\ansible_win_domain_controller.txt
 
 '''
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest

@@ -4,7 +4,11 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
+<<<<<<< HEAD
 # Avi Version: 17.1.1
+=======
+# Avi Version: 16.3.8
+>>>>>>> 885db0c1c2... pull latest
 #
 #
 # This file is part of Ansible
@@ -23,9 +27,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
+=======
+ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -74,8 +82,11 @@ options:
     type:
         description:
             - Specifies which application layer proxy is enabled for the virtual service.
+<<<<<<< HEAD
             - Enum options - APPLICATION_PROFILE_TYPE_L4, APPLICATION_PROFILE_TYPE_HTTP, APPLICATION_PROFILE_TYPE_SYSLOG, APPLICATION_PROFILE_TYPE_DNS,
             - APPLICATION_PROFILE_TYPE_SSL.
+=======
+>>>>>>> 885db0c1c2... pull latest
         required: true
     url:
         description:
@@ -157,6 +168,10 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -185,10 +200,18 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
+<<<<<<< HEAD
             'Avi python API SDK (avisdk>=17.1) is not installed. '
+=======
+            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+>>>>>>> 885db0c1c2... pull latest
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'applicationprofile',
                            set([]))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 if __name__ == '__main__':
     main()

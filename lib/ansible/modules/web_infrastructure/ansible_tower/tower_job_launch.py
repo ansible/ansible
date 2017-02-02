@@ -1,5 +1,20 @@
 #!/usr/bin/python
+<<<<<<< HEAD
 # coding: utf-8 -*-
+
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
+#coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -16,10 +31,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +69,11 @@ options:
       default: null
     extra_vars:
       description:
+<<<<<<< HEAD
         - Extra_vars to use for the job_template. Prepend '@' if a file.
+=======
+        - Extra_vars to use for the job_template. Use '@' for a file.
+>>>>>>> 885db0c1c2... pull latest
       default: null
     limit:
       description:
@@ -75,7 +94,11 @@ EXAMPLES = '''
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
+<<<<<<< HEAD
   register: job
+=======
+    register: job
+>>>>>>> 885db0c1c2... pull latest
 - name: Wait for job max 120s
   tower_job_wait:
     job_id: job.id
@@ -117,6 +140,7 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
+<<<<<<< HEAD
         job_template=dict(required=True),
         job_type=dict(choices=['run', 'check', 'scan']),
         inventory=dict(),
@@ -124,6 +148,15 @@ def main():
         limit=dict(),
         tags=dict(type='list'),
         extra_vars=dict(type='list'),
+=======
+        job_template = dict(required=True),
+        job_type = dict(choices=['run', 'check', 'scan']),
+        inventory = dict(),
+        credential = dict(),
+        limit = dict(),
+        tags = dict(type='list'),
+        extra_vars = dict(type='list'),
+>>>>>>> 885db0c1c2... pull latest
     ))
 
     module = AnsibleModule(

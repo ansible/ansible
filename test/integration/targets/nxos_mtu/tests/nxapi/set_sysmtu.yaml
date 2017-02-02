@@ -27,11 +27,16 @@
     that:
       - "result.changed == false"
 
+<<<<<<< HEAD
 - name: configure invalid (odd) system mtu
+=======
+- name: update system mtu
+>>>>>>> 885db0c1c2... pull latest
   nxos_mtu:
     sysmtu: 2001
     provider: "{{ nxapi }}"
   register: result
+<<<<<<< HEAD
   ignore_errors: yes
 
 - assert:
@@ -41,6 +46,26 @@
 - name: configure invalid (large) system mtu setting
   nxos_mtu:
     sysmtu: 10000
+=======
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify system mtu
+  nxos_mtu:
+    sysmtu: 2001
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: invalid setting
+  nxos_mtu:
+    sysmtu: 3000
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ nxapi }}"
   register: result
   ignore_errors: yes

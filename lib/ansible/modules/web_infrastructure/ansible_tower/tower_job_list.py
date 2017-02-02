@@ -1,5 +1,20 @@
 #!/usr/bin/python
+<<<<<<< HEAD
 # coding: utf-8 -*-
+
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
+#coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -16,10 +31,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -66,7 +81,11 @@ count:
     description: Total count of objects return
     returned: success
     type: int
+<<<<<<< HEAD
     sample: 51
+=======
+    sampled: 51
+>>>>>>> 885db0c1c2... pull latest
 next:
     description: next page available for the listing
     returned: success
@@ -109,6 +128,7 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
+<<<<<<< HEAD
         status=dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
         page=dict(type='int'),
         all_pages=dict(type='bool', default=False),
@@ -117,6 +137,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+=======
+        status = dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
+        page = dict(type='int'),
+        all_pages = dict(type='bool', default=False),
+        query = dict(type='dict'),
+    ))
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
+>>>>>>> 885db0c1c2... pull latest
         supports_check_mode=True
     )
 
@@ -135,7 +165,11 @@ def main():
         tower_check_mode(module)
         try:
             job = tower_cli.get_resource('job')
+<<<<<<< HEAD
             params = {'status': status, 'page': page, 'all_pages': all_pages}
+=======
+            params = {'status':status, 'page':page, 'all_pages': all_pages}
+>>>>>>> 885db0c1c2... pull latest
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)

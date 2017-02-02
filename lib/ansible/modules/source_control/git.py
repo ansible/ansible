@@ -42,10 +42,8 @@ options:
     dest:
         required: true
         description:
-            - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(clone) is set to C(no)
-              This change was made in version 1.8.3. Prior to this version,
-              the C(dest) parameter was always required.
+            - The path of where the repository should be checked out. This
+              parameter is required, unless C(clone) is set to C(no).
     version:
         required: false
         default: "HEAD"
@@ -183,7 +181,7 @@ options:
             - if C(yes), when cloning or checking out a C(version) verify the
               signature of a GPG signed commit. This requires C(git) version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
-              be trusted in the GPG trustdb.
+              be present in the GPG keyring.
 
     archive:
         required: false
@@ -590,15 +588,17 @@ def get_branches(git_path, module, dest):
     return branches
 
 
-def get_tags(git_path, module, dest):
+def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = '%s tag' % (git_path,)
+    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
-            tags.append(line.strip())
+            tagtype, tagname = line.strip().split(':')
+            if tagtype == 'tag':
+                tags.append(tagname)
     return tags
 
 
@@ -887,7 +887,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
 
 
 def verify_commit_sign(git_path, module, dest, version):
-    if version in get_tags(git_path, module, dest):
+    if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"

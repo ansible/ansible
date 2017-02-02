@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+<<<<<<< HEAD
 '''
 DOCUMENTATION:
     cache: yaml
@@ -23,6 +24,8 @@ DOCUMENTATION:
     version_added: "2.3"
     author: Brian Coca (@bcoca)
 '''
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -35,8 +38,12 @@ import yaml
 
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
+<<<<<<< HEAD
 from ansible.plugins.cache import BaseFileCacheModule
 
+=======
+from ansible.plugins.cache.base import BaseFileCacheModule
+>>>>>>> 885db0c1c2... pull latest
 
 class CacheModule(BaseFileCacheModule):
     """

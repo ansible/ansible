@@ -6,6 +6,10 @@
     lines:
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     match: none
     provider: "{{ eapi }}"
 
@@ -14,6 +18,10 @@
     domain_list:
       - ansible.com
       - redhat.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -28,6 +36,10 @@
     domain_list:
       - ansible.com
       - redhat.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -39,6 +51,10 @@
   eos_system:
     domain_list:
       - ansible.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -51,6 +67,10 @@
   eos_system:
     domain_list:
       - ansible.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -63,6 +83,10 @@
     domain_list:
       - ansible.com
       - redhat.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -76,6 +100,10 @@
     domain_list:
       - ansible.com
       - redhat.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -88,6 +116,10 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -103,6 +135,10 @@
     domain_list:
       - ansible.com
       - eng.ansible.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -116,6 +152,10 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     match: none
     provider: "{{ eapi }}"
 

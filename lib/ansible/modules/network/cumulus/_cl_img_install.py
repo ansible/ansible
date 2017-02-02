@@ -110,6 +110,14 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+import re
+from urlparse import urlparse
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule, platform
+# incompatible with ansible 1.4.4 - ubuntu 12.04 version
+# from ansible.module_utils.urls import *
+
 
 def check_url(module, url):
     parsed_url = urlparse(url)
@@ -124,8 +132,7 @@ def check_url(module, url):
 def run_cl_cmd(module, cmd, check_rc=True):
     try:
         (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg=e.strerror)
     # trim last line as it is always empty
     ret = out.splitlines()
@@ -301,7 +308,7 @@ def main():
         argument_spec=dict(
             src=dict(required=True, type='str'),
             version=dict(type='str'),
-            switch_slot=dict(type='bool', choices=BOOLEANS, default=False),
+            switch_slot=dict(type='bool', default=False),
         ),
     )
 
@@ -314,13 +321,6 @@ def main():
 
     install_img(module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-# incompatible with ansible 1.4.4 - ubuntu 12.04 version
-# from ansible.module_utils.urls import *
-from urlparse import urlparse
-import re
 
 if __name__ == '__main__':
     main()

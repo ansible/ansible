@@ -4,14 +4,15 @@ from __future__ import absolute_import, print_function
 
 import datetime
 import json
+<<<<<<< HEAD
+import os
 
 from lib.util import (
     display,
-    EnvironmentConfig,
 )
 
-from lib.metadata import (
-    Metadata,
+from lib.config import (
+    TestConfig,
 )
 
 
@@ -53,6 +54,12 @@ def calculate_confidence(path, line, metadata):
 
     # changes were made to the same file and the line number is different
     return 50
+=======
+
+from lib.util import (
+    display,
+    EnvironmentConfig,
+)
 
 
 class TestConfig(EnvironmentConfig):
@@ -65,7 +72,6 @@ class TestConfig(EnvironmentConfig):
         super(TestConfig, self).__init__(args, command)
 
         self.coverage = args.coverage  # type: bool
-        self.coverage_label = args.coverage_label  # type: str
         self.include = args.include  # type: list [str]
         self.exclude = args.exclude  # type: list [str]
         self.require = args.require  # type: list [str]
@@ -81,10 +87,7 @@ class TestConfig(EnvironmentConfig):
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
-        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
-
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
+>>>>>>> 885db0c1c2... pull latest
 
 
 class TestResult(object):
@@ -193,6 +196,17 @@ class TestResult(object):
 
 class TestSuccess(TestResult):
     """Test success."""
+<<<<<<< HEAD
+=======
+    def __init__(self, command, test, python_version=None):
+        """
+        :type command: str
+        :type test: str
+        :type python_version: str
+        """
+        super(TestSuccess, self).__init__(command, test, python_version)
+
+>>>>>>> 885db0c1c2... pull latest
     def write_junit(self, args):
         """
         :type args: TestConfig
@@ -204,6 +218,17 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
+<<<<<<< HEAD
+=======
+    def __init__(self, command, test, python_version=None):
+        """
+        :type command: str
+        :type test: str
+        :type python_version: str
+        """
+        super(TestSkipped, self).__init__(command, test, python_version)
+
+>>>>>>> 885db0c1c2... pull latest
     def write_console(self):
         """Write results to console."""
         display.info('No tests applicable.', verbosity=1)
@@ -224,6 +249,7 @@ class TestFailure(TestResult):
         """
         :type command: str
         :type test: str
+<<<<<<< HEAD
         :type python_version: str | None
         :type messages: list[TestMessage] | None
         :type summary: str | None
@@ -245,6 +271,17 @@ class TestFailure(TestResult):
 
         super(TestFailure, self).write(args)
 
+=======
+        :type python_version: str
+        :type messages: list[TestMessage]
+        :type summary: str
+        """
+        super(TestFailure, self).__init__(command, test, python_version)
+
+        self.messages = messages
+        self.summary = summary
+
+>>>>>>> 885db0c1c2... pull latest
     def write_console(self):
         """Write results to console."""
         if self.summary:
@@ -258,7 +295,11 @@ class TestFailure(TestResult):
             display.error('Found %d %s issue(s)%s which need to be resolved:' % (len(self.messages), self.test or self.command, specifier))
 
             for message in self.messages:
+<<<<<<< HEAD
                 display.error(message.format(show_confidence=True))
+=======
+                display.error(message)
+>>>>>>> 885db0c1c2... pull latest
 
     def write_lint(self):
         """Write lint results to stdout."""
@@ -293,6 +334,8 @@ class TestFailure(TestResult):
         """
         message = self.format_title()
         output = self.format_block()
+<<<<<<< HEAD
+        docs = self.find_docs()
 
         if self.messages:
             verified = all((m.confidence or 0) >= 50 for m in self.messages)
@@ -301,6 +344,11 @@ class TestFailure(TestResult):
 
         bot_data = dict(
             verified=verified,
+            docs=docs,
+=======
+
+        bot_data = dict(
+>>>>>>> 885db0c1c2... pull latest
             results=[
                 dict(
                     message=message,
@@ -314,6 +362,7 @@ class TestFailure(TestResult):
         if args.explain:
             return
 
+<<<<<<< HEAD
         with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
@@ -326,6 +375,12 @@ class TestFailure(TestResult):
             if message.confidence is None:
                 message.confidence = calculate_confidence(message.path, message.line, metadata)
 
+=======
+        with open(path, 'wb') as bot_fd:
+            json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
+            bot_fd.write('\n')
+
+>>>>>>> 885db0c1c2... pull latest
     def format_command(self):
         """
         :rtype: str
@@ -340,6 +395,28 @@ class TestFailure(TestResult):
 
         return command
 
+<<<<<<< HEAD
+    def find_docs(self):
+        """
+        :rtype: str
+        """
+        testing_docs_url = 'https://docs.ansible.com/ansible/devel/dev_guide/testing'
+        testing_docs_dir = 'docs/docsite/rst/dev_guide/testing'
+
+        url = '%s/%s/' % (testing_docs_url, self.command)
+        path = os.path.join(testing_docs_dir, self.command)
+
+        if self.test:
+            url += '%s.html' % self.test
+            path = os.path.join(path, '%s.rst' % self.test)
+
+        if os.path.exists(path):
+            return url
+
+        return None
+
+=======
+>>>>>>> 885db0c1c2... pull latest
     def format_title(self):
         """
         :rtype: str
@@ -374,7 +451,11 @@ class TestFailure(TestResult):
 
 class TestMessage(object):
     """Single test message for one file."""
+<<<<<<< HEAD
     def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
+=======
+    def __init__(self, message, path, line=0, column=0, level='error', code=None):
+>>>>>>> 885db0c1c2... pull latest
         """
         :type message: str
         :type path: str
@@ -382,7 +463,10 @@ class TestMessage(object):
         :type column: int
         :type level: str
         :type code: str | None
+<<<<<<< HEAD
         :type confidence: int | None
+=======
+>>>>>>> 885db0c1c2... pull latest
         """
         self.path = path
         self.line = line
@@ -390,6 +474,7 @@ class TestMessage(object):
         self.level = level
         self.code = code
         self.message = message
+<<<<<<< HEAD
         self.confidence = confidence
 
     def __str__(self):
@@ -400,11 +485,16 @@ class TestMessage(object):
         :type show_confidence: bool
         :rtype: str
         """
+=======
+
+    def __str__(self):
+>>>>>>> 885db0c1c2... pull latest
         if self.code:
             msg = '%s %s' % (self.code, self.message)
         else:
             msg = self.message
 
+<<<<<<< HEAD
         if show_confidence and self.confidence is not None:
             msg += ' (%d%%)' % self.confidence
 
@@ -416,3 +506,6 @@ class TestMessage(object):
         :rtype: str
         """
         return '%s:%6d:%6d:%s:%s' % (self.path, self.line, self.column, self.code or '', self.message)
+=======
+        return '%s:%s:%s: %s' % (self.path, self.line, self.column, msg)
+>>>>>>> 885db0c1c2... pull latest

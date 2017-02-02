@@ -44,17 +44,14 @@ class TestNxosVrfafModule(TestNxosModule):
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None
 
     def test_nxos_vrf_af_present(self):
         set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
-                                                             'address-family ipv4 unicast',
-                                                             'afi ipv4',
-                                                             'vrf ntc',
-                                                             'safi unicast']))
+                                                             'address-family ipv4 unicast']))
 
     def test_nxos_vrf_af_absent(self):
         set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='absent'))
@@ -66,7 +63,4 @@ class TestNxosVrfafModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
                                                              'address-family ipv4 unicast',
-                                                             'afi ipv4',
-                                                             'route-target both auto evpn',
-                                                             'vrf ntc',
-                                                             'safi unicast']))
+                                                             'route-target both auto evpn']))

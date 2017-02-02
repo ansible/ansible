@@ -352,7 +352,7 @@ def main():
         healthchecks=dict(type='list', required=True),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
-        enable_cdn=dict(type='bool', choices=[True, False]),
+        enable_cdn=dict(type='bool'),
         port_name=dict(type='str'),
         protocol=dict(type='str', default='TCP',
                       choices=['HTTP', 'HTTPS', 'SSL', 'TCP']),

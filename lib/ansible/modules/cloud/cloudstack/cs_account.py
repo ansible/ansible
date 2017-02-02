@@ -181,7 +181,6 @@ domain:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together
 )
@@ -211,7 +210,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'listall': True,
                 'domainid': self.get_domain(key='id'),
             }
-            accounts = self.cs.listAccounts(**args)
+            accounts = self.query_api('listAccounts', **args)
             if accounts:
                 account_name = self.module.params.get('name')
                 for a in accounts['account']:
@@ -234,9 +233,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'domainid': self.get_domain(key='id')
             }
             if not self.module.check_mode:
-                res = self.cs.enableAccount(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('enableAccount', **args)
                 account = res['account']
         return account
 
@@ -265,10 +262,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'lock': lock,
             }
             if not self.module.check_mode:
-                account = self.cs.disableAccount(**args)
-
-                if 'errortext' in account:
-                    self.module.fail_json(msg="Failed: '%s'" % account['errortext'])
+                account = self.query_api('disableAccount', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -303,9 +297,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                 'timezone': self.module.params.get('timezone')
             }
             if not self.module.check_mode:
-                res = self.cs.createAccount(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('createAccount', **args)
                 account = res['account']
         return account
 
@@ -315,10 +307,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.deleteAccount(id=account['id'])
-
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                res = self.query_api('deleteAccount', id=account['id'])
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
@@ -359,30 +348,26 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_acc = AnsibleCloudStackAccount(module)
+    acs_acc = AnsibleCloudStackAccount(module)
 
-        state = module.params.get('state')
+    state = module.params.get('state')
 
-        if state in ['absent']:
-            account = acs_acc.absent_account()
+    if state in ['absent']:
+        account = acs_acc.absent_account()
 
-        elif state in ['enabled', 'unlocked']:
-            account = acs_acc.enable_account()
+    elif state in ['enabled', 'unlocked']:
+        account = acs_acc.enable_account()
 
-        elif state in ['disabled']:
-            account = acs_acc.disable_account()
+    elif state in ['disabled']:
+        account = acs_acc.disable_account()
 
-        elif state in ['locked']:
-            account = acs_acc.lock_account()
+    elif state in ['locked']:
+        account = acs_acc.lock_account()
 
-        else:
-            account = acs_acc.present_account()
+    else:
+        account = acs_acc.present_account()
 
-        result = acs_acc.get_result(account)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_acc.get_result(account)
 
     module.exit_json(**result)
 

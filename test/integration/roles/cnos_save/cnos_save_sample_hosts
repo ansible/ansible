@@ -7,7 +7,11 @@
 #    - A hostname/ip can be a member of multiple groups
 #
 # In the /etc/ansible/hosts file u have to enter [cnos_save_sample] tag
+<<<<<<< HEAD
 # Following you should specify IP Addresses details
+=======
+# Following you should specify IP Adresses details 
+>>>>>>> 885db0c1c2... pull latest
 # Please change <username> and <password> with appropriate value for your switch.
 
 [cnos_save_sample]

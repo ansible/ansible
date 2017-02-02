@@ -216,6 +216,12 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
+import os
+import re
+import tempfile
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 # handy helper for calling system calls.
 # calls AnsibleModule.run_command and prints a more appropriate message
@@ -437,9 +443,9 @@ def main():
             virtual_mac=dict(type='str'),
             vids=dict(type='list'),
             pvid=dict(type='str'),
-            mstpctl_portnetwork=dict(type='bool', choices=BOOLEANS),
-            mstpctl_portadminedge=dict(type='bool', choices=BOOLEANS),
-            mstpctl_bpduguard=dict(type='bool', choices=BOOLEANS),
+            mstpctl_portnetwork=dict(type='bool'),
+            mstpctl_portadminedge=dict(type='bool'),
+            mstpctl_bpduguard=dict(type='bool'),
             clag_id=dict(type='str'),
             min_links=dict(type='int', default=1),
             mode=dict(type='str', default='802.3ad'),
@@ -484,11 +490,6 @@ def main():
 
     module.exit_json(changed=_changed, msg=_msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
-import tempfile
-import os
-import re
 
 if __name__ == '__main__':
     main()

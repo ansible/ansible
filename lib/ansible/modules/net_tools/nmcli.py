@@ -569,7 +569,7 @@ class Nmcli(object):
         self.type=module.params['type']
         self.ip4=module.params['ip4']
         self.gw4=module.params['gw4']
-        self.dns4=module.params['dns4']
+        self.dns4=' '.join(module.params['dns4'])
         self.ip6=module.params['ip6']
         self.gw6=module.params['gw6']
         self.dns6=module.params['dns6']
@@ -1105,7 +1105,7 @@ def main():
             type=dict(required=False, default=None, choices=['ethernet', 'team', 'team-slave', 'bond', 'bond-slave', 'bridge', 'vlan'], type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
-            dns4=dict(required=False, default=None, type='str'),
+            dns4=dict(required=False, default=None, type='list'),
             ip6=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),

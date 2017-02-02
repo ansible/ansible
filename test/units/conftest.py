@@ -7,11 +7,14 @@ try:
 except ImportError:
     coverage = None
 
+<<<<<<< HEAD
 try:
     test = coverage.Coverage
 except AttributeError:
     coverage = None
 
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 def pytest_configure():
     if not coverage:

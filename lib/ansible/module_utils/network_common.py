@@ -173,7 +173,7 @@ class EntityCollection(Entity):
             iterable = [super(EntityCollection, self).__call__(self._module.params, strict)]
 
         if not isinstance(iterable, (list, tuple)):
-            module.fail_json(msg='value must be an iterable')
+            self._module.fail_json(msg='value must be an iterable')
 
         return [(super(EntityCollection, self).__call__(i, strict)) for i in iterable]
 

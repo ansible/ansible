@@ -159,7 +159,8 @@ from deepdiff import DeepDiff
 class Parameters(AnsibleF5Parameters):
     returnables = []
     api_attributes = [
-        'tables', 'variables', 'template', 'lists'
+        'tables', 'variables', 'template', 'lists', 'deviceGroup',
+        'inheritedDevicegroup', 'inheritedTrafficGroup', 'trafficGroup'
     ]
     updatables = ['tables', 'variables', 'lists']
 
@@ -282,12 +283,22 @@ class Parameters(AnsibleF5Parameters):
             self.variables = value['variables']
         if 'lists' in value:
             self.lists = value['lists']
+        if 'deviceGroup' in value:
+            self.deviceGroup = value['deviceGroup']
+        if 'inheritedDevicegroup' in value:
+            self.inheritedDevicegroup = value['inheritedDevicegroup']
+        if 'inheritedTrafficGroup' in value:
+            self.inheritedTrafficGroup = value['inheritedTrafficGroup']
+        if 'trafficGroup' in value:
+            self.trafficGroup = value['trafficGroup']
 
     @property
     def template(self):
         if self._values['template'] is None:
             return None
         if self._values['template'].startswith("/" + self.partition):
+            return self._values['template']
+        elif self._values['template'].startswith("/"):
             return self._values['template']
         else:
             return '/{0}/{1}'.format(

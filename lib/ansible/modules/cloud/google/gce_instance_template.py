@@ -14,16 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
 module: gce_instance_template
 version_added: "2.3"
+<<<<<<< HEAD
 short_description: create or destroy instance templates of Compute Engine of GCP.
+=======
+short_description: create or destroy intance templates of Compute Engine of GCP.
+>>>>>>> 885db0c1c2... pull latest
 description:
      - Creates or destroy Google instance templates
        of Compute Engine of Google Cloud Platform.
@@ -87,7 +99,11 @@ options:
         If C(ephemeral), a new non-static address will be
         used.  If C(None), then no external address will
         be used.  To use an existing static IP address
+<<<<<<< HEAD
         specify address name.
+=======
+        specify adress name.
+>>>>>>> 885db0c1c2... pull latest
     default: "ephemeral"
   service_account_email:
     description:
@@ -140,6 +156,16 @@ options:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
     default: null
+<<<<<<< HEAD
+  disks_gce_struct:
+    description:
+      - Support passing in the GCE-specific
+        formatted formatted disks[] structure. Case sensitive.
+        see U(https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource) for detailed information
+    default: null
+    version_added: "2.4"
+=======
+>>>>>>> 885db0c1c2... pull latest
   project_id:
     description:
       - your GCE project ID
@@ -153,11 +179,14 @@ options:
     description:
       - path to the JSON file associated with the service account email
     default: null
+<<<<<<< HEAD
   subnetwork_region:
     version_added: "2.4"
     description:
       - Region that subnetwork resides in. (Required for subnetwork to successfully complete)
     default: null
+=======
+>>>>>>> 885db0c1c2... pull latest
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
@@ -205,6 +234,35 @@ EXAMPLES = '''
         project_id: "{{ project_id }}"
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
+<<<<<<< HEAD
+
+# Example playbook using disks_gce_struct
+- name: Compute Engine Instance Template Examples
+  hosts: localhost
+  vars:
+    service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+    credentials_file: "/path/to/your-key.json"
+    project_id: "your-project-name"
+  tasks:
+    - name: create instance template
+      gce_instance_template:
+        name: foo
+        size: n1-standard-1
+        state: present
+        project_id: "{{ project_id }}"
+        credentials_file: "{{ credentials_file }}"
+        service_account_email: "{{ service_account_email }}"
+        disks_gce_struct:
+          - device_name: /dev/sda
+            boot: true
+            autoDelete: true
+            initializeParams:
+              diskSizeGb: 30
+              diskType: pd-ssd
+              sourceImage: projects/debian-cloud/global/images/family/debian-8
+
+=======
+>>>>>>> 885db0c1c2... pull latest
 '''
 
 RETURN = '''
@@ -234,7 +292,10 @@ except ImportError:
 
 def get_info(inst):
     """Retrieves instance template information
+<<<<<<< HEAD
+=======
 
+>>>>>>> 885db0c1c2... pull latest
     """
     return({
         'name': inst.name,
@@ -259,7 +320,10 @@ def create_instance_template(module, gce):
     disk_auto_delete = module.params.get('disk_auto_delete')
     network = module.params.get('network')
     subnetwork = module.params.get('subnetwork')
+<<<<<<< HEAD
     subnetwork_region = module.params.get('subnetwork_region')
+=======
+>>>>>>> 885db0c1c2... pull latest
     can_ip_forward = module.params.get('can_ip_forward')
     external_ip = module.params.get('external_ip')
     service_account_email = module.params.get('service_account_email')
@@ -272,6 +336,11 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks = module.params.get('disks')
+<<<<<<< HEAD
+    disks_gce_struct = module.params.get('disks_gce_struct')
+=======
+
+>>>>>>> 885db0c1c2... pull latest
     changed = False
 
     # args of ex_create_instancetemplate
@@ -319,7 +388,11 @@ def create_instance_template(module, gce):
     gce_args['network'] = gce_network
 
     if subnetwork is not None:
+<<<<<<< HEAD
         gce_args['subnetwork'] = gce.ex_get_subnetwork(subnetwork, region=subnetwork_region)
+=======
+        gce_args['subnetwork'] = subnetwork
+>>>>>>> 885db0c1c2... pull latest
 
     if can_ip_forward is not None:
         gce_args['can_ip_forward'] = can_ip_forward
@@ -360,6 +433,12 @@ def create_instance_template(module, gce):
     if tags is not None:
         gce_args['tags'] = tags
 
+<<<<<<< HEAD
+    if disks_gce_struct is not None:
+        gce_args['disks_gce_struct'] = disks_gce_struct
+
+=======
+>>>>>>> 885db0c1c2... pull latest
     # Try to convert the user's metadata value into the format expected
     # by GCE.  First try to ensure user has proper quoting of a
     # dictionary-like syntax using 'literal_eval', then convert the python
@@ -500,7 +579,11 @@ def check_if_system_state_would_be_changed(module, gce):
             output = 'nothing to do for instance template {} '.format(name)
     if current_state == "present":
         if changed:
+<<<<<<< HEAD
             output = 'instance template {} will be destroyed'.format(name)
+=======
+            output = 'instance template {} will be detroyed'.format(name)
+>>>>>>> 885db0c1c2... pull latest
         else:
             output = 'nothing to do for instance template {} '.format(name)
 
@@ -534,7 +617,11 @@ def main():
             project_id=dict(),
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
-            subnetwork_region=dict()
+<<<<<<< HEAD
+            subnetwork_region=dict(),
+            disks_gce_struct=dict(type='list')
+=======
+>>>>>>> 885db0c1c2... pull latest
         ),
         mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],

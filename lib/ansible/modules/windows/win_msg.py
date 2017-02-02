@@ -21,10 +21,15 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = r'''
 ---
@@ -47,13 +52,23 @@ options:
       - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.
         However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for
         the timeout to elapse before moving on to the next user.
+<<<<<<< HEAD
+    type: bool
+    default: 'no'
+=======
     required: false
     default: false
+>>>>>>> 885db0c1c2... pull latest
   msg:
     description:
       - The text of the message to be displayed.
     default: Hello world!
+<<<<<<< HEAD
+author:
+- Jon Hawkesworth (@jhawkesworth)
+=======
 author: "Jon Hawkesworth (@jhawkesworth)"
+>>>>>>> 885db0c1c2... pull latest
 notes:
    - This module must run on a windows host, so ensure your play targets windows
      hosts, or delegates to a windows host.
@@ -63,10 +78,17 @@ notes:
 '''
 
 EXAMPLES = r'''
+<<<<<<< HEAD
+- name: Warn logged in users of impending upgrade
+  win_msg:
+    display_seconds: 60
+    msg: Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time }}
+=======
   # Warn logged in users of impending upgrade
   win_msg:
     display_seconds: 60
     msg: "Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time  }}"
+>>>>>>> 885db0c1c2... pull latest
 '''
 
 RETURN = r'''
@@ -74,12 +96,24 @@ msg:
     description: Test of the message that was sent.
     returned: changed
     type: string
+<<<<<<< HEAD
+    sample: Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00
+=======
     sample: "Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00"
+>>>>>>> 885db0c1c2... pull latest
 display_seconds:
     description: Value of display_seconds module parameter.
     returned: success
     type: string
     sample: 10
+<<<<<<< HEAD
+rc:
+    description: The return code of the API call
+    returned: always
+    type: int
+    sample: 0
+=======
+>>>>>>> 885db0c1c2... pull latest
 runtime_seconds:
     description: How long the module took to run on the remote windows host.
     returned: success
@@ -96,3 +130,7 @@ wait:
     type: boolean
     sample: false
 '''
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest

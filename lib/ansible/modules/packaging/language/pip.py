@@ -104,9 +104,9 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag for versioning URLs.
+      - Pass the editable flag.
     required: false
-    default: yes
+    default: false
     version_added: "2.0"
   chdir:
     description:
@@ -161,10 +161,9 @@ EXAMPLES = '''
 - pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
-# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+).
 - pip:
     name: git+http://myrepo/app/MyApp
-    editable: false
 
 # Install (MyApp) from local tarball
 - pip:
@@ -186,6 +185,11 @@ EXAMPLES = '''
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
+
+# Install (Bottle) within a user home directory.
+- pip:
+    name: bottle
+    extra_args: --user
 
 # Install specified python requirements.
 - pip:
@@ -394,17 +398,17 @@ def main():
             state=dict(default='present', choices=state_map.keys()),
             name=dict(type='list'),
             version=dict(type='str'),
-            requirements=dict(),
+            requirements=dict(type='str'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(default=False, type='bool'),
             virtualenv_command=dict(default='virtualenv', type='path'),
             virtualenv_python=dict(type='str'),
             use_mirrors=dict(default=True, type='bool'),
-            extra_args=dict(),
-            editable=dict(default=True, type='bool'),
+            extra_args=dict(type='str'),
+            editable=dict(default=False, type='bool'),
             chdir=dict(type='path'),
             executable=dict(type='path'),
-            umask=dict(),
+            umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
@@ -511,7 +515,7 @@ def main():
                     has_vcs = True
                     break
 
-        if has_vcs and module.params['editable']:
+        if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
@@ -532,8 +536,6 @@ def main():
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
-                module.exit_json(changed=True)
-            elif has_vcs:
                 module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
@@ -563,10 +565,9 @@ def main():
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
+        out_freeze_before = None
         if requirements or has_vcs:
             _, out_freeze_before, _ = _get_packages(module, pip, chdir)
-        else:
-            out_freeze_before = None
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -583,11 +584,8 @@ def main():
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
             else:
-                if out_freeze_before is None:
-                    changed = 'Successfully installed' in out_pip
-                else:
-                    _, out_freeze_after, _ = _get_packages(module, pip, chdir)
-                    changed = out_freeze_before != out_freeze_after
+                _, out_freeze_after, _ = _get_packages(module, pip, chdir)
+                changed = out_freeze_before != out_freeze_after
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,

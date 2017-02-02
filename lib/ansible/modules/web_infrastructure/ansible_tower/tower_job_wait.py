@@ -1,5 +1,20 @@
 #!/usr/bin/python
+<<<<<<< HEAD
 # coding: utf-8 -*-
+
+# (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
+#coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -16,10 +31,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -76,12 +91,20 @@ started:
     description: timestamp of when the job started running
     returned: success
     type: string
+<<<<<<< HEAD
     sample: "2017-03-01T17:03:53.200234Z"
+=======
+    sample: 2017-03-01T17:03:53.200234Z
+>>>>>>> 885db0c1c2... pull latest
 finished:
     description: timestamp of when the job finished running
     returned: success
     type: string
+<<<<<<< HEAD
     sample: "2017-03-01T17:04:04.078782Z"
+=======
+    sample: 2017-03-01T17:04:04.078782Z
+>>>>>>> 885db0c1c2... pull latest
 status:
     description: current status of job
     returned: success
@@ -116,10 +139,17 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
+<<<<<<< HEAD
         job_id=dict(type='int', required=True),
         timeout=dict(type='int'),
         min_interval=dict(type='float', default=1),
         max_interval=dict(type='float', default=30),
+=======
+        job_id = dict(type='int', required=True),
+        timeout = dict(type='int'),
+        min_interval = dict(type='float', default=1),
+        max_interval = dict(type='float', default=30),
+>>>>>>> 885db0c1c2... pull latest
     ))
 
     module = AnsibleModule(
@@ -140,7 +170,11 @@ def main():
         params = module.params.copy()
 
         # tower-cli gets very noisy when monitoring.
+<<<<<<< HEAD
         # We pass in our our outfile to suppress the out during our monitor call.
+=======
+        # We pass in our our outfile to supress the out during our monitor call.
+>>>>>>> 885db0c1c2... pull latest
         outfile = StringIO()
         params['outfile'] = outfile
 

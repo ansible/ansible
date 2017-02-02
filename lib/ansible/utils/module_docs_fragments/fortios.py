@@ -23,6 +23,7 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = """
 options:
+<<<<<<< HEAD
   file_mode:
     description:
       - Don't connect to any device, only use I(config_file) as input and Output.
@@ -42,6 +43,20 @@ options:
   password:
     description:
       - Specifies the password used to authenticate to the remote device. Required when I(file_mode) is True.
+=======
+  host:
+    description:
+      - Specifies the DNS hostname or IP address for connecting to the remote fortios device.
+    required: true
+  username:
+    description:
+      - Configures the username used to authenticate to the remote device.
+    required: true
+  password:
+    description:
+      - Specifies the password used to authenticate to the remote device.
+    required: true
+>>>>>>> 885db0c1c2... pull latest
   timeout:
     description:
       - Timeout in seconds for connecting to the remote device.
@@ -63,5 +78,9 @@ options:
   backup_filename:
     description:
       - Specifies the backup filename. If omitted filename will be
+<<<<<<< HEAD
         formatted like HOST_config.YYYY-MM-DD@HH:MM:SS
+=======
+        formated like HOST_config.YYYY-MM-DD@HH:MM:SS
+>>>>>>> 885db0c1c2... pull latest
 """

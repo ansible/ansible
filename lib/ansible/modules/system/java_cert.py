@@ -1,6 +1,18 @@
 #!/usr/bin/python
 #
 # (c) 2013, RSD Services S.A
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -17,10 +29,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -181,7 +193,11 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 def delete_cert(module, executable, keystore_path, keystore_pass, alias):
+<<<<<<< HEAD
     ''' Delete certificate identified with alias from keystore on keystore_path '''
+=======
+    ''' Delete cerificate identified with alias from keystore on keystore_path '''
+>>>>>>> 885db0c1c2... pull latest
     del_cmd = ("%s -delete -keystore '%s' -storepass '%s' "
                "-alias '%s'")%(executable, keystore_path, keystore_pass, alias)
 
@@ -221,7 +237,11 @@ def main():
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
         keystore_path=dict(type='str'),
+<<<<<<< HEAD
         keystore_pass=dict(required=True, type='str', no_log=True),
+=======
+        keystore_pass=dict(required=True, type='str'),
+>>>>>>> 885db0c1c2... pull latest
         keystore_create=dict(default=False, type='bool'),
         executable=dict(default='keytool', type='str'),
         state=dict(default='present',

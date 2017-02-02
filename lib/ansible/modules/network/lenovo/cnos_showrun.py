@@ -22,10 +22,16 @@
 # Lenovo Networking
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -59,6 +65,7 @@ Tasks : The following are examples of using the module cnos_showrun. These are w
 
 '''
 RETURN = '''
+<<<<<<< HEAD
 msg:
   description: Success or failure message
   returned: always
@@ -66,6 +73,14 @@ msg:
   sample: "Running Configuration saved in file"
 '''
 
+=======
+  return value: |
+    On successful execution, the method returns a message in JSON format
+    [Running Configuration saved in file]
+    Upon any failure, the method returns an error display string.
+
+'''
+>>>>>>> 885db0c1c2... pull latest
 import sys
 import paramiko
 import time

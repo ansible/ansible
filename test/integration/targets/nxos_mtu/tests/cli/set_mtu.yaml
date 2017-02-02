@@ -32,12 +32,17 @@
     that:
       - "result.changed == false"
 
+<<<<<<< HEAD
 - name: configure invalid (odd) interface mtu
+=======
+- name: configure interface mtu
+>>>>>>> 885db0c1c2... pull latest
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 2001
     provider: "{{ cli }}"
   register: result
+<<<<<<< HEAD
   ignore_errors: yes
 
 - assert:
@@ -45,6 +50,25 @@
       - "result.failed == true"
 
 - name: configure invalid (large) mtu setting
+=======
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify interface mtu
+  nxos_mtu:
+    interface: Ethernet3/1
+    mtu: 2001
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: invalid mtu setting
+>>>>>>> 885db0c1c2... pull latest
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 100000

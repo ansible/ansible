@@ -2,6 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Dag Wieers <dag@wieers.com>
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -18,10 +30,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = r'''
 ---
@@ -93,7 +105,11 @@ def main():
 #    options += ' -v'
 
     if minfw:
+<<<<<<< HEAD
+        options += ' -m %s' % minfw
+=======
         option += ' -m %s' % minfw
+>>>>>>> 885db0c1c2... pull latest
 
     rc, stdout, stderr = module.run_command('hponcfg %s' % options)
 
@@ -102,5 +118,9 @@ def main():
 
     module.exit_json(changed=changed, stdout=stdout, stderr=stderr)
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 885db0c1c2... pull latest
 if __name__ == '__main__':
     main()

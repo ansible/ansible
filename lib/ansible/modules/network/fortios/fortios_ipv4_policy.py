@@ -19,23 +19,36 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = """
 ---
 module: fortios_ipv4_policy
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
+<<<<<<< HEAD
 short_description: Manage IPv4 policy objects on Fortinet FortiOS firewall devices
+=======
+short_description: Manage fortios firewall IPv4 policy objects
+>>>>>>> 885db0c1c2... pull latest
 description:
   - This module provides management of firewall IPv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
 options:
   id:
     description:
+<<<<<<< HEAD
       - "Policy ID.
         Warning: policy ID number is different than Policy sequence number.
         The policy ID is the number assigned at policy creation.
@@ -47,6 +60,13 @@ options:
   state:
     description:
       - Specifies if policy I(id) need to be added or deleted.
+=======
+      - Policy ID.
+    required: true
+  state:
+    description:
+      - Specifies if address need to be added or deleted.
+>>>>>>> 885db0c1c2... pull latest
     choices: ['present', 'absent']
     default: present
   src_intf:
@@ -59,7 +79,12 @@ options:
     default: any
   src_addr:
     description:
+<<<<<<< HEAD
       - Specifies source address (or group) object name(s). Required when I(state=present).
+=======
+      - Specifies source address (or group) object name(s).
+    required: true
+>>>>>>> 885db0c1c2... pull latest
   src_addr_negate:
     description:
       - Negate source address param.
@@ -67,7 +92,12 @@ options:
     choices: ["true", "false"]
   dst_addr:
     description:
+<<<<<<< HEAD
       - Specifies destination address (or group) object name(s). Required when I(state=present).
+=======
+      - Specifies destination address (or group) object name(s).
+    required: true
+>>>>>>> 885db0c1c2... pull latest
   dst_addr_negate:
     description:
       - Negate destination address param.
@@ -75,12 +105,23 @@ options:
     choices: ["true", "false"]
   policy_action:
     description:
+<<<<<<< HEAD
       - Specifies accept or deny action policy. Required when I(state=present).
     choices: ['accept', 'deny']
     aliases: ['action']
   service:
     description:
       - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS']). Required when I(state=present)."
+=======
+      - Specifies accept or deny action policy.
+    choices: ['accept', 'deny']
+    required: true
+    aliases: ['action']
+  service:
+    description:
+      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
+    required: true
+>>>>>>> 885db0c1c2... pull latest
     aliases:
       - services
   service_negate:
@@ -117,6 +158,7 @@ options:
   application_list:
     description:
       - Specifies Application Control name.
+<<<<<<< HEAD
   logtraffic:
     version_added: "2.4"
     description:
@@ -129,6 +171,8 @@ options:
       - Logs beginning of session as well.
     default: false
     choices: ["true", "false"]
+=======
+>>>>>>> 885db0c1c2... pull latest
   comment:
     description:
       - free text to describe policy.
@@ -143,13 +187,21 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
+<<<<<<< HEAD
     src_addr: internal_network
     dst_addr: all
+=======
+    srcaddr: internal_network
+    dstaddr: all
+>>>>>>> 885db0c1c2... pull latest
     service: dns
     nat: True
     state: present
     policy_action: accept
+<<<<<<< HEAD
     logtraffic: disable
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 - name: Public Web
   fortios_ipv4_policy:
@@ -157,8 +209,13 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
+<<<<<<< HEAD
     src_addr: all
     dst_addr: webservers
+=======
+    srcaddr: all
+    dstaddr: webservers
+>>>>>>> 885db0c1c2... pull latest
     services:
       - http
       - https
@@ -168,7 +225,11 @@ EXAMPLES = """
 
 RETURN = """
 firewall_address_config:
+<<<<<<< HEAD
   description: full firewall addresses config string
+=======
+  description: full firewall adresses config string
+>>>>>>> 885db0c1c2... pull latest
   returned: always
   type: string
 change_string:
@@ -195,12 +256,21 @@ def main():
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
+<<<<<<< HEAD
         src_addr                  = dict(type='list'),
         dst_addr                  = dict(type='list'),
         src_addr_negate           = dict(type='bool', default=False),
         dst_addr_negate           = dict(type='bool', default=False),
         policy_action             = dict(choices=['accept','deny'], aliases=['action']),
         service                   = dict(aliases=['services'], type='list'),
+=======
+        src_addr                  = dict(required=True, type='list'),
+        dst_addr                  = dict(required=True, type='list'),
+        src_addr_negate           = dict(type='bool', default=False),
+        dst_addr_negate           = dict(type='bool', default=False),
+        policy_action             = dict(choices=['accept','deny'], required=True, aliases=['action']),
+        service                   = dict(aliases=['services'], required=True, type='list'),
+>>>>>>> 885db0c1c2... pull latest
         service_negate            = dict(type='bool', default=False),
         schedule                  = dict(type='str', default='always'),
         nat                       = dict(type='bool', default=False),
@@ -210,13 +280,17 @@ def main():
         webfilter_profile         = dict(type='str'),
         ips_sensor                = dict(type='str'),
         application_list          = dict(type='str'),
+<<<<<<< HEAD
         logtraffic                = dict(choices=['disable','all','utm'], default='utm'),
         logtraffic_start          = dict(type='bool', default=False),
+=======
+>>>>>>> 885db0c1c2... pull latest
     )
 
     #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
+<<<<<<< HEAD
     ipv4_policy_required_if = [
         ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service']],
     ]
@@ -225,14 +299,23 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=fortios_required_if + ipv4_policy_required_if ,
+=======
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        required_if=fortios_required_if,
+>>>>>>> 885db0c1c2... pull latest
     )
 
     #init forti object
     fortigate = AnsibleFortios(module)
 
+<<<<<<< HEAD
     #Security policies root path
     config_path = 'firewall policy'
 
+=======
+>>>>>>> 885db0c1c2... pull latest
     #test params
     #NAT related
     if not module.params['nat']:
@@ -241,20 +324,31 @@ def main():
         if module.params['fixedport']:
             module.fail_json(msg='Fixedport param requires NAT to be true.')
 
+<<<<<<< HEAD
     #log options
     if module.params['logtraffic_start']:
         if not module.params['logtraffic'] == 'all':
             module.fail_json(msg='Logtraffic_start param requires logtraffic to be set to "all".')
 
+=======
+>>>>>>> 885db0c1c2... pull latest
     #id must be str(int) for pyFG to work
     policy_id = str(module.params['id'])
 
     #load config
+<<<<<<< HEAD
     fortigate.load_config(config_path)
 
     #Absent State
     if module.params['state'] == 'absent':
         fortigate.candidate_config[config_path].del_block(policy_id)
+=======
+    fortigate.load_config('firewall policy')
+
+    #Absent State
+    if module.params['state'] == 'absent':
+        fortigate.candidate_config[path].del_block(policy_id)
+>>>>>>> 885db0c1c2... pull latest
 
     #Present state
     elif module.params['state'] == 'present':
@@ -280,6 +374,7 @@ def main():
         # action
         new_policy.set_param('action', '%s' % (module.params['policy_action']))
 
+<<<<<<< HEAD
         #logging
         new_policy.set_param('logtraffic', '%s' % (module.params['logtraffic']))
         if module.params['logtraffic'] == 'all':
@@ -288,6 +383,8 @@ def main():
             else:
                 new_policy.set_param('logtraffic-start', 'disable')
 
+=======
+>>>>>>> 885db0c1c2... pull latest
         # Schedule
         new_policy.set_param('schedule', '%s' % (module.params['schedule']))
 

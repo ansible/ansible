@@ -176,6 +176,13 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         """
         pass
 
+    @staticmethod
+    def guess_network_os(obj):
+        """Identifies the operating system of
+            network device.
+        """
+        pass
+
     def get_base_rpc(self):
         """Returns list of base rpc method supported by remote device"""
         return ['get_config', 'edit_config', 'get_capabilities', 'get']

@@ -4,7 +4,11 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
+<<<<<<< HEAD
 # Avi Version: 17.1.1
+=======
+# Avi Version: 16.3.8
+>>>>>>> 885db0c1c2... pull latest
 #
 #
 # This file is part of Ansible
@@ -23,9 +27,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
+=======
+ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -53,12 +61,16 @@ options:
             - Set of versions accepted by the server.
     cipher_enums:
         description:
+<<<<<<< HEAD
             - Enum options - tls_ecdhe_ecdsa_with_aes_128_gcm_sha256, tls_ecdhe_ecdsa_with_aes_256_gcm_sha384, tls_ecdhe_rsa_with_aes_128_gcm_sha256,
             - tls_ecdhe_rsa_with_aes_256_gcm_sha384, tls_ecdhe_ecdsa_with_aes_128_cbc_sha256, tls_ecdhe_ecdsa_with_aes_256_cbc_sha384,
             - tls_ecdhe_rsa_with_aes_128_cbc_sha256, tls_ecdhe_rsa_with_aes_256_cbc_sha384, tls_rsa_with_aes_128_gcm_sha256, tls_rsa_with_aes_256_gcm_sha384,
             - tls_rsa_with_aes_128_cbc_sha256, tls_rsa_with_aes_256_cbc_sha256, tls_ecdhe_ecdsa_with_aes_128_cbc_sha, tls_ecdhe_ecdsa_with_aes_256_cbc_sha,
             - tls_ecdhe_rsa_with_aes_128_cbc_sha, tls_ecdhe_rsa_with_aes_256_cbc_sha, tls_rsa_with_aes_128_cbc_sha, tls_rsa_with_aes_256_cbc_sha,
             - tls_rsa_with_3des_ede_cbc_sha, tls_rsa_with_rc4_128_sha.
+=======
+            - Cipher_enums of sslprofile.
+>>>>>>> 885db0c1c2... pull latest
     description:
         description:
             - User defined description for the object.
@@ -158,6 +170,10 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -190,10 +206,18 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
+<<<<<<< HEAD
             'Avi python API SDK (avisdk>=17.1) is not installed. '
+=======
+            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+>>>>>>> 885db0c1c2... pull latest
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'sslprofile',
                            set([]))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 if __name__ == '__main__':
     main()

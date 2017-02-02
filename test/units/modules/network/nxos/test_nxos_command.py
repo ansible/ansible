@@ -25,7 +25,10 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_command
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 885db0c1c2... pull latest
 class TestNxosCommandModule(TestNxosModule):
 
     module = nxos_command
@@ -37,7 +40,11 @@ class TestNxosCommandModule(TestNxosModule):
     def tearDown(self):
         self.mock_run_commands.stop()
 
+<<<<<<< HEAD
+    def load_fixtures(self, commands=None, device=''):
+=======
     def load_fixtures(self, commands=None):
+>>>>>>> 885db0c1c2... pull latest
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -48,9 +55,14 @@ class TestNxosCommandModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item['command']
+<<<<<<< HEAD
+                filename = '%s.txt' % str(command).replace(' ', '_')
+                output.append(load_fixture('nxos_command', filename))
+=======
                 filename = str(command).replace(' ', '_')
                 filename = 'nxos_command/%s.txt' % filename
                 output.append(load_fixture(filename))
+>>>>>>> 885db0c1c2... pull latest
             return output
 
         self.run_commands.side_effect = load_from_file
@@ -68,7 +80,11 @@ class TestNxosCommandModule(TestNxosModule):
         self.assertTrue(result['stdout'][0].startswith('Cisco'))
 
     def test_nxos_command_wait_for(self):
+<<<<<<< HEAD
+        wait_for = 'result[0] contains "NX-OS"'
+=======
         wait_for = 'result[0] contains "Cisco NX-OS"'
+>>>>>>> 885db0c1c2... pull latest
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module()
 
@@ -92,7 +108,11 @@ class TestNxosCommandModule(TestNxosModule):
 
     def test_nxos_command_match_all(self):
         wait_for = ['result[0] contains "Cisco"',
+<<<<<<< HEAD
+                    'result[0] contains "image file"']
+=======
                     'result[0] contains "system image file"']
+>>>>>>> 885db0c1c2... pull latest
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='all'))
         self.execute_module()
 

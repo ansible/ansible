@@ -19,10 +19,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = r'''
 ---
@@ -48,7 +54,11 @@ notes:
 author: "Matt Davis (@nitzmahone)"
 '''
 
+<<<<<<< HEAD
 EXAMPLES = r'''
+=======
+EXAMPLES=r'''
+>>>>>>> 885db0c1c2... pull latest
   # set a single address on the adapter named Ethernet
   - win_dns_client:
       adapter_names: Ethernet
@@ -68,6 +78,10 @@ EXAMPLES = r'''
       ipv4_addresses: []
 '''
 
+<<<<<<< HEAD
 RETURN = '''
+=======
+RETURN='''
+>>>>>>> 885db0c1c2... pull latest
 
 '''

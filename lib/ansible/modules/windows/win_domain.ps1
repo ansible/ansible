@@ -37,7 +37,11 @@ Function Ensure-Prereqs {
 
 $parsed_args = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam $parsed_args "_ansible_check_mode" -default $false
+<<<<<<< HEAD
 $dns_domain_name = Get-AnsibleParam $parsed_args "dns_domain_name" -failifempty $true
+=======
+$forest_root_dns_domain = Get-AnsibleParam $parsed_args "forest_root_dns_domain" -failifempty $true
+>>>>>>> 885db0c1c2... pull latest
 $safe_mode_admin_password = Get-AnsibleParam $parsed_args "safe_mode_password" -failifempty $true
 
 $forest = $null
@@ -54,7 +58,11 @@ $result = @{changed=$false; reboot_required=$false}
 Ensure-Prereqs
 
 Try {
+<<<<<<< HEAD
     $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
+=======
+    $forest = Get-ADForest $forest_root_dns_domain -ErrorAction SilentlyContinue
+>>>>>>> 885db0c1c2... pull latest
 }
 Catch { }
 
@@ -65,7 +73,11 @@ If(-not $forest) {
         $sm_cred = ConvertTo-SecureString $safe_mode_admin_password -AsPlainText -Force
 
         $install_forest_args = @{
+<<<<<<< HEAD
             DomainName=$dns_domain_name;
+=======
+            DomainName=$forest_root_dns_domain;
+>>>>>>> 885db0c1c2... pull latest
             SafeModeAdministratorPassword=$sm_cred;
             Confirm=$false;
             SkipPreChecks=$true;

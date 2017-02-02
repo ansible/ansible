@@ -2,6 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Dag Wieers <dag@wieers.com>
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -18,10 +30,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
+ANSIBLE_METADATA = {'status': ['stableinterface'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = r'''
 ---
@@ -32,7 +44,10 @@ description:
 - Retries the transport connection after a timeout of C(connect_timeout).
 - Tests the transport connection every C(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+<<<<<<< HEAD
 - This module is also supported for Windows targets.
+=======
+>>>>>>> 885db0c1c2... pull latest
 version_added: "2.3"
 options:
   connect_timeout:
@@ -51,8 +66,11 @@ options:
     description:
       - Maximum number of seconds to wait for.
     default: 600
+<<<<<<< HEAD
 notes:
 - This module is also supported for Windows targets.
+=======
+>>>>>>> 885db0c1c2... pull latest
 author: "Dag Wieers (@dagwieers)"
 '''
 
@@ -108,6 +126,10 @@ RETURN = r'''
 elapsed:
   description: The number of seconds that elapsed waiting for the connection to appear.
   returned: always
+<<<<<<< HEAD
   type: int
+=======
+  type: integer
+>>>>>>> 885db0c1c2... pull latest
   sample: 23
 '''

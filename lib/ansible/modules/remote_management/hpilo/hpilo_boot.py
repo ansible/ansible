@@ -2,6 +2,18 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2012 Dag Wieers <dag@wieers.com>
+<<<<<<< HEAD
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+=======
 #
 # This file is part of Ansible
 #
@@ -18,10 +30,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -75,6 +87,15 @@ options:
     - As a safeguard, without force, hpilo_boot will refuse to reboot a server that is already running.
     default: no
     choices: [ "yes", "no" ]
+<<<<<<< HEAD
+  ssl_version:
+    description:
+      - Change the ssl_version used.
+    default: TLSv1
+    choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
+    version_added: '2.4'
+=======
+>>>>>>> 885db0c1c2... pull latest
 requirements:
 - hpilo
 notes:
@@ -107,10 +128,15 @@ RETURN = '''
 # Default return values
 '''
 
+<<<<<<< HEAD
+import time
+import warnings
+=======
 
 import time
 import warnings
 from ansible.module_utils.basic import AnsibleModule
+>>>>>>> 885db0c1c2... pull latest
 
 try:
     import hpilo
@@ -118,6 +144,11 @@ try:
 except ImportError:
     HAS_HPILO = False
 
+<<<<<<< HEAD
+from ansible.module_utils.basic import AnsibleModule
+
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 # Suppress warnings from hpilo
 warnings.simplefilter('ignore')
@@ -134,6 +165,10 @@ def main():
             image = dict(default=None, type='str'),
             state = dict(default='boot_once', type='str', choices=['boot_always', 'boot_once', 'connect', 'disconnect', 'no_boot', 'poweroff']),
             force = dict(default=False, type='bool'),
+<<<<<<< HEAD
+            ssl_version = dict(default='TLSv1', choices=['SSLv3', 'SSLv23', 'TLSv1', 'TLSv1_1', 'TLSv1_2']),
+=======
+>>>>>>> 885db0c1c2... pull latest
         )
     )
 
@@ -147,8 +182,14 @@ def main():
     image = module.params['image']
     state = module.params['state']
     force = module.params['force']
+<<<<<<< HEAD
+    ssl_version = getattr(hpilo.ssl, 'PROTOCOL_' + module.params.get('ssl_version').upper().replace('V','v'))
+
+    ilo = hpilo.Ilo(host, login=login, password=password, ssl_version=ssl_version)
+=======
 
     ilo = hpilo.Ilo(host, login=login, password=password)
+>>>>>>> 885db0c1c2... pull latest
     changed = False
     status = {}
     power_status = 'UNKNOWN'
@@ -205,5 +246,9 @@ def main():
 
     module.exit_json(changed=changed, power=power_status, **status)
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 885db0c1c2... pull latest
 if __name__ == '__main__':
     main()

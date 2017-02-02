@@ -18,12 +18,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
 
 DOCUMENTATION = '''
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
+
+DOCUMENTATION='''
+>>>>>>> 885db0c1c2... pull latest
 module: win_domain
 short_description: Ensures the existence of a Windows domain.
 version_added: 2.3
@@ -43,7 +51,11 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
+<<<<<<< HEAD
 RETURN = '''
+=======
+RETURN='''
+>>>>>>> 885db0c1c2... pull latest
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
@@ -52,9 +64,15 @@ reboot_required:
 
 '''
 
+<<<<<<< HEAD
 EXAMPLES = r'''
 # ensure the named domain is reachable from the target host; if not, create the domain in a new forest residing on the target host
 - win_domain:
+=======
+EXAMPLES=r'''
+# ensure the named domain is reachable from the target host; if not, create the domain in a new forest residing on the target host
+- win_domain_controller:
+>>>>>>> 885db0c1c2... pull latest
     dns_domain_name: ansible.vagrant
     safe_mode_password: password123!
 

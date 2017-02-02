@@ -66,16 +66,24 @@ class Connection(Rpc, ConnectionBase):
 
         display.display('ssh connection done, stating ncclient', log_only=True)
 
-        allow_agent = True
+        self.allow_agent = True
         if self._play_context.password is not None:
-            allow_agent = False
+            self.allow_agent = False
 
-        key_filename = None
+        self.key_filename = None
         if self._play_context.private_key_file:
-            key_filename = os.path.expanduser(self._play_context.private_key_file)
+            self.key_filename = os.path.expanduser(self._play_context.private_key_file)
 
-        if not self._network_os:
-            raise AnsibleConnectionFailure('network_os must be set for netconf connections')
+        network_os = self._play_context.network_os
+
+        if not network_os:
+            for cls in netconf_loader.all(class_only=True):
+                network_os = cls.guess_network_os(self)
+                if network_os:
+                    display.display('discovered network_os %s' % network_os, log_only=True)
+
+        if not network_os:
+            raise AnsibleConnectionFailure('Unable to automatically determine host network os. Please ansible_network_os value')
 
         try:
             self._manager = manager.connect(
@@ -83,12 +91,12 @@ class Connection(Rpc, ConnectionBase):
                 port=self._play_context.port or 830,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
-                key_filename=str(key_filename),
+                key_filename=str(self.key_filename),
                 hostkey_verify=C.HOST_KEY_CHECKING,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
-                allow_agent=allow_agent,
+                allow_agent=self.allow_agent,
                 timeout=self._play_context.timeout,
-                device_params={'name': self._network_os}
+                device_params={'name': network_os}
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(str(exc))
@@ -100,12 +108,12 @@ class Connection(Rpc, ConnectionBase):
 
         self._connected = True
 
-        self._netconf = netconf_loader.get(self._network_os, self)
+        self._netconf = netconf_loader.get(network_os, self)
         if self._netconf:
             self._rpc.add(self._netconf)
-            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
+            display.display('loaded netconf plugin for network_os %s' % network_os, log_only=True)
         else:
-            display.display('unable to load netconf for network_os %s' % self._network_os)
+            display.display('unable to load netconf for network_os %s' % network_os)
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 

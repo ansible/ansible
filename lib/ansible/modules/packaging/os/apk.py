@@ -242,7 +242,7 @@ def install_packages(module, names, state):
         upgrade = True
     if not to_install and not upgrade:
         module.exit_json(changed=False, msg="package(s) already installed")
-    packages = " ".join(to_install) + " ".join(to_upgrade)
+    packages = " ".join(to_install + to_upgrade)
     if upgrade:
         if module.check_mode:
             cmd = "%s add --upgrade --simulate %s" % (APK_PATH, packages)

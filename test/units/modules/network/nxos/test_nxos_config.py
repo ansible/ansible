@@ -43,8 +43,13 @@ class TestNxosConfigModule(TestNxosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
+<<<<<<< HEAD
+    def load_fixtures(self, commands=None, device=''):
+        self.get_config.return_value = load_fixture('nxos_config', 'config.cfg')
+=======
     def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('nxos_config/config.cfg')
+>>>>>>> 885db0c1c2... pull latest
         self.load_config.return_value = None
 
     def test_nxos_config_no_change(self):
@@ -53,7 +58,11 @@ class TestNxosConfigModule(TestNxosModule):
         result = self.execute_module()
 
     def test_nxos_config_src(self):
+<<<<<<< HEAD
+        args = dict(src=load_fixture('nxos_config', 'candidate.cfg'))
+=======
         args = dict(src=load_fixture('nxos_config/candidate.cfg'))
+>>>>>>> 885db0c1c2... pull latest
         set_module_args(args)
 
         result = self.execute_module(changed=True)
@@ -73,7 +82,11 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_before(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
+<<<<<<< HEAD
                     before=['before command'])
+=======
+                     before=['before command'])
+>>>>>>> 885db0c1c2... pull latest
 
         set_module_args(args)
 
@@ -85,7 +98,11 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_after(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'],
+<<<<<<< HEAD
                     after=['after command'])
+=======
+                     after=['after command'])
+>>>>>>> 885db0c1c2... pull latest
 
         set_module_args(args)
 
@@ -134,3 +151,9 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 885db0c1c2... pull latest

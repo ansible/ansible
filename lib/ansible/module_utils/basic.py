@@ -28,10 +28,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
-BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
-BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
-
 SIZE_RANGES = {
     'Y': 1 << 80,
     'Z': 1 << 70,
@@ -178,6 +174,8 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
@@ -245,10 +243,15 @@ FILE_COMMON_ARGUMENTS = dict(
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
-# Can't use 07777 on Python 3, can't use 0o7777 on Python 2.4
-PERM_BITS = int('07777', 8)      # file mode permission bits
-EXEC_PERM_BITS = int('00111', 8)  # execute permission bits
-DEFAULT_PERM = int('0666', 8)    # default file permission bits
+# Used for parsing symbolic file perms
+MODE_OPERATOR_RE = re.compile(r'[+=-]')
+USERS_RE = re.compile(r'[^ugo]')
+PERMS_RE = re.compile(r'[^rwxXstugo]')
+
+
+PERM_BITS = 0o7777       # file mode permission bits
+EXEC_PERM_BITS = 0o0111  # execute permission bits
+DEFAULT_PERM = 0o0666    # default file permission bits
 
 
 def get_platform():
@@ -1013,7 +1016,7 @@ class AnsibleModule(object):
         return context
 
     def user_and_group(self, path, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
         st = os.lstat(b_path)
@@ -1107,22 +1110,22 @@ class AnsibleModule(object):
         return changed
 
     def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         if owner is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(path, expand)
+        orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             uid = int(owner)
         except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-        if orig_uid != uid:
 
+        if orig_uid != uid:
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
@@ -1136,15 +1139,15 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, uid, -1)
             except OSError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chown failed')
             changed = True
         return changed
 
     def set_group_if_different(self, path, group, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         if group is None:
             return changed
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
@@ -1154,9 +1157,10 @@ class AnsibleModule(object):
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
-        if orig_gid != gid:
 
+        if orig_gid != gid:
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
@@ -1170,15 +1174,15 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, -1, gid)
             except OSError:
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed')
             changed = True
         return changed
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1192,12 +1196,14 @@ class AnsibleModule(object):
                     mode = self._symbolic_mode_to_octal(path_stat, mode)
                 except Exception:
                     e = get_exception()
+                    path = to_text(b_path)
                     self.fail_json(path=path,
                                    msg="mode must be in octal or symbolic form",
                                    details=str(e))
 
                 if mode != stat.S_IMODE(mode):
                     # prevent mode from having extra info orbeing invalid long number
+                    path = to_text(b_path)
                     self.fail_json(path=path, msg="Invalid mode supplied, only permission info is allowed", details=mode)
 
         prev_mode = stat.S_IMODE(path_stat.st_mode)
@@ -1241,6 +1247,7 @@ class AnsibleModule(object):
                     raise e
             except Exception:
                 e = get_exception()
+                path = to_text(b_path)
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
             path_stat = os.lstat(b_path)
@@ -1255,10 +1262,9 @@ class AnsibleModule(object):
         if attributes is None:
             return changed
 
-        b_path = to_bytes(path, errors='surrogate_then_strict')
+        b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
             b_path = os.path.expanduser(os.path.expandvars(b_path))
-        path = to_text(b_path, errors='surrogate_then_strict')
 
         existing = self.get_file_attributes(b_path)
 
@@ -1283,6 +1289,7 @@ class AnsibleModule(object):
                             raise Exception("Error while setting attributes: %s" % (out + err))
                     except:
                         e = get_exception()
+                        path = to_text(b_path)
                         self.fail_json(path=path, msg='chattr failed', details=str(e))
         return changed
 
@@ -1302,28 +1309,53 @@ class AnsibleModule(object):
                 pass
         return output
 
-    def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
+    @classmethod
+    def _symbolic_mode_to_octal(cls, path_stat, symbolic_mode):
+        """
+        This enables symbolic chmod string parsing as stated in the chmod man-page
+
+        This includes things like: "u=rw-x+X,g=r-x+X,o=r-x+X"
+        """
+
         new_mode = stat.S_IMODE(path_stat.st_mode)
 
-        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst-]*|[ugo])$')
+        # Now parse all symbolic modes
         for mode in symbolic_mode.split(','):
-            match = mode_re.match(mode)
-            if match:
-                users = match.group('users')
-                operator = match.group('operator')
-                perms = match.group('perms')
+            # Per single mode. This always contains a '+', '-' or '='
+            # Split it on that
+            permlist = MODE_OPERATOR_RE.split(mode)
 
-                if users == 'a':
-                    users = 'ugo'
+            # And find all the operators
+            opers = MODE_OPERATOR_RE.findall(mode)
+
+            # The user(s) where it's all about is the first element in the
+            # 'permlist' list. Take that and remove it from the list.
+            # An empty user or 'a' means 'all'.
+            users = permlist.pop(0)
+            use_umask = (users == '')
+            if users == 'a' or users == '':
+                users = 'ugo'
+
+            # Check if there are illegal characters in the user list
+            # They can end up in 'users' because they are not split
+            if USERS_RE.match(users):
+                raise ValueError("bad symbolic permission for mode: %s" % mode)
+
+            # Now we have two list of equal length, one contains the requested
+            # permissions and one with the corresponding operators.
+            for idx, perms in enumerate(permlist):
+                # Check if there are illegal characters in the permissions
+                if PERMS_RE.match(perms):
+                    raise ValueError("bad symbolic permission for mode: %s" % mode)
 
                 for user in users:
-                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
-                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
-            else:
-                raise ValueError("bad symbolic permission for mode: %s" % mode)
+                    mode_to_apply = cls._get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask)
+                    new_mode = cls._apply_operation_to_mode(user, opers[idx], mode_to_apply, new_mode)
+
         return new_mode
 
-    def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
+    @staticmethod
+    def _apply_operation_to_mode(user, operator, mode_to_apply, current_mode):
         if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU | stat.S_ISUID
@@ -1341,12 +1373,20 @@ class AnsibleModule(object):
             new_mode = current_mode - (current_mode & mode_to_apply)
         return new_mode
 
-    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
+    @staticmethod
+    def _get_octal_mode_from_symbolic_perms(path_stat, user, perms, use_umask):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
+
+        # Get the umask, if the 'user' part is empty, the effect is as if (a) were
+        # given, but bits that are set in the umask are not affected.
+        # We also need the "reversed umask" for masking
+        umask = os.umask(0)
+        os.umask(umask)
+        rev_umask = umask ^ PERM_BITS
 
         # Permission bits constants documented at:
         # http://docs.python.org/2/library/stat.html#stat.S_ISUID
@@ -1365,35 +1405,32 @@ class AnsibleModule(object):
 
         user_perms_to_modes = {
             'u': {
-                'r': stat.S_IRUSR,
-                'w': stat.S_IWUSR,
-                'x': stat.S_IXUSR,
+                'r': rev_umask & stat.S_IRUSR if use_umask else stat.S_IRUSR,
+                'w': rev_umask & stat.S_IWUSR if use_umask else stat.S_IWUSR,
+                'x': rev_umask & stat.S_IXUSR if use_umask else stat.S_IXUSR,
                 's': stat.S_ISUID,
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
-                'o': (prev_mode & stat.S_IRWXO) << 6,
-            },
+                'o': (prev_mode & stat.S_IRWXO) << 6},
             'g': {
-                'r': stat.S_IRGRP,
-                'w': stat.S_IWGRP,
-                'x': stat.S_IXGRP,
+                'r': rev_umask & stat.S_IRGRP if use_umask else stat.S_IRGRP,
+                'w': rev_umask & stat.S_IWGRP if use_umask else stat.S_IWGRP,
+                'x': rev_umask & stat.S_IXGRP if use_umask else stat.S_IXGRP,
                 's': stat.S_ISGID,
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
-                'o': (prev_mode & stat.S_IRWXO) << 3,
-            },
+                'o': (prev_mode & stat.S_IRWXO) << 3},
             'o': {
-                'r': stat.S_IROTH,
-                'w': stat.S_IWOTH,
-                'x': stat.S_IXOTH,
+                'r': rev_umask & stat.S_IROTH if use_umask else stat.S_IROTH,
+                'w': rev_umask & stat.S_IWOTH if use_umask else stat.S_IWOTH,
+                'x': rev_umask & stat.S_IXOTH if use_umask else stat.S_IXOTH,
                 's': 0,
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
-                'o': prev_mode & stat.S_IRWXO,
-            }
+                'o': prev_mode & stat.S_IRWXO},
         }
 
         # Insert X_perms into user_perms_to_modes
@@ -1658,8 +1695,7 @@ class AnsibleModule(object):
                         lowered_choices = None
                         if param[k] == 'False':
                             lowered_choices = _lenient_lowercase(choices)
-                            FALSEY = frozenset(BOOLEANS_FALSE)
-                            overlap = FALSEY.intersection(choices)
+                            overlap = BOOLEANS_FALSE.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
                                 (param[k],) = overlap
@@ -1667,8 +1703,7 @@ class AnsibleModule(object):
                         if param[k] == 'True':
                             if lowered_choices is None:
                                 lowered_choices = _lenient_lowercase(choices)
-                            TRUTHY = frozenset(BOOLEANS_TRUE)
-                            overlap = TRUTHY.intersection(choices)
+                            overlap = BOOLEANS_TRUE.intersection(choices)
                             if len(overlap) == 1:
                                 (param[k],) = overlap
 
@@ -1839,22 +1874,28 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if k not in param:
                 continue
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                if param[k] is None:
-                    continue
-                wanted = 'str'
 
             value = param[k]
             if value is None:
                 continue
 
-            try:
-                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-            except KeyError:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            if not callable(wanted):
+                if wanted is None:
+                    # Mostly we want to default to str.
+                    # For values set to None explicitly, return None instead as
+                    # that allows a user to unset a parameter
+                    if param[k] is None:
+                        continue
+                    wanted = 'str'
+                try:
+                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+                except KeyError:
+                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            else:
+                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+                type_checker = wanted
+                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
             try:
                 param[k] = type_checker(value)
             except (TypeError, ValueError):
@@ -2045,16 +2086,13 @@ class AnsibleModule(object):
 
     def boolean(self, arg):
         ''' return a bool for the arg '''
-        if arg is None or isinstance(arg, bool):
+        if arg is None:
             return arg
-        if isinstance(arg, string_types):
-            arg = arg.lower()
-        if arg in BOOLEANS_TRUE:
-            return True
-        elif arg in BOOLEANS_FALSE:
-            return False
-        else:
-            self.fail_json(msg='%s is not a valid boolean. Valid booleans include: %s' % (to_text(arg), ','.join(['%s' % x for x in BOOLEANS])))
+
+        try:
+            return boolean(arg)
+        except TypeError as e:
+            self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
@@ -2118,9 +2156,6 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
-        if 'changed' not in kwargs:
-            kwargs['changed'] = False
-
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(0)
@@ -2131,8 +2166,10 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
 
-        if 'changed' not in kwargs:
-            kwargs['changed'] = False
+        # add traceback if debug or high verbosity and it is missing
+        # Note: badly named as exception, it is really always been 'traceback'
+        if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
+            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -2281,58 +2318,67 @@ class AnsibleModule(object):
                 native_dest_dir = b_dest_dir
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
+                error_msg = None
+                tmp_dest_name = None
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
-                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
+                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e)
                 except TypeError:
                     # We expect that this is happening because python3.4.x and
                     # below can't handle byte strings in mkstemp().  Traceback
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
-                                       'Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
+                    error_msg = ('Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
+                                 'Please use Python2.x or Python3.5 or greater.')
+                finally:
+                    if error_msg:
+                        if unsafe_writes:
+                            self._unsafe_writes(b_src, b_dest)
+                        else:
+                            self.fail_json(msg=error_msg, exception=traceback.format_exc())
 
-                b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
+                if tmp_dest_name:
+                    b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
-                try:
                     try:
-                        # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
-                        os.close(tmp_dest_fd)
-                        # leaves tmp file behind when sudo and not root
                         try:
-                            shutil.move(b_src, b_tmp_dest_name)
-                        except OSError:
-                            # cleanup will happen by 'rm' of tempdir
-                            # copy2 will preserve some metadata
-                            shutil.copy2(b_src, b_tmp_dest_name)
+                            # close tmp file handle before file operations to prevent text file busy errors on vboxfs synced folders (windows host)
+                            os.close(tmp_dest_fd)
+                            # leaves tmp file behind when sudo and not root
+                            try:
+                                shutil.move(b_src, b_tmp_dest_name)
+                            except OSError:
+                                # cleanup will happen by 'rm' of tempdir
+                                # copy2 will preserve some metadata
+                                shutil.copy2(b_src, b_tmp_dest_name)
 
-                        if self.selinux_enabled():
-                            self.set_context_if_different(
-                                b_tmp_dest_name, context, False)
-                        try:
-                            tmp_stat = os.stat(b_tmp_dest_name)
-                            if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                                os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
-                        except OSError:
-                            e = get_exception()
-                            if e.errno != errno.EPERM:
-                                raise
-                        try:
-                            os.rename(b_tmp_dest_name, b_dest)
+                            if self.selinux_enabled():
+                                self.set_context_if_different(
+                                    b_tmp_dest_name, context, False)
+                            try:
+                                tmp_stat = os.stat(b_tmp_dest_name)
+                                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                                    os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
+                            except OSError:
+                                e = get_exception()
+                                if e.errno != errno.EPERM:
+                                    raise
+                            try:
+                                os.rename(b_tmp_dest_name, b_dest)
+                            except (shutil.Error, OSError, IOError):
+                                e = get_exception()
+                                if unsafe_writes and e.errno == errno.EBUSY:
+                                    self._unsafe_writes(b_tmp_dest_name, b_dest)
+                                else:
+                                    self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
                         except (shutil.Error, OSError, IOError):
                             e = get_exception()
-                            if unsafe_writes and e.errno == errno.EBUSY:
-                                self._unsafe_writes(b_tmp_dest_name, b_dest)
-                            else:
-                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
-                    except (shutil.Error, OSError, IOError):
-                        e = get_exception()
-                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
-                finally:
-                    self.cleanup(b_tmp_dest_name)
+                            self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
+                    finally:
+                        self.cleanup(b_tmp_dest_name)
 
         if creating:
             # make sure the file has the correct permissions
@@ -2515,7 +2561,7 @@ class AnsibleModule(object):
 
         clean_args = []
         is_passwd = False
-        for arg in to_clean_args:
+        for arg in (to_native(a) for a in to_clean_args):
             if is_passwd:
                 is_passwd = False
                 clean_args.append('********')

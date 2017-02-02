@@ -31,7 +31,7 @@ from ansible.plugins.lookup import LookupBase
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'type', 'section', 'file', 're', 'default']
+    keys = ['key', 'type', 'section', 'file', 're', 'default', 'encoding']
     params = {}
     for k in keys:
         params[k] = ''
@@ -52,19 +52,6 @@ def _parse_params(term):
 
 class LookupModule(LookupBase):
 
-    def read_properties(self, filename, key, dflt, is_regexp):
-        config = StringIO()
-        current_cfg_file = open(to_bytes(filename, errors='surrogate_or_strict'), 'rb')
-
-        config.write(u'[java_properties]\n' + to_text(current_cfg_file.read(), errors='surrogate_or_strict'))
-        config.seek(0, os.SEEK_SET)
-        self.cp.readfp(config)
-        return self.get_value(key, 'java_properties', dflt, is_regexp)
-
-    def read_ini(self, filename, key, section, dflt, is_regexp):
-        self.cp.readfp(open(to_bytes(filename, errors='surrogate_or_strict')))
-        return self.get_value(key, section, dflt, is_regexp)
-
     def get_value(self, key, section, dflt, is_regexp):
         # Retrieve all values from a section using a regexp
         if is_regexp:
@@ -79,8 +66,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        basedir = self.get_basedir(variables)
-        self.basedir = basedir
         self.cp = configparser.ConfigParser()
 
         ret = []
@@ -94,6 +79,7 @@ class LookupModule(LookupBase):
                 'default': None,
                 'section': "global",
                 'type': "ini",
+                'encoding': 'utf-8',
             }
 
             # parameters specified?
@@ -105,11 +91,24 @@ class LookupModule(LookupBase):
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
+            # Retrieve file path
             path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
+
+            # Create StringIO later used to parse ini
+            config = StringIO()
+            # Special case for java properties
             if paramvals['type'] == "properties":
-                var = self.read_properties(path, key, paramvals['default'], paramvals['re'])
-            else:
-                var = self.read_ini(path, key, paramvals['section'], paramvals['default'], paramvals['re'])
+                config.write(u'[java_properties]\n')
+                paramvals['section'] = 'java_properties'
+
+            # Open file using encoding
+            contents, show_data = self._loader._get_file_contents(path)
+            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
+            config.write(contents)
+            config.seek(0, os.SEEK_SET)
+
+            self.cp.readfp(config)
+            var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

@@ -21,10 +21,16 @@
 # Module to send Port channel commands to Lenovo Switches
 # Lenovo Networking
 #
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -65,7 +71,11 @@ options:
         required: No
         default: Null
         choices: [aggregation-group number, access or mode or trunk, description, auto or full or half,
+<<<<<<< HEAD
         receive or send, port-priority, suspend-individual, timeout,     receive or transmit or trap-notification,
+=======
+        recieve or send, port-priority, suspend-individual, timeout,     receive or transmit or trap-notification,
+>>>>>>> 885db0c1c2... pull latest
         tlv-select, Load interval delay in seconds, counter, Name for the MAC Access List, mac-address in HHHH.HHHH.HHHH format,
         THRESHOLD  Value in unit of buffer cell, <64-9216>  MTU in bytes-<64-9216> for L2 packet,<576-9216> for
         L3 IPv4 packet, <1280-9216> for L3 IPv6 packet, enter the instance id, input or output, copp-system-policy,
@@ -81,7 +91,11 @@ options:
         mac-phy-status or management-address or max-frame-size or port-description or port-protocol-vlan or
         port-vlan or power-mdi or protocol-identity or system-capabilities or system-description or system-name
         or vid-management or vlan-name, counter for load interval, policy input name, all or Copp class name to attach,
+<<<<<<< HEAD
         qos, queueing, Enter the allowed traffic level, ipv6]
+=======
+        qos, queing, Enter the allowed traffic level, ipv6]
+>>>>>>> 885db0c1c2... pull latest
     interfaceArg4:
         description:
             - This is an overloaded Port Channel fourth argument. Usage of this argument can be found is the User Guide referenced above.
@@ -407,6 +421,7 @@ Tasks : The following are examples of using the module cnos_portchannel. These a
 
 '''
 RETURN = '''
+<<<<<<< HEAD
 msg:
   description: Success or failure message
   returned: always
@@ -414,6 +429,15 @@ msg:
   sample: "Port Channel configurations accomplished"
 '''
 
+=======
+  return value: |
+    On successful execution, the method returns a message in JSON format
+    [Port Channel configurations accomplished]
+    Upon any failure, the method returns an error display string.
+'''
+
+
+>>>>>>> 885db0c1c2... pull latest
 import sys
 import paramiko
 import time

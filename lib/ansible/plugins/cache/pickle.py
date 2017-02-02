@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+<<<<<<< HEAD
 '''
 DOCUMENTATION:
     cache: yaml
@@ -23,6 +24,8 @@ DOCUMENTATION:
     version_added: "2.3"
     author: Brian Coca (@bcoca)
 '''
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -33,9 +36,13 @@ try:
 except ImportError:
     import pickle
 
+<<<<<<< HEAD
 from ansible.module_utils.six import PY3
 from ansible.plugins.cache import BaseFileCacheModule
 
+=======
+from ansible.plugins.cache.base import BaseFileCacheModule
+>>>>>>> 885db0c1c2... pull latest
 
 class CacheModule(BaseFileCacheModule):
     """
@@ -45,10 +52,14 @@ class CacheModule(BaseFileCacheModule):
     def _load(self, filepath):
         # Pickle is a binary format
         with open(filepath, 'rb') as f:
+<<<<<<< HEAD
             if PY3:
                 return pickle.load(f, encoding='bytes')
             else:
                 return pickle.load(f)
+=======
+            return pickle.load(f)
+>>>>>>> 885db0c1c2... pull latest
 
     def _dump(self, value, filepath):
         with open(filepath, 'wb') as f:

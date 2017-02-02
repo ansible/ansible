@@ -179,7 +179,7 @@ please observe the following guidelines:
 - Use a 4-space indent, not  tabs.
 - We do not enforce 80 column lines; up to 160 columns are acceptable.
 - We do not accept 'style only' pull requests unless the code is nearly unreadable.
-- We are "PEP8ish", but not strictly compliant.
+- We are "PEP8ish", but not strictly compliant, see :doc:`testing_pep8` for more information.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
@@ -229,7 +229,7 @@ IRC Meetings
 ------------
 
 The Ansible community holds regular IRC meetings on various topics, and anyone who is interested is invited to 
-participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 Release Numbering
 -----------------
@@ -263,7 +263,7 @@ Ansible has several IRC channels on Freenode (irc.freenode.net):
 - ``#ansible-container`` - For discussions on Ansible Container.
 - ``#ansible-vmware`` - For discussions on Ansible & VMware.
 - ``#ansible-windows`` - For discussions on Ansible & Windows.
-- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/MEETINGS.md>`_
+- ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 - ``#ansible-notices`` - Mostly bot output from things like Github, etc.
 
 Notes on Priority Flags
@@ -417,7 +417,7 @@ of our community members and want everyone to feel welcome at our events, both o
 offline.
 
 We expect all participants, organizers, speakers, and attendees to follow these policies at
-our all of our event venues and event-related social events.
+all of our event venues and event-related social events.
 
 The Ansible Community Code of Conduct is licensed under the Creative Commons
 Attribution-Share Alike 3.0 license. Our Code of Conduct was adapted from Codes of Conduct

@@ -28,8 +28,8 @@ try:
 except ImportError:
     cli = None
 
-from ansible.constants import mk_boolean
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.callback import CallbackBase
 
 try:
@@ -79,8 +79,9 @@ class CallbackModule(CallbackBase):
         self.webhook_url = os.getenv('SLACK_WEBHOOK_URL')
         self.channel = os.getenv('SLACK_CHANNEL', '#ansible')
         self.username = os.getenv('SLACK_USERNAME', 'ansible')
-        self.show_invocation = mk_boolean(
-            os.getenv('SLACK_INVOCATION', self._display.verbosity > 1)
+        self.show_invocation = boolean(
+            os.getenv('SLACK_INVOCATION', self._display.verbosity > 1),
+            strict=False
         )
 
         if self.webhook_url is None:

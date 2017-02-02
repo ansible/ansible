@@ -146,7 +146,6 @@ cloudstack_zone.tags:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
 )
 
@@ -194,14 +193,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
-    try:
-        cs_zone_facts = AnsibleCloudStackZoneFacts(module=module).run()
-        cs_facts_result = dict(changed=False, ansible_facts=cs_zone_facts)
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    cs_zone_facts = AnsibleCloudStackZoneFacts(module=module).run()
+    cs_facts_result = dict(changed=False, ansible_facts=cs_zone_facts)
 
     module.exit_json(**cs_facts_result)
 

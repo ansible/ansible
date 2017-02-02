@@ -2,4 +2,7 @@ coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 
 pywinrm >= 0.2.1 # 0.1.1 required, but 0.2.1 provides better performance
 pylint >= 1.5.3, < 1.7.0 # 1.4.1 adds JSON output, but 1.5.3 fixes bugs related to JSON output
 sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
+yamllint != 1.8.0 ; python_version < '2.7' # yamllint 1.8.0 requires python 2.7+ while earlier/later versions do not
 isort < 4.2.8 # 4.2.8 changes import sort order requirements which breaks previously passing pylint tests
+pycrypto >= 2.6 # Need features found in 2.6 and greater
+ncclient >= 0.5.2 # Need features added in 0.5.2 and greater

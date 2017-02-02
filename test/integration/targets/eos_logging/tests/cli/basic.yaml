@@ -1,0 +1,96 @@
+---
+- name: Set up host logging
+  eos_logging:
+    dest: host
+    name: 172.16.0.1
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging host 172.16.0.1" in result.commands'
+
+- name: Set up host logging again (idempotent)
+  eos_logging:
+    dest: host
+    name: 172.16.0.1
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete/disable host logging
+  eos_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging host 172.16.0.1" in result.commands'
+
+- name: Delete/disable host logging (idempotent)
+  eos_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Console logging with level warnings
+  eos_logging:
+    dest: console
+    level: warnings
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console warnings" in result.commands'
+
+- name: Configure buffer size
+  eos_logging:
+    dest: buffered
+    size: 480000
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging buffered 480000" in result.commands'
+
+- name: remove logging as collection tearDown
+  eos_logging:
+    aggregate:
+      - { dest: console, level: warnings, state: absent }
+      - { dest: buffered, size: 480000, state: absent }
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging console" in result.commands'
+      - '"no logging buffered" in result.commands'

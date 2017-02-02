@@ -44,6 +44,7 @@ RUN apt-get update -y && \
     rsync \
     ruby \
     rubygems \
+    sshpass \
     subversion \
     sudo \
     tzdata \

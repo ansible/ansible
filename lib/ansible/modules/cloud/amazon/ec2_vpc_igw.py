@@ -138,7 +138,7 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
-        raise AnsibleTagCreationException(
+        raise AnsibleIGWException(
             'Unable to update tags for {0}, error: {1}'.format(resource_id, e))
 
 

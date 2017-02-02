@@ -19,7 +19,11 @@
 
 class ModuleDocFragment(object):
 
+<<<<<<< HEAD
     # Ansible Tower documentation fragment
+=======
+    # Ansible Tower documention fragment
+>>>>>>> 885db0c1c2... pull latest
     DOCUMENTATION = '''
 options:
     tower_host:

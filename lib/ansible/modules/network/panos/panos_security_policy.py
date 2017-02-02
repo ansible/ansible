@@ -19,20 +19,33 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
 module: panos_security_policy
 short_description: Create security rule policy on PanOS devices.
+<<<<<<< HEAD
 description:
     - Security policies allow you to enforce rules and take action, and can be as
       general or specific as needed. The policy rules are compared against the
       incoming traffic in sequence, and because the first rule that matches the
       traffic is applied, the more specific rules must precede the more general ones.
+=======
+description: >
+    Security policies allow you to enforce rules and take action, and can be as general or specific as needed.
+    The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches
+    the traffic is applied, the more specific rules must precede the more general ones.
+>>>>>>> 885db0c1c2... pull latest
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:

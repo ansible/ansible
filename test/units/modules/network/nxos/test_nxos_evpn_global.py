@@ -41,6 +41,17 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
+<<<<<<< HEAD
+    def load_fixtures(self, commands=None, device=''):
+        self.load_config.return_value = None
+
+    def start_configured(self, *args, **kwargs):
+        self.get_config.return_value = load_fixture('nxos_evpn_global', 'configured.cfg')
+        return self.execute_module(*args, **kwargs)
+
+    def start_unconfigured(self, *args, **kwargs):
+        self.get_config.return_value = load_fixture('nxos_evpn_global', 'unconfigured.cfg')
+=======
     def load_fixtures(self, commands=None):
         self.load_config.return_value = None
 
@@ -50,6 +61,7 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
 
     def start_unconfigured(self, *args, **kwargs):
         self.get_config.return_value = load_fixture('nxos_evpn_global/unconfigured.cfg')
+>>>>>>> 885db0c1c2... pull latest
         return self.execute_module(*args, **kwargs)
 
     def test_nxos_evpn_global_enable(self):
@@ -61,3 +73,7 @@ class TestNxosEvpnGlobalModule(TestNxosModule):
         set_module_args(dict(nv_overlay_evpn=False))
         commands = ['no nv overlay evpn']
         self.start_configured(changed=True, commands=commands)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest

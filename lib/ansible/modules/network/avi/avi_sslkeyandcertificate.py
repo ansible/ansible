@@ -4,7 +4,11 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
+<<<<<<< HEAD
 # Avi Version: 17.1.1
+=======
+# Avi Version: 16.3.8
+>>>>>>> 885db0c1c2... pull latest
 #
 #
 # This file is part of Ansible
@@ -23,9 +27,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
+=======
+ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -83,14 +91,22 @@ options:
         required: true
     status:
         description:
+<<<<<<< HEAD
             - Enum options - ssl_certificate_finished, ssl_certificate_pending.
+=======
+            - Status of sslkeyandcertificate.
+>>>>>>> 885db0c1c2... pull latest
             - Default value when not specified in API or module is interpreted by Avi Controller as SSL_CERTIFICATE_FINISHED.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
     type:
         description:
+<<<<<<< HEAD
             - Enum options - ssl_certificate_type_virtualservice, ssl_certificate_type_system, ssl_certificate_type_ca.
+=======
+            - Type of sslkeyandcertificate.
+>>>>>>> 885db0c1c2... pull latest
             - Default value when not specified in API or module is interpreted by Avi Controller as SSL_CERTIFICATE_TYPE_VIRTUALSERVICE.
     url:
         description:
@@ -130,6 +146,10 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -149,7 +169,11 @@ def main():
         enckey_base64=dict(type='str',),
         enckey_name=dict(type='str',),
         hardwaresecuritymodulegroup_ref=dict(type='str',),
+<<<<<<< HEAD
         key=dict(type='str', no_log=True,),
+=======
+        key=dict(type='str',),
+>>>>>>> 885db0c1c2... pull latest
         key_params=dict(type='dict',),
         name=dict(type='str', required=True),
         status=dict(type='str',),
@@ -163,10 +187,18 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
+<<<<<<< HEAD
             'Avi python API SDK (avisdk>=17.1) is not installed. '
+=======
+            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+>>>>>>> 885db0c1c2... pull latest
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'sslkeyandcertificate',
                            set(['key']))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 885db0c1c2... pull latest
 if __name__ == '__main__':
     main()

@@ -41,6 +41,7 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import module_loader
@@ -295,7 +296,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_become(self, arg):
         """Toggle whether plays run with become"""
         if arg:
-            self.options.become = C.mk_boolean(arg)
+            self.options.become = boolean(arg, strict=False)
             display.v("become changed to %s" % self.options.become)
             self.set_prompt()
         else:
@@ -329,7 +330,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_check(self, arg):
         """Toggle whether plays run with check mode"""
         if arg:
-            self.options.check = C.mk_boolean(arg)
+            self.options.check = boolean(arg, strict=False)
             display.v("check mode changed to %s" % self.options.check)
         else:
             display.display("Please specify check mode value, e.g. `check yes`")
@@ -337,7 +338,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_diff(self, arg):
         """Toggle whether plays run with diff"""
         if arg:
-            self.options.diff = C.mk_boolean(arg)
+            self.options.diff = boolean(arg, strict=False)
             display.v("diff mode changed to %s" % self.options.diff)
         else:
             display.display("Please specify a diff value , e.g. `diff yes`")
@@ -413,6 +414,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
+
+        vault_secrets = self.setup_vault_secrets(self.loader,
+                                                 vault_id=self.options.vault_ids,
+                                                 vault_password_files=self.options.vault_password_files,
+                                                 ask_vault_pass=self.options.ask_vault_pass)
+        self.loader.set_vault_secrets(vault_secrets)
 
         no_hosts = False
         if len(self.inventory.list_hosts()) == 0:

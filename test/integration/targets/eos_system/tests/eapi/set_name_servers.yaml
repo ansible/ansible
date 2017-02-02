@@ -6,6 +6,10 @@
     lines:
       - no ip name-server
       - vrf definition ansible
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     match: none
     provider: "{{ eapi }}"
 
@@ -15,6 +19,10 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -32,6 +40,10 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -73,6 +85,10 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -87,6 +103,10 @@
     lines:
       - no ip domain lookup source-interface
       - no vrf definition ansible
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     match: none
     provider: "{{ eapi }}"
 

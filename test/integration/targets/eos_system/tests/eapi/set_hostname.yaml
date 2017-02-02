@@ -5,11 +5,19 @@
   eos_config:
     lines: hostname switch
     match: none
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
 
 - name: configure hostname
   eos_system:
     hostname: foo
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -20,6 +28,10 @@
 - name: verify hostname
   eos_system:
     hostname: foo
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
   register: result
 
@@ -31,6 +43,10 @@
   eos_config:
     lines: "hostname {{ inventory_hostname }}"
     match: none
+<<<<<<< HEAD
+    timeout: 30
+=======
+>>>>>>> 885db0c1c2... pull latest
     provider: "{{ eapi }}"
 
 - debug: msg="END eapi/set_hostname.yaml"

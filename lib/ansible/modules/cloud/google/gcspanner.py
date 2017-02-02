@@ -16,10 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 DOCUMENTATION = '''
 ---
 module: gcspanner
@@ -139,6 +145,10 @@ except ImportError as e:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+<<<<<<< HEAD
+from ansible.module_utils.six import string_types
+=======
+>>>>>>> 885db0c1c2... pull latest
 
 CLOUD_CLIENT = 'google-cloud-spanner'
 CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
@@ -169,7 +179,11 @@ def instance_update(instance):
         errmsg = 'node_count must be an integer %s (%s)' % (
             instance.node_count, type(instance.node_count))
     if instance.display_name and not isinstance(instance.display_name,
+<<<<<<< HEAD
+                                                string_types):
+=======
                                                 basestring):
+>>>>>>> 885db0c1c2... pull latest
         errmsg = 'instance_display_name must be an string %s (%s)' % (
             instance.display_name, type(instance.display_name))
     if errmsg:

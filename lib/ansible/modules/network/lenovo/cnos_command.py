@@ -23,10 +23,16 @@
 #
 #
 
+<<<<<<< HEAD
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+=======
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+>>>>>>> 885db0c1c2... pull latest
 
 DOCUMENTATION = '''
 ---
@@ -69,11 +75,18 @@ Tasks : The following are examples of using the module cnos_command. These are w
 
 '''
 RETURN = '''
+<<<<<<< HEAD
 msg:
   description: Success or failure message
   returned: always
   type: string
   sample: "Command Applied"
+=======
+  return value: |
+    On successful execution, the method returns a message in JSON format
+    [Command Applied]
+    Upon any failure, the method returns an error display string.
+>>>>>>> 885db0c1c2... pull latest
 '''
 
 

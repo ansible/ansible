@@ -1,21 +1,11 @@
 #!/usr/bin/python
 
 # (c) 2012, Stephen Fromm <sfromm@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
@@ -61,6 +51,8 @@ EXAMPLES = '''
     persistent: yes
 '''
 
+import os
+
 try:
     import selinux
     HAVE_SELINUX=True
@@ -73,13 +65,23 @@ try:
 except ImportError:
     HAVE_SEMANAGE=False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import binary_type
+from ansible.module_utils._text import to_bytes
+
+
 def has_boolean_value(module, name):
     bools = []
     try:
         rc, bools = selinux.security_get_boolean_names()
     except OSError:
         module.fail_json(msg="Failed to get list of boolean names")
-    if to_bytes(name) in bools:
+    # work around for selinux who changed its API, see
+    # https://github.com/ansible/ansible/issues/25651
+    if len(bools) > 0:
+        if isinstance(bools[0], binary_type):
+            name = to_bytes(name)
+    if name in bools:
         return True
     else:
         return False
@@ -146,8 +148,7 @@ def semanage_boolean_value(module, name, state):
 
         semanage.semanage_disconnect(handle)
         semanage.semanage_handle_destroy(handle)
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
 
@@ -214,16 +215,13 @@ def main():
 
     result['changed'] = r
     if not r:
-        module.fail_json(msg="Failed to set boolean %s to %s" % (name, value))
+        module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
     try:
         selinux.security_commit_booleans()
     except:
         module.fail_json(msg="Failed to commit pending boolean %s value" % name)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils._text import to_bytes
 
 if __name__ == '__main__':
     main()
