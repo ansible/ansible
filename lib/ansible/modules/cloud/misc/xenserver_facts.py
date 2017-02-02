@@ -32,15 +32,6 @@ author:
 options: {}
 '''
 
-import platform
-
-HAVE_XENAPI = False
-try:
-    import XenAPI
-    HAVE_XENAPI = True
-except ImportError:
-    pass
-
 EXAMPLES = '''
 - name: Gather facts from xenserver
    xenserver:
@@ -59,6 +50,16 @@ EXAMPLES = '''
 #     "msg": "Control domain on host: 10.0.13.22"
 # }
 '''
+
+import platform
+
+HAVE_XENAPI = False
+try:
+    import XenAPI
+    HAVE_XENAPI = True
+except ImportError:
+    pass
+
 
 class XenServerFacts:
     def __init__(self):

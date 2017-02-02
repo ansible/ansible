@@ -18,25 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import binascii
-import datetime
-import math
-import re
-import select
-import socket
-import sys
-import time
-
-from ansible.module_utils._text import to_native
-
-HAS_PSUTIL = False
-try:
-    import psutil
-    HAS_PSUTIL = True
-    # just because we can import it on Linux doesn't mean we will use it
-except ImportError:
-    pass
-
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -175,6 +156,26 @@ EXAMPLES = '''
 # and don't start checking for 10 seconds
 - local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
 '''
+
+import binascii
+import datetime
+import math
+import re
+import select
+import socket
+import sys
+import time
+
+from ansible.module_utils._text import to_native
+
+HAS_PSUTIL = False
+try:
+    import psutil
+    HAS_PSUTIL = True
+    # just because we can import it on Linux doesn't mean we will use it
+except ImportError:
+    pass
+
 
 class TCPConnectionInfo(object):
     """

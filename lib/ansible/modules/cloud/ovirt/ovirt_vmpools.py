@@ -19,26 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    wait,
-)
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -126,6 +106,25 @@ vm_pool:
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm_pool."
     returned: On success if VM pool is found.
 '''
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    wait,
+)
 
 
 class VmPoolsModule(BaseModule):

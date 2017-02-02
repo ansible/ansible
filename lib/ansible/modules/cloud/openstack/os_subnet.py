@@ -16,13 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -160,6 +153,13 @@ EXAMPLES = '''
     ipv6_ra_mode: dhcpv6-stateless
     ipv6_address_mode: dhcpv6-stateless
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _can_update(subnet, module, cloud):
     """Check for differences in non-updatable values"""

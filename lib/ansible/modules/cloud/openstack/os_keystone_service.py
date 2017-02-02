@@ -14,14 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -114,6 +106,14 @@ id:
     type: string
     sample: "3292f020780b4d5baf27ff7e1d224c44"
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _needs_update(module, service):

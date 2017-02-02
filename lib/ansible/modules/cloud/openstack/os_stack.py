@@ -17,14 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-from time import sleep
-from distutils.version import StrictVersion
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -156,6 +148,15 @@ stack:
                     'timeout_mins': 60,
                     'updated_time': null}"
 '''
+
+from time import sleep
+from distutils.version import StrictVersion
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _create_stack(module, stack, cloud):
     try:

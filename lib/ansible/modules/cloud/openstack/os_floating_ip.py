@@ -15,17 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    from shade import meta
-
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -140,6 +129,16 @@ EXAMPLES = '''
      floating_ip_address: 203.0.113.2
      server: cattle001
 '''
+
+try:
+    import shade
+    from shade import meta
+
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _get_floating_ip(cloud, floating_ip_address):

@@ -18,11 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import tempfile
-
-from ansible.module_utils._text import to_text, to_bytes
-
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -107,9 +102,12 @@ EXAMPLES = r"""
 """
 
 import os
+import re
+import tempfile
 
-# import module snippets
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
+
 
 def write_changes(module, contents, path):
 
