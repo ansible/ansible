@@ -42,10 +42,9 @@ def get_config(module, target='commands'):
         return cfg
 
 def run_commands(module, commands, check_rc=True):
-    assert isinstance(commands, list), 'commands must be a list'
     responses = list()
 
-    for cmd in commands:
+    for cmd in to_list(commands):
         rc, out, err = module.exec_command(cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=err, rc=rc)
@@ -53,10 +52,11 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 def load_config(module, commands, commit=False, comment=None, save=False):
-    assert isinstance(commands, list), 'commands must be a list'
-    commands.insert(0, 'configure')
+    rc, out, err = module.exec_command('configure')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', output=err)
 
-    for cmd in commands:
+    for cmd in to_list(commands):
         rc, out, err = module.exec_command(cmd, check_rc=False)
         if rc != 0:
             # discard any changes in case of failure
