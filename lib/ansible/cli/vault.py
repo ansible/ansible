@@ -40,10 +40,17 @@ class VaultCLI(CLI):
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
 
+    FROM_STDIN = "stdin"
+    FROM_ARGS = "the command line args"
+    FROM_PROMPT = "the interactive prompt"
+
     def __init__(self, args):
 
         self.vault_pass = None
         self.new_vault_pass = None
+
+        self.encrypt_string_read_stdin = False
+
         super(VaultCLI, self).__init__(args)
 
     def parse(self):
@@ -68,8 +75,11 @@ class VaultCLI(CLI):
         elif self.action == "encrypt":
             self.parser.set_usage("usage: %prog encrypt [options] file_name")
         # I have no prefence for either dash or underscore
-        elif self.action == "encrypt-string":
-            self.parser.set_usage("usage: %prog encrypt-string [options] string_to_encrypt")
+        elif self.action == "encrypt_string":
+            self.parser.add_option('-p', '--prompt', dest='encrypt_string_prompt',
+                                   action='store_true',
+                                   help="Prompt for the string to encrypt")
+            self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
@@ -77,7 +87,7 @@ class VaultCLI(CLI):
 
         display.verbosity = self.options.verbosity
 
-        can_output = ['encrypt', 'decrypt']
+        can_output = ['encrypt', 'decrypt', 'encrypt_string']
 
         if self.action not in can_output:
             if self.options.output_file:
@@ -92,6 +102,15 @@ class VaultCLI(CLI):
             # a workaround.
             if self.options.output_file and len(self.args) > 1:
                 raise AnsibleOptionsError("At most one input file may be used with the --output option")
+
+        #if '-' in self.args or len(self.args) == 0:
+        if '-' in self.args:
+            self.encrypt_string_read_stdin = True
+
+        # TODO: prompting from stdin and reading from stdin seem
+        #       mutually exclusive, but verify that.
+        if self.options.encrypt_string_prompt and self.encrypt_string_read_stdin:
+            raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
     def run(self):
 
@@ -120,6 +139,10 @@ class VaultCLI(CLI):
                 self.new_vault_pass = self.ask_new_vault_passwords()
             if not self.new_vault_pass:
                 raise AnsibleOptionsError("A password is required to rekey Ansible's Vault")
+
+        if self.action == 'encrypt_string':
+            if self.options.encrypt_string_prompt:
+                self.encrypt_string_prompt = True
 
         self.editor = VaultEditor(self.vault_pass)
 
@@ -153,16 +176,48 @@ class VaultCLI(CLI):
         return yaml_ciphertext
 
     def execute_encrypt_string(self):
-        if len(self.args) == 0 and sys.stdin.isatty():
-            display.display("Reading plaintext input from stdin", stderr=True)
+
+        # TODO: encoding rules for to_bytes
 
         b_plaintext = None
+
+        # Holds tuples (the_text, the_source_of_the_string).
         b_plaintext_list = []
 
-        for plaintext in self.args or ['-']:
-            # encrypt_string
+        # remove the non-option '-' arg (used to indicate 'read from stdin') from the candidate args so
+        # we dont add it to the plaintext list
+        args = [x for x in self.args if x != '-']
+
+        if self.options.encrypt_string_prompt:
+            msg = "string to encrypt:"
+
+            # could use private=True for shadowed input if useful
+            prompt_response = display.prompt(msg)
+
+            if prompt_response == '':
+                raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
+
+            b_plaintext = to_bytes(prompt_response)
+            b_plaintext_list.append((b_plaintext, self.FROM_PROMPT))
+
+        if self.encrypt_string_read_stdin:
+            if sys.stdout.isatty():
+                display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
+
+            stdin_text = sys.stdin.read()
+            if stdin_text == '':
+                raise AnsibleOptionsError('stdin was empty, not encrypting')
+
+            b_plaintext = to_bytes(stdin_text)
+            b_plaintext_list.append((b_plaintext, self.FROM_STDIN))
+
+        for plaintext in args:
+            if plaintext == '':
+                raise AnsibleOptionsError('The plaintext provided from the command line args was empty, not encrypting')
+
             b_plaintext = to_bytes(plaintext)
-            b_plaintext_list.append(b_plaintext)
+            b_plaintext_list.append((b_plaintext, self.FROM_ARGS))
+
 
         show_delimiter = False
         if len(b_plaintext_list) > 1:
@@ -170,12 +225,14 @@ class VaultCLI(CLI):
 
         # order of args seem important
         # Or maybe just only support one string...
-        for index, b_plaintext in enumerate(b_plaintext_list):
+        for index, b_plaintext_info in enumerate(b_plaintext_list):
+            # (the text itself, which input it came from)
+            b_plaintext, src = b_plaintext_info
             b_ciphertext = self.editor.encrypt_bytes(b_plaintext)
 
             yaml_text = self.format_ciphertext_yaml(b_ciphertext)
             if show_delimiter:
-                sys.stderr.write('# The encrypted version of the string #%d from the command line.\n' % (index + 1))
+                sys.stderr.write('# The encrypted version of the string #%d from %s.\n' % ((index + 1), src))
             print(yaml_text)
         # if '--prompt', prompt for string
 
