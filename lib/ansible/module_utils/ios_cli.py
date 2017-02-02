@@ -150,7 +150,7 @@ def load_config(module, commands):
     for command in to_list(commands):
         if command == 'end':
             continue
-        rc, out, err = module.exec_command(command)
+        rc, out, err = conn.exec_command(command)
         if rc != 0:
             module.fail_json(msg=err, command=command, rc=rc)
 
