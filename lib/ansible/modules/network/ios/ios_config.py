@@ -33,9 +33,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   lines:
     description:
@@ -223,14 +221,39 @@ delta:
 import re
 import time
 
+from functools import partial
+
+from ansible.module_utils import ios
+from ansible.module_utils import ios_cli
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.ios import load_config, get_config, run_commands
+from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.six import string_types
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
+
+SHARED_LIB = 'ios'
+
+def get_ansible_module():
+    if SHARED_LIB == 'ios':
+        return LocalAnsibleModule
+    return AnsibleModule
+
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+run_commands = partial(invoke, 'run_commands')
+load_config = partial(invoke, 'load_config')
+get_config = partial(invoke, 'get_config')
 
 def check_args(module, warnings):
+    if SHARED_LIB == 'ios_cli':
+        ios_cli.check_args(module)
+
     if module.params['multiline_delimiter']:
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '
@@ -239,14 +262,6 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated as of Ansible 2.2, '
                         'please use match=none instead.  This argument will '
                         'be removed in the future')
-
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
 
 def extract_banners(config):
     banners = {}
@@ -335,7 +350,7 @@ def main():
         save=dict(type='bool', default=False),
     )
 
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(ios_cli.ios_cli_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -343,10 +358,14 @@ def main():
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                required_if=required_if,
-                                supports_check_mode=True)
+    cls = get_ansible_module()
+    module = cls(argument_spec=argument_spec,
+                mutually_exclusive=mutually_exclusive,
+                required_if=required_if,
+                supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -409,4 +428,5 @@ def main():
 
 
 if __name__ == '__main__':
+    SHARED_LIB = 'ios_cli'
     main()

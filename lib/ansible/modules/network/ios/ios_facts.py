@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -140,32 +142,58 @@ ansible_net_neighbors:
   type: dict
 """
 import re
-import itertools
 
-import ansible.module_utils.ios
-from ansible.module_utils.network import NetworkModule
+from functools import partial
+
+from ansible.module_utils import ios
+from ansible.module_utils import ios_cli
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+
+SHARED_LIB = 'ios'
+
+def get_ansible_module():
+    if SHARED_LIB == 'ios':
+        return LocalAnsibleModule
+    return AnsibleModule
+
+def invoke(name, *args, **kwargs):
+    obj = globals().get(SHARED_LIB)
+    func = getattr(obj, name)
+    return func(*args, **kwargs)
+
+run_commands = partial(invoke, 'run_commands')
+
+def check_args(module, warnings):
+    if SHARED_LIB == 'ios_cli':
+        ios_cli.check_args(module)
 
 
 class FactsBase(object):
 
+    COMMANDS = list()
+
     def __init__(self, module):
         self.module = module
         self.facts = dict()
-        self.failed_commands = list()
+        self.responses = None
+
+
+    def populate(self):
+        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
-        try:
-            return self.module.cli(cmd)[0]
-        except:
-            self.failed_commands.append(cmd)
-
+        return run_commands(self.module, cmd, check_rc=False)
 
 class Default(FactsBase):
 
+    COMMANDS = ['show version']
+
     def populate(self):
-        data = self.run('show version')
+        super(Default, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['version'] = self.parse_version(data)
             self.facts['serialnum'] = self.parse_serialnum(data)
@@ -201,12 +229,18 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
+    COMMANDS = [
+        'dir | include Directory',
+        'show memory statistics | include Processor'
+    ]
+
     def populate(self):
-        data = self.run('dir | include Directory')
+        super(Hardware, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show memory statistics | include Processor')
+        data = self.responses[1]
         if data:
             match = re.findall(r'\s(\d+)\s', data)
             if match:
@@ -219,33 +253,44 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
+    COMMANDS = ['show running-config']
+
     def populate(self):
-        data = self.run('show running-config')
+        super(Config, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['config'] = data
 
 
 class Interfaces(FactsBase):
 
+    COMMANDS = [
+        'show interfaces',
+        'show ipv6 interface',
+        'show lldp'
+    ]
+
     def populate(self):
+        super(Interfaces, self).populate()
+
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interfaces')
+        data = self.responses[0]
         if data:
             interfaces = self.parse_interfaces(data)
             self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.run('show ipv6 interface')
+        data = self.responses[1]
         if data:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        data = self.run('show lldp')
-        if 'LLDP is not enabled' not in data:
+        data = self.responses[2]
+        if data:
             neighbors = self.run('show lldp neighbors detail')
             if neighbors:
-                self.facts['neighbors'] = self.parse_neighbors(neighbors)
+                self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -392,11 +437,19 @@ FACT_SUBSETS = dict(
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(ios_cli.ios_cli_argument_spec)
+
+    cls = get_ansible_module()
+    module = cls(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -438,24 +491,18 @@ def main():
     for key in runable_subsets:
         instances.append(FACT_SUBSETS[key](module))
 
-    failed_commands = list()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            failed_commands.extend(inst.failed_commands)
-            facts.update(inst.facts)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts, failed_commands=failed_commands)
+    module.exit_json(ansible_facts=ansible_facts)
 
 
 if __name__ == '__main__':
+    SHARED_LIB = 'ios_cli'
     main()
