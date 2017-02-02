@@ -47,12 +47,10 @@ options:
   replace_dest:
     description:
       - replace destination folder if exists (recursive!)
-    required: false
     default: false
   accept_hostkey:
     description:
       - add hostkey to known_hosts (before connecting to git)
-    required: false
     default: false
 author: Anatoliy Ivashina
 '''

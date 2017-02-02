@@ -28,8 +28,8 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject @{
-    win_git = New-Object psobject @{
+$result = @{
+    win_git = @{
         name              = $null
         dest              = $null
         replace_dest      = $false
@@ -39,12 +39,11 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
-$dest = Get-AnsibleParam -obj $params -name "dest"
-$replace_dest = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "replace_dest" -default $false)
-$accept_hostkey = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "accept_hostkey" -default $false)
-
-$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true -type "str"
+$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true -type "path"
+$replace_dest = Get-AnsibleParam -obj $params -name "replace_dest" -default $false -type "bool"
+$accept_hostkey = Get-AnsibleParam -obj $params -name "accept_hostkey" -default $false -type "bool"
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false -type "bool"
 
 # Add Git to PATH variable
 $env:Path += ";" + "C:\Program Files\Git\usr\bin"
@@ -151,18 +150,18 @@ if ($name -eq ($null -or "")) {
     Fail-Json $result "Repository cannot be empty or `$null"
 }
 $git_opts += $name
-Set-Attr $result.win_git "name" $name
+$result.win_git.name = $name
 
 $git_opts += $dest
-Set-Attr $result.win_git "dest" $dest
+$result.win_git.dest = $dest
 
-Set-Attr $result.win_git "replace_dest" $replace_dest
-Set-Attr $result.win_git "accept_hostkey" $accept_hostkey
+$result.win_git.replace_dest = $replace_dest
+$result.win_git.accept_hostkey = $accept_hostkey
 
 $git_output = ""
 $rc = 0
 
-If ($_ansible_check_mode -eq $true) {
+If ($check_mode) {
     $git_output = "Would have copied the contents of $name to $dest"
     $rc = 0
 }
@@ -183,8 +182,8 @@ Else {
     }
 }
 
-Set-Attr $result.win_git "return_code" $rc
-Set-Attr $result.win_git "output" $git_output
+$result.win_git.return_code = $rc
+$result.win_git.output = $git_output
 
 $cmd_msg = "Success"
 If ($rc -eq 0) {
@@ -196,7 +195,7 @@ Else {
     Fail-Json $result $error_msg
 }
 
-Set-Attr $result "msg" $cmd_msg
-Set-Attr $result "changed" $changed
+$result.msg = $cmd_msg
+$result.changed = $changed
 
 Exit-Json $result
