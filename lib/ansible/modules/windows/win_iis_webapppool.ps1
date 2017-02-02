@@ -48,7 +48,8 @@ If (Get-Member -InputObject $params -Name attributes) {
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $NULL){
   Import-Module WebAdministration
-  Add-Type -Path C:\Windows\system32\inetsrv\Microsoft.Web.Administration.dll
+  $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
+  Add-Type -Path $web_admin_dll_path
   $t = [Type]"Microsoft.Web.Administration.ApplicationPool"
 }
 
@@ -97,9 +98,17 @@ try {
       Stop-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
-    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped')) -or ($state -eq 'restarted')) {
+    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped')) {
       Start-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
+    }
+    if ($state -eq 'restarted') {
+     switch ($pool.State)
+       { 
+         'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
+         default { Restart-WebAppPool -Name $name -ErrorAction Stop }
+       }
+     $result.changed = $TRUE   
     }
   }
 } catch {
@@ -114,7 +123,6 @@ if ($pool)
     name = $pool.Name
     state = $pool.State
     attributes =  New-Object psobject @{}
-    enumerations =  New-Object psobject @{}
   };
 
   $pool.Attributes | ForEach {
@@ -123,7 +131,6 @@ if ($pool)
         $propertyName = $_.Name.Substring(0,1).ToUpper() + $_.Name.Substring(1)
         $enum = [Microsoft.Web.Administration.ApplicationPool].GetProperty($propertyName).PropertyType.FullName
         $enum_names = [Enum]::GetNames($enum)
-        $result.info.enumerations.Add($_.Name, $enum_names)
         $result.info.attributes.Add($_.Name, $enum_names[$_.Value])
      } else {
         $result.info.attributes.Add($_.Name, $_.Value);
