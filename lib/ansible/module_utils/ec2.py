@@ -618,5 +618,5 @@ def map_complex_type(complex_type, type_map):
                 complex_type[i],
                 type_map))
     elif type_map:
-        return vars(globals()['__builtins__'])[type_map](complex_type)
+        return globals()['__builtins__'][type_map](complex_type)
     return new_type
