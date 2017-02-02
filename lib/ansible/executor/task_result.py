@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.parsing.dataloader import DataLoader
 
+
 class TaskResult:
     '''
     This class is responsible for interpreting the resulting data
@@ -28,13 +29,23 @@ class TaskResult:
     the result of a given task.
     '''
 
-    def __init__(self, host, task, return_data):
+    def __init__(self, host, task, return_data, task_fields=None):
         self._host = host
         self._task = task
+
         if isinstance(return_data, dict):
             self._result = return_data.copy()
         else:
             self._result = DataLoader().load(return_data)
+
+        if task_fields is None:
+            self._task_fields = dict()
+        else:
+            self._task_fields = task_fields
+
+    @property
+    def task_name(self):
+        return self._task_fields.get('name', None) or self._task.get_name()
 
     def is_changed(self):
         return self._check_key('changed')

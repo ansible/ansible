@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -44,8 +45,6 @@ options:
         required: true
         description:
         - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
     validate_certs:
         required: false
         default: true
@@ -74,9 +73,16 @@ EXAMPLES = """
 """
 RETURN = """
 ---
-    changed: true
-    msg: "Created snapshot image"
-    image_id: "3400000060080E5000299B640063074057BC5C5E "
+    msg:
+        description: State of operation
+        type: string
+        returned: always
+        sample: "Created snapshot image"
+    image_id:
+        description: ID of snaphot image
+        type: string
+        returned: state == created
+        sample: "3400000060080E5000299B640063074057BC5C5E "
 """
 
 HEADERS = {

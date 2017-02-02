@@ -1,0 +1,19 @@
+---
+# File:
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - ec2_lc:
+        name: special-2
+        region: ap-southeast-2
+        instance_id: i-00a48b207ec59e948
+        key_name: Willem key pair
+        security_groups: ['launch-wizard-2' ]
+        volumes:
+        - device_name: /dev/sda1
+          volume_size: 120
+          device_type: io1
+          iops: 3000
+          delete_on_termination: true

@@ -1,0 +1,16 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - cloudfront:
+        resource: distribution
+        state: updated
+        distribution_id: E1OWTTJTYJKWFN
+        comment: modified by cloudfront.py again
+        aliases:
+          - tested.com
+        tags:
+          - Project: distribution 1.2
+        purge_tags: yes

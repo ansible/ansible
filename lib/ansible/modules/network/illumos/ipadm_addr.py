@@ -19,14 +19,15 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ipadm_addr
-short_description: Manage IP addresses on an interface.
+short_description: Manage IP addresses on an interface on Solaris/illumos systems
 description:
     - Create/delete static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
     - Up/down static/dynamic IP addresses on network interfaces on Solaris/illumos systems.

@@ -101,21 +101,21 @@ Use the dict constructor where possible when allocating dictionaries:
 
     # this:
     foo = dict(
-       a = 12,
-       b = 34
+       a=12,
+       b=34,
     )
 
-Line up variables
+Do not line up variables
 
     # not this
-    a  = 12
-    foosball = 34
-    xyz = 'dog'
-
-    # this
     a        = 12
     foosball = 34
     xyz      = 'dog'
+
+    # this
+    a = 12
+    foosball = 34
+    xyz = 'dog'
 
 Don't use line continuations:
 
@@ -131,13 +131,13 @@ Don't use line continuations:
 Spacing:
 
     # no
-    x=[1,2,3]
-
-    # no
     x = [1,2,3]
 
-    # yes
+    # no
     x = [ 1, 2, 3 ]
+
+    # yes
+    x = [1, 2, 3]
 
 Spacing continued:
 
@@ -277,7 +277,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    from ansible.compat.six import string_types
+    from ansible.module_utils.six import string_types
     if isinstance(x, string_types):
 
 Cleverness
@@ -314,7 +314,3 @@ This was not meant to be a scary document, so we hope it wasn't, but we also hop
 If you have questions about this document, please ask on the ansible-devel mailing list.
 
 Thank you!
-
-
-
-

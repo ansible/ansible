@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,6 +29,7 @@ module: assert
 short_description: Asserts given expressions are true
 description:
      - This module asserts that given expressions are true with an optional custom message.
+     - This module is also supported for Windows targets.
 version_added: "1.5"
 options:
   that:
@@ -38,7 +40,8 @@ options:
   msg:
     description:
       - "The customized message used for a failing assertion"
-    required: false
+notes:
+     - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

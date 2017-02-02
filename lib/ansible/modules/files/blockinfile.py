@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -70,7 +71,7 @@ options:
       - If specified, the block will be inserted after the last match of
         specified regular expression. A special value is available; C(EOF) for
         inserting the block at the end of the file.  If specified regular
-        expresion has no matches, C(EOF) will be used instead.
+        expression has no matches, C(EOF) will be used instead.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -79,7 +80,7 @@ options:
       - If specified, the block will be inserted before the last match of
         specified regular expression. A special value is available; C(BOF) for
         inserting the block at the beginning of the file.  If specified regular
-        expresion has no matches, the block will be inserted at the end of the
+        expression has no matches, the block will be inserted at the end of the
         file.
     choices: [ 'BOF', '*regex*' ]
   create:
@@ -125,6 +126,12 @@ EXAMPLES = r"""
       iface eth0 inet static
           address 192.0.2.23
           netmask 255.255.255.0
+
+- name: insert/update configuration using a local file
+  blockinfile:
+    block: "{{ lookup('file', './local/ssh_config') }}"
+    dest: "/etc/ssh/ssh_config"
+    backup: yes
 
 - name: insert/update HTML surrounded by custom markers after <body> line
   blockinfile:

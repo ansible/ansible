@@ -15,7 +15,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'hostname foo' in result.updates"
+      - "'hostname foo' in result.commands"
 
 - name: configure top level command idempotent check
   iosxr_config:

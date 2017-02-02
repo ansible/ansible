@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -16,10 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: tower_organization
 version_added: "2.3"
+author: "Wayne Witzel III (@wwitzel3)"
 short_description: create, update, or destroy Ansible Tower organizations
 description:
     - Create, update, or destroy Ansible Tower organizations. See
@@ -40,27 +46,27 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    host:
+    tower_host:
       description:
         - URL to your Tower instance.
       required: False
       default: null
-    username:
+    tower_username:
         description:
           - Username for your Tower instance.
         required: False
         default: null
-    password:
+    tower_password:
         description:
           - Password for your Tower instance.
         required: False
         default: null
-    verify_ssl:
+    tower_verify_ssl:
         description:
           - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
             This should only be used on personally controlled sites using self-signed certificates.
         required: False
-        default: 'yes'
+        default: True
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
@@ -83,16 +89,13 @@ notes:
 
 
 EXAMPLES = '''
-  - tasks
-    - name: Create organization
-      tower_organization:
-          name: "Foo"
-          description: "Foo bar organization"
-          state: present
-          tower_config_file: "~/tower_cli.cfg"
+- name: Create tower organization
+  tower_organization:
+    name: "Foo"
+    description: "Foo bar organization"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
 '''
-
-import os
 
 try:
     import tower_cli
@@ -108,15 +111,15 @@ except ImportError:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            description = dict(),
-            host = dict(),
-            username = dict(),
-            password = dict(no_log=True),
-            verify_ssl = dict(type='bool', default='yes'),
-            tower_config_file = dict(type='path'),
-            state = dict(choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            description=dict(),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -127,8 +128,13 @@ account:
   sample: example account
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
@@ -165,7 +171,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
             for a in affinity_types['affinityGroupType']:
                 if a['type'] == affinity_type:
                     return a['type']
-        self.module.fail_json(msg="affinity group type '%s' not found" % affinity_type)
+        self.module.fail_json(msg="affinity group type not found: %s" % affinity_type)
 
     def create_affinity_group(self):
         affinity_group = self.get_affinity_group()
@@ -218,12 +224,12 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
-        affinty_type=dict(default=None),
-        description=dict(default=None),
+        affinty_type=dict(),
+        description=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-        domain=dict(default=None),
-        account=dict(default=None),
-        project=dict(default=None),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -249,7 +255,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

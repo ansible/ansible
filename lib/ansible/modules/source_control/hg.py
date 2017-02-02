@@ -23,9 +23,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -156,7 +157,7 @@ class Hg(object):
     def get_remote_revision(self):
         (rc, out, err) = self._command(['id', self.repo])
         if rc != 0:
-            self.module_fail_json(msg=err)
+            self.module.fail_json(msg=err)
         else:
             return to_native(out).strip('\n')
 

@@ -49,6 +49,7 @@ try:
 except:
     import simplejson as json
 
+
 class ZabbixInventory(object):
 
     def read_settings(self):
@@ -80,7 +81,7 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {}
+        data = {'ansible_ssh_host': name}
         return data
 
     def get_list(self, api):
@@ -96,7 +97,7 @@ class ZabbixInventory(object):
             for group in host['groups']:
                 groupname = group['name']
 
-                if not groupname in data:
+                if groupname not in data:
                     data[groupname] = self.hoststub()
 
                 data[groupname]['hosts'].append(hostname)

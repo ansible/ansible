@@ -17,7 +17,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'set system host-name foo' in result.updates"
+      - "'set system host-name foo' in result.commands"
 
 - name: collect system commits
   vyos_command:

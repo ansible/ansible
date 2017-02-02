@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -136,6 +137,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -192,7 +194,7 @@ def update_roles(user_facts, cursor, user,
         cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
 
 def check(user_facts, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+          locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         return False
@@ -204,16 +206,16 @@ def check(user_facts, user, profile, resource_pool,
         return False
     if password and password != user_facts[user_key]['password']:
         return False
-    if expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or \
-       ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True'):
+    if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
+           ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-        cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
 
 def present(user_facts, cursor, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+            locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         query_fragments = ["create user {0}".format(user)]
@@ -274,8 +276,8 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
+               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
                 user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
@@ -306,7 +308,7 @@ def main():
             user=dict(required=True, aliases=['name']),
             profile=dict(default=None),
             resource_pool=dict(default=None),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             expired=dict(type='bool', default=None),
             ldap=dict(type='bool', default=None),
             roles=dict(default=None, aliases=['role']),
@@ -315,7 +317,7 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
         ), supports_check_mode = True)
 
     if not pyodbc_found:
@@ -392,7 +394,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg=e)
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(changed=changed, user=user, ansible_facts={'vertica_users': user_facts})
 

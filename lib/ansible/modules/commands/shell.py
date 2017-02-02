@@ -1,4 +1,4 @@
-# There is actually no actual shell module source, when you use 'shell' in ansible,
+# There is no actual shell module source, when you use 'shell' in ansible,
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
@@ -17,18 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
 module: shell
 short_description: Execute commands in nodes.
 description:
-     - The M(shell) module takes the command name followed by a list of space-delimited arguments.
+     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
        It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
+     - For Windows targets, use the M(win_shell) module instead.
 version_added: "0.2"
 options:
   free_form:
@@ -69,12 +71,12 @@ options:
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless M(shell) is
-      explicitly required. When running ad-hoc commands, use your best
+      playbooks will follow the trend of using M(command) unless the C(shell)
+      module is explicitly required. When running ad-hoc commands, use your best
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-
+   - For Windows targets, use the M(win_shell) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team
@@ -104,6 +106,26 @@ EXAMPLES = '''
 
 - name: Run a command using a templated variable (always use quote filter to avoid injection)
   shell: cat {{ myfile|quote }}
+
+# You can use shell to run other executables to perform actions inline
+- name: Run expect to wait for a successful PXE boot via out-of-band CIMC
+  shell: |
+    set timeout 300
+    spawn ssh admin@{{ cimc_host }}
+
+    expect "password:"
+    send "{{ cimc_password }}\\n"
+
+    expect "\\n{{ cimc_name }}"
+    send "connect host\\n"
+
+    expect "pxeboot.n12"
+    send "\\n"
+
+    exit 0
+  args:
+    executable: /usr/bin/expect
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -150,6 +172,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

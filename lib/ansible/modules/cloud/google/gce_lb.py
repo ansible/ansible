@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -193,8 +194,8 @@ def main():
             members = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
         )
     )

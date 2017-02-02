@@ -1,0 +1,12 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - cloudfront_invalidation:
+      caller_reference: 'testing 123-'
+      distribution_id: E1G3ZKO43E8A8L
+      target_paths:
+          - /testpath/text.txt
+          - /testpath/test.twob

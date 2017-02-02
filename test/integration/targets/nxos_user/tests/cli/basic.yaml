@@ -1,0 +1,42 @@
+---
+- name: Create user
+  nxos_user:
+    name: netend
+    roles: network-operator
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username netend role network-operator"]'
+
+- name: Collection of users
+  nxos_user:
+    users:
+      - name: test1
+      - name: test2
+    authorize: yes
+    state: present
+    roles: network-admin
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username test1 role network-admin", "username test2 role network-admin"]'
+
+- name: tearDown
+  nxos_user:
+    purge: yes
+    authorize: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username netend", "no username test1", "no username test2"]'

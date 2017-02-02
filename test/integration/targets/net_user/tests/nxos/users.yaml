@@ -1,0 +1,23 @@
+---
+- name: Create user
+  net_user:
+    name: netop
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username netop"]'
+
+- name: Purge users
+  net_user:
+    purge: yes
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["no username netop"]'

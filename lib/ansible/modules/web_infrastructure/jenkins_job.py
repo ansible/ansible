@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -162,7 +163,9 @@ try:
 except ImportError:
     python_lxml_installed = False
 
+
 class JenkinsJob:
+
     def __init__(self, module):
         self.module = module
 
@@ -264,12 +267,12 @@ class JenkinsJob:
         if self.enabled is None:
             return False
 
-        if ( (self.enabled == False and status != "disabled") or (self.enabled == True and status == "disabled") ):
+        if ((self.enabled is False and status != "disabled") or (self.enabled is True and status == "disabled")):
             return True
         return False
 
     def switch_state(self):
-        if self.enabled == False:
+        if self.enabled is False:
             self.server.disable_job(self.name)
         else:
             self.server.enable_job(self.name)
@@ -327,31 +330,34 @@ class JenkinsJob:
             result['enabled'] = None
         return result
 
+
 def test_dependencies(module):
     if not python_jenkins_installed:
-        module.fail_json(msg="python-jenkins required for this module. "\
-              "see http://python-jenkins.readthedocs.io/en/latest/install.html")
+        module.fail_json(msg="python-jenkins required for this module. "
+                         "see http://python-jenkins.readthedocs.io/en/latest/install.html")
 
     if not python_lxml_installed:
-        module.fail_json(msg="lxml required for this module. "\
-              "see http://lxml.de/installation.html")
+        module.fail_json(msg="lxml required for this module. "
+                         "see http://lxml.de/installation.html")
+
 
 def job_config_to_string(xml_str):
     return ET.tostring(ET.fromstring(xml_str))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            config      = dict(required=False),
-            name        = dict(required=True),
-            password    = dict(required=False, no_log=True),
-            state       = dict(required=False, choices=['present', 'absent'], default="present"),
-            enabled     = dict(required=False, type='bool'),
-            token       = dict(required=False, no_log=True),
-            url         = dict(required=False, default="http://localhost:8080"),
-            user        = dict(required=False)
+        argument_spec=dict(
+            config=dict(required=False),
+            name=dict(required=True),
+            password=dict(required=False, no_log=True),
+            state=dict(required=False, choices=['present', 'absent'], default="present"),
+            enabled=dict(required=False, type='bool'),
+            token=dict(required=False, no_log=True),
+            url=dict(required=False, default="http://localhost:8080"),
+            user=dict(required=False)
         ),
-        mutually_exclusive = [
+        mutually_exclusive=[
             ['password', 'token'],
             ['config', 'enabled'],
         ],

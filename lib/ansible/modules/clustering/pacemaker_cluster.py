@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-from distutils.version import StrictVersion
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,20 +66,27 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-change:
+changed:
     description: True if the cluster state has changed
     type: bool
+    returned: always
 out:
     description: The output of the current state of the cluster. It return a
                  list of the nodes state.
     type: string
     sample: 'out: [["  overcloud-controller-0", " Online"]]}'
+    returned: always
 rc:
     description: exit code of the module
     type: bool
+    returned: always
 '''
 
+import time
+from distutils.version import StrictVersion
+
 _PCS_CLUSTER_DOWN="Error: cluster is not currently running on this node"
+
 
 def get_cluster_status(module):
     cmd = "pcs cluster status"

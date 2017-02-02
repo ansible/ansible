@@ -31,9 +31,10 @@
 # This module is based on python-crontab by Martin Owens.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -462,7 +463,6 @@ class CronTab(object):
             else:
                 return "%s%s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,job)
 
-        return None
 
     def get_jobnames(self):
         jobnames = []
@@ -655,6 +655,10 @@ def main():
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
         module.fail_json(msg="You must specify time and date fields or special time.")
 
+    # cannot support special_time on solaris
+    if (special_time or reboot) and get_platform() == 'SunOS':
+        module.fail_json(msg="Solaris does not support special_time=... or @reboot")
+
     if cron_file and do_install:
         if not user:
             module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
@@ -725,7 +729,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed:
+    if not changed and not crontab.existing == '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 
@@ -751,12 +755,11 @@ def main():
             res_args['diff'] = diff
 
     # retain the backup only if crontab or cron file have changed
-    if backup:
+    if backup and not module.check_mode:
         if changed:
             res_args['backup_file'] = backup_file
         else:
-            if not module.check_mode:
-                os.unlink(backup_file)
+            os.unlink(backup_file)
 
     if cron_file:
         res_args['cron_file'] = cron_file

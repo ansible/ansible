@@ -22,9 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -38,7 +39,8 @@ author: "Balazs Pocze (@banyek)"
 options:
     mode:
         description:
-            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
+            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
+              (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
         required: False
         choices:
             - getslave
@@ -199,7 +201,7 @@ def changemaster(cursor, chm, chm_params):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -266,7 +268,8 @@ def main():
     except Exception:
         e = get_exception()
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                                 "Exception message: %s" % (config_file, e))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
 
@@ -287,7 +290,7 @@ def main():
         module.exit_json(**status)
 
     elif mode in "changemaster":
-        chm=[]
+        chm = []
         chm_params = {}
         result = {}
         if master_host:
@@ -344,7 +347,7 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (e, chm))
-        result['changed']=True
+        result['changed'] = True
         module.exit_json(**result)
     elif mode in "startslave":
         started = start_slave(cursor)

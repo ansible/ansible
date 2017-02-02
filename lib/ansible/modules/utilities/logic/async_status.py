@@ -19,34 +19,33 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
 module: async_status
 short_description: Obtain status of asynchronous task
 description:
-     - "This module gets the status of an asynchronous task."
+     - This module gets the status of an asynchronous task.
+     - This module is also supported for Windows targets.
 version_added: "0.5"
 options:
   jid:
     description:
       - Job or task identifier
     required: true
-    default: null
-    aliases: []
   mode:
     description:
       - if C(status), obtain the status; if C(cleanup), clean up the async job cache
         located in C(~/.ansible_async/) for the specified job I(jid).
-    required: false
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
     - See also U(http://docs.ansible.com/playbooks_async.html)
-requirements: []
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

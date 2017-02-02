@@ -22,9 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -87,10 +88,6 @@ options:
 
 '''
 
-RETURN = '''
-#
-'''
-
 EXAMPLES = '''
 # Create a new server
 - a10_server:
@@ -115,7 +112,12 @@ content:
   type: string
   sample: "mynewserver"
 '''
+import json
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure
+from ansible.module_utils.a10 import axapi_get_port_protocol, axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS
 
 VALID_PORT_FIELDS = ['port_num', 'protocol', 'status']
 
@@ -263,7 +265,9 @@ def main():
             # - in case ports are missing from the ones specified by the user
             # - in case ports are missing from those on the device
             # - in case we are change the status of a server
-            if port_needs_update(defined_ports, slb_server_ports) or port_needs_update(slb_server_ports, defined_ports) or status_needs_update(current_status, axapi_enabled_disabled(slb_server_status)):
+            if (port_needs_update(defined_ports, slb_server_ports) or
+                    port_needs_update(slb_server_ports, defined_ports) or
+                    status_needs_update(current_status, axapi_enabled_disabled(slb_server_status))):
                 result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
                 if axapi_failure(result):
                     module.fail_json(msg="failed to update the server: %s" % result['response']['err']['msg'])
@@ -291,13 +295,6 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
-
-# ansible module imports
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_get_port_protocol, axapi_enabled_disabled
-
 
 if __name__ == '__main__':
     main()

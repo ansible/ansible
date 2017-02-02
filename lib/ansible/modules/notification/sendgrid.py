@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -124,7 +125,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 # send an email to more than one recipient that the build failed
-- sendgrid
+- sendgrid:
       username: "{{ sendgrid_username }}"
       password: "{{ sendgrid_password }}"
       from_address: "build@mycompany.com"
@@ -139,7 +140,7 @@ EXAMPLES = '''
 # =======================================
 # sendgrid module support methods
 #
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 try:
     import sendgrid
@@ -156,7 +157,7 @@ def post_sendgrid_api(module, username, password, from_address, to_addresses,
         AGENT = "Ansible"
         data = {'api_user': username, 'api_key':password,
                 'from':from_address, 'subject': subject, 'text': body}
-        encoded_data = urllib.urlencode(data)
+        encoded_data = urlencode(data)
         to_addresses_api = ''
         for recipient in to_addresses:
             if isinstance(recipient, unicode):
@@ -253,7 +254,8 @@ def main():
     sendgrid_lib_args = [api_key, bcc, cc, headers, from_name, html_body, attachments]
 
     if any(lib_arg is not None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
-        module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: api_key, bcc, cc, headers, from_name, html_body, attachments')
+        module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: '
+                             'api_key, bcc, cc, headers, from_name, html_body, attachments')
 
     response, info = post_sendgrid_api(module, username, password,
         from_address, to_addresses, subject, body, attachments=attachments,

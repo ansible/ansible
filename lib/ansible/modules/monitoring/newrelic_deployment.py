@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -87,7 +88,7 @@ EXAMPLES = '''
     revision: '1.0'
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 # ===========================================
 # Module execution.
@@ -134,7 +135,7 @@ def main():
 
     # Send the data to NewRelic
     url = "https://rpm.newrelic.com/deployments.xml"
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     headers = {
         'x-api-key': module.params["token"],
     }

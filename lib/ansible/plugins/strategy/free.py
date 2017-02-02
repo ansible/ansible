@@ -14,7 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    strategy: free
+    short_description: Executes tasks on each host independently
+    description:
+        - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
+          Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
+          Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
+    version_added: "2.0"
+    author: Ansible Core Team
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -61,14 +71,15 @@ class StrategyModule(StrategyBase):
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
-            hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+            hosts_left = self.get_hosts_left(iterator)
+
             if len(hosts_left) == 0:
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
                 break
 
             work_to_do = False        # assume we have no more work to do
-            starting_host = last_host # save current position so we know when we've looped back around and need to break
+            starting_host = last_host  # save current position so we know when we've looped back around and need to break
 
             # try and find an unblocked host with a task to run
             host_results = []
@@ -104,7 +115,7 @@ class StrategyModule(StrategyBase):
                             action = None
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -144,8 +155,8 @@ class StrategyModule(StrategyBase):
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
                                 if task.any_errors_fatal:
-                                    display.warning("Using any_errors_fatal with the free strategy is not supported,"
-                                            " as tasks are executed independently on each host")
+                                    display.warning("Using any_errors_fatal with the free strategy is not supported, "
+                                                    "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
                                 del task_vars
@@ -190,7 +201,7 @@ class StrategyModule(StrategyBase):
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=included_file._task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=included_file._task)
                         final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:

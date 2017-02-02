@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,7 +34,7 @@ version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
 description:
-  - The M(git_config) module changes git configuration by invoking 'git config'.
+  - The C(git_config) module changes git configuration by invoking 'git config'.
     This is needed if you don't want to use M(template) for the entire git
     config file (e.g. because you need to change just C(user.email) in
     /etc/.git/config).  Solutions involving M(command) are cumbersone or

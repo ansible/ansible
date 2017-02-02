@@ -19,27 +19,10 @@
 # TODO:
 # Ability to set CPU/Memory reservations
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
-HAS_PYSPHERE = False
-try:
-    from pysphere import VIServer, VIProperty, MORTypes
-    from pysphere.resources import VimService_services as VI
-    from pysphere.vi_task import VITask
-    from pysphere import VIException, VIApiException, FaultTypes
-    HAS_PYSPHERE = True
-except ImportError:
-    pass
-
-import ssl
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -92,18 +75,21 @@ options:
     default: None
   esxi:
     description:
-      - Dictionary which includes datacenter and hostname on which the VM should be created. For standalone ESXi hosts, ha-datacenter should be used as the datacenter name
+      - Dictionary which includes datacenter and hostname on which the VM should be created. For standalone ESXi hosts, ha-datacenter should be used as the
+        datacenter name
     required: false
     default: null
   state:
     description:
-      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter. The 'memory_mb' and 'num_cpus' changes are applied to powered-on vms when hot-plugging is enabled for the guest.
+      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter.
+        The 'memory_mb' and 'num_cpus' changes are applied to powered-on vms when hot-plugging is enabled for the guest.
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
     version_added: "1.9"
     description:
-      - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied when launching from template.
+      - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware
+        such as CPU, RAM, NICs or Disks can be applied when launching from template.
     default: no
     choices: ['yes', 'no']
   template_src:
@@ -145,7 +131,8 @@ options:
     default: null
   vm_hw_version:
     description:
-      - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware version of existing vm is not supported.
+      - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware
+        version of existing vm is not supported.
     required: false
     default: null
     version_added: "1.7"
@@ -171,6 +158,7 @@ requirements:
 
 
 EXAMPLES = '''
+---
 # Create a new VM on an ESX server
 # Returns changed = False when the VM already exists
 # Returns changed = True and a adds ansible_facts from the new VM
@@ -276,7 +264,7 @@ EXAMPLES = '''
     guest: newvm001
     vmware_guest_facts: yes
 
-
+---
 # Typical output of a vsphere_facts run on a guest
 # If vmware tools is not installed, ipadresses with return None
 
@@ -295,22 +283,22 @@ EXAMPLES = '''
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 
-hw_power_status will be one of the following values:
-  - POWERED ON
-  - POWERED OFF
-  - SUSPENDED
-  - POWERING ON
-  - POWERING OFF
-  - SUSPENDING
-  - RESETTING
-  - BLOCKED ON MSG
-  - REVERTING TO SNAPSHOT
-  - UNKNOWN
-as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
+# hw_power_status will be one of the following values:
+#   - POWERED ON
+#   - POWERED OFF
+#   - SUSPENDED
+#   - POWERING ON
+#   - POWERING OFF
+#   - SUSPENDING
+#   - RESETTING
+#   - BLOCKED ON MSG
+#   - REVERTING TO SNAPSHOT
+#   - UNKNOWN
+# as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
 
+---
 # Remove a vm from vSphere
 # The VM must be powered_off or you need to use force to force a shutdown
-
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
@@ -319,6 +307,24 @@ as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
     state: absent
     force: yes
 '''
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+HAS_PYSPHERE = False
+try:
+    from pysphere import VIServer, VIProperty, MORTypes
+    from pysphere.resources import VimService_services as VI
+    from pysphere.vi_task import VITask
+    from pysphere import VIException, VIApiException, FaultTypes
+    HAS_PYSPHERE = True
+except ImportError:
+    pass
+
+import ssl
+
 
 def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=0, disk_ctrl_key=1):
     # add a scsi controller
@@ -761,7 +767,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
                 vm.set_extra_config(vm_extra_config)
 
             # Power on if asked
-            if power_on_after_clone == True:
+            if power_on_after_clone is True:
                 state = 'powered_on'
                 power_state(vm, state, True)
 
@@ -1003,8 +1009,9 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             # Make sure the new disk size is higher than the current value
             dev = dev_list[disk_num]
             if disksize < int(dev.capacityInKB):
-              vsphere_client.disconnect()
-              module.fail_json(msg="Error in '%s' definition. New size needs to be higher than the current value (%s GB)." % (disk, int(dev.capacityInKB) / 1024 / 1024))
+                vsphere_client.disconnect()
+                module.fail_json(msg="Error in '%s' definition. New size needs to be higher than the current value (%s GB)." %
+                                     (disk, int(dev.capacityInKB) / 1024 / 1024))
 
             # Set the new disk size
             elif disksize > int(dev.capacityInKB):
@@ -1777,7 +1784,8 @@ def main():
     # CONNECT TO THE SERVER
     viserver = VIServer()
     if validate_certs and not hasattr(ssl, 'SSLContext') and not vcenter_hostname.startswith('http://'):
-        module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+        module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
+                             'validate_certs=False on the task')
 
     try:
         viserver.connect(vcenter_hostname, username, password)

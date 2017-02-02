@@ -18,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
 import inspect
 import os
 import time
@@ -55,49 +56,67 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
     """
     Convert SDK Struct type into dictionary.
     """
+    res = {}
+
     def remove_underscore(val):
         if val.startswith('_'):
             val = val[1:]
             remove_underscore(val)
         return val
 
-    res = {}
+    def convert_value(value):
+        nested = False
+
+        if isinstance(value, sdk.Struct):
+            return get_dict_of_struct(value)
+        elif isinstance(value, Enum) or isinstance(value, datetime):
+            return str(value)
+        elif isinstance(value, list) or isinstance(value, sdk.List):
+            if isinstance(value, sdk.List) and fetch_nested and value.href:
+                try:
+                    value = connection.follow_link(value)
+                    nested = True
+                except sdk.Error:
+                    value = []
+
+            ret = []
+            for i in value:
+                if isinstance(i, sdk.Struct):
+                    if not nested:
+                        ret.append(get_dict_of_struct(i))
+                    else:
+                        nested_obj = dict(
+                            (attr, convert_value(getattr(i, attr)))
+                            for attr in attributes if getattr(i, attr, None)
+                        )
+                        nested_obj['id'] = getattr(i, 'id', None),
+                        ret.append(nested_obj)
+                elif isinstance(i, Enum):
+                    ret.append(str(i))
+                else:
+                    ret.append(i)
+            return ret
+        else:
+            return value
+
     if struct is not None:
         for key, value in struct.__dict__.items():
-            nested = False
-            key = remove_underscore(key)
             if value is None:
                 continue
 
-            elif isinstance(value, sdk.Struct):
-                res[key] = get_dict_of_struct(value)
-            elif isinstance(value, Enum) or isinstance(value, datetime):
-                res[key] = str(value)
-            elif isinstance(value, list) or isinstance(value, sdk.List):
-                if isinstance(value, sdk.List) and fetch_nested and value.href:
-                    value = connection.follow_link(value)
-                    nested = True
-
-                res[key] = []
-                for i in value:
-                    if isinstance(i, sdk.Struct):
-                        if not nested:
-                            res[key].append(get_dict_of_struct(i))
-                        else:
-                            nested_obj = dict(
-                                (attr, getattr(i, attr))
-                                for attr in attributes if getattr(i, attr, None)
-                            )
-                            nested_obj['id'] = getattr(i, 'id', None),
-                            res[key].append(nested_obj)
-                    elif isinstance(i, Enum):
-                        res[key].append(str(i))
-                    else:
-                        res[key].append(i)
-            else:
-                res[key] = value
+            key = remove_underscore(key)
+            res[key] = convert_value(value)
 
     return res
+
+
+def engine_version(connection):
+    """
+    Return string representation of oVirt engine version.
+    """
+    engine_api = connection.system_service().get()
+    engine_version = engine_api.product_info.version
+    return '%s.%s' % (engine_version.major, engine_version.minor)
 
 
 def create_connection(auth):
@@ -180,7 +199,7 @@ def get_link_name(connection, link):
         return None
 
 
-def equal(param1, param2):
+def equal(param1, param2, ignore_case=False):
     """
     Compare two parameters and return if they are equal.
     This parameter doesn't run equal operation if first parameter is None.
@@ -192,6 +211,8 @@ def equal(param1, param2):
     :return: True if parameters are equal or first parameter is None, otherwise False
     """
     if param1 is not None:
+        if ignore_case:
+            return param1.lower() == param2.lower()
         return param1 == param2
     return True
 
@@ -261,6 +282,19 @@ def get_entity(service):
     return entity
 
 
+def get_id_by_name(service, name, raise_error=True, ignore_case=False):
+    """
+    Search an entity ID by it's name.
+    """
+    entity = search_by_name(service, name)
+
+    if entity is not None:
+        return entity.id
+
+    if raise_error:
+        raise Exception("Entity '%s' was not found." % name)
+
+
 def wait(
     service,
     condition,
@@ -283,15 +317,17 @@ def wait(
     if wait:
         start = time.time()
         while time.time() < start + timeout:
-            # Sleep for `poll_interval` seconds if none of the conditions apply:
-            time.sleep(float(poll_interval))
-
             # Exit if the condition of entity is valid:
             entity = get_entity(service)
             if condition(entity):
                 return
             elif fail_condition(entity):
                 raise Exception("Error while waiting on result state of the entity.")
+
+            # Sleep for `poll_interval` seconds if none of the conditions apply:
+            time.sleep(float(poll_interval))
+
+        raise Exception("Timeout exceed while waiting on result state of the entity.")
 
 
 def __get_auth_dict():
@@ -331,7 +367,7 @@ def ovirt_facts_full_argument_spec(**kwargs):
     spec = dict(
         auth=__get_auth_dict(),
         fetch_nested=dict(default=False, type='bool'),
-        nested_attributes=dict(type='list'),
+        nested_attributes=dict(type='list', default=list()),
     )
     spec.update(kwargs)
     return spec
@@ -350,7 +386,7 @@ def ovirt_full_argument_spec(**kwargs):
         wait=dict(default=True, type='bool'),
         poll_interval=dict(default=3, type='int'),
         fetch_nested=dict(default=False, type='bool'),
-        nested_attributes=dict(type='list'),
+        nested_attributes=dict(type='list', default=list()),
     )
     spec.update(kwargs)
     return spec
@@ -364,13 +400,8 @@ def check_params(module):
         module.fail_json(msg='"name" or "id" is required')
 
 
-def engine_version(connection):
-    """
-    Return string representation of oVirt engine version.
-    """
-    engine_api = connection.system_service().get()
-    engine_version = engine_api.product_info.version
-    return '%s.%s' % (engine_version.major, engine_version.minor)
+def engine_supported(connection, version):
+    return LooseVersion(engine_version(connection)) >= LooseVersion(version)
 
 
 def check_support(version, connection, module, params):
@@ -401,6 +432,7 @@ class BaseModule(object):
         self._module = module
         self._service = service
         self._changed = changed
+        self._diff = {'after': dict(), 'before': dict()}
 
     @property
     def changed(self):
@@ -464,7 +496,23 @@ class BaseModule(object):
         """
         pass
 
-    def create(self, entity=None, result_state=None, fail_condition=lambda e: False, search_params=None, **kwargs):
+    def diff_update(self, after, update):
+        for k, v in update.items():
+            if isinstance(v, collections.Mapping):
+                after[k] = self.diff_update(after.get(k, dict()), v)
+            else:
+                after[k] = update[k]
+        return after
+
+    def create(
+        self,
+        entity=None,
+        result_state=None,
+        fail_condition=lambda e: False,
+        search_params=None,
+        update_params=None,
+        **kwargs
+    ):
         """
         Method which is called when state of the entity is 'present'. If user
         don't provide `entity` parameter the entity is searched using
@@ -480,6 +528,7 @@ class BaseModule(object):
         :param result_state: State which should entity has in order to finish task.
         :param fail_condition: Function which checks incorrect state of entity, if it returns `True` Exception is raised.
         :param search_params: Dictionary of parameters to be used for search.
+        :param update_params: The params which should be passed to update method.
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
         """
@@ -492,9 +541,29 @@ class BaseModule(object):
             # Entity exists, so update it:
             entity_service = self._service.service(entity.id)
             if not self.update_check(entity):
+                new_entity = self.build_entity()
                 if not self._module.check_mode:
-                    entity_service.update(self.build_entity())
+                    update_params = update_params or {}
+                    updated_entity = entity_service.update(
+                        new_entity,
+                        **update_params
+                    )
                     self.post_update(entity)
+
+                # Update diffs only if user specified --diff parameter,
+                # so we don't useless overload API:
+                if self._module._diff:
+                    before = get_dict_of_struct(
+                        entity,
+                        self._connection,
+                        fetch_nested=True,
+                        attributes=['name'],
+                    )
+                    after = before.copy()
+                    self.diff_update(after, get_dict_of_struct(new_entity))
+                    self._diff['before'] = before
+                    self._diff['after'] = after
+
                 self.changed = True
         else:
             # Entity don't exists, so create it:
@@ -509,9 +578,14 @@ class BaseModule(object):
         # Wait for the entity to be created and to be in the defined state:
         entity_service = self._service.service(entity.id)
 
-        state_condition = lambda entity: entity
+        def state_condition(entity):
+            return entity
+
         if result_state:
-            state_condition = lambda entity: entity and entity.status == result_state
+
+            def state_condition(entity):
+                return entity and entity.status == result_state
+
         wait(
             service=entity_service,
             condition=state_condition,
@@ -530,6 +604,7 @@ class BaseModule(object):
                 fetch_nested=self._module.params.get('fetch_nested'),
                 attributes=self._module.params.get('nested_attributes'),
             ),
+            'diff': self._diff,
         }
 
     def pre_remove(self, entity):
@@ -539,6 +614,12 @@ class BaseModule(object):
         :param entity: Entity which we want to remove.
         """
         pass
+
+    def entity_name(self, entity):
+        return "{e_type} '{e_name}'".format(
+            e_type=type(entity).__name__.lower(),
+            e_name=getattr(entity, 'name', None),
+        )
 
     def remove(self, entity=None, search_params=None, **kwargs):
         """
@@ -568,7 +649,6 @@ class BaseModule(object):
         entity_service = self._service.service(entity.id)
         if not self._module.check_mode:
             entity_service.remove(**kwargs)
-
             wait(
                 service=entity_service,
                 condition=lambda entity: not entity,
@@ -662,6 +742,7 @@ class BaseModule(object):
                 fetch_nested=self._module.params.get('fetch_nested'),
                 attributes=self._module.params.get('nested_attributes'),
             ),
+            'diff': self._diff,
         }
 
     def search_entity(self, search_params=None):

@@ -1,0 +1,14 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - cloudfront:
+        update_distribution: yes
+        distribution_id: E15BU8SDCGSG57
+        comment: modified by cloudfront.py again
+        aliases:
+          - tested.com
+        tags:
+          - ProjectXY: Nth distribution_x

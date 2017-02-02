@@ -4,6 +4,7 @@ import argparse
 from ipalib import api
 import json
 
+
 def initialize():
     '''
     This function initializes the FreeIPA/IPA API. This function requires
@@ -16,10 +17,11 @@ def initialize():
     try:
         api.Backend.rpcclient.connect()
     except AttributeError:
-        #FreeIPA < 4.0 compatibility
+        # FreeIPA < 4.0 compatibility
         api.Backend.xmlclient.connect()
 
     return api
+
 
 def list_groups(api):
     '''
@@ -28,8 +30,8 @@ def list_groups(api):
     '''
 
     inventory = {}
-    hostvars={}
-    meta={}
+    hostvars = {}
+    meta = {}
 
     result = api.Command.hostgroup_find()['result']
 
@@ -51,6 +53,7 @@ def list_groups(api):
 
     return None
 
+
 def parse_args():
     '''
     This function parses the arguments that were passed in via the command line.
@@ -66,6 +69,7 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def print_host(host):
     '''
     This function is really a stub, it could return variables to be used in
@@ -78,6 +82,7 @@ def print_host(host):
     print(json.dumps({}))
 
     return None
+
 
 if __name__ == '__main__':
     args = parse_args()

@@ -21,9 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems, string_types
-
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_roles
@@ -40,8 +39,8 @@ class RoleMetadata(Base):
     '''
 
     _allow_duplicates = FieldAttribute(isa='bool', default=False)
-    _dependencies     = FieldAttribute(isa='list', default=[])
-    _galaxy_info      = FieldAttribute(isa='GalaxyInfo')
+    _dependencies = FieldAttribute(isa='list', default=[])
+    _galaxy_info = FieldAttribute(isa='GalaxyInfo')
 
     def __init__(self, owner=None):
         self._owner = owner
@@ -81,16 +80,17 @@ class RoleMetadata(Base):
                         role_def['name'] = def_parsed['name']
                     roles.append(role_def)
                 except AnsibleError as exc:
-                    raise AnsibleParserError(str(exc), obj=role_def)
+                    raise AnsibleParserError(str(exc), obj=role_def, orig_exc=exc)
 
         current_role_path = None
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
 
         try:
-            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError:
-            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds)
+            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager,
+                                      loader=self._loader)
+        except AssertionError as e:
+            raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
     def _load_galaxy_info(self, attr, ds):
         '''
@@ -103,8 +103,8 @@ class RoleMetadata(Base):
 
     def serialize(self):
         return dict(
-            allow_duplicates = self._allow_duplicates,
-            dependencies     = self._dependencies,
+            allow_duplicates=self._allow_duplicates,
+            dependencies=self._dependencies,
         )
 
     def deserialize(self, data):

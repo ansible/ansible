@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 from lib.util import (
     CommonConfig,
+    SubprocessError,
     run_command,
 )
 
@@ -16,6 +17,14 @@ class Git(object):
         """
         self.args = args
         self.git = 'git'
+
+    def get_diff(self, args):
+        """
+        :type args: list[str]
+        :rtype: list[str]
+        """
+        cmd = ['diff'] + args
+        return self.run_git_split(cmd, '\n')
 
     def get_diff_names(self, args):
         """
@@ -55,6 +64,18 @@ class Git(object):
         cmd = ['merge-base', '--fork-point', branch]
         return self.run_git(cmd).strip()
 
+    def is_valid_ref(self, ref):
+        """
+        :type ref: str
+        :rtype: bool
+        """
+        cmd = ['show', ref]
+        try:
+            self.run_git(cmd)
+            return True
+        except SubprocessError:
+            return False
+
     def run_git_split(self, cmd, separator=None):
         """
         :type cmd: list[str]
@@ -63,7 +84,7 @@ class Git(object):
         """
         output = self.run_git(cmd).strip(separator)
 
-        if len(output) == 0:
+        if not output:
             return []
 
         return output.split(separator)

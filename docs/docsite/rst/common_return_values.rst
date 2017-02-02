@@ -84,6 +84,10 @@ warnings
 ````````
 This key contains a list of strings that will be presented to the user.
 
+deprecations
+````````````
+This key contains a list of dictionaries that will be presented to the user. Keys of the dictionaries are `msg` and `version`, values are string, value for the `version` key can be an empty string.
+
 .. seealso::
 
    :doc:`modules`

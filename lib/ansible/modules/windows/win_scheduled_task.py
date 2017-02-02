@@ -18,13 +18,15 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = r'''
 ---
 module: win_scheduled_task
+author: "Peter Mounce"
 version_added: "2.0"
 short_description: Manage scheduled tasks
 description:
@@ -39,7 +41,6 @@ options:
   description:
     description:
       - The description for the scheduled task
-    required: false
   enabled:
     description:
       - Enable/disable the task
@@ -57,33 +58,31 @@ options:
   user:
     description:
       - User to run scheduled task as
-    required: false
-  execute:
+  executable:
     description:
       - Command the scheduled task should execute
-    required: false
-  argument:
+    aliases: [ execute ]
+  arguments:
     description:
       - Arguments to provide scheduled task action
-    required: false
+    aliases: [ argument ]
   frequency:
     description:
       - The frequency of the command, not idempotent
-    required: false
     choices:
+      - once
       - daily
       - weekly
   time:
     description:
       - Time to execute scheduled task, not idempotent
-    required: false
   days_of_week:
     description:
       - Days of the week to run a weekly task, not idempotent
-    required: false
   path:
     description:
-      - Task folder in which this task will be stored
+      - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present),
+        and removes an empty path when C(state) is C(absent)
     default: '\'
 '''
 
@@ -91,12 +90,13 @@ EXAMPLES = r'''
 # Create a scheduled task to open a command prompt
 - win_scheduled_task:
     name: TaskName
-    execute: cmd
-    frequency: daily
-    time: 9am
     description: open command prompt
-    path: example
-    enable: yes
+    executable: cmd
+    arguments: -opt1 -opt2
+    path: \example
+    time: 9am
+    frequency: daily
     state: present
+    enabled: yes
     user: SYSTEM
 '''

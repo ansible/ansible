@@ -137,6 +137,7 @@ def filter_targets(targets, patterns, include=True, directories=True, errors=Tru
     :rtype: collections.Iterable[CompletionTarget]
     """
     unmatched = set(patterns or ())
+    compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
 
     for target in targets:
         matched_directories = set()
@@ -145,7 +146,7 @@ def filter_targets(targets, patterns, include=True, directories=True, errors=Tru
         if patterns:
             for alias in target.aliases:
                 for pattern in patterns:
-                    if re.match('^%s$' % pattern, alias):
+                    if compiled_patterns[pattern].match(alias):
                         match = True
 
                         try:
@@ -253,7 +254,8 @@ def walk_integration_targets():
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        if os.path.isdir(path):
+            yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -322,8 +324,8 @@ class CompletionTarget(object):
     def __eq__(self, other):
         if isinstance(other, CompletionTarget):
             return self.__repr__() == other.__repr__()
-        else:
-            return False
+
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)

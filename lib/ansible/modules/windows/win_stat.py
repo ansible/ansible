@@ -17,9 +17,10 @@
 # this is a windows documentation stub, actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -27,7 +28,8 @@ module: win_stat
 version_added: "1.7"
 short_description: returns information about a Windows file
 description:
-     - Returns information about a Windows file
+     - Returns information about a Windows file.
+     - For non-Windows targets, use the M(stat) module instead.
 options:
     path:
         description:
@@ -37,9 +39,11 @@ options:
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9
-              and 2.2 this is no longer an MD5, but a SHA1 isntead. As of Ansible
+              and 2.2 this is no longer an MD5, but a SHA1 instead. As of Ansible
               2.3 this is back to an MD5. Will return None if host is unable to
-              use specified algorithm
+              use specified algorithm.
+            - This option is deprecated in Ansible 2.3 and is replaced with
+              C(checksum_algorithm=md5).
         required: no
         default: True
     get_checksum:
@@ -54,8 +58,10 @@ options:
               the host is unable to use specified algorithm.
         required: no
         default: sha1
-        choices: ['sha1', 'sha256', 'sha384', 'sha512']
+        choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
         version_added: "2.3"
+notes:
+     - For non-Windows targets, use the M(stat) module instead.
 author: "Chris Church (@cchurch)"
 '''
 
@@ -67,22 +73,23 @@ EXAMPLES = r'''
 
 # Obtain information about a folder
 - win_stat:
-    path: C:\\bar
+    path: C:\bar
   register: folder_info
 
 # Get MD5 checksum of a file
 - win_stat:
-    path: C:\\foo.ini
-    get_md5: True
+    path: C:\foo.ini
+    get_checksum: yes
+    checksum_algorithm: md5
   register: md5_checksum
 
 - debug:
-    var: md5_checksum.stat.md5
+    var: md5_checksum.stat.checksum
 
 # Get SHA1 checksum of file
 - win_stat:
-    path: C:\\foo.ini
-    get_checksum: True
+    path: C:\foo.ini
+    get_checksum: yes
   register: sha1_checksum
 
 - debug:
@@ -90,8 +97,8 @@ EXAMPLES = r'''
 
 # Get SHA256 checksum of file
 - win_stat:
-    path: C:\\foo.ini
-    get_checksum: True
+    path: C:\foo.ini
+    get_checksum: yes
     checksum_algorithm: sha256
   register: sha256_checksum
 
@@ -99,7 +106,7 @@ EXAMPLES = r'''
     var: sha256_checksum.stat.checksum
 '''
 
-RETURN = '''
+RETURN = r'''
 changed:
     description: Whether anything was changed
     returned: always
@@ -108,7 +115,7 @@ changed:
 stat:
     description: dictionary containing all the stat data
     returned: success
-    type: dictionary
+    type: complex
     contains:
         attributes:
             description: attributes of the file at path in raw form
@@ -126,11 +133,21 @@ stat:
             returned: success, path exists
             type: float
             sample: 1477984205.15
+        exists:
+            description: if the path exists or not
+            returned: success
+            type: boolean
+            sample: True
         extension:
             description: the extension of the file at path
             returned: success, path exists, path is a file
             type: string
             sample: ".ps1"
+        filename:
+            description: the name of the file (without path)
+            returned: success, path exists, path is a file
+            type: string
+            sammple: foo.ini
         isarchive:
             description: if the path is ready for archiving or not
             returned: success, path exists
@@ -146,7 +163,7 @@ stat:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean
@@ -175,7 +192,7 @@ stat:
             description: the target of the symbolic link, will return null if not a link or the link is broken
             return: success, path exists, file is a symbolic link
             type: string
-            sample: C:\\temp
+            sample: C:\temp
         md5:
             description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash)
             returned: success, path exist, path is a file, get_md5 == True, md5 is supported
@@ -185,12 +202,12 @@ stat:
             description: the owner of the file
             returned: success, path exists
             type: string
-            sample: BUILTIN\\Administrators
+            sample: BUILTIN\Administrators
         path:
             description: the full absolute path to the file
-            returned: success, path exists
+            returned: success, path exists, file exists
             type: string
-            sample: BUILTIN\\Administrators
+            sample: C:\foo.ini
         sharename:
             description: the name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True

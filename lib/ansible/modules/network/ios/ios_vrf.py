@@ -16,23 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
 module: ios_vrf
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage the collection of VRF definitions on IOS devices
+short_description: Manage the collection of VRF definitions on Cisco IOS devices
 description:
   - This module provides declarative management of VRF definitions on
     Cisco IOS devices.  It allows playbooks to manage individual or
     the entire VRF collection.  It also supports purging VRF definitions from
     the configuration that are not explicitly defined.
+extends_documentation_fragment: ios
 options:
   vrfs:
     description:
@@ -40,53 +40,41 @@ options:
         IOS device.  Ths list entries can either be the VRF name or a hash
         of VRF definitions and attributes.  This argument is mutually
         exclusive with the C(name) argument.
-    required: false
-    default: null
   name:
     description:
       - The name of the VRF definition to be managed on the remote IOS
         device.  The VRF definition name is an ASCII string name used
         to uniquely identify the VRF.  This argument is mutually exclusive
         with the C(vrfs) argument
-    required: false
-    default: null
   description:
     description:
       - Provides a short description of the VRF definition in the
         current active configuration.  The VRF definition value accepts
-        alphanumberic characters used to provide additional information
+        alphanumeric characters used to provide additional information
         about the VRF.
-    required: false
-    default: null
   rd:
     description:
-      - The router-distigusher value uniquely identifies the VRF to
+      - The router-distinguisher value uniquely identifies the VRF to
         routing processes on the remote IOS system.  The RD value takes
-        the form of A:B where A and B are both numeric values.
-    required: false
-    default: null
+        the form of C(A:B) where C(A) and C(B) are both numeric values.
   interfaces:
     description:
-      - The C(interfaces) argument identifies the set of interfaces that
+      - Identifies the set of interfaces that
         should be configured in the VRF.  Interfaces must be routed
         interfaces in order to be placed into a VRF.
-    required: false
-    default: null
   purge:
     description:
-      - The C(purge) argument instructs the module to consider the
+      - Instructs the module to consider the
         VRF definition absolute.  It will remove any previously configured
         VRFs on the device.
-    required: false
     default: false
   state:
     description:
-      - The C(state) argument configures the state of the VRF definition
+      - Configures the state of the VRF definition
         as it relates to the device operational configuration.  When set
         to I(present), the VRF should be configured in the device active
         configuration and when set to I(absent) the VRF should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -142,8 +130,9 @@ import re
 
 from functools import partial
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ios import load_config, get_config
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
@@ -155,7 +144,7 @@ def add_command_to_vrf(name, cmd, commands):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
+    state = module.params['state'] # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -327,18 +316,24 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(ios_argument_spec)
+
     mutually_exclusive = [('name', 'vrfs')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     result = {'changed': False}
+
+    warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(update_objects(want,have), module)
+    commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
         want_vrfs = [x['name'] for x in want]

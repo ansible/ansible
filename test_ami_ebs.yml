@@ -1,0 +1,20 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - ec2_ami:
+        region: ap-southeast-2
+        name: newtest10
+        state: present
+        architecture: x86_64
+        virtualization_type: hvm
+        root_device_name: /dev/xvda
+        device_mapping:
+          - device_name: /dev/xvda
+            size: 8
+            snapshot_id: snap-002ff680181284d87
+            delete_on_termination: true
+            volume_type: gp2
+      register: image

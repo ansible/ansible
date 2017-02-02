@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -41,6 +42,10 @@ options:
     description:
       - The path to the root of the Serverless Service to be operated on.
     required: true
+  stage:
+    description:
+      - The name of the serverless framework project stage to deploy to. This uses the serverless framework default "dev".
+    required: false
   functions:
     description:
       - A list of specific functions to deploy. If this is not provided, all functions in the service will be deployed.
@@ -53,7 +58,8 @@ options:
     default: us-east-1
   deploy:
     description:
-      - Whether or not to deploy artifacts after building them. When this option is `false` all the functions will be built, but no stack update will be run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
+      - Whether or not to deploy artifacts after building them. When this option is `false` all the functions will be built, but no stack update will be
+        run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
 notes:
@@ -114,7 +120,7 @@ import yaml
 
 
 def read_serverless_config(module):
-    path = os.path.expanduser(module.params.get('service_path'))
+    path = module.params.get('service_path')
 
     try:
         with open(os.path.join(path, 'serverless.yml')) as sls_config:
@@ -141,7 +147,7 @@ def get_service_name(module, stage):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path = dict(required=True),
+            service_path = dict(required=True, type='path'),
             state        = dict(default='present', choices=['present', 'absent'], required=False),
             functions    = dict(type='list', required=False),
             region       = dict(default='', required=False),
@@ -150,7 +156,7 @@ def main():
         ),
     )
 
-    service_path = os.path.expanduser(module.params.get('service_path'))
+    service_path = module.params.get('service_path')
     state = module.params.get('state')
     functions = module.params.get('functions')
     region = module.params.get('region')

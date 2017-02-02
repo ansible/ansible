@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Add or change a subnet group
-- elasticache_subnet_group
+- elasticache_subnet_group:
     state: present
     name: norwegian-blue
     description: My Fancy Ex Parrot Subnet Group
@@ -70,8 +71,7 @@ EXAMPLES = '''
 
 try:
     import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
+    from boto.elasticache import connect_to_region
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
@@ -114,9 +114,7 @@ def main():
 
     """Get an elasticache connection"""
     try:
-        endpoint = "elasticache.%s.amazonaws.com" % region
-        connect_region = RegionInfo(name=region, endpoint=endpoint)
-        conn = ElastiCacheConnection(region=connect_region, **aws_connect_kwargs)
+        conn = connect_to_region(region_name=region, **aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=e.message)
 

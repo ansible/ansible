@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -96,8 +97,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import subprocess
-
 
 class BackendProp(object):
     def __init__(self, module):
@@ -113,9 +112,8 @@ class BackendProp(object):
             '--backend-name', backend_name,
             '-n', '-X', '-s'
         ] + password_method
-        process = subprocess.Popen(my_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode == 0:
+        rc, stdout, stderr = self._module.run_command(my_command)
+        if rc == 0:
             return stdout
         else:
             self._module.fail_json(msg="Error message: " + str(stderr))
@@ -131,9 +129,8 @@ class BackendProp(object):
             '--set', name + ":" + value,
             '-n', '-X'
         ] + password_method
-        process = subprocess.Popen(my_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode == 0:
+        rc, stdout, stderr = self._module.run_command(my_command)
+        if rc == 0:
             return True
         else:
             self._module.fail_json(msg="Error message: " + stderr)

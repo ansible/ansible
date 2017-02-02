@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: htpasswd
@@ -72,7 +73,7 @@ notes:
   - "This module depends on the I(passlib) Python library, which needs to be installed on all target systems."
   - "On Debian, Ubuntu, or Fedora: install I(python-passlib)."
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
-requires: [ passlib>=1.6 ]
+requirements: [ passlib>=1.6 ]
 author: "Ansible Core Team"
 """
 
@@ -103,7 +104,7 @@ EXAMPLES = """
 
 import os
 import tempfile
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
@@ -130,14 +131,14 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
     if crypt_scheme in apache_hashes:
         context = htpasswd_context
     else:
-        context = CryptContext(schemes = [ crypt_scheme ] + apache_hashes)
+        context = CryptContext(schemes=[crypt_scheme] + apache_hashes)
     if not os.path.exists(dest):
         if not create:
             raise ValueError('Destination %s does not exist' % dest)
         if check_mode:
             return ("Create %s" % dest, True)
         create_missing_directories(dest)
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=True, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, autoload=False, default=crypt_scheme, context=context)
@@ -148,7 +149,7 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         ht.save()
         return ("Created %s and added %s" % (dest, username), True)
     else:
-        if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+        if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
             ht = HtpasswdFile(dest, new=False, default_scheme=crypt_scheme, context=context)
         else:
             ht = HtpasswdFile(dest, default=crypt_scheme, context=context)
@@ -175,7 +176,7 @@ def absent(dest, username, check_mode):
     """ Ensures user is absent
 
     Returns (msg, changed) """
-    if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
+    if LooseVersion(passlib.__version__) >= LooseVersion('1.6'):
         ht = HtpasswdFile(dest, new=False)
     else:
         ht = HtpasswdFile(dest)
@@ -253,7 +254,7 @@ def main():
                 path = temp.name
             f = open(path, "w")
             try:
-                [ f.write(line) for line in lines if line.strip() ]
+                [f.write(line) for line in lines if line.strip()]
             finally:
                 f.close()
 
@@ -263,7 +264,7 @@ def main():
         elif state == 'absent':
             if not os.path.exists(path):
                 module.exit_json(msg="%s not present" % username,
-                        warnings="%s does not exist" % path, changed=False)
+                                 warnings="%s does not exist" % path, changed=False)
             (msg, changed) = absent(path, username, check_mode)
         else:
             module.fail_json(msg="Invalid state: %s" % state)

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -92,7 +93,7 @@ class NailGun(object):
         if len(response) == 1:
             return response[0]
         else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
+            return None
 
     def organization(self, params):
         name = params['name']

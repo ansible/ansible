@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -65,7 +66,7 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
    - name: Create Management portgroup
-      local_action:
+     local_action:
         module: vmware_dvs_portgroup
         hostname: vcenter_ip_or_hostname
         username: vcenter_username

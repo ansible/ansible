@@ -25,11 +25,12 @@ import os
 
 from ansible.plugins.callback import CallbackBase
 
-FAILED_VOICE="Zarvox"
-REGULAR_VOICE="Trinoids"
-HAPPY_VOICE="Cellos"
-LASER_VOICE="Princess"
-SAY_CMD="/usr/bin/say"
+FAILED_VOICE = "Zarvox"
+REGULAR_VOICE = "Trinoids"
+HAPPY_VOICE = "Cellos"
+LASER_VOICE = "Princess"
+SAY_CMD = "/usr/bin/say"
+
 
 class CallbackModule(CallbackBase):
     """
@@ -48,7 +49,7 @@ class CallbackModule(CallbackBase):
         # ansible will not call any callback if disabled is set to True
         if not os.path.exists(SAY_CMD):
             self.disabled = True
-            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)) )
+            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)))
 
     def say(self, msg, voice):
         subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: netapp_e_facts
@@ -38,8 +39,6 @@ options:
     required: true
     description:
     - The url to the SANtricity WebServices Proxy or embedded REST API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true
@@ -68,7 +67,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg: Gathered facts for <StorageArrayId>.
+msg:
+    description: Gathered facts for <StorageArrayId>.
+    returned: always
+    type: string
 """
 import json
 

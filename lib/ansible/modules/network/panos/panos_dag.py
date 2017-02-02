@@ -75,9 +75,10 @@ RETURN='''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -119,7 +120,7 @@ def add_dag(xapi, dag_name, dag_filter):
 def main():
     argument_spec = dict(
         ip_address=dict(required=True),
-        password=dict(required=True),
+        password=dict(required=True, no_log=True),
         username=dict(default='admin'),
         dag_name=dict(required=True),
         dag_filter=dict(required=True),

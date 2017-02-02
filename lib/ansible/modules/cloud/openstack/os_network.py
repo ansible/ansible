@@ -16,18 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -91,6 +83,10 @@ options:
      required: false
      default: None
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -107,7 +103,7 @@ RETURN = '''
 network:
     description: Dictionary describing the network.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Network ID.
@@ -162,6 +158,14 @@ network:
             type: string
             sample: 101
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def main():

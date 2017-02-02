@@ -18,11 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-import time
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -62,6 +62,9 @@ EXAMPLES = '''
     state: started
 '''
 
+import time
+
+
 def main():
     arg_spec = dict(
         name=dict(required=True),
@@ -96,7 +99,7 @@ def main():
         return status()
 
     def wait_for_monit_to_stop_pending():
-        """Fails this run if there is no status or it's pending/initalizing for timeout"""
+        """Fails this run if there is no status or it's pending/initializing for timeout"""
         timeout_time = time.time() + timeout
         sleep_time = 5
 

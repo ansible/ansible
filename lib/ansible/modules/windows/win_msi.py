@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -81,4 +82,3 @@ EXAMPLES = r'''
     path: C:\7z920-x64.msi
     state: absent
 '''
-

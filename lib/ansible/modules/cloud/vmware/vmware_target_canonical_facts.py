@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -45,10 +46,12 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_target_canonical_facts command from Ansible Playbooks
 - name: Get Canonical name
-      local_action: >
-        vmware_target_canonical_facts
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        target_id=7
+  local_action:
+    module: vmware_target_canonical_facts
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    target_id: 7
 '''
 
 try:

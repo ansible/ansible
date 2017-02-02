@@ -32,7 +32,17 @@ BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
 BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
-SIZE_RANGES = { 'Y': 1<<80, 'Z': 1<<70, 'E': 1<<60, 'P': 1<<50, 'T': 1<<40, 'G': 1<<30, 'M': 1<<20, 'K': 1<<10, 'B': 1 }
+SIZE_RANGES = {
+    'Y': 1 << 80,
+    'Z': 1 << 70,
+    'E': 1 << 60,
+    'P': 1 << 50,
+    'T': 1 << 40,
+    'G': 1 << 30,
+    'M': 1 << 20,
+    'K': 1 << 10,
+    'B': 1,
+}
 
 FILE_ATTRIBUTES = {
     'A': 'noatime',
@@ -64,7 +74,6 @@ FILE_ATTRIBUTES = {
 import locale
 import os
 import re
-import pipes
 import shlex
 import subprocess
 import sys
@@ -80,13 +89,15 @@ import pwd
 import platform
 import errno
 import datetime
+from collections import deque
+from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import repeat, chain
 
 try:
     import syslog
-    HAS_SYSLOG=True
+    HAS_SYSLOG = True
 except ImportError:
-    HAS_SYSLOG=False
+    HAS_SYSLOG = False
 
 try:
     from systemd import journal
@@ -94,22 +105,15 @@ try:
 except ImportError:
     has_journal = False
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
-
-try:
-    from collections import Sequence, Mapping
-except ImportError:
-    # python2.5
-    Sequence = (list, tuple)
-    Mapping = (dict,)
 
 # Note: When getting Sequence from collections, it matches with strings.  If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -162,10 +166,20 @@ except ImportError:
         pass
 
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
-from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
-        iteritems, text_type, string_types)
-from ansible.module_utils.six.moves import map, reduce
+from ansible.module_utils.six import (
+    PY2,
+    PY3,
+    b,
+    binary_type,
+    integer_types,
+    iteritems,
+    string_types,
+    text_type,
+)
+from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+
+PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -207,33 +221,33 @@ _literal_eval = literal_eval
 # is an internal implementation detail
 _ANSIBLE_ARGS = None
 
-FILE_COMMON_ARGUMENTS=dict(
-    src = dict(),
-    mode = dict(type='raw'),
-    owner = dict(),
-    group = dict(),
-    seuser = dict(),
-    serole = dict(),
-    selevel = dict(),
-    setype = dict(),
-    follow = dict(type='bool', default=False),
+FILE_COMMON_ARGUMENTS = dict(
+    src=dict(),
+    mode=dict(type='raw'),
+    owner=dict(),
+    group=dict(),
+    seuser=dict(),
+    serole=dict(),
+    selevel=dict(),
+    setype=dict(),
+    follow=dict(type='bool', default=False),
     # not taken by the file module, but other modules call file so it must ignore them.
-    content = dict(no_log=True),
-    backup = dict(),
-    force = dict(),
-    remote_src = dict(), # used by assemble
-    regexp = dict(), # used by assemble
-    delimiter = dict(), # used by assemble
-    directory_mode = dict(), # used by copy
-    unsafe_writes  = dict(type='bool'), # should be available to any module using atomic_move
-    attributes = dict(aliases=['attr']),
+    content=dict(no_log=True),
+    backup=dict(),
+    force=dict(),
+    remote_src=dict(),  # used by assemble
+    regexp=dict(),  # used by assemble
+    delimiter=dict(),  # used by assemble
+    directory_mode=dict(),  # used by copy
+    unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    attributes=dict(aliases=['attr']),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 # Can't use 07777 on Python 3, can't use 0o7777 on Python 2.4
 PERM_BITS = int('07777', 8)      # file mode permission bits
-EXEC_PERM_BITS = int('00111', 8) # execute permission bits
+EXEC_PERM_BITS = int('00111', 8)  # execute permission bits
 DEFAULT_PERM = int('0666', 8)    # default file permission bits
 
 
@@ -241,11 +255,12 @@ def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
 
+
 def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            supported_dists = platform._supported_dists + ('arch','alpine')
+            supported_dists = platform._supported_dists + ('arch', 'alpine', 'devuan')
             distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
@@ -260,6 +275,7 @@ def get_distribution():
         distribution = None
     return distribution
 
+
 def get_distribution_version():
     ''' return the distribution version '''
     if platform.system() == 'Linux':
@@ -273,6 +289,7 @@ def get_distribution_version():
     else:
         distribution_version = None
     return distribution_version
+
 
 def get_all_subclasses(cls):
     '''
@@ -337,6 +354,7 @@ def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'
     else:
         return d
 
+
 def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'):
     ''' Recursively convert dict keys and values to byte str
 
@@ -355,6 +373,7 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'
         return tuple(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
     else:
         return d
+
 
 def return_values(obj):
     """ Return native stringified values from datastructures.
@@ -380,20 +399,45 @@ def return_values(obj):
     else:
         raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
 
-def remove_values(value, no_log_strings):
-    """ Remove strings in no_log_strings from value.  If value is a container
-    type, then remove a lot more"""
+
+def _remove_values_conditions(value, no_log_strings, deferred_removals):
+    """
+    Helper function for :meth:`remove_values`.
+
+    :arg value: The value to check for strings that need to be stripped
+    :arg no_log_strings: set of strings which must be stripped out of any values
+    :arg deferred_removals: List which holds information about nested
+        containers that have to be iterated for removals.  It is passed into
+        this function so that more entries can be added to it if value is
+        a container type.  The format of each entry is a 2-tuple where the first
+        element is the ``value`` parameter and the second value is a new
+        container to copy the elements of ``value`` into once iterated.
+    :returns: if ``value`` is a scalar, returns ``value`` with two exceptions:
+        1. :class:`~datetime.datetime` objects which are changed into a string representation.
+        2. objects which are in no_log_strings are replaced with a placeholder
+            so that no sensitive data is leaked.
+        If ``value`` is a container type, returns a new empty container.
+
+    ``deferred_removals`` is added to as a side-effect of this function.
+
+    .. warning:: It is up to the caller to make sure the order in which value
+        is passed in is correct.  For instance, higher level containers need
+        to be passed in before lower level containers. For example, given
+        ``{'level1': {'level2': 'level3': [True]} }`` first pass in the
+        dictionary for ``level1``, then the dict for ``level2``, and finally
+        the list for ``level3``.
+    """
     if isinstance(value, (text_type, binary_type)):
         # Need native str type
         native_str_value = value
         if isinstance(value, text_type):
             value_is_text = True
             if PY2:
-                native_str_value = to_bytes(value, encoding='utf-8', errors='surrogate_or_strict')
+                native_str_value = to_bytes(value, errors='surrogate_or_strict')
         elif isinstance(value, binary_type):
             value_is_text = False
             if PY3:
-                native_str_value = to_text(value, encoding='utf-8', errors='surrogate_or_strict')
+                native_str_value = to_text(value, errors='surrogate_or_strict')
 
         if native_str_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
@@ -401,15 +445,36 @@ def remove_values(value, no_log_strings):
             native_str_value = native_str_value.replace(omit_me, '*' * 8)
 
         if value_is_text and isinstance(native_str_value, binary_type):
-            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         elif not value_is_text and isinstance(native_str_value, text_type):
-            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         else:
             value = native_str_value
-    elif isinstance(value, SEQUENCETYPE):
-        return [remove_values(elem, no_log_strings) for elem in value]
+
+    elif isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
+    elif isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
     elif isinstance(value, Mapping):
-        return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        value = new_value
+
     elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
@@ -417,11 +482,40 @@ def remove_values(value, no_log_strings):
         for omit_me in no_log_strings:
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
     elif isinstance(value, datetime.datetime):
         value = value.isoformat()
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
     return value
+
+
+def remove_values(value, no_log_strings):
+    """ Remove strings in no_log_strings from value.  If value is a container
+    type, then remove a lot more"""
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
+                new_data[old_key] = new_elem
+        else:
+            for elem in old_data:
+                new_elem = _remove_values_conditions(elem, no_log_strings, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from output')
+
+    return new_value
 
 
 def heuristic_log_sanitize(data, no_log_values=None):
@@ -488,6 +582,7 @@ def heuristic_log_sanitize(data, no_log_values=None):
         output = remove_values(output, no_log_values)
     return output
 
+
 def bytes_to_human(size, isbits=False, unit=None):
 
     base = 'Bytes'
@@ -504,7 +599,8 @@ def bytes_to_human(size, isbits=False, unit=None):
     else:
         suffix = base
 
-    return '%.2f %s' % (float(size)/ limit, suffix)
+    return '%.2f %s' % (float(size) / limit, suffix)
+
 
 def human_to_bytes(number, default_unit=None, isbits=False):
 
@@ -554,6 +650,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
 
     return int(round(num * limit))
 
+
 def is_executable(path):
     '''is the given path executable?
 
@@ -566,6 +663,7 @@ def is_executable(path):
     # looking for, then bitwise-and with the file's mode to determine if any
     # execute bits are set.
     return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
+
 
 def _load_params():
     ''' read the modules parameters and store them globally.
@@ -618,8 +716,10 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
+              '"failed": true}')
         sys.exit(1)
+
 
 def env_fallback(*args, **kwargs):
     ''' Load value from environment '''
@@ -628,6 +728,7 @@ def env_fallback(*args, **kwargs):
             return os.environ[arg]
     else:
         raise AnsibleFallbackNotFound
+
 
 def _lenient_lowercase(lst):
     """Lowercase elements of a list.
@@ -642,6 +743,7 @@ def _lenient_lowercase(lst):
             lowered.append(value)
     return lowered
 
+
 def format_attributes(attributes):
     attribute_list = []
     for attr in attributes:
@@ -649,22 +751,31 @@ def format_attributes(attributes):
             attribute_list.append(FILE_ATTRIBUTES[attr])
     return attribute_list
 
+
 def get_flags_from_attributes(attributes):
     flags = []
-    for key,attr in FILE_ATTRIBUTES.items():
+    for key, attr in FILE_ATTRIBUTES.items():
         if attr in attributes:
             flags.append(key)
     return ''.join(flags)
+
 
 class AnsibleFallbackNotFound(Exception):
     pass
 
 
+class _SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Set):
+            return list(obj)
+        return super(_SetEncoder, self).default(obj)
+
+
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-        check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-        required_if=None):
+                 check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+                 required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -672,7 +783,7 @@ class AnsibleModule(object):
         see library/* for examples
         '''
 
-        self._name = os.path.basename(__file__) #initialize name until we can parse from options
+        self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
@@ -680,16 +791,18 @@ class AnsibleModule(object):
         self.cleanup_files = []
         self._debug = False
         self._diff = False
+        self._socket_path = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
-        self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
+                              '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
+                              '_ansible_socket']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -804,15 +917,15 @@ class AnsibleModule(object):
             b_path = os.path.realpath(b_path)
             path = to_native(b_path)
 
-        mode   = params.get('mode', None)
-        owner  = params.get('owner', None)
-        group  = params.get('group', None)
+        mode = params.get('mode', None)
+        owner = params.get('owner', None)
+        group = params.get('group', None)
 
         # selinux related options
-        seuser    = params.get('seuser', None)
-        serole    = params.get('serole', None)
-        setype    = params.get('setype', None)
-        selevel   = params.get('selevel', None)
+        seuser = params.get('seuser', None)
+        serole = params.get('serole', None)
+        setype = params.get('setype', None)
+        selevel = params.get('selevel', None)
         secontext = [seuser, serole, setype]
 
         if self.selinux_mls_enabled():
@@ -829,7 +942,6 @@ class AnsibleModule(object):
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
         )
-
 
     # Detect whether using selinux that is MLS-aware.
     # While this means you can set the level/range with
@@ -849,7 +961,7 @@ class AnsibleModule(object):
         if not HAVE_SELINUX:
             seenabled = self.get_bin_path('selinuxenabled')
             if seenabled is not None:
-                (rc,out,err) = self.run_command(seenabled)
+                (rc, out, err) = self.run_command(seenabled)
                 if rc == 0:
                     self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
             return False
@@ -900,19 +1012,28 @@ class AnsibleModule(object):
         context = ret[1].split(':', 3)
         return context
 
-    def user_and_group(self, filename):
-        filename = os.path.expanduser(os.path.expandvars(filename))
-        b_filename = to_bytes(filename, errors='surrogate_or_strict')
-        st = os.lstat(b_filename)
+    def user_and_group(self, path, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        st = os.lstat(b_path)
         uid = st.st_uid
         gid = st.st_gid
         return (uid, gid)
 
     def find_mount_point(self, path):
-        path = os.path.realpath(os.path.expanduser(os.path.expandvars(path)))
-        while not os.path.ismount(path):
-            path = os.path.dirname(path)
-        return path
+        path_is_bytes = False
+        if isinstance(path, binary_type):
+            path_is_bytes = True
+
+        b_path = os.path.realpath(to_bytes(os.path.expanduser(os.path.expandvars(path)), errors='surrogate_or_strict'))
+        while not os.path.ismount(b_path):
+            b_path = os.path.dirname(b_path)
+
+        if path_is_bytes:
+            return b_path
+
+        return to_text(b_path, errors='surrogate_or_strict')
 
     def is_special_selinux_path(self, path):
         """
@@ -985,12 +1106,14 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_owner_if_different(self, path, owner, changed, diff=None):
-        path = os.path.expanduser(os.path.expandvars(path))
-        b_path = to_bytes(path, errors='surrogate_or_strict')
+    def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         if owner is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(path)
+        orig_uid, orig_gid = self.user_and_group(path, expand)
         try:
             uid = int(owner)
         except ValueError:
@@ -1017,12 +1140,14 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_group_if_different(self, path, group, changed, diff=None):
-        path = os.path.expanduser(os.path.expandvars(path))
-        b_path = to_bytes(path, errors='surrogate_or_strict')
+    def set_group_if_different(self, path, group, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         if group is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(b_path)
+        orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             gid = int(group)
         except ValueError:
@@ -1049,9 +1174,11 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_mode_if_different(self, path, mode, changed, diff=None):
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        b_path = os.path.expanduser(os.path.expandvars(b_path))
+    def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1108,7 +1235,7 @@ class AnsibleModule(object):
                 e = get_exception()
                 if os.path.islink(b_path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
-                elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
+                elif e.errno in (errno.ENOENT, errno.ELOOP):  # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -1123,16 +1250,19 @@ class AnsibleModule(object):
                 changed = True
         return changed
 
-    def set_attributes_if_different(self, path, attributes, changed, diff=None):
+    def set_attributes_if_different(self, path, attributes, changed, diff=None, expand=True):
 
         if attributes is None:
             return changed
 
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        b_path = os.path.expanduser(os.path.expandvars(b_path))
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
+
         existing = self.get_file_attributes(b_path)
 
-        if existing.get('attr_flags','') != attributes:
+        if existing.get('attr_flags', '') != attributes:
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
                 attrcmd = [attrcmd, '=%s' % attributes, b_path]
@@ -1165,13 +1295,12 @@ class AnsibleModule(object):
                 rc, out, err = self.run_command(attrcmd)
                 if rc == 0:
                     res = out.split(' ')[0:2]
-                    output['attr_flags'] =  res[1].replace('-','').strip()
+                    output['attr_flags'] = res[1].replace('-', '').strip()
                     output['version'] = res[0].strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
             except:
                 pass
         return output
-
 
     def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
         new_mode = stat.S_IMODE(path_stat.st_mode)
@@ -1195,7 +1324,7 @@ class AnsibleModule(object):
         return new_mode
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
-        if operator  ==  '=':
+        if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU | stat.S_ISUID
             elif user == 'g':
@@ -1225,13 +1354,13 @@ class AnsibleModule(object):
             X_perms = {
                 'u': {'X': stat.S_IXUSR},
                 'g': {'X': stat.S_IXGRP},
-                'o': {'X': stat.S_IXOTH}
+                'o': {'X': stat.S_IXOTH},
             }
         else:
             X_perms = {
                 'u': {'X': 0},
                 'g': {'X': 0},
-                'o': {'X': 0}
+                'o': {'X': 0},
             }
 
         user_perms_to_modes = {
@@ -1243,7 +1372,8 @@ class AnsibleModule(object):
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
-                'o': (prev_mode & stat.S_IRWXO) << 6 },
+                'o': (prev_mode & stat.S_IRWXO) << 6,
+            },
             'g': {
                 'r': stat.S_IRGRP,
                 'w': stat.S_IWGRP,
@@ -1252,7 +1382,8 @@ class AnsibleModule(object):
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
-                'o': (prev_mode & stat.S_IRWXO) << 3 },
+                'o': (prev_mode & stat.S_IRWXO) << 3,
+            },
             'o': {
                 'r': stat.S_IROTH,
                 'w': stat.S_IWOTH,
@@ -1261,40 +1392,43 @@ class AnsibleModule(object):
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
-                'o': prev_mode & stat.S_IRWXO }
+                'o': prev_mode & stat.S_IRWXO,
+            }
         }
 
         # Insert X_perms into user_perms_to_modes
         for key, value in X_perms.items():
             user_perms_to_modes[key].update(value)
 
-        or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
+        def or_reduce(mode, perm):
+            return mode | user_perms_to_modes[user][perm]
+
         return reduce(or_reduce, perms, 0)
 
-    def set_fs_attributes_if_different(self, file_args, changed, diff=None):
+    def set_fs_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
             file_args['path'], file_args['secontext'], changed, diff
         )
         changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed, diff
+            file_args['path'], file_args['owner'], changed, diff, expand
         )
         changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed, diff
+            file_args['path'], file_args['group'], changed, diff, expand
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed, diff
+            file_args['path'], file_args['mode'], changed, diff, expand
         )
         changed = self.set_attributes_if_different(
-            file_args['path'], file_args['attributes'], changed, diff
+            file_args['path'], file_args['attributes'], changed, diff, expand
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed, diff=None):
-        return self.set_fs_attributes_if_different(file_args, changed, diff)
+    def set_directory_attributes_if_different(self, file_args, changed, diff=None, expand=True):
+        return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
-    def set_file_attributes_if_different(self, file_args, changed, diff=None):
-        return self.set_fs_attributes_if_different(file_args, changed, diff)
+    def set_file_attributes_if_different(self, file_args, changed, diff=None, expand=True):
+        return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
     def add_path_info(self, kwargs):
         '''
@@ -1359,10 +1493,12 @@ class AnsibleModule(object):
             e = get_exception()
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
-    def _handle_aliases(self):
+    def _handle_aliases(self, spec=None):
         # this uses exceptions as it happens before we can safely call fail_json
-        aliases_results = {} #alias:canon
-        for (k,v) in self.argument_spec.items():
+        aliases_results = {}  # alias:canon
+        if spec is None:
+            spec = self.argument_spec
+        for (k, v) in spec.items():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
@@ -1385,7 +1521,7 @@ class AnsibleModule(object):
     def _check_arguments(self, check_invalid_arguments):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
-        for (k,v) in list(self.params.items()):
+        for (k, v) in list(self.params.items()):
 
             if k == '_ansible_check_mode' and v:
                 self.check_mode = True
@@ -1414,10 +1550,13 @@ class AnsibleModule(object):
             elif k == '_ansible_module_name':
                 self._name = v
 
+            elif k == '_ansible_socket':
+                self._socket_path = v
+
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)
 
-            #clean up internal params:
+            # clean up internal params:
             if k.startswith('_ansible_'):
                 del self.params[k]
 
@@ -1455,18 +1594,22 @@ class AnsibleModule(object):
         if spec is None:
             return
         for check in spec:
-            counts = [ self._count_terms([field]) for field in check ]
-            non_zero = [ c for c in counts if c > 0 ]
+            counts = [self._count_terms([field]) for field in check]
+            non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % (check,))
 
-    def _check_required_arguments(self):
+    def _check_required_arguments(self, spec=None, param=None):
         ''' ensure all required arguments are present '''
         missing = []
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        for (k, v) in spec.items():
             required = v.get('required', False)
-            if required and k not in self.params:
+            if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
@@ -1497,37 +1640,41 @@ class AnsibleModule(object):
             if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
-    def _check_argument_values(self):
+    def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        for (k,v) in self.argument_spec.items():
-            choices = v.get('choices',None)
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        for (k, v) in spec.items():
+            choices = v.get('choices', None)
             if choices is None:
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
-                if k in self.params:
-                    if self.params[k] not in choices:
+                if k in param:
+                    if param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
-                        if self.params[k] == 'False':
+                        if param[k] == 'False':
                             lowered_choices = _lenient_lowercase(choices)
                             FALSEY = frozenset(BOOLEANS_FALSE)
                             overlap = FALSEY.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] == 'True':
+                        if param[k] == 'True':
                             if lowered_choices is None:
                                 lowered_choices = _lenient_lowercase(choices)
                             TRUTHY = frozenset(BOOLEANS_TRUE)
                             overlap = TRUTHY.intersection(choices)
                             if len(overlap) == 1:
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] not in choices:
-                            choices_str=",".join([to_native(c) for c in choices])
-                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                        if param[k] not in choices:
+                            choices_str = ",".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
@@ -1575,7 +1722,7 @@ class AnsibleModule(object):
         if isinstance(value, string_types):
             return value.split(",")
         elif isinstance(value, int) or isinstance(value, float):
-            return [ str(value) ]
+            return [str(value)]
 
         raise TypeError('%s cannot be converted to a list' % type(value))
 
@@ -1662,12 +1809,11 @@ class AnsibleModule(object):
             return value.strip()
         else:
             if isinstance(value, (list, tuple, dict)):
-                return json.dumps(value)
+                return self.jsonify(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
         return value
-
 
     def _check_type_bytes(self, value):
         try:
@@ -1675,28 +1821,33 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Byte value' % type(value))
 
-
     def _check_type_bits(self, value):
         try:
             self.human_to_bytes(value, isbits=True)
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
-    def _check_argument_types(self):
+    def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
-        for (k, v) in self.argument_spec.items():
+
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+
+        for (k, v) in spec.items():
             wanted = v.get('type', None)
-            if k not in self.params:
+            if k not in param:
                 continue
             if wanted is None:
                 # Mostly we want to default to str.
                 # For values set to None explicitly, return None instead as
                 # that allows a user to unset a parameter
-                if self.params[k] is None:
+                if param[k] is None:
                     continue
                 wanted = 'str'
 
-            value = self.params[k]
+            value = param[k]
             if value is None:
                 continue
 
@@ -1705,15 +1856,24 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
             try:
-                self.params[k] = type_checker(value)
+                param[k] = type_checker(value)
             except (TypeError, ValueError):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
+            # deal with sub options to create sub spec
+            spec = None
+            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
+                spec = v.get('options', None)
+                if spec:
+                    self._check_required_arguments(spec, param[k])
+                    self._check_argument_types(spec, param[k])
+                    self._check_argument_values(spec, param[k])
+
     def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.items():
+        for (k, v) in self.argument_spec.items():
             default = v.get('default', None)
-            if pre == True:
+            if pre is True:
                 # this prevents setting defaults on required items
                 if default is not None and k not in self.params:
                     self.params[k] = default
@@ -1723,7 +1883,7 @@ class AnsibleModule(object):
                     self.params[k] = default
 
     def _set_fallbacks(self):
-        for k,v in self.argument_spec.items():
+        for (k, v) in self.argument_spec.items():
             fallback = v.get('fallback', (None,))
             fallback_strategy = fallback[0]
             fallback_args = []
@@ -1804,17 +1964,19 @@ class AnsibleModule(object):
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
-        passwd_keys = ['password', 'login_password']
 
         for param in self.params:
-            canon  = self.aliases.get(param, param)
+            canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
-            elif param in passwd_keys:
+            # try to capture all passwords/passphrase named fields missed by no_log
+            elif PASSWORD_MATCH.search(param) and arg_opts.get('type', 'str') != 'bool' and not arg_opts.get('choices', False):
+                # skip boolean and enums as they are about 'password' state
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
+                self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):
@@ -1823,14 +1985,7 @@ class AnsibleModule(object):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
-        msg = []
-        for arg in log_args:
-            arg_val = log_args[arg]
-            if not isinstance(arg_val, (text_type, binary_type)):
-                arg_val = str(arg_val)
-            elif isinstance(arg_val, text_type):
-                arg_val = arg_val.encode('utf-8')
-            msg.append('%s=%s' % (arg, arg_val))
+        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
         if msg:
             msg = 'Invoked with %s' % ' '.join(msg)
         else:
@@ -1838,19 +1993,18 @@ class AnsibleModule(object):
 
         self.log(msg, log_args=log_args)
 
-
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
-            if not os.access(cwd, os.F_OK|os.R_OK):
-                raise
+            if not os.access(cwd, os.F_OK | os.R_OK):
+                raise Exception()
             return cwd
         except:
             # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
-                    if os.access(cwd, os.F_OK|os.R_OK):
+                    if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
                 except:
@@ -1882,7 +2036,7 @@ class AnsibleModule(object):
             if not d:
                 continue
             path = os.path.join(d, arg)
-            if os.path.exists(path) and is_executable(path):
+            if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
                 bin_path = path
                 break
         if required and bin_path is None:
@@ -1905,14 +2059,14 @@ class AnsibleModule(object):
     def jsonify(self, data):
         for encoding in ("utf-8", "latin-1"):
             try:
-                return json.dumps(data, encoding=encoding)
+                return json.dumps(data, encoding=encoding, cls=_SetEncoder)
             # Old systems using old simplejson module does not support encoding keyword.
             except TypeError:
                 try:
                     new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
                 except UnicodeDecodeError:
                     continue
-                return json.dumps(new_data)
+                return json.dumps(new_data, cls=_SetEncoder)
             except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
@@ -1941,15 +2095,19 @@ class AnsibleModule(object):
                     self.warn(w)
             else:
                 self.warn(kwargs['warnings'])
+
         if self._warnings:
             kwargs['warnings'] = self._warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    self.warn(d)
+                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
+                        self.deprecate(d[0], version=d[1])
+                    else:
+                        self.deprecate(d)
             else:
-                self.warn(kwargs['deprecations'])
+                self.deprecate(kwargs['deprecations'])
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
@@ -1960,7 +2118,7 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
-        if not 'changed' in kwargs:
+        if 'changed' not in kwargs:
             kwargs['changed'] = False
 
         self.do_cleanup_files()
@@ -1972,6 +2130,9 @@ class AnsibleModule(object):
 
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+
+        if 'changed' not in kwargs:
+            kwargs['changed'] = False
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -2008,7 +2169,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(filename, 'rb')
+        infile = open(os.path.realpath(filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)
@@ -2044,7 +2205,7 @@ class AnsibleModule(object):
 
         backupdest = ''
         if os.path.exists(fn):
-            # backups named basename-YYYY-MM-DD@HH:MM:SS~
+            # backups named basename.PID.YYYY-MM-DD@HH:MM:SS~
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
             backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
@@ -2121,7 +2282,7 @@ class AnsibleModule(object):
                 native_suffix = os.path.basename(b_dest)
                 native_prefix = b('.ansible_tmp')
                 try:
-                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp( prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
+                    tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
                     self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
@@ -2131,7 +2292,8 @@ class AnsibleModule(object):
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
+                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
+                                       'Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
 
                 b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
@@ -2206,7 +2368,6 @@ class AnsibleModule(object):
             e = get_exception()
             self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e), exception=traceback.format_exc())
 
-
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
         if file_descriptor in rfds:
@@ -2216,7 +2377,8 @@ class AnsibleModule(object):
 
         return data
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
+                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2261,24 +2423,33 @@ class AnsibleModule(object):
             strings on python3, use encoding=None to turn decoding to text off.
         '''
 
-        shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
-                args = " ".join([pipes.quote(x) for x in args])
+                args = " ".join([shlex_quote(x) for x in args])
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
         elif isinstance(args, (binary_type, text_type)):
-            # On python2.6 and below, shlex has problems with text type
-            # On python3, shlex needs a text type.
-            if PY2:
-                args = to_bytes(args, errors='surrogate_or_strict')
-            elif PY3:
-                args = to_text(args, errors='surrogateescape')
-            args = shlex.split(args)
+            if not use_unsafe_shell:
+                # On python2.6 and below, shlex has problems with text type
+                # On python3, shlex needs a text type.
+                if PY2:
+                    args = to_bytes(args, errors='surrogate_or_strict')
+                elif PY3:
+                    args = to_text(args, errors='surrogateescape')
+                args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        shell = False
+        if use_unsafe_shell:
+            if executable is None:
+                executable = os.environ.get('SHELL')
+            if executable:
+                args = [executable, '-c', args]
+            else:
+                shell = True
 
         prompt_re = None
         if prompt_regex:
@@ -2294,7 +2465,7 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None ]
+            args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
 
         rc = 0
         msg = None
@@ -2322,9 +2493,9 @@ class AnsibleModule(object):
         # Clean out python paths set by ansiballz
         if 'PYTHONPATH' in os.environ:
             pypaths = os.environ['PYTHONPATH'].split(':')
-            pypaths = [x for x in pypaths \
-                        if not x.endswith('/ansible_modlib.zip') \
-                        and not x.endswith('/debug_dir')]
+            pypaths = [x for x in pypaths
+                       if not x.endswith('/ansible_modlib.zip') and
+                       not x.endswith('/debug_dir')]
             os.environ['PYTHONPATH'] = ':'.join(pypaths)
             if not os.environ['PYTHONPATH']:
                 del os.environ['PYTHONPATH']
@@ -2358,7 +2529,7 @@ class AnsibleModule(object):
                     is_passwd = True
             arg = heuristic_log_sanitize(arg, self.no_log_values)
             clean_args.append(arg)
-        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
+        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE
@@ -2441,9 +2612,11 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except (OSError, IOError):
             e = get_exception()
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(traceback.format_exc())))
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings

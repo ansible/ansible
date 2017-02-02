@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -95,13 +96,13 @@ EXAMPLES = '''
 '''
 
 import atexit
-import urllib
 import mmap
 import errno
 import socket
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import open_url
 
 def vmware_path(datastore, datacenter, path):
@@ -115,7 +116,7 @@ def vmware_path(datastore, datacenter, path):
     params = dict( dsName = datastore )
     if datacenter:
         params["dcPath"] = datacenter
-    params = urllib.urlencode(params)
+    params = urlencode(params)
     return "%s?%s" % (path, params)
 
 def main():

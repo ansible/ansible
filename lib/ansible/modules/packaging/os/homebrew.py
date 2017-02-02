@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -46,7 +47,10 @@ options:
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - "':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
+            - >
+              ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed
+              relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an
+              alternative location in the system.
         required: false
         default: '/usr/local/bin'
     state:

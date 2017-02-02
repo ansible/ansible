@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -84,7 +85,7 @@ EXAMPLES = '''
     msg: Ansible task finished
 
 # send a message, specifying the host and port
-- jabber
+- jabber:
     user: mybot@example.net
     host: talk.example.net
     port: 5223
@@ -136,7 +137,7 @@ def main():
     else:
         host = server
     if module.params['encoding']:
-        xmpp.simplexml.ENCODING = params['encoding']
+        xmpp.simplexml.ENCODING = module.params['encoding']
 
     msg = xmpp.protocol.Message(body=module.params['msg'])
 

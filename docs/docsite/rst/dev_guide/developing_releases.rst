@@ -49,7 +49,7 @@ During the release candidate process, the focus will be on bugfixes that affect 
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `Ansible Tower <http://ansible.com/ansible-tower>`_
+   `Ansible Tower <https://ansible.com/ansible-tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

@@ -52,6 +52,9 @@ a file at a given filepath.
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (which simplifies password management in 'host_vars' variables).
 
+A special case is using ``/dev/null`` as a path. The password lookup will generate a new random password each time, but will not write it to ``/dev/null``. This can be used when you need a password
+without storing it on the controller.
+
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
 This length can be changed by passing an extra parameter::
@@ -98,6 +101,48 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
         # (...)
 
 To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
+
+.. _passwordstore_lookup:
+
+The Passwordstore Lookup
+````````````````````````
+.. versionadded:: 2.3
+
+The ``passwordstore`` lookup enables Ansible to retrieve, create or update passwords from
+the passwordstore.org ``pass`` utility. It also retrieves YAML style keys stored as multilines
+in the passwordfile.
+
+Examples
+--------
+Basic lookup. Fails if example/test doesn't exist::
+
+    password="{{ lookup('passwordstore', 'example/test')}}`
+
+Create pass with random 16 character password. If password exists just give the password::
+
+    password="{{ lookup('passwordstore', 'example/test create=true')}}`
+
+Different size password::
+
+    password="{{ lookup('passwordstore', 'example/test create=true length=42')}}`
+
+Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file::
+
+    password="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}`
+
+Return the value for user in the KV pair user: username::
+
+    password="{{ lookup('passwordstore', 'example/test subkey=user')}}`
+
+Return the entire password file content::
+
+    password="{{ lookup('passwordstore', 'example/test returnall=true')}}`
+
+The location of the password-store directory can be specified in the following ways:
+  - Default is ~/.password-store
+  - Can be overruled by PASSWORD_STORE_DIR environment variable
+  - Can be overruled by 'passwordstore: path/to/.password-store' ansible setting
+  - Can be overrules by 'directory=path' argument in the lookup call
 
 .. _csvfile_lookup:
 
@@ -428,7 +473,7 @@ Since there are too many parameters for this lookup method, below is a sample pl
 
           #optional query  parameters
           #we accept any parameter from the normal mongodb query.
-          # the offical documentation is here
+          # the official documentation is here
           # https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find
           # filter:  { "hostname": "batman" }
           projection: { "pid": True    , "_id" : False , "hostname" : True }
@@ -518,6 +563,7 @@ Here are some examples::
          - debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
 
          # The following lookups were added in 1.9
+         # url lookup splits lines by default, an option to disable this was added in 2.4
          - debug: msg="{{item}}"
            with_url:
                 - 'https://github.com/gremlin.keys'

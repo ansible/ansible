@@ -19,54 +19,36 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_quotas
-short_description: Module to manage datacenter quotas in oVirt
+short_description: Module to manage datacenter quotas in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage datacenter quotas in oVirt"
+    - "Module to manage datacenter quotas in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the quota to manage."
+            - "Name of the quota to manage."
         required: true
     state:
         description:
             - "Should the quota be present/absent."
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Name of the datacenter where quota should be managed."
         required: true
     description:
         description:
-            - "Description of the the quota to manage."
+            - "Description of the quota to manage."
     cluster_threshold:
         description:
             - "Cluster threshold(soft limit) defined in percentage (0-100)."
@@ -102,7 +84,7 @@ EXAMPLES = '''
 # Add cluster quota to cluster cluster1 with memory limit 20GiB and CPU limit to 10:
 ovirt_quotas:
     name: quota1
-    datacenter: dcX
+    data_center: dcX
     clusters:
         - name: cluster1
           memory: 20
@@ -111,7 +93,7 @@ ovirt_quotas:
 # Add cluster quota to all clusters with memory limit 30GiB and CPU limit to 15:
 ovirt_quotas:
     name: quota2
-    datacenter: dcX
+    data_center: dcX
     clusters:
         - memory: 30
           cpu: 15
@@ -119,7 +101,7 @@ ovirt_quotas:
 # Add storage quota to storage data1 with size limit to 100GiB
 ovirt_quotas:
     name: quota3
-    datacenter: dcX
+    data_center: dcX
     storage_grace: 40
     storage_threshold: 60
     storages:
@@ -129,7 +111,7 @@ ovirt_quotas:
 # Remove quota quota1 (Note the quota must not be assigned to any VM/disk):
 ovirt_quotas:
     state: absent
-    datacenter: dcX
+    data_center: dcX
     name: quota1
 '''
 
@@ -140,10 +122,29 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 quota:
-    description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+    description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success if quota is found.
+    type: dict
 '''
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class QuotasModule(BaseModule):
@@ -223,7 +224,7 @@ def main():
             default='present',
         ),
         name=dict(required=True),
-        datacenter=dict(required=True),
+        data_center=dict(required=True),
         description=dict(default=None),
         cluster_threshold=dict(default=None, type='int', aliases=['cluster_soft_limit']),
         cluster_grace=dict(default=None, type='int', aliases=['cluster_hard_limit']),
@@ -239,9 +240,10 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
-        dc_name = module.params['datacenter']
+        dc_name = module.params['data_center']
         dc_id = getattr(search_by_name(datacenters_service, dc_name), 'id', None)
         if dc_id is None:
             raise Exception("Datacenter '%s' was not found." % dc_name)
@@ -291,7 +293,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

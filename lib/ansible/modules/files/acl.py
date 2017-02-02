@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,8 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if path is a file.
+      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
+        path is a file.
 
   entity:
     version_added: "1.5"
@@ -81,7 +83,9 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
+        some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
+        superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
@@ -148,6 +152,7 @@ import os
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.pycompat24 import get_exception
 
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''

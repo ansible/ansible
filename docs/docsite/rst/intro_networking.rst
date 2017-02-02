@@ -15,9 +15,7 @@ Starting with Ansible version 2.1, you can now use the familiar Ansible models o
 Network Automation Installation
 ```````````````````````````````
 
-* Install the `latest Ansible network release <http://docs.ansible.com/ansible/intro_installation.html>`_.
-* Get the `playbooks for testing <https://github.com/ansible/test-network-modules>`_ Ansible core network modules.
-
+* Install the `latest Ansible release <http://docs.ansible.com/ansible/intro_installation.html>`_.
 
 .. _networking_module_index:
 
@@ -26,7 +24,7 @@ Available Networking Modules
 
 Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
 
-To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <http://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
+To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <https://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
 
 .. _understanding_provider_arguments:
 
@@ -69,10 +67,10 @@ The following two config modules are essentially identical (using nxos_config) a
     ---
     vars:
        cli:
-       host: "{{ inventory_hostname }}"
-       username: "{{ ansible_ssh_user }}" 
-       password: "{{ ansible_ssh_pass }} "
-       transport: cli
+          host: "{{ inventory_hostname }}"
+          username: "{{ ansible_ssh_user }}" 
+          password: "{{ ansible_ssh_pass }} "
+          transport: cli
    
 
     nxos_config:
@@ -84,10 +82,10 @@ Given the above two examples that are equivalent, the arguments can also be used
     ---
     vars:
         cli:
-        host: "{{ inventory_hostname }}"
-        username: operator
-        password: secret
-        transport: cli
+           host: "{{ inventory_hostname }}"
+           username: operator
+           password: secret
+           transport: cli
    
     tasks:
     - nxos_config:
@@ -105,10 +103,10 @@ This is true for all values in the provider including transport.  So you could h
     ---
     vars:
         cli:
-        host: "{{ inventory_hostname }}"
-        username: operator
-        password: secret
-        transport: cli
+           host: "{{ inventory_hostname }}"
+           username: operator
+           password: secret
+           transport: cli
    
     tasks:
       - nxos_config:
@@ -121,8 +119,8 @@ If all values are provided via the provider argument, the rules for requirements
     ---
     vars:
       conn:
-      password: cisco_pass
-      transport: cli
+         password: cisco_pass
+         transport: cli
    
     tasks:
     - nxos_config:
@@ -171,9 +169,9 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 * contains - Object contains specified item
 
 
-Conditional statements evalute the results from the commands that are
+Conditional statements evaluate the results from the commands that are
 executed remotely on the device.  Once the task executes the command
-set, the waitfor argument can be used to evalute the results before
+set, the waitfor argument can be used to evaluate the results before
 returning control to the Ansible playbook.
 
 For example::

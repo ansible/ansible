@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: stacki_host
@@ -58,7 +63,7 @@ options:
   force_install:
     description:
      - Set value to True to force node into install state if it already exists in stacki.
-    requiored: False
+    required: False
 
 author: "Hugh Ma <Hugh.Ma@flextronics.com>"
 '''
@@ -107,8 +112,8 @@ import os
 import re
 import tempfile
 import json
-import urllib
 
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 class StackiHost:
@@ -128,7 +133,7 @@ class StackiHost:
         auth_creds  = {'USERNAME': module.params['stacki_user'],
                        'PASSWORD': module.params['stacki_password']}
 
-        # Get Intial CSRF
+        # Get Initial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET")
         cookie_a = cred_a.headers.get('Set-Cookie').split(';')
         init_csrftoken = None
@@ -147,7 +152,7 @@ class StackiHost:
 
         # Get Final CSRF and Session ID
         login_req = self.do_request(self.module, login_endpoint, headers=header,
-                                    payload=urllib.urlencode(auth_creds), method="POST")
+                                    payload=urlencode(auth_creds), method='POST')
 
         cookie_f = login_req.headers.get('Set-Cookie').split(';')
         csrftoken = None

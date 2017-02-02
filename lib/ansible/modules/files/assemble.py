@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,7 +32,7 @@ description:
      - Assembles a configuration file from fragments. Often a particular
        program will take a single configuration file and does not support a
        C(conf.d) style structure where it is easy to build up the configuration
-       from multiple sources. M(assemble) will take a directory of files that can be
+       from multiple sources. C(assemble) will take a directory of files that can be
        local or have already been transferred to the system, and concatenate them
        together to produce a destination file. Files are assembled in string sorting order.
        Puppet calls this idea I(fragments).
@@ -95,6 +96,7 @@ options:
 author: "Stephen Fromm (@sfromm)"
 extends_documentation_fragment:
     - files
+    - decrypt
 '''
 
 EXAMPLES = '''
@@ -140,7 +142,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
-        fragment = u"%s/%s" % (src_path, f)
+        fragment = os.path.join(src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         fragment_content = open(fragment, 'rb').read()
@@ -188,9 +190,9 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src = dict(required=True),
+            src = dict(required=True, type='path'),
             delimiter = dict(required=False),
-            dest = dict(required=True),
+            dest = dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
             regexp = dict(required=False),
@@ -203,8 +205,8 @@ def main():
     changed   = False
     path_hash   = None
     dest_hash   = None
-    src       = os.path.expanduser(module.params['src'])
-    dest      = os.path.expanduser(module.params['dest'])
+    src       = module.params['src']
+    dest      = module.params['dest']
     backup    = module.params['backup']
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']

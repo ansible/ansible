@@ -14,16 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: profitbricks
 short_description: Create, destroy, start, stop, and reboot a ProfitBricks virtual machine.
 description:
-     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
+     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait
+       for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
 version_added: "2.0"
 options:
   auto_increment:
@@ -598,7 +600,7 @@ def main():
                             default='AMD_OPTERON'),
             volume_size=dict(type='int', default=10),
             disk_type=dict(choices=['HDD', 'SSD'], default='HDD'),
-            image_password=dict(default=None),
+            image_password=dict(default=None, no_log=True),
             ssh_keys=dict(type='list', default=[]),
             bus=dict(choices=['VIRTIO', 'IDE'], default='VIRTIO'),
             lan=dict(type='int', default=1),
@@ -606,7 +608,7 @@ def main():
             auto_increment=dict(type='bool', default=True),
             instance_ids=dict(type='list', default=[]),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             location=dict(choices=LOCATIONS, default='us/las'),
             assign_public_ip=dict(type='bool', default=False),
             wait=dict(type='bool', default=True),

@@ -1,0 +1,39 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - cloudfront_distribution:
+      state: present
+      caller_reference: test1    
+      origins:
+          - id: 'my test origin-000111'
+            domain_name: www.example.com
+            origin_path: /production
+            custom_headers:
+              - header_name: MyCustomHeaderName
+                header_value: MyCustomHeaderValue
+      default_cache_behavior:
+        target_origin_id: 'my test origin-000111'
+        forwarded_values:
+          query_string: true
+          cookies:
+            forward: all
+          headers:
+           - '*'
+        viewer_protocol_policy: allow-all
+        smooth_streaming: true
+        compress: true
+        allowed_methods:
+          items:
+            - GET
+            - HEAD
+            - OPTIONS
+          cached_methods:
+            - GET
+            - HEAD
+      enabled: false
+      comment: this is a cloudfront distribution with logging
+      tags:
+        test: one

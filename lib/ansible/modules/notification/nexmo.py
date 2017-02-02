@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: nexmo
@@ -75,7 +76,7 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 NEXMO_API = 'https://rest.nexmo.com/sms/json'
 
@@ -91,7 +92,7 @@ def send_msg(module):
     }
     for number in module.params.get('dest'):
         msg['to'] = number
-        url = "%s?%s" % (NEXMO_API, urllib.urlencode(msg))
+        url = "%s?%s" % (NEXMO_API, urlencode(msg))
 
         headers = dict(Accept='application/json')
         response, info = fetch_url(module, url, headers=headers)

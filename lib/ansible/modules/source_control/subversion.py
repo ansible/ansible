@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -284,6 +285,8 @@ def main():
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
         if module.check_mode or not update:
+            if svn.has_local_mods() and not force:
+                module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()

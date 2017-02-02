@@ -19,40 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_external_providers
-short_description: Module to manage external providers in oVirt
+short_description: Module to manage external providers in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage external providers in oVirt"
+    - "Module to manage external providers in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the external provider to manage."
+            - "Name of the external provider to manage."
     state:
         description:
             - "Should the external be present or absent"
@@ -147,26 +130,43 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 external_host_provider:
-    description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/external_host_provider."
+    description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
     returned: "On success and if parameter 'type: foreman' is used."
     type: dictionary
 openstack_image_provider:
-    description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_image_provider."
+    description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
     returned: "On success and if parameter 'type: os_image' is used."
     type: dictionary
 openstack_volume_provider:
-    description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_volume_provider."
+    description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
     returned: "On success and if parameter 'type: os_volume' is used."
     type: dictionary
 openstack_network_provider:
-    description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/openstack_network_provider."
+    description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
     returned: "On success and if parameter 'type: network' is used."
     type: dictionary
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+)
 
 
 class ExternalProviderModule(BaseModule):
@@ -233,7 +233,7 @@ def main():
         password=dict(default=None, no_log=True),
         tenant_name=dict(default=None, aliases=['tenant']),
         authentication_url=dict(default=None, aliases=['auth_url']),
-        data_center=dict(default=None, aliases=['data_center']),
+        data_center=dict(default=None),
         read_only=dict(default=None, type='bool'),
         network_type=dict(
             default='external',
@@ -248,7 +248,8 @@ def main():
     check_params(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         provider_type, external_providers_service = _external_provider_service(
             provider_type=module.params.get('type'),
             system_service=connection.system_service(),
@@ -270,7 +271,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

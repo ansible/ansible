@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -112,18 +113,19 @@ class AnsibleTagCreationException(AnsibleVPCSubnetException):
 
 def get_subnet_info(subnet):
 
-    subnet_info = { 'id': subnet.id,
-                    'availability_zone': subnet.availability_zone,
-                    'available_ip_address_count': subnet.available_ip_address_count,
-                    'cidr_block': subnet.cidr_block,
-                    'default_for_az': subnet.defaultForAz,
-                    'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
-                    'state': subnet.state,
-                    'tags': subnet.tags,
-                    'vpc_id': subnet.vpc_id
-                  }
+    subnet_info = {'id': subnet.id,
+                   'availability_zone': subnet.availability_zone,
+                   'available_ip_address_count': subnet.available_ip_address_count,
+                   'cidr_block': subnet.cidr_block,
+                   'default_for_az': subnet.defaultForAz,
+                   'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
+                   'state': subnet.state,
+                   'tags': subnet.tags,
+                   'vpc_id': subnet.vpc_id
+                   }
 
     return subnet_info
+
 
 def subnet_exists(vpc_conn, subnet_id):
     filters = {'subnet-id': subnet_id}
@@ -148,6 +150,8 @@ def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
     except EC2ResponseError as e:
         if e.error_code == "DryRunOperation":
             subnet = None
+        elif e.error_code == "InvalidSubnet.Conflict":
+            raise AnsibleVPCSubnetCreationException("%s: the CIDR %s conflicts with another subnet with the VPC ID %s." % (e.error_code, cidr, vpc_id))
         else:
             raise AnsibleVPCSubnetCreationException(
                 'Unable to create subnet {0}, error: {1}'.format(cidr, e))
@@ -230,11 +234,11 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            az = dict(default=None, required=False),
-            cidr = dict(default=None, required=True),
-            state = dict(default='present', choices=['present', 'absent']),
-            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id = dict(default=None, required=True)
+            az=dict(default=None, required=False),
+            cidr=dict(default=None, required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
+            vpc_id=dict(default=None, required=True)
         )
     )
 

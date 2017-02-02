@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -98,6 +99,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
 
@@ -225,14 +227,14 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            api_token = dict(aliases=['API_TOKEN'], no_log=True),
-            name = dict(type='str'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            ip = dict(type='str'),
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            name=dict(type='str'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            ip=dict(type='str'),
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )

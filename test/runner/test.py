@@ -24,9 +24,7 @@ from lib.executor import (
     command_windows_integration,
     command_units,
     command_compile,
-    command_sanity,
     command_shell,
-    SANITY_TESTS,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
     PosixIntegrationConfig,
@@ -40,6 +38,12 @@ from lib.executor import (
     Delegate,
     generate_pip_install,
     check_startup,
+)
+
+from lib.sanity import (
+    command_sanity,
+    sanity_init,
+    sanity_get_tests,
 )
 
 from lib.target import (
@@ -56,6 +60,10 @@ from lib.core_ci import (
     AWS_ENDPOINTS,
 )
 
+from lib.cloud import (
+    initialize_cloud_plugins,
+)
+
 import lib.cover
 
 
@@ -64,10 +72,13 @@ def main():
     try:
         git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
         os.chdir(git_root)
+        initialize_cloud_plugins()
+        sanity_init()
         args = parse_args()
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
+        display.info_stderr = isinstance(config, SanityConfig) and config.lint
         check_startup()
 
         try:
@@ -157,6 +168,13 @@ def parse_args():
                       action='store_true',
                       help='analyze code coverage when running tests')
 
+    test.add_argument('--coverage-label',
+                      default='',
+                      help='label to include in coverage output file names')
+
+    test.add_argument('--metadata',
+                      help=argparse.SUPPRESS)
+
     add_changes(test, argparse)
     add_environments(test)
 
@@ -232,7 +250,7 @@ def parse_args():
 
     units.add_argument('--python',
                        metavar='VERSION',
-                       choices=SUPPORTED_PYTHON_VERSIONS,
+                       choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                        help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     units.add_argument('--collect-only',
@@ -254,6 +272,7 @@ def parse_args():
                           choices=COMPILE_PYTHON_VERSIONS,
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
+    add_lint(compiler)
     add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
@@ -267,14 +286,14 @@ def parse_args():
     sanity.add_argument('--test',
                         metavar='TEST',
                         action='append',
-                        choices=[t.name for t in SANITY_TESTS],
-                        help='tests to run')
+                        choices=[test.name for test in sanity_get_tests()],
+                        help='tests to run').completer = complete_sanity_test
 
     sanity.add_argument('--skip-test',
                         metavar='TEST',
                         action='append',
-                        choices=[t.name for t in SANITY_TESTS],
-                        help='tests to skip')
+                        choices=[test.name for test in sanity_get_tests()],
+                        help='tests to skip').completer = complete_sanity_test
 
     sanity.add_argument('--list-tests',
                         action='store_true',
@@ -285,6 +304,10 @@ def parse_args():
                         choices=SUPPORTED_PYTHON_VERSIONS,
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
+    sanity.add_argument('--base-branch',
+                        help=argparse.SUPPRESS)
+
+    add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',
@@ -314,6 +337,8 @@ def parse_args():
     coverage_combine.set_defaults(func=lib.cover.command_coverage_combine,
                                   config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_combine)
+
     coverage_erase = coverage_subparsers.add_parser('erase',
                                                     parents=[coverage_common],
                                                     help='erase coverage data files')
@@ -328,6 +353,8 @@ def parse_args():
     coverage_report.set_defaults(func=lib.cover.command_coverage_report,
                                  config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_report)
+
     coverage_html = coverage_subparsers.add_parser('html',
                                                    parents=[coverage_common],
                                                    help='generate html coverage report')
@@ -335,12 +362,16 @@ def parse_args():
     coverage_html.set_defaults(func=lib.cover.command_coverage_html,
                                config=lib.cover.CoverageConfig)
 
+    add_extra_coverage_options(coverage_html)
+
     coverage_xml = coverage_subparsers.add_parser('xml',
                                                   parents=[coverage_common],
                                                   help='generate xml coverage report')
 
     coverage_xml.set_defaults(func=lib.cover.command_coverage_xml,
                               config=lib.cover.CoverageConfig)
+
+    add_extra_coverage_options(coverage_xml)
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
@@ -358,6 +389,23 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+def add_lint(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--lint',
+                        action='store_true',
+                        help='write lint output to stdout, everything else stderr')
+
+    parser.add_argument('--junit',
+                        action='store_true',
+                        help='write test failures to junit xml files')
+
+    parser.add_argument('--failure-ok',
+                        action='store_true',
+                        help='exit successfully on failed tests after saving results')
 
 
 def add_changes(parser, argparse):
@@ -420,6 +468,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
             remote=None,
             remote_stage=None,
             remote_aws_region=None,
+            remote_terminate=None,
         )
 
         return
@@ -449,6 +498,31 @@ def add_environments(parser, tox_version=False, tox_only=False):
                         help='remote aws region to use: %(choices)s (default: auto)',
                         choices=sorted(AWS_ENDPOINTS),
                         default=None)
+
+    remote.add_argument('--remote-terminate',
+                        metavar='WHEN',
+                        help='terminate remote instance: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='never')
+
+
+def add_extra_coverage_options(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--group-by',
+                        metavar='GROUP',
+                        action='append',
+                        choices=lib.cover.COVERAGE_GROUPS,
+                        help='group output by: %s' % ', '.join(lib.cover.COVERAGE_GROUPS))
+
+    parser.add_argument('--all',
+                        action='store_true',
+                        help='include all python source files')
+
+    parser.add_argument('--stub',
+                        action='store_true',
+                        help='generate empty report of all python source files')
 
 
 def add_extra_docker_options(parser, integration=True):
@@ -535,6 +609,19 @@ def complete_network_platform(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_sanity_test(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    tests = sorted(t.name for t in sanity_get_tests())
+
+    return [i for i in tests if i.startswith(prefix)]
 
 
 if __name__ == '__main__':

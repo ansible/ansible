@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -164,7 +165,8 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing requried gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or "
+                             "install with: pip install pyapi-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -191,13 +193,21 @@ def main():
     # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url)
+            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+
+    # Check if user is authorized or not before proceeding to any operations
+    # if not, exit from here
+    auth_msg = git.currentuser().get('message', None)
+    if auth_msg is not None and auth_msg == '401 Unauthorized':
+        module.fail_json(msg='User unauthorized',
+                         details="User is not allowed to access Gitlab server "
+                                 "using login_token. Please check login_token")
 
     # Validate if group exists and take action based on "state"
     group = GitLabGroup(module, git)

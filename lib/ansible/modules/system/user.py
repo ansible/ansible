@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,8 +33,10 @@ notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
+  - For Windows targets, use the M(win_user) module instead.
 description:
     - Manage user accounts and user attributes.
+    - For Windows targets, use the M(win_user) module instead.
 options:
     name:
         required: true
@@ -321,7 +324,7 @@ class User(object):
                 self.expires = time.gmtime(module.params['expires'])
             except Exception:
                 e = get_exception()
-                module.fail_json("Invalid expires time %s: %s" %(self.expires, str(e)))
+                module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -551,8 +554,8 @@ class User(object):
         if self.groups is None:
             return None
         info = self.user_info()
-        groups = set(filter(None, self.groups.split(',')))
-        for g in set(groups):
+        groups = set(x.strip() for x in self.groups.split(',') if x)
+        for g in groups.copy():
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
             if info and remove_existing and self.group_info(g)[2] == info[3]:
@@ -718,7 +721,7 @@ class User(object):
             os.chown(path, uid, gid)
             for root, dirs, files in os.walk(path):
                 for d in dirs:
-                    os.chown(path, uid, gid)
+                    os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError:
@@ -1027,7 +1030,7 @@ class OpenBSDUser(User):
         if self.groups is not None:
             current_groups = self.user_group_membership()
             groups_need_mod = False
-            groups_option = '-G'
+            groups_option = '-S'
             groups = []
 
             if self.groups == '':
@@ -1041,7 +1044,7 @@ class OpenBSDUser(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                groups_option = '-S'
+                                groups_option = '-G'
                                 groups_need_mod = True
                                 break
                     else:
@@ -1651,7 +1654,7 @@ class DarwinUser(User):
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
 
-        Returns 0 if a change has been made, None otherwhise.'''
+        Returns 0 if a change has been made, None otherwise.'''
 
         plist_file = '/Library/Preferences/com.apple.loginwindow.plist'
 
@@ -2067,20 +2070,17 @@ class HPUX(User):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                if has_append:
-                                    cmd.append('-a')
                                 groups_need_mod = True
                                 break
                     else:
                         groups_need_mod = True
 
             if groups_need_mod:
-                if self.append and not has_append:
-                    cmd.append('-A')
-                    cmd.append(','.join(group_diff))
-                else:
-                    cmd.append('-G')
-                    cmd.append(','.join(groups))
+                cmd.append('-G')
+                new_groups = groups
+                if self.append:
+                    new_groups = groups | set(current_groups)
+                cmd.append(','.join(new_groups))
 
 
         if self.comment is not None and info[4] != self.comment:
@@ -2207,7 +2207,7 @@ def main():
 
     if user.user_exists():
         info = user.user_info()
-        if info == False:
+        if info is False:
             result['msg'] = "failed to look up user name: %s" % user.name
             result['failed'] = True
         result['uid'] = info[2]

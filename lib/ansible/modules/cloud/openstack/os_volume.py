@@ -15,17 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -78,6 +71,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
      - "python >= 2.6"
      - "shade"
@@ -96,6 +93,12 @@ EXAMPLES = '''
       size: 40
       display_name: test_volume
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _present_volume(module, cloud):
@@ -128,14 +131,16 @@ def _present_volume(module, cloud):
 
 
 def _absent_volume(module, cloud):
-    try:
-        cloud.delete_volume(
-            name_or_id=module.params['display_name'],
-            wait=module.params['wait'],
-            timeout=module.params['timeout'])
-    except shade.OpenStackCloudTimeout:
-        module.exit_json(changed=False)
-    module.exit_json(changed=True)
+    changed = False
+    if cloud.volume_exists(module.params['display_name']):
+        try:
+            changed = cloud.delete_volume(name_or_id=module.params['display_name'],
+                                          wait=module.params['wait'],
+                                          timeout=module.params['timeout'])
+        except shade.OpenStackCloudTimeout:
+            module.exit_json(changed=changed)
+
+    module.exit_json(changed=changed)
 
 
 def main():

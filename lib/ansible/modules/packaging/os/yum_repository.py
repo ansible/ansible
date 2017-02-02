@@ -18,16 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-import os
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.six.moves import configparser
-
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -478,6 +472,11 @@ state:
     sample: "present"
 '''
 
+import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import configparser
+
 
 class YumRepo(object):
     # Class global variables
@@ -571,7 +570,7 @@ class YumRepo(object):
         # defined.
         if (self.params['baseurl'], self.params['mirrorlist']) == (None, None):
             self.module.fail_json(
-                msg='Paramater "baseurl" or "mirrorlist" is required for '
+                msg='Parameter "baseurl" or "mirrorlist" is required for '
                 'adding a new repo.')
 
         # Set options

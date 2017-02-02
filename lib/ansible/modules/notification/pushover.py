@@ -20,9 +20,10 @@
 
 ###
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,13 +65,12 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 
 class Pushover(object):
     ''' Instantiates a pushover object, use it to send notifications '''
     base_uri = 'https://api.pushover.net'
-    port = 443
 
     def __init__(self, module, user, token):
         self.module = module
@@ -80,14 +80,14 @@ class Pushover(object):
     def run(self, priority, msg):
         ''' Do, whatever it is, we do. '''
 
-        url = '%s:%s/1/messages.json' % (self.base_uri, self.port)
+        url = '%s/1/messages.json' % (self.base_uri)
 
         # parse config
         options = dict(user=self.user,
                 token=self.token,
                 priority=priority,
                 message=msg)
-        data = urllib.urlencode(options)
+        data = urlencode(options)
 
         headers = { "Content-type": "application/x-www-form-urlencoded"}
         r, info = fetch_url(self.module, url, method='POST', data=data, headers=headers)

@@ -8,9 +8,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -19,7 +20,8 @@ author:
 module: include_role
 short_description: Load and execute a role
 description:
-     - "Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks."
+     - Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks.
+     - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
   name:
@@ -53,7 +55,10 @@ options:
 notes:
     - Handlers are made available to the whole play.
     - simple dependencies seem to work fine.
-    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
+    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will
+      show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task
+      level to control this.
+    - This module is also supported for Windows targets.
 '''
 
 EXAMPLES = """

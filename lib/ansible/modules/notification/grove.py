@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -26,7 +27,7 @@ module: grove
 version_added: 1.4
 short_description: Sends a notification to a grove.io channel
 description:
-     - The M(grove) module sends a message for a service to a Grove.io
+     - The C(grove) module sends a message for a service to a Grove.io
        channel.
 options:
   channel_token:
@@ -68,7 +69,7 @@ EXAMPLES = '''
     message=deployed {{ target }}
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 BASE_URL = 'https://grove.io/api/notice/%s/'
 
@@ -84,7 +85,7 @@ def do_notify_grove(module, channel_token, service, message, url=None, icon_url=
     if icon_url is not None:
         my_data['icon_url'] = icon_url
 
-    data = urllib.urlencode(my_data)
+    data = urlencode(my_data)
     response, info = fetch_url(module, my_url, data=data)
     if info['status'] != 200:
         module.fail_json(msg="failed to send notification: %s" % info['msg'])

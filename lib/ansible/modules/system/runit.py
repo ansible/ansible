@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 # This is a modification of @bcoca's `svc` module
 
@@ -66,32 +67,32 @@ options:
 
 EXAMPLES = '''
 # Example action to start sv dnscache, if not running
- - sv:
+ - runit:
     name: dnscache
     state: started
 
 # Example action to stop sv dnscache, if running
- - sv:
+ - runit:
     name: dnscache
     state: stopped
 
 # Example action to kill sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: killed
 
 # Example action to restart sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: restarted
 
 # Example action to reload sv dnscache, in all cases
- - sv:
+ - runit:
     name: dnscache
     state: reloaded
 
 # Example using alt sv directory location
- - sv:
+ - runit:
     name: dnscache
     state: reloaded
     service_dir: /run/service

@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: clc_loadbalancer
@@ -805,7 +806,7 @@ class ClcLoadBalancer:
             if not node in nodes:
                 changed = True
                 nodes.append(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,
@@ -836,7 +837,7 @@ class ClcLoadBalancer:
             if node in nodes:
                 changed = True
                 nodes.remove(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,

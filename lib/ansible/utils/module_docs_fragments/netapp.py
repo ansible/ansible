@@ -38,8 +38,8 @@ options:
   username:
       required: true
       description:
-      - Username: This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the documentation U(https://goo.gl/BRu78Z).
-
+      - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
+        For more information, please read the documentation U(https://goo.gl/BRu78Z).
   password:
       required: true
       description:
@@ -55,7 +55,7 @@ notes:
 
 """
 
-# Documentation fragment for SolidFire
+    # Documentation fragment for SolidFire
     SOLIDFIRE = """
 options:
   hostname:
@@ -65,7 +65,7 @@ options:
   username:
       required: true
       description:
-      - Username: Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
+      - Please ensure that the user has the adequate permissions. For more information, please read the official documentation U(https://goo.gl/ddJa4Q).
   password:
       required: true
       description:
@@ -78,3 +78,31 @@ notes:
   - The modules prefixed with C(sf\_) are built to support the SolidFire storage platform.
 
 """
+
+    # Documentation fragment for E-Series
+    ESERIES = """
+options:
+  api_username:
+    required: true
+    description:
+    - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+  api_password:
+    required: true
+    description:
+    - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
+  api_url:
+    required: true
+    description:
+    - The url to the SANtricity WebServices Proxy or embedded REST API.
+    example:
+    - https://prod-1.wahoo.acme.com/devmgr/v2
+  validate_certs:
+    required: false
+    default: true
+    description:
+    - Should https certificates be validated?
+  ssid:
+    required: true
+    description:
+    - The ID of the array to manage. This value must be unique for each array.
+    """

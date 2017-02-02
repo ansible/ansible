@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -34,7 +33,7 @@ description:
     an implementation for working with eos configuration sections in
     a deterministic way.  This module works with either CLI or eAPI
     transports.
-extends_documentation_fragment: eapi
+extends_documentation_fragment: eos
 options:
   lines:
     description:
@@ -201,62 +200,22 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from functools import partial
-
-from ansible.module_utils import eos
-from ansible.module_utils import eos_local
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-
-SHARED_LIB = 'eos'
-
-def get_ansible_module():
-    if SHARED_LIB == 'eos':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-run_commands = partial(invoke, 'run_commands')
-get_config = partial(invoke, 'get_config')
-load_config = partial(invoke, 'load_config')
-supports_sessions = partial(invoke, 'supports_sessions')
+from ansible.module_utils.eos import get_config, load_config
+from ansible.module_utils.eos import run_commands
+from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import check_args as eos_check_args
 
 def check_args(module, warnings):
-    if SHARED_LIB == 'eos_local':
-        eos_local.check_args(module)
-
+    eos_check_args(module, warnings)
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
-
-    if not supports_sessions(module):
-        warnings.append('The current version of EOS on the remote device does '
-                        'not support configuration sessions.  The commit '
-                        'argument will be ignored')
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=3)
@@ -267,6 +226,12 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+def get_running_config(module):
+    flags = []
+    if module.params['defaults'] is True:
+        flags.append('all')
+    return get_config(module, flags)
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -274,9 +239,10 @@ def run(module, result):
     candidate = get_candidate(module)
 
     if match != 'none' and replace != 'config':
-        config_text = get_config(module)
+        config_text = get_running_config(module)
         config = NetworkConfig(indent=3, contents=config_text)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        path = module.params['parents']
+        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
     else:
         configobjs = candidate.items
 
@@ -291,13 +257,16 @@ def run(module, result):
                 commands.extend(module.params['after'])
 
         result['commands'] = commands
+        result['updates'] = commands
 
         replace = module.params['replace'] == 'config'
         commit = not module.check_mode
 
         response = load_config(module, commands, replace=replace, commit=commit)
+
         if 'diff' in response:
             result['diff'] = {'prepared': response['diff']}
+
         if 'session' in response:
             result['session'] = response['session']
 
@@ -330,7 +299,7 @@ def main():
         force=dict(default=False, type='bool'),
     )
 
-    argument_spec.update(eos_local.eos_local_argument_spec)
+    argument_spec.update(eos_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -339,12 +308,10 @@ def main():
                    ('replace', 'block', ['lines']),
                    ('replace', 'config', ['src'])]
 
-    cls = get_ansible_module()
-
-    module = cls(argument_spec=argument_spec,
-                 mutually_exclusive=mutually_exclusive,
-                 required_if=required_if,
-                 supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
+                           supports_check_mode=True)
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
@@ -364,12 +331,13 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['copy running-config startup-config'])
-        result['changed'] = True
+            response = run_commands(module, ['show running-config diffs'])
+            if len(response[0]):
+                run_commands(module, ['copy running-config startup-config'])
+                result['changed'] = True
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eos_local'
     main()

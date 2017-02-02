@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: apache2_mod_proxy
+author: Olivier Boukili (@oboukili)"
 version_added: "2.2"
 short_description: Set and/or get members' attributes of an Apache httpd 2.4 mod_proxy balancer pool
 description:
@@ -217,6 +219,7 @@ EXPRESSION = r"(b=([\w\.\-]+)&w=(https?|ajp|wss?|ftp|[sf]cgi)://([\w\.\-]+):?(\d
 # Apache2 server version extraction regexp:
 APACHE_VERSION_EXPRESSION = r"Server Version: Apache/([\d.]+) \(([\w]+)\)"
 
+
 def regexp_extraction(string, _regexp, groups=1):
     """ Returns the capture group (default=1) specified in the regexp, applied to the string """
     regexp_search = re.search(string=str(string), pattern=str(_regexp))
@@ -224,6 +227,7 @@ def regexp_extraction(string, _regexp, groups=1):
         if regexp_search.group(groups) != '':
             return str(regexp_search.group(groups))
     return None
+
 
 class BalancerMember(object):
     """ Apache 2.4 mod_proxy LB balancer member.
@@ -274,10 +278,10 @@ class BalancerMember(object):
 
     def get_member_status(self):
         """ Returns a dictionary of a balancer member's status attributes."""
-        status_mapping = {'disabled':'Dis',
-                          'drained':'Drn',
-                          'hot_standby':'Stby',
-                          'ignore_errors':'Ign'}
+        status_mapping = {'disabled': 'Dis',
+                          'drained': 'Drn',
+                          'hot_standby': 'Stby',
+                          'ignore_errors': 'Ign'}
         status = {}
         actual_status = str(self.attributes['Status'])
         for mode in status_mapping.keys():
@@ -289,10 +293,10 @@ class BalancerMember(object):
 
     def set_member_status(self, values):
         """ Sets a balancer member's status attributes amongst pre-mapped values."""
-        values_mapping = {'disabled':'&w_status_D',
-                          'drained':'&w_status_N',
-                          'hot_standby':'&w_status_H',
-                          'ignore_errors':'&w_status_I'}
+        values_mapping = {'disabled': '&w_status_D',
+                          'drained': '&w_status_N',
+                          'hot_standby': '&w_status_H',
+                          'ignore_errors': '&w_status_I'}
 
         request_body = regexp_extraction(self.management_url, EXPRESSION, 1)
         for k in values_mapping.keys():
@@ -313,6 +317,7 @@ class BalancerMember(object):
 
 class Balancer(object):
     """ Apache httpd 2.4 mod_proxy balancer object"""
+
     def __init__(self, host, suffix, module, members=None, tls=False):
         if tls:
             self.base_url = str(str('https://') + str(host))
@@ -357,6 +362,7 @@ class Balancer(object):
 
     members = property(get_balancer_members)
 
+
 def main():
     """ Initiates module."""
     module = AnsibleModule(
@@ -381,7 +387,9 @@ def main():
         else:
             for _state in states:
                 if _state not in ['present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors']:
-                    module.fail_json(msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'.")
+                    module.fail_json(
+                        msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'."
+                    )
     else:
         states = ['None']
 
@@ -410,7 +418,7 @@ def main():
     else:
         changed = False
         member_exists = False
-        member_status = {'disabled': False, 'drained': False, 'hot_standby': False, 'ignore_errors':False}
+        member_status = {'disabled': False, 'drained': False, 'hot_standby': False, 'ignore_errors': False}
         for mode in member_status.keys():
             for state in states:
                 if mode == state:
@@ -443,7 +451,7 @@ def main():
             module.exit_json(
                 changed=changed,
                 member=json_output
-                )
+            )
         else:
             module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
 

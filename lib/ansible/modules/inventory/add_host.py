@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -26,6 +27,7 @@ short_description: add a host (and alternatively a group) to the ansible-playboo
 description:
   - Use variables to create new hosts and groups in inventory for use in later plays of the same playbook.
     Takes variables so you can define the new hosts more fully.
+  - This module is also supported for Windows targets.
 version_added: "0.9"
 options:
   name:
@@ -41,6 +43,7 @@ options:
 notes:
     - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
       to iterate use a with\_ directive.
+    - This module is also supported for Windows targets.
 author:
     - "Ansible Core Team"
     - "Seth Vidal"

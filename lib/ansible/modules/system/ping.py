@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,6 +35,9 @@ description:
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible) to verify the ability to login and that a usable python is configured.
    - This is NOT ICMP ping, this is just a trivial test module.
+   - For Windows targets, use the M(ping) module instead.
+notes:
+   - For Windows targets, use the M(ping) module instead.
 options: {}
 author:
     - "Ansible Core Team"
@@ -46,6 +50,7 @@ ansible webservers -m ping
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -61,6 +66,6 @@ def main():
         result['ping'] = module.params['data']
     module.exit_json(**result)
 
+
 if __name__ == '__main__':
     main()
-

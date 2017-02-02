@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -83,7 +84,8 @@ options:
     default: null
   no_reboot:
     description:
-      - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance.
+      - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the
+        responsibility of maintaining file system integrity is left to the owner of the instance.
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -96,7 +98,9 @@ options:
     version_added: "2.0"
     description:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
-      - "Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)"
+      - >
+        Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean),
+        snapshot_id, iops (for io1 volume_type)
     required: false
     default: null
   delete_snapshot:
@@ -252,7 +256,7 @@ architecture:
 block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI is created or already exists
-    type: a dictionary of block devices
+    type: dict
     sample: {
         "/dev/sda1": {
             "delete_on_termination": true,
@@ -325,7 +329,7 @@ state:
 tags:
     description: a dictionary of tags assigned to image
     returned: when AMI is created or already exists
-    type: dictionary of tags
+    type: dict
     sample: {
         "Env": "devel",
         "Name": "nat-server"
@@ -473,7 +477,8 @@ def create_image(module, ec2):
                 module.fail_json(msg="AMI creation failed, please see the AWS console for more details")
         except boto.exception.EC2ResponseError as e:
             if ('InvalidAMIID.NotFound' not in e.error_code and 'InvalidAMIID.Unavailable' not in e.error_code) and wait and i == wait_timeout - 1:
-                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help. %s: %s" % (e.error_code, e.error_message))
+                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer "
+                                     "wait_timeout may help. %s: %s" % (e.error_code, e.error_message))
         finally:
             time.sleep(1)
 
@@ -568,7 +573,8 @@ def update_image(module, ec2, image_id):
     try:
         set_permissions = img.get_launch_permissions()
         if set_permissions != launch_permissions:
-            if ('user_ids' in launch_permissions and launch_permissions['user_ids']) or ('group_names' in launch_permissions and launch_permissions['group_names']):
+            if (('user_ids' in launch_permissions and launch_permissions['user_ids']) or
+                    ('group_names' in launch_permissions and launch_permissions['group_names'])):
                 res = img.set_launch_permissions(**launch_permissions)
             elif ('user_ids' in set_permissions and set_permissions['user_ids']) or ('group_names' in set_permissions and set_permissions['group_names']):
                 res = img.remove_launch_permissions(**set_permissions)

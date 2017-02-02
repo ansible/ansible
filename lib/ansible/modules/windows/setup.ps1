@@ -17,8 +17,6 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args -supports_check_mode $true
-
 Function Get-CustomFacts {
   [cmdletBinding()]
   param (
@@ -34,27 +32,29 @@ Function Get-CustomFacts {
 
   foreach ($FactsFile in $FactsFiles) {
       $out = & $($FactsFile.FullName)
-      Set-Attr $result.ansible_facts "ansible_$(($FactsFile.Name).Split('.')[0])" $out
+      $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
   }
 }
 
-$result = New-Object psobject @{
-    ansible_facts = New-Object psobject
+$result = @{
+    ansible_facts = @{ }
     changed = $false
-};
+}
 
-# failifempty = $false is default and thus implied
-$factpath = Get-AnsibleParam -obj $params -name fact_path -type "path"
+$params = Parse-Args $args -supports_check_mode $true
+$factpath = Get-AnsibleParam -obj $params -name "fact_path" -type "path"
+
 if ($factpath -ne $null) {
-  # Get any custom facts
-  Get-CustomFacts -factpath $factpath
+    # Get any custom facts
+    Get-CustomFacts -factpath $factpath
 }
 
 $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
 $win32_bios = Get-CimInstance Win32_Bios
 $win32_cpu = Get-CimInstance Win32_Processor
-If ($win32_cpu -is [array]) { # multi-socket, pick first
+if ($win32_cpu -is [array]) {
+    # multi-socket, pick first
     $win32_cpu = $win32_cpu[0]
 }
 
@@ -63,15 +63,17 @@ $osversion = [Environment]::OSVersion
 $user = [Security.Principal.WindowsIdentity]::GetCurrent()
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
-$ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
+$ActiveNetcfg = @()
+$ActiveNetcfg += $netcfg | where {$_.ipaddress -ne $null}
+
 $formattednetcfg = @()
 foreach ($adapter in $ActiveNetcfg)
 {
-    $thisadapter = New-Object psobject @{
-    interface_name = $adapter.description
-    dns_domain = $adapter.dnsdomain
-    default_gateway = $null
-    interface_index = $adapter.InterfaceIndex
+    $thisadapter = @{
+        default_gateway = $null
+        dns_domain = $adapter.dnsdomain
+        interface_index = $adapter.InterfaceIndex
+        interface_name = $adapter.description
     }
 
     if ($adapter.defaultIPGateway)
@@ -79,7 +81,7 @@ foreach ($adapter in $ActiveNetcfg)
         $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
     }
 
-    $formattednetcfg += $thisadapter;$thisadapter = $null
+    $formattednetcfg += $thisadapter
 }
 
 $cpu_list = @( )
@@ -88,92 +90,96 @@ for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProc
     $cpu_list += $win32_cpu.Name
 }
 
-Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
-
-Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
-
-Set-Attr $result.ansible_facts "ansible_bios_date" $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
-Set-Attr $result.ansible_facts "ansible_bios_version" $win32_bios.SMBIOSBIOSVersion
-Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME
-Set-Attr $result.ansible_facts "ansible_fqdn" ($ip_props.Hostname + "." + $ip_props.DomainName)
-Set-Attr $result.ansible_facts "ansible_processor" $cpu_list
-Set-Attr $result.ansible_facts "ansible_processor_cores" $win32_cpu.NumberOfCores
-Set-Attr $result.ansible_facts "ansible_processor_count" $win32_cs.NumberOfProcessors
-Set-Attr $result.ansible_facts "ansible_processor_threads_per_core" ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors / $win32_cpu.NumberOfCores)
-Set-Attr $result.ansible_facts "ansible_processor_vcpus" ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
-Set-Attr $result.ansible_facts "ansible_product_name" $win32_cs.Model.Trim()
-Set-Attr $result.ansible_facts "ansible_product_serial" $win32_bios.SerialNumber
-#Set-Attr $result.ansible_facts "ansible_product_version" ([string] $win32_cs.SystemFamily)
-Set-Attr $result.ansible_facts "ansible_system" $osversion.Platform.ToString()
-Set-Attr $result.ansible_facts "ansible_system_description" ([string] $win32_os.Description)
-Set-Attr $result.ansible_facts "ansible_system_vendor" $win32_cs.Manufacturer
-Set-Attr $result.ansible_facts "ansible_os_family" "Windows"
-Set-Attr $result.ansible_facts "ansible_os_name" ($win32_os.Name.Split('|')[0]).Trim()
-Set-Attr $result.ansible_facts "ansible_distribution" $win32_os.Caption
-Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
-Set-Attr $result.ansible_facts "ansible_distribution_major_version" $osversion.Version.Major.ToString()
-Set-Attr $result.ansible_facts "ansible_kernel" $osversion.Version.ToString()
-
-Set-Attr $result.ansible_facts "ansible_machine_id" $user.User.AccountDomainSid.Value
-Set-Attr $result.ansible_facts "ansible_domain" $ip_props.DomainName
-Set-Attr $result.ansible_facts "ansible_nodename" ($ip_props.HostName + "." + $ip_props.DomainName)
-Set-Attr $result.ansible_facts "ansible_windows_domain" $win32_cs.Domain
-
-Set-Attr $result.ansible_facts "ansible_owner_name" ([string] $win32_cs.PrimaryOwnerName)
-Set-Attr $result.ansible_facts "ansible_owner_contact" ([string] $win32_cs.PrimaryOwnerContact)
-
-Set-Attr $result.ansible_facts "ansible_user_dir" $env:userprofile
-Set-Attr $result.ansible_facts "ansible_user_gecos" "" # Win32_UserAccount.FullName is probably the right thing here, but it can be expensive to get on large domains
-Set-Attr $result.ansible_facts "ansible_user_id" $env:username
-Set-Attr $result.ansible_facts "ansible_user_sid" $user.User.Value
-
-$date = New-Object psobject
 $datetime = (Get-Date)
 $datetime_utc = $datetime.ToUniversalTime()
-Set-Attr $date "date" $datetime.ToString("yyyy-MM-dd")
-Set-Attr $date "day" $datetime.ToString("dd")
-Set-Attr $date "epoch" (Get-Date -UFormat "%s")
-Set-Attr $date "hour" $datetime.ToString("HH")
-Set-Attr $date "iso8601" $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ssZ")
-Set-Attr $date "iso8601_basic" $datetime.ToString("yyyyMMddTHHmmssffffff")
-Set-Attr $date "iso8601_basic_short" $datetime.ToString("yyyyMMddTHHmmss")
-Set-Attr $date "iso8601_micro" $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ")
-Set-Attr $date "minute" $datetime.ToString("mm")
-Set-Attr $date "month" $datetime.ToString("MM")
-Set-Attr $date "second" $datetime.ToString("ss")
-Set-Attr $date "time" $datetime.ToString("HH:mm:ss")
-Set-Attr $date "tz_offset" $datetime.ToString("zzzz")
-Set-Attr $date "tz" ([System.TimeZoneInfo]::Local.Id)
-# Ensure that the weekday is in English
-Set-Attr $date "weekday" $datetime.ToString("dddd", [System.Globalization.CultureInfo]::InvariantCulture)
-Set-Attr $date "weekday_number" (Get-Date -UFormat "%w")
-Set-Attr $date "weeknumber" (Get-Date -UFormat "%W")
-Set-Attr $date "year" $datetime.ToString("yyyy")
-Set-Attr $result.ansible_facts "ansible_date_time" $date
 
-# Win32_PhysicalMemory is empty on some virtual platforms
-Set-Attr $result.ansible_facts "ansible_memtotal_mb" ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
-Set-Attr $result.ansible_facts "ansible_swaptotal_mb" ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
-
-Set-Attr $result.ansible_facts "ansible_lastboot" $win32_os.lastbootuptime.ToString("u")
-Set-Attr $result.ansible_facts "ansible_uptime_seconds" $([System.Convert]::ToInt64($(Get-Date).Subtract($win32_os.lastbootuptime).TotalSeconds))
+$date = @{
+    date = $datetime.ToString("yyyy-MM-dd")
+    day = $datetime.ToString("dd")
+    epoch = (Get-Date -UFormat "%s")
+    hour = $datetime.ToString("HH")
+    iso8601 = $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ssZ")
+    iso8601_basic = $datetime.ToString("yyyyMMddTHHmmssffffff")
+    iso8601_basic_short = $datetime.ToString("yyyyMMddTHHmmss")
+    iso8601_micro = $datetime_utc.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ")
+    minute = $datetime.ToString("mm")
+    month = $datetime.ToString("MM")
+    second = $datetime.ToString("ss")
+    time = $datetime.ToString("HH:mm:ss")
+    tz = ([System.TimeZoneInfo]::Local.Id)
+    tz_offset = $datetime.ToString("zzzz")
+    # Ensure that the weekday is in English
+    weekday = $datetime.ToString("dddd", [System.Globalization.CultureInfo]::InvariantCulture)
+    weekday_number = (Get-Date -UFormat "%w")
+    weeknumber = (Get-Date -UFormat "%W")
+    year = $datetime.ToString("yyyy")
+}
 
 $ips = @()
-Foreach ($ip in $netcfg.IPAddress) { If ($ip) { $ips += $ip } }
-Set-Attr $result.ansible_facts "ansible_ip_addresses" $ips
+Foreach ($ip in $netcfg.IPAddress) {
+    If ($ip) {
+        $ips += $ip
+    }
+}
 
-$env_vars = New-Object psobject
-foreach ($item in Get-ChildItem Env:)
-{
+$env_vars = @{ }
+foreach ($item in Get-ChildItem Env:) {
     $name = $item | select -ExpandProperty Name
     # Powershell ConvertTo-Json fails if string ends with \
     $value = ($item | select -ExpandProperty Value).TrimEnd("\")
-    Set-Attr $env_vars $name $value
+    $env_vars.Add($name, $value)
 }
-Set-Attr $result.ansible_facts "ansible_env" $env_vars
 
-$psversion = $PSVersionTable.PSVersion.Major
-Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
+$ansible_facts = @{
+    ansible_architecture = $win32_os.OSArchitecture
+    ansible_bios_date = $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
+    ansible_bios_version = $win32_bios.SMBIOSBIOSVersion
+    ansible_date_time = $date
+    ansible_distribution = $win32_os.Caption
+    ansible_distribution_version = $osversion.Version.ToString()
+    ansible_distribution_major_version = $osversion.Version.Major.ToString()
+    ansible_domain = $ip_props.DomainName
+    ansible_env = $env_vars
+    ansible_fqdn = ($ip_props.Hostname + "." + $ip_props.DomainName)
+    ansible_hostname = $env:COMPUTERNAME
+    ansible_interfaces = $formattednetcfg
+    ansible_ip_addresses = $ips
+    ansible_kernel = $osversion.Version.ToString()
+    ansible_lastboot = $win32_os.lastbootuptime.ToString("u")
+    ansible_machine_id = $user.User.AccountDomainSid.Value
+    ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
+    ansible_os_family = "Windows"
+    ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
+    ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
+    ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
+    ansible_powershell_version = ($PSVersionTable.PSVersion.Major)
+    ansible_processor = $cpu_list
+    ansible_processor_cores = $win32_cpu.NumberOfCores
+    ansible_processor_count = $win32_cs.NumberOfProcessors
+    ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors / $win32_cpu.NumberOfCores)
+    ansible_processor_vcpus = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
+    ansible_product_name = $win32_cs.Model.Trim()
+    ansible_product_serial = $win32_bios.SerialNumber
+#    ansible_product_version = ([string] $win32_cs.SystemFamily)
+    ansible_reboot_pending = (Get-PendingRebootStatus)
+    ansible_system = $osversion.Platform.ToString()
+    ansible_system_description = ([string] $win32_os.Description)
+    ansible_system_vendor = $win32_cs.Manufacturer
+    ansible_uptime_seconds = $([System.Convert]::ToInt64($(Get-Date).Subtract($win32_os.lastbootuptime).TotalSeconds))
+
+    ansible_user_dir = $env:userprofile
+    # Win32_UserAccount.FullName is probably the right thing here, but it can be expensive to get on large domains
+    ansible_user_gecos = ""
+    ansible_user_id = $env:username
+    ansible_user_sid = $user.User.Value
+    ansible_windows_domain = $win32_cs.Domain
+
+    # Win32_PhysicalMemory is empty on some virtual platforms
+    ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+    ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
+
+    module_setup = $true
+}
 
 $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
 if ($winrm_https_listener_parent_paths -isnot [array]) {
@@ -181,49 +187,38 @@ if ($winrm_https_listener_parent_paths -isnot [array]) {
 }
 
 $winrm_https_listener_paths = @()
-$https_listeners = @()
-$winrm_cert_thumbprints = @()
-$winrm_cert_expiry = @()
-
 foreach ($winrm_https_listener_parent_path in $winrm_https_listener_parent_paths) {
     $winrm_https_listener_paths += $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
 }
 
-foreach ($winrm_https_listener_path in $winrm_https_listener_paths)
-{
+$https_listeners = @()
+foreach ($winrm_https_listener_path in $winrm_https_listener_paths) {
     $https_listeners += Get-ChildItem -Path "WSMan:\localhost\Listener$winrm_https_listener_path"
 }
 
-foreach ($https_listener in $https_listeners)
-{
+$winrm_cert_thumbprints = @()
+foreach ($https_listener in $https_listeners) {
     $winrm_cert_thumbprints += $https_listener | where {$_.Name -EQ "CertificateThumbprint" } | select Value
 }
 
+$winrm_cert_expiry = @()
 foreach ($winrm_cert_thumbprint in $winrm_cert_thumbprints) {
     Try {
         $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | select NotAfter
-    }
-    Catch {}
+    } Catch {}
 }
 
 $winrm_cert_expirations = $winrm_cert_expiry | Sort-Object NotAfter
-if ($winrm_cert_expirations)
-{
+if ($winrm_cert_expirations) {
     # this fact was renamed from ansible_winrm_certificate_expires due to collision with ansible_winrm_X connection var pattern
-    Set-Attr $result.ansible_facts "ansible_win_rm_certificate_expires" $winrm_cert_expirations[0].NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
+    $ansible_facts.Add("ansible_win_rm_certificate_expires", $winrm_cert_expirations[0].NotAfter.ToString("yyyy-MM-dd HH:mm:ss"))
 }
-
-$PendingReboot = Get-PendingRebootStatus
-Set-Attr $result.ansible_facts "ansible_reboot_pending" $PendingReboot
-
-Set-Attr $result.ansible_facts "module_setup" $true
 
 # See if Facter is on the System Path
 Try {
     $facter_exe = Get-Command facter -ErrorAction Stop
     $facter_installed = $true
-}
-Catch {
+} Catch {
     $facter_installed = $false
 }
 
@@ -233,8 +228,10 @@ if ($facter_installed) {
     $facts = "$facter_output" | ConvertFrom-Json
     ForEach($fact in $facts.PSObject.Properties) {
         $fact_name = $fact.Name
-        Set-Attr $result.ansible_facts "facter_$fact_name" $fact.Value
+        $ansible_facts.Add("facter_$fact_name", $fact.Value)
     }
 }
 
-Exit-Json $result;
+$result.ansible_facts += $ansible_facts
+
+Exit-Json $result

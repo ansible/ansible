@@ -1,0 +1,13 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - cloudfront_distribution:
+        state: present
+        default_origin_domain_name: www.my-cloudfront-origin.com
+        tags:
+          Name: example distribution
+          Project: example project
+          Priority: 1

@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -88,6 +89,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
@@ -145,7 +147,7 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
         ), supports_check_mode = True)
 
     if not pyodbc_found:
@@ -197,7 +199,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg=e)
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(changed=changed, parameter=parameter_name, ansible_facts={'vertica_configuration': configuration_facts})
 

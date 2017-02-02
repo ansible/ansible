@@ -28,9 +28,10 @@ ICMP_TYPE_OPTIONS = dict(
     ipv6='--icmpv6-type',
 )
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -138,7 +139,7 @@ options:
         matches it. The target can be a user-defined chain (other than the one
         this rule is in), one of the special builtin targets which decide the
         fate of the packet immediately, or an extension (see EXTENSIONS
-        below).  If this option is omitted in a rule (and the goto paramater
+        below).  If this option is omitted in a rule (and the goto parameter
         is not used), then matching the rule will have no effect on the
         packet's fate, but the counters on the rule will be incremented.
     required: false
@@ -399,8 +400,13 @@ def construct_rule(params):
         False)
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
-    append_match(rule, params['ctstate'], 'state')
-    append_csv(rule, params['ctstate'], '--state')
+    if 'conntrack' in params['match']:
+        append_csv(rule, params['ctstate'], '--ctstate')
+    elif 'state' in params['match']:
+        append_csv(rule, params['ctstate'], '--state')
+    elif params['ctstate']:
+        append_match(rule, params['ctstate'], 'conntrack')
+        append_csv(rule, params['ctstate'], '--ctstate')
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)

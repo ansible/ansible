@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,11 +82,10 @@ EXAMPLES = '''
 
 RETURN = '''# '''
 
-import urllib
-
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import *
 
 # ===========================================
@@ -130,17 +130,16 @@ def main():
         module.exit_json(changed=True)
 
     try:
-        data = urllib.urlencode(params)
+        data = urlencode(params)
         response, info = fetch_url(module, url, data=data)
     except Exception:
         e = get_exception()
         module.fail_json(msg='Unable to notify Honeybadger: %s' % e)
     else:
-        if info['status'] == 200:
+        if info['status'] == 201:
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="HTTP result code: %d connecting to %s" % (info['status'], url))
 
 if __name__ == '__main__':
     main()
-

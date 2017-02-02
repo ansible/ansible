@@ -22,9 +22,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,9 +36,13 @@ description:
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
-    - Sadly, you I(do) need to know your webfaction hostname for the C(host) parameter.  But at least, unlike the API, you don't need to know the IP address - you can use a DNS name.
+    - Sadly, you I(do) need to know your webfaction hostname for the C(host) parameter.  But at least, unlike the API, you don't need to know the IP
+      address. You can use a DNS name.
     - If a site of the same name exists in the account but on a different host, the operation will exit.
-    - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
+    - >
+      You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
+      The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
+      your host, you may want to add C(serial: 1) to the plays.
     - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
@@ -122,7 +127,7 @@ def main():
             subdomains = dict(required=False, type='list', default=[]),
             site_apps = dict(required=False, type='list', default=[]),
             login_name = dict(required=True),
-            login_password = dict(required=True),
+            login_password = dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )

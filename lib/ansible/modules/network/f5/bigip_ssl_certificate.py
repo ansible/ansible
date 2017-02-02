@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: bigip_ssl_certificate
@@ -137,42 +138,29 @@ cert_name:
     description: >
         The name of the SSL certificate. The C(cert_name) and
         C(key_name) will be equal to each other.
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "cert1"
 key_name:
     description: >
         The name of the SSL certificate key. The C(key_name) and
         C(cert_name) will be equal to each other.
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "key1"
 partition:
     description: Partition in which the cert/key was created
-    returned:
-        - changed
-        - created
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "Common"
 key_checksum:
     description: SHA1 checksum of the key that was provided
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "cf23df2207d99a74fbe169e3eba035e633b65d94"
 cert_checksum:
     description: SHA1 checksum of the cert that was provided
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0"
 '''
@@ -263,7 +251,7 @@ class BigIpSslCertificate(object):
         key_content = self.params['key_content']
         passphrase = self.params['passphrase']
 
-        # Technically you dont need to provide us with anything in the form
+        # Technically you don't need to provide us with anything in the form
         # of content for your cert, but that's kind of illogical, so we just
         # return saying you didn't "do" anything if you left the cert and keys
         # empty.
@@ -443,6 +431,8 @@ class BigIpSslCertificate(object):
 
     def delete(self):
         changed = False
+        name = self.params['name']
+        partition = self.params['partition']
 
         check_mode = self.params['check_mode']
 
@@ -514,7 +504,7 @@ def main():
         module.fail_json(msg=str(e))
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

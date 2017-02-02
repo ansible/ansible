@@ -35,3 +35,4 @@
     - { role: mount, tags: [test_mount, needs_root, needs_privileged]}
     - { role: include_vars, tags: test_include_vars }
     - { role: sefcontext, tags: [test_sefcontext, needs_root]}
+    - { role: known_hosts, tags: test_known_hosts }

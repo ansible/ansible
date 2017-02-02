@@ -52,8 +52,9 @@ You may wish to consult the `ansible.cfg in source control <https://raw.github.c
 Environmental configuration
 ```````````````````````````
 
-Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
+Ansible also allows configuration of settings via environment variables.  If
+these environment variables are set, they will override any setting loaded
+from the configuration file.  These variables are defined in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_.
 
 .. _config_values_by_section:
 
@@ -83,6 +84,20 @@ different locations::
    action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`dev_guide/developing_plugins` for more details.
+
+
+.. _allow_unsafe_lookups:
+
+allow_unsafe_lookups
+====================
+
+.. versionadded:: 2.2.3, 2.3.1
+
+When enabled, this option allows lookup plugins (whether used in variables as `{{lookup('foo')}}` or as a loop as `with_foo`) to return data that is **not** marked "unsafe". By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language, as this could represent a security risk.
+
+This option is provided to allow for backwards-compatibility, however users should first consider adding `allow_unsafe=True` to any lookups which may be expected to contain data which may be run through the templating engine later. For example::
+
+    {{lookup('pipe', '/path/to/some/command', allow_unsafe=True)}}
 
 
 .. _allow_world_readable_tmpfiles:
@@ -501,6 +516,19 @@ to talk to::
 
 It used to be called hostfile in Ansible before 1.9
 
+.. _inventory_ignore_extensions:
+
+inventory_ignore_extensions
+===========================
+
+Comma-separated list of file extension patterns to ignore when Ansible inventory
+is a directory with multiple sources (static and dynamic)::
+
+    inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
+
+This option can be overridden by setting ``ANSIBLE_INVENTORY_IGNORE``
+environment variable.
+
 .. _jinja2_extensions:
 
 jinja2_extensions
@@ -521,8 +549,25 @@ This is the default location Ansible looks to find modules::
 
      library = /usr/share/ansible
 
-Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
-"./library" directory alongside a playbook.
+Ansible can look in multiple locations if you feed it a colon
+separated path, and it also will look for modules in the :file:`./library`
+directory alongside a playbook.
+
+This can be used to manage modules pulled from several different locations.
+For instance, a site wishing to checkout modules from several different git
+repositories might handle it like this:
+
+.. code-block:: shell-session
+
+    $ mkdir -p /srv/modules
+    $ cd /srv/modules
+    $ git checkout https://vendor_modules .
+    $ git checkout ssh://custom_modules .
+    $ export ANSIBLE_LIBRARY=/srv/modules/custom_modules:/srv/modules/vendor_modules
+    $ ansible [...]
+
+In case of modules with the same name, the library paths are searched in order
+and the first module found with that name is used.
 
 .. _local_tmp:
 
@@ -538,7 +583,7 @@ things gets stored in a temporary file until ansible exits and cleans up after
 itself.  The default location is a subdirectory of the user's home directory.
 If you'd like to change that, you can do so by altering this setting::
 
-    local_tmp = $HOME/.ansible/tmp
+    local_tmp = ~/.ansible/tmp
 
 Ansible will then choose a random directory name inside this location.
 
@@ -576,15 +621,41 @@ merge_multiple_cli_tags
 
 .. versionadded:: 2.3
 
-This allows changing how multiple --tags and --skip-tags arguments are handled
-on the command line.  In Ansible up to and including 2.3, specifying --tags
-more than once will only take the last value of --tags.  Setting this config
-value to True will mean that all of the --tags options will be merged
-together.  The same holds true for --skip-tags.
+This allows changing how multiple :option:`--tags` and :option:`--skip-tags`
+arguments are handled on the command line.  Specifying :option:`--tags` more
+than once merges all of the :option:`--tags` options together.  If you want
+the pre-2.4.x behaviour where only the last value of :option:`--tags` is used,
+then set this to False.  The same holds true for :option:`--skip-tags`.
 
 .. note:: The default value for this in 2.3 is False.  In 2.4, the
-    default value will be True.  After 2.4, the option is going away.
-    Multiple --tags and multiple --skip-tags will always be merged together.
+    default value is True.  After 2.8, the option will be removed.
+    Multiple :option:`--tags` and multiple :option:`--skip-tags` will always
+    be merged together.
+
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
+
+    module_lang = en_US.UTF-8
+
+.. note::
+
+    This is only used if :ref:`module_set_locale` is set to True.
+
+.. _module_name:
+
+module_name
+===========
+
+This is the default module name (-m) value for /usr/bin/ansible.  The default is the 'command' module.
+Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
+it to 'shell'::
+
+    module_name = command
 
 .. _module_set_locale:
 
@@ -600,27 +671,23 @@ being set when the module is executed on the given remote system.  By default th
     The module_set_locale option was added in Ansible-2.1 and defaulted to
     True.  The default was changed to False in Ansible-2.2
 
-.. _module_lang:
+.. _module_utils:
 
+module_utils
+============
 
-module_lang
-===========
+This is the default location Ansible looks to find module_utils::
 
-This is to set the default language to communicate between the module and the system.
-By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
+    module_utils = /usr/share/ansible/my_module_utils
 
-    module_lang = en_US.UTF-8
+module_utils are python modules that Ansible is able to combine with Ansible
+modules when sending them to the remote machine.  Having custom module_utils
+is useful for extracting common code when developing a set of site-specific
+modules.
 
-.. _module_name:
-
-module_name
-===========
-
-This is the default module name (-m) value for /usr/bin/ansible.  The default is the 'command' module.
-Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
-it to 'shell'::
-
-    module_name = command
+Ansible can look in multiple locations if you feed it a colon
+separated path, and it also will look for modules in the
+:file:`./module_utils` directory alongside a playbook.
 
 .. _nocolor:
 
@@ -695,7 +762,7 @@ Ansible works by transferring modules to your remote machines, running them, and
 cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
 setting::
 
-    remote_tmp = $HOME/.ansible/tmp
+    remote_tmp = ~/.ansible/tmp
 
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
 inside this location.
@@ -709,6 +776,27 @@ This is the default username ansible will connect as for /usr/bin/ansible-playbo
 always default to the current user if this is not defined::
 
     remote_user = root
+
+
+.. _restrict_facts_namespace:
+
+restrict_facts_namespace
+========================
+
+.. versionadded:: 2.4
+
+This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
+False by default. Can also be set via the environment variable `ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
+
+When False::
+
+    - debug: var=ansible_system
+
+
+When True::
+
+    - debug: var=ansible_facts.ansible_system
+
 
 .. _retry_files_enabled:
 
@@ -999,7 +1087,7 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
     ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
-be appropriate. If `ssh_args` is set, the default ``control_path`` setting is not used.
+be appropriate. If ``-o ControlPath`` is set in ``ssh_args``, the ``control_path`` setting is not used.
 
 .. _control_path:
 
@@ -1019,7 +1107,7 @@ may wish to shorten the string to something like the below::
 
 Ansible 1.4 and later will instruct users to run with "-vvvv" in situations where it hits this problem
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
-encountered on EC2. This setting is ignored if ``ssh_args`` is set.
+encountered on EC2. This setting is ignored if ``-o ControlPath`` is set in ``ssh_args``.
 
 .. _control_path_dir:
 
@@ -1032,7 +1120,16 @@ This is the base directory of the ControlPath sockets.
 It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
 
-    control_path_dir=$HOME/.ansible/cp
+    control_path_dir=~/.ansible/cp
+
+.. _retries:
+
+retries
+=======
+
+Adds the option to retry failed ssh executions if the failure is encountered in ssh itself, not the remote command. This can be helpful if there are transient network issues. Enabled by setting retries to an integer greater than 1. Defaults to::
+
+    retries = 0
 
 .. _scp_if_ssh:
 
@@ -1200,7 +1297,5 @@ Override the default Galaxy server value of https://galaxy.ansible.com. Useful i
 ignore_certs
 ============
 
-If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
-.
-ver with a self-signed certificate
-.
+If set to *yes*, ansible-galaxy will not validate TLS certificates. This can be useful for testing against a server with a self-signed certificate.
+

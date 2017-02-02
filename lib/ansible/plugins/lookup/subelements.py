@@ -17,11 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.constants import mk_boolean as boolean
+
 
 FLAGS = ('skip_missing',)
 
@@ -32,8 +33,7 @@ class LookupModule(LookupBase):
 
         def _raise_terms_error(msg=""):
             raise AnsibleError(
-                "subelements lookup expects a list of two or three items, "
-                + msg)
+                "subelements lookup expects a list of two or three items, " + msg)
 
         terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
 
@@ -79,7 +79,7 @@ class LookupModule(LookupBase):
             for subkey in subelements:
                 if subkey == subelements[-1]:
                     lastsubkey = True
-                if not subkey in subvalue:
+                if subkey not in subvalue:
                     if skip_missing:
                         continue
                     else:
@@ -101,4 +101,3 @@ class LookupModule(LookupBase):
                 ret.append((item0, item1))
 
         return ret
-

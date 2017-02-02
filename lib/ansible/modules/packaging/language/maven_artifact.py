@@ -19,25 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-__author__ = 'cschmidt'
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from lxml import etree
-import os
-import hashlib
-import sys
-import posixpath
-import urlparse
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-try:
-    import boto3
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -153,6 +138,21 @@ EXAMPLES = '''
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
+from lxml import etree
+import os
+import hashlib
+import sys
+import posixpath
+import urlparse
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+try:
+    import boto3
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+
+
 class Artifact(object):
     def __init__(self, group_id, artifact_id, version, classifier=None, extension='jar'):
         if not group_id:
@@ -245,7 +245,10 @@ class MavenDownloader:
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                if len(snapshotArtifact.xpath("classifier/text()")) > 0 and snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and len(snapshotArtifact.xpath("extension/text()")) > 0 and snapshotArtifact.xpath("extension/text()")[0] == artifact.extension:
+                if (len(snapshotArtifact.xpath("classifier/text()")) > 0 and
+                        snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and
+                        len(snapshotArtifact.xpath("extension/text()")) > 0 and
+                        snapshotArtifact.xpath("extension/text()")[0] == artifact.extension):
                     return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
@@ -412,7 +415,8 @@ def main():
 
     try:
         if downloader.download(artifact, dest):
-            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
+            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier,
+                             extension=extension, repository_url=repository_url, changed=True)
         else:
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:

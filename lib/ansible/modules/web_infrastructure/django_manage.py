@@ -19,23 +19,27 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: django_manage
 short_description: Manages a Django application.
 description:
-     - Manages a Django application using the I(manage.py) application frontend to I(django-admin). With the I(virtualenv) parameter, all management commands will be executed by the given I(virtualenv) installation.
+    - Manages a Django application using the I(manage.py) application frontend to I(django-admin). With the I(virtualenv) parameter, all
+      management commands will be executed by the given I(virtualenv) installation.
 version_added: "1.1"
 options:
   command:
     choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
-      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate.
-      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run with the I(--noinput) flag.
+      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb,
+        test, and validate.
+      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run
+        with the I(--noinput) flag.
     required: true
   app_path:
     description:
@@ -91,12 +95,13 @@ options:
     required: false
     version_added: "1.3"
 notes:
-   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
-   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
-   - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
-   - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings.
-   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings.
-   - As of ansible 2.x, your I(manage.py) application must be executable (rwxr-xr-x), and must have a valid I(shebang), i.e. "#!/usr/bin/env python", for invoking the appropriate Python interpreter.
+  - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
+  - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
+  - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
+  - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings.
+  - To be able to use the collectstatic command, you must have enabled staticfiles in your settings.
+  - As of ansible 2.x, your I(manage.py) application must be executable (rwxr-xr-x), and must have a valid I(shebang), i.e. "#!/usr/bin/env python",
+    for invoking the appropriate Python interpreter.
 requirements: [ "virtualenv", "django" ]
 author: "Scott Anderson (@tastychutney)"
 '''
@@ -136,6 +141,7 @@ EXAMPLES = """
 
 import os
 
+
 def _fail(module, cmd, out, err, **kwargs):
     msg = ''
     if out:
@@ -165,23 +171,30 @@ def _ensure_virtualenv(module):
     os.environ["PATH"] = "%s:%s" % (vbin, os.environ["PATH"])
     os.environ["VIRTUAL_ENV"] = venv_param
 
+
 def createcachetable_filter_output(line):
     return "Already exists" not in line
+
 
 def flush_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
+
 def loaddata_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
+
 
 def syncdb_filter_output(line):
     return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
+
 def migrate_filter_output(line):
     return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line) or ("Applying" in line)
 
+
 def collectstatic_filter_output(line):
     return line and "0 static files" not in line
+
 
 def main():
     command_allowed_param_map = dict(
@@ -194,11 +207,11 @@ def main():
         validate=(),
         migrate=('apps', 'skip', 'merge', 'database',),
         collectstatic=('clear', 'link', ),
-        )
+    )
 
     command_required_param_map = dict(
         loaddata=('fixtures', ),
-        )
+    )
 
     # forces --noinput on every command that needs it
     noinput_commands = (
@@ -207,7 +220,7 @@ def main():
         'migrate',
         'test',
         'collectstatic',
-        )
+    )
 
     # These params are allowed for certain commands only
     specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
@@ -219,23 +232,23 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            command     = dict(default=None, required=True),
-            app_path    = dict(default=None, required=True),
-            settings    = dict(default=None, required=False),
-            pythonpath  = dict(default=None, required=False, aliases=['python_path']),
-            virtualenv  = dict(default=None, required=False, aliases=['virtual_env']),
+            command=dict(default=None, required=True),
+            app_path=dict(default=None, required=True),
+            settings=dict(default=None, required=False),
+            pythonpath=dict(default=None, required=False, aliases=['python_path']),
+            virtualenv=dict(default=None, required=False, aliases=['virtual_env']),
 
-            apps        = dict(default=None, required=False),
-            cache_table = dict(default=None, required=False),
-            clear       = dict(default=None, required=False, type='bool'),
-            database    = dict(default=None, required=False),
-            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
-            fixtures    = dict(default=None, required=False),
-            liveserver  = dict(default=None, required=False, aliases=['live_server']),
-            testrunner  = dict(default=None, required=False, aliases=['test_runner']),
-            skip        = dict(default=None, required=False, type='bool'),
-            merge       = dict(default=None, required=False, type='bool'),
-            link        = dict(default=None, required=False, type='bool'),
+            apps=dict(default=None, required=False),
+            cache_table=dict(default=None, required=False),
+            clear=dict(default=None, required=False, type='bool'),
+            database=dict(default=None, required=False),
+            failfast=dict(default='no', required=False, type='bool', aliases=['fail_fast']),
+            fixtures=dict(default=None, required=False),
+            liveserver=dict(default=None, required=False, aliases=['live_server']),
+            testrunner=dict(default=None, required=False, aliases=['test_runner']),
+            skip=dict(default=None, required=False, type='bool'),
+            merge=dict(default=None, required=False, type='bool'),
+            link=dict(default=None, required=False, type='bool'),
         ),
     )
 

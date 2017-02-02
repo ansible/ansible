@@ -16,303 +16,139 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_interface
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages physical attributes of interfaces.
 description:
     - Manages physical attributes of interfaces of NX-OS switches.
 author: Jason Edelman (@jedelman8)
 notes:
-    - This module is also used to create logical interfaces such as
-      svis and loopbacks.
-    - Be cautious of platform specific idiosyncrasies. For example,
-      when you default a loopback interface, the admin state toggles
-      on certain versions of NX-OS.
-    - The M(nxos_overlay_global) C(anycast_gateway_mac) attribute must be
-      set before setting the C(fabric_forwarding_anycast_gateway) property.
+  - This module is also used to create logical interfaces such as
+    svis and loopbacks.
+  - Be cautious of platform specific idiosyncrasies. For example,
+    when you default a loopback interface, the admin state toggles
+    on certain versions of NX-OS.
+  - The M(nxos_overlay_global) C(anycast_gateway_mac) attribute must be
+    set before setting the C(fabric_forwarding_anycast_gateway) property.
 options:
-    interface:
-        description:
-            - Full name of interface, i.e. Ethernet1/1, port-channel10.
-        required: true
-        default: null
-    interface_type:
-        description:
-            - Interface type to be unconfigured from the device.
-        required: false
-        default: null
-        choices: ['loopback', 'portchannel', 'svi', 'nve']
-        version_added: "2.2"
-    admin_state:
-        description:
-            - Administrative state of the interface.
-        required: false
-        default: up
-        choices: ['up','down']
+  interface:
     description:
-        description:
-            - Interface description.
-        required: false
-        default: null
-    mode:
-        description:
-            - Manage Layer 2 or Layer 3 state of the interface.
-        required: false
-        default: null
-        choices: ['layer2','layer3']
-    ip_forward:
-        description:
-            - Enable/Disable ip forward feature on SVIs.
-        required: false
-        default: null
-        choices: ['enable','disable']
-        version_added: "2.2"
-    fabric_forwarding_anycast_gateway:
-        description:
-            - Associate SVI with anycast gateway under VLAN configuration mode.
-        required: false
-        default: null
-        choices: ['true','false']
-        version_added: "2.2"
-    state:
-        description:
-            - Specify desired state of the resource.
-        required: true
-        default: present
-        choices: ['present','absent','default']
+      - Full name of interface, i.e. Ethernet1/1, port-channel10.
+    required: true
+    default: null
+  interface_type:
+    description:
+      - Interface type to be unconfigured from the device.
+    required: false
+    default: null
+    choices: ['loopback', 'portchannel', 'svi', 'nve']
+    version_added: "2.2"
+  admin_state:
+    description:
+      - Administrative state of the interface.
+    required: false
+    default: up
+    choices: ['up','down']
+  description:
+    description:
+      - Interface description.
+    required: false
+    default: null
+  mode:
+    description:
+      - Manage Layer 2 or Layer 3 state of the interface.
+    required: false
+    default: null
+    choices: ['layer2','layer3']
+  ip_forward:
+    description:
+      - Enable/Disable ip forward feature on SVIs.
+    required: false
+    default: null
+    choices: ['enable','disable']
+    version_added: "2.2"
+  fabric_forwarding_anycast_gateway:
+    description:
+      - Associate SVI with anycast gateway under VLAN configuration mode.
+    required: false
+    default: null
+    choices: ['true','false']
+    version_added: "2.2"
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: true
+    default: present
+    choices: ['present','absent','default']
 '''
 
 EXAMPLES = '''
-- name Ensure an interface is a Layer 3 port and that it has the proper description
+- name: Ensure an interface is a Layer 3 port and that it has the proper description
   nxos_interface:
     interface: Ethernet1/1
     description: 'Configured by Ansible'
     mode: layer3
     host: 68.170.147.165
 
-- name Admin down an interface
+- name: Admin down an interface
   nxos_interface:
     interface: Ethernet2/1
     host: 68.170.147.165
     admin_state: down
 
-- name Remove all loopback interfaces
+- name: Remove all loopback interfaces
   nxos_interface:
     interface: loopback
     state: absent
     host: 68.170.147.165
 
-- name Remove all logical interfaces
+- name: Remove all logical interfaces
   nxos_interface:
     interface_type: "{{ item }} "
     state: absent
     host: "{{ inventory_hostname }}"
-
   with_items:
     - loopback
     - portchannel
     - svi
     - nve
-- name Admin up all ethernet interfaces
+
+- name: Admin up all ethernet interfaces
   nxos_interface:
     interface: ethernet
     host: 68.170.147.165
     admin_state: up
 
-- name Admin down ALL interfaces (physical and logical)
+- name: Admin down ALL interfaces (physical and logical)
   nxos_interface:
     interface: all
     host: 68.170.147.165
     admin_state: down
 '''
+
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"admin_state": "down"}
-existing:
-    description: k/v pairs of existing switchport
-    type: dict
-    sample:  {"admin_state": "up", "description": "None",
-              "interface": "port-channel101", "mode": "layer2",
-              "type": "portchannel", "ip_forward": "enable"}
-end_state:
-    description: k/v pairs of switchport after module execution
-    returned: always
-    type: dict or null
-    sample:  {"admin_state": "down", "description": "None",
-              "interface": "port-channel101", "mode": "layer2",
-              "type": "portchannel", "ip_forward": "enable"}
-updates:
+commands:
     description: command list sent to the device
     returned: always
     type: list
     sample: ["interface port-channel101", "shutdown"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
-import json
-
-# COMMON CODE FOR MIGRATION
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.shell import ShellError
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
 
 
 def is_default_interface(interface, module):
@@ -325,11 +161,10 @@ def is_default_interface(interface, module):
         False: if it does not have a default config
         DNE (str): if the interface does not exist - loopbacks, SVIs, etc.
     """
-    command = 'show run interface ' + interface
+    command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module,
-                                    command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)[0]
     except IndexError:
         body = ''
 
@@ -384,23 +219,24 @@ def get_manual_interface_attributes(interface, module):
     """
 
     if get_interface_type(interface) == 'svi':
-        command = 'show interface ' + interface
+        command = 'show interface {0}'.format(interface)
         try:
-            body = execute_modified_show_for_cli_text(command, module)[0]
-        except (IndexError, ShellError):
+            body = run_commands(module, [command])[0]
+        except IndexError:
             return None
 
-        command_list = body.split('\n')
-        desc = None
-        admin_state = 'up'
-        for each in command_list:
-            if 'Description:' in each:
-                line = each.split('Description:')
-                desc = line[1].strip().split('MTU')[0].strip()
-            elif 'Administratively down' in each:
-                admin_state = 'down'
+        if body:
+            command_list = body.split('\n')
+            desc = None
+            admin_state = 'up'
+            for each in command_list:
+                if 'Description:' in each:
+                    line = each.split('Description:')
+                    desc = line[1].strip().split('MTU')[0].strip()
+                elif 'Administratively down' in each:
+                    admin_state = 'down'
 
-        return dict(description=desc, admin_state=admin_state)
+            return dict(description=desc, admin_state=admin_state)
     else:
         return None
 
@@ -441,7 +277,7 @@ def get_interface(intf, module):
     key_map = {}
     interface = {}
 
-    command = 'show interface ' + intf
+    command = 'show interface {0}'.format(intf)
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
@@ -470,9 +306,8 @@ def get_interface(intf, module):
                                                           'nxapibug'))
             interface['description'] = str(attributes.get('description',
                                                           'nxapi_bug'))
-            command = 'show run interface ' + intf
-            body = execute_show_command(command, module,
-                                        command_type='cli_show_ascii')[0]
+            command = 'show run interface {0}'.format(intf)
+            body = execute_show_command(command, module)[0]
             if 'ip forward' in body:
                 interface['ip_forward'] = 'enable'
             else:
@@ -555,7 +390,7 @@ def get_interfaces_dict(module):
 
     interface_list = body.get('TABLE_interface')['ROW_interface']
     for index in interface_list:
-        intf = index ['interface']
+        intf = index['interface']
         intf_type = get_interface_type(intf)
 
         interfaces[intf_type].append(intf)
@@ -663,12 +498,13 @@ def get_interface_config_commands(interface, intf, existing):
             commands.append('no fabric forwarding mode anycast-gateway')
 
     if commands:
-        commands.insert(0, 'interface ' + intf)
+        commands.insert(0, 'interface {0}'.format(intf))
 
     return commands
 
 
 def get_admin_state(interface, intf, admin_state):
+    command = ''
     if admin_state == 'up':
         command = 'no shutdown'
     elif admin_state == 'down':
@@ -710,96 +546,11 @@ def smart_existing(module, intf_type, normalized_interface):
     return existing, is_default
 
 
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet.
-    """
-    if 'xml' in response[0]:
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-
+def execute_show_command(command, module):
     if module.params['transport'] == 'cli':
         command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
-
-
-def execute_modified_show_for_cli_text(command, module):
     cmds = [command]
-    if module.params['transport'] == 'cli':
-        response = execute_show(cmds, module)
-    else:
-        response = execute_show(cmds, module, command_type='cli_show_ascii')
-    body = response
+    body = run_commands(module, cmds)
     return body
 
 
@@ -830,19 +581,25 @@ def main():
         admin_state=dict(default='up', choices=['up', 'down'], required=False),
         description=dict(required=False, default=None),
         mode=dict(choices=['layer2', 'layer3'], required=False),
-        interface_type=dict(required=False,
-                            choices=['loopback', 'portchannel', 'svi', 'nve']),
+        interface_type=dict(required=False, choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(required=False, choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(required=False, type='bool'),
-        state=dict(choices=['absent', 'present', 'default'],
-                   default='present', required=False),
+        state=dict(choices=['absent', 'present', 'default'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                mutually_exclusive=[['interface', 'interface_type']],
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=[['interface', 'interface_type']],
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
+    results = dict(changed=False, warnings=warnings)
 
     interface = module.params['interface']
     interface_type = module.params['interface_type']
@@ -866,8 +623,7 @@ def main():
                 module.fail_json(msg='description and mode params are not '
                                      'supported in this module. Use '
                                      'nxos_vxlan_vtep instead.')
-        if ((ip_forward or fabric_forwarding_anycast_gateway) and
-             intf_type != 'svi'):
+        if (ip_forward or fabric_forwarding_anycast_gateway) and intf_type != 'svi':
             module.fail_json(msg='The ip_forward and '
                                  'fabric_forwarding_anycast_gateway features '
                                  ' are only available for SVIs.')
@@ -876,9 +632,8 @@ def main():
                     fabric_forwarding_anycast_gateway=fabric_forwarding_anycast_gateway)
 
         if intf_type == 'unknown':
-            module.fail_json(
-                msg='unknown interface type found-1',
-                interface=interface)
+            module.fail_json(msg='unknown interface type found-1',
+                             interface=interface)
 
         existing, is_default = smart_existing(module, intf_type, normalized_interface)
         proposed = get_proposed(existing, normalized_interface, args)
@@ -886,7 +641,6 @@ def main():
         intf_type = normalized_interface = interface_type
         proposed = dict(interface_type=interface_type)
 
-    changed = False
     commands = []
     if interface:
         delta = dict()
@@ -902,29 +656,22 @@ def main():
                     commands.append(cmds)
         elif state == 'present':
             if not existing:
-                cmds = get_interface_config_commands(proposed,
-                                                     normalized_interface,
-                                                     existing)
+                cmds = get_interface_config_commands(proposed, normalized_interface, existing)
                 commands.append(cmds)
             else:
-                delta = dict(set(proposed.items()).difference(
-                    existing.items()))
+                delta = dict(set(proposed.items()).difference(existing.items()))
                 if delta:
-                    cmds = get_interface_config_commands(delta,
-                                                         normalized_interface,
-                                                         existing)
+                    cmds = get_interface_config_commands(delta, normalized_interface, existing)
                     commands.append(cmds)
         elif state == 'default':
             if is_default is False:
                 cmds = ['default interface {0}'.format(normalized_interface)]
                 commands.append(cmds)
             elif is_default == 'DNE':
-                module.exit_json(msg='interface you are trying to default does'
-                                     ' not exist')
+                module.exit_json(msg='interface you are trying to default does not exist')
     elif interface_type:
         if state == 'present':
-            module.fail_json(msg='The interface_type param can be used '
-                                 'only with state absent.')
+            module.fail_json(msg='The interface_type param can be used only with state absent.')
 
         existing = get_interfaces_dict(module)[interface_type]
         cmds = get_interface_type_removed_cmds(existing)
@@ -937,8 +684,8 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            execute_config_command(cmds, module)
-            changed = True
+            load_config(module, cmds)
+            results['changed'] = True
             if module.params['interface']:
                 if delta.get('mode'): # or delta.get('admin_state'):
                     # if the mode changes from L2 to L3, the admin state
@@ -948,7 +695,7 @@ def main():
                     c1 = 'interface {0}'.format(normalized_interface)
                     c2 = get_admin_state(delta, normalized_interface, admin_state)
                     cmds2 = [c1, c2]
-                    execute_config_command(cmds2, module)
+                    load_config(module, cmds2)
                     cmds.extend(cmds2)
                 end_state, is_default = smart_existing(module, intf_type,
                                                        normalized_interface)
@@ -956,12 +703,7 @@ def main():
                 end_state = get_interfaces_dict(module)[interface_type]
             cmds = [cmd for cmd in cmds if cmd != 'configure']
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
+    results['commands'] = cmds
 
     module.exit_json(**results)
 

@@ -1,0 +1,9 @@
+{
+    "results": [
+        {
+            "message": "The test `ansible-test sanity --test pep8` failed with the following error:", 
+            "output": "lib/ansible/modules/cloud/amazon/cloudfront_distribution.py:1715:55: E128 continuation line under-indented for visual indent"
+        }
+    ], 
+    "verified": false
+}

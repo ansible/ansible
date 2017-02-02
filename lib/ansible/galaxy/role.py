@@ -30,7 +30,6 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -42,12 +41,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
-    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
+    ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
 
@@ -58,7 +58,7 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.options = galaxy.options
-        self.galaxy  = galaxy
+        self.galaxy = galaxy
 
         self.name = name
         self.version = version
@@ -113,7 +113,6 @@ class GalaxyRole(object):
                     f.close()
 
         return self._metadata
-
 
     @property
     def install_info(self):
@@ -238,7 +237,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
+                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
                         loose_versions.sort()
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
@@ -247,13 +246,14 @@ class GalaxyRole(object):
                         self.version = 'master'
                 elif self.version != 'master':
                     if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
-                        raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
+                        raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
+                                                                                                                                         self.name,
+                                                                                                                                         role_versions))
 
                 tmp_file = self.fetch(role_data)
 
         else:
             raise AnsibleError("No valid role data found")
-
 
         if tmp_file:
 
@@ -272,8 +272,17 @@ class GalaxyRole(object):
                 # next find the metadata file
                 for member in members:
                     if self.META_MAIN in member.name:
-                        meta_file = member
-                        break
+                        # Look for parent of meta/main.yml
+                        # Due to possibility of sub roles each containing meta/main.yml
+                        # look for shortest length parent
+                        meta_parent_dir = os.path.dirname(os.path.dirname(member.name))
+                        if not meta_file:
+                            archive_parent_dir = meta_parent_dir
+                            meta_file = member
+                        else:
+                            if len(meta_parent_dir) < len(archive_parent_dir):
+                                archive_parent_dir = meta_parent_dir
+                                meta_file = member
                 if not meta_file:
                     raise AnsibleError("this role does not appear to have a meta/main.yml file.")
                 else:
@@ -282,9 +291,9 @@ class GalaxyRole(object):
                     except:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
-                # we strip off the top-level directory for all of the files contained within
-                # the tar file here, since the default is 'github_repo-target', and change it
-                # to the specified role's name
+                # we strip off any higher-level directories for all of the files contained within
+                # the tar file here. The default is 'github_repo-target'. Gerrit instances, on the other
+                # hand, does not have a parent directory at all.
                 installed = False
                 while not installed:
                     display.display("- extracting %s to %s" % (self.name, self.path))
@@ -297,7 +306,8 @@ class GalaxyRole(object):
                             else:
                                 # using --force, remove the old path
                                 if not self.remove():
-                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really want to put the role here." % self.path)
+                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
+                                                       "want to put the role here." % self.path)
                         else:
                             os.makedirs(self.path)
 
@@ -305,9 +315,9 @@ class GalaxyRole(object):
                         for member in members:
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
-                            # and drop the leading directory, as mentioned above
+                            # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.split(os.sep)[1:]
+                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
                                 final_parts = []
                                 for part in parts:
                                     if part != '..' and '~' not in part and '$' not in part:
@@ -334,7 +344,7 @@ class GalaxyRole(object):
                 if not local_file:
                     try:
                         os.unlink(tmp_file)
-                    except (OSError,IOError) as e:
+                    except (OSError, IOError) as e:
                         display.warning("Unable to remove tmp file (%s): %s" % (tmp_file, str(e)))
                 return True
 

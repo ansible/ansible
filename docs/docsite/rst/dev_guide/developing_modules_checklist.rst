@@ -1,7 +1,8 @@
 .. _module_contribution:
 
+===================================
 Contributing Your Module to Ansible
-```````````````````````````````````
+===================================
 
 High-quality modules with minimal dependencies
 can be included in Ansible, but modules (just due to the programming
@@ -14,14 +15,15 @@ gives them slightly higher development priority (though they'll work in exactly 
 
 .. formerly marked with _module_dev_testing:
 
+------------------------------
 Contributing Modules Checklist
-``````````````````````````````
+------------------------------
 
 The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
 
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
-* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
-* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
+* Modules must be written to support Python 2.6. If this is not possible, required minimum Python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  In Ansible-2.3 the minimum requirement for modules was Python-2.4.
+* Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
   the metadata should look exactly like this:
 
@@ -29,9 +31,9 @@ The following  checklist items are important guidelines for people who want to c
 
     ANSIBLE_METADATA = {'status': ['preview'],
                         'supported_by': 'community',
-                        'version': '1.0'}
+                        'metadata_version': '1.0'}
 
-The complete module metadata specification is here: https://github.com/ansible/proposals/issues/30
+The complete module metadata specification is here: `Ansible metadata block <https://docs.ansible.com/ansible/dev_guide/developing_modules_documenting.html#ansible-metadata-block>`_
 
 * Documentation: Make sure it exists
     * Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts. This documentation is not meant to teach a total novice, but it also should not be reserved for the Illuminati (hard balance).
@@ -46,7 +48,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
     * For password / secret arguments no_log=True should be set.
     * Requirements should be documented, using the `requirements=[]` field.
     * Author should be set, with their name and their github id, at the least.
-    * Ensure that you make use of U() for urls, C() for files and options, I() for params, M() for modules.
+    * Ensure that you make use of `U()` for URLs, `I()` for option names, `C()` for files and option values, `M()` for module names.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when C(state=present)."
     * Verify that a GPL 3 License header is included.
     * Does module use check_mode? Could it be modified to use it? Document it. Documentation is everyone's friend.
@@ -74,7 +76,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
     * Be sure to check out the modules themselves for additional information.
-        * Amazon: https://github.com/ansible/ansible-modules-extras/blob/devel/cloud/amazon/GUIDELINES.md
+        * `Amazon <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
     * Modules should make use of the "extends_documentation_fragment" to ensure documentation available. For example, the AWS module should include::
 
         extends_documentation_fragment:
@@ -106,7 +108,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
         main()
 
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
-* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Being `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant is a requirement. See :doc:`testing_pep8` for more information.
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
@@ -133,7 +135,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
   like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
-`````````````````````````
+=========================
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
 * look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
@@ -158,7 +160,7 @@ To parse all arguments into a variable modules generally use:
     $params = Parse-Args $args
 
 Arguments
-+++++++++
+---------
 
 * Try and use state present and state absent like other modules
 * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
@@ -175,7 +177,7 @@ Required arguments with name validation:
         $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 
 Optional arguments with name validation
-+++++++++++++++++++++++++++++++++++++++
+---------------------------------------
 
 .. code-block:: powershell
 
@@ -186,7 +188,7 @@ Optional arguments with name validation
 * Look at existing modules for more examples of argument checking.
 
 Results
-+++++++
+-------
 * The result object should always contain an attribute called changed set to either $true or $false
 * Create your result object like this
 
@@ -208,17 +210,22 @@ Results
 * Have you tested for powershell 3.0 and 4.0 compliance?
 
 Deprecating and making module aliases
-``````````````````````````````````````
+======================================
 
-Starting in 1.8, you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
-_old_cloud.py. This keeps the module available, but hides it from the primary docs and listing.
+Starting in 1.8, you can deprecate modules by renaming them with a preceding ``_``, i.e. ``old_cloud.py`` to
+``_old_cloud.py``. This keeps the module available, but hides it from the primary docs and listing.
 
-When deprecating a module, set the `ANSIBLE_METADATA` `status` to `deprecated`.
-In the `DOCUMENTATION` section, add a `deprecated` field along the lines of::
+When deprecating a module:
+
+1) Set the ``ANSIBLE_METADATA`` `status` to `deprecated`.
+2) In the ``DOCUMENTATION`` section, add a `deprecated` field along the lines of::
 
     deprecated: Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.
 
-Add the deprecation to CHANGELOG.md
+3) Add the deprecation to CHANGELOG.md under the ``###Deprecations:`` section.
+
+Alias module names
+------------------
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
 This example allows the stat module to be called with fileinfo, making the following examples equivalent::

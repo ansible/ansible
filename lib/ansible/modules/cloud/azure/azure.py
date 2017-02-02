@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -52,12 +53,14 @@ options:
     required: true
   image:
     description:
-      - system image for creating the virtual machine (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
+      - system image for creating the virtual machine
+        (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
     required: true
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of
+        type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -77,7 +80,8 @@ options:
     default: null
   ssh_cert_path:
     description:
-      - path to an X509 certificate containing the public ssh key to install in the virtual machine. See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
+      - path to an X509 certificate containing the public ssh key to install in the virtual machine.
+        See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
       - if this option is specified, password-based ssh authentication will be disabled.
     required: false
     default: null
@@ -301,7 +305,7 @@ def _delete_disks_when_detached(azure, wait_timeout, disk_names):
                     azure.delete_disk(disk.name, True)
                     disk_names.remove(disk_name)
     except AzureException as e:
-        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+        module.fail_json(msg="failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
     finally:
         signal.alarm(0)
 

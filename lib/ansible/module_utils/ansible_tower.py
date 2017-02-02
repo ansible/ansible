@@ -52,16 +52,16 @@ def tower_auth_config(module):
             return parser.string_to_dict(f.read())
     else:
         auth_config = {}
-        host = module.params.get('host')
+        host = module.params.get('tower_host')
         if host:
             auth_config['host'] = host
-        username = module.params.get('username')
+        username = module.params.get('tower_username')
         if username:
             auth_config['username'] = username
-        password = module.params.get('password')
+        password = module.params.get('tower_password')
         if password:
             auth_config['password'] = password
-        verify_ssl = module.params.get('verify_ssl')
+        verify_ssl = module.params.get('tower_verify_ssl')
         if verify_ssl:
             auth_config['verify_ssl'] = verify_ssl
         return auth_config
@@ -75,3 +75,13 @@ def tower_check_mode(module):
             module.exit_json(changed=True, tower_version='{0}'.format(result['version']))
         except (exc.ServerError, exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
+
+
+def tower_argument_spec():
+    return dict(
+        tower_host=dict(),
+        tower_username=dict(),
+        tower_password=dict(no_log=True),
+        tower_verify_ssl=dict(type='bool', default=True),
+        tower_config_file=dict(type='path'),
+    )

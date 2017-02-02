@@ -21,9 +21,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -458,10 +459,11 @@ class UbuntuSourcesList(SourcesList):
         _repositories = []
         for parsed_repos in self.files.values():
             for parsed_repo in parsed_repos:
-                enabled = parsed_repo[1]
+                valid = parsed_repo[1]
+                enabled = parsed_repo[2]
                 source_line = parsed_repo[3]
 
-                if not enabled:
+                if not valid or not enabled:
                     continue
 
                 if source_line.startswith('ppa:'):

@@ -90,7 +90,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in :doc:`playbooks_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -123,6 +123,11 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
+
+.. seealso::
+
+    :doc:`playbooks_templating`
+        More information about Jinja2 templating
 
 .. _jinja2_filters:
 
@@ -830,20 +835,25 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
-  * inventory vars [2]_
-  * inventory group_vars
-  * inventory host_vars
-  * playbook group_vars
-  * playbook host_vars
+  * inventory file or script group vars [2]_
+  * inventory group_vars/all
+  * playbook group_vars/all
+  * inventory group_vars/*
+  * playbook group_vars/*
+  * inventory file or script host vars [2]_
+  * inventory host_vars/*
+  * playbook host_vars/*
   * host facts
   * play vars
   * play vars_prompt
   * play vars_files
-  * registered vars
-  * set_facts
-  * role and include vars
+  * role vars (defined in role/vars/main.yml)
   * block vars (only for tasks in block)
   * task vars (only for the task)
+  * role (and include_role) params
+  * include params
+  * include_vars
+  * set_facts / registered vars
   * extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
@@ -859,15 +869,30 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
-Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
 
-    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+    ansible -u lola myhost
 
-This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
+For plays/tasks this is also true for ``remote_user``::
 
-    ansible... -e "ansible_ssh_user=<user>"
+ - hosts: myhost
+   tasks:
+    - command: i'll connect as ramon still
+      remote_user: lola
 
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
+
+    ansible... -e "ansible_user=<user>"
+
+You can also override as a normal variable in a play::
+
+    - hosts: all
+      vars:
+        ansible_user: lola
+      tasks:
+        - command: i'll connect as lola!
 
 .. _variable_scopes:
 
@@ -877,8 +902,8 @@ Variable Scopes
 Ansible has 3 main scopes:
 
  * Global: this is set by config, environment variables and the command line
- * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
- * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+ * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
 .. _variable_examples:
 
@@ -921,7 +946,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See :doc:`playbooks_roles` for more info about this::
+See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -1004,7 +1029,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Jinja2 filters and their uses
    :doc:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_roles`
+   :doc:`playbooks_reuse_roles`
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks

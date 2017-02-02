@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,7 +34,7 @@ options:
   name:
     description:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
-        optionaly prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
+        optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
     required: true
     default: null
@@ -91,7 +92,7 @@ EXAMPLES = '''
     state: opts_present
     opts: discard
   with_items: '{{ ansible_mounts }}'
-  when: '/dev/mapper/luks-' in {{ item.device }}
+  when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
 from ansible.module_utils.basic import *

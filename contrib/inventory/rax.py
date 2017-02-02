@@ -229,18 +229,18 @@ def _list_into_cache(regions):
     try:
         # Ansible 2.3+
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', value_type='list')
+                              'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', islist=True)
+                              'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
+                                              'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, islist=True))
+                                              'RAX_ACCESS_IP_VERSION', 4, islist=True))
     except:
         ip_versions = [4]
     else:
@@ -367,8 +367,8 @@ def _list(regions, refresh_cache=True):
                                    'RAX_CACHE_MAX_AGE', 600))
 
     if (not os.path.exists(get_cache_file_path(regions)) or
-        refresh_cache or
-        (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
+            refresh_cache or
+            (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
         # Cache file doesn't exist or older than 10m or refresh cache requested
         _list_into_cache(regions)
 
@@ -434,11 +434,11 @@ def setup():
         try:
             # Ansible 2.3+
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    value_type='list')
+                                     value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    islist=True)
+                                     islist=True)
 
         for region in region_list:
             region = region.strip().upper()

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -82,7 +83,7 @@ user_data:
     description: User data used to start instance
     returned: when Launch Configuration was found
     type: string
-    user_data: "ZXhwb3J0IENMT1VE"
+    sample: "ZXhwb3J0IENMT1VE"
 name:
     description: Name of the AMI
     returned: when Launch Configuration was found

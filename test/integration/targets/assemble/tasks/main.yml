@@ -29,6 +29,15 @@
   copy: src="./" dest="{{output_dir}}/src"
   register: result
 
+- name: create unicode file for test
+  shell: echo "π" > {{ output_dir }}/src/ßΩ.txt
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+
 - name: test assemble with all fragments
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
   register: result
@@ -38,7 +47,7 @@
     that:
     - "result.state == 'file'"
     - "result.changed == True"
-    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
 
 - name: test assemble with all fragments
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
@@ -49,7 +58,7 @@
     that:
     - "result.state == 'file'"
     - "result.changed == False"
-    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
 
 - name: test assemble with fragments matching a regex
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" regexp="^fragment[1-3]$"
@@ -69,7 +78,7 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
+    - "result.checksum == 'd986cefb82e34e4cf14d33a3cda132ff45aa2980'"
 
 - name: test assemble with remote_src=False
   assemble: src="./" dest="{{output_dir}}/assembled4" remote_src=no

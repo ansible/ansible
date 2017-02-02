@@ -5,8 +5,10 @@ from __future__ import absolute_import, print_function
 import errno
 import os
 import pipes
+import pkgutil
 import shutil
 import subprocess
+import re
 import sys
 import time
 
@@ -165,10 +167,14 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         raise
 
     if communicate:
-        stdout, stderr = process.communicate(data)
+        encoding = 'utf-8'
+        data_bytes = data.encode(encoding) if data else None
+        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
     else:
         process.wait()
-        stdout, stderr = None, None
+        stdout_text, stderr_text = None, None
 
     status = process.returncode
     runtime = time.time() - start
@@ -176,9 +182,9 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
 
     if status == 0:
-        return stdout, stderr
+        return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout, stderr, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
 
 
 def common_environment():
@@ -202,7 +208,7 @@ def common_environment():
     return env
 
 
-def pass_vars(required=None, optional=None):
+def pass_vars(required, optional):
     """
     :type required: collections.Iterable[str]
     :type optional: collections.Iterable[str]
@@ -227,7 +233,7 @@ def deepest_path(path_a, path_b):
     """Return the deepest of two paths, or None if the paths are unrelated.
     :type path_a: str
     :type path_b: str
-    :return: str | None
+    :rtype: str | None
     """
     if path_a == '.':
         path_a = ''
@@ -266,6 +272,15 @@ def make_dirs(path):
             raise
 
 
+def is_binary_file(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    with open(path, 'rb') as path_fd:
+        return b'\0' in path_fd.read(1024)
+
+
 class Display(object):
     """Manages color console output."""
     clear = '\033[0m'
@@ -287,6 +302,8 @@ class Display(object):
         self.verbosity = 0
         self.color = True
         self.warnings = []
+        self.warnings_unique = set()
+        self.info_stderr = False
 
     def __warning(self, message):
         """
@@ -304,10 +321,17 @@ class Display(object):
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message):
+    def warning(self, message, unique=False):
         """
         :type message: str
+        :type unique: bool
         """
+        if unique:
+            if message in self.warnings_unique:
+                return
+
+            self.warnings_unique.add(message)
+
         self.__warning(message)
         self.warnings.append(message)
 
@@ -330,7 +354,7 @@ class Display(object):
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
 
     def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
         """
@@ -349,20 +373,12 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationError, self).__init__(message)
+    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationWarning, self).__init__(message)
+    pass
 
 
 class SubprocessError(ApplicationError):
@@ -451,8 +467,12 @@ class EnvironmentConfig(CommonConfig):
 
         self.remote_stage = args.remote_stage  # type: str
         self.remote_aws_region = args.remote_aws_region  # type: str
+        self.remote_terminate = args.remote_terminate  # type: str
 
         self.requirements = args.requirements  # type: bool
+
+        if self.python == 'default':
+            self.python = '.'.join(str(i) for i in sys.version_info[:2])
 
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 
@@ -471,6 +491,61 @@ def docker_qualify_image(name):
         return name
 
     return 'ansible/ansible:%s' % name
+
+
+def parse_to_dict(pattern, value):
+    """
+    :type pattern: str
+    :type value: str
+    :return: dict[str, str]
+    """
+    match = re.search(pattern, value)
+
+    if match is None:
+        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+
+    return match.groupdict()
+
+
+def get_subclasses(class_type):
+    """
+    :type class_type: type
+    :rtype: set[str]
+    """
+    subclasses = set()
+    queue = [class_type]
+
+    while queue:
+        parent = queue.pop()
+
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                subclasses.add(child)
+                queue.append(child)
+
+    return subclasses
+
+
+def import_plugins(directory):
+    """
+    :type directory: str
+    """
+    path = os.path.join(os.path.dirname(__file__), directory)
+    prefix = 'lib.%s.' % directory
+
+    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
+        __import__(name)
+
+
+def load_plugins(base_type, database):
+    """
+    :type base_type: type
+    :type database: dict[str, type]
+    """
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+
+    for plugin in plugins:
+        database[plugin] = plugins[plugin]
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -316,7 +317,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                 router = self.cs.changeServiceForRouter(**args)
 
                 if 'errortext' in router:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                    self.module.fail_json(msg="Failed: '%s'" % router['errortext'])
 
                 if state in [ 'restarted', 'started' ]:
                     router = self.start_router()

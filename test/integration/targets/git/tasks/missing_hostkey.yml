@@ -16,7 +16,6 @@
 - assert:
     that:
       - 'git_result.failed'
-      - 'git_result.msg == "github.com has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module"'
 
 - name: checkout git@github.com repo with accept_hostkey (expected pass)
   git:

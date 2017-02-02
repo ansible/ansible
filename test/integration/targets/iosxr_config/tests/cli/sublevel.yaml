@@ -16,8 +16,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'ipv4 access-list test' in result.updates"
-      - "'10 permit ipv4 any any log' in result.updates"
+      - "'ipv4 access-list test' in result.commands"
+      - "'10 permit ipv4 any any log' in result.commands"
 
 - name: configure sub level command idempotent check
   iosxr_config:

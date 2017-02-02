@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,14 +65,16 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_cluster command from Ansible Playbooks
 - name: Create Cluster
-      local_action: >
-        vmware_cluster
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        datacenter_name="datacenter"
-        cluster_name="cluster"
-        enable_ha=True
-        enable_drs=True
-        enable_vsan=True
+  local_action:
+    module: vmware_cluster
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    datacenter_name: "datacenter"
+    cluster_name: "cluster"
+    enable_ha: True
+    enable_drs: True
+    enable_vsan: True
 '''
 
 try:
@@ -220,7 +223,7 @@ class VMwareCluster(object):
                                  self.cluster.configurationEx.drsConfig.enabled,
                                  self.cluster.configurationEx.vsanConfigInfo.enabled)
 
-                if cmp(desired_state, current_state) != 0:
+                if desired_state != current_state:
                     return 'update'
                 else:
                     return 'present'

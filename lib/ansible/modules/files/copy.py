@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +29,10 @@ module: copy
 version_added: "historical"
 short_description: Copies files to remote locations.
 description:
-     - The M(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
+    - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
+      Use the M(fetch) module to copy files from remote locations to the local box.
+      If you need variable interpolation in copied files, use the M(template) module.
+    - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
     description:
@@ -84,7 +88,7 @@ options:
       - Currently remote_src does not support recursive copying.
     choices: [ "True", "False" ]
     required: false
-    default: "no"
+    default: "False"
     version_added: "2.0"
   follow:
     required: false
@@ -96,12 +100,14 @@ options:
 extends_documentation_fragment:
     - files
     - validate
+    - decrypt
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see synchronize module, which is a wrapper around rsync.
+   - For Windows targets, use the M(win_copy) module instead.
 '''
 
 EXAMPLES = '''
@@ -143,6 +149,12 @@ EXAMPLES = '''
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: 'visudo -cf %s'
+
+# Copy a "sudoers" file on the remote machine for editing
+- copy:
+    remote_src: true
+    src: /etc/sudoers
+    dest: /etc/sudoers.edit
 '''
 
 RETURN = '''
@@ -259,7 +271,7 @@ def main():
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
             validate          = dict(required=False, type='str'),
-            directory_mode    = dict(required=False),
+            directory_mode    = dict(required=False, type='raw'),
             remote_src        = dict(required=False, type='bool'),
         ),
         add_file_common_args=True,

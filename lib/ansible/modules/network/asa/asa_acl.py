@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -102,6 +103,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -111,6 +113,7 @@ vars:
     authorize: yes
     auth_pass: cisco
 
+---
 - asa_acl:
     lines:
       - access-list ACL-ANSIBLE extended permit tcp any any eq 82
@@ -127,7 +130,7 @@ vars:
     lines:
       - access-list ACL-OUTSIDE extended permit tcp any any eq www
       - access-list ACL-OUTSIDE extended permit tcp any any eq https
-     context: customer_a
+    context: customer_a
     provider: "{{ cli }}"
 """
 
@@ -140,7 +143,7 @@ updates:
 
 responses:
   description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
+  returned: when not check_mode
   type: list
   sample: ['...', '...']
 """

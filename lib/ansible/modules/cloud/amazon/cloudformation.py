@@ -21,9 +21,10 @@
 # - move create/update code out of main
 # - unit tests
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,7 +33,8 @@ short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML. This will change (in fact, it may change before 2.3 is out).
+     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML.
+       This will change (in fact, it may change before 2.3 is out).
 version_added: "1.1"
 options:
   stack_name:
@@ -58,8 +60,10 @@ options:
   template:
     description:
       - The local path of the cloudformation template.
-      - This must be the full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - This must be the full path to the file, relative to the working directory. If using roles this may look
+        like "roles/cloudformation/files/cloudformation-example.json".
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
+        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     default: null
   notification_arns:
@@ -70,7 +74,8 @@ options:
     version_added: "2.0"
   stack_policy:
     description:
-      - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified. (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
+      - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
+        (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     required: false
     default: null
     version_added: "1.9"
@@ -82,20 +87,41 @@ options:
     version_added: "1.4"
   template_url:
     description:
-      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
+        as the stack.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
+        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
+  create_changeset:
+    description:
+      - "If stack already exists create a changeset instead of directly applying changes.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
+        WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
+        changeset."
+    required: false
+    default: false
+    version_added: "2.4"
+  changeset_name:
+    description:
+      - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
+        is generated based on input parameters.
+        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+    required: false
+    default: null
+    version_added: "2.4"
   template_format:
     description:
-    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format. This parameter is ignored since Ansible 2.3.
+    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
+      This parameter is ignored since Ansible 2.3.
     default: json
     choices: [ json, yaml ]
     required: false
     version_added: "2.0"
   role_arn:
     description:
-    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
+      docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     required: false
     default: null
     version_added: "2.3"
@@ -104,7 +130,7 @@ author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
-requires: [ botocore>=1.4.57 ]
+requirements: [ botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''
@@ -195,6 +221,7 @@ log:
   sample: ["updating stack"]
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
+  returned: state == present
   type: list
   sample: [
           {
@@ -209,9 +236,9 @@ stack_resources:
 stack_outputs:
   type: dict
   description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
-  returned: always
+  returned: state == present
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
-'''
+'''  # NOQA
 
 import json
 import time
@@ -228,6 +255,9 @@ except ImportError:
 
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.basic import AnsibleModule
+from ansible.utils.hashing import secure_hash_s
+import ansible.module_utils.ec2
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -239,17 +269,6 @@ def boto_exception(err):
         error = '%s: %s' % (Exception, err)
 
     return error
-
-
-def boto_version_required(version_tuple):
-    parts = boto3.__version__.split('.')
-    boto_version = []
-    try:
-        for part in parts:
-            boto_version.append(int(part))
-    except ValueError:
-        boto_version.append(-1)
-    return tuple(boto_version) >= tuple(version_tuple)
 
 
 def get_stack_events(cfn, stack_name):
@@ -291,6 +310,45 @@ def create_stack(module, stack_params, cfn):
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg)
+    if not result:
+        module.fail_json(msg="empty result")
+    return result
+
+
+def list_changesets(cfn, stack_name):
+    res = cfn.list_change_sets(StackName=stack_name)
+    changesets = []
+    for cs in res['Summaries']:
+        changesets.append(cs['ChangeSetName'])
+    return changesets
+
+def create_changeset(module, stack_params, cfn):
+    if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
+        module.fail_json(msg="Either 'template' or 'template_url' is required.")
+
+    try:
+        if not 'ChangeSetName' in stack_params:
+            # Determine ChangeSetName using hash of parameters.
+            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + secure_hash_s(json.dumps(stack_params, sort_keys=True))
+            stack_params['ChangeSetName'] = changeset_name
+        # Determine if this changeset already exists
+        pending_changesets = list_changesets(cfn, stack_params['StackName'])
+        if changeset_name in pending_changesets:
+            warning = 'WARNING: '+str(len(pending_changesets))+' pending changeset(s) exist(s) for this stack!'
+            result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.', warnings=[warning])
+        else:
+            cs = cfn.create_change_set(**stack_params)
+            result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+            result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
+                ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
+                ('NOTE that dependencies on this stack might fail due to pending changes!')]
+    except Exception as err:
+        error_msg = boto_exception(err)
+        if 'No updates are to be performed.' in error_msg:
+            result = dict(changed=False, output='Stack is already up-to-date.')
+        else:
+            module.fail_json(msg=error_msg)
+
     if not result:
         module.fail_json(msg="empty result")
     return result
@@ -342,8 +400,10 @@ def stack_operation(cfn, stack_name, operation):
             else:
                 ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
                 return ret
-        elif stack['StackStatus'].endswith('_ROLLBACK_COMPLETE'):
-            ret.update({'changed': True, 'failed' :True, 'output': 'Problem with %s. Rollback complete' % operation})
+        # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
+        # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
+        elif stack['StackStatus'].endswith('ROLLBACK_COMPLETE'):
+            ret.update({'changed': True, 'failed': True, 'output': 'Problem with %s. Rollback complete' % operation})
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
@@ -372,7 +432,7 @@ def get_stack_facts(cfn, stack_name):
     #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
-        if 'does not exist'.format(stack_name) in error_msg:
+        if 'does not exist' in error_msg:
             # missing stack, don't bail.
             return None
 
@@ -399,6 +459,8 @@ def main():
         disable_rollback=dict(default=False, type='bool'),
         template_url=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        create_changeset=dict(default=False, type='bool'),
+        changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict')
     )
@@ -431,8 +493,11 @@ def main():
     if module.params['stack_policy'] is not None:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
+    if module.params['changeset_name'] is not None:
+        stack_params['ChangeSetName'] = module.params['changeset_name']
+
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':v} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
@@ -453,6 +518,8 @@ def main():
     if state == 'present':
         if not stack_info:
             result = create_stack(module, stack_params, cfn)
+        elif create_changeset:
+            result = create_changeset(module, stack_params, cfn)
         else:
             result = update_stack(module, stack_params, cfn)
 
@@ -497,10 +564,6 @@ def main():
             'since Ansible 2.3, JSON and YAML templates are now passed '
             'directly to the CloudFormation API.')]
     module.exit_json(**result)
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2
 
 
 if __name__ == '__main__':

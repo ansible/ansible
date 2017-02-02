@@ -25,7 +25,7 @@ import glob
 import urlparse
 
 from ansible.module_utils._text import to_text
-from ansible.plugins.action.network import ActionModule as _ActionModule
+from ansible.plugins.action.normal import ActionModule as _ActionModule
 
 
 class ActionModule(_ActionModule):

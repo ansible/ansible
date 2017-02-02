@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -200,12 +201,14 @@ def main():
                 ( 'x-max-length' not in response['arguments'] and module.params['max_length'] is None )
             ) and
             (
-                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange'] ) or
-                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None )
+                ('x-dead-letter-exchange' in response['arguments'] and
+                 response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange']) or
+                ('x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None)
             ) and
             (
-                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key'] ) or
-                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None )
+                ('x-dead-letter-routing-key' in response['arguments'] and
+                 response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
+                ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
             )
         ):
             module.fail_json(
@@ -221,7 +224,7 @@ def main():
         'dead_letter_exchange': 'x-dead-letter-exchange',
         'dead_letter_routing_key': 'x-dead-letter-routing-key'
     }.items():
-        if module.params[k]:
+        if module.params[k] is not None:
             module.params['arguments'][v] = module.params[k]
 
     # Exit if check_mode
@@ -249,7 +252,8 @@ def main():
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 
-        if r.status_code == 204:
+        # RabbitMQ 3.6.7 changed this response code from 204 to 201
+        if r.status_code == 204 or r.status_code == 201:
             module.exit_json(
                 changed = True,
                 name = module.params['name']

@@ -1,0 +1,14 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - ec2_ami:
+        instance_id: i-345fd30b
+        wait: yes
+        name: newtest
+        tags:
+          Name: newtest3
+          Service: TestService
+      register: image

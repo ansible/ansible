@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -61,7 +62,7 @@ notes:
     - The ejabberd configuration file must include mod_admin_extra as a module.
 '''
 EXAMPLES = '''
-Example playbook entries using the ejabberd_user module to manage users state.
+# Example playbook entries using the ejabberd_user module to manage users state.
 
 - name: create a user if it does not exists
   ejabberd_user:
@@ -78,11 +79,13 @@ Example playbook entries using the ejabberd_user module to manage users state.
 
 import syslog
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
+
 
 class EjabberdUserException(Exception):
     """ Base exception for EjabberdUser class object """
     pass
+
 
 class EjabberdUser(object):
     """ This object represents a user resource for an ejabberd server.   The
@@ -180,22 +183,23 @@ class EjabberdUser(object):
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             host=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
-            password=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     obj = EjabberdUser(module)
 
     rc = None
-    result = dict()
+    result = dict(changed=False)
 
     if obj.state == 'absent':
         if obj.exists:

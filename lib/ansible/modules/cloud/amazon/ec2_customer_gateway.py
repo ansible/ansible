@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +28,9 @@ version_added: "2.2"
 author: Michael Baydoun (@MichaelBaydoun)
 requirements: [ botocore, boto3 ]
 notes:
-    - You cannot create more than one customer gateway with the same IP address. If you run an identical request more than one time, the first request creates the customer gateway, and subsequent requests return information about the existing customer gateway. The subsequent requests do not create new customer gateway resources.
+    - You cannot create more than one customer gateway with the same IP address. If you run an identical request more than one time, the
+      first request creates the customer gateway, and subsequent requests return information about the existing customer gateway. The subsequent
+      requests do not create new customer gateway resources.
     - Return values contain customer_gateway and customer_gateways keys which are identical dicts. You should use
       customer_gateway. See U(https://github.com/ansible/ansible-modules-extras/issues/2773) for details.
 options:

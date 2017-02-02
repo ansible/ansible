@@ -20,15 +20,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: rocketchat
 short_description: Send notifications to Rocket Chat
 description:
-    - The M(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
+    - The C(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
 version_added: "2.2"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
@@ -59,7 +60,7 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token)
-        specifed during the creation of webhook.
+        specified during the creation of webhook.
     required: false
     default: None
   username:

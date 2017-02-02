@@ -1,0 +1,20 @@
+---
+# File:
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - ec2_lc:
+        name: test-2
+        region: ap-southeast-2
+        image_id: ami-2da2b14e
+        key_name: Willem key pair
+        security_groups: ['launch-wizard-1' ]
+        instance_type: t1.micro
+        volumes:
+        - device_name: /dev/sda1
+          volume_size: 100
+          device_type: io1
+          iops: 3000
+          delete_on_termination: true

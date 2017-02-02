@@ -15,15 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 module: os_port_facts
@@ -51,6 +46,10 @@ options:
               the port dictionary, or strings within nested dictionaries.
         required: false
         default: null
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatibility
+      required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -197,6 +196,12 @@ openstack_ports:
             type: string
             sample: "51fce036d7984ba6af4f6c849f65ef00"
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def main():

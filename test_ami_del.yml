@@ -1,0 +1,10 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - ec2_ami:
+        image_id: ami-b0312ad3
+        name: newtest
+        state: absent

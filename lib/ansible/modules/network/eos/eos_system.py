@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -33,58 +32,45 @@ description:
     on Arista EOS devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+extends_documentation_fragment: eos
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Arista EOS devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(description) argument will configure the IP domain name
-        on the remote device to the provided value.  The C(domain_name)
-        argument should be in the dotted name form and will be
+      - Configure the IP domain name
+        on the remote device to the provided value. Value
+        should be in the dotted name form and will be
         appended to the C(hostname) to create a fully-qualified
-        domain name
-    required: false
-    default: null
-  domain_list:
+        domain name.
+  domain_search:
     description:
-      - The C(domain_list) provides the list of domain suffixes to
+      - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
-    required: false
-    default: null
   lookup_source:
     description:
-      - The C(lookup_source) argument provides one or more source
+      - Provides one or more source
         interfaces to use for performing DNS lookups.  The interface
         provided in C(lookup_source) can only exist in a single VRF.  This
         argument accepts either a list of interface names or a list of
         hashes that configure the interface name and VRF name.  See
         examples.
-    required: false
-    default: null
   name_servers:
     description:
-      - The C(name_serves) argument accepts a list of DNS name servers by
-        way of either FQDN or IP address to use to perform name resolution
-        lookups.  This argument accepts wither a list of DNS servers or
+      - List of DNS name servers by IP address to use to perform name resolution
+        lookups.  This argument accepts either a list of DNS servers or
         a list of hashes that configure the name server and VRF name.  See
         examples.
-    required: false
-    default: null
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -93,7 +79,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   eos_system:
     hostname: eos01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
 
 - name: remove configuration
   eos_system:
@@ -104,7 +90,7 @@ EXAMPLES = """
     lookup_source: Management1
 
 - name: configure DNS lookup sources with VRF support
-    eos_system:
+  eos_system:
       lookup_source:
         - interface: Management1
           vrf: mgmt
@@ -131,33 +117,19 @@ commands:
   type: list
   sample:
     - hostname eos01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 session_name:
   description: The EOS config session name used to load the configuration
-  returned: when changed is True
+  returned: changed
   type: str
   sample: ansible_1479315771
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.eos import load_config, get_config
+from ansible.module_utils.eos import eos_argument_spec
 
 _CONFIGURED_VRFS = None
 
@@ -229,22 +201,29 @@ def map_obj_to_commands(want, have, module):
                 if item not in want['name_servers']:
                     if not has_vrf(module, item['vrf']):
                         module.fail_json(msg='vrf %s is not configured' % item['vrf'])
-                    values = (item['vrf'], item['server'])
-                    commands.append('no ip name-server vrf %s %s' %  values)
+                    if item['vrf'] not in ('default', None):
+                        values = (item['vrf'], item['server'])
+                        commands.append('no ip name-server vrf %s %s' %  values)
+                    else:
+                        commands.append('no ip name-server %s' %  item['server'])
 
             # handle name_servers items to be added
             for item in want['name_servers']:
                 if item not in have['name_servers']:
                     if not has_vrf(module, item['vrf']):
                         module.fail_json(msg='vrf %s is not configured' % item['vrf'])
-                    values = (item['vrf'], item['server'])
-                    commands.append('ip name-server vrf %s %s' % values)
+                    if item['vrf'] not in ('default', None):
+                        values = (item['vrf'], item['server'])
+                        commands.append('ip name-server vrf %s %s' % values)
+                    else:
+                        commands.append('ip name-server %s' % item['server'])
 
     return commands
 
 def parse_hostname(config):
     match = re.search('^hostname (\S+)', config, re.M)
-    return match.group(1)
+    if match:
+        return match.group(1)
 
 def parse_domain_name(config):
     match = re.search('^ip domain-name (\S+)', config, re.M)
@@ -286,12 +265,12 @@ def map_params_to_obj(module):
     lookup_source = ComplexList(dict(
         interface=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     name_servers = ComplexList(dict(
         server=dict(key=True),
         vrf=dict(default='default')
-    ))
+    ), module)
 
     for arg, cast in [('lookup_source', lookup_source), ('name_servers', name_servers)]:
         if module.params[arg] is not None:
@@ -308,7 +287,7 @@ def main():
         hostname=dict(),
 
         domain_name=dict(),
-        domain_list=dict(type='list'),
+        domain_list=dict(type='list', aliases=['domain_search']),
 
         # { interface: <str>, vrf: <str> }
         lookup_source=dict(type='list'),
@@ -319,8 +298,10 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    argument_spec.update(eos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     result = {'changed': False}
 

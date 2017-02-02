@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -57,7 +58,8 @@ options:
 '''
 
 EXAMPLES = '''
-Simple Example:
+---
+# Simple Example:
 
 - name: "Create Product"
   local_action:
@@ -69,9 +71,8 @@ Simple Example:
       params:
         name: "Centos 7"
 
-Abstraction Example:
-
-katello.yml
+# Abstraction Example:
+# katello.yml
 ---
 - name: "{{ name }}"
   local_action:
@@ -82,7 +83,7 @@ katello.yml
       entity: "{{ entity }}"
       params: "{{ params }}"
 
-tasks.yml
+# tasks.yml
 ---
 - include: katello.yml
   vars:
@@ -383,17 +384,6 @@ class NailGun(object):
 
             content_view.repository = repos
             content_view.update(['repository'])
-
-    def find_content_view(self, name, organization):
-        org = self.find_organization(organization)
-
-        content_view = self._entities.ContentView(self._server, name=name, organization=org)
-        response = content_view.search()
-
-        if len(response) == 1:
-            return response[0]
-        else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
 
     def find_content_view_version(self, name, organization, environment):
         env = self.find_lifecycle_environment(environment, organization)

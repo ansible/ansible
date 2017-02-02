@@ -19,47 +19,30 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_clusters
-short_description: Module to manage clusters in oVirt
+short_description: Module to manage clusters in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage clusters in oVirt"
+    - "Module to manage clusters in oVirt/RHV"
 options:
     name:
         description:
-            - "Name of the the cluster to manage."
+            - "Name of the cluster to manage."
         required: true
     state:
         description:
             - "Should the cluster be present or absent"
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Datacenter name where cluster reside."
     description:
@@ -98,7 +81,7 @@ options:
             - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
     ha_reservation:
         description:
-            - "If I(True) enable the oVirt to monitor cluster capacity for highly
+            - "If I(True) enable the oVirt/RHV to monitor cluster capacity for highly
                available virtual machines."
     trusted_service:
         description:
@@ -155,7 +138,7 @@ options:
     migration_bandwidth:
         description:
             - "The bandwidth settings define the maximum bandwidth of both outgoing and incoming migrations per host."
-            - "Following bandwith options are supported:"
+            - "Following bandwidth options are supported:"
             - "C(auto) - Bandwidth is copied from the I(rate limit) [Mbps] setting in the data center host network QoS."
             - "C(hypervisor_default) - Bandwidth is controlled by local VDSM setting on sending host."
             - "C(custom) - Defined by user (in Mbps)."
@@ -190,7 +173,10 @@ options:
             - "C(legacy) - Legacy behavior of 3.6 version."
             - "C(minimal_downtime) - Virtual machines should not experience any significant downtime."
             - "C(suspend_workload) - Virtual machines may experience a more significant downtime."
-        choices: ['legacy', 'minimal_downtime', 'suspend_workload']
+            - "C(post_copy) - Virtual machines should not experience any significant downtime.
+               If the VM migration is not converging for a long time, the migration will be switched to post-copy.
+               Added in version I(2.4)."
+        choices: ['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
     serial_policy:
         description:
             - "Specify a serial number policy for the virtual machines in the cluster."
@@ -231,7 +217,7 @@ EXAMPLES = '''
 
 # Create cluster
 - ovirt_clusters:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mycluster
     cpu_type: Intel SandyBridge Family
     description: mycluster
@@ -239,7 +225,7 @@ EXAMPLES = '''
 
 # Create virt service cluster:
 - ovirt_clusters:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mycluster
     cpu_type: Intel Nehalem Family
     description: mycluster
@@ -271,10 +257,28 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 cluster:
-    description: "Dictionary of all the cluster attributes. Cluster attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/cluster."
+    description: "Dictionary of all the cluster attributes. Cluster attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/cluster."
+    type: dict
     returned: On success if cluster is found.
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class ClustersModule(BaseModule):
@@ -310,6 +314,7 @@ class ClustersModule(BaseModule):
         # legacy - 00000000-0000-0000-0000-000000000000
         # minimal downtime - 80554327-0569-496b-bdeb-fcbbf52b827b
         # suspend workload if needed - 80554327-0569-496b-bdeb-fcbbf52b827c
+        # post copy - a7aeedb2-8d66-4e51-bb22-32595027ce71
         migration_policy = self.param('migration_policy')
         if migration_policy == 'legacy':
             return '00000000-0000-0000-0000-000000000000'
@@ -317,6 +322,8 @@ class ClustersModule(BaseModule):
             return '80554327-0569-496b-bdeb-fcbbf52b827b'
         elif migration_policy == 'suspend_workload':
             return '80554327-0569-496b-bdeb-fcbbf52b827c'
+        elif migration_policy == 'post_copy':
+            return 'a7aeedb2-8d66-4e51-bb22-32595027ce71'
 
     def _get_sched_policy(self):
         sched_policy = None
@@ -424,8 +431,8 @@ class ClustersModule(BaseModule):
                 self.param('ksm') is not None
             ) else None,
             data_center=otypes.DataCenter(
-                name=self.param('datacenter'),
-            ) if self.param('datacenter') else None,
+                name=self.param('data_center'),
+            ) if self.param('data_center') else None,
             management_network=otypes.Network(
                 name=self.param('network'),
             ) if self.param('network') else None,
@@ -474,7 +481,7 @@ class ClustersModule(BaseModule):
             equal(self.param('migration_compressed'), str(entity.migration.compressed)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
-            equal(self.param('scheduling_policy'), getattr(sched_policy, 'name', None)) and
+            equal(self.param('scheduling_policy'), getattr(self._connection.follow_link(entity.scheduling_policy), 'name', None)) and
             equal(self._get_policy_id(), getattr(migration_policy, 'id', None)) and
             equal(self._get_memory_policy(), entity.memory_policy.over_commit.percent) and
             equal(self.__get_minor(self.param('compatibility_version')), self.__get_minor(entity.version)) and
@@ -521,11 +528,14 @@ def main():
         migration_bandwidth_limit=dict(default=None, type='int'),
         migration_auto_converge=dict(default=None, choices=['true', 'false', 'inherit']),
         migration_compressed=dict(default=None, choices=['true', 'false', 'inherit']),
-        migration_policy=dict(default=None, choices=['legacy', 'minimal_downtime', 'suspend_workload']),
+        migration_policy=dict(
+            default=None,
+            choices=['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
+        ),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
         scheduling_policy=dict(default=None),
-        datacenter=dict(default=None),
+        data_center=dict(default=None),
         description=dict(default=None),
         comment=dict(default=None),
         network=dict(default=None),
@@ -541,7 +551,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         clusters_service = connection.system_service().clusters_service()
         clusters_module = ClustersModule(
             connection=connection,
@@ -559,7 +570,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

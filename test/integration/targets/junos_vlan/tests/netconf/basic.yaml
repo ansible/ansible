@@ -1,0 +1,83 @@
+---
+- debug: msg="START junos_vlan netconf/basic.yaml"
+
+- name: setup - remove vlan
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    description: test vlan
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create vlan
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: present
+    description: test vlan
+    provider: "{{ netconf }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test-vlan</name>' in result.rpc"
+      - "'<vlan-id>100</vlan-id>' in result.rpc"
+
+- name: Create vlan again (idempotent)
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: present
+    description: test vlan
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Deactivate vlan
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: suspend
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<vlan inactive=\"inactive\">' in result.rpc"
+      - "'<name>test-vlan</name>' in result.rpc"
+
+- name: Activate vlan
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: active
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<vlan active=\"active\">' in result.rpc"
+      - "'<name>test-vlan</name>' in result.rpc"
+
+- name: Delete vlan
+  junos_vlan:
+    vlan_id: 100
+    name: test-vlan
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<vlan delete=\"delete\">' in result.rpc"
+      - "'<name>test-vlan</name>' in result.rpc"

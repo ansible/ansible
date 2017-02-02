@@ -1,0 +1,10 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - cloudfront_origin_access_identity:
+      state: absent
+      caller_reference: 'testing 123asdasd'
+      comment: test comment

@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,14 +138,15 @@ def set_selection(module, pkg, question, vtype, value, unseen):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, aliases=['pkg'], type='str'),
-            question = dict(required=False, aliases=['setting', 'selection'], type='str'),
-            vtype = dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title', 'text', 'seen']),
-            value = dict(required=False, type='str', aliases=['answer']),
-            unseen = dict(required=False, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg'], type='str'),
+            question=dict(required=False, aliases=['setting', 'selection'], type='str'),
+            vtype=dict(required=False, type='str', choices=['string', 'password', 'boolean', 'select',  'multiselect', 'note', 'error', 'title',
+                                                            'text', 'seen']),
+            value=dict(required=False, type='str', aliases=['answer']),
+            unseen=dict(required=False, type='bool'),
         ),
-        required_together = ( ['question','vtype', 'value'],),
+        required_together=(['question','vtype', 'value'],),
         supports_check_mode=True,
     )
 

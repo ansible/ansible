@@ -21,8 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import six
-
 import binascii
 import io
 import os
@@ -33,9 +31,10 @@ from nose.plugins.skip import SkipTest
 from ansible.compat.tests import unittest
 
 from ansible import errors
+from ansible.module_utils import six
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.vault import VaultLib
 from ansible.parsing import vault
-from ansible.module_utils._text import to_bytes, to_text
 
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
@@ -78,11 +77,11 @@ class TestVaultIsEncrypted(unittest.TestCase):
         self.assertTrue(vault.is_encrypted(b_data))
 
     def test_invalid_text_not_ascii(self):
-        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s"% u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
+        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         self.assertFalse(vault.is_encrypted(data))
 
     def test_invalid_bytes_not_ascii(self):
-        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s"% u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
+        data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % u"ァ ア ィ イ ゥ ウ ェ エ ォ オ カ ガ キ ギ ク グ ケ "
         b_data = to_bytes(data, encoding='utf-8')
         self.assertFalse(vault.is_encrypted(b_data))
 

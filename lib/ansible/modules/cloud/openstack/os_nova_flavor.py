@@ -15,15 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -88,6 +83,16 @@ options:
           assigned if a value is not specified.
      required: false
      default: "auto"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
+   extra_specs:
+     description:
+        - Metadata dictionary
+     required: false
+     default: None
+     version_added: "2.3"
 requirements: ["shade"]
 '''
 
@@ -107,13 +112,25 @@ EXAMPLES = '''
     cloud: mycloud
     state: absent
     name: tiny
+
+- name: Create flavor with metadata
+  os_nova_flavor:
+    cloud: mycloud
+    state: present
+    name: tiny
+    ram: 1024
+    vcpus: 1
+    disk: 10
+    extra_specs:
+      "quota:disk_read_iops_sec": 5000
+      "aggregate_instance_extra_specs:pinned": false
 '''
 
 RETURN = '''
 flavor:
     description: Dictionary describing the flavor.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.
@@ -155,7 +172,20 @@ flavor:
             returned: success
             type: bool
             sample: true
+        extra_specs:
+            description: Flavor metadata
+            returned: success
+            type: dict
+            sample:
+                "quota:disk_read_iops_sec": 5000
+                "aggregate_instance_extra_specs:pinned": false
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _system_state_change(module, flavor):
@@ -183,6 +213,7 @@ def main():
         rxtx_factor  = dict(required=False, default=1.0, type='float'),
         is_public    = dict(required=False, default=True, type='bool'),
         flavorid     = dict(required=False, default="auto"),
+        extra_specs  = dict(required=False, default=None, type='dict'),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -199,6 +230,7 @@ def main():
 
     state = module.params['state']
     name = module.params['name']
+    extra_specs = module.params['extra_specs'] or {}
 
     try:
         cloud = shade.operator_cloud(**module.params)
@@ -223,6 +255,18 @@ def main():
                 changed=True
             else:
                 changed=False
+
+            old_extra_specs = flavor['extra_specs']
+            new_extra_specs = dict([(k, str(v)) for k, v in extra_specs.items()])
+            unset_keys = set(flavor['extra_specs'].keys()) - set(extra_specs.keys())
+
+            if unset_keys:
+                cloud.unset_flavor_specs(flavor['id'], unset_keys)
+
+            if old_extra_specs != new_extra_specs:
+                cloud.set_flavor_specs(flavor['id'], extra_specs)
+
+            changed = (changed or old_extra_specs != new_extra_specs)
 
             module.exit_json(changed=changed,
                              flavor=flavor,

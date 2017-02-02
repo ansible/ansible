@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -145,12 +146,12 @@ options:
     default: no
   low_flap_threshold:
     description:
-      - The low threshhold for flap detection
+      - The low threshold for flap detection
     required: false
     default: null
   high_flap_threshold:
     description:
-      - The high threshhold for flap detection
+      - The high threshold for flap detection
     required: false
     default: null
   custom:

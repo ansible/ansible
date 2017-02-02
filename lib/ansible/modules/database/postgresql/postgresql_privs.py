@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -124,13 +125,15 @@ options:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
     required: false
-    default: disable
+    default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
     required: false
     default: null
     version_added: '2.3'
@@ -533,7 +536,7 @@ class Connection(object):
             self.cursor.execute(query % (set_what, for_whom))
 
             # Only revoke GRANT/ADMIN OPTION if grant_option actually is False.
-            if grant_option == False:
+            if grant_option is False:
                 if obj_type == 'group':
                     query = 'REVOKE ADMIN OPTION FOR %s FROM %s'
                 else:
@@ -571,7 +574,7 @@ def main():
             unix_socket=dict(default='', aliases=['login_unix_socket']),
             login=dict(default='postgres', aliases=['login_user']),
             password=dict(default='', aliases=['login_password'], no_log=True),
-            ssl_mode=dict(default="disable", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True
@@ -657,7 +660,7 @@ def main():
     except psycopg2.Error:
         e = get_exception()
         conn.rollback()
-        # psycopg2 errors come in connection encoding, reencode
+        # psycopg2 errors come in connection encoding, re-encode
         msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(),
                                                      'replace')
         module.fail_json(msg=msg)

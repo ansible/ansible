@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -253,7 +254,9 @@ class Rhn(redhat.RegistrationBase):
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = ['/usr/sbin/rhnreg_ks', '--username', self.username, '--password', self.password, '--force']
+        register_cmd = ['/usr/sbin/rhnreg_ks', '--force']
+        if self.username:
+            register_cmd.extend(['--username', self.username, '--password', self.password])
         if self.server_url:
             register_cmd.extend(['--serverUrl', self.server_url])
         if enable_eus:
@@ -371,14 +374,17 @@ def main():
         rhn.configure_server_url(server_url)
 
     if not rhn.server_url:
-        module.fail_json(msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)")
+        module.fail_json(
+            msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)"
+        )
 
     # Ensure system is registered
     if state == 'present':
 
         # Check for missing parameters ...
         if not (activationkey or rhn.username or rhn.password):
-            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, rhn.username, rhn.password))
+            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, rhn.username,
+                                                                                                                              rhn.password))
         if not activationkey and not (rhn.username and rhn.password):
             module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
 

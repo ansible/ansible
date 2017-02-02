@@ -22,12 +22,12 @@ __metaclass__ = type
 
 from io import StringIO
 
-from six import text_type, binary_type
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest
 
 from ansible import errors
+from ansible.module_utils.six import text_type, binary_type
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -204,7 +204,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             lines2.append('        %s' % line)
 
         vaulted_var = '\n'.join(lines2)
-        tagged_vaulted_var = u"""!vault-encrypted |\n%s""" % vaulted_var
+        tagged_vaulted_var = u"""!vault |\n%s""" % vaulted_var
         return tagged_vaulted_var
 
     def _build_stream(self, yaml_text):
@@ -259,7 +259,9 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         different_var = u"""A different string that is not the same as the first one."""
         different_vaulted_var = self._encrypt_plaintext(different_var)
 
-        yaml_text = u"""---\nwebster: daniel\noed: oxford\nthe_secret: %s\nanother_secret: %s\ndifferent_secret: %s""" % (tagged_vaulted_var, another_vaulted_var, different_vaulted_var)
+        yaml_text = u"""---\nwebster: daniel\noed: oxford\nthe_secret: %s\nanother_secret: %s\ndifferent_secret: %s""" % (tagged_vaulted_var,
+                                                                                                                          another_vaulted_var,
+                                                                                                                          different_vaulted_var)
 
         data_from_yaml = self._load_yaml(yaml_text, self.vault_password)
         vault_string = data_from_yaml['the_secret']
@@ -284,7 +286,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         self.assertTrue('some string' != vault_string)
         self.assertNotEquals('some string', vault_string)
 
-        # Note this is a compare of the str/unicode of these, they are diferent types
+        # Note this is a compare of the str/unicode of these, they are different types
         # so we want to test self == other, and other == self etc
         self.assertEquals(plaintext_var, vault_string)
         self.assertEquals(vault_string, plaintext_var)
@@ -339,16 +341,17 @@ class TestAnsibleLoaderPlay(unittest.TestCase):
         self.assertEqual(self.data[0][u'vars'][u'number'], 1)
         self.assertEqual(self.data[0][u'vars'][u'string'], u'Ansible')
         self.assertEqual(self.data[0][u'vars'][u'utf8_string'], u'Cafè Eñyei')
-        self.assertEqual(self.data[0][u'vars'][u'dictionary'],
-                {u'webster': u'daniel',
-                    u'oed': u'oxford'})
+        self.assertEqual(self.data[0][u'vars'][u'dictionary'], {
+            u'webster': u'daniel',
+            u'oed': u'oxford'
+        })
         self.assertEqual(self.data[0][u'vars'][u'list'], [u'a', u'b', 1, 2])
 
-        self.assertEqual(self.data[0][u'tasks'],
-                [{u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
-                 {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
-                 {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
-                 ])
+        self.assertEqual(self.data[0][u'tasks'], [
+            {u'name': u'Test case', u'ping': {u'data': u'{{ utf8_string }}'}},
+            {u'name': u'Test 2', u'ping': {u'data': u'Cafè Eñyei'}},
+            {u'name': u'Test 3', u'command': u'printf \'Cafè Eñyei\n\''},
+        ])
 
     def walk(self, data):
         # Make sure there's no str in the data

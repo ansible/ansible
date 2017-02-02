@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - cloudfront_distribution:
+        state: present
+#        distribution_id: # filled in on the second run after the distribution exists
+        default_origin_domain_name: anywhere.com
+        comment: modified by ansible cloudfront.py

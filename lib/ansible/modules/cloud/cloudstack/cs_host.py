@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +36,14 @@ options:
     description:
       - Name of the host.
     required: true
-    aliases: [ 'url' ]
+    aliases: [ 'ip_address' ]
+  url:
+    description:
+      - Url of the host used to create a host.
+      - If not provided, C(http://) and param C(name) is used as url.
+      - Only considered if C(state=present) and host does not yet exist.
+    required: false
+    default: null
   username:
     description:
       - Username for the host.
@@ -300,13 +308,19 @@ resource_state:
   returned: success
   type: string
   sample: Enabled
+allocation_state::
+  description: Allocation state of the host.
+  returned: success
+  type: string
+  sample: enabled
 state:
   description: State of the host.
   returned: success
   type: string
   sample: Up
 suitable_for_migration:
-  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM to it or not.
+  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM
+               to it or not.
   returned: success
   type: string
   sample: true
@@ -333,7 +347,14 @@ zone:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import AnsibleCloudStack, CloudStackException, cs_argument_spec, cs_required_together, CS_HYPERVISORS
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+    CS_HYPERVISORS
+)
+import time
 
 
 class AnsibleCloudStackHost(AnsibleCloudStack):
@@ -358,7 +379,6 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             'events': 'events',
             'hahost': 'ha_host',
             'hasenoughcapacity': 'has_enough_capacity',
-            'hosttags': 'host_tags',
             'hypervisor': 'hypervisor',
             'hypervisorversion': 'hypervisor_version',
             'ipaddress': 'ip_address',
@@ -379,12 +399,12 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             'type': 'host_type',
             'version': 'host_version',
             'gpugroup': 'gpu_group',
-
         }
         self.allocation_states = {
-            'enabled': 'enable',
-            'disabled': 'disable',
+            'enabled': 'Enable',
+            'disabled': 'Disable',
         }
+        self.host = None
 
     def get_pod(self, key=None):
         pod_name = self.module.params.get('pod')
@@ -424,16 +444,20 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             return None
         return self.allocation_states[allocation_state]
 
-    def get_host(self):
-        host = None
+    def get_host(self, refresh=False):
+        if self.host is not None and not refresh:
+            return self.host
+
+        name = self.module.params.get('name')
         args = {
             'zoneid': self.get_zone(key='id'),
-            'name': self.module.params.get('name'),
         }
-        hosts = self.cs.listHosts(**args)
-        if hosts:
-            host = hosts['host'][0]
-        return host
+        res = self.cs.listHosts(**args)
+        if res:
+            for h in res['host']:
+                if name in [h['ipaddress'], h['name']]:
+                    self.host = h
+        return self.host
 
     def present_host(self):
         host = self.get_host()
@@ -442,6 +466,13 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
         else:
             host = self._update_host(host)
         return host
+
+    def _get_url(self):
+        url = self.module.params.get('url')
+        if url:
+            return url
+        else:
+            return "http://%s" % self.module.params.get('name')
 
     def _create_host(self, host):
         required_params = [
@@ -454,7 +485,7 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
         self.result['changed'] = True
         args = {
             'hypervisor': self.module.params.get('hypervisor'),
-            'url': self.module.params.get('name'),
+            'url': self._get_url(),
             'username': self.module.params.get('username'),
             'password': self.module.params.get('password'),
             'podid': self.get_pod(key='id'),
@@ -467,24 +498,24 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
             host = self.cs.addHost(**args)
             if 'errortext' in host:
                 self.module.fail_json(msg="Failed: '%s'" % host['errortext'])
-            host = host['host']
+            host = host['host'][0]
         return host
 
     def _update_host(self, host):
         args = {
             'id': host['id'],
             'hosttags': self.get_host_tags(),
-            'allocationstate': self.module.params.get('allocation_state'),
+            'allocationstate': self.get_allocation_state()
         }
-        host['allocationstate'] = host['resourcestate'].lower()
+        host['allocationstate'] = self.allocation_states[host['resourcestate'].lower()]
         if self.has_changed(args, host):
-            args['allocationstate'] = self.get_allocation_state()
             self.result['changed'] = True
             if not self.module.check_mode:
                 host = self.cs.updateHost(**args)
                 if 'errortext' in host:
                     self.module.fail_json(msg="Failed: '%s'" % host['errortext'])
                 host = host['host']
+
         return host
 
     def absent_host(self):
@@ -495,17 +526,52 @@ class AnsibleCloudStackHost(AnsibleCloudStack):
                 'id': host['id'],
             }
             if not self.module.check_mode:
-                res = self.cs.deleteHost(**args)
+                res = self.enable_maintenance()
+                if res:
+                    res = self.cs.deleteHost(**args)
+                    if 'errortext' in res:
+                        self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        return host
+
+    def enable_maintenance(self):
+        host = self.get_host()
+        if host['resourcestate'] not in ['PrepareForMaintenance', 'Maintenance']:
+            self.result['changed'] = True
+            args = {
+                'id': host['id'],
+            }
+            if not self.module.check_mode:
+                res = self.cs.prepareHostForMaintenance(**args)
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                host = self.poll_job(res, 'host')
+                self._poll_for_maintenance()
         return host
+
+    def _poll_for_maintenance(self):
+        for i in range(0, 300):
+            time.sleep(2)
+            host = self.get_host(refresh=True)
+            if not host:
+                return None
+            elif host['resourcestate'] != 'PrepareForMaintenance':
+                return host
+        self.fail_json("Polling for maintenance timed out")
+
+    def get_result(self, host):
+        super(AnsibleCloudStackHost, self).get_result(host)
+        if host:
+            self.result['allocation_state'] = host['resourcestate'].lower()
+            self.result['host_tags'] = host['hosttags'].split(',') if host.get('hosttags') else []
+        return self.result
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True, aliases=['url']),
-        password=dict(default=None, not_log=True),
+        name=dict(required=True, aliases=['ip_address']),
+        url=dict(),
+        password=dict(default=None, no_log=True),
         username=dict(default=None),
         hypervisor=dict(choices=CS_HYPERVISORS, default=None),
         allocation_state=dict(default=None),

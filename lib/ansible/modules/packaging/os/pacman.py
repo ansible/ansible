@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -91,6 +92,14 @@ options:
         version_added: "2.0"
 '''
 
+RETURN = '''
+packages:
+    description: a list of packages that have been changed
+    returned: when upgrade is set to yes
+    type: list
+    sample: ['package', 'other-package']
+'''
+
 EXAMPLES = '''
 # Install package foo
 - pacman:
@@ -134,10 +143,7 @@ EXAMPLES = '''
     force: yes
 '''
 
-import shlex
-import os
 import re
-import sys
 
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
@@ -148,7 +154,9 @@ def get_version(pacman_output):
     return None
 
 def query_package(module, pacman_path, name, state="present"):
-    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available"""
+    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
+    boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
+    """
     if state == "present":
         lcmd = "%s -Qi %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
@@ -189,22 +197,41 @@ def update_package_db(module, pacman_path):
 
 def upgrade(module, pacman_path):
     cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
-    cmdneedrefresh = "%s -Qqu" % (pacman_path)
+    cmdneedrefresh = "%s -Qu" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
+    data = stdout.split('\n')
+    data.remove('')
+    packages = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
 
     if rc == 0:
+        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        for p in data:
+            m = regex.search(p)
+            packages.append(m.group(1))
+            if module._diff:
+                diff['before'] += "%s-%s\n" % (m.group(1), m.group(2))
+                diff['after'] += "%s-%s\n" % (m.group(1), m.group(3))
         if module.check_mode:
-            data = stdout.split('\n')
-            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data) - 1))
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=packages, diff=diff)
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
-            module.exit_json(changed=True, msg='System upgraded')
+            module.exit_json(changed=True, msg='System upgraded', packages=packages, diff=diff)
         else:
             module.fail_json(msg="Could not upgrade")
     else:
-        module.exit_json(changed=False, msg='Nothing to upgrade')
+        module.exit_json(changed=False, msg='Nothing to upgrade', packages=packages)
 
 def remove_packages(module, pacman_path, packages):
+    data = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
+
     if module.params["recurse"] or module.params["force"]:
         if module.params["recurse"]:
             args = "Rs"
@@ -229,11 +256,17 @@ def remove_packages(module, pacman_path, packages):
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
 
+        if module._diff:
+            d = stdout.split('\n')[2].split(' ')[2:]
+            for i, pkg in enumerate(d):
+                d[i] = re.sub('-[0-9].*$', '', d[i].split('/')[-1])
+                diff['before'] += "%s\n" % pkg
+            data.append('\n'.join(d))
+
         remove_c += 1
 
     if remove_c > 0:
-
-        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c, diff=diff)
 
     module.exit_json(changed=False, msg="package(s) already absent")
 
@@ -242,6 +275,11 @@ def install_packages(module, pacman_path, state, packages, package_files):
     install_c = 0
     package_err = []
     message = ""
+    data = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
 
     to_install_repos = []
     to_install_files = []
@@ -266,13 +304,28 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
+        data = stdout.split('\n')[3].split(' ')[2:]
+        data = [ i for i in data if i != '' ]
+        for i, pkg in enumerate(data):
+            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
+
         install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
+
+        data = stdout.split('\n')[3].split(' ')[2:]
+        data = [ i for i in data if i != '' ]
+        for i, pkg in enumerate(data):
+            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
 
         install_c += len(to_install_files)
 
@@ -280,12 +333,19 @@ def install_packages(module, pacman_path, state, packages, package_files):
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message))
+        module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message), diff=diff)
 
-    module.exit_json(changed=False, msg="package(s) already installed. %s" % (message))
+    module.exit_json(changed=False, msg="package(s) already installed. %s" % (message), diff=diff)
 
 def check_packages(module, pacman_path, packages, state):
     would_be_changed = []
+    diff = {
+        'before': '',
+        'after': '',
+        'before_header': '',
+        'after_header': ''
+    }
+
     for package in packages:
         installed, updated, unknown = query_package(module, pacman_path, package)
         if ((state in ["present", "latest"] and not installed) or
@@ -295,27 +355,36 @@ def check_packages(module, pacman_path, packages, state):
     if would_be_changed:
         if state == "absent":
             state = "removed"
+
+        if module._diff and (state == 'removed'):
+            diff['before_header'] = 'removed'
+            diff['before'] = '\n'.join(would_be_changed) + '\n'
+        elif module._diff and ((state == 'present') or (state == 'latest')):
+            diff['after_header'] = 'installed'
+            diff['after'] = '\n'.join(would_be_changed) + '\n'
+
         module.exit_json(changed=True, msg="%s package(s) would be %s" % (
-            len(would_be_changed), state))
+            len(would_be_changed), state), diff=diff)
     else:
-        module.exit_json(changed=False, msg="package(s) already %s" % state)
+        module.exit_json(changed=False, msg="package(s) already %s" % state, diff=diff)
 
 
 def expand_package_groups(module, pacman_path, pkgs):
     expanded = []
 
     for pkg in pkgs:
-        cmd = "%s -Sgq %s" % (pacman_path, pkg)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        if pkg: # avoid empty strings
+            cmd = "%s -Sgq %s" % (pacman_path, pkg)
+            rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
-        if rc == 0:
-            # A group was found matching the name, so expand it
-            for name in stdout.split('\n'):
-                name = name.strip()
-                if name:
-                    expanded.append(name)
-        else:
-            expanded.append(pkg)
+            if rc == 0:
+                # A group was found matching the name, so expand it
+                for name in stdout.split('\n'):
+                    name = name.strip()
+                    if name:
+                        expanded.append(name)
+            else:
+                expanded.append(pkg)
 
     return expanded
 
@@ -359,7 +428,9 @@ def main():
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
-            if re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
+            if not pkg: # avoid empty strings
+                continue
+            elif re.match(".*\.pkg\.tar(\.(gz|bz2|xz|lrz|lzo|Z))?$", pkg):
                 # The package given is a filename, extract the raw pkg name from
                 # it and store the filename
                 pkg_files.append(pkg)

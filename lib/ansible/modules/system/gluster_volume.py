@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: gluster_volume
@@ -241,11 +242,11 @@ def get_peers():
                 uuid = value
             if key.lower() == 'state':
                 state = value
-                peers[hostname] = [ uuid, state ]
+                peers[hostname] = [uuid, state]
         elif row.lower() == 'other names:':
             shortNames = True
-        elif row != '' and shortNames == True:
-            peers[row] = [ uuid, state ]
+        elif row != '' and shortNames is True:
+            peers[row] = [uuid, state]
         elif row == '':
             shortNames = False
     return peers

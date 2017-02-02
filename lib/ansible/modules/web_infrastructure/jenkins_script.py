@@ -20,6 +20,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 author: James Hogarth
@@ -27,7 +32,7 @@ module: jenkins_script
 short_description: Executes a groovy script in the jenkins instance
 version_added: '2.3'
 description:
-    - The M(jenkins_script) module takes a script plus a dict of values
+    - The C(jenkins_script) module takes a script plus a dict of values
       to use within the script and returns the result of the script being run.
 
 options:
@@ -58,8 +63,14 @@ options:
   password:
     description:
       - The password to connect to the jenkins server with.
-    require: false
+    required: false
     default: null
+  timeout:
+    description:
+      - The request timeout in seconds
+    required: false
+    default: 10
+    version_added: "2.4"
   args:
     description:
       - A dict of key-value pairs used in formatting the script.
@@ -111,28 +122,48 @@ output:
     sample: 'Result: true'
 '''
 
+import json
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
-try:
-    # python2
-    from urllib import urlencode
-except ImportError:
-    # python3
-    from urllib.parse import urlencode
+
+
+def is_csrf_protection_enabled(module):
+    resp, info = fetch_url(module,
+                           module.params['url'] + '/api/json',
+                           method='GET')
+    if info["status"] != 200:
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+
+    content = resp.read()
+    return json.loads(content).get('useCrumbs', False)
+
+
+def get_crumb(module):
+    resp, info = fetch_url(module,
+                           module.params['url'] + '/crumbIssuer/api/json',
+                           method='GET')
+    if info["status"] != 200:
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+
+    content = resp.read()
+    return json.loads(content)
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            script = dict(required=True, type="str"),
-            url   = dict(required=False, type="str", default="http://localhost:8080"),
-            validate_certs = dict(required=False, type="bool", default=True),
-            user   = dict(required=False, no_log=True, type="str",default=None),
-            password   = dict(required=False, no_log=True, type="str",default=None),
-            args   = dict(required=False, type="dict", default=None)
+        argument_spec=dict(
+            script=dict(required=True, type="str"),
+            url=dict(required=False, type="str", default="http://localhost:8080"),
+            validate_certs=dict(required=False, type="bool", default=True),
+            user=dict(required=False, no_log=True, type="str", default=None),
+            password=dict(required=False, no_log=True, type="str", default=None),
+            timeout=dict(required=False, type="int", default=10),
+            args=dict(required=False, type="dict", default=None)
         )
     )
-
 
     if module.params['user'] is not None:
         if module.params['password'] is None:
@@ -141,18 +172,23 @@ def main():
         module.params['url_password'] = module.params['password']
         module.params['force_basic_auth'] = True
 
-
     if module.params['args'] is not None:
         from string import Template
         script_contents = Template(module.params['script']).substitute(module.params['args'])
     else:
         script_contents = module.params['script']
 
+    headers = {}
+    if is_csrf_protection_enabled(module):
+        crumb = get_crumb(module)
+        headers = {crumb['crumbRequestField']: crumb['crumb']}
 
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
-                           method="POST")
+                           headers=headers,
+                           method="POST",
+                           timeout=module.params['timeout'])
 
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
@@ -163,9 +199,8 @@ def main():
         module.fail_json(msg="script failed with stacktrace:\n " + result)
 
     module.exit_json(
-        output = result,
+        output=result,
     )
-
 
 
 if __name__ == '__main__':

@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -150,7 +151,7 @@ def match_active_opt(option, line):
 # do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None,
-        state='present', backup=False, no_extra_spaces=False, create=False):
+        state='present', backup=False, no_extra_spaces=False, create=True):
 
     diff = {'before': '',
             'after': '',
@@ -175,6 +176,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
         diff['before'] = ''.join(ini_lines)
 
     changed = False
+
+    # ini file could be empty
+    if not ini_lines:
+        ini_lines.append('\n')
 
     # last line of file may not contain a trailing newline
     if ini_lines[-1] == "" or ini_lines[-1][-1] != '\n':
@@ -288,7 +293,7 @@ def main():
         supports_check_mode = True
     )
 
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     section = module.params['section']
     option = module.params['option']
     value = module.params['value']

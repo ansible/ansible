@@ -19,6 +19,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: sorcery
@@ -124,8 +129,8 @@ EXAMPLES = '''
 
 # Playbook: make sure spells with/without required dependencies (if any) are installed
 - sorcery:
-    name: {{ item.spell }}
-    depends: {{ item.depends | default(None) }}
+    name: "{{ item.spell }}"
+    depends: "{{ item.depends | default(None) }}"
     state: present
   with_items:
     - { spell: 'vifm', depends: '+file,-gtk+2' }
@@ -234,7 +239,7 @@ def codex_list(module):
     rc, stdout, stderr = module.run_command(cmd_scribe)
 
     if rc != 0:
-        module.fail_json("unable to list grimoire collection, fix your Codex")
+        module.fail_json(msg="unable to list grimoire collection, fix your Codex")
 
     rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
 

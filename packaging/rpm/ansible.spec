@@ -8,7 +8,7 @@
 Name:      %{name}
 Version:   %{ansible_version}
 Release:   1%{?dist}
-Url:       http://www.ansible.com
+Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3
 Group:     Development/Libraries

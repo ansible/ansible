@@ -2,21 +2,24 @@
 
 set -o pipefail
 
-add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
-add-apt-repository 'ppa:ubuntu-toolchain-r/test'
-add-apt-repository 'ppa:fkrull/deadsnakes'
-
-apt-get update -qq
-apt-get install -qq \
+retry.py apt-get update -qq
+retry.py apt-get install -qq \
     shellcheck \
-    python2.4 \
-    g++-4.9 \
-    python3.6-dev \
 
-ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
+retry.py pip install tox --disable-pip-version-check
 
-pip install tox --disable-pip-version-check
+echo '{"verified": false, "results": []}' > test/results/bot/ansible-test-failure.json
 
-ansible-test compile --color -v
-ansible-test sanity --color -v --tox --skip-test ansible-doc --python 2.7
-ansible-test sanity --color -v --tox --test ansible-doc --coverage
+# shellcheck disable=SC2086
+ansible-test compile --failure-ok --color -v --junit --requirements --coverage ${CHANGED:+"$CHANGED"}
+# shellcheck disable=SC2086
+ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --python 3.5 --coverage ${CHANGED:+"$CHANGED"}
+# shellcheck disable=SC2086
+ansible-test sanity  --failure-ok --color -v --junit --tox --test ansible-doc --coverage ${CHANGED:+"$CHANGED"}
+
+rm test/results/bot/ansible-test-failure.json
+
+if find test/results/bot/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+    echo "One or more of the above tests reported at least one failure."
+    exit 1
+fi

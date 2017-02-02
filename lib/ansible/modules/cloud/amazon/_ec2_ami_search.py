@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -94,8 +95,10 @@ EXAMPLES = '''
 '''
 
 import csv
-import json
-import urlparse
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 SUPPORTED_DISTROS = ['ubuntu']
 
@@ -114,6 +117,7 @@ AWS_REGIONS = ['ap-northeast-1',
                'us-west-1',
                'us-west-2',
                "us-gov-west-1"]
+
 
 def get_url(module, url):
     """ Get url and return response """
@@ -208,11 +212,6 @@ def main():
     else:
         module.fail_json(msg="Unsupported distro: %s" % distro)
 
-
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

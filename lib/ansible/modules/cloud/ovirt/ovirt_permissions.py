@@ -19,43 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    follow_link,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions
-short_description: "Module to manage permissions of users/groups in oVirt"
+short_description: "Module to manage permissions of users/groups in oVirt/RHV"
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage permissions of users/groups in oVirt"
+    - "Module to manage permissions of users/groups in oVirt/RHV"
 options:
     role:
         description:
-            - "Name of the the role to be assigned to user/group on specific object."
+            - "Name of the role to be assigned to user/group on specific object."
         default: UserRole
     state:
         description:
@@ -89,18 +69,18 @@ options:
         ]
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user,
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user,
                but in Active Directory you must specify I(UPN) of the user."
             - "Note that if user don't exist in the system this module will fail,
                you should ensure the user exists by using M(ovirt_users) module."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
             - "Note that if group don't exist in the system this module will fail,
                you should ensure the group exists by using M(ovirt_groups) module."
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
     namespace:
@@ -139,10 +119,31 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 permission:
-    description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
+    description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success if permission is found.
+    type: dict
 '''
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    follow_link,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
 
 
 def _objects_service(connection, object_type):
@@ -210,7 +211,7 @@ class PermissionsModule(BaseModule):
         )
 
         # If found more groups, filter them by namespace and authz name:
-        # (filtering here, as oVirt backend doesn't support it)
+        # (filtering here, as oVirt/RHV backend doesn't support it)
         if len(groups) > 1:
             groups = [
                 g for g in groups if (
@@ -286,7 +287,8 @@ def main():
         module.fail_json(msg='"user_name" or "group_name" is required')
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         permissions_service = _object_service(connection, module).permissions_service()
         permissions_module = PermissionsModule(
             connection=connection,
@@ -305,7 +307,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

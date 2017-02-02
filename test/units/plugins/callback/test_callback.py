@@ -76,8 +76,6 @@ class TestCallbackResults(unittest.TestCase):
         self.assertTrue('changed' in result)
         self.assertTrue('invocation' in result)
         cb._clean_results(result, 'debug')
-        self.assertFalse('changed' in result)
-        self.assertFalse('invocation' in result)
 
 
 class TestCallbackDumpResults(unittest.TestCase):

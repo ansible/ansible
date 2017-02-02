@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -98,7 +97,7 @@ tasks:
       wait_for: result[0] contains IOS
 
   - name: run multiple commands on remote nodes
-     ios_command:
+    ios_command:
       commands:
         - show version
         - show interfaces
@@ -116,12 +115,12 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
@@ -129,51 +128,15 @@ failed_conditions:
   returned: failed
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import time
 
-from functools import partial
-
-from ansible.module_utils import ios
-from ansible.module_utils import ios_cli
+from ansible.module_utils.ios import run_commands
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
-
-SHARED_LIB = 'ios'
-
-def get_ansible_module():
-    if SHARED_LIB == 'ios':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-run_commands = partial(invoke, 'run_commands')
-
-def check_args(module, warnings):
-    if SHARED_LIB == 'ios_cli':
-        ios_cli.check_args(module)
 
 def to_lines(stdout):
     for item in stdout:
@@ -185,10 +148,9 @@ def parse_commands(module, warnings):
     command = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
-        response=dict()
-    ))
+        answer=dict()
+    ), module)
     commands = command(module.params['commands'])
-
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
@@ -200,14 +162,12 @@ def parse_commands(module, warnings):
                 msg='ios_command does not support running config mode '
                     'commands.  Please use ios_config instead'
             )
-        commands[index] = module.jsonify(item)
     return commands
 
 def main():
     """main entry point for module execution
     """
     argument_spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -217,17 +177,17 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(ios_cli.ios_cli_argument_spec)
+    argument_spec.update(ios_argument_spec)
 
-    cls = get_ansible_module()
-    module = cls(argument_spec=argument_spec, supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     result = {'changed': False}
 
+    warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
+    result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -258,16 +218,14 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
-        'warnings': warnings,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'ios_cli'
     main()

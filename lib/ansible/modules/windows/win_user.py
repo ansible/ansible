@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -32,6 +33,7 @@ version_added: "1.7"
 short_description: Manages local Windows user accounts
 description:
      - Manages local Windows user accounts
+     - For non-Windows targets, use the M(user) module instead.
 options:
   name:
     description:
@@ -131,6 +133,8 @@ options:
       - query
     default: present
     aliases: []
+notes:
+     - For non-Windows targets, use the M(user) module instead.
 author:
     - "Paul Durivage (@angstwad)"
     - "Chris Church (@cchurch)"

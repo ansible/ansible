@@ -19,43 +19,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_entity,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_host_networks
-short_description: Module to manage host networks in oVirt
+short_description: Module to manage host networks in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage host networks in oVirt."
+    - "Module to manage host networks in oVirt/RHV."
 options:
     name:
         description:
-            - "Name of the the host to manage networks for."
+            - "Name of the host to manage networks for."
         required: true
     state:
         description:
@@ -153,10 +133,31 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 host_nic:
-    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host_nic."
+    description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/host_nic."
     returned: On success if host NIC is found.
+    type: dict
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_entity,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class HostNetworksModule(BaseModule):
@@ -256,7 +257,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         host_networks_module = HostNetworksModule(
             connection=connection,
@@ -374,7 +376,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

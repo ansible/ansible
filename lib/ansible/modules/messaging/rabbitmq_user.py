@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -153,7 +154,7 @@ class RabbitMqUser(object):
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args, run_in_check_mode=False):
-        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+        if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node is not None:
                 cmd.extend(['-n', self.node])
@@ -233,12 +234,12 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return self._permissions != self.permissions
+        return sorted(self._permissions) != sorted(self.permissions)
 
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         tags=dict(default=None),
         permissions=dict(default=list(), type='list'),
         vhost=dict(default='/'),

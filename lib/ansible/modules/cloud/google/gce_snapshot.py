@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -129,6 +131,9 @@ snapshots_absent:
     sample: "[disk0-example-snapshot, disk1-example-snapshot]"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
+
 try:
     from libcloud.compute.types import Provider
     _ = Provider.GCE
@@ -194,31 +199,32 @@ def main():
     instance_disks = instance.extra['disks']
 
     for instance_disk in instance_disks:
+        disk_snapshot_name = snapshot_name
         device_name = instance_disk['deviceName']
         if disks is None or device_name in disks:
             volume_obj = gce.ex_get_volume(device_name)
 
             # If we have more than one disk to snapshot, prepend the disk name
             if len(instance_disks) > 1:
-                snapshot_name = device_name + "-" + snapshot_name
+                disk_snapshot_name = device_name + "-" + disk_snapshot_name
 
-            snapshot = find_snapshot(volume_obj, snapshot_name)
+            snapshot = find_snapshot(volume_obj, disk_snapshot_name)
 
             if snapshot and state == 'present':
-                json_output['snapshots_existing'].append(snapshot_name)
+                json_output['snapshots_existing'].append(disk_snapshot_name)
 
             elif snapshot and state == 'absent':
                 snapshot.destroy()
                 json_output['changed'] = True
-                json_output['snapshots_deleted'].append(snapshot_name)
+                json_output['snapshots_deleted'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'present':
-                volume_obj.snapshot(snapshot_name)
+                volume_obj.snapshot(disk_snapshot_name)
                 json_output['changed'] = True
-                json_output['snapshots_created'].append(snapshot_name)
+                json_output['snapshots_created'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'absent':
-                json_output['snapshots_absent'].append(snapshot_name)
+                json_output['snapshots_absent'].append(disk_snapshot_name)
 
     module.exit_json(**json_output)
 

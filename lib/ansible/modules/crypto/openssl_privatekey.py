@@ -16,21 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import *
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    from OpenSSL import crypto
-except ImportError:
-    pyopenssl_found = False
-else:
-    pyopenssl_found = True
-
-
-import os
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -99,29 +88,37 @@ EXAMPLES = '''
 RETURN = '''
 size:
     description: Size (in bits) of the TLS/SSL private key
-    returned:
-        - changed
-        - success
-    type: integer
+    returned: changed or success
+    type: int
     sample: 4096
 type:
     description: Algorithm used to generate the TLS/SSL private key
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: RSA
 filename:
     description: Path to the generated TLS/SSL private key file
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
 '''
 
+from ansible.module_utils.basic import *
+
+try:
+    from OpenSSL import crypto
+except ImportError:
+    pyopenssl_found = False
+else:
+    pyopenssl_found = True
+
+
+import os
+
+
 class PrivateKeyError(Exception):
     pass
+
 
 class PrivateKey(object):
 
@@ -185,7 +182,7 @@ class PrivateKey(object):
 
 
     def dump(self):
-        """Serialize the object into a dictionnary."""
+        """Serialize the object into a dictionary."""
 
         result = {
             'size': self.size,

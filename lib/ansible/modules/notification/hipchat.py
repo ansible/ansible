@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -102,15 +103,17 @@ EXAMPLES = '''
 # HipChat module specific support methods.
 #
 
-import urllib
 try:
     import json
 except ImportError:
     import simplejson as json
 
+
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six.moves.urllib.request import pathname2url
 from ansible.module_utils.urls import fetch_url
 
 DEFAULT_URI = "https://api.hipchat.com/v1"
@@ -134,7 +137,7 @@ def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
     params['notify'] = int(notify)
 
     url = api + MSG_URI_V1 + "?auth_token=%s" % (token)
-    data = urllib.urlencode(params)
+    data = urlencode(params)
 
     if module.check_mode:
         # In check mode, exit before actually sending the message
@@ -161,7 +164,7 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
 
     POST_URL = api + NOTIFY_URI_V2
 
-    url = POST_URL.replace('{id_or_name}', urllib.pathname2url(room))
+    url = POST_URL.replace('{id_or_name}', pathname2url(room))
     data = json.dumps(body)
 
     if module.check_mode:

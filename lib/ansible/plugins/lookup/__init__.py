@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.compat.six import with_metaclass
+from ansible.module_utils.six import with_metaclass
 
 try:
     from __main__ import display
@@ -60,7 +60,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         results = []
         for x in a:
             for y in b:
-                results.append(LookupBase._flatten([x,y]))
+                results.append(LookupBase._flatten([x, y]))
         return results
 
     @staticmethod

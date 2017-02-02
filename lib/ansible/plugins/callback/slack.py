@@ -68,7 +68,6 @@ class CallbackModule(CallbackBase):
         else:
             self._options = None
 
-
         super(CallbackModule, self).__init__(display=display)
 
         if not HAS_PRETTYTABLE:

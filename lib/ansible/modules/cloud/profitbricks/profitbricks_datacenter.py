@@ -14,16 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: profitbricks_datacenter
 short_description: Create or destroy a ProfitBricks Virtual Datacenter.
 description:
-     - This is a simple module that supports creating or removing vDCs. A vDC is required before you can create servers. This module has a dependency on profitbricks >= 1.0.0
+     - This is a simple module that supports creating or removing vDCs. A vDC is required before you can create servers. This module has a dependency
+       on profitbricks >= 1.0.0
 version_added: "2.0"
 options:
   name:
@@ -212,7 +214,7 @@ def main():
             description=dict(),
             location=dict(choices=LOCATIONS, default='us/las'),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(default=600),
             state=dict(default='present'),

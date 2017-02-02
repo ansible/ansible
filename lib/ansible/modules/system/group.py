@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,6 +32,7 @@ short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]
 description:
     - Manage presence of groups on a host.
+    - For Windows targets, use the M(win_group) module instead.
 options:
     name:
         required: true
@@ -52,7 +54,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-
+notes:
+    - For Windows targets, use the M(win_group) module instead.
 '''
 
 EXAMPLES = '''
@@ -105,7 +108,7 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -190,8 +193,8 @@ class AIX(Group):
         cmd = [self.module.get_bin_path('mkgroup', True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
-                cmd.append('id='+kwargs[key])
-            elif key == 'system' and kwargs[key] == True:
+                cmd.append('id=' + kwargs[key])
+            elif key == 'system' and kwargs[key] is True:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -202,7 +205,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('id='+kwargs[key])
+                    cmd.append('id=' + kwargs[key])
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -275,9 +278,9 @@ class DarwinGroup(Group):
         cmd += [ '-o', 'create' ]
         if self.gid is not None:
             cmd += [ '-i', self.gid ]
-        elif 'system' in kwargs and kwargs['system'] == True:
+        elif 'system' in kwargs and kwargs['system'] is True:
             gid = self.get_lowest_available_system_gid()
-            if gid != False:
+            if gid is not False:
                 self.gid = str(gid)
                 cmd += [ '-i', self.gid ]
         cmd += [ '-L', self.name ]

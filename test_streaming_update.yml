@@ -1,0 +1,12 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - cloudfront_distribution:
+      streaming_distribution: yes
+      state: present
+      caller_reference: test1_xx 
+      default_s3_origin_domain_name: will-van-ketwich-01.s3.amazonaws.com
+      comment: this is a cloudfront distribution with logging

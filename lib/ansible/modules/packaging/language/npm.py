@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,44 +82,44 @@ options:
 '''
 
 EXAMPLES = '''
-description: Install "coffee-script" node.js package.
-- npm:
+- name: Install "coffee-script" node.js package.
+  npm:
     name: coffee-script
     path: /app/location
 
-description: Install "coffee-script" node.js package on version 1.6.1.
-- npm:
+- name: Install "coffee-script" node.js package on version 1.6.1.
+  npm:
     name: coffee-script
     version: '1.6.1'
     path: /app/location
 
-description: Install "coffee-script" node.js package globally.
-- npm:
+- name: Install "coffee-script" node.js package globally.
+  npm:
     name: coffee-script
     global: yes
 
-description: Remove the globally package "coffee-script".
-- npm:
+- name: Remove the globally package "coffee-script".
+  npm:
     name: coffee-script
     global: yes
     state: absent
 
-description: Install "coffee-script" node.js package from custom registry.
-- npm:
+- name: Install "coffee-script" node.js package from custom registry.
+  npm:
     name: coffee-script
     registry: 'http://registry.mysite.com'
 
-description: Install packages based on package.json.
-- npm:
+- name: Install packages based on package.json.
+  npm:
     path: /app/location
 
-description: Update packages based on package.json to their latest version.
-- npm:
+- name: Update packages based on package.json to their latest version.
+  npm:
     path: /app/location
     state: latest
 
-description: Install packages based on package.json using the npm installed with nvm v0.10.1.
-- npm:
+- name: Install packages based on package.json using the npm installed with nvm v0.10.1.
+  npm:
     path: /app/location
     executable: /opt/nvm/v0.10.1/bin/npm
     state: present

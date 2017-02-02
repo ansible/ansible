@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -373,6 +374,14 @@ def main():
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+
+    # Check if user is authorized or not before proceeding to any operations
+    # if not, exit from here
+    auth_msg = git.currentuser().get('message', None)
+    if auth_msg is not None and auth_msg == '401 Unauthorized':
+        module.fail_json(msg='User unauthorized',
+                         details="User is not allowed to access Gitlab server "
+                                 "using login_token. Please check login_token")
 
     # Validate if project exists and take action based on "state"
     project = GitLabProject(module, git)

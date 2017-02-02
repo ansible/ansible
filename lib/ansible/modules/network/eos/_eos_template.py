@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -34,8 +33,8 @@ description:
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
+extends_documentation_fragment: eos
 deprecated: Deprecated in 2.2. Use M(eos_config) instead
-extends_documentation_fragment: eos_local
 options:
   src:
     description:
@@ -124,32 +123,20 @@ responses:
 """
 import re
 
-from ansible.module_utils import eos
-from ansible.module_utils import eos_local
-from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.basic import AnsibleModle
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.eos import load_config, get_config
+from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import check_args as eos_check_args
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 
-SHARED_LIB = 'eos'
+def check_args(module, warnings):
+    eos_check_args(module, warnings)
 
-def get_ansible_module():
-    if SHARED_LIB == 'eos':
-        return LocalAnsibleModule
-    return AnsibleModule
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
 
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-load_config = partial(invoke, 'load_config')
-get_config = partial(invoke, 'get_config')
-
-def check_args(module):
-    warnings = list()
-    if SHARED_LIB == 'eos_local':
-        eos_local.check_args(module)
-    return warnings
+    if module.params['replace'] and 'eapi' in (transport, provider_transport):
+        module.fail_json(msg='config replace is only supported over cli')
 
 def get_current_config(module):
     config = module.params.get('config')
@@ -157,7 +144,7 @@ def get_current_config(module):
         flags = []
         if module.params['include_defaults']:
             flags.append('all')
-        config = module.config.get_config(include_defaults=defaults)
+        config = get_config(module, flags)
     return config
 
 def filter_exit(commands):
@@ -197,17 +184,16 @@ def main():
         config=dict()
     )
 
-    argument_spec.update(eos_local.eapi_argument_spec)
+    argument_spec.update(eos_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    cls = get_ansible_module()
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
-    module = cls(argument_spec=argument_spec,
-                 mutually_exclusive=mutually_exclusive,
-                 supports_check_mode=True)
-
-    warnings = check_args(module)
+    warnings = list()
+    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:
@@ -217,7 +203,7 @@ def main():
     candidate = NetworkConfig(contents=src, indent=3)
 
     if module.params['backup']:
-        result['__backup__'] = get_config()
+        result['__backup__'] = get_config(module)
 
     if not module.params['force']:
         contents = get_current_config(module)
@@ -228,22 +214,19 @@ def main():
     else:
         commands = [c.strip() for c in str(candidate).split('\n')]
 
-    # FIXME not implemented yet!!
-    if replace:
-        if module.params['transport'] == 'cli':
-            module.fail_json(msg='config replace is only supported over eos_local')
-        commands = str(candidate).split('\n')
+    #commands = str(candidate).split('\n')
 
     if commands:
         commands = filter_exit(commands)
         commit = not module.check_mode
-        load_config(commands, commit=commit)
+        replace = module.params['replace'] or False
+        load_config(module, commands, commit=commit, replace=replace)
         result['changed'] = True
 
+    result['commands'] = commands
     result['updates'] = commands
 
     module.exit_json(**result)
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eos_local'
     main()

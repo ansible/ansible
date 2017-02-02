@@ -20,9 +20,10 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -74,7 +75,9 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), C(screen_name), C(host_group) are required.
             - When deleting screen(s), the C(screen_name) is required.
-            - 'The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s) will just be updated as needed.'
+            - >
+              The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
+              will just be updated as needed.
         required: true
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
@@ -123,7 +126,7 @@ EXAMPLES = '''
         graph_width: 200
         graph_height: 100
 
-# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurent updates
+# Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurrent updates
 - name: Create a new screen or update an existing screen's items
   local_action:
     module: zabbix_screen
@@ -342,7 +345,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -422,7 +425,8 @@ def main():
                         changed_screens.append(screen_name)
 
     if created_screens and changed_screens:
-        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens), ",".join(changed_screens)))
+        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens),
+                                                                                                                 ",".join(changed_screens)))
     elif created_screens:
         module.exit_json(changed=True, result="Successfully created screen(s): %s" % ",".join(created_screens))
     elif changed_screens:

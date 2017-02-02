@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - cloudfront_facts:
+        summary: true
+

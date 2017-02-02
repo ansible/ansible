@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -38,7 +39,7 @@ options:
     required: true
   dev:
     description:
-    - Target block device. Starting in 2.3 it can also take a list of devices for file systems that allow this.
+    - Target block device.
     required: true
   force:
     choices: [ "yes", "no" ]
@@ -73,9 +74,6 @@ EXAMPLES = '''
     opts: -cc
 '''
 
-import os
-from ansible.module_utils.basic import AnsibleModule
-
 def _get_dev_size(dev, module):
     """ Return size in bytes of device. Returns int """
     blockdev_cmd = module.get_bin_path("blockdev", required=True)
@@ -103,10 +101,14 @@ def _get_fs_size(fssize_cmd, dev, module):
         rc, size, err = module.run_command("%s %s" % (cmd, dev))
         if rc == 0:
             for line in size.splitlines():
-                #if 'data' in line:
-                if 'data ' in line:
-                    block_size = int(line.split('=')[2].split()[0])
-                    block_count = int(line.split('=')[3].split(',')[0])
+                col = line.split('=')
+                if col[0].strip() == 'data':
+                    if col[1].strip() != 'bsize':
+                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "bsize")')
+                    if col[2].split()[1] != 'blocks':
+                        module.fail_json(msg='Unexpected output format from xfs_info (could not locate "blocks")')
+                    block_size = int(col[2].split()[0])
+                    block_count = int(col[3].split(',')[0])
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )
@@ -124,7 +126,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             fstype=dict(required=True, aliases=['type']),
-            dev=dict(required=True, aliases=['device'], type='list'),
+            dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default='no'),
             resizefs=dict(type='bool', default='no'),
@@ -203,18 +205,17 @@ def main():
     growcmd = fs_cmd_map[fstype]['grow']
     fssize_cmd = fs_cmd_map[fstype]['fsinfo']
 
-    for device in dev:
-        if not os.path.exists(device):
-            module.fail_json(msg="Device %s not found." % device)
+    if not os.path.exists(dev):
+        module.fail_json(msg="Device %s not found."%dev)
 
     cmd = module.get_bin_path('blkid', required=True)
 
-    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, ' '.join(dev)))
+    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
-    if fs == fstype and resizefs == False and not force:
+    if fs == fstype and resizefs is False and not force:
         module.exit_json(changed=False)
-    elif fs == fstype and resizefs == True:
+    elif fs == fstype and resizefs is True:
         # Get dev and fs size and compare
         devsize_in_bytes = _get_dev_size(dev, module)
         fssize_in_bytes = _get_fs_size(fssize_cmd, dev, module)
@@ -263,5 +264,7 @@ def main():
 
     module.exit_json(changed=changed)
 
+# import module snippets
+from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

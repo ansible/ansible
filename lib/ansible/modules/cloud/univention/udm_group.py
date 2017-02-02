@@ -20,19 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.univention_umc import (
-    umc_module_for_add,
-    umc_module_for_edit,
-    ldap_search,
-    base_dn,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -95,6 +86,14 @@ EXAMPLES = '''
 
 
 RETURN = '''# '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.univention_umc import (
+    umc_module_for_add,
+    umc_module_for_edit,
+    ldap_search,
+    base_dn,
+)
 
 
 def main():

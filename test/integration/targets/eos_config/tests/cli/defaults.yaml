@@ -23,7 +23,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "result.updates is not defined"
+      - "result.updates is defined"
 
 - name: check device with defaults included
   eos_config:

@@ -23,8 +23,8 @@
   assert:
     that:
     - item.0 | changed
-    - item.0.path_value == "C:\\{{ item.0.item }}Path"
-    - item.1.stdout_lines[0] == 'C:\\{{ item.0.item }}Path'
+    - item.0.path_value == "C:\\" + item.0.item + "Path"
+    - item.1.stdout_lines[0] == 'C:\\' + item.0.item + 'Path'
   with_together:
   - "{{ pathout.results }}"
   - "{{ varout.results }}"

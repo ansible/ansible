@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -44,11 +45,8 @@ options:
   recurse:
     description:
       - Indicates if the owner should be changed recursively
-    required: false
-    choices:
-      - no
-      - yes
-    default: no
+    type: bool
+    default: 'no'
 author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 

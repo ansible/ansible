@@ -1,58 +1,21 @@
 #!/usr/bin/python
 
-"""LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
-   Copyright (C) 2015  LogicMonitor
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA"""
-
-import datetime
-import os
-import platform
-import socket
-import sys
-import types
-import urllib
-
-HAS_LIB_JSON = True
-try:
-    import json
-    # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
-    try:
-        if (
-            not isinstance(json.loads, types.FunctionType) or
-            not isinstance(json.dumps, types.FunctionType)
-        ):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print(
-            '\n{"msg": "Error: ansible requires the stdlib json or ' +
-            'simplejson module, neither was found!", "failed": true}'
-        )
-        HAS_LIB_JSON = False
-    except SyntaxError:
-        print(
-            '\n{"msg": "SyntaxError: probably due to installed simplejson ' +
-            'being for a different python version", "failed": true}'
-        )
-        HAS_LIB_JSON = False
+# LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
+# Copyright (C) 2015  LogicMonitor
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 RETURN = '''
 ---
@@ -65,9 +28,10 @@ success:
 '''
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -86,10 +50,14 @@ options:
     description:
       - The type of LogicMonitor object you wish to manage.
       - "Collector: Perform actions on a LogicMonitor collector."
-      - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and 'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services before a Collector remove.
+      - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and
+        'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services
+        before a Collector remove.
       - "Host: Perform actions on a host device."
       - "Hostgroup: Perform actions on a LogicMonitor host group."
-      - 'NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.'
+      - >
+        NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the
+        remote host and doing so will typically cause problems.
     required: true
     default: null
     choices: ['collector', 'host', 'datsource', 'hostgroup']
@@ -122,7 +90,8 @@ options:
     description:
       - The fully qualified domain name of a collector in your LogicMonitor account.
       - This is required for the creation of a LogicMonitor host (target=host action=add).
-      - This is required for updating, removing or scheduling downtime for hosts if 'displayname' isn't specified (target=host action=update action=remove action=sdt).
+      - This is required for updating, removing or scheduling downtime for hosts if 'displayname' isn't
+        specified (target=host action=update action=remove action=sdt).
     required: false
     default: null
   hostname:
@@ -267,7 +236,7 @@ EXAMPLES = '''
   tasks:
   - name: Create a host group
     # All tasks except for target=collector should use delegate_to: localhost
-    logicmonitor
+    logicmonitor:
       target: hostgroup
       action: add
       fullpath: /servers/development
@@ -555,6 +524,37 @@ EXAMPLES = '''
     delegate_to: localhost
 '''
 
+import datetime
+import os
+import platform
+import socket
+import sys
+import types
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+
+HAS_LIB_JSON = True
+try:
+    import json
+    # Detect the python-json library which is incompatible
+    # Look for simplejson if that's the case
+    try:
+        if (
+            not isinstance(json.loads, types.FunctionType) or
+            not isinstance(json.dumps, types.FunctionType)
+        ):
+            raise ImportError
+    except AttributeError:
+        raise ImportError
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        HAS_LIB_JSON = False
+    except SyntaxError:
+        HAS_LIB_JSON = False
+
+
 
 class LogicMonitor(object):
 
@@ -576,8 +576,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})
@@ -615,8 +615,8 @@ class LogicMonitor(object):
          server \"do\" function"""
         self.module.debug("Running LogicMonitor.do...")
 
-        param_str = urllib.urlencode(params)
-        creds = (urllib.urlencode(
+        param_str = urlencode(params)
+        creds = (urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password}))
@@ -909,15 +909,13 @@ class Collector(LogicMonitor):
                 self.module.run_command("mkdir " + self.installdir)
 
                 try:
-                    f = open(installfilepath, "w")
                     installer = (self.do("logicmonitorsetup",
                                          {"id": self.id,
                                           "arch": arch}))
-                    f.write(installer)
-                    f.closed
+                    with open(installfilepath, "w") as write_file:
+                        write_file.write(installer)
                 except:
                     self.fail(msg="Unable to open installer file for writing")
-                    f.closed
             else:
                 self.module.debug("Collector installer already exists")
                 return installfilepath
@@ -947,7 +945,7 @@ class Collector(LogicMonitor):
             installer = self.get_installer_binary()
 
             if self.info is None:
-                self.module.debug("Retriving collector information")
+                self.module.debug("Retrieving collector information")
                 self.info = self._get()
 
             if not os.path.exists(self.installdir + "/agent"):

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -159,7 +160,7 @@ bwc_policy:
 connection_limit:
     description: The new connection limit for the route domain
     returned: changed
-    type: integer
+    type: int
     sample: 100
 flow_eviction_policy:
     description: The new eviction policy to use with this route domain
@@ -475,18 +476,12 @@ class BigIpRouteDomain(object):
         result = dict()
         state = self.params['state']
 
-        if self.params['check_mode']:
-            if value == current:
-                changed = False
-            else:
-                changed = True
-        else:
-            if state == "present":
-                changed = self.present()
-                current = self.read()
-                result.update(current)
-            elif state == "absent":
-                changed = self.absent()
+        if state == "present":
+            changed = self.present()
+            current = self.read()
+            result.update(current)
+        elif state == "absent":
+            changed = self.absent()
 
         result.update(dict(changed=changed))
         return result
@@ -524,7 +519,7 @@ def main():
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

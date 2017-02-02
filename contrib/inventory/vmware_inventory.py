@@ -27,8 +27,8 @@ import argparse
 import atexit
 import datetime
 import getpass
-import jinja2
 import os
+import re
 import six
 import ssl
 import sys
@@ -37,6 +37,7 @@ import uuid
 from collections import defaultdict
 from six.moves import configparser
 from time import time
+from jinja2 import Environment
 
 HAS_PYVMOMI = False
 try:
@@ -59,6 +60,15 @@ try:
     hasvcr = True
 except ImportError:
     pass
+
+
+def regex_match(s, pattern):
+    '''Custom filter for regex matching'''
+    reg = re.compile(pattern)
+    if reg.match(s):
+        return True
+    else:
+        return False
 
 
 class VMwareMissingHostException(Exception):
@@ -103,6 +113,10 @@ class VMWareInventory(object):
     }
 
     custom_fields = {}
+
+    # use jinja environments to allow for custom filters
+    env = Environment()
+    env.filters['regex_match'] = regex_match
 
     # translation table for attributes to fetch for known vim types
     if not HAS_PYVMOMI:
@@ -412,7 +426,7 @@ class VMWareInventory(object):
         # Reset the inventory keys
         for k, v in name_mapping.items():
 
-            if not host_mapping or not k in host_mapping:
+            if not host_mapping or k not in host_mapping:
                 continue
 
             # set ansible_host (2.x)
@@ -498,7 +512,7 @@ class VMWareInventory(object):
 
         mapping = {}
         for k, v in inventory['_meta']['hostvars'].items():
-            t = jinja2.Template(pattern)
+            t = self.env.from_string(pattern)
             newkey = None
             try:
                 newkey = t.render(v)
@@ -546,7 +560,10 @@ class VMWareInventory(object):
 
                     # if the val wasn't set yet, get it from the parent
                     if not val:
-                        val = getattr(vm, x)
+                        try:
+                            val = getattr(vm, x)
+                        except AttributeError as e:
+                            self.debugl(e)
                     else:
                         # in a subkey, get the subprop from the previous attrib
                         try:
@@ -628,7 +645,10 @@ class VMWareInventory(object):
         elif type(vobj) in self.vimTable:
             rdata = {}
             for key in self.vimTable[type(vobj)]:
-                rdata[key] = getattr(vobj, key)
+                try:
+                    rdata[key] = getattr(vobj, key)
+                except Exception as e:
+                    self.debugl(e)
 
         elif issubclass(type(vobj), str) or isinstance(vobj, str):
             if vobj.isalnum():
@@ -685,12 +705,15 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
                 if level + 1 <= self.maxlevel:
-                    rdata[method] = self._process_object_types(
-                        methodToCall,
-                        thisvm=thisvm,
-                        inkey=inkey + '.' + method,
-                        level=(level + 1)
-                    )
+                    try:
+                        rdata[method] = self._process_object_types(
+                            methodToCall,
+                            thisvm=thisvm,
+                            inkey=inkey + '.' + method,
+                            level=(level + 1)
+                        )
+                    except vim.fault.NoPermission:
+                        self.debugl("Skipping method %s (NoPermission)" % method)
         else:
             pass
 
@@ -719,5 +742,3 @@ class VMWareInventory(object):
 if __name__ == "__main__":
     # Run the script
     print(VMWareInventory().show())
-
-

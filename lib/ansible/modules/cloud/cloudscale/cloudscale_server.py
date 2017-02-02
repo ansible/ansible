@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -30,12 +31,15 @@ description:
   - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
   - All operations are performed using the cloudscale.ch public API v1.
   - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at U(https://control.cloudscale.ch).
+  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
   - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
   - If more than one server with the name given by the C(name) option exists, execution is aborted.
-  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the correct name or UUID exists. Only state changes will be applied.
+  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
+    of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
+    correct name or UUID exists. Only state changes will be applied.
 version_added: 2.3
 author: "Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>"
 options:
@@ -144,6 +148,19 @@ EXAMPLES = '''
     name: my-other-shiny-server
     state: absent
     api_token: xxxxxx
+
+# Start a server and wait for the SSH host keys to be generated
+- name: Start server and wait for SSH host keys
+  cloudscale_server:
+    name: my-cloudscale-server-with-ssh-key
+    image: debian-8
+    flavor: flex-4
+    ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
+    api_token: xxxxxx
+  register: server
+  until: server.ssh_fingerprints
+  retries: 60
+  delay: 2
 '''
 
 RETURN = '''
@@ -187,6 +204,16 @@ interfaces:
   returned: success when not state == absent
   type: list
   sample: [ { "type": "public", "addresses": [ ... ] } ]
+ssh_fingerprints:
+  description: A list of SSH host key fingerprints. Will be null until the host keys could be retrieved from the server.
+  returned: success when not state == absent
+  type: list
+  sample: ["ecdsa-sha2-nistp256 SHA256:XXXX", ... ]
+ssh_host_keys:
+  description: A list of SSH host keys. Will be null until the host keys could be retrieved from the server.
+  returned: success when not state == absent
+  type: list
+  sample: ["ecdsa-sha2-nistp256 XXXXX", ... ]
 anti_affinity_with:
   description: List of servers in the same anti-affinity group
   returned: success when not state == absent
@@ -198,9 +225,9 @@ from datetime import datetime, timedelta
 import json
 import os
 from time import sleep
-from urllib import urlencode
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
 API_URL      = 'https://api.cloudscale.ch/v1/'

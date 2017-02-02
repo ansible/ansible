@@ -17,11 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.module_utils.six import iteritems
+import atexit
+import ssl
+import time
 
 try:
-    import atexit
-    import time
-    import ssl
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
@@ -51,6 +52,30 @@ def wait_for_task(task):
             time.sleep(15)
 
 
+def find_obj(content, vimtype, name, first=True):
+    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
+    obj_list = container.view
+    container.Destroy()
+
+    # Backward compatible with former get_obj() function
+    if name is None:
+        if obj_list:
+            return obj_list[0]
+        return None
+
+    # Select the first match
+    if first is True:
+        for obj in obj_list:
+            if obj.name == name:
+                return obj
+
+        # If no object found, return None
+        return None
+
+    # Return all matching objects if needed
+    return [obj for obj in obj_list if obj.name == name]
+
+
 def find_dvspg_by_name(dv_switch, portgroup_name):
 
     portgroups = dv_switch.portgroup
@@ -60,6 +85,7 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
             return pg
 
     return None
+
 
 def find_entity_child_by_path(content, entityRootFolder, path):
 
@@ -88,6 +114,7 @@ def find_cluster_by_name_datacenter(datacenter, cluster_name):
             return folder
     return None
 
+
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
     if datacenter:
@@ -101,6 +128,7 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
             return cluster
 
     return None
+
 
 def find_datacenter_by_name(content, datacenter_name):
 
@@ -138,6 +166,7 @@ def find_hostsystem_by_name(content, hostname):
             return host
     return None
 
+
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None):
     """ UUID is unique to a VM, every other id returns the first match. """
     si = content.searchIndex
@@ -147,7 +176,7 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
         vm = si.FindByDnsName(datacenter=datacenter, dnsName=vm_id, vmSearch=True)
     elif vm_id_type == 'inventory_path':
         vm = si.FindByInventoryPath(inventoryPath=vm_id)
-        if type(vm) != type(vim.VirtualMachine):
+        if isinstance(vm, vim.VirtualMachine):
             vm = None
     elif vm_id_type == 'uuid':
         vm = si.FindByUuid(datacenter=datacenter, instanceUuid=vm_id, vmSearch=True)
@@ -166,7 +195,7 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
 def find_vm_by_name(content, vm_name, folder=None, recurse=True):
 
-    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=True)
+    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
     for vm in vms:
         if vm.name == vm_name:
             return vm
@@ -179,6 +208,121 @@ def find_host_portgroup_by_name(host, portgroup_name):
         if portgroup.spec.name == portgroup_name:
             return portgroup
     return None
+
+
+def gather_vm_facts(content, vm):
+    """ Gather facts from vim.VirtualMachine object. """
+    facts = {
+        'module_hw': True,
+        'hw_name': vm.config.name,
+        'hw_power_status': vm.summary.runtime.powerState,
+        'hw_guest_full_name': vm.summary.guest.guestFullName,
+        'hw_guest_id': vm.summary.guest.guestId,
+        'hw_product_uuid': vm.config.uuid,
+        'hw_processor_count': vm.config.hardware.numCPU,
+        'hw_memtotal_mb': vm.config.hardware.memoryMB,
+        'hw_interfaces': [],
+        'guest_tools_status': vm.guest.toolsRunningStatus,
+        'guest_tools_version': vm.guest.toolsVersion,
+        'ipv4': None,
+        'ipv6': None,
+        'annotation': vm.config.annotation,
+        'customvalues': {},
+        'snapshots': [],
+        'current_snapshot': None,
+    }
+
+    cfm = content.customFieldsManager
+    # Resolve custom values
+    for value_obj in vm.summary.customValue:
+        kn = value_obj.key
+        if cfm is not None and cfm.field:
+            for f in cfm.field:
+                if f.key == value_obj.key:
+                    kn = f.name
+                    # Exit the loop immediately, we found it
+                    break
+
+        facts['customvalues'][kn] = value_obj.value
+
+    net_dict = {}
+    for device in vm.guest.net:
+        net_dict[device.macAddress] = list(device.ipAddress)
+
+    for k, v in iteritems(net_dict):
+        for ipaddress in v:
+            if ipaddress:
+                if '::' in ipaddress:
+                    facts['ipv6'] = ipaddress
+                else:
+                    facts['ipv4'] = ipaddress
+
+    ethernet_idx = 0
+    for idx, entry in enumerate(vm.config.hardware.device):
+        if not hasattr(entry, 'macAddress'):
+            continue
+
+        if entry.macAddress:
+            mac_addr = entry.macAddress
+            mac_addr_dash = mac_addr.replace(':', '-')
+        else:
+            mac_addr = mac_addr_dash = None
+
+        factname = 'hw_eth' + str(ethernet_idx)
+        facts[factname] = {
+            'addresstype': entry.addressType,
+            'label': entry.deviceInfo.label,
+            'macaddress': mac_addr,
+            'ipaddresses': net_dict.get(entry.macAddress, None),
+            'macaddress_dash': mac_addr_dash,
+            'summary': entry.deviceInfo.summary,
+        }
+        facts['hw_interfaces'].append('eth' + str(ethernet_idx))
+        ethernet_idx += 1
+
+    snapshot_facts = list_snapshots(vm)
+    if 'snapshots' in snapshot_facts:
+        facts['snapshots'] = snapshot_facts['snapshots']
+        facts['current_snapshot'] = snapshot_facts['current_snapshot']
+    return facts
+
+
+def deserialize_snapshot_obj(obj):
+    return {'id': obj.id,
+            'name': obj.name,
+            'description': obj.description,
+            'creation_time': obj.createTime,
+            'state': obj.state}
+
+
+def list_snapshots_recursively(snapshots):
+    snapshot_data = []
+    for snapshot in snapshots:
+        snapshot_data.append(deserialize_snapshot_obj(snapshot))
+        snapshot_data = snapshot_data + list_snapshots_recursively(snapshot.childSnapshotList)
+    return snapshot_data
+
+
+def get_current_snap_obj(snapshots, snapob):
+    snap_obj = []
+    for snapshot in snapshots:
+        if snapshot.snapshot == snapob:
+            snap_obj.append(snapshot)
+        snap_obj = snap_obj + get_current_snap_obj(snapshot.childSnapshotList, snapob)
+    return snap_obj
+
+
+def list_snapshots(vm):
+    result = {}
+    if vm.snapshot is None:
+        return result
+
+    result['snapshots'] = list_snapshots_recursively(vm.snapshot.rootSnapshotList)
+    current_snapref = vm.snapshot.currentSnapshot
+    current_snap_obj = get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
+    result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
+
+    return result
 
 
 def vmware_argument_spec():
@@ -199,7 +343,8 @@ def connect_to_api(module, disconnect_atexit=True):
     validate_certs = module.params['validate_certs']
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
-        module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update python or or use validate_certs=false')
+        module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
+                             'python or or use validate_certs=false')
 
     try:
         service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
@@ -224,6 +369,7 @@ def connect_to_api(module, disconnect_atexit=True):
         atexit.register(connect.Disconnect, service_instance)
     return service_instance.RetrieveContent()
 
+
 def get_all_objs(content, vimtype, folder=None, recurse=True):
     if not folder:
         folder = content.rootFolder
@@ -233,6 +379,7 @@ def get_all_objs(content, vimtype, folder=None, recurse=True):
     for managed_object_ref in container.view:
         obj.update({managed_object_ref: managed_object_ref.name})
     return obj
+
 
 def fetch_file_from_guest(content, vm, username, password, src, dest):
 
@@ -282,6 +429,7 @@ def fetch_file_from_guest(content, vm, username, password, src, dest):
 
     return result
 
+
 def push_file_to_guest(content, vm, username, password, src, dest, overwrite=True):
 
     """ Use VMWare's filemanager api to fetch a file over http """
@@ -330,6 +478,7 @@ def push_file_to_guest(content, vm, username, password, src, dest, overwrite=Tru
         result[k] = v
 
     return result
+
 
 def run_command_in_guest(content, vm, username, password, program_path, program_args, program_cwd, program_env):
 

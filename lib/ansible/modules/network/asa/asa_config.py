@@ -16,16 +16,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: asa_config
 version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
-short_description: Manage Cisco ASA configuration sections
+short_description: Manage configuration sections on Cisco ASA devices
 description:
   - Cisco ASA configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
@@ -172,6 +173,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -181,6 +183,7 @@ vars:
     auth_pass: cisco
     transport: cli
 
+---
 - asa_config:
     lines:
       - network-object host 10.80.30.18
@@ -220,7 +223,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 responses:
   description: The set of responses from issuing the commands on the device

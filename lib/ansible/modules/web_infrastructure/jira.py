@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: jira
@@ -35,7 +36,7 @@ options:
   uri:
     required: true
     description:
-      - Base URI for the JIRA instance
+      - Base URI for the JIRA instance.
 
   operation:
     required: true
@@ -99,24 +100,33 @@ options:
     required: false
     version_added: 2.3
     description:
-     - Set type of link, when action 'link' selected
+     - Set type of link, when action 'link' selected.
 
   inwardissue:
     required: false
     version_added: 2.3
     description:
-     - set issue from which link will be created
+     - Set issue from which link will be created.
 
   outwardissue:
     required: false
     version_added: 2.3
     description:
-     - set issue to which link will be created
+     - Set issue to which link will be created.
 
   fields:
     required: false
     description:
-     - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API (possibly after merging with other required data, as when passed to create). See examples for more information, and the JIRA REST API for the structure required for various fields.
+     - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API
+       (possibly after merging with other required data, as when passed to create). See examples for more information,
+       and the JIRA REST API for the structure required for various fields.
+
+  timeout:
+    required: false
+    version_added: 2.3
+    description:
+      - Set timeout, in seconds, on requests to JIRA API.
+    default: 10
 
 notes:
   - "Currently this only works with basic-auth."
@@ -237,7 +247,8 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 from ansible.module_utils.pycompat24 import get_exception
 
-def request(url, user, passwd, data=None, method=None):
+
+def request(url, user, passwd, timeout, data=None, method=None):
     if data:
         data = json.dumps(data)
 
@@ -249,9 +260,9 @@ def request(url, user, passwd, data=None, method=None):
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    response, info = fetch_url(module, url, data=data, method=method,
-                               headers={'Content-Type':'application/json',
-                                        'Authorization':"Basic %s" % auth})
+    response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
+                               headers={'Content-Type': 'application/json',
+                                        'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 201, 204):
         module.fail_json(msg=info['msg'])
@@ -263,22 +274,25 @@ def request(url, user, passwd, data=None, method=None):
     else:
         return {}
 
-def post(url, user, passwd, data):
-    return request(url, user, passwd, data=data, method='POST')
 
-def put(url, user, passwd, data):
-    return request(url, user, passwd, data=data, method='PUT')
+def post(url, user, passwd, timeout, data):
+    return request(url, user, passwd, timeout, data=data, method='POST')
 
-def get(url, user, passwd):
-    return request(url, user, passwd)
+
+def put(url, user, passwd, timeout, data):
+    return request(url, user, passwd, timeout, data=data, method='PUT')
+
+
+def get(url, user, passwd, timeout):
+    return request(url, user, passwd, timeout)
 
 
 def create(restbase, user, passwd, params):
     createfields = {
-        'project': { 'key': params['project'] },
+        'project': {'key': params['project']},
         'summary': params['summary'],
         'description': params['description'],
-        'issuetype': { 'name': params['issuetype'] }}
+        'issuetype': {'name': params['issuetype']}}
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -288,7 +302,7 @@ def create(restbase, user, passwd, params):
 
     url = restbase + '/issue/'
 
-    ret = post(url, user, passwd, data)
+    ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
@@ -296,11 +310,11 @@ def create(restbase, user, passwd, params):
 def comment(restbase, user, passwd, params):
     data = {
         'body': params['comment']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
-    ret = post(url, user, passwd, data)
+    ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
@@ -308,25 +322,25 @@ def comment(restbase, user, passwd, params):
 def edit(restbase, user, passwd, params):
     data = {
         'fields': params['fields']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, data)
+    ret = put(url, user, passwd, params['timeout'], data)
 
     return ret
 
 
 def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
-    ret = get(url, user, passwd)
+    ret = get(url, user, passwd, params['timeout'])
     return ret
 
 
 def transition(restbase, user, passwd, params):
     # Find the transition id
     turl = restbase + '/issue/' + params['issue'] + "/transitions"
-    tmeta = get(turl, user, passwd)
+    tmeta = get(turl, user, passwd, params['timeout'])
 
     target = params['status']
     tid = None
@@ -340,23 +354,24 @@ def transition(restbase, user, passwd, params):
 
     # Perform it
     url = restbase + '/issue/' + params['issue'] + "/transitions"
-    data = { 'transition': { "id" : tid },
-             'fields': params['fields']}
+    data = {'transition': {"id": tid},
+            'fields': params['fields']}
 
-    ret = post(url, user, passwd, data)
+    ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
+
 def link(restbase, user, passwd, params):
     data = {
-        'type': { 'name': params['linktype'] },
-        'inwardIssue': { 'key': params['inwardissue'] },
-        'outwardIssue': { 'key': params['outwardissue'] },
+        'type': {'name': params['linktype']},
+        'inwardIssue': {'key': params['inwardissue']},
+        'outwardIssue': {'key': params['outwardissue']},
     }
 
     url = restbase + '/issueLink/'
 
-    ret = post(url, user, passwd, data)
+    ret = post(url, user, passwd, params['timeout'], data)
 
     return ret
 
@@ -368,6 +383,7 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    transition=['status'],
                    link=['linktype', 'inwardissue', 'outwardissue'])
 
+
 def main():
 
     global module
@@ -377,7 +393,7 @@ def main():
             operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link'],
                            aliases=['command'], required=True),
             username=dict(required=True),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             project=dict(),
             summary=dict(),
             description=dict(),
@@ -390,6 +406,7 @@ def main():
             linktype=dict(),
             inwardissue=dict(),
             outwardissue=dict(),
+            timeout=dict(type='float', default=10),
         ),
         supports_check_mode=False
     )
@@ -409,10 +426,10 @@ def main():
     user = module.params['username']
     passwd = module.params['password']
     if module.params['assignee']:
-        module.params['fields']['assignee'] = { 'name': module.params['assignee'] }
+        module.params['fields']['assignee'] = {'name': module.params['assignee']}
 
     if not uri.endswith('/'):
-        uri = uri+'/'
+        uri = uri + '/'
     restbase = uri + 'rest/api/2'
 
     # Dispatch
@@ -428,7 +445,6 @@ def main():
     except Exception:
         e = get_exception()
         return module.fail_json(msg=e.message)
-
 
     module.exit_json(changed=True, meta=ret)
 

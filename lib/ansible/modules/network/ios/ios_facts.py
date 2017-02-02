@@ -15,18 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
 module: ios_facts
 version_added: "2.2"
 author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote devices running IOS
+short_description: Collect facts from remote devices running Cisco IOS
 description:
   - Collects a base set of device facts from a remote device that
     is running IOS.  This module prepends all of the
@@ -50,6 +49,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -57,6 +57,7 @@ vars:
     password: cisco
     transport: cli
 
+---
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all
@@ -143,32 +144,11 @@ ansible_net_neighbors:
 """
 import re
 
-from functools import partial
-
-from ansible.module_utils import ios
-from ansible.module_utils import ios_cli
+from ansible.module_utils.ios import run_commands
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
-
-SHARED_LIB = 'ios'
-
-def get_ansible_module():
-    if SHARED_LIB == 'ios':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-run_commands = partial(invoke, 'run_commands')
-
-def check_args(module, warnings):
-    if SHARED_LIB == 'ios_cli':
-        ios_cli.check_args(module)
 
 
 class FactsBase(object):
@@ -230,8 +210,8 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     COMMANDS = [
-        'dir | include Directory',
-        'show memory statistics | include Processor'
+        'dir',
+        'show memory statistics'
     ]
 
     def populate(self):
@@ -242,10 +222,12 @@ class Hardware(FactsBase):
 
         data = self.responses[1]
         if data:
-            match = re.findall(r'\s(\d+)\s', data)
+            processor_line = [l for l in data.splitlines()
+                              if 'Processor' in l].pop()
+            match = re.findall(r'\s(\d+)\s', processor_line)
             if match:
                 self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[1]) / 1024
+                self.facts['memfree_mb'] = int(match[3]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
@@ -288,7 +270,7 @@ class Interfaces(FactsBase):
 
         data = self.responses[2]
         if data:
-            neighbors = self.run('show lldp neighbors detail')
+            neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
                 self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
 
@@ -443,13 +425,10 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    argument_spec.update(ios_cli.ios_cli_argument_spec)
+    argument_spec.update(ios_argument_spec)
 
-    cls = get_ansible_module()
-    module = cls(argument_spec=argument_spec, supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -500,9 +479,11 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    warnings = list()
+    check_args(module, warnings)
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'ios_cli'
     main()

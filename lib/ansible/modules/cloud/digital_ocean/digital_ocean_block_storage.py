@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -189,7 +190,7 @@ class DOBlockStorage(object):
             os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
         self.module = module
         self.rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
-                         'Content-type': 'application/json'})
+                                  'Content-type': 'application/json'})
 
     def get_key_or_fail(self, k):
         v = self.module.params[k]
@@ -324,15 +325,15 @@ def handle_request(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state = dict(choices=['present', 'absent'], required=True),
-            command = dict(choices=['create', 'attach'], required=True),
-            api_token = dict(aliases=['API_TOKEN'], no_log=True),
-            block_size = dict(type='int'),
-            volume_name = dict(type='str', required=True),
-            description = dict(type='str'),
-            region = dict(type='str', required=True),
-            droplet_id = dict(type='int'),
-            timeout = dict(type='int', default=10),
+            state=dict(choices=['present', 'absent'], required=True),
+            command=dict(choices=['create', 'attach'], required=True),
+            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            block_size=dict(type='int'),
+            volume_name=dict(type='str', required=True),
+            description=dict(type='str'),
+            region=dict(type='str', required=True),
+            droplet_id=dict(type='int'),
+            timeout=dict(type='int', default=10),
         ),
     )
     try:

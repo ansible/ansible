@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import time
 
 from lib.target import (
     walk_module_targets,
@@ -15,6 +16,10 @@ from lib.target import (
 
 from lib.util import (
     display,
+)
+
+from lib.import_analysis import (
+    get_python_module_utils_imports,
 )
 
 
@@ -35,6 +40,29 @@ def categorize_changes(paths, verbose_command=None):
         'network-integration': set(),
     }
 
+    additional_paths = set()
+
+    for path in paths:
+        if not os.path.exists(path):
+            continue
+
+        dependent_paths = mapper.get_dependent_paths(path)
+
+        if not dependent_paths:
+            continue
+
+        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=1)
+
+        for dependent_path in dependent_paths:
+            display.info(dependent_path, verbosity=1)
+            additional_paths.add(dependent_path)
+
+    additional_paths -= set(paths)  # don't count changed paths as additional paths
+
+    if additional_paths:
+        display.info('Expanded %d changed file(s) into %d additional dependent file(s).' % (len(paths), len(additional_paths)))
+        paths = sorted(set(paths) | additional_paths)
+
     display.info('Mapping %d changed file(s) to tests.' % len(paths))
 
     for path in paths:
@@ -52,7 +80,7 @@ def categorize_changes(paths, verbose_command=None):
 
                 # identify targeted integration tests (those which only target a single integration command)
                 if 'integration' in verbose_command and tests.get(verbose_command):
-                    if not any('integration' in command for command in tests.keys() if command != verbose_command):
+                    if not any('integration' in command for command in tests if command != verbose_command):
                         result += ' (targeted)'
             else:
                 result = '%s' % tests
@@ -66,7 +94,7 @@ def categorize_changes(paths, verbose_command=None):
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 
-    commands = dict((c, sorted(commands[c])) for c in commands.keys() if commands[c])
+    commands = dict((c, sorted(commands[c])) for c in commands if commands[c])
 
     return commands
 
@@ -97,6 +125,43 @@ class PathMapper(object):
                                                   if 'network/' in t.aliases for m in t.modules)
 
         self.prefixes = load_integration_prefixes()
+
+        self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+
+    def get_dependent_paths(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        ext = os.path.splitext(os.path.split(path)[1])[1]
+
+        if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.py':
+                return self.get_python_module_utils_usage(path)
+
+        return []
+
+    def get_python_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if path == 'lib/ansible/module_utils/__init__.py':
+            return []
+
+        if not self.python_module_utils_imports:
+            display.info('Analyzing python module_utils imports...')
+            before = time.time()
+            self.python_module_utils_imports = get_python_module_utils_imports(self.compile_targets)
+            after = time.time()
+            display.info('Processed %d python module_utils in %d second(s).' % (len(self.python_module_utils_imports), after - before))
+
+        name = os.path.splitext(path)[0].replace('/', '.')[4:]
+
+        if name.endswith('.__init__'):
+            name = name[:-9]
+
+        return sorted(self.python_module_utils_imports[name])
 
     def classify(self, path):
         """
@@ -174,39 +239,7 @@ class PathMapper(object):
                 }
 
             if ext == '.py':
-                network_utils = (
-                    'netcfg',
-                    'netcli',
-                    'network_common',
-                    'network',
-                )
-
-                if name in network_utils:
-                    return {
-                        'network-integration': 'network/',  # target all network platforms
-                        'units': 'all',
-                    }
-
-                if name in self.prefixes and self.prefixes[name] == 'network':
-                    network_target = 'network/%s/' % name
-
-                    if network_target in self.integration_targets_by_alias:
-                        return {
-                            'network-integration': network_target,
-                            'units': 'all',
-                        }
-
-                    display.warning('Integration tests for "%s" not found.' % network_target)
-
-                    return {
-                        'units': 'all',
-                    }
-
-                return {
-                    'integration': 'all',
-                    'network-integration': 'all',
-                    'units': 'all',
-                }
+                return minimal  # already expanded using get_dependent_paths
 
         if path.startswith('lib/ansible/plugins/connection/'):
             if name == '__init__':
@@ -300,6 +333,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('test/integration/targets/'):
+            if not os.path.exists(path):
+                return minimal
+
             target = self.integration_targets_by_name[path.split('/')[3]]
 
             if 'hidden/' in target.aliases:
@@ -344,6 +380,16 @@ class PathMapper(object):
                     }
 
                 test_path = os.path.dirname(test_path)
+
+        if path.startswith('test/runner/lib/cloud/'):
+            cloud_target = 'cloud/%s/' % name
+
+            if cloud_target in self.integration_targets_by_alias:
+                return {
+                    'integration': cloud_target,
+                }
+
+            return all_tests()  # test infrastructure, run all tests
 
         if path.startswith('test/runner/'):
             return all_tests()  # test infrastructure, run all tests

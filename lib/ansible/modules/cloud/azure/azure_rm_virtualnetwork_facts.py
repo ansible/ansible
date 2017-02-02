@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,7 @@ options:
 extends_documentation_fragment:
     - azure
 
-authors:
+author:
     - "Chris Houseknecht house@redhat.com"
     - "Matt Davis mdavis@redhat.com"
 

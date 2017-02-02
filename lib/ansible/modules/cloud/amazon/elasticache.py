@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -30,7 +31,8 @@ author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:
-      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster, resulting in a momentary outage.
+      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster,
+        resulting in a momentary outage.
     choices: ['present', 'absent', 'rebooted']
     required: true
   name:
@@ -64,7 +66,8 @@ options:
     default: None
   cache_parameter_group:
     description:
-      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
+      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
+        for the specified engine will be used.
     required: false
     default: None
     version_added: "2.0"
@@ -143,8 +146,7 @@ import time
 
 try:
     import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
+    from boto.elasticache import connect_to_region
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -427,10 +429,8 @@ class ElastiCacheManager(object):
     def _get_elasticache_connection(self):
         """Get an elasticache connection"""
         try:
-            endpoint = "elasticache.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(
-                region=connect_region,
+            return connect_to_region(
+                region_name=self.region,
                 **self.aws_connect_kwargs
             )
         except boto.exception.NoAuthHandlerFound as e:

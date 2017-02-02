@@ -23,8 +23,8 @@ import ansible.constants as C
 import time
 import random
 
-from ansible.compat.six import text_type
-from ansible.compat.six.moves import shlex_quote
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
@@ -34,18 +34,19 @@ class ShellBase(object):
     def __init__(self):
         self.env = dict()
         if C.DEFAULT_MODULE_SET_LOCALE:
+            module_locale = C.DEFAULT_MODULE_LANG or os.getenv('LANG', 'en_US.UTF-8')
             self.env.update(
                 dict(
-                    LANG        = C.DEFAULT_MODULE_LANG,
-                    LC_ALL      = C.DEFAULT_MODULE_LANG,
-                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
+                    LANG=module_locale,
+                    LC_ALL=module_locale,
+                    LC_MESSAGES=module_locale,
                 )
             )
 
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -171,4 +172,8 @@ class ShellBase(object):
         if self._SHELL_AND:
             cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
 
+        return cmd
+
+    def wrap_for_exec(self, cmd):
+        """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd

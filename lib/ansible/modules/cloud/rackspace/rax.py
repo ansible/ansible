@@ -16,9 +16,10 @@
 
 # This is a DOCUMENTATION stub specific to this module, it extends
 # a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -337,7 +338,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
                 try:
                     server.get()
                 except:
-                    server.status == 'ERROR'
+                    server.status = 'ERROR'
 
             if not filter(lambda s: s.status not in FINAL_STATUSES,
                           servers):
@@ -351,7 +352,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         try:
             server.get()
         except:
-            server.status == 'ERROR'
+            server.status = 'ERROR'
         instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)

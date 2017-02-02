@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -52,6 +53,35 @@ options:
      - if false, the ssh host key of the device is not checked
     default: true
     required: false
+  look_for_keys:
+    description:
+     - if true, enables looking in the usual locations for ssh keys (e.g. ~/.ssh/id_*)
+     - if false, disables looking for ssh keys
+    default: true
+    required: false
+    version_added: "2.4"
+  allow_agent:
+    description:
+     - if true, enables querying SSH agent (if found) for keys
+     - if false, disables querying the SSH agent for ssh keys
+    default: true
+    required: false
+    version_added: "2.4"
+  datastore:
+    description:
+     - auto, uses candidate and fallback to running
+     - candidate, edit <candidate/> datastore and then commit
+     - running, edit <running/> datastore directly
+    default: auto
+    required: false
+    version_added: "2.4"
+  save:
+    description:
+      - The C(save) argument instructs the module to save the running-
+        config to the startup-config if changed.
+    required: false
+    default: false
+    version_added: "2.4"
   username:
     description:
      - the username to authenticate with
@@ -63,7 +93,16 @@ options:
   xml:
     description:
      - the XML content to send to the device
-    required: true
+    required: false
+  src:
+    description:
+      - Specifies the source path to the xml file that contains the configuration
+        or configuration template to load.  The path to the source file can
+        either be the full path on the Ansible control host or a relative
+        path from the playbook or role root directory.  This argument is mutually
+        exclusive with I(xml).
+    required: false
+    version_added: "2.4"
 
 
 requirements:
@@ -113,7 +152,7 @@ RETURN = '''
 server_capabilities:
     description: list of capabilities of the server
     returned: success
-    type: list of strings
+    type: list
     sample: ['urn:ietf:params:netconf:base:1.1','urn:ietf:params:netconf:capability:confirmed-commit:1.0','urn:ietf:params:netconf:capability:candidate:1.0']
 
 '''
@@ -129,20 +168,16 @@ except ImportError:
 import logging
 
 
-def netconf_edit_config(m, xml, commit, retkwargs):
-    if ":candidate" in m.server_capabilities:
-        datastore = 'candidate'
-    else:
-        datastore = 'running'
+def netconf_edit_config(m, xml, commit, retkwargs, datastore):
     m.lock(target=datastore)
     try:
-        if ":candidate" in m.server_capabilities:
+        if datastore == "candidate":
             m.discard_changes()
         config_before = m.get_config(source=datastore)
         m.edit_config(target=datastore, config=xml)
         config_after = m.get_config(source=datastore)
         changed = config_before.data_xml != config_after.data_xml
-        if changed and commit:
+        if changed and commit and datastore == "candidate":
             if ":confirmed-commit" in m.server_capabilities:
                 m.commit(confirmed=True)
                 m.commit()
@@ -164,34 +199,47 @@ def main():
             host=dict(type='str', required=True),
             port=dict(type='int', default=830),
             hostkey_verify=dict(type='bool', default=True),
+            allow_agent=dict(type='bool', default=True),
+            look_for_keys=dict(type='bool', default=True),
+            datastore=dict(choices=['auto', 'candidate', 'running'], default='auto'),
+            save=dict(type='bool', default=False),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
-            xml=dict(type='str', required=True),
-        )
+            xml=dict(type='str', required=False),
+            src=dict(type='path', required=False),
+        ),
+        mutually_exclusive=[('xml', 'src')]
     )
 
     if not HAS_NCCLIENT:
         module.fail_json(msg='could not import the python library '
                          'ncclient required by this module')
 
+    if (module.params['src']):
+        config_xml = str(module.params['src'])
+    elif module.params['xml']:
+        config_xml = str(module.params['xml'])
+    else:
+        module.fail_json(msg='Option src or xml must be provided')
+
     try:
-        xml.dom.minidom.parseString(module.params['xml'])
+        xml.dom.minidom.parseString(config_xml)
+
     except:
         e = get_exception()
         module.fail_json(
-            msg='error parsing XML: ' +
-                str(e)
+            msg='error parsing XML: ' + str(e)
         )
-        return
 
     nckwargs = dict(
         host=module.params['host'],
         port=module.params['port'],
         hostkey_verify=module.params['hostkey_verify'],
+        allow_agent=module.params['allow_agent'],
+        look_for_keys=module.params['look_for_keys'],
         username=module.params['username'],
         password=module.params['password'],
     )
-    retkwargs = dict()
 
     try:
         m = ncclient.manager.connect(**nckwargs)
@@ -202,22 +250,69 @@ def main():
     except:
         e = get_exception()
         module.fail_json(
-            msg='error connecting to the device: ' +
-                str(e)
+            msg='error connecting to the device: ' + str(e)
         )
-        return
+
+    retkwargs = dict()
     retkwargs['server_capabilities'] = list(m.server_capabilities)
+
+    if module.params['datastore'] == 'candidate':
+        if ':candidate' in m.server_capabilities:
+            datastore = 'candidate'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg=':candidate is not supported by this netconf server'
+            )
+    elif module.params['datastore'] == 'running':
+        if ':writable-running' in m.server_capabilities:
+            datastore = 'running'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg=':writable-running is not supported by this netconf server'
+            )
+    elif module.params['datastore'] == 'auto':
+        if ':candidate' in m.server_capabilities:
+            datastore = 'candidate'
+        elif ':writable-running' in m.server_capabilities:
+            datastore = 'running'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg='neither :candidate nor :writable-running are supported by this netconf server'
+            )
+    else:
+        m.close_session()
+        module.fail_json(
+            msg=module.params['datastore'] + ' datastore is not supported by this ansible module'
+        )
+
+    if module.params['save']:
+        if ':startup' not in m.server_capabilities:
+            module.fail_json(
+                msg='cannot copy <running/> to <startup/>, while :startup is not supported'
+            )
+
     try:
         changed = netconf_edit_config(
             m=m,
-            xml=module.params['xml'],
+            xml=config_xml,
             commit=True,
             retkwargs=retkwargs,
+            datastore=datastore,
+        )
+        if changed and module.params['save']:
+            m.copy_config(source="running", target="startup")
+    except:
+        e = get_exception()
+        module.fail_json(
+            msg='error editing configuration: ' + str(e)
         )
     finally:
         m.close_session()
-    module.exit_json(changed=changed, **retkwargs)
 
+    module.exit_json(changed=changed, **retkwargs)
 
 # import module snippets
 from ansible.module_utils.basic import *

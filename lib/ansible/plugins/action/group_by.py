@@ -23,7 +23,7 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
     ''' Create inventory groups based on variables '''
 
-    ### We need to be able to modify the inventory
+    # We need to be able to modify the inventory
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=None):
@@ -38,7 +38,7 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
-        group_name = group_name.replace(' ','-')
+        group_name = group_name.replace(' ', '-')
 
         result['changed'] = False
         result['add_group'] = group_name

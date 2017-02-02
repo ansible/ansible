@@ -14,26 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import json
-import time
-import inspect
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -120,9 +104,11 @@ RETURN = '''
 state:
     type: string
     description: The asserted state of the repository (present, absent)
+    returned: always
 created:
     type: boolean
     description: If true, the repository was created
+    returned: always
 name:
     type: string
     description: The name of the repository
@@ -138,6 +124,21 @@ repository:
         repositoryName: ecr-test-1484664090
         repositoryUri: 999999999999.dkr.ecr.us-east-1.amazonaws.com/ecr-test-1484664090
 '''
+
+import json
+import time
+import inspect
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 
 def boto_exception(err):

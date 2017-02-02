@@ -28,8 +28,9 @@
 import re
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils.network_common import to_list
 
-DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
 
 class ConfigLine(object):
@@ -66,6 +67,10 @@ class ConfigLine(object):
         return _obj_to_text(self._children)
 
     @property
+    def child_objs(self):
+        return self._children
+
+    @property
     def parents(self):
         return _obj_to_text(self._parents)
 
@@ -76,7 +81,7 @@ class ConfigLine(object):
         return '\n'.join(config)
 
     @property
-    def has_chilren(self):
+    def has_children(self):
         return len(self._children) > 0
 
     @property
@@ -87,13 +92,20 @@ class ConfigLine(object):
         assert isinstance(obj, ConfigLine), 'child must be of type `ConfigLine`'
         self._children.append(obj)
 
+
 def ignore_line(text, tokens=None):
     for item in (tokens or DEFAULT_COMMENT_TOKENS):
         if text.startswith(item):
             return True
 
-_obj_to_text = lambda x: [o.text for o in x]
-_obj_to_raw = lambda x: [o.raw for o in x]
+
+def _obj_to_text(x):
+    return [o.text for o in x]
+
+
+def _obj_to_raw(x):
+    return [o.raw for o in x]
+
 
 def _obj_to_block(objects, visited=None):
     items = list()
@@ -104,6 +116,7 @@ def _obj_to_block(objects, visited=None):
                 if child not in items:
                     items.append(child)
     return _obj_to_raw(items)
+
 
 def dumps(objects, output='block', comments=False):
     if output == 'block':
@@ -124,6 +137,7 @@ def dumps(objects, output='block', comments=False):
         items.append('end')
 
     return '\n'.join(items)
+
 
 class NetworkConfig(object):
 
@@ -149,6 +163,9 @@ class NetworkConfig(object):
 
     def __str__(self):
         return '\n'.join([c.raw for c in self.items])
+
+    def __len__(self):
+        return len(self._items)
 
     def load(self, s):
         self._items = self.parse(s)
@@ -247,9 +264,9 @@ class NetworkConfig(object):
         updates = list()
         for index, line in enumerate(self.items):
             try:
-                if line != other[index]:
+                if str(line).strip() != str(other[index]).strip():
                     updates.append(line)
-            except IndexError:
+            except (AttributeError, IndexError):
                 updates.append(line)
         return updates
 
@@ -320,7 +337,7 @@ class NetworkConfig(object):
         offset = 0
         obj = None
 
-        ## global config command
+        # global config command
         if not parents:
             for line in lines:
                 item = ConfigLine(line)
@@ -361,3 +378,35 @@ class NetworkConfig(object):
                     self.items.append(item)
 
 
+class CustomNetworkConfig(NetworkConfig):
+
+    def items_text(self):
+        return [item.text for item in self.items]
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.child_objs:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)

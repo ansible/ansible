@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,7 +35,7 @@ requirements: [ hostname ]
 description:
     - Set system's hostname, supports most OSs/Distributions, including those using systemd.
     - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
-    - Windows, HP-UX and AIX are not currently supported
+    - Windows, HP-UX and AIX are not currently supported.
 options:
     name:
         required: true
@@ -52,7 +53,7 @@ from distutils.version import LooseVersion
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
+from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -111,7 +112,7 @@ class Hostname(object):
     def __init__(self, module):
         self.module       = module
         self.name         = module.params['name']
-        if self.platform == 'Linux' and Facts(module).is_systemd_managed():
+        if self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
@@ -636,6 +637,11 @@ class RedHatWorkstationHostname(Hostname):
     distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
 
+class RedHatAtomicHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux atomic host'
+    strategy_class = RedHatStrategy
+
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
@@ -644,6 +650,16 @@ class CentOSHostname(Hostname):
 class CentOSLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos linux'
+    strategy_class = RedHatStrategy
+
+class CloudlinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux'
+    strategy_class = RedHatStrategy
+
+class CloudlinuxServerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinux server'
     strategy_class = RedHatStrategy
 
 class ScientificHostname(Hostname):
@@ -694,6 +710,11 @@ class LinuxmintHostname(Hostname):
 class LinaroHostname(Hostname):
     platform = 'Linux'
     distribution = 'Linaro'
+    strategy_class = DebianStrategy
+
+class DevuanHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Devuan'
     strategy_class = DebianStrategy
 
 class GentooHostname(Hostname):

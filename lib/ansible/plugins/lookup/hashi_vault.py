@@ -30,7 +30,6 @@
 # necessarily be an error if a bad endpoint is specified.
 #
 # Requires hvac library. Install with pip.
-#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -46,6 +45,7 @@ ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
 if os.getenv('VAULT_ADDR') is not None:
     ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
 
+
 class HashiVault:
     def __init__(self, **kwargs):
         try:
@@ -54,9 +54,6 @@ class HashiVault:
             raise AnsibleError("Please pip install hvac to use this module")
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-        self.token = kwargs.get('token')
-        if self.token is None:
-            raise AnsibleError("No Vault Token specified")
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -65,7 +62,7 @@ class HashiVault:
 
         s_f = s.split(':')
         self.secret = s_f[0]
-        if len(s_f)>=2:
+        if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
             self.secret_field = 'value'
@@ -85,7 +82,16 @@ class HashiVault:
             except AttributeError:
                 raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
         else:
-            self.token = kwargs.get('token')
+            self.token = kwargs.get('token', os.environ.get('VAULT_TOKEN', None))
+            if self.token is None and os.environ.get('HOME'):
+                token_filename = os.path.join(
+                    os.environ.get('HOME'),
+                    '.vault-token'
+                )
+                if os.path.exists(token_filename):
+                    with open(token_filename) as token_file:
+                        self.token = token_file.read().strip()
+
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
@@ -102,7 +108,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
 
-        if self.secret_field=='': # secret was specified with trailing ':'
+        if self.secret_field == '':  # secret was specified with trailing ':'
             return data['data']
 
         if self.secret_field not in data['data']:
@@ -147,4 +153,3 @@ class LookupModule(LookupBase):
             ret.append(value)
 
         return ret
-

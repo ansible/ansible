@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,11 +30,12 @@ module: command
 short_description: Executes a command on a remote node
 version_added: historical
 description:
-     - The M(command) module takes the command name followed by a list of space-delimited arguments.
+     - The C(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
+     - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
@@ -72,9 +74,10 @@ options:
     required: false
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
-       The M(command) module is much more secure as it's not affected by the user's environment.
+       The C(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
+    - For Windows targets, use the M(win_command) module instead.
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -95,7 +98,7 @@ EXAMPLES = '''
     chdir: somedir/
     creates: /path/to/database
 
-- name: safely use tempalated variable to run command. Always use the quote filter to avoid injection issues.
+- name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
   register: myoutput
 '''
@@ -118,7 +121,7 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'dnf': 'dnf', 'zypper': 'zypper' }
-    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun' ]
     warnings = list()
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
@@ -203,7 +206,7 @@ def main():
     if err is None:
         err = b('')
 
-    module.exit_json(
+    result = dict(
         cmd      = args,
         stdout   = out.rstrip(b("\r\n")),
         stderr   = err.rstrip(b("\r\n")),
@@ -214,6 +217,12 @@ def main():
         changed  = True,
         warnings = warnings
     )
+
+    if rc != 0:
+        module.fail_json(msg='non-zero return code', **result)
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

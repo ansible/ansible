@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import yaml
 
-from ansible.compat.six import text_type
+from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes
 
 
@@ -70,10 +70,10 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
 
 # Unicode like object that is not evaluated (decrypted) until it needs to be
 # TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
+class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
     __UNSAFE__ = True
     __ENCRYPTED__ = True
-    yaml_tag = u'!vault-encrypted'
+    yaml_tag = u'!vault'
 
     @classmethod
     def from_plaintext(cls, seq, vault):
@@ -90,7 +90,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
 
         ciphertext is a byte string (str on PY2, bytestring on PY3).
 
-        The .data atttribute is a property that returns the decrypted plaintext
+        The .data attribute is a property that returns the decrypted plaintext
         of the ciphertext as a PY2 unicode or PY3 string object.
         '''
         super(AnsibleVaultEncryptedUnicode, self).__init__()
@@ -111,7 +111,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
         self._ciphertext = value
 
     def __repr__(self):
-        return 'AnsibleVaultEncryptedUnicode(%s)' % self._ciphertext
+        return repr(self.data)
 
     # Compare a regular str/text_type with the decrypted hypertext
     def __eq__(self, other):

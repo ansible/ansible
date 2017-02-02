@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -663,7 +664,7 @@ def main():
             ipv6=dict(required=False, default=False, type='bool'),
             multi_key=dict(required=False, default=False, type='bool'),
             timeout=dict(required=False, default=300),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             minutes=dict(required=False, default=30),
             debug=dict(required=False, default=0, type='int')
         ),

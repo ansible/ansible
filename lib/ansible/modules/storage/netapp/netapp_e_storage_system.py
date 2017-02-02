@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: netapp_e_storage_system
@@ -40,8 +41,6 @@ options:
     required: true
     description:
     - The url to the SANtricity WebServices Proxy or embedded REST API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true
@@ -63,7 +62,8 @@ options:
   array_wwn:
     required: false
     description:
-    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of controller_addresses parameter.
+    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of
+      controller_addresses parameter.
   array_password:
     required: false
     description:
@@ -99,8 +99,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg: Storage system removed.
-msg: Storage system added.
+msg:
+    description: State of request
+    type: string
+    returned: always
+    sample: 'Storage system removed.'
 '''
 import json
 from datetime import datetime as dt, timedelta
@@ -232,7 +235,9 @@ def main():
                 changed = True
             if array_detail['wwn'] != array_wwn and array_wwn is not None:
                 module.fail_json(
-                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' % (ssid, array_detail['wwn']))
+                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' %
+                        (ssid, array_detail['wwn'])
+                )
     elif rc == 404:
         if state == 'present':
             changed = True

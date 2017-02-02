@@ -13,11 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -32,7 +30,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInternetGateways.html) for possible filters.
     required: false
     default: null
   internet_gateway_ids:
@@ -100,6 +98,12 @@ changed:
     sample: "false"
 '''
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+
 try:
     import botocore
 except ImportError:
@@ -109,7 +113,7 @@ except ImportError:
 def get_internet_gateway_info(internet_gateway):
     internet_gateway_info = {'InternetGatewayId': internet_gateway['InternetGatewayId'],
                              'Attachments': internet_gateway['Attachments'],
-                             'Tags': internet_gateway['Tags'] }
+                             'Tags': internet_gateway['Tags']}
     return internet_gateway_info
 
 
@@ -117,7 +121,6 @@ def list_internet_gateways(client, module):
     params = dict()
 
     params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
-    params['DryRun'] = module.check_mode
 
     if module.params.get("internet_gateway_ids"):
         params['InternetGatewayIds'] = module.params.get("internet_gateway_ids")
@@ -137,8 +140,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(type='dict', default=dict()),
-            internet_gateway_ids = dict(type='list', default=None)
+            filters=dict(type='dict', default=dict()),
+            internet_gateway_ids=dict(type='list', default=None)
         )
     )
 

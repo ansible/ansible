@@ -42,7 +42,7 @@ NET_TRANSPORT_ARGS = dict(
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    provider=dict(type='dict'),
+    provider=dict(type='dict', no_log=True),
     transport=dict(choices=list()),
 
     timeout=dict(default=10, type='int')
@@ -52,12 +52,14 @@ NET_CONNECTION_ARGS = dict()
 
 NET_CONNECTIONS = dict()
 
+
 def _transitional_argument_spec():
     argument_spec = {}
     for key, value in iteritems(NET_TRANSPORT_ARGS):
         value['required'] = False
         argument_spec[key] = value
     return argument_spec
+
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -75,11 +77,13 @@ class ModuleStub(object):
             self.params[key] = value.get('default')
         self.fail_json = fail_json
 
+
 class NetworkError(Exception):
 
     def __init__(self, msg, **kwargs):
         super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
+
 
 class Config(object):
 
@@ -185,6 +189,7 @@ class NetworkModule(AnsibleModule):
             exc = get_exception()
             self.fail_json(msg=to_native(exc))
 
+
 def register_transport(transport, default=False):
     def register(cls):
         NET_CONNECTIONS[transport] = cls
@@ -193,6 +198,6 @@ def register_transport(transport, default=False):
         return cls
     return register
 
+
 def add_argument(key, value):
     NET_CONNECTION_ARGS[key] = value
-

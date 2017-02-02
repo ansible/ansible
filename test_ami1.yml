@@ -1,0 +1,10 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - ec2_ami:
+        state: absent
+        image_id: ami-fa0e1799
+        wait: yes

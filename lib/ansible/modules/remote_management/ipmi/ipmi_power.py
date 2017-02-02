@@ -16,17 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from pyghmi.ipmi import command
-except ImportError:
-    command = None
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import *
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -44,7 +37,6 @@ options:
     description:
       - Remote RMCP port.
     required: false
-    type: int
     default: 623
   user:
     description:
@@ -69,7 +61,6 @@ options:
     description:
       - Maximum number of seconds before interrupt request.
     required: false
-    type: int
     default: 300
 requirements:
   - "python >= 2.6"
@@ -94,7 +85,12 @@ EXAMPLES = '''
     state: on
 '''
 
-# ==================================================
+try:
+    from pyghmi.ipmi import command
+except ImportError:
+    command = None
+
+from ansible.module_utils.basic import *
 
 
 def main():

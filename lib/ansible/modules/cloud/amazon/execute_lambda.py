@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -126,10 +127,12 @@ output:
 logs:
     description: The last 4KB of the function logs. Only provided if I(tail_log) is true
     type: string
+    returned: if I(tail_log) == true
 status:
     description: C(StatusCode) of API call exit (200 for synchronous invokes, 202 for async)
     type: int
     sample: 200
+    returned: always
 '''
 
 import base64
@@ -189,7 +192,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg="Failure connecting boto3 to AWS", exception=traceback.format_exc(e))
+        module.fail_json(msg="Failure connecting boto3 to AWS", exception=traceback.format_exc())
 
     invoke_params = {}
 
@@ -230,15 +233,15 @@ def main():
             module.fail_json(msg="Could not find Lambda to execute. Make sure "
                              "the ARN is correct and your profile has "
                              "permissions to execute this function.",
-                             exception=traceback.format_exc(ce))
-        module.fail_json("Client-side error when invoking Lambda, check inputs and specific error",
-                         exception=traceback.format_exc(ce))
+                             exception=traceback.format_exc())
+        module.fail_json(msg="Client-side error when invoking Lambda, check inputs and specific error",
+                         exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",
                          exception=traceback.format_exc(ve))
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
-                         exception=traceback.format_exc(e))
+                         exception=traceback.format_exc())
 
     results ={
         'logs': '',
@@ -251,13 +254,13 @@ def main():
             # logs are base64 encoded in the API response
             results['logs'] = base64.b64decode(response.get('LogResult', ''))
         except Exception as e:
-            module.fail_json(msg="Failed while decoding logs", exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed while decoding logs", exception=traceback.format_exc())
 
     if invoke_params['InvocationType'] == 'RequestResponse':
         try:
             results['output'] = json.loads(response['Payload'].read())
         except Exception as e:
-            module.fail_json(msg="Failed while decoding function return value", exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed while decoding function return value", exception=traceback.format_exc())
 
         if isinstance(results.get('output'), dict) and any(
                 [results['output'].get('stackTrace'), results['output'].get('errorMessage')]):

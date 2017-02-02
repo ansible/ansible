@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -47,7 +48,8 @@ options:
     default: null
   is_ready:
     description:
-      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g. successfully downloaded and installed. Recommended to set it to C(false).
+      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g.
+        successfully downloaded and installed. Recommended to set it to C(false).
     required: false
     default: false
     aliases: []
@@ -115,6 +117,14 @@ options:
     required: false
     default: true
     version_added: "2.3"
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -241,11 +251,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args['ispublic']                = self.module.params.get('is_public')
 
             if args['bootable'] and not args['ostypeid']:
-                self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
+                self.module.fail_json(msg="OS type 'os_type' is required if 'bootable=true'.")
 
             args['url'] = self.module.params.get('url')
             if not args['url']:
-                self.module.fail_json(msg="URL is requried.")
+                self.module.fail_json(msg="URL is required.")
 
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -253,6 +263,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 iso = res['iso'][0]
+
+        if iso:
+            iso = self.ensure_tags(resource=iso, resource_type='ISO')
+            self.iso=iso
+
         return iso
 
 
@@ -323,6 +338,7 @@ def main():
         is_dynamically_scalable = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent'], default='present'),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -30,7 +31,7 @@ description:
      - This module prints statements during execution and can be useful
        for debugging variables or expressions without necessarily halting
        the playbook. Useful for debugging together with the 'when:' directive.
-
+     - This module is also supported for Windows targets.
 version_added: "0.8"
 options:
   msg:
@@ -48,6 +49,8 @@ options:
     required: False
     default: 0
     version_added: "2.1"
+notes:
+    - This module is also supported for Windows targets.
 author:
     - "Dag Wieers (@dagwieers)"
     - "Michael DeHaan"

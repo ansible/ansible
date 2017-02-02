@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'committer'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
-module: kms
+module: aws_kms
 short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
@@ -264,7 +263,7 @@ def main():
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
 
 
     try:
@@ -284,12 +283,13 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
     module.exit_json(**result)
 

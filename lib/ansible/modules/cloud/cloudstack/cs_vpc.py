@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http//www.gnu.or/license/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -160,7 +161,7 @@ region_level_vpc:
   type: boolean
   sample: true
 restart_required:
-  description: "Wheter the VPC router needs a restart or not."
+  description: "Whether the VPC router needs a restart or not."
   returned: success
   type: boolean
   sample: true
@@ -207,7 +208,12 @@ tags:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackVpc(AnsibleCloudStack):
@@ -251,13 +257,16 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
         }
-        vpcs = self.cs.listVPCs()
+        vpcs = self.cs.listVPCs(**args)
         if vpcs:
             vpc_name = self.module.params.get('name')
             for v in vpcs['vpc']:
-                if vpc_name.lower() in [ v['name'].lower(), v['id']]:
-                    self.vpc = v
-                    break
+                if vpc_name in [v['name'], v['displaytext'], v['id']]:
+                    # Fail if the identifyer matches more than one VPC
+                    if self.vpc:
+                        self.module.fail_json(msg="More than one VPC found with the provided identifyer '%s'" % vpc_name)
+                    else:
+                        self.vpc = v
         return self.vpc
 
     def restart_vpc(self):
@@ -344,7 +353,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
 
 def main():
-    argument_spec=cs_argument_spec()
+    argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
         cidr=dict(default=None),
@@ -386,6 +395,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

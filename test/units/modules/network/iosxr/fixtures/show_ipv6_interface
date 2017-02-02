@@ -1,0 +1,5 @@
+Loopback0 is Up, ipv6 protocol is Up, Vrfid is default (0x60000000)
+  IPv6 is disabled, link-local address unassigned
+  No global unicast address is configured
+GigabitEthernet0/0/0/0 is Up, ipv6 protocol is Up, Vrfid is default (0x60000000)
+  IPv6 is disabled, link-local address unassigned

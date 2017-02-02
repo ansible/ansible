@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -128,7 +129,7 @@ def main():
             state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
             checkid=dict(required=True),
             uid=dict(required=True),
-            passwd=dict(required=True),
+            passwd=dict(required=True, no_log=True),
             key=dict(required=True)
         )
     )

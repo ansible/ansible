@@ -15,9 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -55,8 +56,6 @@ EXAMPLES = '''
     msg: install completed
 '''
 
-import urllib
-
 try:
     import json
 except ImportError:
@@ -68,11 +67,12 @@ except ImportError:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, ConnectionError
 
 
 def do_request(module, url, params, headers=None):
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     if headers is None:
         headers = dict()
     headers = dict(headers, **{

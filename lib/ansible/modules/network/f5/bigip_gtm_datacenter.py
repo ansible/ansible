@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -319,7 +320,7 @@ class BigIpGtmDatacenter(object):
         enabled = self.params['enabled']
 
         if state is None and enabled is None:
-            module.fail_json(msg="Neither 'state' nor 'enabled' set")
+            raise F5ModuleError("Neither 'state' nor 'enabled' set")
 
         try:
             if state == "present":
@@ -366,7 +367,7 @@ def main():
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

@@ -27,15 +27,7 @@
 #
 
 Set-StrictMode -Version 2.0
-
-# Ansible v2 will insert the module arguments below as a string containing
-# JSON; assign them to an environment variable and redefine $args so existing
-# modules will continue to work.
-$complex_args = @'
-<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
-'@
-Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
-$args = @('env:MODULE_COMPLEX_ARGS')
+$ErrorActionPreference = "Stop"
 
 # Helper function to set an "attribute" on a psobject instance in powershell.
 # This is a convenience to make adding Members to the object easier and
@@ -46,7 +38,7 @@ Function Set-Attr($obj, $name, $value)
     # If the provided $obj is undefined, define one to be nice
     If (-not $obj.GetType)
     {
-        $obj = New-Object psobject
+        $obj = @{ }
     }
 
     Try
@@ -67,7 +59,11 @@ Function Exit-Json($obj)
     # If the provided $obj is undefined, define one to be nice
     If (-not $obj.GetType)
     {
-        $obj = New-Object psobject
+        $obj = @{ }
+    }
+
+    if (-not $obj.ContainsKey('changed')) {
+        Set-Attr $obj "changed" $false
     }
 
     echo $obj | ConvertTo-Json -Compress -Depth 99
@@ -75,32 +71,75 @@ Function Exit-Json($obj)
 }
 
 # Helper function to add the "msg" property and "failed" property, convert the
-# powershell object to JSON and echo it, exiting the script
+# powershell Hashtable to JSON and echo it, exiting the script
 # Example: Fail-Json $result "This is the failure message"
 Function Fail-Json($obj, $message = $null)
 {
-    # If we weren't given 2 args, and the only arg was a string, create a new
-    # psobject and use the arg as the failure message
-    If ($message -eq $null -and $obj.GetType().Name -eq "String")
-    {
+    if ($obj -is [hashtable] -or $obj -is [psobject]) {
+        # Nothing to do
+    } elseif ($obj -is [string] -and $message -eq $null) {
+        # If we weren't given 2 args, and the only arg was a string,
+        # create a new Hashtable and use the arg as the failure message
         $message = $obj
-        $obj = New-Object psobject
-    }
-    # If the first args is undefined or not an object, make it an object
-    ElseIf (-not $obj -or -not $obj.GetType -or $obj.GetType().Name -ne "PSCustomObject")
-    {
-        $obj = New-Object psobject
+        $obj = @{ }
+    } else {
+        # If the first argument is undefined or a different type,
+        # make it a Hashtable
+        $obj = @{ }
     }
 
+    # Still using Set-Attr for PSObject compatibility
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
+
+    if (-not $obj.ContainsKey('changed')) {
+        Set-Attr $obj "changed" $false
+    }
+
     echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit 1
 }
 
+# Helper function to add warnings, even if the warnings attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Add-Warning($obj, $message)
+{
+    if (-not $obj.ContainsKey("warnings")) {
+        $obj.warnings = @()
+    } elseif ($obj.warnings -isnot [array]) {
+        throw "Add-Warning: warnings attribute is not an array"
+    }
+
+    $obj.warnings += $message
+}
+
+# Helper function to add deprecations, even if the deprecations attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Add-DeprecationWarning($obj, $message, $version = $null)
+{
+    if (-not $obj.ContainsKey("deprecations")) {
+        $obj.deprecations = @()
+    } elseif ($obj.deprecations -isnot [array]) {
+        throw "Add-DeprecationWarning: deprecations attribute is not a list"
+    }
+
+    $obj.deprecations += @{
+        msg = $message
+        version = $version
+    }
+}
+
+# Helper function to expand environment variables in values. By default
+# it turns any type to a string, but we ensure $null remains $null.
 Function Expand-Environment($value)
 {
-    [System.Environment]::ExpandEnvironmentVariables($value)
+    if ($value -ne $null) {
+        [System.Environment]::ExpandEnvironmentVariables($value)
+    } else {
+        $value
+    }
 }
 
 # Helper function to get an "attribute" from a psobject instance in powershell.
@@ -121,7 +160,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
         # Iterate over aliases to find acceptable Member $name
         foreach ($alias in $aliases) {
-            if (Get-Member -InputObject $obj -Name $alias) {
+            if ($obj.ContainsKey($alias)) {
                 $found = $alias
                 break
             }
@@ -139,7 +178,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 if ($ValidateSetErrorMessage -eq $null) {
                     #Auto-generated error should be sufficient in most use cases
-                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                    $ValidateSetErrorMessage = "Get-AnsibleParam: Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
                 }
                 Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
             }
@@ -153,19 +192,41 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             $value = $default
         } else {
             if (!$emptyattributefailmessage) {
-                $emptyattributefailmessage = "Missing required argument: $name"
+                $emptyattributefailmessage = "Get-AnsibleParam: Missing required argument: $name"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
 
     }
 
-    if ($value -ne $null -and $type -eq "path") {
-        # Expand environment variables on path-type (Beware: turns $null into "")
-        $value = Expand-Environment($value)
-    } elseif ($type -eq "bool") {
-        # Convert boolean types to real Powershell booleans
-        $value = $value | ConvertTo-Bool
+    # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
+    # Please leave $null-values intact, modules need to know if a parameter was specified
+    if ($value -ne $null) {
+        if ($type -eq "path") {
+            # Expand environment variables on path-type
+            $value = Expand-Environment($value)
+        } elseif ($type -eq "str") {
+            # Convert str types to real Powershell strings
+            $value = $value.ToString()
+        } elseif ($type -eq "bool") {
+            # Convert boolean types to real Powershell booleans
+            $value = $value | ConvertTo-Bool
+        } elseif ($type -eq "int") {
+            # Convert int types to real Powershell integers
+            $value = $value -as [int]
+        } elseif ($type -eq "float") {
+            # Convert float types to real Powershell floats
+            $value = $value -as [float]
+        } elseif ($type -eq "list") {
+            if ($value -is [array]) {
+                # Nothing to do
+            } elseif ($value -is [string]) {
+                # Convert string type to real Powershell array
+                $value = $value.Split(",").Trim()
+            } else {
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter $name is not a YAML list."
+            }
+        }
     }
 
     return $value
@@ -176,7 +237,6 @@ If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
 {
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
-
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
@@ -191,12 +251,9 @@ Function ConvertTo-Bool
     $boolean_strings = "yes", "on", "1", "true", 1
     $obj_string = [string]$obj
 
-    if (($obj.GetType().Name -eq "Boolean" -and $obj) -or $boolean_strings -contains $obj_string.ToLower())
-    {
+    if (($obj -is [boolean] -and $obj) -or $boolean_strings -contains $obj_string.ToLower()) {
         return $true
-    }
-    Else
-    {
+    } else {
         return $false
     }
 }
@@ -210,6 +267,9 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     If ($arguments.Length -gt 0)
     {
         $params = Get-Content $arguments[0] | ConvertFrom-Json
+    }
+    Else {
+        $params = $complex_args
     }
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
     If ($check_mode -and -not $supports_check_mode)
@@ -227,7 +287,7 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
 # and above can handle:
 Function Get-FileChecksum($path, $algorithm = 'sha1')
 {
-    If (Test-Path -PathType Leaf $path)
+    If (Test-Path -Path $path -PathType Leaf)
     {
         switch ($algorithm)
         {
@@ -236,7 +296,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
             'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
             'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
-            default { Fail-Json (New-Object PSObject) "Unsupported hash algorithm supplied '$algorithm'" }
+            default { Fail-Json @{} "Unsupported hash algorithm supplied '$algorithm'" }
         }
 
         If ($PSVersionTable.PSVersion.Major -ge 4) {
@@ -248,7 +308,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             $fp.Dispose();
         }
     }
-    ElseIf (Test-Path -PathType Container $path)
+    ElseIf (Test-Path -Path $path -PathType Container)
     {
         $hash = "3";
     }
@@ -275,3 +335,7 @@ Function Get-PendingRebootStatus
         return $False
     }
 }
+
+# this line must stay at the bottom to ensure all defined module parts are exported
+Export-ModuleMember -Alias * -Function * -Cmdlet *
+

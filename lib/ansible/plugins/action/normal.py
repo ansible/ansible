@@ -24,16 +24,29 @@ from ansible.utils.vars import merge_hash
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
+
+        # individual modules might disagree but as the generic the action plugin, pass at this point.
+        self._supports_check_mode = True
+        self._supports_async = True
 
         results = super(ActionModule, self).run(tmp, task_vars)
-        # remove as modules might hide due to nolog
-        del results['invocation']['module_args']
-        results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars))
 
-        # hack to keep --verbose from showing all the setup module results
-        if self._task.action == 'setup':
-            results['_ansible_verbose_override'] = True
+        if not results.get('skipped'):
+
+            if results.get('invocation', {}).get('module_args'):
+                # avoid passing to modules in case of no_log
+                # should not be set anymore but here for backwards compatibility
+                del results['invocation']['module_args']
+
+            # FUTURE: better to let _execute_module calculate this internally?
+            wrap_async = self._task.async and not self._connection.has_native_async
+
+            # do work!
+            results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars, wrap_async=wrap_async))
+
+            # hack to keep --verbose from showing all the setup module results
+            # moved from setup module as now we filter out all _ansible_ from results
+            if self._task.action == 'setup':
+                results['_ansible_verbose_override'] = True
 
         return results

@@ -20,22 +20,22 @@ __metaclass__ = type
 import os
 import re
 
-HAVE_REDIS=False
+HAVE_REDIS = False
 try:
     import redis        # https://github.com/andymccurdy/redis-py/
-    HAVE_REDIS=True
+    HAVE_REDIS = True
 except ImportError:
     pass
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+
 # ==============================================================
 # REDISGET: Obtain value from a GET on a Redis key. Terms
 # expected: 0 = URL, 1 = Key
 # URL may be empty, in which case redis://localhost:6379 assumed
 # --------------------------------------------------------------
-
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
@@ -45,7 +45,7 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
-            (url,key) = term.split(',')
+            (url, key) = term.split(',')
             if url == "":
                 url = 'redis://localhost:6379'
 

@@ -33,17 +33,15 @@
       - "result.changed == false"
 
 - name: Ensure we can communicate over 8080
-  junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname_short }}
+  junos_command:
+    rpcs: get-software-information
     provider: "{{ netconf }}"
     port: 8080
 
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
-  junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname_short }}
+  junos_command:
+    rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
   ignore_errors: true
@@ -60,9 +58,8 @@
   register: result
 
 - name: Ensure we can communicate over netconf
-  junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname_short }}
+  junos_command:
+    rpcs: get-software-information
     provider: "{{ netconf }}"
 
 - debug: msg="END netconf/changeport.yaml"

@@ -1,0 +1,10 @@
+---
+# File:
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+  - cloudfront_facts:
+      streaming_distribution: yes
+      distribution_id: E2RTIUCAA9RINU
+

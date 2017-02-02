@@ -17,22 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: os_keypair
 short_description: Add/Delete a keypair from OpenStack
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
@@ -60,6 +54,10 @@ options:
       - Should the resource be present or absent.
     choices: [present, absent]
     default: present
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatibility
+    required: false
 requirements: []
 '''
 
@@ -97,6 +95,12 @@ private_key:
               and a public key is not specified).
     type: string
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _system_state_change(module, keypair):

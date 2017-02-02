@@ -15,25 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    from shade import meta
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: os_floating_ip
 version_added: "2.0"
+author: "Davide Guerri <davide.guerri@hp.com>"
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:
@@ -98,6 +89,10 @@ options:
      required: false
      default: false
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -140,6 +135,16 @@ EXAMPLES = '''
      floating_ip_address: 203.0.113.2
      server: cattle001
 '''
+
+try:
+    import shade
+    from shade import meta
+
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
 
 
 def _get_floating_ip(cloud, floating_ip_address):

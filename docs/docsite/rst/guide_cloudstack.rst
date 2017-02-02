@@ -13,7 +13,7 @@ Ansible contains a number of extra modules for interacting with CloudStack based
 
 Prerequisites
 `````````````
-Prerequisites for using the CloudStack modules are minimal. In addition to ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
+Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
 
 You'll need this Python module installed on the execution host, usually your workstation.
 
@@ -21,11 +21,17 @@ You'll need this Python module installed on the execution host, usually your wor
 
     $ pip install cs
 
+Or alternatively starting with Debian 9 and Ubuntu 16.04:
+
+.. code-block:: bash
+
+    $ sudo apt install python-cs
+
 .. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
 
 Limitations and Known Issues
 ````````````````````````````
-VPC support is not yet fully implemented and tested. The community is working on the VPC integration.
+VPC support has been improved since Ansible 2.3 but is still not yet fully implemented. The community is working on the VPC integration.
 
 Credentials File
 ````````````````
@@ -46,8 +52,35 @@ The structure of the ini file must look like this:
     endpoint = https://cloud.example.com/client/api
     key = api key
     secret = api secret
+    timeout = 30
 
 .. Note:: The section ``[cloudstack]`` is the default section. ``CLOUDSTACK_REGION`` environment variable can be used to define the default section.
+
+.. versionadded:: 2.4
+
+The ENV variables support ``CLOUDSTACK_*`` as written in the documentation of the library ``cs``,  like e.g ``CLOUDSTACK_TIMEOUT``, ``CLOUDSTACK_METHOD``, etc. has been implemented into Ansible. It is even possible to have some incomplete config in your cloudstack.ini:
+
+.. code-block:: bash
+
+    $ cat $HOME/.cloudstack.ini
+    [cloudstack]
+    endpoint = https://cloud.example.com/client/api
+    timeout = 30
+
+ and fulfill the missing data by either setting ENV variables or tasks params:
+
+ .. code-block:: yaml
+
+    ---
+    - name: provision our VMs
+      hosts: cloud-vm
+      connection: local
+      tasks:
+        - name: ensure VMs are created and running
+          cs_instance:
+            api_key: your api key
+            api_secret: your api secret
+            ...
 
 Regions
 ```````

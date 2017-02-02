@@ -13,11 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -31,7 +29,8 @@ requirements: [ boto3 ]
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: None
   vpn_gateway_ids:
@@ -102,11 +101,17 @@ changed:
     sample: "false"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+
 try:
     import botocore
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
+import traceback
 
 def get_virtual_gateway_info(virtual_gateway):
     virtual_gateway_info = {'VpnGatewayId': virtual_gateway['VpnGatewayId'],

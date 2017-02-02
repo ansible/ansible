@@ -16,63 +16,66 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
 module: nxos_portchannel
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages port-channel interfaces.
 description:
-    - Manages port-channel specific configuration parameters.
-extends_documentation_fragment: nxos
+  - Manages port-channel specific configuration parameters.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - C(state=absent) removes the portchannel config and interface if it
-      already exists. If members to be removed are not explicitly
-      passed, all existing members (if any), are removed.
-    - Members must be a list.
-    - LACP needs to be enabled first if active/passive modes are used.
+  - C(state=absent) removes the portchannel config and interface if it
+    already exists. If members to be removed are not explicitly
+    passed, all existing members (if any), are removed.
+  - Members must be a list.
+  - LACP needs to be enabled first if active/passive modes are used.
 options:
-    group:
-        description:
-            - Channel-group number for the port-channel.
-        required: true
-    mode:
-        description:
-            - Mode for the port-channel, i.e. on, active, passive.
-        required: false
-        default: on
-        choices: ['active','passive','on']
-    min_links:
-        description:
-            - Min links required to keep portchannel up.
-        required: false
-        default: null
-    members:
-        description:
-            - List of interfaces that will be managed in a given portchannel.
-        required: false
-        default: null
-    force:
-        description:
-            - When true it forces port-channel members to match what is
-              declared in the members param. This can be used to remove
-              members.
-        required: false
-        choices: ['true', 'false']
-        default: false
-    state:
-        description:
-            - Manage the state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  group:
+    description:
+      - Channel-group number for the port-channel.
+    required: true
+  mode:
+    description:
+      - Mode for the port-channel, i.e. on, active, passive.
+    required: false
+    default: on
+    choices: ['active','passive','on']
+  min_links:
+    description:
+      - Min links required to keep portchannel up.
+    required: false
+    default: null
+  members:
+    description:
+      - List of interfaces that will be managed in a given portchannel.
+    required: false
+    default: null
+  force:
+    description:
+      - When true it forces port-channel members to match what is
+        declared in the members param. This can be used to remove
+        members.
+    required: false
+    choices: ['true', 'false']
+    default: false
+  state:
+    description:
+      - Manage the state of the resource.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
+
 EXAMPLES = '''
 # Ensure port-channel99 is created, add two members, and set to mode on
 - nxos_portchannel:
@@ -80,37 +83,10 @@ EXAMPLES = '''
     members: ['Ethernet1/1','Ethernet1/2']
     mode: 'active'
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "mode": "on"}
-existing:
-    description:
-        - k/v pairs of existing portchannel
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "members_detail": {
-            "Ethernet2/5": {"mode": "active", "status": "D"},
-            "Ethernet2/6": {"mode": "active", "status": "D"}},
-            "min_links": null, "mode": "active"}
-end_state:
-    description: k/v pairs of portchannel info after module execution
-    returned: always
-    type: dict
-    sample: {"group": "12", "members": ["Ethernet2/5",
-            "Ethernet2/6"], "members_detail": {
-            "Ethernet2/5": {"mode": "on", "status": "D"},
-            "Ethernet2/6": {"mode": "on", "status": "D"}},
-            "min_links": null, "mode": "on"}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
@@ -118,192 +94,32 @@ updates:
              "interface Ethernet2/5", "no channel-group 12",
              "interface Ethernet2/6", "channel-group 12 mode on",
              "interface Ethernet2/5", "channel-group 12 mode on"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 import collections
-import json
-
-# COMMON CODE FOR MIGRATION
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-WARNINGS = []
-PARAM_TO_COMMAND_KEYMAP = {
-    'min_links': 'lacp min-links'
-}
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 def get_value(arg, config, module):
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    param_to_command_keymap = {
+        'min_links': 'lacp min-links'
+    }
+
+    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(param_to_command_keymap[arg]), re.M)
     value = ''
-    if PARAM_TO_COMMAND_KEYMAP[arg] in config:
+    if param_to_command_keymap[arg] in config:
         value = REGEX.search(config).group('value')
     return value
 
 
 def check_interface(module, netcfg):
     config = str(netcfg)
-    REGEX = re.compile(r'\s+interface port-channel{0}*$'.format(module.params['group']), re.M)
+    REGEX = re.compile(r'\s+interface port-channel{0}$'.format(module.params['group']), re.M)
     value = False
     try:
         if REGEX.search(config):
@@ -326,75 +142,15 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def execute_config_command(commands, module):
-    try:
-        output = module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            output = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-    return output
-
-
-def get_cli_body_ssh(command, response, module):
-    try:
-        body = [json.loads(response[0])]
-    except ValueError:
-        module.fail_json(msg='Command does not support JSON output',
-                         command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
+def execute_show_command(command, module):
     if module.params['transport'] == 'cli':
         if 'show port-channel summary' in command:
             command += ' | json'
         cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
+        body = run_commands(module, cmds)
     elif module.params['transport'] == 'nxapi':
         cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
+        body = run_commands(module, cmds)
 
     return body
 
@@ -412,7 +168,7 @@ def get_portchannel_mode(interface, protocol, module, netcfg):
     if protocol != 'LACP':
         mode = 'on'
     else:
-        netcfg = get_config(module)
+        netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
         parents = ['interface {0}'.format(interface.capitalize())]
         body = netcfg.get_section(parents)
 
@@ -437,10 +193,9 @@ def get_portchannel(module, netcfg=None):
     portchannel_table = {}
     members = []
 
-    body = execute_show_command(command, module)
-
     try:
-        pc_table = body[0]['TABLE_channel']['ROW_channel']
+        body = execute_show_command(command, module)[0]
+        pc_table = body['TABLE_channel']['ROW_channel']
 
         if isinstance(pc_table, dict):
             pc_table = [pc_table]
@@ -486,7 +241,7 @@ def get_portchannel(module, netcfg=None):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     interface_exist = check_interface(module, netcfg)
     if interface_exist:
@@ -498,19 +253,6 @@ def get_existing(module, args):
             existing.update(get_portchannel(module, netcfg=netcfg))
 
     return existing, interface_exist
-
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
-    return new_dict
 
 
 def config_portchannel(proposed, mode, group):
@@ -639,23 +381,65 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
+def state_present(module, existing, proposed, interface_exist, force, warnings):
+    commands = []
+    group = str(module.params['group'])
+    mode = module.params['mode']
+    min_links = module.params['min_links']
+
+    if not interface_exist:
+        command = config_portchannel(proposed, mode, group)
+        commands.append(command)
+        commands.insert(0, 'interface port-channel{0}'.format(group))
+        warnings.append("The proposed port-channel interface did not "
+                        "exist. It's recommended to use nxos_interface to "
+                        "create all logical interfaces.")
+
+    elif existing and interface_exist:
+        if force:
+            command = get_commands_to_remove_members(proposed, existing, module)
+            commands.append(command)
+
+        command = get_commands_to_add_members(proposed, existing, module)
+        commands.append(command)
+
+        mode_command = get_commands_if_mode_change(proposed, existing, group, mode, module)
+        commands.insert(0, mode_command)
+
+        if min_links:
+            command = get_commands_min_links(existing, proposed, group, min_links, module)
+            commands.append(command)
+
+    return commands
+
+
+def state_absent(module, existing, proposed):
+    commands = []
+    group = str(module.params['group'])
+    commands.append(['no interface port-channel{0}'.format(group)])
+    return commands
+
+
 def main():
     argument_spec = dict(
         group=dict(required=True, type='str'),
-        mode=dict(required=False, choices=['on', 'active', 'passive'],
-                      default='on', type='str'),
+        mode=dict(required=False, choices=['on', 'active', 'passive'], default='on', type='str'),
         min_links=dict(required=False, default=None, type='str'),
         members=dict(required=False, default=None, type='list'),
-        force=dict(required=False, default='false', type='str',
-                       choices=['true', 'false']),
-        state=dict(required=False, choices=['absent', 'present'],
-                       default='present'),
+        force=dict(required=False, default='false', type='str', choices=['true', 'false']),
+        state=dict(required=False, choices=['absent', 'present'], default='present'),
         include_defaults=dict(default=False),
         config=dict(),
         save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+    results = dict(changed=False, warnings=warnings)
 
     group = str(module.params['group'])
     mode = module.params['mode']
@@ -673,72 +457,35 @@ def main():
         module.fail_json(msg='"members" is required when state=present and '
                              '"min_links" or "mode" are provided')
 
-    changed = False
-    args =  [
+    args = [
         'group',
         'members',
         'min_links',
         'mode'
     ]
 
-    existing, interface_exist = invoke('get_existing', module, args)
-    end_state = existing
+    existing, interface_exist = get_existing(module, args)
     proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
 
-    result = {}
     commands = []
-    if state == 'absent':
-        if existing:
-            commands.append(['no interface port-channel{0}'.format(group)])
+
+    if state == 'absent' and existing:
+        commands = state_absent(module, existing, proposed)
     elif state == 'present':
-        if not interface_exist:
-            command = config_portchannel(proposed, mode, group)
-            commands.append(command)
-            commands.insert(0, 'interface port-channel{0}'.format(group))
-            WARNINGS.append("The proposed port-channel interface did not "
-                            "exist. It's recommended to use nxos_interface to "
-                            "create all logical interfaces.")
-
-        elif existing and interface_exist:
-            if force:
-                command = get_commands_to_remove_members(proposed, existing, module)
-                commands.append(command)
-
-            command = get_commands_to_add_members(proposed, existing, module)
-            commands.append(command)
-
-            mode_command = get_commands_if_mode_change(proposed, existing,
-                                                       group, mode, module)
-
-            commands.insert(0, mode_command)
-
-            if min_links:
-                command = get_commands_min_links(existing, proposed,
-                                                 group, min_links, module)
-                commands.append(command)
+        commands = state_present(module, existing, proposed, interface_exist, force, warnings)
 
     cmds = flatten_list(commands)
     if cmds:
         if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
+            module.exit_json(**results)
         else:
-            output = execute_config_command(cmds, module)
-            changed = True
-            end_state, interface_exist = get_existing(module, args)
+            load_config(module, cmds)
+            results['changed'] = True
             if 'configure' in cmds:
                 cmds.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-
-    if WARNINGS:
-        results['warnings'] = WARNINGS
-
+    results['commands'] = cmds
     module.exit_json(**results)
 
 
