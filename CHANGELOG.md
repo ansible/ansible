@@ -119,6 +119,8 @@ Ansible Changes By Release
   * ovirt_permissions_facts
   * ovirt_quotas
   * ovirt_quotas_facts
+  * ovirt_snapshots
+  * ovirt_snapshots_facts
   * ovirt_storage_domains
   * ovirt_storage_domains_facts
   * ovirt_tags
