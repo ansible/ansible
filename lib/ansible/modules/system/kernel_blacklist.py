@@ -24,7 +24,7 @@ import re
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.1'}
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
