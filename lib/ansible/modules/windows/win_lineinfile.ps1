@@ -29,11 +29,11 @@ $path= Get-Attr $params "path" $FALSE;
 $regexp = Get-Attr $params "regexp" $FALSE;
 $state = Get-Attr $params "state" "present";
 $line = Get-Attr $params "line" $FALSE;
-$backrefs = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "backrefs" -default "no")
+$backrefs = Get-Attr -obj $params -name "backrefs" -default "no" -type "bool"
 $insertafter = Get-Attr $params "insertafter" $FALSE;
 $insertbefore = Get-Attr $params "insertbefore" $FALSE;
-$create = Get-Attr $params "create" "no";
-$backup = Get-Attr $params "backup" "no";
+$create = Get-Attr $params -name "create" -default "no" -type "bool";
+$backup = Get-Attr $params -name "backup" -default "no" -type "bool";
 $validate = Get-Attr $params "validate" $FALSE;
 $encoding = Get-Attr $params "encoding" "auto";
 $newline = Get-Attr $params "newline" "windows";
@@ -98,8 +98,15 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate) {
 
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
-	Copy-Item $temppath $cleanpath -force;
+	Try {
+		Copy-Item $temppath $cleanpath -force;
+	}
+	catch {
+		Fail-Json "Cannot write to: $cleanpath"
+	}
+
 	Remove-Item $temppath -force;
+
 }
 
 
@@ -124,7 +131,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	# Check if path exists. If it does not exist, either create it if create == "yes"
 	# was specified or fail with a reasonable error message.
 	If (!(Test-Path $path)) {
-		If ($create -eq "no") {
+		If (-not $create) {
 			Fail-Json (New-Object psobject) "Path $path does not exist !";
 		}
 		# Create new empty file, using the specified encoding to write correct BOM
@@ -229,7 +236,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	# Write backup file if backup == "yes"
     $backuppath = "";
 
-	If ($changed -eq $TRUE -and $backup -eq "yes") {
+	If ($changed -eq $TRUE -and $backup -eq $TRUE) {
 		$backuppath = BackupFile $path;
 	}
 
@@ -307,7 +314,7 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 	# Write backup file if backup == "yes"
     $backuppath = "";
 
-	If ($changed -eq $TRUE -and $backup -eq "yes") {
+	If ($changed -eq $TRUE -and $backup -eq $TRUE) {
 		$backuppath = BackupFile $path;
 	}
 
