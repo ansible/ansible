@@ -375,6 +375,20 @@ def add_bricks(name, new_bricks, stripe, replica, force):
         args.append('force')
     run_gluster(args)
 
+def remove_bricks(name, old_bricks, replica, force):
+    args = [ 'volume', 'remove-brick', name ]
+    if replica:
+        args.append('replica')
+        args.append(str(replica))
+    args.extend(old_bricks)
+    if force:
+        args.append('force')
+    run_gluster(args)
+
+def replace_brick(name, old_brick, new_brick):
+    args = [ 'volume', 'replace-brick', name, old_brick, new_brick, 'commit', 'force' ]
+    run_gluster(args)
+
 def do_rebalance(name):
     run_gluster([ 'volume', 'rebalance', name, 'start' ])
 
@@ -492,12 +506,29 @@ def main():
                     if brick not in volumes[volume_name]['bricks']:
                         new_bricks.append(brick)
 
-            # this module does not yet remove bricks, but we check those anyways
             for brick in volumes[volume_name]['bricks']:
                 if brick not in all_bricks:
                     removed_bricks.append(brick)
 
-            if new_bricks:
+            # replace removed bricks wih new bricks, if possible
+            if new_bricks and removed_bricks:
+                changed = True
+                rebalance = True
+
+                for (old_brick, new_brick) in zip(removed_bricks, new_bricks):
+                    replace_brick(volume_name, old_brick, new_brick)
+
+                if len(new_bricks) > len(removed_bricks):
+                    add_bricks(volume_name, new_bricks[len(removed_bricks):], stripes, replicas, force)
+
+                elif len(new_bricks) < len(removed_bricks):
+                    remove_bricks(volume_name, removed_bricks[len(new_bricks):], replicas, force)
+
+            elif removed_bricks:
+                remove_bricks(volume_name, removed_bricks, replicas, force)
+                changed = True
+
+            elif new_bricks:
                 add_bricks(volume_name, new_bricks, stripes, replicas, force)
                 changed = True
 
