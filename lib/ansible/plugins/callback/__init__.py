@@ -192,8 +192,6 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
-        if 'changed' in result and task_name in ['debug']:
-            del result['changed']
         if 'invocation' in result and task_name in ['debug']:
             del result['invocation']
 
