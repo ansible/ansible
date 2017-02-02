@@ -62,6 +62,7 @@ def run_commands(module, commands):
     responses = list()
 
     for cmd in to_list(commands):
+        cmd = module.jsonify(cmd)
         rc, out, err = module.exec_command(cmd)
 
         if rc != 0:
