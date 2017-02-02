@@ -157,18 +157,26 @@ class VaultCLI(CLI):
             display.display("Reading plaintext input from stdin", stderr=True)
 
         b_plaintext = None
+        b_plaintext_list = []
+
         for plaintext in self.args or ['-']:
             # encrypt_string
             b_plaintext = to_bytes(plaintext)
+            b_plaintext_list.append(b_plaintext)
 
-        if b_plaintext is None:
-            # exception?
-            return
+        show_delimiter = False
+        if len(b_plaintext_list) > 1:
+            show_delimiter = True
 
-        b_ciphertext = self.editor.encrypt_bytes(b_plaintext)
+        # order of args seem important
+        # Or maybe just only support one string...
+        for index, b_plaintext in enumerate(b_plaintext_list):
+            b_ciphertext = self.editor.encrypt_bytes(b_plaintext)
 
-        yaml_text = self.format_ciphertext_yaml(b_ciphertext)
-        print(yaml_text)
+            yaml_text = self.format_ciphertext_yaml(b_ciphertext)
+            if show_delimiter:
+                sys.stderr.write('# The encrypted version of the string #%d from the command line.\n' % (index + 1))
+            print(yaml_text)
         # if '--prompt', prompt for string
 
         if sys.stdout.isatty():
