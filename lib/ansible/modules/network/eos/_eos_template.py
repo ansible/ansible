@@ -28,14 +28,14 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Arista EOS device configurations
 description:
-  - Manages network device configurations over SSH or eAPI.  This module
+  - Manages network device configurations over SSH or eos_local.  This module
     allows implementers to work with the device running-config.  It
     provides a way to push a set of commands onto a network device
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(eos_config) instead
-extends_documentation_fragment: eapi
+extends_documentation_fragment: eos_local
 options:
   src:
     description:
@@ -76,7 +76,7 @@ options:
       - This argument will cause the provided configuration to be replaced
         on the destination node.   The use of the replace argument will
         always cause the task to set changed to true and will implies
-        C(force=true).  This argument is only valid with C(transport=eapi).
+        C(force=true).  This argument is only valid with C(transport=eos_local).
     required: false
     default: false
     choices: ['yes', 'no']
@@ -125,11 +125,10 @@ responses:
 import re
 
 from ansible.module_utils import eos
-from ansible.module_utils import eapi
+from ansible.module_utils import eos_local
 from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.basic import AnsibleModle
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
 SHARED_LIB = 'eos'
 
@@ -148,8 +147,8 @@ get_config = partial(invoke, 'get_config')
 
 def check_args(module):
     warnings = list()
-    if SHARED_LIB == 'eapi':
-        eapi.check_args(module)
+    if SHARED_LIB == 'eos_local':
+        eos_local.check_args(module)
     return warnings
 
 def get_current_config(module):
@@ -198,7 +197,7 @@ def main():
         config=dict()
     )
 
-    argument_spec.update(eapi.eapi_argument_spec)
+    argument_spec.update(eos_local.eapi_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
@@ -232,7 +231,7 @@ def main():
     # FIXME not implemented yet!!
     if replace:
         if module.params['transport'] == 'cli':
-            module.fail_json(msg='config replace is only supported over eapi')
+            module.fail_json(msg='config replace is only supported over eos_local')
         commands = str(candidate).split('\n')
 
     if commands:
@@ -246,5 +245,5 @@ def main():
     module.exit_json(**result)
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eapi'
+    SHARED_LIB = 'eos_local'
     main()
