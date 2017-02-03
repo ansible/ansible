@@ -276,11 +276,6 @@ class VaultCLI(CLI):
 
         # TODO: offer block or string ala eyaml
 
-    def _format_delimiter_text(self, name, human_index, src):
-        if name:
-            return '# The encrypted version of variable ("%s", the string #%d from %s).\n' % (name, human_index, src)
-        return '# The encrypted version of the string #%d from %s.)\n' % (human_index, src)
-
     def _format_output_vault_strings(self, b_plaintext_list):
         # If we are only showing one item in the output, we dont need to included commented
         # delimiters in the text
@@ -305,7 +300,10 @@ class VaultCLI(CLI):
             err_msg = None
             if show_delimiter:
                 human_index = index + 1
-                err_msg = self._format_delimiter_text(name, human_index, src)
+                if name:
+                    err_msg = '# The encrypted version of variable ("%s", the string #%d from %s).\n' % (name, human_index, src)
+                else:
+                    err_msg = '# The encrypted version of the string #%d from %s.)\n' % (human_index, src)
             output.append({'out': yaml_text, 'err': err_msg})
 
         return output
