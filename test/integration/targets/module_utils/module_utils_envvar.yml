@@ -5,12 +5,10 @@
     test:
     register: result
 
-  - name: Check that the module imported the correct version of each module_util.
+  - name: Check that these are all loaded from playbook dir's module_utils
     assert:
       that:
-        # Check that we imported this first one from ./other_mu_dir instead of ./module_utils
-        - 'result["abcdefgh"] == "hgfedcba"'
-        # All others should be the same
+        - 'result["abcdefgh"] == "abcdefgh"'
         - 'result["bar0"] == "bar0"'
         - 'result["bar1"] == "bar1"'
         - 'result["bar2"] == "bar2"'
@@ -29,3 +27,25 @@
         - 'result["spam6"] == ["spam6:bacon", "spam6:eggs"]'
         - 'result["spam7"] == ["spam7:bacon", "spam7:eggs"]'
         - 'result["spam8"] == ["spam8:bacon", "spam8:eggs"]'
+
+  # Test that overriding something in module_utils with something in the local library works
+  - name: Test that playbook dir's module_utils overrides facts.py
+    test_override:
+    register: result
+
+  - name: Make sure the we used the local facts.py, not the one shipped with ansible
+    assert:
+      that:
+        - 'result["data"] == "overridden facts.py"'
+
+  - name: Test that importing something from the module_utils in the env_vars works
+    test_env_override:
+    register: result
+
+  - name: Make sure we used the module_utils from the env_var for these
+    assert:
+      that:
+        # Override of shipped module_utils
+        - 'result["json_utils"] == "overridden json_utils"'
+        # Only i nthe env vars directory
+        - 'result["mork"] == "mork"'
