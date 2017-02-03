@@ -54,6 +54,24 @@ options:
     description:
     - List of the service constraints.
       Maps docker service --constraint option.
+  dns:
+    required: false
+    default: []
+    description:
+    - List of custom DNS servers.
+      Maps docker service --dns option.
+  dns_search:
+    required: false
+    default: []
+    description:
+    - List of custom DNS search domains.
+      Maps docker service --dns-search option.
+  dns_options:
+    required: false
+    default: []
+    description:
+    - List of custom DNS options.
+      Maps docker service --dns-option option.
   labels:
     required: false
     description:
@@ -339,6 +357,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.docker_common import *
+from distutils.version import LooseVersion
 
 try:
     from docker import utils
@@ -354,6 +373,9 @@ class DockerService(DockerBaseClass):
         self.image=""
         self.args = []
         self.endpoint_mode="vip"
+        self.dns=[]
+        self.dns_search=[]
+        self.dns_options=[]
         self.env=[]
         self.labels={}
         self.container_labels={}
@@ -381,6 +403,9 @@ class DockerService(DockerBaseClass):
             'mounts'                  : self.mounts,
             'networks'                : self.networks,
             'args'                    : self.args,
+            'dns'                     : self.dns,
+            'dns_search'              : self.dns_search,
+            'dns_options'              : self.dns_options,
             'env'                     : self.env,
             'publish'                 : self.publish,
             'constraints'             : self.constraints,
@@ -405,6 +430,9 @@ class DockerService(DockerBaseClass):
         s.image                    = ap['image']
         s.args                     = ap['args']
         s.endpoint_mode            = ap['endpoint_mode']
+        s.dns                      = ap['dns']
+        s.dns_search               = ap['dns_search']
+        s.dns_options               = ap['dns_options']
         s.env                      = ap['env']
         s.labels                   = ap['labels']
         s.container_labels         = ap['container_labels']
@@ -506,6 +534,12 @@ class DockerService(DockerBaseClass):
             differences.append('image')
         if self.user!=os.user:
             differences.append('user')
+        if self.dns!=os.dns:
+            differences.append('dns')
+        if self.dns_search!=os.dns_search:
+            differences.append('dns_search')
+        if self.dns_options!=os.dns_options:
+            differences.append('dns_options')
         return len(differences)>0, differences, needs_rebuild
 
     def __str__(self):
@@ -527,6 +561,9 @@ class DockerService(DockerBaseClass):
                 'Type': mount_config['type'],
                 'ReadOnly': mount_config['readonly']
             })
+        cspec['DNSConfig']={"Nameservers": self.dns,
+                            "Search": self.dns_search,
+                            "Options": self.dns_options}
         cspec['Args']=self.args
         cspec['Env']=self.env
         cspec['Labels']=self.container_labels
@@ -598,6 +635,15 @@ class DockerServiceManager():
         ds.user  = task_template_data['ContainerSpec'].get('User','root')
         ds.env   = task_template_data['ContainerSpec'].get('Env',[])
         ds.args  = task_template_data['ContainerSpec'].get('Args',[])
+
+        dns_config = task_template_data['ContainerSpec'].get('DNSConfig',None)
+        if dns_config:
+            if 'Nameservers' in dns_config.keys:
+                ds.dns = dns_config['Nameservers']
+            if 'Search' in dns_config.keys:
+                ds.dns_search = dns_config['Search']
+            if 'Options' in dns_config.keys:
+                ds.dns_options = dns_config['Options']
 
         if 'Placement' in task_template_data.keys():
             ds.constraints = task_template_data['Placement'].get('Constraints',[])
@@ -684,7 +730,21 @@ class DockerServiceManager():
     def __init__(self, client):
         self.client = client
 
+    def test_parameter_versions(self):
+        parameters_versions=[
+            {'param': 'dns', 'attribute': 'dns', 'min_version': '1.25'}]
+        params = self.client.module.params
+        empty_service = DockerService()
+        for pv in parameters_versions:
+            if (params[pv['param']] != getattr(empty_service, pv['attribute'])
+                    and LooseVersion(self.client.version()['ApiVersion'])
+                        < LooseVersion(pv['min_version'])):
+                self.client.module.fail_json(
+                    msg='dns parameter supported only with api_version>=%s' % pv['min_version'])
+
     def run(self):
+        self.test_parameter_versions()
+
         module = self.client.module
         try:
             current_service = self.get_service(module.params['name'])
@@ -754,6 +814,9 @@ def main():
         env                     = dict( default=[], type='list' ),
         publish                 = dict( default=[], type='list' ),
         constraints             = dict( default=[], type='list' ),
+        dns                     = dict( default=[], type='list' ),
+        dns_search              = dict( default=[], type='list' ),
+        dns_options             = dict( default=[], type='list' ),
         labels                  = dict( default={}, type='dict' ),
         container_labels        = dict( default={}, type='dict' ),
         mode                    = dict( default="replicated" ),
@@ -776,6 +839,9 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
+    if client.module.params['dns']!=[]:
+        if LooseVersion(client.version()['ApiVersion'])<LooseVersion('1.25'):
+            client.module.fail_json(msg='dns parameter supported only on api_version>=1.25')
 
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()
