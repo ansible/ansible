@@ -5,7 +5,7 @@
     test:
     register: result
 
-  - name: Check that the module imported the correct version of each module_util
+  - name: Check that these are all loaded from playbook dir's module_utils
     assert:
       that:
         - 'result["abcdefgh"] == "abcdefgh"'
@@ -29,7 +29,7 @@
         - 'result["spam8"] == ["spam8:bacon", "spam8:eggs"]'
 
   # Test that overriding something in module_utils with something in the local library works
-  - name: Test that local module_utils overrides facts.py
+  - name: Test that playbook dir's module_utils overrides facts.py
     test_override:
     register: result
 
@@ -38,14 +38,14 @@
       that:
         - 'result["data"] == "overridden facts.py"'
 
-  - name: Test that importing a module that only exists inside of a submodule does not work
-    test_failure:
-    ignore_errors: True
+  - name: Test that importing something from the module_utils in the env_vars works
+    test_env_override:
     register: result
 
-  - debug: var=result
-  - name: Make sure we failed in AnsiBallZ
+  - name: Make sure we used the module_utils from the env_var for these
     assert:
       that:
-        - 'result["failed"] == True'
-        - '"Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py" == result["msg"]'
+        # Override of shipped module_utils
+        - 'result["json_utils"] == "overridden json_utils"'
+        # Only i nthe env vars directory
+        - 'result["mork"] == "mork"'
