@@ -178,7 +178,13 @@ class TestLinuxHardwareGetCpuFacts(unittest.TestCase):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)
         lh.facts = {'architecture': arch}
-        cpu_info_data = open(os.path.join('module_utils/fixtures/cpuinfo/', fixture), 'r').readlines()
+
+        # TODO: better way to specify/find the test data
+        this_module_path = __file__
+        this_module_dir = os.path.dirname(this_module_path)
+
+        cpu_info_data = open(os.path.join(this_module_dir, 'fixtures/cpuinfo/', fixture), 'r').readlines()
+
         mock_get_file_lines.return_value = cpu_info_data
         lh.get_cpu_facts()
         return lh
