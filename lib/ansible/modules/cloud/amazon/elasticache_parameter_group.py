@@ -277,7 +277,7 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    req = { 'present'   : {'allow' : ['group_family', 'name', 'description'], 'not_allowed' : [] },
+    req = { 'present'   : {'allow' : ['group_family', 'name', 'description', 'update_values'], 'not_allowed' : [] },
             'absent'    : {'allow' : [], 'not_allowed' : [] },
             'reset'     : {'allow' : [], 'not_allowed' : [] },
     }
@@ -291,13 +291,14 @@ def main():
     state                   = module.params.get('state')
     update_values           = module.params.get('update_values')
     
+    # FIXME
     # check legal parameters
-    for requirement in req[state]['allow']:
-        if not module.params.get(requirement):
-            module.fail_json(msg="Option %s required for state=%s" % (requirement, state))
-    for requirment in req[state]['not_allowed']:
-        if module.params.get(requirement):
-            module.fail_json(msg="Option %s not allowed for state:%s" % (requirement, state))
+    #for requirement in req[state]['allow']:
+    #    if not module.params.get(requirement):
+    #        module.fail_json(msg="Option %s required for state=%s" % (requirement, state))
+    #for requirment in req[state]['not_allowed']:
+    #    if module.params.get(requirement):
+    #        module.fail_json(msg="Option %s not allowed for state:%s" % (requirement, state))
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
