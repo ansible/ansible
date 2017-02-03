@@ -15,6 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = """
+    version: "1.0"
+    supported_by: committer
+    status: ["preview"]
+"""
+
 DOCUMENTATION = """
 ---
 module: elasticache_parameter_group
