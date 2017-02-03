@@ -115,7 +115,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
+        checksum: a9993e364706816aba3e25717850c26c9cd0d89d
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -128,10 +128,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for file
   assert:
@@ -150,7 +150,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
+        checksum: a9993e364706816aba3e25717850c26c9cd0d89d
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -165,7 +165,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for file without md5
   assert:
@@ -184,7 +184,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: aec4cd5ed4c05ed5cf9dea5a8b30f5e655ad87b937b36e3c059840ce3cf3642f
+        checksum: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -197,10 +197,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for file with sha256
   assert:
@@ -219,7 +219,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 862076ed4ef117cb61395daa839ccfe20a880e8cd048e76b3b1503d39d72f4c09d58ab3c44cdd5a3272ca8da9d8d8666
+        checksum: cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -232,10 +232,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for file with sha384
   assert:
@@ -254,7 +254,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 6d821d068cd8f09582de9ef14550666547eb6d4ae1d34cfc5aea921e595dbb9c462bf7f4c88a90190a69e52d69ac157e8146b555ed679a3e997061ca69632d0f
+        checksum: ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -267,10 +267,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\file.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for file with sha512
   assert:
@@ -288,7 +288,7 @@
       changed: False
       stat:
         attributes: "Hidden, Archive"
-        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
+        checksum: a9993e364706816aba3e25717850c26c9cd0d89d
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -301,10 +301,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\hidden.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for hidden file
   assert:
@@ -322,7 +322,7 @@
       changed: False
       stat:
         attributes: "ReadOnly, Archive"
-        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
+        checksum: a9993e364706816aba3e25717850c26c9cd0d89d
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -335,10 +335,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\read-only.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for readonly file
   assert:
@@ -356,7 +356,7 @@
       changed: False
       stat:
         attributes: Archive
-        checksum: 5943831380243c1269c8b68bb92de6e2f1844590
+        checksum: a9993e364706816aba3e25717850c26c9cd0d89d
         creationtime: 1477984205
         exists: True
         extension: .ps1
@@ -369,10 +369,10 @@
         isshared: False
         lastaccesstime: 1477984205
         lastwritetime: 1477984205
-        md5: c627105fad747457b7e88ed1016e065f
+        md5: 900150983cd24fb0d6963f7d28e17f72
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested\\hard-link.ps1"
-        size: 8
+        size: 3
 
 - name: check actual for hard link file
   assert:
@@ -403,7 +403,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\nested"
-        size: 40
+        size: 15
 
 - name: check actual for directory
   assert:
@@ -465,7 +465,7 @@
         lastwritetime: 1477984205
         owner: BUILTIN\Administrators
         path: "{{win_output_dir}}\\win_stat\\folder space"
-        size: 8
+        size: 3
 
 - name: check actual for directory with space in name
   assert:
