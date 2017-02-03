@@ -156,7 +156,7 @@ class Cloudera(object):
         filtered = filter(lambda key: dictionary.pop(key, None), keys)
         return filtered
 
-###
+####
     def installed_hosts_globally(self, connection, hostnames):
         mapping = self.get_hostid_hostname_mapping(connection)
         reversed_mapping = self.reversed_dictionary(mapping)
