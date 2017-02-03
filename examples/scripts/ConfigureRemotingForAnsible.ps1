@@ -193,7 +193,7 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
     # HTTPS-based endpoint does not exist.
     If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
     {
-        $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -ValidDays $CertValidityDays
+        $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddDays($CertValidityDays)
         $thumbprint = $cert.Thumbprint
         Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
     }
@@ -229,7 +229,7 @@ Else
         # Create the new cert.
         If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
         {
-            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -ValidDays $CertValidityDays
+            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddDays($CertValidityDays)
             $thumbprint = $cert.Thumbprint
             Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
         }
