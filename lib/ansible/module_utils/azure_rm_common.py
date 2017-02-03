@@ -18,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser
 import json
 import os
 import re
@@ -29,7 +28,9 @@ import inspect
 
 from distutils.version import LooseVersion
 from os.path import expanduser
-from ansible.module_utils.basic import *
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import configparser
 
 AZURE_COMMON_ARGS = dict(
     profile=dict(type='str'),
@@ -299,7 +300,7 @@ class AzureRMModuleBase(object):
     def _get_profile(self, profile="default"):
         path = expanduser("~/.azure/credentials")
         try:
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.read(path)
         except Exception as exc:
             self.fail("Failed to access {0}. Check that the file exists and you have read "

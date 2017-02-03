@@ -36,12 +36,12 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
-import urllib
-from ConfigParser import ConfigParser, NoSectionError
+import os
 
 # import module snippets
-from ansible.module_utils.urls import *
-from ansible.module_utils.basic import *
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import configparser
+from ansible.module_utils.urls import fetch_url
 
 EXO_DNS_BASEURL="https://api.exoscale.ch/dns/v1"
 
@@ -115,7 +115,7 @@ class ExoDns(object):
             raise SystemExit("Config file not found. Tried {0}".format(
                 ", ".join(paths)))
 
-        conf = ConfigParser()
+        conf = configparser.ConfigParser()
         conf.read(paths)
         return dict(conf.items(ini_group))
 
