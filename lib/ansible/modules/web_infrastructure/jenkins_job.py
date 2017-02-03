@@ -69,6 +69,13 @@ options:
     description:
        - User to authenticate with the Jenkins server.
     required: false
+  validate_certs:
+    description:
+      - If set to C(False), the SSL certificates will not be validated.
+        This should only set to C(False) used on personally controlled sites
+        using self-signed certificates as it avoids verifying the source site.
+    required: False
+    default: True
 '''
 
 EXAMPLES = '''
@@ -119,6 +126,15 @@ EXAMPLES = '''
     enabled: False
     url: http://localhost:8080
     user: admin
+
+# Interacting with an untrusted HTTPS connection
+- jenkins_job:
+    config: "{{ lookup('file', 'templates/test.xml') }}"
+    name: test
+    password: admin
+    url: https://localhost:8080
+    user: admin
+    validate_certs: False
 '''
 
 RETURN = '''
@@ -148,6 +164,11 @@ url:
   returned: success
   type: string
   sample: https://jenkins.mydomain.com
+validate_certs:
+  description: Whether SSL certificates will be validated or not.
+  returned: success
+  type: bool
+  sample: true
 '''
 
 try:
@@ -161,6 +182,7 @@ try:
     python_lxml_installed = True
 except ImportError:
     python_lxml_installed = False
+import ssl
 
 class JenkinsJob:
     def __init__(self, module):
@@ -171,6 +193,7 @@ class JenkinsJob:
         self.password = module.params.get('password')
         self.state = module.params.get('state')
         self.enabled = module.params.get('enabled')
+        self.validate_certs = module.params.get('validate_certs')
         self.token = module.params.get('token')
         self.user = module.params.get('user')
         self.jenkins_url = module.params.get('url')
@@ -194,6 +217,16 @@ class JenkinsJob:
         self.EXCL_STATE = "excluded state"
 
     def get_jenkins_connection(self):
+
+        if self.validate_certs == False:
+            try:
+                _create_unverified_https_context = ssl._create_unverified_context
+            except AttributeError:
+            # Legacy Python that doesn't verify HTTPS certificates by default
+                pass
+            else:
+            # Handle target environment that doesn't support HTTPS verification
+                ssl._create_default_https_context = _create_unverified_https_context
         try:
             if (self.user and self.password):
                 return jenkins.Jenkins(self.jenkins_url, self.user, self.password)
@@ -342,14 +375,15 @@ def job_config_to_string(xml_str):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            config      = dict(required=False),
-            name        = dict(required=True),
-            password    = dict(required=False, no_log=True),
-            state       = dict(required=False, choices=['present', 'absent'], default="present"),
-            enabled     = dict(required=False, type='bool'),
-            token       = dict(required=False, no_log=True),
-            url         = dict(required=False, default="http://localhost:8080"),
-            user        = dict(required=False)
+            config          = dict(required=False),
+            name            = dict(required=True),
+            password        = dict(required=False, no_log=True),
+            state           = dict(required=False, choices=['present', 'absent'], default="present"),
+            enabled         = dict(required=False, type='bool'),
+            validate_certs  = dict(required=False, type='bool'),
+            token           = dict(required=False, no_log=True),
+            url             = dict(required=False, default="http://localhost:8080"),
+            user            = dict(required=False)
         ),
         mutually_exclusive = [
             ['password', 'token'],
