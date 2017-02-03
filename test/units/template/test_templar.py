@@ -190,20 +190,16 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         msg = 'Error raised from _clean_data by test_template_unsafe_non_string_clean_data_exception'
         mock_clean_data.side_effect = AnsibleError(msg)
         unsafe_obj = AnsibleUnsafe()
-        self.assertRaisesRegexp(AnsibleError,
-                                msg,
-                                self.templar.template,
-                                unsafe_obj)
+        res = self.templar.template(unsafe_obj)
+        self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
     # TODO: not sure what template is supposed to do it, but it currently throws attributeError
     @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
     def test_template_unsafe_non_string_subclass_clean_data_exception(self, mock_clean_data):
         unsafe_obj = SomeUnsafeClass()
         self.assertTrue(self.is_unsafe(unsafe_obj))
-        self.assertRaisesRegexp(AnsibleError,
-                                '.*',
-                                self.templar.template,
-                                unsafe_obj)
+        res = self.templar.template(unsafe_obj)
+        self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
     def test_weird(self):
         data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''

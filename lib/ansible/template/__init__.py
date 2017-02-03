@@ -345,11 +345,7 @@ class Templar:
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
                 rval = self._clean_data(variable)
-            else:
-                # Do we need to convert these into text_type as well?
-                # return self._clean_data(to_text(variable._obj, nonstring='passthru'))
-                rval = self._clean_data(variable)
-            return rval
+                return rval
 
         try:
             if convert_bare:
