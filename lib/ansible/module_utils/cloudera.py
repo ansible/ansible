@@ -34,8 +34,8 @@ except ImportError:
 class Cloudera(object):
     def __init__(self, module, host, port, username, password, api_version, use_tls):
         self.module = module
-        self.host = hos
-        self.port = por
+        self.host = host
+        self.port = port
         self.username = username
         self.password = password
         self.api_version = api_version

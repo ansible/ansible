@@ -147,7 +147,7 @@ def create_role(module, cloudera, service_obj, role_name, role_type, role_host, 
         role_changed = True
         configuration_changed = update_role_config_group(cloudera, service_obj, role_type, configuration_file)
     result = role_changed | configuration_changed
-    return resul
+    return result
 
 def update_role_config_group(cloudera, service_obj, role_type, configuration_file):
     configuration_changed = False

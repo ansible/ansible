@@ -118,7 +118,7 @@ def create_mgmt_service(cloudera, connection, service_type, configuration_file):
         cloudera_manager.create_mgmt_service(service_info)
         service_changed = True
     result = service_changed | configuration_changed
-    return resul
+    return result
 
 def create_general_service(cloudera, connection, cluster_name, service_type, configuration_file):
     cluster = cloudera.get_cluster(connection, cluster_name)
@@ -137,7 +137,7 @@ def create_general_service(cloudera, connection, cluster_name, service_type, con
         current_config = service.get_config()[0]
         configuration_changed = cloudera.update_config(service, current_config, configuration_file)
     result = service_changed | configuration_changed
-    return resul
+    return result
 
 def main():
     module = AnsibleModule(
