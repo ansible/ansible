@@ -190,18 +190,9 @@ Else
 $listeners = Get-ChildItem WSMan:\localhost\Listener
 If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
 {
-    # HTTPS-based endpoint does not exist.
-    If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
-    {
-        $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddDays($CertValidityDays)
-        $thumbprint = $cert.Thumbprint
-        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
-    }
-    Else
-    {
-        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-        Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
-    }
+    # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
+    $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
+    Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
 
     # Create the hashtables of settings to be used.
     $valueset = @{
@@ -226,18 +217,9 @@ Else
     If ($ForceNewSSLCert)
     {
 
-        # Create the new cert.
-        If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
-        {
-            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddDays($CertValidityDays)
-            $thumbprint = $cert.Thumbprint
-            Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
-        }
-        Else
-        {
-            $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-            Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
-        }
+        # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
+        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
+        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
 
         $valueset = @{
             CertificateThumbprint = $thumbprint
