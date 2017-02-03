@@ -44,22 +44,22 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    host:
+    tower_host:
       description:
         - URL to your Tower instance.
       required: False
       default: null
-    username:
+    tower_username:
         description:
           - Username for your Tower instance.
         required: False
         default: null
-    password:
+    tower_password:
         description:
           - Password for your Tower instance.
         required: False
         default: null
-    verify_ssl:
+    tower_verify_ssl:
         description:
           - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
             This should only be used on personally controlled sites using self-signed certificates.
@@ -96,8 +96,6 @@ EXAMPLES = '''
           tower_config_file: "~/tower_cli.cfg"
 '''
 
-import os
-
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
@@ -115,10 +113,10 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             description = dict(),
-            host = dict(),
-            username = dict(),
-            password = dict(no_log=True),
-            verify_ssl = dict(type='bool', default='yes'),
+            tower_host = dict(),
+            tower_username = dict(),
+            tower_password = dict(no_log=True),
+            tower_verify_ssl = dict(type='bool', default='yes'),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),
