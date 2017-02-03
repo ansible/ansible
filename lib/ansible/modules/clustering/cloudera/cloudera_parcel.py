@@ -99,7 +99,7 @@ def deploy_parcel(module, cluster, parcel_name, parcel_version):
     if len(parcel) == 0:
         raise Exception('No such parcel version - %s, for parcel name - %s!' % (parcel_version, parcel_name))
     elif parcel[0].stage == 'ACTIVATED':
-        print 'Already activated!'
+        module.log('Parcel %s already activated!' % parcel_version)
     else:
         parcel_obj = parcel[0]
         
