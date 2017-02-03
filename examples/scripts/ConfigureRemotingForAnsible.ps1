@@ -193,24 +193,26 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
     # HTTPS-based endpoint does not exist.
     If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
     {
-        $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My"
+        $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -ValidDays $CertValidityDays
         $thumbprint = $cert.Thumbprint
         Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
     }
     Else
     {
-        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName
+        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
         Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
     }
 
     # Create the hashtables of settings to be used.
-    $valueset = @{}
-    $valueset.Add('Hostname', $SubjectName)
-    $valueset.Add('CertificateThumbprint', $thumbprint)
+    $valueset = @{
+        Hostname = $SubjectName
+        CertificateThumbprint = $thumbprint
+    }
 
-    $selectorset = @{}
-    $selectorset.Add('Transport', 'HTTPS')
-    $selectorset.Add('Address', '*')
+    $selectorset = @{
+        Transport = "HTTPS"
+        Address = "*"
+    }
 
     Write-Verbose "Enabling SSL listener."
     New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
@@ -227,24 +229,26 @@ Else
         # Create the new cert.
         If (Get-Command "New-SelfSignedCertificate" -ErrorAction SilentlyContinue)
         {
-            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My"
+            $cert = New-SelfSignedCertificate -DnsName $SubjectName -CertStoreLocation "Cert:\LocalMachine\My" -ValidDays $CertValidityDays
             $thumbprint = $cert.Thumbprint
             Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
         }
         Else
         {
-            $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName
+            $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
             Write-HostLog "(Legacy) Self-signed SSL certificate generated; thumbprint: $thumbprint"
         }
 
-        $valueset = @{}
-        $valueset.Add('Hostname', $SubjectName)
-        $valueset.Add('CertificateThumbprint', $thumbprint)
+        $valueset = @{
+            CertificateThumbprint = $thumbprint
+            Hostname = $SubjectName
+        }
 
         # Delete the listener for SSL
-        $selectorset = @{}
-        $selectorset.Add('Transport', 'HTTPS')
-        $selectorset.Add('Address', '*')
+        $selectorset = @{
+            Address = "*"
+            Transport = "HTTPS"
+        }
         Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
 
         # Add new Listener with new SSL cert
