@@ -16,13 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
+                    'supported_by': 'community',
                     'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ordnance_facts
-version_added: "2.2??"
+version_added: "2.3"
 author: "Alexander Turner (alex.turner@ordnance.io)"
 short_description: Collect facts from Ordnance Virtual Routers
 over SSH
@@ -32,7 +32,6 @@ description:
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
-extends_documentation_fragment: ordnance
 options:
   gather_subset:
     description:
