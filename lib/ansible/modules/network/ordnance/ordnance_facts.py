@@ -24,11 +24,10 @@ DOCUMENTATION = """
 module: ordnance_facts
 version_added: "2.3"
 author: "Alexander Turner (alex.turner@ordnance.io)"
-short_description: Collect facts from Ordnance Virtual Routers
-over SSH
+short_description: Collect facts from Ordnance Virtual Routers over SSH
 description:
   - Collects a base set of device facts from an Ordnance Virtual
-  router over SSH. This module prepends all of the
+    router over SSH. This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
