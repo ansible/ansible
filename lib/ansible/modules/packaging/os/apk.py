@@ -136,7 +136,7 @@ def query_package(module, name):
 def query_latest(module, name):
     cmd = "%s version %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    search_pattern = "(%s)-[\d\.\w]+-[\d\w]+\s+(.)\s+[\d\.\w]+-[\d\w]+\s+" % (name)
+    search_pattern = r"(%s)-[\d\.\w]+-[\d\w]+\s+(.)\s+[\d\.\w]+-[\d\w]+\s+" % (re.escape(name))
     match = re.search(search_pattern, stdout)
     if match and match.group(2) == "<":
         return False
@@ -145,7 +145,7 @@ def query_latest(module, name):
 def query_virtual(module, name):
     cmd = "%s -v info --description %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    search_pattern = "^%s: virtual meta package" % (name)
+    search_pattern = r"^%s: virtual meta package" % (re.escape(name))
     if re.search(search_pattern, stdout):
         return True
     return False
@@ -167,7 +167,7 @@ def upgrade_packages(module):
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="failed to upgrade packages")
-    if re.search('^OK', stdout):
+    if re.search(r'^OK', stdout):
         module.exit_json(changed=False, msg="packages already upgraded")
     module.exit_json(changed=True, msg="upgraded packages")
 
