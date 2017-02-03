@@ -4,6 +4,7 @@ Ansible Changes By Release
 ## 2.3 TBD - ACTIVE DEVELOPMENT
 
 ###Major Changes:
+* Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
 
 ###Minor Changes:
 * The version and release facts for OpenBSD hosts were reversed.  This has been
