@@ -146,8 +146,10 @@ class Cloudera(object):
 
 ### Reverses dict { key:value } to { value:key }
     def reversed_dictionary(self, dictionary):
-        dictionary = { value:key for key,value in dictionary.items() }
-        return dictionary
+        rev = {}
+        for item in dictionary.iteritems():
+          rev[item[1]] = item[0]
+        return rev
 
 ### Removes specific keys from dict
     def filter_dictionary(self, dictionary, keys):
