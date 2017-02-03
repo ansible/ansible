@@ -59,27 +59,210 @@ except ImportError:
 ##
 Expected output format
 {
-    "groupname": {
-        "hosts": [
-            "192.168.28.71",
-            "192.168.28.72"
-        ],
-        "vars": {
-            "ansible_ssh_user": "johndoe",
-            "ansible_ssh_private_key_file": "~/.ssh/mykey",
-            "example_variable": "value"
-        }
-    },
-    "_meta": {
-        "hostvars": {
-            "192.168.28.71": {
-                "host_specific_var": "bar"
-            },
-            "192.168.28.72": {
-                "host_specific_var": "foo"
-            }
-        }
+  "Cumulus": {
+    "hosts": [
+      "52540073956E",
+      "52540022211A"
+    ],
+    "vars": {}
+  },
+  "EOS": {
+    "hosts": [
+      "5254001CAFD8",
+      "525400DDDF72"
+    ],
+    "vars": {}
+  },
+  "Generic Model": {
+    "hosts": [
+      "525400E5486D"
+    ],
+    "vars": {}
+  },
+  "Ubuntu GNU/Linux": {
+    "hosts": [
+      "525400E5486D"
+    ],
+    "vars": {}
+  },
+  "VX": {
+    "hosts": [
+      "52540073956E",
+      "52540022211A"
+    ],
+    "vars": {}
+  },
+  "_meta": {
+    "hostvars": {
+      "5254001CAFD8": {
+        "agent_start_time": "2017-02-03T00:49:16.000000Z",
+        "ansible_ssh_host": "172.20.52.6",
+        "aos_hcl_model": "Arista_vEOS",
+        "aos_server": "",
+        "aos_version": "AOS_1.1.1_OB.5",
+        "comm_state": "on",
+        "device_start_time": "2017-02-03T00:47:58.454480Z",
+        "domain_name": "",
+        "error_message": "",
+        "fqdn": "localhost",
+        "hostname": "localhost",
+        "hw_model": "vEOS",
+        "hw_version": "",
+        "is_acknowledged": false,
+        "mgmt_ifname": "Management1",
+        "mgmt_ipaddr": "172.20.52.6",
+        "mgmt_macaddr": "52:54:00:1C:AF:D8",
+        "os_arch": "x86_64",
+        "os_family": "EOS",
+        "os_version": "4.16.6M",
+        "os_version_info": {
+          "build": "6M",
+          "major": "4",
+          "minor": "16"
+        },
+        "serial_number": "5254001CAFD8",
+        "state": "OOS-QUARANTINED",
+        "vendor": "Arista"
+      },
+      "52540022211A": {
+        "agent_start_time": "2017-02-03T00:45:22.000000Z",
+        "ansible_ssh_host": "172.20.52.7",
+        "aos_hcl_model": "Cumulus_VX",
+        "aos_server": "172.20.52.3",
+        "aos_version": "AOS_1.1.1_OB.5",
+        "comm_state": "on",
+        "device_start_time": "2017-02-03T00:45:11.019189Z",
+        "domain_name": "",
+        "error_message": "",
+        "fqdn": "cumulus",
+        "hostname": "cumulus",
+        "hw_model": "VX",
+        "hw_version": "",
+        "is_acknowledged": false,
+        "mgmt_ifname": "eth0",
+        "mgmt_ipaddr": "172.20.52.7",
+        "mgmt_macaddr": "52:54:00:22:21:1a",
+        "os_arch": "x86_64",
+        "os_family": "Cumulus",
+        "os_version": "3.1.1",
+        "os_version_info": {
+          "build": "1",
+          "major": "3",
+          "minor": "1"
+        },
+        "serial_number": "52540022211A",
+        "state": "OOS-QUARANTINED",
+        "vendor": "Cumulus"
+      },
+      "52540073956E": {
+        "agent_start_time": "2017-02-03T00:45:19.000000Z",
+        "ansible_ssh_host": "172.20.52.8",
+        "aos_hcl_model": "Cumulus_VX",
+        "aos_server": "172.20.52.3",
+        "aos_version": "AOS_1.1.1_OB.5",
+        "comm_state": "on",
+        "device_start_time": "2017-02-03T00:45:11.030113Z",
+        "domain_name": "",
+        "error_message": "",
+        "fqdn": "cumulus",
+        "hostname": "cumulus",
+        "hw_model": "VX",
+        "hw_version": "",
+        "is_acknowledged": false,
+        "mgmt_ifname": "eth0",
+        "mgmt_ipaddr": "172.20.52.8",
+        "mgmt_macaddr": "52:54:00:73:95:6e",
+        "os_arch": "x86_64",
+        "os_family": "Cumulus",
+        "os_version": "3.1.1",
+        "os_version_info": {
+          "build": "1",
+          "major": "3",
+          "minor": "1"
+        },
+        "serial_number": "52540073956E",
+        "state": "OOS-QUARANTINED",
+        "vendor": "Cumulus"
+      },
+      "525400DDDF72": {
+        "agent_start_time": "2017-02-03T00:49:07.000000Z",
+        "ansible_ssh_host": "172.20.52.5",
+        "aos_hcl_model": "Arista_vEOS",
+        "aos_server": "",
+        "aos_version": "AOS_1.1.1_OB.5",
+        "comm_state": "on",
+        "device_start_time": "2017-02-03T00:47:46.929921Z",
+        "domain_name": "",
+        "error_message": "",
+        "fqdn": "localhost",
+        "hostname": "localhost",
+        "hw_model": "vEOS",
+        "hw_version": "",
+        "is_acknowledged": false,
+        "mgmt_ifname": "Management1",
+        "mgmt_ipaddr": "172.20.52.5",
+        "mgmt_macaddr": "52:54:00:DD:DF:72",
+        "os_arch": "x86_64",
+        "os_family": "EOS",
+        "os_version": "4.16.6M",
+        "os_version_info": {
+          "build": "6M",
+          "major": "4",
+          "minor": "16"
+        },
+        "serial_number": "525400DDDF72",
+        "state": "OOS-QUARANTINED",
+        "vendor": "Arista"
+      },
+      "525400E5486D": {
+        "agent_start_time": "2017-02-02T18:44:42.000000Z",
+        "ansible_ssh_host": "172.20.52.4",
+        "aos_hcl_model": "Generic_Server_1RU_1x10G",
+        "aos_server": "172.20.52.3",
+        "aos_version": "AOS_1.1.1_OB.5",
+        "comm_state": "on",
+        "device_start_time": "2017-02-02T21:11:25.188734Z",
+        "domain_name": "",
+        "error_message": "",
+        "fqdn": "localhost",
+        "hostname": "localhost",
+        "hw_model": "Generic Model",
+        "hw_version": "pc-i440fx-trusty",
+        "is_acknowledged": false,
+        "mgmt_ifname": "eth0",
+        "mgmt_ipaddr": "172.20.52.4",
+        "mgmt_macaddr": "52:54:00:e5:48:6d",
+        "os_arch": "x86_64",
+        "os_family": "Ubuntu GNU/Linux",
+        "os_version": "14.04 LTS",
+        "os_version_info": {
+          "build": "",
+          "major": "14",
+          "minor": "04"
+        },
+        "serial_number": "525400E5486D",
+        "state": "OOS-QUARANTINED",
+        "vendor": "Generic Manufacturer"
+      }
     }
+  },
+  "all": {
+    "hosts": [
+      "5254001CAFD8",
+      "52540073956E",
+      "525400DDDF72",
+      "525400E5486D",
+      "52540022211A"
+    ],
+    "vars": {}
+  },
+  "vEOS": {
+    "hosts": [
+      "5254001CAFD8",
+      "525400DDDF72"
+    ],
+    "vars": {}
+  }
 }
 """
 class AosInventory(object):
@@ -104,11 +287,11 @@ class AosInventory(object):
         # Open session to AOS
         #----------------------------------------------------
 
-        # aos = Session(self.aos_server)
-        aos = Session(  self.aos_server,
-                        port=self.aos_server_port,
-                        user=self.aos_username,
-                        passwd=self.aos_password)
+        aos = Session(self.aos_server)
+        # aos = Session(  server=self.aos_server,
+        #                 port=self.aos_server_port,
+        #                 user=self.aos_username,
+        #                 passwd=self.aos_password)
 
         aos.login()
 
