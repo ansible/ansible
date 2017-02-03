@@ -1,25 +1,39 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import distutils.spawn
 import os
-import pipes
+import os.path
 import subprocess
 import traceback
 import shlex
 
 from ansible import constants as C
+from ansible.compat import six
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase
-from ansible.module_utils.basic import is_executable
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
-
-BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
@@ -31,31 +45,43 @@ class Connection(ConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin,
-                *args, **kwargs)
+                                         *args, **kwargs)
 
         display.vvv("NSPAWN ARGS %s" % self._play_context.nspawn_args)
 
-        self.chroot = self._play_context.remote_addr
+        self.ostree = os.path.normpath(self._play_context.remote_addr)
 
         if os.geteuid() != 0:
             raise AnsibleError("nspawn connection requires running as root")
 
         # we're running as root on the local system so do some
-        # trivial checks for ensuring 'host' is actually a chroot'able dir
-        if not os.path.isdir(self.chroot):
-            raise AnsibleError("%s is not a directory" % self.chroot)
+        # trivial checks for ensuring 'host' may be an OS tree dir
+        if not os.path.isdir(self.ostree):
+            raise AnsibleError("%s is not a directory" % self.ostree)
 
-        chrootsh = os.path.join(self.chroot, 'bin/sh')
-        if not is_executable(chrootsh):
-            raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
+        # As systemd-nspawn will, we check the existence of os-release files
+        # in the container tree to think it looks like an OS tree enough
+        # see man systemd-nspawn(1) and os-release(5)
+        if not (
+            os.path.isfile(os.path.join(self.ostree, "usr/lib/os-release"))
+            or os.path.isfile(os.path.join(self.ostree, "etc/os-release"))
+        ):
+            raise AnsibleError("%s does not contain an os-release file"
+                               % self.ostree)
 
-        self.nspawn_cmd = 'systemd-nspawn'
+        self.nspawn_cmd = distutils.spawn.find_executable('systemd-nspawn')
+        if not self.nspawn_cmd:
+            raise AnsibleError("systemd-nspawn command not found in PATH")
 
     def _connect(self):
-      pass
+        ''' Connect to the container. Nothing to do '''
+        super(Connection, self)._connect()
+        if not self._connected:
+            display.vvv(u"THIS IS A LOCAL NSPAWN CONTAINER", host=self.ostree)
+            self._connected = True
 
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
-        ''' run a command on the chroot.  This is only needed for
+        ''' run a command in the container.  This is only needed for
         implementing put_file() get_file() so that we don't have to
         read the whole file into memory.
 
@@ -63,24 +89,35 @@ class Connection(ConnectionBase):
         able to return the process's exit code immediately.
         '''
         executable = (
-                C.DEFAULT_EXECUTABLE.split()[0]
-                if C.DEFAULT_EXECUTABLE
-                else '/bin/sh')
+            C.DEFAULT_EXECUTABLE.split()[0]
+            if C.DEFAULT_EXECUTABLE
+            else '/bin/sh')
 
-        nspawn_args = shlex.split(self._play_context.nspawn_args)
-        local_cmd = [self.nspawn_cmd, '-D', self.chroot ] + nspawn_args + [
-                '--', executable, '-c', cmd]
+        nspawn_args = self._play_context.nspawn_args
+        if six.PY2:
+            nspawn_args = shlex.split(
+                to_bytes(nspawn_args, errors='surrogate_or_strict')
+            )
+        else:
+            nspawn_args = shlex.split(
+                to_text(nspawn_args, errors='surrogate_or_strict')
+            )
 
-        display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
-        local_cmd = map(to_bytes, local_cmd)
+        local_cmd = [self.nspawn_cmd, '-D', self.ostree] + nspawn_args + [
+            '--', executable, '-c', cmd]
+
+        display.vvv("EXEC %s" % (local_cmd), host=self.ostree)
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict')
+                     for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 
     def exec_command(self, cmd, in_data=None, sudoable=False):
-        ''' run a command on the chroot '''
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        ''' run a command in the container '''
+        super(Connection, self).exec_command(cmd, in_data=in_data,
+                                             sudoable=sudoable)
 
         p = self._buffered_exec_command(cmd)
         stdout, stderr = p.communicate(in_data)
@@ -91,7 +128,8 @@ class Connection(ConnectionBase):
 
             If a path is relative, then we need to choose where to put it.
             ssh chooses $HOME but we aren't guaranteed that a home dir will
-            exist in any given chroot.  So for now we're choosing "/" instead.
+            exist in any given container. So for now we're choosing "/"
+            instead.
             This also happens to be the former default.
 
             Can revisit using $HOME instead if it's a problem
@@ -101,39 +139,54 @@ class Connection(ConnectionBase):
         return os.path.normpath(remote_path)
 
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to chroot '''
+        ''' transfer a file from local to the container '''
         super(Connection, self).put_file(in_path, out_path)
-        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.ostree)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
-            with open(in_path, 'rb') as in_file:
+            with open(to_bytes(in_path, errors='surrogate_or_strict'),
+                      'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command(
+                        'dd of=%s bs=%s' % (out_path, BUFSIZE),
+                        stdin=in_file
+                    )
                 except OSError:
-                    raise AnsibleError("chroot connection requires dd command in the chroot")
+                    raise AnsibleError(
+                        "nspawn connection requires dd command in container"
+                    )
                 try:
                     stdout, stderr = p.communicate()
                 except:
                     traceback.print_exc()
-                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                    raise AnsibleError("failed to transfer file %s to %s"
+                                       % (in_path, out_path))
                 if p.returncode != 0:
-                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleError(
+                        "failed to transfer file %s to %s:\n%s\n%s"
+                        % (in_path, out_path, stdout, stderr)
+                    )
         except IOError:
-            raise AnsibleError("file or module does not exist at: %s" % in_path)
+            raise AnsibleError("file or module does not exist at: %s"
+                               % in_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from chroot to local '''
+        ''' fetch a file from the container to local '''
         super(Connection, self).fetch_file(in_path, out_path)
-        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.ostree)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = shlex_quote(self._prefix_login_path(in_path))
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
+            p = self._buffered_exec_command('dd if=%s bs=%s'
+                                            % (in_path, BUFSIZE))
         except OSError:
-            raise AnsibleError("chroot connection requires dd command in the chroot")
+            raise AnsibleError(
+                "nspawn connection requires dd command in the container"
+            )
 
-        with open(out_path, 'wb+') as out_file:
+        with open(to_bytes(out_path, errors='surrogate_or_strict'),
+                  'wb+') as out_file:
             try:
                 chunk = p.stdout.read(BUFSIZE)
                 while chunk:
@@ -141,10 +194,12 @@ class Connection(ConnectionBase):
                     chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
-                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                raise AnsibleError("failed to transfer file %s to %s"
+                                   % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s"
+                                   % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
