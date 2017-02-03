@@ -52,8 +52,9 @@ You may wish to consult the `ansible.cfg in source control <https://raw.github.c
 Environmental configuration
 ```````````````````````````
 
-Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
+Ansible also allows configuration of settings via environment variables.  If
+these environment variables are set, they will override any setting loaded
+from the configuration file.  These variables are defined in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_.
 
 .. _config_values_by_section:
 
@@ -521,8 +522,25 @@ This is the default location Ansible looks to find modules::
 
      library = /usr/share/ansible
 
-Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
-"./library" directory alongside a playbook.
+Ansible can look in multiple locations if you feed it a colon
+separated path, and it also will look for modules in the :file:`./library`
+directory alongside a playbook.
+
+This can be used to manage modules pulled from several different locations.
+For instance, a site wishing to checkout modules from several different git
+repositories might handle it like this:
+
+.. code-block:: shell-session
+
+    $ mkdir -p /srv/modules
+    $ cd /srv/modules
+    $ git checkout https://vendor_modules .
+    $ git checkout ssh://custom_modules .
+    $ export ANSIBLE_LIBRARY=/srv/modules/custom_modules:/srv/modules/vendor_modules
+    $ ansible [...]
+
+In case of modules with the same name, the library paths are searched in order
+and the first module found with that name is used.
 
 .. _local_tmp:
 
@@ -586,6 +604,31 @@ together.  The same holds true for --skip-tags.
     default value will be True.  After 2.4, the option is going away.
     Multiple --tags and multiple --skip-tags will always be merged together.
 
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system.
+By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
+
+    module_lang = en_US.UTF-8
+
+.. note::
+
+    This is only used if :ref:`module_set_locale` is set to True.
+
+.. _module_name:
+
+module_name
+===========
+
+This is the default module name (-m) value for /usr/bin/ansible.  The default is the 'command' module.
+Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
+it to 'shell'::
+
+    module_name = command
+
 .. _module_set_locale:
 
 module_set_locale
@@ -600,27 +643,23 @@ being set when the module is executed on the given remote system.  By default th
     The module_set_locale option was added in Ansible-2.1 and defaulted to
     True.  The default was changed to False in Ansible-2.2
 
-.. _module_lang:
+.. _module_utils:
 
+module_utils
+============
 
-module_lang
-===========
+This is the default location Ansible looks to find module_utils::
 
-This is to set the default language to communicate between the module and the system.
-By default, the value is value `LANG` on the controller or, if unset, `en_US.UTF-8` (it used to be `C` in previous versions)::
+    module_utils = /usr/share/ansible/my_module_utils
 
-    module_lang = en_US.UTF-8
+module_utils are python modules that Ansible is able to combine with Ansible
+modules when sending them to the remote machine.  Having custom module_utils
+is useful for extracting common code when developing a set of site-specific
+modules.
 
-.. _module_name:
-
-module_name
-===========
-
-This is the default module name (-m) value for /usr/bin/ansible.  The default is the 'command' module.
-Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
-it to 'shell'::
-
-    module_name = command
+Ansible can look in multiple locations if you feed it a colon
+separated path, and it also will look for modules in the
+:file:`./module_utils` directory alongside a playbook.
 
 .. _nocolor:
 
