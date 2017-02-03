@@ -428,9 +428,15 @@ class ModuleValidator(Validator):
 
         for error in errors:
             path = [str(p) for p in error.path]
+
+            if isinstance(error.data, dict):
+                error_message = humanize_error(error.data, error)
+            else:
+                error_message = error
+
             self.errors.append('%s.%s: %s' %
                                (name, '.'.join(path),
-                                humanize_error(error.data, error)))
+                                error_message))
 
     def _validate_docs(self):
         doc_info = self._get_docs()
