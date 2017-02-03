@@ -165,14 +165,14 @@ def to_lines(stdout):
     return lines
 
 def parse_commands(module, warnings):
-    cast = ComplexList(dict(
+    transform = ComplexList(dict(
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
         response=dict()
     ))
 
-    commands = cast(module.params['commands'])
+    commands = transform(module.params['commands'])
 
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
@@ -180,6 +180,7 @@ def parse_commands(module, warnings):
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % item['command']
             )
+
     return commands
 
 def to_cli(obj):
@@ -222,8 +223,6 @@ def main():
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
-
-    commands = [to_cli(c) for c in commands]
 
     while retries > 0:
         responses = run_commands(module, commands)

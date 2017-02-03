@@ -188,7 +188,6 @@ def parse_commands(module, warnings):
         response=dict()
     ))
     commands = command(module.params['commands'])
-
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
@@ -200,7 +199,6 @@ def parse_commands(module, warnings):
                 msg='ios_command does not support running config mode '
                     'commands.  Please use ios_config instead'
             )
-        commands[index] = module.jsonify(item)
     return commands
 
 def main():
