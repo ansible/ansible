@@ -67,7 +67,12 @@ If (Test-Path $path -pathType container) {
 # performing validation if a validation command was specified.
 
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate) {
-	$temppath = [System.IO.Path]::GetTempFileName();
+	Try {
+		$temppath = [System.IO.Path]::GetTempFileName();
+	}
+	Catch {
+		Fail-Json ("Cannot create temporary file! (" + $_.Exception.Message + ")")
+	}
 	$joined = $outlines -join $linesep;
 	[System.IO.File]::WriteAllText($temppath, $joined, $encodingobj);
 
@@ -99,13 +104,18 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate) {
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
 	Try {
-		Copy-Item $temppath $cleanpath -force;
+		Copy-Item $temppath $cleanpath -force -ErrorAction Stop;
 	}
 	Catch {
 		Fail-Json ("Cannot write to: $cleanpath (" + $_.Exception.Message + ")")
 	}
 
-	Remove-Item $temppath -force;
+	Try {
+		Remove-Item $temppath -force -ErrorAction Stop;
+	}
+	Catch {
+		Fail-Json ("Cannot remove temporary file: $temppath (" + $_.Exception.Message + ")")
+	}
 
 }
 
