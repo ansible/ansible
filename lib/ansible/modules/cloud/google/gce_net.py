@@ -199,24 +199,6 @@ except ImportError:
 
 def format_allowed_section(allowed):
     """Format each section of the allowed list"""
-    if allowed.count(":") == 0:
-        protocol = allowed
-        ports = []
-    elif allowed.count(":") == 1:
-        protocol, ports = allowed.split(":")
-    else:
-        return []
-    if ports.count(","):
-        ports = ports.split(",")
-    elif ports:
-        ports = [ports]
-    return_val = {"IPProtocol": protocol}
-    if ports:
-        return_val["ports"] = ports
-    return return_val
-
-def format_allowed(allowed):
-    """Format the 'allowed' value so that it is GCE compatible."""
     lst_proto = allowed.split(':')
     protocol = lst_proto[0]
     if len(lst_proto) > 1:
@@ -226,6 +208,17 @@ def format_allowed(allowed):
         return_val={'IPProtocol': protocol}
 
     return return_val
+
+def format_allowed(allowed):
+    """Format the 'allowed' value so that it is GCE compatible."""
+    return_value = []
+    if allowed.count(";") == 0:
+        return [format_allowed_section(allowed)]
+    else:
+        sections = allowed.split(";")
+        for section in sections:
+            return_value.append(format_allowed_section(section))
+    return return_value
 
 def sorted_allowed_list(allowed_list):
     """Sort allowed_list (output of format_allowed) by protocol and port."""
