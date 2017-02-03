@@ -159,7 +159,7 @@ network:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dimensiondata import get_credentials, DimensionDataAPIException, LibcloudNotFound
+from ansible.module_utils.dimensiondata import get_credentials, get_mcp_version, DimensionDataAPIException, LibcloudNotFound
 from ansible.module_utils.pycompat24 import get_exception
 try:
     from libcloud.compute.types import Provider
@@ -188,14 +188,6 @@ def network_obj_to_dict(network, version):
         network_dict['multicast'] = None
         network_dict['status'] = network.status
     return network_dict
-
-
-def get_mcp_version(driver, location):
-    # Get location to determine if MCP 1.0 or 2.0
-    location = driver.ex_get_location_by_id(location)
-    if 'MCP 2.0' in location.name:
-        return '2.0'
-    return '1.0'
 
 
 def create_network(module, driver, mcp_version, location,
