@@ -22,15 +22,15 @@ class TestGCENet(unittest.TestCase):
         """
         want = self.obj_sample_output[0]
         got = format_allowed_section(self.str_sample_input_section[0])
-        self.assertDictEqual(want, got)
+        self.assertEqual(want, got)
 
         want = self.obj_sample_output[1]
         got = format_allowed_section(self.str_sample_input_section[1])
-        self.assertDictEqual(want, got)
+        self.assertEqual(want, got)
 
         want = self.obj_sample_output[2]
         got = format_allowed_section(self.str_sample_input_section[2])
-        self.assertDictEqual(want, got)
+        self.assertEqual(want, got)
 
     def test_format_allowed(self):
         """
