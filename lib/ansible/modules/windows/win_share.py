@@ -86,9 +86,15 @@ options:
     default: none
   caching_mode:
     description:
-      - Set the CachingMode for this share Options: BranchCache, Documents, Manual, None, Programs, Unkown
-    requred: no
-    default: Manual
+      - Set the CachingMode for this share.
+    choices:
+      - BranchCache
+      - Documents
+      - Manual
+      - None
+      - Programs
+      - Unknown
+    required: no
 author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
 '''
 

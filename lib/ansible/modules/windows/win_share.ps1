@@ -67,7 +67,7 @@ Function UserSearch
             $Searcher.Filter = "userPrincipalName=$($accountName)"
         }
 
-        $result = $Searcher.FindOne() 
+        $result = $Searcher.FindOne()
         if ($result)
         {
             $user = $result.GetDirectoryEntry()
