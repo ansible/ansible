@@ -34,7 +34,7 @@ Target: February/March 2017
   - Update developing_modules
   - Set up rst skeleton for module_utils docs.
   - Plugin development docs
-  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406  (stretch)
+  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   [done]
   
 - **Windows platform** (nitzmahone)
   
