@@ -187,7 +187,7 @@ def main():
             elif state == 'absent':
                 result = user.delete(username=username)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
-            module.fail_json(msg='{}'.format(excinfo), changed=False)
+            module.fail_json(msg='Failed to update the user: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)

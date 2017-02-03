@@ -284,9 +284,9 @@ def main():
             elif state == 'absent':
                 result = credential.delete(**params)
         except (exc.NotFound) as excinfo:
-            module.fail_json(msg='{} Organization {}'.format(excinfo, organization), changed=False)
+            module.fail_json(msg='Failed to update credential, organization not found: {0}'.format(excinfo), changed=False)
         except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
-            module.fail_json(msg='{}'.format(excinfo), changed=False)
+            module.fail_json(msg='Failed to update credential: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
