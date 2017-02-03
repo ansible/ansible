@@ -37,8 +37,7 @@ if (($creates -ne $null) -and ($state -ne "absent") -and (Test-Path $creates)) {
     Exit-Json $result
 }
 
-if (-not (Test-Path $path))
-{
+if (-not (Test-Path $path)) {
 	Fail-Json $result "Cannot find $path."
 }
 
