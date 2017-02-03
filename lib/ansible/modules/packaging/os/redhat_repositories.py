@@ -15,6 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import re
+import syslog
+from ansible.module_utils.basic import AnsibleModule
+
+debug=False
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -133,22 +141,15 @@ redhat_repositories:
 
 '''
 
-import os
-import re
-import types
-import ConfigParser
-import shlex
-import syslog
-from ansible.module_utils.basic import AnsibleModule
-
-debug=False
 
 def notice(msg):
     if debug:
         syslog.syslog(syslog.LOG_NOTICE, msg)
 
+
 if debug:
     syslog.openlog('ansible-%s' % os.path.basename(__file__))
+
 
 class RhsmRepository(object):
     '''
@@ -182,14 +183,15 @@ class RhsmRepository(object):
     def is_disabled(self):
         return not self.Enabled
 
+
 class RhsmRepositories(object):
     '''
         This class to manipulate repositories
     '''
 
     def __init__(self, module):
-       self.module = module
-       self.repos = self._load_repo_list()
+        self.module = module
+        self.repos = self._load_repo_list()
 
     def __iter__(self):
         return self.repos.__iter__()
@@ -328,22 +330,23 @@ class RhsmRepositories(object):
         args = "subscription-manager repos --disable='*'"
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
 
+
 def main():
     #
     # Initialise Ansible module
     #
     module = AnsibleModule(
-                argument_spec = dict(
-                    id      = dict(type="list"),
-                    # can't set a default='all' on list, otherwise id will never be used to enable/disable repos
-                    list    = dict(choices=['all', 'enabled', 'disabled']),
-                    mode    = dict(choices=['idempotent', 'incremental']),
-                    state   = dict(choices=['enabled', 'disabled']),
-                ),
-                required_one_of = [['id', 'list']],
-                mutually_exclusive = [['id', 'list']],
-                supports_check_mode = False,
-            )
+        argument_spec = dict(
+            id      = dict(type="list"),
+            # can't set a default='all' on list, otherwise id will never be used to enable/disable repos
+            list    = dict(choices=['all', 'enabled', 'disabled']),
+            mode    = dict(choices=['idempotent', 'incremental']),
+            state   = dict(choices=['enabled', 'disabled']),
+        ),
+        required_one_of = [['id', 'list']],
+        mutually_exclusive = [['id', 'list']],
+        supports_check_mode = False,
+    )
 
     #
     # Initialize RhsmRepositories
@@ -391,7 +394,7 @@ def main():
 
         changed_repos.setdefault('enabled', [])
         changed_repos.setdefault('disabled', [])
-        module.exit_json(changed=has_changed, state=p_state, id=p_id, enabled=changed_repos['enabled'], disabled=changed_repos['disabled']);
+        module.exit_json(changed=has_changed, state=p_state, id=p_id, enabled=changed_repos['enabled'], disabled=changed_repos['disabled'])
 
 if __name__ == '__main__':
     main()
