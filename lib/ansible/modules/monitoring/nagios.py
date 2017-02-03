@@ -196,13 +196,14 @@ EXAMPLES = '''
     command: DISABLE_FAILURE_PREDICTION
 '''
 
-import ConfigParser
 import types
 import time
 import os.path
 
-######################################################################
+from ansible.module_utils.basic import AnsibleModule
 
+
+######################################################################
 
 def which_cmdfile():
     locations = [
@@ -1079,9 +1080,6 @@ class Nagios(object):
         self.module.exit_json(nagios_commands=self.command_results,
                               changed=True)
 
-######################################################################
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

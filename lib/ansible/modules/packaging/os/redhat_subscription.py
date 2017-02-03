@@ -160,8 +160,10 @@ EXAMPLES = '''
 import os
 import re
 import types
-import ConfigParser
-import shlex
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six.moves import configparser
 
 
 class RegistrationBase(object):
@@ -191,7 +193,7 @@ class RegistrationBase(object):
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
         if os.path.isfile(plugin_conf):
-            cfg = ConfigParser.ConfigParser()
+            cfg = configparser.ConfigParser()
             cfg.read([plugin_conf])
             if enabled:
                 cfg.set('main', 'enabled', 1)
@@ -219,7 +221,7 @@ class Rhsm(RegistrationBase):
         '''
 
         # Read RHSM defaults ...
-        cp = ConfigParser.ConfigParser()
+        cp = configparser.ConfigParser()
         cp.read(rhsm_conf)
 
         # Add support for specifying a default value w/o having to standup some configuration
@@ -231,7 +233,7 @@ class Rhsm(RegistrationBase):
             else:
                 return default
 
-        cp.get_option = types.MethodType(get_option_default, cp, ConfigParser.ConfigParser)
+        cp.get_option = types.MethodType(get_option_default, cp, configparser.ConfigParser)
 
         return cp
 
@@ -558,9 +560,6 @@ def main():
             else:
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
