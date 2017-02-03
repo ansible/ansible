@@ -118,7 +118,7 @@ def main():
                        default='present'),
             blacklist_file=dict(required=False, default=None)
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     args = dict(changed=False, failed=False,
@@ -128,6 +128,9 @@ def main():
 
     if module.params['blacklist_file']:
         filename = module.params['blacklist_file']
+
+    if module.check_mode:
+        filename = '/dev/null'
 
     blacklist = Blacklist(args['name'], filename)
 
