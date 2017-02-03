@@ -30,6 +30,7 @@ stated otherwise in the document.
 
   - Make setup.py/facts more pluggable
   - Fact gathering policy finer grained
+  - Improve testing of setup.py/facts.py
 
 - **Cloud Provider Support**
 
