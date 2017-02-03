@@ -60,21 +60,51 @@ options:
       - Filepath to JSON file containing the collection item data
     default: []
     required: false
-  src:
-    description:
-      - Filepath to JSON file containing the collection item data
-    required: false
 '''
 
 EXAMPLES = '''
-# add an IP address pool to AOS-server
+# Create an IP Pool with one subnet
 
-- aos_ip_pool:
-    session: "{{ aos_session }}"
-    name:
-    state: present
-    src: resources/ip-pools/dc1_switches.json
+    - name: "Create IP Pool"
+      aos_ip_pool:
+        session: "{{ session_ok }}"
+        name: "my-ip-pool"
+        subnets: [ 172.10.0.0/16 ]
+        state: present
 
+# Create an IP Pool with multiple subnets
+
+    - name: "Create IP Pool with multiple subnets"
+      aos_ip_pool:
+        session: "{{ session_ok }}"
+        name: "my-other-ip-pool"
+        subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
+        state: present
+
+# Check if an IP Pool exist with same subnets by ID
+
+    - name: "Check if IP pool exist and is conform"
+      aos_ip_pool:
+        session: "{{ session_ok }}"
+        name: "45ab26fc-c2ed-4307-b330-0870488fa13e"
+        subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
+        state: present
+
+# Delete an IP Pool by name
+
+    - name: "Delete an IP pool "
+      aos_ip_pool:
+        session: "{{ session }}"
+        name: "my-ip-pool"
+        state: absent
+
+# Delete an IP Pool by ID
+
+    - name: "Delete an IP pool by id"
+      aos_ip_pool:
+        session: "{{ session }}"
+        id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
+        state: absent
 '''
 
 RETURNS = '''
