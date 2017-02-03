@@ -34,8 +34,8 @@ except ImportError:
 class Cloudera(object):
     def __init__(self, module, host, port, username, password, api_version, use_tls):
         self.module = module
-        self.host = host
-        self.port = port
+        self.host = hos
+        self.port = por
         self.username = username
         self.password = password
         self.api_version = api_version
@@ -61,7 +61,7 @@ class Cloudera(object):
             fd.close()
         else:
             self.module.log('No such configuration file -  %s or there are no read permissions' % config_path)
-        return config_content
+        return config_conten
 
 ### Checks if existing config is up-to-date
     def update_config(self, obj, current_config, config_path):
@@ -84,7 +84,7 @@ class Cloudera(object):
             self.module.log('Cloudera Manager is in express state!')
         return license
 
-### Returns connection object
+### Returns connection objec
     def connect(self):
         connection = ApiResource(
             self.host, server_port = self.port, username = self.username, password = self.password,
@@ -97,7 +97,7 @@ class Cloudera(object):
         cm = connection.get_cloudera_manager()
         return cm
 
-### Returns cluster object
+### Returns cluster objec
     def get_cluster(self, connection, cluster_name):
         cluster = None
         try:
@@ -148,22 +148,22 @@ class Cloudera(object):
     def reversed_dictionary(self, dictionary):
         rev = {}
         for key, value in dictionary.items():
-          rev[value] = key
+            rev[value] = key
         return rev
 
-### Removes specific keys from dict
+### Removes specific keys from dic
     def filter_dictionary(self, dictionary, keys):
-        filtered = filter(lambda key: dictionary.pop(key, None), keys) 
+        filtered = filter(lambda key: dictionary.pop(key, None), keys)
         return filtered
 
-### 
+###
     def installed_hosts_globally(self, connection, hostnames):
         mapping = self.get_hostid_hostname_mapping(connection)
         reversed_mapping = self.reversed_dictionary(mapping)
         installed_hosts = filter(lambda hostname: reversed_mapping.pop(hostname, None), hostnames)
         return installed_hosts
 
-### Returns host_ids which is provisioned but not in the cluster    
+### Returns host_ids which is provisioned but not in the cluster
     def installed_hosts_not_in_cluster(self, connection, cluster_obj):
         mapping = self.get_hostid_hostname_mapping(connection)
         host_ids = self.list_cluster_member_ids(cluster_obj)

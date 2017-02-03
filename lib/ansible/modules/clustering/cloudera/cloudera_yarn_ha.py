@@ -63,13 +63,13 @@ options:
     secondary_host:
         description:
             - Hostname where secondary YARN will be created. Host MUST BE in cluster!
-        required: true    
+        required: true
     state:
         description:
             - Enable YARN HA state.
         required: false
         default: 'enable_yarn_ha'
-        choices: ['enable_yarn_ha']        
+        choices: ['enable_yarn_ha']
 '''
 
 EXAMPLES = '''
@@ -89,7 +89,7 @@ def enable_yarn_ha(cloudera, connection, cluster_name, secondary_host):
     cluster = connection.get_cluster(cluster_name)
     service = cloudera.get_service_by_type(cluster, 'YARN')
     secondary_host_id = cloudera.get_hostid_by_hostname(connection, secondary_host)
-    zookeeper_service_name = cloudera.get_service_by_type(cluster, 'ZOOKEEPER').name  
+    zookeeper_service_name = cloudera.get_service_by_type(cluster, 'ZOOKEEPER').name
     service.enable_rm_ha(secondary_host_id, zookeeper_service_name).wait()
     service.create_yarn_job_history_dir().wait()
     service.create_yarn_node_manager_remote_app_log_dir().wait()

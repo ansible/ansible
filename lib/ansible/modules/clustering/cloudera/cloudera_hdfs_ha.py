@@ -66,34 +66,34 @@ options:
         required: true
     standby_host_role_type:
         description:
-            - Role type in HDFS service. It will be used to find host ID where this role has been applied. Default is : SECONDARYNAMENODE.      
+            - Role type in HDFS service. It will be used to find host ID where this role has been applied. Default is : SECONDARYNAMENODE.
         required: false
         default: SECONDARYNAMENODE
     nameservice:
         description:
             - Nameservice for HDFS HA
         required: false
-        default: HDFS-HA-NAMESERVICE    
+        default: HDFS-HA-NAMESERVICE
     jns:
         description:
             - Journal node list:
-            - { 'journal_role_name': 'JOURNALNODE1', 'host': "123.123.123.124" } 
+            - { 'journal_role_name': 'JOURNALNODE1', 'host': "123.123.123.124" }
             - { 'journal_role_name': 'JOURNALNODE2', 'host': "123.123.123.125" }
             - { 'journal_role_name': 'JOURNALNODE3', 'host': "123.123.123.126" }
             - In this example 'journal_role_name' - role name which will be used when creating JOURNALNODE role type on specific host.
             - 'host' is a hostname where journal role will be applied. This 'host' MUST BE in cluster.
-        required: true    
+        required: true
     standby_role_name:
         description:
             - Role name to use for NAMENODE-STANDBY role type.
         required: false
-        default: NAMENODE-STANDBY    
+        default: NAMENODE-STANDBY
     state:
         description:
             - Enable HDFS HA state.
         required: false
         default: 'enable_hdfs_ha'
-        choices: ['enable_hdfs_ha']        
+        choices: ['enable_hdfs_ha']
 '''
 
 EXAMPLES = '''
@@ -129,7 +129,10 @@ def enable_hdfs_ha(cloudera, connection, cluster_name, active_role_name, standby
     standby_host_id = cloudera.get_hostid_by_role_type(service, standby_host_role_type)[0]
     zookeeper_service_name = cloudera.get_service_by_type(cluster, 'ZOOKEEPER').name
     journal_nodes_info = compose_journal_nodes_info(cloudera, connection, jns)
-    service.enable_nn_ha(active_name=active_role_name, standby_host_id=standby_host_id, nameservice=nameservice, jns=journal_nodes_info, standby_name=standby_role_name, zk_service_name=zookeeper_service_name).wait()
+    service.enable_nn_ha(
+        active_name=active_role_name, standby_host_id=standby_host_id, nameservice=nameservice, jns=journal_nodes_info,
+        standby_name=standby_role_name, zk_service_name=zookeeper_service_name
+    ).wait()
     return True
 
 def main():

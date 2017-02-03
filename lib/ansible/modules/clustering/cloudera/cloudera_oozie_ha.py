@@ -63,7 +63,7 @@ options:
     load_balancer_host:
         description:
             - Hostname where secondary Load Balancer will be created. Host MUST BE in cluster!
-        required: true    
+        required: true
     load_balancer_port:
         description:
             - Port number to use for Load Balancer.
@@ -73,13 +73,13 @@ options:
         description:
             - List of hostnames where additional OOZIE roles will be applied. They MUST be in cluster!
             - 123.123.123.124
-            - 123.123.123.125 
+            - 123.123.123.125
     state:
         description:
             - Enable OOZIE HA state.
         required: false
         default: 'enable_oozie_ha'
-        choices: ['enable_oozie_ha']        
+        choices: ['enable_oozie_ha']
 '''
 
 EXAMPLES = '''

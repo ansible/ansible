@@ -65,7 +65,7 @@ options:
         description:
             - Service type to create role in.
         required: false
-        default: MGMT        
+        default: MGMT
     role_type:
         description:
             - Role type to create or search role_config_group in.
@@ -73,21 +73,22 @@ options:
     role_name:
         description:
             - Role name to create. This should be present for state: 'create'.
-        required: false    
-    role_host:    
+        required: false
+    role_host:
         description:
             - Host(hostname as listed in cluster) to apply role on.
-        required: false    
+        required: false
     configuration_file:
         description:
-            - Path to the configuration file to use for the desired role. Should be in JSON format only!. If configuration file is inaccessible warning message will be shown.
+            - Path to the configuration file to use for the desired role. Should be in JSON format only!.
+            - If configuration file is inaccessible warning message will be shown.
         required: false
     state:
         description:
             - Action to apply on desired role_type.
         required: false
         default: 'create'
-        choices: ['create', 'update_role_group']        
+        choices: ['create', 'update_role_group']
 '''
 
 EXAMPLES = '''
@@ -142,7 +143,7 @@ def create_role(module, cloudera, service_obj, role_name, role_type, role_host, 
         role_changed = True
         configuration_changed = update_role_config_group(cloudera, service_obj, role_type, configuration_file)
     result = role_changed | configuration_changed
-    return result
+    return resul
 
 def update_role_config_group(cloudera, service_obj, role_type, configuration_file):
     configuration_changed = False

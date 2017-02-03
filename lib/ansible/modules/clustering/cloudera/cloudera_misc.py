@@ -25,7 +25,8 @@ author: "Serghei Anicheev (@sanicheev) <serghei.anicheev@gmail.com>"
 version_added: '2.2.0.2'
 short_description: Cloudera Manager miscellaneous.
 description:
-    - This module can be used to run post actions for service before first run such as: 'create_sentry_database, create_yarn_job_history_dir', or stop,start services or re-deploy service configuration.
+    - This module can be used to run post actions for service before first run such as: 'create_sentry_database, create_yarn_job_history_dir',
+    - or stop,start services or re-deploy service configuration.
 options:
     host:
         description:
@@ -67,15 +68,16 @@ options:
         required: true
     force:
         description:
-            - Enable this if you would like to skip service status check before running stop or start action on desired service type.  
+            - Enable this if you would like to skip service status check before running stop or start action on desired service type.
         required: false
-        default: false    
+        default: false
     state:
         description:
             - Action to apply on desired service_type.
         required: false
         default: 'start'
-        choices: [ 'start', 'stop', 'restart', 'init_zk', 'init_hive', 'init_impala', 'init_sqoop', 'init_hbase', 'init_solr', 'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs']       
+        choices: [ 'start', 'stop', 'restart', 'init_zk', 'init_hive', 'init_impala', 'init_sqoop', 'init_hbase',
+                   'init_solr', 'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs']
 '''
 
 EXAMPLES = '''
@@ -89,7 +91,7 @@ EXAMPLES = '''
     service_type: "MGMT"
     state: "start"
 
-# Run required action on HDFS service type before first start    
+# Run required action on HDFS service type before first star
 - name: Init HDFS
   cloudera_misc:
     host: 123.123.123.123
@@ -100,7 +102,7 @@ EXAMPLES = '''
     service_type: "HDFS"
     state: "init_hdfs"
 
-# Start HDFS service and skipping any service status checks    
+# Start HDFS service and skipping any service status checks
 - name: Start HDFS service
   cloudera_misc:
     host: 123.123.123.123
@@ -110,8 +112,8 @@ EXAMPLES = '''
     service_type: "HDFS"
     force: true
     state: "start"
-    
-# Run required action on ZOOKEEPER service type before first start   
+
+# Run required action on ZOOKEEPER service type before first star
  - name: Init ZOOKEEPER
   cloudera_misc:
     host: 123.123.123.123
@@ -121,8 +123,8 @@ EXAMPLES = '''
     cluster_name: MyCluster
     service_type: "ZOOKEEPER"
     state: "init_zk"
-    
-# Re-Deploy service configuration for SENTRY service type.   
+
+# Re-Deploy service configuration for SENTRY service type.
  - name: Re-Deploy SENTRY service configuration
   cloudera_misc:
     host: 123.123.123.123
@@ -131,7 +133,7 @@ EXAMPLES = '''
     password: admin
     cluster_name: MyCluster
     service_type: "SENTRY"
-    state: "deploy_service_config"          
+    state: "deploy_service_config"
 '''
 import time
 
@@ -155,7 +157,7 @@ def get_svc(cloudera, connection, cluster_name, service_type):
 def service_control(cloudera, connection, cluster_name, service_type, force, action='start'):
     changed = False
     if service_type == 'MGMT':
-        cloudera_manager = cloudera.cloudera_manager(connection) 
+        cloudera_manager = cloudera.cloudera_manager(connection)
         mgmt_service = cloudera_manager.get_service()
         changed = process_service(mgmt_service, force, action)
     else:
@@ -248,7 +250,10 @@ def main():
             cluster_name=dict(default='MyCluster', required=False, type='str'),
             service_type=dict(required=True, type='str'),
             force=dict(default=False, type='bool'),
-            state=dict(default='start', choices=['start', 'stop', 'restart', 'init_zk', 'init_hive', 'init_impala', 'init_sqoop', 'init_hbase', 'init_solr', 'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs'])
+            state=dict(default='start', choices=[
+                'start', 'stop', 'restart', 'init_zk', 'init_hive', 'init_impala', 'init_sqoop', 'init_hbase', 'init_solr',
+                'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs'
+            ])
         ),
         supports_check_mode=True
     )

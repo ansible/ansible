@@ -58,7 +58,7 @@ options:
         default: false
     trial:
         description:
-            - Begin trial period. This option is mutually exclusive with options: license_body or license_owner. 
+            - Begin trial period. This option is mutually exclusive with options: license_body or license_owner.
         required: false
         default: false
     license_body:
@@ -69,7 +69,7 @@ options:
         description:
             - Owner of the license. This option is mutually exclusive with option: trial. Required together with option: license_body.
         required: false
-        default: Trial License                
+        default: Trial License
     state:
         description:
             - The desired action to perform with the license.
@@ -162,7 +162,7 @@ def main():
         else:
             install_license(cloudera_manager, license_body)
             changed = True
-            
+
     module.exit_json(changed=changed)
 
 if __name__ == '__main__':

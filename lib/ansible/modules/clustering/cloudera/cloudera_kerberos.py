@@ -69,13 +69,13 @@ options:
     kdc_password:
         description:
             - Password to use during generation of admin principal
-        required: true    
+        required: true
     state:
         description:
             - Kerberize services in cluster.
         required: false
         default: 'kerberize'
-        choices: ['kerberize']        
+        choices: ['kerberize']
 '''
 
 EXAMPLES = '''
@@ -87,7 +87,7 @@ EXAMPLES = '''
     password: admin
     cluster_name: MyCluster
     kdc_user: Administrator@MY.REALM
-    kdc_password: secret
+    kdc_password: secre
     state: "kerberize"
 '''
 
@@ -135,7 +135,7 @@ def main():
     changed=False
 
     if module.check_mode:
-      module.exit_json(changed=True)
+        module.exit_json(changed=True)
 
     cloudera = Cloudera(module, host, port, username, password, api_version, use_tls)
     connection = cloudera.connect()

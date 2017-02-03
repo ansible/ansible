@@ -102,13 +102,13 @@ def deploy_parcel(module, cluster, parcel_name, parcel_version):
         module.log('Parcel %s already activated!' % parcel_version)
     else:
         parcel_obj = parcel[0]
-        
+
         download = parcel_obj.start_download()
         while parcel_obj.stage != 'DOWNLOADED':
             sleep(5)
             parcel_obj = cluster.get_parcel(parcel_name, parcel_version)
 
-        parcel_obj.start_distribution()       
+        parcel_obj.start_distribution()
         while parcel_obj.stage != "DISTRIBUTED":
             sleep(5)
             parcel_obj = cluster.get_parcel(parcel_name, parcel_version)

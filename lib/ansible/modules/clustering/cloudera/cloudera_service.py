@@ -67,14 +67,15 @@ options:
         required: true
     configuration_file:
         description:
-            - Path to the configuration file to use for the desired service. Should be in JSON format only!. If configuration file is inaccessible warning message will be shown.
+            - Path to the configuration file to use for the desired service. Should be in JSON format only!.
+            - If configuration file is inaccessible warning message will be shown.
         required: false
     state:
         description:
             - Action to apply on desired service_type.
         required: false
         default: 'create'
-        choices: ['create']        
+        choices: ['create']
 '''
 
 EXAMPLES = '''
@@ -88,7 +89,7 @@ EXAMPLES = '''
     configuration_file: 'service.conf'
     state: create
 
-# Create Zookeeper service and configure it
+# Create Zookeeper service and configure i
 - name: Create Zookeeper service
   cloudera_service:
     host: 123.123.123.123
@@ -114,8 +115,8 @@ def create_mgmt_service(cloudera, connection, service_type, configuration_file):
         cloudera_manager.create_mgmt_service(service_info)
         service_changed = True
     result = service_changed | configuration_changed
-    return result  
-    
+    return resul
+
 def create_general_service(cloudera, connection, cluster_name, service_type, configuration_file):
     cluster = cloudera.get_cluster(connection, cluster_name)
     cloudera.validate_service_type(cluster, service_type)
@@ -133,7 +134,7 @@ def create_general_service(cloudera, connection, cluster_name, service_type, con
         current_config = service.get_config()[0]
         configuration_changed = cloudera.update_config(service, current_config, configuration_file)
     result = service_changed | configuration_changed
-    return result
+    return resul
 
 def main():
     module = AnsibleModule(

@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-module: cloudera_host
+module: cloudera_hos
 author: "Serghei Anicheev (@sanicheev) <serghei.anicheev@gmail.com>"
 version_added: '2.2.0.2'
 short_description: Module for Cloudera Manager hosts.
@@ -65,7 +65,7 @@ options:
         description:
             - Username to use for connection from Cloudera Manager to agent node during 'install'.
         required: false
-        default: root
+        default: roo
     private_key:
         description:
             - Private ssh key to use for connection from Cloudera Manager to agent node during 'install'.
@@ -130,10 +130,10 @@ def install_hosts(cloudera, connection, host_username, private_key, cm_repo_url,
             host_username, hosts_to_install, private_key=private_key, cm_repo_url=cm_repo_url,
             gpg_key_custom_url=gpg_key_custom_url
         )
-        while status.success == None:
-          sleep(5)
-          status = status.fetch()
-        if status.success != True:
+        while status.success is None:
+            sleep(5)
+            status = status.fetch()
+        if status.success is not True:
             raise Exception('Host install failed with error: ' + cmd.resultMessage)
         changed = True
     return changed
