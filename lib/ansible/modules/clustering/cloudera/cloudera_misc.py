@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -25,8 +28,8 @@ author: "Serghei Anicheev (@sanicheev) <serghei.anicheev@gmail.com>"
 version_added: '2.2.0.2'
 short_description: Cloudera Manager miscellaneous.
 description:
-    - This module can be used to run post actions for service before first run such as: 'create_sentry_database, create_yarn_job_history_dir',
-    - or stop,start services or re-deploy service configuration.
+    - This module can be used to run post actions for service before first run such as - 'create_sentry_database, create_yarn_job_history_dir'
+      or stop,start services or re-deploy service configuration.
 options:
     host:
         description:
@@ -60,7 +63,7 @@ options:
     cluster_name:
         description:
             - Cloudera cluster name to use.
-        default: MyCluster    .
+        default: MyCluster
         required: false
     service_type:
         description:
@@ -77,7 +80,7 @@ options:
         required: false
         default: 'start'
         choices: [ 'start', 'stop', 'restart', 'init_zk', 'init_hive', 'init_impala', 'init_sqoop', 'init_hbase',
-                   'init_solr', 'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs']
+        'init_solr', 'init_yarn', 'init_sentry', 'deploy_service_config', 'init_oozie', 'init_hdfs']
 '''
 
 EXAMPLES = '''

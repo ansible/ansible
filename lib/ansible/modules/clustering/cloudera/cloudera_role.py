@@ -18,6 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: cloudera_role
@@ -72,7 +76,7 @@ options:
         required: true
     role_name:
         description:
-            - Role name to create. This should be present for state: 'create'.
+            - Role name to create. This should be present for state - 'create'.
         required: false
     role_host:
         description:

@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -58,7 +61,7 @@ options:
         default: false
     cluster_name:
         description:
-            - Cloudera cluster name to search for HDFS service type in.  .
+            - Cloudera cluster name to search for HDFS service type in.
         required: true
     active_role_name:
         description:
@@ -66,7 +69,7 @@ options:
         required: true
     standby_host_role_type:
         description:
-            - Role type in HDFS service. It will be used to find host ID where this role has been applied. Default is : SECONDARYNAMENODE.
+            - Role type in HDFS service. It will be used to find host ID where this role has been applied. Default is SECONDARYNAMENODE.
         required: false
         default: SECONDARYNAMENODE
     nameservice:
@@ -76,12 +79,9 @@ options:
         default: HDFS-HA-NAMESERVICE
     jns:
         description:
-            - Journal node list:
-            - { 'journal_role_name': 'JOURNALNODE1', 'host': "123.123.123.124" }
-            - { 'journal_role_name': 'JOURNALNODE2', 'host': "123.123.123.125" }
-            - { 'journal_role_name': 'JOURNALNODE3', 'host': "123.123.123.126" }
-            - In this example 'journal_role_name' - role name which will be used when creating JOURNALNODE role type on specific host.
-            - 'host' is a hostname where journal role will be applied. This 'host' MUST BE in cluster.
+            - Journal node list.
+              'journal_role_name' - role name which will be used when creating JOURNALNODE role type on specific host.
+              'host' is a hostname where journal role will be applied. This 'host' MUST BE in cluster.
         required: true
     standby_role_name:
         description:

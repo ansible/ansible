@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -58,16 +61,16 @@ options:
         default: false
     trial:
         description:
-            - Begin trial period. This option is mutually exclusive with options: license_body or license_owner.
+            - Begin trial period. This option is mutually exclusive with options license_body or license_owner.
         required: false
         default: false
     license_body:
         description:
-            - License body to install. This option is mutually exclusive with option: trial. Required together with option: license_owner.
+            - License body to install. This option is mutually exclusive with option trial. Required together with option license_owner.
         required: false
     license_owner:
         description:
-            - Owner of the license. This option is mutually exclusive with option: trial. Required together with option: license_body.
+            - Owner of the license. This option is mutually exclusive with option trial. Required together with option license_body.
         required: false
         default: Trial License
     state:
