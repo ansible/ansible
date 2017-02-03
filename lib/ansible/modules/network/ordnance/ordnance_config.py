@@ -17,13 +17,13 @@
 #
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
+                    'supported_by': 'community',
                     'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: Ordnance_config
-version_added: "2.2??"
+version_added: "2.3"
 author: "Alexander Turner (alex.turner@ordnance.io)"
 short_description: Manage Ordnance configuration sections
 description:
@@ -31,9 +31,8 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with these configuration sections in
     a deterministic way.
-extends_documentation_fragment: ordnance
 options:
-  lines:
+  commands:
     description:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
@@ -60,7 +59,6 @@ options:
         exclusive with I(lines).
     required: false
     default: null
-    version_added: "2.2"
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -110,7 +108,6 @@ options:
         configuration action
     required: false
     default: "@"
-    version_added: "2.3"
   force:
     description:
       - The force argument instructs the module to not consider the
@@ -133,7 +130,6 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-    version_added: "2.2"
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
@@ -142,7 +138,6 @@ options:
         will not download the running-config from the remote node.
     required: false
     default: null
-    version_added: "2.2"
   defaults:
     description:
       - This argument specifies whether or not to collect all defaults
@@ -152,7 +147,6 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-    version_added: "2.2"
   save:
     description:
       - The C(save) argument instructs the module to save the running-
@@ -161,7 +155,6 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
-    version_added: "2.2"
 """
 
 EXAMPLES = """
