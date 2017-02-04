@@ -721,6 +721,7 @@ def test_distribution_version():
 
     args = json.dumps(dict(ANSIBLE_MODULE_ARGS={}))
     with swap_stdin_and_argv(stdin_data=args):
+        basic._ANSIBLE_ARGS = None
         module = basic.AnsibleModule(argument_spec=dict())
 
         for t in TESTSETS:
