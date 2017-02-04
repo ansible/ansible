@@ -72,7 +72,7 @@ The following fields can be used and are all required unless specified otherwise
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. `version_added: "2.3"`
 * ``requirements:``
-    List of requirements, and minimum versions (if applicable)
+    List of requirements, and minimum versions (if applicable). These are the requirements on the host that executes the module.
 * ``notes:``
     Details of any important information that doesn't fit in one of the above sections, for example if ``check_mode`` isn't supported, or a link to external documentation.
 
