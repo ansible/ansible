@@ -253,18 +253,20 @@ def main():
         ps_cmd = module.get_bin_path('ps', True)
         rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', str(pid)])
         stime = ''
-        for line in iter(ps_output.splitlines()):
-            if 'started' not in line:
-                stime = line
+        if rc == 0:
+            for line in iter(ps_output.splitlines()):
+                if 'started' not in line:
+                    stime = line
         return stime
 
     def getPidUser(pid):
         ps_cmd = module.get_bin_path('ps', True)
         rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', str(pid)])
         user = ''
-        for line in iter(ps_output.splitlines()):
-            if line != 'USER':
-                user = line
+        if rc == 0:
+            for line in iter(ps_output.splitlines()):
+                if line != 'USER':
+                    user = line
         return user
 
     result = {}
@@ -276,23 +278,25 @@ def main():
 
         # which TCP ports are listening for connections?
         rc, output_tcp, stderr = module.run_command([netstat_cmd, '-plnt'])
-        tcp_ports = netStatParse(output_tcp)
-        for i, p in enumerate(tcp_ports):
-            p['stime'] = getPidSTime(p['pid'])
-            p['user'] = getPidUser(p['pid'])
-            tcp_ports[i] = p
-        if tcp_ports:
-            result['ansible_facts']['tcp_listen'] = tcp_ports
+        if rc == 0:
+            tcp_ports = netStatParse(output_tcp)
+            for i, p in enumerate(tcp_ports):
+                p['stime'] = getPidSTime(p['pid'])
+                p['user'] = getPidUser(p['pid'])
+                tcp_ports[i] = p
+            if tcp_ports:
+                result['ansible_facts']['tcp_listen'] = tcp_ports
 
         # which UDP ports are listening for connections?
         rc, output_udp, stderr = module.run_command([netstat_cmd, '-plnu'])
-        udp_ports = netStatParse(output_udp)
-        for i, p in enumerate(udp_ports):
-            p['stime'] = getPidSTime(p['pid'])
-            p['user'] = getPidUser(p['pid'])
-            udp_ports[i] = p
-        if udp_ports:
-            result['ansible_facts']['udp_listen'] = udp_ports
+        if rc == 0:
+            udp_ports = netStatParse(output_udp)
+            for i, p in enumerate(udp_ports):
+                p['stime'] = getPidSTime(p['pid'])
+                p['user'] = getPidUser(p['pid'])
+                udp_ports[i] = p
+            if udp_ports:
+                result['ansible_facts']['udp_listen'] = udp_ports
 
     except EnvironmentError:
         err = get_exception()
