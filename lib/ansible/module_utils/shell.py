@@ -73,6 +73,7 @@ class Shell(object):
              allow_agent=False, key_policy="loose"):
 
         self.ssh = paramiko.SSHClient()
+
         if key_policy != "ignore":
             self.ssh.load_system_host_keys()
             try:
@@ -90,14 +91,12 @@ class Shell(object):
         if not look_for_keys:
             look_for_keys = password is None
 
-
         try:
             self.ssh.connect(
                 host, port=port, username=username, password=password,
                 timeout=self._timeout, look_for_keys=look_for_keys, pkey=pkey,
                 key_filename=key_filename, allow_agent=allow_agent,
             )
-
             self.shell = self.ssh.invoke_shell()
             self.shell.settimeout(self._timeout)
         except socket.gaierror:
@@ -160,7 +159,7 @@ class Shell(object):
 
             self.shell.sendall(cmd)
 
-            if self._timeout == 0:
+            if obj.get('sendonly'):
                 return
 
             signal.alarm(self._timeout)
@@ -223,7 +222,8 @@ class CliBase(object):
         username = params['username']
         password = params.get('password')
         key_file = params.get('ssh_keyfile')
-        timeout = params['timeout'] or 10
+
+        timeout = params.get('timeout') or 10
 
         try:
             self.shell = Shell(
@@ -259,7 +259,8 @@ class CliBase(object):
             transform = ComplexDict(dict(
                 command=dict(key=True),
                 prompt=dict(),
-                response=dict()
+                response=dict(),
+                sendonly=dict(default=False)
             ))
             return transform(obj)
 
