@@ -32,4 +32,3 @@ requirements:
     - list of required things.
     - like the factor package
     - zypper >= 1.0
-
