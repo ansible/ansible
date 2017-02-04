@@ -588,6 +588,7 @@ def create_autoscaling_group(connection, module):
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     notification_topic = module.params.get('notification_topic')
+    wait_for_instances = module.params.get('wait_for_instances')
 
     if notification_topic:
         ag.delete_notification_configuration(notification_topic)
@@ -595,22 +596,25 @@ def delete_autoscaling_group(connection, module):
     groups = connection.get_all_groups(names=[group_name])
     if groups:
         group = groups[0]
-        group.max_size = 0
-        group.min_size = 0
-        group.desired_capacity = 0
-        group.update()
-        instances = True
-        while instances:
-            tmp_groups = connection.get_all_groups(names=[group_name])
-            if tmp_groups:
-                tmp_group = tmp_groups[0]
-                if not tmp_group.instances:
-                    instances = False
-            time.sleep(10)
+        if not wait_for_instances:
+            group.delete(True)
+        else:
+            group.max_size = 0
+            group.min_size = 0
+            group.desired_capacity = 0
+            group.update()
+            instances = True
+            while instances:
+                tmp_groups = connection.get_all_groups(names=[group_name])
+                if tmp_groups:
+                    tmp_group = tmp_groups[0]
+                    if not tmp_group.instances:
+                        instances = False
+                time.sleep(10)
 
-        group.delete()
-        while len(connection.get_all_groups(names=[group_name])):
-            time.sleep(5)
+            group.delete()
+            while len(connection.get_all_groups(names=[group_name])):
+                time.sleep(5)
         changed=True
         return changed
     else:
