@@ -3,23 +3,30 @@
 # Configure a Windows host for remote management with Ansible
 # -----------------------------------------------------------
 #
-# This script checks the current WinRM/PSRemoting configuration and makes the
-# necessary changes to allow Ansible to connect, authenticate and execute
-# PowerShell commands.
+# This script checks the current WinRM (PS Remoting) configuration and makes
+# the # necessary changes to allow Ansible to connect, authenticate and
+# execute PowerShell commands.
 #
 # All events are logged to the Windows EventLog, useful for unattended runs.
 #
 # Use option -Verbose in order to see the verbose output messages.
+#
+# Use option -CertValidityDays to specify how long this certificate is valid
+# starting from today. So you would specify -CertValidityDays 3650 to get
+# a 10-year valid certificate.
+#
+# Use option -ForceNewSSLCert if the system has been SysPreped and a new
+# SSL Certifcate must be forced on the WinRM Listener when re-running this
+# script. This is necessary when a new SID and CN name is created.
 #
 # Use option -SkipNetworkProfileCheck to skip the network profile check.
 # Without specifying this the script will only run if the device's interfaces
 # are in DOMAIN or PRIVATE zones.  Provide this switch if you want to enable
 # WinRM on a device with an interface in PUBLIC zone.
 #
-# Use option -ForceNewSSLCert if the system has been SysPreped and a new
-# SSL Certifcate must be forced on the WinRM Listener when re-running this
-# script. This is necessary when a new SID and CN name is created.
-#
+# Use option -SubjectName to specify the CN name of the certificate. This
+# defaults to the system's hostname and generally should not be specified.
+
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
