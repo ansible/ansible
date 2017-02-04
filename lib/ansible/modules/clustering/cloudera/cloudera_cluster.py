@@ -25,8 +25,8 @@ DOCUMENTATION = '''
 ---
 module: cloudera_cluster
 author: "Serghei Anicheev (@sanicheev) <serghei.anicheev@gmail.com>"
-version_added: '2.2.0.2'
-short_description: Manage Cloudera cluster.
+version_added: '2.3'
+short_description: Manage Cloudera cluster
 description:
     - This module can create/delete Cloudera cluster.
 options:
@@ -153,7 +153,9 @@ def main():
 
     module.exit_json(changed=changed)
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.cloudera import *
+
 if __name__ == '__main__':
-    from ansible.module_utils.basic import *
-    from ansible.module_utils.cloudera import *
     main()
