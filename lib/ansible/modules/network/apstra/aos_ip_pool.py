@@ -43,11 +43,17 @@ options:
   name:
     description:
       - Name of the IP Pool to manage
+        I(only one of : name, id or src can be define)
     required: false
   id:
     description:
       - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
-        it's an alternative to C(name) and can't be use with C(name)
+        I(only one of : name, id or src can be define)
+    required: false
+  src:
+    description:
+      - filepath to JSON file containing the collection item data
+        I(only one of : name, id or src can be define)
     required: false
   state:
     description:
@@ -60,6 +66,7 @@ options:
       - Filepath to JSON file containing the collection item data
     default: []
     required: false
+
 '''
 
 EXAMPLES = '''
@@ -105,6 +112,30 @@ EXAMPLES = '''
         session: "{{ session }}"
         id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
         state: absent
+
+# Save an IP Pool to a file
+
+    - name: "Access IP Pool"
+      aos_ip_pool:
+        session: "{{ session_ok }}"
+        name: "my-ip-pool"
+        subnets: [ 172.10.0.0/16, 172.12.0.0/16 ]
+        state: present
+      register: ip_pool
+
+    - name: "Save Ip Pool into a file "
+      copy:
+        content: "{{ ip_pool.value | to_nice_json }}"
+        dest: ip_pool_saved.json
+
+# Load IP Pool from a file
+
+    - name: "Load Ip Pool from file, 1/2"
+      aos_ip_pool:
+        session: "{{ session_ok }}"
+        src: resources/ip_pool_saved.json
+        state: present
+
 '''
 
 RETURNS = '''
@@ -153,7 +184,7 @@ def create_new_ip_pool(ip_pool, name, subnets=[]):
     return ip_pool.write()
 
 #########################################################
-# State Processing 
+# State Processing
 #########################################################
 def ip_pool_absent(module, aos, my_pool):
 
@@ -185,6 +216,10 @@ def ip_pool_absent(module, aos, my_pool):
 def ip_pool_present(module, aos, my_pool):
 
     margs = module.params
+
+    # if src is defined
+    if margs['src'] is not None:
+        do_load_resource(module, aos.IpPools, margs['src'])
 
     # if ip_pool doesn't exist already, create a new one
     if my_pool.exists == False and 'name' not in margs.keys():
@@ -220,15 +255,18 @@ def ip_pool(module):
     margs = module.params
 
     # TODO add Exception handling for login error
-    aos = get_aos_session(margs['session'])
+    aos = get_aos_session(module, margs['session'])
 
     item_name = False
     item_id = False
 
-    if 'name' in margs.keys():
+    if margs['src'] is not None:
+        item_name = get_display_name_from_file(module, margs['src'])
+
+    elif margs['name'] is not None:
         item_name = margs['name']
 
-    if 'id' in margs.keys():
+    elif margs['id'] is not None:
         item_id = margs['id']
 
     #----------------------------------------------------
@@ -255,12 +293,14 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
+            src=dict(required=False),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present"),
             subnets=dict(required=False, type="list")
         ),
-        mutually_exclusive = [('name', 'id')],
+        mutually_exclusive = [('name', 'id', 'src')],
+        required_one_of=[('name', 'id', 'src')],
         supports_check_mode=True
     )
 
