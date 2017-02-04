@@ -81,6 +81,23 @@ def find_collection_item(collection, item_name=False, item_id=False):
     else:
         return collection[my_dict['display_name']]
 
+def get_display_name_from_file(module, file=''):
+    """
+    Read a JSON file and extract the display_name
+    """
+    datum = None
+
+    try:
+        datum = json.load(open(file))
+    except Exception as exc:
+        module.fail_json(msg="unable to read file'%s': %s" %
+                             (file, exc.message))
+
+    if 'display_name' in datum.keys():
+        return datum['display_name']
+    else:
+        module.fail_json(msg="unable to find display_name in file'%s'" % file)
+
 def do_load_resource(module, collection, file=''):
     """
     Load a JSON file directly to the AOS API
