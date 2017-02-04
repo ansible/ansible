@@ -24,17 +24,11 @@ author: "Pieter Voet (pietervoet@nl.ibm.com)"
 module: set_extra_var
 short_description: Sets an extra variable from a playbook.
 description:
-   - This module allows setting new variables.  Variables are set on a global basis
-   - These variables will survive between plays during an Ansible run, even for different host groups
-options:
-    key_value:
-    description:
-        - The C(set_extra_var) module takes name=var_name value=var_value pairs as variables to set
-            in the playbook scope. Or alternatively, accepts complex arguments
-            using the C(args:) statement.
-    required: true
-    default: null
-version_added: "1.2"
+    - This module allows setting new variables.  Variables are set on a global basis
+    - These variables will survive between plays during an Ansible run, even for different host groups
+    - The C(set_extra_var) module takes name=var_name value=var_value pairs as variables to set
+      in the playbook scope. Or alternatively, accepts complex arguments
+      using the C(args:) statement.
 '''
 
 EXAMPLES = '''
