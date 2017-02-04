@@ -40,6 +40,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             from ansible.module_utils import basic
 
             # test basic log invocation
+            basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec=dict(
                     foo = dict(default=True, type='bool'),
