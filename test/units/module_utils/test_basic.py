@@ -315,6 +315,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo":"hello", "bar": "bad", "bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
@@ -331,6 +332,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
@@ -583,12 +585,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_is_special_selinux_path(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos"}))
 
         with swap_stdin_and_argv(stdin_data=args):
-
+            basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec = dict(),
             )
