@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: net_command
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Executes a common on a remote network device
+short_description: Executes a command on a remote network device
 description:
   - This module will take the command and execute it on the remote
     device in a CLI shell. The command will output will be returned
