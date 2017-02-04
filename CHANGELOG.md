@@ -60,7 +60,9 @@ Ansible Changes By Release
   * cs_region
   * cs_role
   * cs_vpc
-- dimensiondata_network
+- dimensiondata
+  * dimensiondata_network
+  * dimensiondata_firewall
 - f5
   * bigip_gtm_facts
   * bigip_hostname
