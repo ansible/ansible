@@ -153,6 +153,66 @@ def create_new_ip_pool(ip_pool, name, subnets=[]):
     return ip_pool.write()
 
 #########################################################
+# State Processing 
+#########################################################
+def ip_pool_absent(module, aos, my_pool):
+
+    margs = module.params
+
+    # If the module do not exist, return directly
+    if my_pool.exists == False:
+        module.exit_json(changed=False, name=margs['name'], id='', value={})
+
+    ## Check if object is currently in Use or Not
+    # If in Use, return an error
+    in_use = False
+    if my_pool.value:
+        if my_pool.value['status'] != 'not_in_use':
+            in_use = True
+            module.fail_json(msg="unable to delete this ip Pool, currently in use")
+    else:
+        module.fail_json(msg="Ip Pool object has an invalid format, value['status'] must be defined")
+
+    # If not in check mode, delete Ip Pool
+    if not module.check_mode:
+        my_pool.delete()
+
+    module.exit_json( changed=True,
+                      name=my_pool.name,
+                      id=my_pool.id,
+                      value={} )
+
+def ip_pool_present(module, aos, my_pool):
+
+    margs = module.params
+
+    # if ip_pool doesn't exist already, create a new one
+    if my_pool.exists == False and 'name' not in margs.keys():
+        module.fail_json(msg="name is mandatory for module that don't exist currently")
+
+    elif my_pool.exists == False:
+
+        if not module.check_mode:
+            my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
+            my_pool = my_new_pool
+
+        module.exit_json( changed=True,
+                          name=my_pool.name,
+                          id=my_pool.id,
+                          value=my_pool.value )
+
+    # if pool already exist, check if list of network is the same
+    # if same just return the object and report change false
+    if set(get_list_of_subnets(my_pool)) == set(margs['subnets']):
+        module.exit_json( changed=False,
+                          name=my_pool.name,
+                          id=my_pool.id,
+                          value=my_pool.value )
+    else:
+        module.fail_json(msg="ip_pool already exist but value is different, currently not supported to update a module")
+
+
+#########################################################
 # Main Function
 #########################################################
 def ip_pool(module):
@@ -179,62 +239,15 @@ def ip_pool(module):
                         item_id=item_id)
 
     #----------------------------------------------------
-    # State == Absent
+    # Proceed based on State value
     #----------------------------------------------------
     if margs['state'] == 'absent':
 
-        # If the module do not exist, return directly
-        if my_pool.exists == False:
-            module.exit_json(changed=False, name=margs['name'], id='', value={})
+        ip_pool_absent(module, aos, my_pool)
 
-        ## Check if object is currently in Use or Not
-        # If in Use, return an error
-        in_use = False
-        if my_pool.value:
-            if my_pool.value['status'] != 'not_in_use':
-                in_use = True
-                module.fail_json(msg="unable to delete this ip Pool, currently in use")
-        else:
-            module.fail_json(msg="Ip Pool object has an invalid format, value['status'] must be defined")
-
-        # If not in check mode, delete Ip Pool
-        if not module.check_mode:
-            my_pool.delete()
-
-        module.exit_json( changed=True,
-                          name=my_pool.name,
-                          id=my_pool.id,
-                          value={} )
-
-    #----------------------------------------------------
-    # State == Present
-    #----------------------------------------------------
     elif margs['state'] == 'present':
 
-        # if ip_pool doesn't exist already, create a new one
-        if my_pool.exists == False and 'name' not in margs.keys():
-            module.fail_json(msg="name is mandatory for module that don't exist currently")
-
-        elif my_pool.exists == False:
-
-            if not module.check_mode:
-                my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
-                my_pool = my_new_pool
-
-            module.exit_json( changed=True,
-                              name=my_pool.name,
-                              id=my_pool.id,
-                              value=my_pool.value )
-
-        # if pool already exist, check if list of network is the same
-        # if same just return the object and report change false
-        if set(get_list_of_subnets(my_pool)) == set(margs['subnets']):
-            module.exit_json( changed=False,
-                              name=my_pool.name,
-                              id=my_pool.id,
-                              value=my_pool.value )
-        else:
-            module.fail_json(msg="ip_pool already exist but value is different, currently not supported to update a module")
+        ip_pool_present(module, aos, my_pool)
 
 def main():
     module = AnsibleModule(
