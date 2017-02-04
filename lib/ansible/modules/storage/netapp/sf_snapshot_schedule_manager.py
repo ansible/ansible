@@ -111,8 +111,7 @@ options:
         description:
         - starting date for the schedule
         - required when C(state=present)
-        - Please use two '-' in the above format, or you may see the following error: TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable description.
-
+        - Please use two '-' in the above format, or you may see an error- TypeError, is not JSON serializable description
 '''
 
 EXAMPLES = """
