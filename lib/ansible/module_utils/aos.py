@@ -25,16 +25,17 @@ In order to use this module, include it as part of your module
 from ansible.module_utils.aos import *
 
 """
+import json
 
 try:
     from apstra.aosom.session import Session
-    from apstra.aosom.exc import SessionError, SessionRqstError, LoginError
+    import apstra.aosom.exc as aosExc
 
     HAS_AOS_PYEZ = True
 except ImportError:
     HAS_AOS_PYEZ = False
 
-def get_aos_session(auth):
+def get_aos_session(module, auth):
     """
     Resume an existing session and return an AOS object.
 
@@ -55,7 +56,7 @@ def get_aos_session(auth):
     try:
         aos = Session()
         aos.api.resume(auth['url'], auth['headers'])
-    except LoginError as err:
+    except (aosExc.SessionError, aosExc.LoginError) as err:
         module.fail_json(msg="unable to login: %r" % err)
 
     return aos
@@ -68,39 +69,42 @@ def find_collection_item(collection, item_name=False, item_id=False):
     Return
         collection_item: object corresponding to the collection type
     """
-    my_dict = False
+    my_dict = None
 
     if item_name:
         my_dict = collection.find(method='display_name', key=item_name)
     elif item_id:
         my_dict = collection.find(method='id', key=item_id)
-    else:
-        raise Exception('Invalid inputs, either name or id must be defined')
 
     if my_dict is None:
         return collection['']
     else:
         return collection[my_dict['display_name']]
 
-def do_load_resource(module, resources):
-    margs = module.params
-    src_file = margs['src']
+def do_load_resource(module, collection, file=''):
+    """
+    Load a JSON file directly to the AOS API
+    """
+
     datum = None
-    resource = None
 
     try:
-        datum = json.load(open(src_file))
+        datum = json.load(open(file))
     except Exception as exc:
         module.fail_json(msg="unable to load src file '%s': %s" %
-                             (src_file, exc.message))
+                             (file, exc.message))
 
     try:
-        resource = resources[datum['display_name']]
-        if resource.exists:
-            module.exit_json(changed=False)
+        item = find_collection_item(collection, datum['display_name'], '')
+        if item.exists:
+            module.exit_json( changed=False,
+                              name=item.name,
+                              id=item.id,
+                              value=item.value )
 
-        resource.datum = datum
-        resource.write()
+        if not module.check_mode:
+            item.datum = datum
+            item.write()
 
     except KeyError:
         module.fail_json(msg="src data missing display_name, check file contents")
@@ -109,6 +113,7 @@ def do_load_resource(module, resources):
         module.fail_json(msg="unable to write item content: %s" % exc.message,
                          content=datum)
 
-    module.exit_json(changed=True,
-                     item_name=resource.name,
-                     item_id=resource.id)
+    module.exit_json( changed=True,
+                      name=item.name,
+                      id=item.id,
+                      value=item.value )
