@@ -25,9 +25,7 @@ author:
     - '"Nathan Davison (@ndavison)" <ndavison85@gmail.com>'
 version_added: "2.3"
 description:
-    - |
-      Gather facts on processes listening on TCP and UDP ports. Optionally provide a whitelist of TCP and/or UDP ports to gather facts on processes
-       that violate the whitelists.
+    - Gather facts on processes listening on TCP and UDP ports. Optionally provide whitelists to gather facts on violations ofthe whitelist.
 short_description: Gather facts on processes listening on TCP and UDP ports.
 options:
   whitelist_tcp:
