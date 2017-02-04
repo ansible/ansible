@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,7 +31,6 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update accounts on SolidFire
-    - auth_basic
 
 options:
 
@@ -87,16 +88,17 @@ options:
 
     volumes:
         required: false
-        note: required when state == create
         type: list
         description:
         - Volume IDs that you want to set the snapshot schedule for.
         - At least 1 volume ID is required for creating a new schedule.
+        - required when C(state=present)
 
     retention:
         required: false
-        note: HH:mm:ss format
-        description: Retention period for the snapshot.
+        description:
+        - Retention period for the snapshot.
+        - Format is HH:mm:ss
 
     schedule_id:
         required: false
@@ -106,11 +108,10 @@ options:
     starting_date:
         required: false
         format: 2016--12--01T00:00:00Z
-        description: starting date for the schedule
-        note:
-        -   required when state == 'present'
-        -   Please use two '-' in the above format, or you may see the following error:
-        -   TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable description. The starting date and time for the schedule.
+        description:
+        - starting date for the schedule
+        - required when C(state=present)
+        - Please use two '-' in the above format, or you may see the following error: TypeError: datetime.datetime(2016, 12, 1, 0, 0) is not JSON serializable description.
 
 '''
 
@@ -146,23 +147,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successful creation of schedule
-    returned: success
-    type: string
-    sample: '{"changed": true, "key": value}'
 
-msg:
-    description: Successful update of schedule
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successful removal of schedule
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
 
@@ -189,9 +174,6 @@ class SolidFireSnapShotSchedule(object):
             name=dict(required=True, type='str'),
             new_name=dict(required=False, type='str', default=None),
 
-            # interval is required when action == create
-            # interval=dict(choices=['time_interval', 'weekly', 'monthly']),
-
             time_interval_days=dict(required=False, type='int', default=1),
             time_interval_hours=dict(required=False, type='int', default=0),
             time_interval_minutes=dict(required=False, type='int', default=0),
@@ -213,7 +195,7 @@ class SolidFireSnapShotSchedule(object):
             required_if=[
                 ('state', 'present', ['starting_date', 'volumes'])
             ],
-            supports_check_mode=False
+            supports_check_mode=True
         )
 
         p = self.module.params
