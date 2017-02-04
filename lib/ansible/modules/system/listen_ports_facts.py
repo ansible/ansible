@@ -57,6 +57,140 @@ EXAMPLES = '''
   when: tcp_listen_violations
 '''
 
+RETURN = '''
+tcp_listen:
+  description: A list of processes that are listening on a TCP port.
+  type: list
+  contains:
+    address:
+      description: The address (IPv4 or IPv6) of the process.
+      type: string
+      sample: '0.0.0.0'
+    name:
+      description: The name of the process.
+      type: string
+      sample: 'mysqld'
+    pid:
+      description: The pid of the process.
+      type: int
+      sample: 1223
+    port:
+      description: The port the pid was listening on.
+      type: int
+      sample: 3306
+    protocol:
+      description: The protocol, TCP or UDP, of the listening connection.
+      type: string
+      sample: 'tcp'
+    stime:
+      description: The start time of the process.
+      type: string
+      sample: 'Thu Feb  2 13:29:45 2017'
+    user:
+      description: The user running the process.
+      type: string
+      sample: 'mysql'
+
+udp_listen:
+  description: A list of processes that are listening on a UDP port.
+  type: list
+  contains:
+    address:
+      description: The address (IPv4 or IPv6) of the process.
+      type: string
+      sample: '0.0.0.0'
+    name:
+      description: The name of the process.
+      type: string
+      sample: 'rsyslogd'
+    pid:
+      description: The pid of the process.
+      type: int
+      sample: 609
+    port:
+      description: The port the pid was listening on.
+      type: int
+      sample: 514
+    protocol:
+      description: The protocol, TCP or UDP, of the listening connection.
+      type: string
+      sample: 'udp'
+    stime:
+      description: The start time of the process.
+      type: string
+      sample: 'Thu Feb  2 13:29:45 2017'
+    user:
+      description: The user running the process.
+      type: string
+      sample: 'root'
+
+tcp_listen_violations:
+  description: A list of processes that are listening on a TCP port that violated the whitelist_tcp argument.
+  type: list
+  contains:
+    address:
+      description: The address (IPv4 or IPv6) of the process.
+      type: string
+      sample: '0.0.0.0'
+    name:
+      description: The name of the process.
+      type: string
+      sample: 'mysqld'
+    pid:
+      description: The pid of the process.
+      type: int
+      sample: 1223
+    port:
+      description: The port the pid was listening on.
+      type: int
+      sample: 3306
+    protocol:
+      description: The protocol, TCP or UDP, of the listening connection.
+      type: string
+      sample: 'tcp'
+    stime:
+      description: The start time of the process.
+      type: string
+      sample: 'Thu Feb  2 13:29:45 2017'
+    user:
+      description: The user running the process.
+      type: string
+      sample: 'mysql'
+
+udp_listen_violations:
+  description: A list of processes that are listening on a UDP port that violated the whitelist_udp argument.
+  type: list
+  contains:
+    address:
+      description: The address (IPv4 or IPv6) of the process.
+      type: string
+      sample: '0.0.0.0'
+    name:
+      description: The name of the process.
+      type: string
+      sample: 'rsyslogd'
+    pid:
+      description: The pid of the process.
+      type: int
+      sample: 609
+    port:
+      description: The port the pid was listening on.
+      type: int
+      sample: 514
+    protocol:
+      description: The protocol, TCP or UDP, of the listening connection.
+      type: string
+      sample: 'udp'
+    stime:
+      description: The start time of the process.
+      type: string
+      sample: 'Thu Feb  2 13:29:45 2017'
+    user:
+      description: The user running the process.
+      type: string
+      sample: 'root'
+'''
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'committer',
                     'version': '1.0'}
