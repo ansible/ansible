@@ -197,7 +197,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 import re
 import platform
-from subprocess import Popen, PIPE
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
@@ -252,8 +251,7 @@ def main():
 
     def getPidSTime(pid):
         ps_cmd = module.get_bin_path('ps', True)
-        p1 = Popen([ps_cmd, '-o', 'lstart', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
-        ps_output = p1.communicate()[0]
+        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', str(pid)])
         stime = ''
         for line in iter(ps_output.splitlines()):
             if 'started' not in line:
@@ -262,8 +260,7 @@ def main():
 
     def getPidUser(pid):
         ps_cmd = module.get_bin_path('ps', True)
-        p1 = Popen([ps_cmd, '-o', 'user', '-p', str(pid)], stdout=PIPE, stderr=PIPE)
-        ps_output = p1.communicate()[0]
+        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', str(pid)])
         user = ''
         for line in iter(ps_output.splitlines()):
             if line != 'USER':
@@ -278,8 +275,7 @@ def main():
         netstat_cmd = module.get_bin_path('netstat', True)
 
         # which TCP ports are listening for connections?
-        p1 = Popen([netstat_cmd, '-plnt'], stdout=PIPE, stderr=PIPE)
-        output_tcp = p1.communicate()[0]
+        rc, output_tcp, stderr = module.run_command([netstat_cmd, '-plnt'])
         tcp_ports = netStatParse(output_tcp)
         for i, p in enumerate(tcp_ports):
             p['stime'] = getPidSTime(p['pid'])
@@ -289,8 +285,7 @@ def main():
             result['ansible_facts']['tcp_listen'] = tcp_ports
 
         # which UDP ports are listening for connections?
-        p1 = Popen([netstat_cmd, '-plnu'], stdout=PIPE, stderr=PIPE)
-        output_udp = p1.communicate()[0]
+        rc, output_udp, stderr = module.run_command([netstat_cmd, '-plnu'])
         udp_ports = netStatParse(output_udp)
         for i, p in enumerate(udp_ports):
             p['stime'] = getPidSTime(p['pid'])
