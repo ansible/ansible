@@ -22,12 +22,12 @@ Although it's tempting to get straight into coding, there are a few things to be
 
 * Read though all the pages linked off :doc:`developing_modules`, paying particular focus to the :doc:`developing_modules_checklist`.
 * For new modules going into Ansible 2.4 we are raising the bar so they must pass `pep8 --ignore=E402 --max-line-length=160` cleanly.
-* All new modules going into Ansible 2.3 must support Python 2.4+ and Python 3.5+. For Ansible 2.4 the requirement will change to Python 2.6 and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
-* Understand that all modules shipped with Ansible MUST be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should generally be done so under the BSD license (or GPLv3).
+* All new modules for Ansible 2.4 must support Python 2.6 and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
+* Understand that all modules shipped with Ansible must be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should generally be done so under the BSD license (or GPLv3).
 * Have a look at the existing modules, especially in the same functional area (such as cloud, networking, databases) in the :doc:`../list_of_all_modules` for a list of existing modules and how they've been named.
 * Shared code can be places into `lib/ansible/module_utils/`
 * Shared documentation, for example describing common arguments, can be placed in `lib/ansible/utils/module_docs_fragments/`
-
+* Although not required, unit and/or integration tests are strongly recomended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see `test/` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Naming Convention
 `````````````````
@@ -42,6 +42,7 @@ Each module should have the above (or similar) prefix, see existing :doc:`../lis
 
 * File and directory names are always in lower case
 * Words are separated with an underscore (`_`) character
+* Module names should be in the singular, rather than plural, eg ``command`` not ``commands``
 
 
 Speak to us
@@ -86,11 +87,11 @@ The first PR is slightly different to the rest as:
 
 The first PR should include the following files:
 
-* `lib/ansible/modules/$area/$prefix/__init__.py` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
-* `lib/ansible/modules/$area/$prefix/$yourfirstmodule.py` - A single module. *Required new file*
-* `lib/ansible/utils/module_docs_fragments/$prefix.py` - Code documentation, such as details regarding common arguments. *Optional new file*
-* `lib/ansible/module_utils/$prefix.py` - Code shared between more than one module, such as common arguments. *Optional new file*
-*  `docs/docsite/rst/dev_guide/developing_module_utilities.rst` - Document your new `module_utils` file. *Optional update to existing file*
+* ``lib/ansible/modules/$area/$prefix/__init__.py`` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
+* ``lib/ansible/modules/$area/$prefix/$yourfirstmodule.py`` - A single module. *Required new file*
+* ``lib/ansible/utils/module_docs_fragments/$prefix.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
+* ``lib/ansible/module_utils/$prefix.py`` - Code shared between more than one module, such as common arguments. *Optional new file*
+*  ``docs/docsite/rst/dev_guide/developing_module_utilities.rst`` - Document your new `module_utils` file. *Optional update to existing file*
 
 And that's it.
 
