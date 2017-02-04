@@ -117,16 +117,24 @@ Function Warn($obj, $message)
 # Helper function to add deprecations, even if the deprecations attribute was
 # not already set up. This is a convenience for the module developer
 # so he does not have to check for the attribute prior to adding.
-Function Deprecate($obj, $message)
+Function Deprecate($obj, $message, $version = $null)
 {
     if (Get-Member -InputObject $obj -Name "deprecations") {
         if ($obj.deprecations -is [System.Array]) {
-            $obj.deprecations += $message
+            $obj.deprecations += @{
+                msg = $message
+                version = $version
+            }
         } else {
             throw "deprecations attribute is not a list"
         }
     } else {
-        $obj.deprecations = ,@( $message )
+        $obj.deprecations = ,@(
+            @{
+                msg = $message
+                version = $version
+            }
+        )
     }
 }
 
