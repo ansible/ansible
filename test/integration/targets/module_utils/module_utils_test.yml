@@ -43,8 +43,9 @@
     ignore_errors: True
     register: result
 
+  - debug: var=result
   - name: Make sure we failed in AnsiBallZ
     assert:
       that:
         - 'result["failed"] == True'
-        - '"Could not find imported module support code for test_failure.  Looked for either foo or zebra" == result["msg"]'
+        - '"Could not find imported module support code for test_failure.  Looked for either foo.py or zebra.py" == result["msg"]'

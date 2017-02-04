@@ -14,23 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
-
-import json
-import time
-import inspect
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -138,6 +121,21 @@ repository:
         repositoryName: ecr-test-1484664090
         repositoryUri: 999999999999.dkr.ecr.us-east-1.amazonaws.com/ecr-test-1484664090
 '''
+
+import json
+import time
+import inspect
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 
 def boto_exception(err):

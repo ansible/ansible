@@ -204,7 +204,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             lines2.append('        %s' % line)
 
         vaulted_var = '\n'.join(lines2)
-        tagged_vaulted_var = u"""!vault-encrypted |\n%s""" % vaulted_var
+        tagged_vaulted_var = u"""!vault |\n%s""" % vaulted_var
         return tagged_vaulted_var
 
     def _build_stream(self, yaml_text):

@@ -16,13 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -167,6 +160,12 @@ security_group_id:
   description: The security group ID to associate with this security group rule.
   type: string
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):

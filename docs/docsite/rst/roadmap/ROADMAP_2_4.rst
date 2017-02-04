@@ -5,7 +5,7 @@ Ansible by Red Hat, Core 2.4
 Target: June/July 2017
 **********************
 
-This is meant to be a living document, and is by no means **FINAL** until
+This is meant to be a living document, and is **DRAFT** until
 stated otherwise in the document.
 
 - **Ansible-Config**
@@ -30,6 +30,7 @@ stated otherwise in the document.
 
   - Make setup.py/facts more pluggable
   - Fact gathering policy finer grained
+  - Improve testing of setup.py/facts.py
 
 - **Cloud Provider Support**
 

@@ -20,19 +20,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from datetime import date
-import crypt
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.univention_umc import (
-    umc_module_for_add,
-    umc_module_for_edit,
-    ldap_search,
-    base_dn,
-)
-from dateutil.relativedelta import relativedelta
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -304,6 +291,13 @@ options:
         description:
             - "Define the whole position of users object inside the LDAP tree,
                e.g. C(cn=employee,cn=users,ou=school,dc=example,dc=com)."
+    update_password:
+        required: false
+        default: always
+        description:
+            - "C(always) will update passwords if they differ.
+               C(on_create) will only set the password for newly created users."
+        version_added: "2.3"
     ou:
         required: false
         default: ''
@@ -348,6 +342,17 @@ EXAMPLES = '''
 
 
 RETURN = '''# '''
+
+from datetime import date
+import crypt
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.univention_umc import (
+    umc_module_for_add,
+    umc_module_for_edit,
+    ldap_search,
+    base_dn,
+)
+from dateutil.relativedelta import relativedelta
 
 
 def main():
@@ -466,6 +471,9 @@ def main():
                                            type='str'),
             position                = dict(default='',
                                            type='str'),
+            update_password         = dict(default='always',
+                                           choices=['always', 'on_create'],
+                                           type='str'),
             ou                      = dict(default='',
                                            type='str'),
             subpath                 = dict(default='cn=users',
@@ -530,7 +538,7 @@ def main():
             password = module.params['password']
             if obj['password'] is None:
                 obj['password'] = password
-            else:
+            if module.params['update_password'] == 'always':
                 old_password = obj['password'].split('}', 2)[1]
                 if crypt.crypt(password, old_password) != old_password:
                     obj['overridePWHistory'] = module.params['overridePWHistory']

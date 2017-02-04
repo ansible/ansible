@@ -97,7 +97,7 @@ class Cli(CliBase):
 
     def connect(self):
         super(Cli, self).connect(self._module.params, kickstart=False)
-        self.shell.send('terminal length 0')
+        self.exec_command('terminal length 0')
 
     def authorize(self):
         passwd = self._module.params['auth_pass']
@@ -106,7 +106,6 @@ class Cli(CliBase):
             self.exec_command(dict(command='enable', prompt=prompt, response=passwd))
         else:
             self.exec_command('enable')
-
 
 
 def connection(module):
@@ -150,7 +149,7 @@ def load_config(module, commands):
     for command in to_list(commands):
         if command == 'end':
             continue
-        rc, out, err = module.exec_command(command)
+        rc, out, err = conn.exec_command(command)
         if rc != 0:
             module.fail_json(msg=err, command=command, rc=rc)
 

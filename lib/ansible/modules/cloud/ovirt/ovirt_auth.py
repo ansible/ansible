@@ -19,17 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
-
-try:
-    import ovirtsdk4 as sdk
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import check_sdk
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -171,6 +160,16 @@ ovirt_auth:
             sample: False
 '''
 
+import traceback
+
+try:
+    import ovirtsdk4 as sdk
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import check_sdk
+
 
 def main():
     module = AnsibleModule(
@@ -190,6 +189,7 @@ def main():
             ('state', 'absent', ['ovirt_auth']),
             ('state', 'present', ['username', 'password', 'url']),
         ],
+        supports_check_mode=True,
     )
     check_sdk(module)
 

@@ -16,18 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import *
-
-try:
-    from OpenSSL import crypto
-except ImportError:
-    pyopenssl_found = False
-else:
-    pyopenssl_found = True
-
-
-import os
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -103,8 +91,22 @@ filename:
     sample: /etc/ssl/public/ansible.com.pem
 '''
 
+from ansible.module_utils.basic import *
+
+try:
+    from OpenSSL import crypto
+except ImportError:
+    pyopenssl_found = False
+else:
+    pyopenssl_found = True
+
+
+import os
+
+
 class PublicKeyError(Exception):
     pass
+
 
 class PublicKey(object):
 

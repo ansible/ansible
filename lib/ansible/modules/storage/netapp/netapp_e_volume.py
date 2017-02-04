@@ -18,8 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.api import basic_auth_argument_spec
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -154,6 +152,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.api import basic_auth_argument_spec
 
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,

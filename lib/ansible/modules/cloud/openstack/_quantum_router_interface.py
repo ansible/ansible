@@ -16,16 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
-
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -103,9 +93,19 @@ EXAMPLES = '''
     subnet_name: t1subnet
 '''
 
+try:
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
 
 _os_keystone = None
 _os_tenant_id = None
+
 
 def _get_ksclient(module, kwargs):
     try:

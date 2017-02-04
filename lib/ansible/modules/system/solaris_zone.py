@@ -17,11 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import os
-import platform
-import tempfile
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -158,6 +153,12 @@ EXAMPLES = '''
     state: attached
     attach_options: -u
 '''
+
+import sys
+import os
+import platform
+import tempfile
+
 
 class Zone(object):
     def __init__(self, module):

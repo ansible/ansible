@@ -35,7 +35,7 @@ if ($state -eq "touch") {
         if (Test-Path $path) {
             (Get-ChildItem $path).LastWriteTime = Get-Date
         } else {
-            echo $null > $path
+            Write-Output $null | Out-File -FilePath $path -Encoding ASCII
         }
     }
     $result.changed = $true

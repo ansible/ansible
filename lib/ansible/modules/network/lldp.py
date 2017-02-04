@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -50,6 +48,9 @@ EXAMPLES = '''
 # ok: [10.13.0.22] => (item=eth0) => {"item": "eth0", "msg": "switch3.example.com / Gi0/3"}
 
 '''
+
+import subprocess
+
 
 def gather_lldp():
     cmd = ['lldpctl', '-f', 'keyvalue']

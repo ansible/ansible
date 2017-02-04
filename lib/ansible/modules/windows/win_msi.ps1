@@ -37,6 +37,10 @@ if (($creates -ne $null) -and ($state -ne "absent") -and (Test-Path $creates)) {
     Exit-Json $result
 }
 
+if (-not (Test-Path $path)) {
+	Fail-Json $result "Cannot find $path."
+}
+
 $logfile = [IO.Path]::GetTempFileName()
 if ($state -eq "absent") {
 

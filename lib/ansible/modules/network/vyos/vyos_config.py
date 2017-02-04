@@ -16,15 +16,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0',
+}
 
 DOCUMENTATION = """
 ---
 module: vyos_config
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author: "Nathaniel Case (@qalthos)"
 short_description: Manage VyOS configuration on remote device
 description:
   - This module provides configuration file management of VyOS
@@ -32,7 +34,6 @@ description:
     configuration file and state of the active configuration.   All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
-extends_documentation_fragment: vyos
 options:
   lines:
     description:
@@ -95,8 +96,22 @@ options:
     choices: ['yes', 'no']
 """
 
+EXAMPLES = """
+- name: configure the remote device
+  vyos_config:
+    lines:
+      - set system host-name {{ inventory_hostname }}
+      - set service lldp
+      - delete service dhcp-server
+
+- name: backup and load from file
+  vyos_config:
+    src: vyos.cfg
+    backup: yes
+"""
+
 RETURN = """
-updates:
+commands:
   description: The list of configuration commands sent to the device
   returned: always
   type: list
@@ -106,37 +121,27 @@ filtered:
   returned: always
   type: list
   sample: ['...', '...']
-"""
-
-EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: vyos
-    password: vyos
-    transport: cli
-
-- name: configure the remote device
-  vyos_config:
-    lines:
-      - set system host-name {{ inventory_hostname }}
-      - set service lldp
-      - delete service dhcp-server
-    provider: "{{ cli }}"
-
-- name: backup and load from file
-  vyos_config:
-    src: vyos.cfg
-    backup: yes
-    provider: "{{ cli }}"
+start:
+  description: The time the job started
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:15.126146"
+end:
+  description: The time the job ended
+  returned: always
+  type: str
+  sample: "2016-11-16 10:38:25.595612"
+delta:
+  description: The time elapsed to perform all operations
+  returned: always
+  type: str
+  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.network import Command, get_exception
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.vyos import NetworkModule, NetworkError
+from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.vyos import load_config, get_config, run_commands
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -148,7 +153,7 @@ CONFIG_FILTERS = [
 
 def config_to_commands(config):
     set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
+    candidate = NetworkConfig(indent=4, contents=config)
     if not set_format:
         candidate = [c.line for c in candidate.items]
         commands = list()
@@ -160,19 +165,13 @@ def config_to_commands(config):
                     break
             commands.append(item)
 
+        commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
+
     else:
         commands = str(candidate).split('\n')
 
     return commands
 
-def get_config(module, result):
-    contents = module.params['config']
-    if not contents:
-        contents = module.config.get_config(output='set').split('\n')
-    else:
-        contents = config_to_commands(contents)
-
-    return contents
 
 def get_candidate(module):
     contents = module.params['src'] or module.params['lines']
@@ -182,8 +181,9 @@ def get_candidate(module):
 
     return config_to_commands(contents)
 
+
 def diff_config(commands, config):
-    config = [str(c).replace("'", '') for c in config]
+    config = [str(c).replace("'", '') for c in config.splitlines()]
 
     updates = list()
     visited = set()
@@ -209,6 +209,7 @@ def diff_config(commands, config):
 
     return list(updates)
 
+
 def sanitize_config(config, result):
     result['filtered'] = list()
     for regex in CONFIG_FILTERS:
@@ -217,46 +218,36 @@ def sanitize_config(config, result):
                 result['filtered'].append(line)
                 del config[index]
 
-def load_config(module, commands, result):
-    comment = module.params['comment']
-    commit = not module.check_mode
-    save = module.params['save']
-
-    # sanitize loadable config to remove items that will fail
-    # remove items will be returned in the sanitized keyword
-    # in the result.
-    sanitize_config(commands, result)
-
-    diff = module.config.load_config(commands, commit=commit, comment=comment,
-                                     save=save)
-
-    if diff:
-        result['diff'] = dict(prepared=diff)
-        result['changed'] = True
-
 
 def run(module, result):
     # get the current active config from the node or passed in via
     # the config param
-    config = get_config(module, result)
+    config = module.params['config'] or get_config(module)
 
     # create the candidate config object from the arguments
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    updates = diff_config(candidate, config)
+    commands = diff_config(candidate, config)
+    sanitize_config(commands, result)
 
-    result['updates'] = updates
+    result['commands'] = commands
 
-    load_config(module, updates, result)
+    commit = not module.check_mode
+    comment = module.params['comment']
+    save = module.params['save']
 
-    if result.get('filtered'):
-        result['warnings'].append('Some configuration commands where '
-                                  'removed, please see the filtered key')
+    if commands:
+        load_config(module, commands, commit=commit, comment=comment, save=save)
+
+        if result.get('filtered'):
+            result['warnings'].append('Some configuration commands were '
+                                      'removed, please see the filtered key')
+
+        result['changed'] = True
 
 
 def main():
-
     argument_spec = dict(
         src=dict(type='path'),
         lines=dict(type='list'),
@@ -267,27 +258,30 @@ def main():
 
         config=dict(),
 
-        backup=dict(default=False, type='bool'),
-        save=dict(default=False, type='bool'),
+        backup=dict(type='bool', default=False),
+        save=dict(type='bool', default=False),
     )
 
     mutually_exclusive = [('lines', 'src')]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
-                           mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
+    module = LocalAnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True
+    )
 
-    result = dict(changed=False)
+    result = dict(changed=False, warnings=[])
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module=module)
 
-    try:
+    if any((module.params['src'], module.params['lines'])):
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+
+    if module.params['save']:
+        if not module.check_mode:
+            run_commands(module, ['save'])
+        result['changed'] = True
 
     module.exit_json(**result)
 

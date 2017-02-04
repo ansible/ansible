@@ -43,3 +43,13 @@ doc_schema = Schema(
     },
     extra=ALLOW_EXTRA
 )
+
+metadata_schema = Schema(
+    {
+        Required('status'): [Any('stableinterface', 'preview', 'deprecated',
+                                 'removed')],
+        Required('version'): '1.0',
+        Required('supported_by'): Any('core', 'community', 'unmaintained',
+                                      'committer')
+    }
+)

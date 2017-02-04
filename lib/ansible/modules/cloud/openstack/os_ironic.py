@@ -16,13 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-import jsonpatch
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -151,6 +144,14 @@ EXAMPLES = '''
     chassis_uuid: "00000000-0000-0000-0000-000000000001"
 
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+import jsonpatch
 
 
 def _parse_properties(module):

@@ -20,11 +20,6 @@
 #
 # see examples/playbooks/get_url.yml
 
-import shutil
-import datetime
-import re
-import tempfile
-
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
@@ -208,6 +203,10 @@ EXAMPLES='''
     dest: /tmp/afilecopy.txt
 '''
 
+import shutil
+import datetime
+import re
+import tempfile
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 
 # ==============================================================

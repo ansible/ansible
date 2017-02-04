@@ -19,26 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
-
-try:
-    import ovirtsdk4.types as otypes
-
-    from ovirtsdk4.types import HostStatus as hoststate
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    wait,
-)
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -114,6 +94,13 @@ options:
             - "Kernel boot parameters changes require host deploy and restart. The host needs
                to be I(reinstalled) suceesfully and then to be I(rebooted) for kernel boot parameters
                to be applied."
+    hosted_engine:
+        description:
+            - "If I(deploy) it means this host should deploy also hosted engine
+               components."
+            - "If I(undeploy) it means this host should un-deploy hosted engine
+               components and this host will not function as part of the High
+               Availability cluster."
 extends_documentation_fragment: ovirt
 '''
 
@@ -137,6 +124,14 @@ EXAMPLES = '''
     name: myhost2
     address: 10.34.61.145
 
+# Deploy hosted engine host
+- ovirt_hosts:
+    cluster: Default
+    name: myhost2
+    password: secret
+    address: 10.34.61.145
+    hosted_engine: deploy
+
 # Maintenance
 - ovirt_hosts:
     state: maintenance
@@ -151,6 +146,12 @@ EXAMPLES = '''
 - ovirt_hosts:
     state: upgraded
     name: myhost
+
+# Reinstall host using public key
+- ovirt_hosts:
+    state: reinstalled
+    name: myhost
+    public_key: true
 
 # Remove host
 - ovirt_hosts:
@@ -171,6 +172,25 @@ host:
     returned: On success if host is found.
 '''
 
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+
+    from ovirtsdk4.types import HostStatus as hoststate
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    wait,
+)
+
 
 class HostsModule(BaseModule):
 
@@ -184,7 +204,7 @@ class HostsModule(BaseModule):
             address=self._module.params['address'],
             root_password=self._module.params['password'],
             ssh=otypes.Ssh(
-                authentication_method='publickey',
+                authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
             ) if self._module.params['public_key'] else None,
             kdump_status=otypes.KdumpStatus(
                 self._module.params['kdump_integration']
@@ -227,6 +247,15 @@ class HostsModule(BaseModule):
             if not self._module.check_mode:
                 self._service.host_service(entity.id).activate()
             self.changed = True
+
+    def post_reinstall(self, host):
+        wait(
+            service=self._service.service(host.id),
+            condition=lambda h: h.status != hoststate.MAINTENANCE,
+            fail_condition=failed_state,
+            wait=self._module.params['wait'],
+            timeout=self._module.params['timeout'],
+        )
 
 
 def failed_state(host):
@@ -296,6 +325,7 @@ def main():
         timeout=dict(default=600, type='int'),
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
+        hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -315,23 +345,27 @@ def main():
         state = module.params['state']
         control_state(hosts_module)
         if state == 'present':
-            ret = hosts_module.create()
-            ret['changed'] = hosts_module.action(
+            hosts_module.create(
+                deploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'deploy'
+                ) if module.params.get('hosted_engine') is not None else None,
+            )
+            ret = hosts_module.action(
                 action='activate',
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 wait_condition=lambda h: h.status == hoststate.UP,
                 fail_condition=failed_state,
-            )['changed'] or ret['changed']
+            )
         elif state == 'absent':
             ret = hosts_module.remove()
         elif state == 'maintenance':
-            ret = hosts_module.action(
+            hosts_module.action(
                 action='deactivate',
                 action_condition=lambda h: h.status != hoststate.MAINTENANCE,
                 wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 fail_condition=failed_state,
             )
-            ret['changed'] = hosts_module.create()['changed'] or ret['changed']
+            ret = hosts_module.create()
         elif state == 'upgraded':
             ret = hosts_module.action(
                 action='upgrade',
@@ -348,19 +382,19 @@ def main():
                 fence_type='start',
             )
         elif state == 'stopped':
-            ret = hosts_module.action(
+            hosts_module.action(
                 action='deactivate',
                 action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
                 wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
                 fail_condition=failed_state,
             )
-            ret['changed'] = hosts_module.action(
+            ret = hosts_module.action(
                 action='fence',
                 action_condition=lambda h: h.status != hoststate.DOWN,
-                wait_condition=lambda h: h.status == hoststate.DOWN,
+                wait_condition=lambda h: h.status == hoststate.DOWN if module.params['wait'] else True,
                 fail_condition=failed_state,
                 fence_type='stop',
-            )['changed'] or ret['changed']
+            )
         elif state == 'restarted':
             ret = hosts_module.action(
                 action='fence',
@@ -370,17 +404,18 @@ def main():
             )
         elif state == 'reinstalled':
             # Deactivate host if not in maintanence:
-            deactivate_changed = hosts_module.action(
+            hosts_module.action(
                 action='deactivate',
                 action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
                 wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
                 fail_condition=failed_state,
-            )['changed']
+            )
 
             # Reinstall host:
-            install_changed = hosts_module.action(
+            hosts_module.action(
                 action='install',
                 action_condition=lambda h: h.status == hoststate.MAINTENANCE,
+                post_action=hosts_module.post_reinstall,
                 wait_condition=lambda h: h.status == hoststate.MAINTENANCE,
                 fail_condition=failed_state,
                 host=otypes.Host(
@@ -388,9 +423,15 @@ def main():
                 ) if module.params['override_iptables'] else None,
                 root_password=module.params['password'],
                 ssh=otypes.Ssh(
-                    authentication_method='publickey',
+                    authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
                 ) if module.params['public_key'] else None,
-            )['changed']
+                deploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'deploy'
+                ) if module.params.get('hosted_engine') is not None else None,
+                undeploy_hosted_engine=(
+                    module.params.get('hosted_engine') == 'undeploy'
+                ) if module.params.get('hosted_engine') is not None else None,
+            )
 
             # Activate host after reinstall:
             ret = hosts_module.action(
@@ -399,9 +440,6 @@ def main():
                 wait_condition=lambda h: h.status == hoststate.UP,
                 fail_condition=failed_state,
             )
-            ret['changed'] = install_changed or deactivate_changed or ret['changed']
-
-
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

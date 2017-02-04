@@ -18,14 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import platform
-import re
-import shlex
-import sqlite3
-
-from distutils.version import StrictVersion
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -135,6 +127,15 @@ EXAMPLES = '''
 # Quickly remove a package without checking checksums
 - openbsd_pkg: name=qt5 quick=yes state=absent
 '''
+
+import os
+import platform
+import re
+import shlex
+import sqlite3
+
+from distutils.version import StrictVersion
+
 
 # Function used for executing commands.
 def execute_command(cmd, module):
