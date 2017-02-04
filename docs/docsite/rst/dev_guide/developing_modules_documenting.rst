@@ -4,7 +4,7 @@ Documenting Your Module
 ```````````````````````
 
 The online module documentation is generated from the modules themselves.
-Therefor all modules included with Ansible must have a
+Therefore all modules included with Ansible must have a
 ``DOCUMENTATION`` string. This string must be a valid YAML document
 which conforms to the schema defined below. You may find it easier to
 start writing your ``DOCUMENTATION`` string in an editor with YAML
@@ -50,7 +50,7 @@ The following fields can be used and are all required unless specified otherwise
 * ``author:``
   In the form ``First Last (@GitHubID)``, use a multi-line list if there is more than one.
 * ``options:``
-  One per module argument
+  One per option name
 
   * ``description:``
 
@@ -76,7 +76,15 @@ The following fields can be used and are all required unless specified otherwise
 * ``notes:``
     Details of any important information that doesn't fit in one of the above sections, for example if ``check_mode`` isn't supported, or a link to external documentation.
 
+.. note:: Versions should be strings
 
+    In general, care should be taken to list versions as strings rather than floats.  This has
+    several reasons:
+    * Versions may not always be floats, for instance "2.1.0" or "2.0alpha1".
+    * Versions may not compare correctly if used as a float.  A float will tempt
+       naive comparison between 2.3 and 2.12 which won't generate the correct
+       ordering.  Strings "2.3" and "2.12" require a bit of code which will let the
+       programmer do it correctly.
 
 
 EXAMPLES block
