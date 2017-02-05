@@ -173,8 +173,6 @@ try:
 
     HAS_LIBCLOUD = True
 except ImportError:
-    libcloud, Provider, get_driver, NodeLocation = None
-
     HAS_LIBCLOUD = False
 
 

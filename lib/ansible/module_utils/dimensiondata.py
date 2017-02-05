@@ -40,12 +40,6 @@ try:
 
     HAS_LIBCLOUD = True
 except ImportError:
-    libcloud = None
-    API_ENDPOINTS, DimensionDataAPIException, DimensionDataStatus = None
-    Node, NodeLocation = None
-    get_driver = None
-    Provider = None
-
     HAS_LIBCLOUD = False
 
 # MCP 2.x version patten for location (datacenter) names.
