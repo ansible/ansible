@@ -272,41 +272,31 @@ def main():
     try:
         netstat_cmd = module.get_bin_path('netstat', True)
 
-        # which TCP ports are listening for connections?
-        rc, output_tcp, stderr = module.run_command([netstat_cmd, '-plnt'])
+        # which ports are listening for connections?
+        rc, stdout, stderr = module.run_command([netstat_cmd, '-plunt'])
         if rc == 0:
-            tcp_ports = netStatParse(output_tcp)
-            for i, p in enumerate(tcp_ports):
+            netstatOut = netStatParse(stdout)
+            for i, p in enumerate(netstatOut):
                 p['stime'] = getPidSTime(p['pid'])
                 p['user'] = getPidUser(p['pid'])
-                tcp_ports[i] = p
-            if tcp_ports:
-                result['ansible_facts']['tcp_listen'] = tcp_ports
-
-        # which UDP ports are listening for connections?
-        rc, output_udp, stderr = module.run_command([netstat_cmd, '-plnu'])
-        if rc == 0:
-            udp_ports = netStatParse(output_udp)
-            for i, p in enumerate(udp_ports):
-                p['stime'] = getPidSTime(p['pid'])
-                p['user'] = getPidUser(p['pid'])
-                udp_ports[i] = p
-            if udp_ports:
-                result['ansible_facts']['udp_listen'] = udp_ports
+                if p['protocol'] == 'tcp':
+                    result['ansible_facts']['tcp_listen'].append(p)
+                elif p['protocol'] == 'udp':
+                    result['ansible_facts']['udp_listen'].append(p)
 
     except EnvironmentError:
         err = get_exception()
         module.fail_json(msg=str(err))
 
     # if a TCP whitelist was supplied, determine which if any pids violate it
-    if module.params['whitelist_tcp'] and tcp_ports:
-        tcp_violations = applyWhitelist(tcp_ports, module.params['whitelist_tcp'])
+    if module.params['whitelist_tcp'] and result['ansible_facts']['tcp_listen']:
+        tcp_violations = applyWhitelist(result['ansible_facts']['tcp_listen'], module.params['whitelist_tcp'])
         if tcp_violations:
             result['ansible_facts']['tcp_listen_violations'] = tcp_violations
 
     # if a UDP whitelist was supplied, determine which if any pids violate it
-    if module.params['whitelist_udp'] and udp_ports:
-        udp_violations = applyWhitelist(udp_ports, module.params['whitelist_udp'])
+    if module.params['whitelist_udp'] and result['ansible_facts']['udp_listen']:
+        udp_violations = applyWhitelist(result['ansible_facts']['udp_listen'], module.params['whitelist_udp'])
         if udp_violations:
             result['ansible_facts']['udp_listen_violations'] = udp_violations
 
