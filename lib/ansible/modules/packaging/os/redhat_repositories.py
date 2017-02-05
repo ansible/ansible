@@ -49,8 +49,8 @@ options:
        To specify all repositories, use C(*).
        In incremental mode, other repos won't be touched.
        In idempotent mode (default), other repos would be disabled or enabled depending on their actual state.
-   required: False
-   default: null
+    required: False
+    default: null
  list:
     description:
       - List either all repositories, or only enabled or disabled.
