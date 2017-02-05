@@ -121,6 +121,8 @@ AZURE_GROUP_BY_RESOURCE_GROUP=yes
 AZURE_GROUP_BY_LOCATION=yes
 AZURE_GROUP_BY_SECURITY_GROUP=yes
 AZURE_GROUP_BY_TAG=yes
+AZURE_CACHE_PATH=~/.azure/tmp
+AZURE_CACHE_MAX_AGE=1800
 
 Select hosts within specific resource groups by assigning a comma separated list to:
 
@@ -163,6 +165,9 @@ Examples:
   Use the inventory script to print instance specific information
   $ contrib/inventory/azure_rm.py --host my_instance_host_name --pretty
 
+  Refresh the cache
+  $ contrib/inventory/azure_rm.py --refresh-cache
+
   Use with a playbook
   $ ansible-playbook -i contrib/inventory/azure_rm.py my_playbook.yml --limit galaxy-qa
 
@@ -190,6 +195,7 @@ import json
 import os
 import re
 import sys
+import time
 
 from distutils.version import LooseVersion
 
@@ -229,7 +235,9 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_resource_group='AZURE_GROUP_BY_RESOURCE_GROUP',
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
-    group_by_tag='AZURE_GROUP_BY_TAG'
+    group_by_tag='AZURE_GROUP_BY_TAG',
+    cache_path='AZURE_CACHE_PATH',
+    cache_max_age='AZURE_CACHE_MAX_AGE'
 )
 
 AZURE_MIN_VERSION = "0.30.0rc5"
@@ -417,6 +425,8 @@ class AzureInventory(object):
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
+        self.cache_path = "~/.ansible/tmp"
+        self.cache_max_age = 1800
 
         self._inventory = dict(
             _meta=dict(
@@ -477,9 +487,22 @@ class AzureInventory(object):
                             help='Return inventory for comma separated list of locations')
         parser.add_argument('--no-powerstate', action='store_true', default=False,
                             help='Do not include the power state of each virtual host')
+        parser.add_argument('--refresh-cache', action='store_true', default=False,
+                            help='Force refresh of cache by making API requests to Azure (default: False - use cache files)')
         return parser.parse_args()
 
     def get_inventory(self):
+        write_cache = True
+        if os.path.isfile(os.path.expanduser(self.cache_path) + "/ansible-azure.cache") and not self._args.get('refresh_cache'):
+            mod_time = os.path.getmtime(os.path.expanduser(self.cache_path) + "/ansible-azure.cache")
+            current_time = time.time()
+            if (mod_time + 1800) > current_time:
+                with open(os.path.expanduser(self.cache_path) + "/ansible-azure.cache") as data_file:
+                    self._inventory = json.load(data_file)
+                    return
+        else:
+            write_cache = False
+
         if len(self.resource_groups) > 0:
             # get VMs for requested resource groups
             for resource_group in self.resource_groups:
@@ -505,6 +528,14 @@ class AzureInventory(object):
                 self._load_machines(selected_machines)
             else:
                 self._load_machines(virtual_machines)
+
+
+        if self.cache_max_age > 0 and write_cache:
+            try:
+                with open(os.path.expanduser(self.cache_path) + "/ansible-azure.cache", 'w') as cf:
+                    cf.write(self._json_format_dict(pretty=self._args.pretty))
+            except:
+                pass
 
     def _load_machines(self, machines):
         for machine in machines:
@@ -695,16 +726,24 @@ class AzureInventory(object):
                     values = file_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
+                elif key in ('cache_path') and file_settings.get(key, None) is not None:
+                    setattr(self, key, file_settings.get(key))
+                elif key == 'cache_max_age' and file_settings.get(key, None) is not None:
+                    setattr(self, key, int(file_settings.get(key)))
                 elif file_settings.get(key):
                     val = self._to_boolean(file_settings[key])
                     setattr(self, key, val)
         else:
             env_settings = self._get_env_settings()
             for key in AZURE_CONFIG_SETTINGS:
-                if key in('resource_groups', 'tags', 'locations') and env_settings.get(key):
+                if key in ('resource_groups', 'tags', 'locations') and env_settings.get(key):
                     values = env_settings.get(key).split(',')
                     if len(values) > 0:
                         setattr(self, key, values)
+                elif key in ('cache_path') and file_settings.get(key, None) is not None:
+                    setattr(self, key, file_settings.get(key))
+                elif key == 'cache_max_age' and file_settings.get(key, None) is not None:
+                    setattr(self, key, int(file_settings.get(key)))
                 elif env_settings.get(key, None) is not None:
                     val = self._to_boolean(env_settings[key])
                     setattr(self, key, val)
