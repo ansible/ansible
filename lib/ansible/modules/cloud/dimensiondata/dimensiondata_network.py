@@ -165,11 +165,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dimensiondata import DimensionDataModule, DimensionDataAPIException
 from ansible.module_utils.pycompat24 import get_exception
 try:
-    from libcloud.compute.types import Provider
-    from libcloud.compute.providers import get_driver
     from libcloud.compute.base import NodeLocation
-
-    import libcloud.security
 
     HAS_LIBCLOUD = True
 except ImportError:
