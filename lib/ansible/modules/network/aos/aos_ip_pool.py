@@ -161,7 +161,7 @@ value:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import *
+from ansible.module_utils.aos import get_aos_session, find_collection_item, get_display_name_from_file, do_load_resource
 
 def get_list_of_subnets(ip_pool):
     subnets = []
