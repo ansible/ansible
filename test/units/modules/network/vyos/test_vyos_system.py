@@ -80,15 +80,15 @@ class TestVyosSystemModule(unittest.TestCase):
         result = exc.exception.result
 
         if failed:
-            self.assertEqual(result['failed'], failed, result)
+            self.assertTrue(result['failed'], result)
         else:
-            self.assertEqual(result['changed'], changed, result)
+            self.assertEqual(result.get('changed'), changed, result)
 
         if commands:
             if sort:
                 self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
             else:
-                self.assertEqual(commands, result['commands'])
+                self.assertEqual(commands, result['commands'], result['commands'])
 
         return result
 
@@ -126,6 +126,7 @@ class TestVyosSystemModule(unittest.TestCase):
         set_module_args(dict(domain_search=['foo.example.com', 'bar.example.com']))
         result = self.execute_module(changed=True)
         self.assertIn("set system domain-search domain 'foo.example.com'", result['commands'])
+        self.assertIn("set system domain-search domain 'bar.example.com'", result['commands'])
         self.assertEqual(2, len(result['commands']))
 
     def test_vyos_system_clear_domain_search(self):
