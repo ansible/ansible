@@ -171,6 +171,7 @@ options:
       published_port
       target_port
       protocol (defaults to 'tcp')
+      mode <ingress|host>, default to ingress. Only used with api_version >= 1.25
   replicas:
     required: false
     default: -1
@@ -494,11 +495,15 @@ class DockerService(DockerBaseClass):
         for param_p in ap['publish']:
             service_p = {}
             service_p['protocol']       = param_p.get( 'protocol', 'tcp' )
-            service_p['published_port'] = param_p['published_port']
-            service_p['target_port']    = param_p['target_port']
+            service_p['mode']           = param_p.get( 'mode', 'ingress' )
+            service_p['published_port'] = str(param_p['published_port'])
+            service_p['target_port']    = str(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
                 raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
                                  service_p['protocol'])
+            if service_p['mode'] not in ['ingress', 'host']:
+                raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
+                                 service_p['mode'])
             s.publish.append(service_p)
         s.mounts=[]
         for param_m in ap['mounts']:
@@ -634,6 +639,7 @@ class DockerService(DockerBaseClass):
         for port in self.publish:
             endpoint_spec['Ports'].append({
                 'Protocol': port['protocol'],
+                'PublishMode': port['mode'],
                 'PublishedPort': int(port['published_port']),
                 'TargetPort': int(port['target_port'])})
         return task_template, networks, endpoint_spec, mode, self.labels
@@ -693,6 +699,7 @@ class DockerServiceManager():
                 for port in raw_data_endpoint_spec.get('Ports',[]):
                     ds.publish.append({
                         'protocol': port['Protocol'],
+                        'mode': port.get('PublishMode','ingress'),
                         'published_port': str(port['PublishedPort']),
                         'target_port': str(port['TargetPort'])})
 
@@ -772,11 +779,17 @@ class DockerServiceManager():
         empty_service = DockerService()
         for pv in parameters_versions:
             if (params[pv['param']] != getattr(empty_service, pv['attribute'])
-                    and LooseVersion(self.client.version()['ApiVersion'])
-                        < LooseVersion(pv['min_version'])):
+                    and (LooseVersion(self.client.version()['ApiVersion'])
+                         < LooseVersion(pv['min_version']))):
                 self.client.module.fail_json(
                     msg=('%s parameter supported only with api_version>=%s'
                          % (pv['param'], pv['min_version'])))
+
+        for publish_def in self.client.module.params.get('publish',[]):
+            if ('mode' in publish_def.keys()
+                     and (LooseVersion(self.client.version()['ApiVersion'])
+                          < LooseVersion('1.25'))):
+                self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
 
     def run(self):
         self.test_parameter_versions()
