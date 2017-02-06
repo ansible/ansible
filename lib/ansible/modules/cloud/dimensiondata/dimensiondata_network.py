@@ -185,42 +185,18 @@ class DimensionDataNetworkModule(DimensionDataModule):
         super(DimensionDataNetworkModule, self).__init__(
             module=AnsibleModule(
                 argument_spec=dict(
-                    region=dict(
-                        type='str', default='na'
-                    ),
-                    mcp_user=dict(
-                        type='str', required=False
-                    ),
-                    mcp_password=dict(
-                        type='str', required=False
-                    ),
-                    location=dict(
-                        type='str', required=True
-                    ),
-                    name=dict(
-                        type='str', required=True
-                    ),
-                    description=dict(
-                        type='str', required=False
-                    ),
-                    service_plan=dict(
-                        default='ADVANCED', choices=['ADVANCED', 'ESSENTIALS']
-                    ),
-                    state=dict(
-                        default='present', choices=['present', 'absent']
-                    ),
-                    wait=dict(
-                        type='bool', required=False, default=False
-                    ),
-                    wait_time=dict(
-                        type='int', required=False, default=600
-                    ),
-                    wait_poll_interval=dict(
-                        type='int', required=False, default=2
-                    ),
-                    verify_ssl_cert=dict(
-                        type='bool', required=False, default=True
-                    )
+                    region=dict(type='str', default='na'),
+                    mcp_user=dict(type='str', required=False),
+                    mcp_password=dict(type='str', required=False, no_log=True),
+                    location=dict(type='str', required=True),
+                    name=dict(type='str', required=True),
+                    description=dict(type='str', required=False),
+                    service_plan=dict(default='ADVANCED', choices=['ADVANCED', 'ESSENTIALS']),
+                    state=dict(default='present', choices=['present', 'absent']),
+                    wait=dict(type='bool', required=False, default=False),
+                    wait_time=dict(type='int', required=False, default=600),
+                    wait_poll_interval=dict(type='int', required=False, default=2),
+                    verify_ssl_cert=dict(type='bool', required=False, default=True)
                 ),
                 required_together=[
                     ['mcp_user', 'mcp_password']
