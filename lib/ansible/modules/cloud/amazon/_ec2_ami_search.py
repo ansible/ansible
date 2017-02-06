@@ -94,8 +94,10 @@ EXAMPLES = '''
 '''
 
 import csv
-import json
-import ansible.module_utils.six.moves.urllib.parse as urlparse
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 SUPPORTED_DISTROS = ['ubuntu']
 
@@ -114,6 +116,7 @@ AWS_REGIONS = ['ap-northeast-1',
                'us-west-1',
                'us-west-2',
                "us-gov-west-1"]
+
 
 def get_url(module, url):
     """ Get url and return response """
@@ -208,11 +211,6 @@ def main():
     else:
         module.fail_json(msg="Unsupported distro: %s" % distro)
 
-
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
