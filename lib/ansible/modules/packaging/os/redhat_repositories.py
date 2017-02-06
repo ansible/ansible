@@ -44,7 +44,7 @@ options:
        In idempotent mode (default), other repos would be disabled or enabled depending on their actual state.
     required: False
     default: null
- list:
+  list:
     description:
       - List either all repositories, or only enabled or disabled.
     required: False
