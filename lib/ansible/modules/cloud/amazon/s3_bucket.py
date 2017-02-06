@@ -112,7 +112,7 @@ EXAMPLES = '''
 
 import os
 import xml.etree.ElementTree as ET
-import ansible.module_utils.six.moves.urllib_parse as urlparse
+import ansible.module_utils.six.moves.urllib.parse as urlparse
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
