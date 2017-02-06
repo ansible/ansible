@@ -477,14 +477,20 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             if self.template:
                 return self._get_by_key(key, self.template)
 
+            rootdisksize = self.module.params.get('root_disk_size')
             args['templatefilter'] = self.module.params.get('template_filter')
             templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
                     if template in [ t['displaytext'], t['name'], t['id'] ]:
+                        if rootdisksize and t['size'] > rootdisksize*1024**3:
+                            continue
                         self.template = t
                         return self._get_by_key(key, self.template)
-            self.module.fail_json(msg="Template '%s' not found" % template)
+            more_info = ""
+            if rootdisksize:
+                more_info = " (with size <= %s)" % rootdisksize
+            self.module.fail_json(msg="Template '%s' not found%s" % (template, more_info))
 
         elif iso:
             if self.iso:
