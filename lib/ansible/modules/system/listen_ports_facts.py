@@ -214,8 +214,14 @@ def netStatParse(raw):
             if conns and pids:
                 address = conns.group(1)
                 port = conns.group(2)
-                pid = pids.group(2) if pids.group(2) else 0
-                name = pids.group(3) if pids.group(3) else ''
+                if (pids.group(2)):
+                    pid = pids.group(2)
+                else:
+                    pid = 0
+                if (pids.group(3)):
+                    name = pids.group(3)
+                else:
+                    name = ''
                 result = dict(pid=int(pid), address=address, port=int(port), protocol=protocol, name=name)
                 if result not in results:
                     results.append(result)
