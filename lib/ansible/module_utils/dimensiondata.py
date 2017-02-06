@@ -79,25 +79,30 @@ class DimensionDataModule(object):
         self.key = credentials['key']
 
         # Region and location are common to all Dimension Data modules.
-        if 'region' in self.module.params:
-            region = self.module.params['region']
-            self.region = 'dd-{}'.format(region)
-        else:
-            self.region = None
+        region = self.module.params['region']
+        self.region = 'dd-{}'.format(region)
+        self.location = self.module.params['location']
 
-        if 'location' in self.module.params:
-            self.location = self.module.params['location']
-        else:
-            self.location = None
-
-        if 'verify_ssl_cert' in self.module.params:
-            libcloud.security.VERIFY_SSL_CERT = self.module.params['verify_ssl_cert']
+        libcloud.security.VERIFY_SSL_CERT = self.module.params['verify_ssl_cert']
 
         self.driver = get_driver(Provider.DIMENSIONDATA)(
             self.user_id,
             self.key,
             region=self.region
         )
+
+        # Determine the MCP API version (this depends on the target datacenter).
+        self.mcp_version = self.get_mcp_version(self.location)
+
+        # Optional "wait-for-completion" arguments
+        if 'wait' in self.module.params:
+            self.wait = self.module.params['wait']
+            self.wait_time = self.module.params['wait_time']
+            self.wait_poll_interval = self.module.params['wait_poll_interval']
+        else:
+            self.wait = False
+            self.wait_time = 0
+            self.wait_poll_interval = 0
 
     def get_credentials(self):
         """
@@ -219,6 +224,63 @@ class DimensionDataModule(object):
             return vlan
 
         raise UnknownVLANError("VLAN '%s' could not be found" % locator)
+
+    @staticmethod
+    def argument_spec(**additional_argument_spec):
+        """
+        Build an argument specification for a Dimension Data module.
+        :param additional_argument_spec: An optional dictionary representing the specification for additional module arguments (if any).
+        :return: A dict containing the argument specification.
+        """
+
+        spec = dict(
+            region=dict(type='str', default='na'),
+            mcp_user=dict(type='str', required=False),
+            mcp_password=dict(type='str', required=False, no_log=True),
+            location=dict(type='str', required=True),
+            verify_ssl_cert=dict(type='bool', required=False, default=True)
+        )
+
+        if additional_argument_spec:
+            spec.update(additional_argument_spec)
+
+        return spec
+
+    @staticmethod
+    def argument_spec_with_wait(**additional_argument_spec):
+        """
+        Build an argument specification for a Dimension Data module that includes "wait for completion" arguments.
+        :param additional_argument_spec: An optional dictionary representing the specification for additional module arguments (if any).
+        :return: A dict containing the argument specification.
+        """
+
+        spec = DimensionDataModule.argument_spec(
+            wait=dict(type='bool', required=False, default=False),
+            wait_time=dict(type='int', required=False, default=600),
+            wait_poll_interval=dict(type='int', required=False, default=2)
+        )
+
+        if additional_argument_spec:
+            spec.update(additional_argument_spec)
+
+        return spec
+
+    @staticmethod
+    def required_together(*additional_required_together):
+        """
+        Get the basic argument specification for Dimension Data modules indicating which arguments are must be specified together.
+        :param additional_required_together: An optional list representing the specification for additional module arguments that must be specified together.
+        :return: An array containing the argument specifications.
+        """
+
+        required_together = [
+            ['mcp_user', 'mcp_password']
+        ]
+
+        if additional_required_together:
+            required_together.extend(additional_required_together)
+
+        return required_together
 
 
 class LibcloudNotFound(Exception):

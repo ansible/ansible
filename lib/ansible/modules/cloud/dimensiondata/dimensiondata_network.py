@@ -32,35 +32,12 @@ DOCUMENTATION = '''
 ---
 module: dimensiondata_network
 short_description: Create, update, and delete MCP 1.0 & 2.0 networks
+extends_documentation_fragment: dimensiondata_with_wait
 description:
   - Create, update, and delete MCP 1.0 & 2.0 networks
 version_added: "2.3"
 author: 'Aimon Bustardo (@aimonb)'
 options:
-  region:
-    description:
-      - The target region.
-    choices:
-      - Regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - They are also listed in U(https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html)
-      - Note that the default value "na" stands for "North America".
-      - The module prepends 'dd-' to the region choice.
-    default: na
-  mcp_user:
-    description:
-      - The username used to authenticate to the CloudControl API.
-      - If not specified, will fall back to C(MCP_USER) from environment variable or C(~/.dimensiondata).
-    required: false
-  mcp_password:
-    description:
-      - The password used to authenticate to the CloudControl API.
-      - If not specified, will fall back to C(MCP_PASSWORD) from environment variable or C(~/.dimensiondata).
-      - Required if I(mcp_user) is specified.
-    required: false
-  location:
-    description:
-      - The target datacenter.
-    required: true
   name:
     description:
       - The name of the network domain to create.
@@ -75,26 +52,6 @@ options:
       - MCP 2.0 Only.
     choices: [ESSENTIALS, ADVANCED]
     default: ADVANCED
-  verify_ssl_cert:
-    description:
-      - Check that SSL certificate is valid.
-    required: false
-    default: true
-  wait:
-    description:
-      - Should we wait for the task to complete before moving onto the next.
-    required: false
-    default: false
-  wait_time:
-    description:
-      - Only applicable if wait is true. This is the amount of time in seconds to wait
-    required: false
-    default: 600
-  wait_poll_interval:
-    description:
-      - The length of time between successive polls for completion
-    required: false
-    default: 2
   state:
     description:
       - Should the resource be present or absent.
@@ -184,33 +141,20 @@ class DimensionDataNetworkModule(DimensionDataModule):
 
         super(DimensionDataNetworkModule, self).__init__(
             module=AnsibleModule(
-                argument_spec=dict(
-                    region=dict(type='str', default='na'),
-                    mcp_user=dict(type='str', required=False),
-                    mcp_password=dict(type='str', required=False, no_log=True),
-                    location=dict(type='str', required=True),
+                argument_spec=DimensionDataModule.argument_spec_with_wait(
                     name=dict(type='str', required=True),
                     description=dict(type='str', required=False),
                     service_plan=dict(default='ADVANCED', choices=['ADVANCED', 'ESSENTIALS']),
-                    state=dict(default='present', choices=['present', 'absent']),
-                    wait=dict(type='bool', required=False, default=False),
-                    wait_time=dict(type='int', required=False, default=600),
-                    wait_poll_interval=dict(type='int', required=False, default=2),
-                    verify_ssl_cert=dict(type='bool', required=False, default=True)
+                    state=dict(default='present', choices=['present', 'absent'])
                 ),
-                required_together=[
-                    ['mcp_user', 'mcp_password']
-                ]
+                required_together=DimensionDataModule.required_together()
             )
         )
 
         self.name = self.module.params['name']
         self.description = self.module.params['description']
-        self.location = self.module.params['location']
+        self.service_plan = self.module.params['service_plan']
         self.state = self.module.params['state']
-
-        # Get MCP API Version
-        self.mcp_version = self.get_mcp_version(self.location)
 
     def state_present(self):
         network = self._get_network()
