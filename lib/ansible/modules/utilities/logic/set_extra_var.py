@@ -26,7 +26,6 @@ DOCUMENTATION = '''
 author: "Pieter Voet (pietervoet@nl.ibm.com)"
 module: set_extra_var
 short_description: Sets an extra variable from a playbook.
-options:
 description:
     - This module allows setting new variables.  Variables are set on a global basis
     - These variables will survive between plays during an Ansible run, even for different host groups
