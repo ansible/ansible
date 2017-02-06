@@ -923,6 +923,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
             ret = vms_module.action(
                 action='start',
                 post_action=vms_module._post_start_action,
@@ -944,13 +945,23 @@ def main():
                     placement_policy=otypes.VmPlacementPolicy(
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
-                    initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    initialization=initialization,
                     os=otypes.OperatingSystem(
                         cmdline=module.params.get('kernel_params'),
                         initrd=module.params.get('initrd_path'),
                         kernel=module.params.get('kernel_path'),
-                    ),
-                ),
+                    ) if (
+                        module.params.get('kernel_params')
+                        or module.params.get('initrd_path')
+                        or module.params.get('kernel_path')
+                    ) else None,
+                ) if (
+                    module.params.get('kernel_params')
+                    or module.params.get('initrd_path')
+                    or module.params.get('kernel_path')
+                    or module.params.get('host')
+                    or initialization
+                ) else None,
             )
 
             if state == 'next_run':
