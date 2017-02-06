@@ -287,10 +287,10 @@ def main():
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
                     result['ansible_facts']['udp_listen'].append(p)
-
-    except EnvironmentError:
-        err = get_exception()
-        module.fail_json(msg=str(err))
+                    
+    except:
+        e = get_exception()
+        module.fail_json(msg=str(e))
 
     # if a TCP whitelist was supplied, determine which if any pids violate it
     if module.params['whitelist_tcp'] and result['ansible_facts']['tcp_listen']:
