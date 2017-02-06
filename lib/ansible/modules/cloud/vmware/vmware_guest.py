@@ -1529,6 +1529,8 @@ def main():
                 # has to be poweredoff first
                 pyv.set_powerstate(vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
+        elif module.params['snapshot_op']:
+            result = pyv.snapshot_vm(vm, module.params['name'], module.params['snapshot_op'])
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended']:
@@ -1545,8 +1547,6 @@ def main():
             except Exception:
                 e = get_exception()
                 module.fail_json(msg="Fact gather failed with exception %s" % e)
-        elif module.params['snapshot_op']:
-            result = pyv.snapshot_vm(vm, module.params['name'], module.params['snapshot_op'])
         else:
             # This should not happen
             assert False
