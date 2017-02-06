@@ -58,8 +58,8 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security
-        group names or IDs.
+      - A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix.  Previous to 2.4,
+        for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
     required: false
   volumes:
     description:
@@ -184,7 +184,10 @@ def create_launch_config(connection, module):
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
-    security_groups = module.params['security_groups']
+    try:
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=None, boto3=False)
+    except ValueError as e:
+        module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
