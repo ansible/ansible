@@ -98,7 +98,7 @@ tasks:
       wait_for: result[0] contains IOS
 
   - name: run multiple commands on remote nodes
-     ios_command:
+    ios_command:
       commands:
         - show version
         - show interfaces
