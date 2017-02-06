@@ -240,8 +240,10 @@ def ip_pool(module):
 
     margs = module.params
 
-    # TODO add Exception handling for login error
-    aos = get_aos_session(module, margs['session'])
+    try:
+        aos = get_aos_session(module, margs['session'])
+    except:
+        module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
     item_id = False
