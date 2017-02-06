@@ -256,11 +256,9 @@ def main():
     if not region:
         module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region     or ec2_region must be set."))
 
-    connection = boto3_conn(module, conn_type='client', resource='elasticache', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    #client = boto3_conn(module, conn_type='client',
-    #                         resource='elasticache', region=region,
-    #                         endpoint="elasticache.%s.amazonaws.com" % region, 
-    #                         **aws_connect_kwargs)  # endpoint was ec2_url
+    connection = boto3_conn(module, conn_type='client', 
+                            resource='elasticache', region=region, 
+                            endpoint=ec2_url, **aws_connect_kwargs)
 
     exists = get_info(connection, parameter_group_name)
      
@@ -289,10 +287,7 @@ def main():
         else:
             changed = False
     elif state == 'reset':
-        #initial_parameters = make_current_modifiable_param_dict(connection, parameter_group_name)
         result, changed = reset(connection, parameter_group_name, update_values)
-        #new_parameters = make_current_modifiable_param_dict(connection, parameter_group_name)
-        # check if initial parameters differ from current parameters
 
     facts_result = dict(changed=changed, elasticache=get_info(connection, parameter_group_name))
 
