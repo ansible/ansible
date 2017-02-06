@@ -70,14 +70,14 @@ def find_collection_item(collection, item_name=False, item_id=False):
     my_dict = None
 
     if item_name:
-        my_dict = collection.find(method='display_name', key=item_name)
+        my_dict = collection.find(label=item_name)
     elif item_id:
-        my_dict = collection.find(method='id', key=item_id)
+        my_dict = collection.find(uid=item_id)
 
     if my_dict is None:
         return collection['']
     else:
-        return collection[my_dict['display_name']]
+        return my_dict
 
 def get_display_name_from_file(module, file=''):
     """
