@@ -490,6 +490,7 @@ def main():
             ),
         required_together = [ ['username', 'password'], ['activationkey', 'org_id'] ],
         mutually_exclusive = [ ['username', 'activationkey'] ],
+        required_if = [ [ 'state', 'present', ['username', 'activationkey'], True ] ],
         )
 
     rhsm.module = module
@@ -514,10 +515,6 @@ def main():
 
     # Ensure system is registered
     if state == 'present':
-
-        # Check for missing parameters ...
-        if not (activationkey or org_id or username or password):
-            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) and Organization ID (%s) or username (%s) and password (%s)" % (activationkey, org_id, username, password))
 
         # Register system
         if rhsm.is_registered and not force_register:
