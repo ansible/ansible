@@ -112,7 +112,7 @@ EXAMPLES = """
        hostname: "{{ solidfire_hostname }}"
        username: "{{ solidfire_username }}"
        password: "{{ solidfire_password }}"
-       state: delete
+       state: absent
        name: TenantA-Renamed
 """
 
