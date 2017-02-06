@@ -100,6 +100,7 @@ options:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
+        default: False
    force:
         description:
             - Ignore warnings and complete the actions
@@ -107,6 +108,7 @@ options:
         description:
             - Destination datacenter for the deploy operation
         required: True
+        default: ha-datacenter
    cluster:
         description:
             - The cluster name where the VM will run.
