@@ -167,7 +167,7 @@ def main():
     response,info = fetch_url(module, uri)
 
     if info['status'] != 200:
-        module.fail_json("Failed to get the weather: %s" % info['msg'])
+        module.fail_json(msg="Failed to get the weather: %s" % info['msg'])
 
     data = json.loads(response.read())
     weather['weather_' + str(data['id'])] = data
