@@ -287,7 +287,7 @@ class ModuleArgsParser:
             if item in module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
-                    raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
+                    raise AnsibleParserError("conflicting action statements: {}, {}".format(action, item), obj=self._task_ds)
                 action = item
                 thing = value
                 action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
