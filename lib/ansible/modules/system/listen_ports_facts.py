@@ -31,11 +31,9 @@ options:
   whitelist_tcp:
     description:
       - A list of TCP port numbers that are expected to have processes listening.
-    required: false
   whitelist_udp:
     description:
       - A list of UDP port numbers that are expected to have processes listening.
-    required: false
 '''
 
 EXAMPLES = '''
