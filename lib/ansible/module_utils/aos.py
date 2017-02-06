@@ -87,9 +87,8 @@ def get_display_name_from_file(module, file=''):
 
     try:
         datum = json.load(open(file))
-    except Exception as exc:
-        module.fail_json(msg="unable to read file'%s': %s" %
-                             (file, exc.message))
+    except Exception:
+        module.fail_json(msg="unable to read file'%s'" % file)
 
     if 'display_name' in datum.keys():
         return datum['display_name']
@@ -105,9 +104,8 @@ def do_load_resource(module, collection, file=''):
 
     try:
         datum = json.load(open(file))
-    except Exception as exc:
-        module.fail_json(msg="unable to load src file '%s': %s" %
-                             (file, exc.message))
+    except Exception:
+        module.fail_json(msg="unable to load src file '%s'" % file)
 
     try:
         item = find_collection_item(collection, datum['display_name'], '')
@@ -124,8 +122,8 @@ def do_load_resource(module, collection, file=''):
     except KeyError:
         module.fail_json(msg="src data missing display_name, check file contents")
 
-    except SessionRqstError as exc:
-        module.fail_json(msg="unable to write item content: %s" % exc.message,
+    except SessionRqstError:
+        module.fail_json(msg="unable to write item content",
                          content=datum)
 
     module.exit_json( changed=True,
