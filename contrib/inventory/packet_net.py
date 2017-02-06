@@ -143,13 +143,13 @@ class PacketInventory(object):
         ]
         self.packet_device_states = []
         if config.has_option(ini_section, 'device_states'):
-          for device_state in config.get(ini_section, 'device_states').split(','):
-            device_state = device_state.strip()
-            if device_state not in packet_valid_device_states:
-              continue
-            self.packet_device_states.append(device_state)
+            for device_state in config.get(ini_section, 'device_states').split(','):
+                device_state = device_state.strip()
+                if device_state not in packet_valid_device_states:
+                    continue
+                self.packet_device_states.append(device_state)
         else:
-          self.packet_device_states = packet_valid_device_states
+            self.packet_device_states = packet_valid_device_states
 
         # Cache related
         cache_dir = os.path.expanduser(config.get(ini_section, 'cache_path'))
@@ -200,7 +200,7 @@ class PacketInventory(object):
 
         # Do we need to exclude hosts that match a pattern?
         try:
-            pattern_exclude = config.get(ini_section, 'pattern_exclude');
+            pattern_exclude = config.get(ini_section, 'pattern_exclude')
             if pattern_exclude and len(pattern_exclude) > 0:
                 self.pattern_exclude = re.compile(pattern_exclude)
             else:
@@ -304,7 +304,7 @@ class PacketInventory(object):
         # Select the best destination address
         dest = None
         for ip_address in device.ip_addresses:
-            if ip_address['public'] == True and ip_address['address_family'] == 4:
+            if ip_address['public'] is True and ip_address['address_family'] == 4:
                 dest = ip_address['address']
 
 
@@ -389,7 +389,7 @@ class PacketInventory(object):
                 device_vars[key] = value
             elif isinstance(value, six.string_types):
                 device_vars[key] = value.strip()
-            elif type(value) == type(None):
+            elif value is None:
                 device_vars[key] = ''
             elif key == 'packet_facility':
                 device_vars[key] = value['code']
@@ -495,4 +495,3 @@ class PacketInventory(object):
 
 # Run the script
 PacketInventory()
-
