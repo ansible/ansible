@@ -210,17 +210,17 @@ def netStatParse(raw):
             elif 'udp' in splitted[0]:
                 protocol = 'udp'
                 pidstr = splitted[5]
-            pids = re.search('([0-9]+)/(.*)', pidstr)
+            pids = re.search('(([0-9]+)/(.*)|-)', pidstr)
             if conns and pids:
                 address = conns.group(1)
                 port = conns.group(2)
-                pid = pids.group(1)
-                name = pids.group(2)
+                pid = pids.group(2) if pids.group(2) else 0
+                name = pids.group(3) if pids.group(3) else ''
                 result = dict(pid=int(pid), address=address, port=int(port), protocol=protocol, name=name)
                 if result not in results:
                     results.append(result)
-            elif not pids:
-                raise EnvironmentError('Could not get the pids for the listening ports - possibly a permission issue')
+            else:
+                raise EnvironmentError('Could not get process information for the listening ports.')
     return results
 
 def applyWhitelist(portspids, whitelist=list()):
