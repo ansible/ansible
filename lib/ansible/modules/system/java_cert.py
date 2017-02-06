@@ -17,13 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: java_cert
 version_added: 2.3
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
-  - This is a wrapper module around keytool. Which can be used to import/remove certificates from a given java keystore.
+  - This is a wrapper module around keytool. Which can be used to import/remove
+    certificates from a given java keystore.
 options:
   cert_url:
     description:
@@ -32,13 +37,10 @@ options:
   cert_port:
     description:
       - Port to connect to URL. This will be used to create server URL:PORT
-    required: false
     default: 443
   cert_path:
     description:
       - Local path to load certificate from
-    required: false
-    default: null
   cert_alias:
     description:
       - Imported certificate alias
@@ -71,7 +73,7 @@ author: Adam Hamsik @haad
 
 EXAMPLES = '''
 # Import SSL certificate from google.com to a given cacerts keystore
-java_certs:
+java_cert:
   cert_url: google.com
   cert_port: 443
   keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
@@ -79,14 +81,15 @@ java_certs:
   state: present
 
 # Remove certificate with given alias from a keystore
-java_certs:
+java_cert:
   cert_url: google.com
   keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
   keystore_pass: changeit
   state: absent
 
-# Import SSL certificate from google.com to a keystore, create it if it doesn't exist
-java_certs:
+# Import SSL certificate from google.com to a keystore,
+# create it if it doesn't exist
+java_cert:
   cert_url: google.com
   keystore_path: /tmp/cacerts
   keystore_pass: changeit
@@ -96,7 +99,7 @@ java_certs:
 
 RETURN = '''
 msg:
-  description: Output from stdou of keytool command after execution of given command.
+  description: Output from stdout of keytool command after execution of given command.
   returned: success
   type: string
   sample: "Module require existing keystore at keystore_path '/tmp/test/cacerts'"
@@ -117,9 +120,10 @@ cmd:
 import os
 
 def check_cert_present(module, keystore_path, keystore_pass, alias):
-    ''' Check if certificate with alias is present in keystore located at keystore_path '''
-    test_cmd = ("keytool -noprompt -list -keystore '{}' -storepass '{}' "
-                "-alias '{}'").format(keystore_path, keystore_pass, alias)
+    ''' Check if certificate with alias is present in keystore
+        located at keystore_path '''
+    test_cmd = ("keytool -noprompt -list -keystore '%s' -storepass '%s' "
+                "-alias '%s'")%(keystore_path, keystore_pass, alias)
 
     (check_rc, _, _) = module.run_command(test_cmd)
     if check_rc == 0:
@@ -128,47 +132,69 @@ def check_cert_present(module, keystore_path, keystore_pass, alias):
 
 def import_cert_url(module, url, port, keystore_path, keystore_pass, alias):
     ''' Import certificate from URL into keystore located at keystore_path '''
-    fetch_cmd = ("keytool -printcert -rfc -sslserver {}:{}").format(url, port)
-    import_cmd = ("keytool -importcert -noprompt -keystore '{}' -storepass '{}' "
-                  "-alias '{}'").format(keystore_path, keystore_pass, alias)
+    fetch_cmd = ("keytool -printcert -rfc -sslserver %s:%d")%(url, port)
+    import_cmd = ("keytool -importcert -noprompt -keystore '%s' "
+                  "-storepass '%s' -alias '%s'")%(keystore_path,
+                                                  keystore_pass, alias)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
 
     # Fetch SSL certificate from remote host.
     (_, fetch_out, _) = module.run_command(fetch_cmd, check_rc=True)
 
     # Use remote certificate from remote host and import it to a java keystore
-    (import_rc, import_out, import_err) = module.run_command(import_cmd, data=fetch_out,
+    (import_rc, import_out, import_err) = module.run_command(import_cmd,
+                                                             data=fetch_out,
                                                              check_rc=False)
+    diff = {'before': '\n', 'after': '%s\n'%alias}
     if import_rc == 0:
         return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout_lines=import_out)
+                                rc=import_rc, cmd=import_cmd, stdout=import_out,
+                                diff=diff)
     else:
-        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd, error=import_err)
+        return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd,
+                                error=import_err)
 
 def import_cert_path(module, path, keystore_path, keystore_pass, alias):
-    ''' Import certificate from path into keystore located on keystore_path as alias '''
-    import_cmd = ("keytool -importcert -noprompt -keystore '{}' -storepass '{}' "
-                  "-file '{}' -alias '{}'").format(keystore_path, keystore_pass, path, alias)
+    ''' Import certificate from path into keystore located on
+        keystore_path as alias '''
+    import_cmd = ("keytool -importcert -noprompt -keystore '%s' "
+                  "-storepass '%s' -file '%s' -alias '%s'")%(keystore_path,
+                                                             keystore_pass,
+                                                             path, alias)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
 
     # Use local certificate from local path and import it to a java keystore
-    (import_rc, import_out, import_err) = module.run_command(import_cmd, check_rc=False)
+    (import_rc, import_out, import_err) = module.run_command(import_cmd,
+                                                             check_rc=False)
+
+    diff = {'before': '\n', 'after': '%s\n'%alias}
     if import_rc == 0:
         return module.exit_json(changed=True, msg=import_out,
-                                rc=import_rc, cmd=import_cmd, stdout_lines=import_out,
-                                error=import_err)
+                                rc=import_rc, cmd=import_cmd, stdout=import_out,
+                                error=import_err, diff=diff)
     else:
         return module.fail_json(msg=import_out, rc=import_rc, cmd=import_cmd)
 
 def delete_cert(module, keystore_path, keystore_pass, alias):
     ''' Delete cerificate identified with alias from keystore on keystore_path '''
-    del_cmd = ("keytool -delete -keystore '{}' -storepass '{}' "
-               "-alias '{}'").format(keystore_path, keystore_pass, alias)
+    del_cmd = ("keytool -delete -keystore '%s' -storepass '%s' "
+               "-alias '%s'")%(keystore_path, keystore_pass, alias)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
 
     # Delete SSL certificate from keystore
     (del_rc, del_out, del_err) = module.run_command(del_cmd, check_rc=True)
 
+    diff = {'before': '%s\n'%alias, 'after': None}
+
     return module.exit_json(changed=True, msg=del_out,
-                            rc=del_rc, cmd=del_cmd, stdout_lines=del_out,
-                            error=del_err)
+                            rc=del_rc, cmd=del_cmd, stdout=del_out,
+                            error=del_err, diff=diff)
 
 def test_keytool(module):
     ''' Test if keytool is actuall executable or not '''
@@ -184,19 +210,20 @@ def test_keystore(module, keystore_path):
     if not os.path.exists(keystore_path) and not os.path.isfile(keystore_path):
         ## Keystore doesn't exist we want to create it
         return module.fail_json(changed=False,
-                                msg="Module require existing keystore at keystore_path '{}'"
-                                .format(keystore_path))
+                                msg="Module require existing keystore at keystore_path '%s'"
+                                %(keystore_path))
 
 def main():
     argument_spec = dict(
         cert_url=dict(required=False, type='str'),
         cert_path=dict(required=False, type='str'),
         cert_alias=dict(required=False, type='str'),
-        cert_port=dict(required=False, default='443'),
+        cert_port=dict(required=False, default='443', type='int'),
         keystore_path=dict(required=False, type='str'),
         keystore_pass=dict(required=False, default='changeit', type='str'),
         keystore_create=dict(required=False, default=False, type='bool'),
-        state=dict(required=False, default='present', choices=['present', 'absent'])
+        state=dict(required=False, default='present',
+                   choices=['present', 'absent'])
     )
 
     module = AnsibleModule(
@@ -206,6 +233,7 @@ def main():
         mutually_exclusive=[
             ['cert_url', 'cert_path']
         ],
+        supports_check_mode=True,
     )
 
     url = module.params.get('cert_url')
@@ -220,28 +248,32 @@ def main():
 
     if path and not cert_alias:
         module.fail_json(changed=False,
-                         msg="Using local path import from {} requires alias argument."
-                         .format(keystore_path))
+                         msg="Using local path import from %s requires alias argument."
+                         %(keystore_path))
 
     test_keytool(module)
 
     if not keystore_create:
         test_keystore(module, keystore_path)
 
+    cert_present = check_cert_present(module, keystore_path,
+                                      keystore_pass, cert_alias)
+
     if state == 'absent':
-        if check_cert_present(module, keystore_path, keystore_pass, cert_alias):
+        if cert_present:
             delete_cert(module, keystore_path, keystore_pass, cert_alias)
-        else:
-            module.exit_json(changed=False)
 
-    if check_cert_present(module, keystore_path, keystore_pass, cert_alias):
-        module.exit_json(changed=False)
-    else:
-        if path:
-            import_cert_path(module, path, keystore_path, keystore_pass, cert_alias)
+    elif state == 'present':
+        if not cert_present:
+            if path:
+                import_cert_path(module, path, keystore_path,
+                                 keystore_pass, cert_alias)
 
-        if url:
-            import_cert_url(module, url, port, keystore_path, keystore_pass, cert_alias)
+            if url:
+                import_cert_url(module, url, port, keystore_path,
+                                keystore_pass, cert_alias)
+
+    module.exit_json(changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
