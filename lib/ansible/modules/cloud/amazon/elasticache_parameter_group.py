@@ -86,183 +86,146 @@ EXAMPLES = """
 
 """
 
-import traceback
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 
 try:
-    import boto
-    from boto.elasticache.layer1 import ElastiCacheConnection
-    from boto.regioninfo import RegionInfo
-    HAS_BOTO = True
+    import boto3
+    import botocore
+    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO = False
+    HAS_BOTO3 = False
 
-class ElastiCacheManager(object):
-    def __init__(self, module, aws_connect_kwargs, state, group_name, group_family, description, update_values, region):
-        self.module = module
-        self.aws_connect_kwargs = aws_connect_kwargs
-        self.state = state
-        self.name = group_name
-        self.group_family = group_family
-        self.description = description
-        self.update_values = update_values
+def create(conn, name, group_family, description):
+    """ Create ElastiCache parameter group. """
+    try:
+        response = conn.create_cache_parameter_group(CacheParameterGroupName=name, CacheParameterGroupFamily=group_family, Description=description)
+        changed = True
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=e.message)
+    return response, changed
+     
+def delete(conn, name):
+    """ Delete ElastiCache parameter group. """
+    try:
+        response = conn.delete_cache_parameter_group(CacheParameterGroupName=name)
+        changed = True
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=e.message)
+    return response, changed
 
-        self.changed = False
-        self.response = None
-        self.region = region
-        self._get_elasticache_connection()
-        self.exists = self.get_info()
+def make_current_modifiable_param_dict(conn, name):
+    """ Gets the current state of the cache parameter group and creates a dictionary with the format: {ParameterName: [Allowed_Values, DataType, ParameterValue]}"""
+    current_info = get_info(conn, name)
+    if current_info is False:
+        return False
+         
+    parameters = current_info["Parameters"]
+    modifiable_params = {}
 
-    def _get_elasticache_connection(self):
-        """Get an elasticache connection"""
-        try:
-            endpoint = "elasticache.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            self.conn = ElastiCacheConnection(region=connect_region, **self.aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg=e.message)
-
-    def create(self):
-        """ Create ElastiCache parameter group if it doesn't exist. If it does exist, update it if needed. """
-        try:
-            self.response = self.conn.create_cache_parameter_group(cache_parameter_group_name=self.name, cache_parameter_group_family=self.group_family, description=self.description)
-            self.changed = True
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
- 
-    def delete(self):
-        """ Delete ElastiCache parameter group if it exists. """
-        if self.exists:
-            try:
-                self.response = self.conn.delete_cache_parameter_group(cache_parameter_group_name=self.name)
-                self.changed = True
-            except boto.exception.BotoServerError as e:
-                self.module.fail_json(msg=e.message)
-
-    def make_current_modifiable_param_dict(self):
-        """ Gets the current state of the cache parameter group and creates a dictionary with the format: {ParameterName: [Allowed_Values, DataType, ParameterValue]}"""
-        current_info = self.get_info()
-        if current_info is False:
-            self.module.fail_json(msg="The the parameter group cannot be found. Ensure it exists and you have access to it.")
-        
-        parameters = current_info["DescribeCacheParametersResponse"]["DescribeCacheParametersResult"]["Parameters"]
-        modifiable_params = {}
-
-        for i in range(0, len(parameters)):
-            param = parameters[i]
-            if param["IsModifiable"] == True:
+    for param in parameters:
+        if param["IsModifiable"] == True:
+            if ("AllowedValues" and "ParameterValue") in param:
                 modifiable_params[param["ParameterName"]] = [param["AllowedValues"], param["DataType"], param["ParameterValue"]]
+    return modifiable_params
 
-        return modifiable_params
+def check_valid_modification(module, update_values, modifiable_params):
+    """ Check if the parameters and values in update_values are valid.  """
+    changed_with_update = False
 
-    def check_valid_parameter_names(self):
-        """ Check if the parameters and values in update_values are valid.  """
-        modifiable_params = self.make_current_modifiable_param_dict()
+    for param_value_pair in update_values:
+        parameter = param_value_pair[0]
+        new_value = param_value_pair[1]
         
-        if self.state == "reset":
-            # returning the current parameter dict so we can compare it for changes after everything has been reset
-            return modifiable_params
-
-        changed_with_update = False
-
-        for i in range(0, len(self.update_values)):
-            # check valid modifiable parameters
-            modified = self.update_values[i][0]
-            if modified not in modifiable_params.keys():
-                self.module.fail_json(msg="%s is not a modifiable parameter." % modified)
-
-        changed_with_update = self.check_valid_parameter_name_values(modifiable_params, allowed_index=0, type_index=1, value_index=2)
-
-        return changed_with_update
-
-    def check_changed_parameter_values(self, old_parameters, new_parameters):
-        """ Checking if the new values are different than the old values.  """
-        changed_with_update = False
-
-        # if the user specified parameters to reset, only check those for change
-        if self.update_values:
-            for i in range(0, len(self.update_values)):
-                parameter = self.update_values[i][0]
-                if old_parameters[parameter] != new_parameters[parameter]:
-                    changed_with_update = True
-                    break
-        # otherwise check all to find a change            
-        else:
-            for parameter in old_parameters.keys():
-                if old_parameters[parameter] != new_parameters[parameter]:
-                    changed_with_update = True
-                    break
-        return changed_with_update
-
-    def check_valid_parameter_name_values(self, modifiable_params, allowed_index, type_index, value_index):
-        """ Check if the parameters and values in update_values are valid.  """
-        changed_with_update = False
-
-        new_param = 0
-        new_value = 1
+        # check valid modifiable parameters
+        if parameter not in modifiable_params.keys():
+            module.fail_json("%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
+            
+        # check allowed datatype for modified parameters
+        str_to_type = {"integer": int, "string": str}
+        if type(new_value) != str_to_type[modifiable_params[parameter][1]]:
+            module.fail_json(msg="%s (type %s) is not an allowed value for the parameter %s. Expected a type %s." % (new_value, type(new_value), parameter, modifiable_params[parameter][1]))
         
-        # iterating through the length of self.update_values; each index is a parameter,value pair the user wants to modify
-        for i in range(0, len(self.update_values)):
-            
-            # check valid modifiable parameters
-            modified = self.update_values[i][new_param]
-            if modified not in modifiable_params.keys():
-                self.module.fail_json("%s is not a modifiable parameter." % modified)
-            
-            # check allowed values for modifiable parameters
-            value = self.update_values[i][new_value]
-            if str(value) not in modifiable_params[modified][allowed_index]:
-                if "-" not in modifiable_params[modified][allowed_index]:
-                    self.module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." % (value, modified, modifiable_params[modified][0]))
+        # check allowed values for modifiable parameters
+        if str(new_value) not in modifiable_params[parameter][0]:
+            if "-" not in modifiable_params[parameter][0]:
+                module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." % (value, modified, modifiable_params[parameter][0]))
 
-            # check allowed datatype for modifiable parameter values
-            modified_type = type(self.update_values[i][new_value])
-            expected_type = modifiable_params[modified][type_index]  # Out of index
-            if (expected_type == "string" and modified_type != str) or (expected_type == "integer" and modified_type != int):
-                self.module.fail_json(msg="%s (type %s) is not an allowed value for the parameter %s. Expected a type %s." % (value, modified_type, modified, expected_type))
+        # check if a new value is different from current value
+        if str(new_value) != modifiable_params[parameter][2]:
+            changed_with_update = True
 
-            # check if a new value is different from current value; 1 value must be different for changed=True
-            if str(value) != modifiable_params[modified][value_index]:
+    return changed_with_update
+
+def check_changed_parameter_values(update_values, old_parameters, new_parameters):
+    """ Checking if the new values are different than the old values.  """
+    changed_with_update = False
+
+    # if the user specified parameters to reset, only check those for change
+    if update_values:
+        for param_value_pair in update_values:
+            parameter = param_value_pair[0]
+            if old_parameters[parameter] != new_parameters[parameter]:
                 changed_with_update = True
+                break
+    # otherwise check all to find a change            
+    else:
+        for parameter in old_parameters.keys():
+            if old_parameters[parameter] != new_parameters[parameter]:
+                changed_with_update = True
+                break
+    
+    return changed_with_update
+
+def modify(conn, name, update_values):
+    """ Modify ElastiCache parameter group to reflect the new information if it differs from the current. """
+    # compares current group parameters with the parameters we've specified to to a value to see if this will change the group
+    format_parameters = []
+    for key_value_pair in update_values:
+        key = key_value_pair[0]
+        value = str(key_value_pair[1])
+        format_parameters.append({'ParameterName': key, 'ParameterValue': value})
+    try:
+        response = conn.modify_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters)
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=e.message)
+    return response
+
+def reset(conn, name, update_values):
+    """ Reset ElastiCache parameter group if the current information is different from the new information. """
+    # used to compare with the reset parameters' dict to see if there have been changes
+    old_parameters_dict = make_current_modifiable_param_dict(conn, name)
+    
+    format_parameters = []
+    
+    # determine whether to reset all or specific parameters
+    if update_values:
+        all_parameters = False
+        format_parameters = []
+        for key_value_pair in update_values:
+            key = key_value_pair[0]
+            value = str(key_value_pair[1])
+            format_parameters.append({'ParameterName': key, 'ParameterValue': value})
+    else:
+        all_parameters = True
+
+    try:
+        response = conn.reset_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters, ResetAllParameters=all_parameters)
+    except boto.exception.BotoServerError as e:
+        module.fail_json(msg=e.message) 
         
-        return changed_with_update
+    # determine changed
+    new_parameters_dict = make_current_modifiable_param_dict(conn, name)
+    changed = check_changed_parameter_values(update_values, old_parameters_dict, new_parameters_dict)
+    
+    return response, changed
 
-    def modify(self):
-        """ Modify ElastiCache parameter group to reflect the new information if it differs from the current. """
-        # compares current group parameters with the parameters we've specified to to a value to see if this will change the group
-        changed_with_update = self.check_valid_parameter_names()
-        try:
-            self.response = self.conn.modify_cache_parameter_group(cache_parameter_group_name=self.name, parameter_name_values=self.update_values)
-            self.changed = changed_with_update
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message)
-
-    def reset(self):
-        """ Reset ElastiCache parameter group if the current information is different from the new information. """
-        # used to compare with the reset parameters' dict to see if there have been changes
-        old_parameters_dict = self.make_current_modifiable_param_dict()
-        
-        # determine whether to reset all or specific parameters
-        if self.update_values:
-            all_parameters = False
-        else:
-            all_parameters = True
-
-        try:
-            self.response = self.conn.reset_cache_parameter_group(cache_parameter_group_name=self.name, parameter_name_values=self.update_values, reset_all_parameters=all_parameters)
-        except boto.exception.BotoServerError as e:
-            self.module.fail_json(msg=e.message) 
-        
-        # determine self.changed
-        new_parameters_dict = self.make_current_modifiable_param_dict()
-        self.changed = self.check_changed_parameter_values(old_parameters_dict, new_parameters_dict)
-
-    def get_info(self):
-        """ Gets info about the ElastiCache parameter group. Returns false if it doesn't exist or we don't have access. """
-        try:
-            data = self.conn.describe_cache_parameters(cache_parameter_group_name=self.name)
-            return data
-        except boto.exception.BotoServerError:
-            return False
+def get_info(conn, name):
+    """ Gets info about the ElastiCache parameter group. Returns false if it doesn't exist or we don't have access. """
+    try:
+        data = conn.describe_cache_parameters(CacheParameterGroupName=name)
+        return data
+    except botocore.exceptions.ClientError as e:
+        return False
 
 
 def main():
@@ -277,12 +240,7 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    req = { 'present'   : {'allow' : ['group_family', 'name', 'description', 'update_values'], 'not_allowed' : [] },
-            'absent'    : {'allow' : [], 'not_allowed' : [] },
-            'reset'     : {'allow' : [], 'not_allowed' : [] },
-    }
-
-    if not HAS_BOTO:
+    if not HAS_BOTO3:
         module.fail_json(msg='boto required for this module')
 
     parameter_group_family  = module.params.get('group_family')
@@ -291,24 +249,21 @@ def main():
     state                   = module.params.get('state')
     update_values           = module.params.get('update_values')
     
-    # FIXME
-    # check legal parameters
-    #for requirement in req[state]['allow']:
-    #    if not module.params.get(requirement):
-    #        module.fail_json(msg="Option %s required for state=%s" % (requirement, state))
-    #for requirment in req[state]['not_allowed']:
-    #    if module.params.get(requirement):
-    #        module.fail_json(msg="Option %s not allowed for state:%s" % (requirement, state))
 
     # Retrieve any AWS settings from the environment.
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     if not region:
-        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
+        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region     or ec2_region must be set."))
 
-    elasticache_manager = ElastiCacheManager(module, aws_connect_kwargs, state, parameter_group_name, parameter_group_family, group_description, update_values, region)
-    exists = elasticache_manager.exists
-    
+    connection = boto3_conn(module, conn_type='client', resource='elasticache', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    #client = boto3_conn(module, conn_type='client',
+    #                         resource='elasticache', region=region,
+    #                         endpoint="elasticache.%s.amazonaws.com" % region, 
+    #                         **aws_connect_kwargs)  # endpoint was ec2_url
+
+    exists = get_info(connection, parameter_group_name)
+     
     # check if modifications specified or not are valid
     if state == 'present' and exists and not update_values:
         module.fail_json(msg="Group already exists. Please specify values to modify using the 'update_values' option or use the state 'reset' if you want to reset all or some group parameters.")
@@ -317,21 +272,29 @@ def main():
     elif state == 'reset' and not exists:
         module.fail_json(msg="No group %s to reset. Please create the group before using the state 'reset'." % parameter_group_name)
 
+    changed = False
     if state == 'present':
         # modify existing group
         if exists:
-            elasticache_manager.modify() 
+            modifiable_params = make_current_modifiable_param_dict(connection, parameter_group_name)
+            changed = check_valid_modification(module, update_values, modifiable_params)
+            result = modify(connection, parameter_group_name, update_values)
         # create group
         else:
-            elasticache_manager.create()
+            result, changed = create(connection, parameter_group_name, parameter_group_family, group_description)
     elif state == 'absent':
         # delete group
-        elasticache_manager.delete()
+        if exists:
+            result, changed = delete(connection, parameter_group_name)
+        else:
+            changed = False
     elif state == 'reset':
-        # reset group parameters
-        elasticache_manager.reset()
+        #initial_parameters = make_current_modifiable_param_dict(connection, parameter_group_name)
+        result, changed = reset(connection, parameter_group_name, update_values)
+        #new_parameters = make_current_modifiable_param_dict(connection, parameter_group_name)
+        # check if initial parameters differ from current parameters
 
-    facts_result = dict(changed=elasticache_manager.changed, elasticache=elasticache_manager.get_info())
+    facts_result = dict(changed=changed, elasticache=get_info(connection, parameter_group_name))
 
     module.exit_json(**facts_result)
 
