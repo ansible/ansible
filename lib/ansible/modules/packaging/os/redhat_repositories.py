@@ -15,13 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import re
-import syslog
-from ansible.module_utils.basic import AnsibleModule
-
-debug=False
-
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -140,6 +133,13 @@ redhat_repositories:
     }'
 
 '''
+
+import os
+import re
+import syslog
+from ansible.module_utils.basic import AnsibleModule
+
+debug=False
 
 
 def notice(msg):
