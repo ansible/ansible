@@ -652,7 +652,7 @@ if hasattr(select, "kqueue"):
 # select() also can't accept a FD > FD_SETSIZE (usually around 1024)
 if 'KqueueSelector' in globals():  # Platform-specific: Mac OS and BSD
     DefaultSelector = KqueueSelector
-if 'DevpollSelector' in globals():
+elif 'DevpollSelector' in globals():
     DefaultSelector = DevpollSelector
 elif 'EpollSelector' in globals():  # Platform-specific: Linux
     DefaultSelector = EpollSelector
