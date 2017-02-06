@@ -72,7 +72,7 @@ class TestVyosSystemModule(unittest.TestCase):
         self.mock_load_config.stop()
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True):
-        self.get_config.return_value = load_fixture('show_config_commands.cfg')
+        self.get_config.return_value = load_fixture('vyos_config_config.cfg')
 
         with self.assertRaises(AnsibleModuleExit) as exc:
             vyos_system.main()
@@ -105,15 +105,15 @@ class TestVyosSystemModule(unittest.TestCase):
         self.assertEqual(1, len(result['commands']))
 
     def test_vyos_remove_single_name_server(self):
-        set_module_args(dict(name_server=['172.26.1.2'], state='absent'))
+        set_module_args(dict(name_server=['8.8.4.4'], state='absent'))
         result = self.execute_module(changed=True)
-        self.assertIn("delete system name-server '172.26.1.2'", result['commands'])
+        self.assertIn("delete system name-server '8.8.4.4'", result['commands'])
         self.assertEqual(1, len(result['commands']))
 
     def test_vyos_system_domain_name(self):
-        set_module_args(dict(domain_name='example.com'))
+        set_module_args(dict(domain_name='example2.com'))
         result = self.execute_module(changed=True)
-        self.assertIn("set system domain-name 'example.com'", result['commands'])
+        self.assertIn("set system domain-name 'example2.com'", result['commands'])
         self.assertEqual(1, len(result['commands']))
 
     def test_vyos_system_clear_domain_name(self):
@@ -135,7 +135,7 @@ class TestVyosSystemModule(unittest.TestCase):
         self.assertEqual(1, len(result['commands']))
 
     def test_vyos_system_no_change(self):
-        set_module_args(dict(host_name='vyos01', domain_name='eng.ansible.com', name_server=['172.26.1.1', '172.26.1.2']))
+        set_module_args(dict(host_name='router', domain_name='example.com', name_server=['8.8.8.8', '8.8.4.4']))
         result = self.execute_module()
         self.assertEqual([], result['commands'])
 
