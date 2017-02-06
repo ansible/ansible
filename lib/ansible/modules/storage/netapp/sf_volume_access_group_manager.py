@@ -152,7 +152,7 @@ class SolidFireVolumeAccessGroup(object):
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=False
+            supports_check_mode=True
         )
 
         p = self.module.params
