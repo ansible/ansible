@@ -235,7 +235,7 @@ def main():
         name            = dict(required=True, type='str'),
         description     = dict(required=False),
         state           = dict(required=True),
-        update_values   = dict(required=False, type='list', default=[]),
+        update_values   = dict(required=False, type='list'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -249,10 +249,8 @@ def main():
     state                   = module.params.get('state')
     update_values           = module.params.get('update_values')
     
-
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-
     if not region:
         module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region     or ec2_region must be set."))
 
@@ -262,14 +260,17 @@ def main():
 
     exists = get_info(connection, parameter_group_name)
      
-    # check if modifications specified or not are valid
+    # check that the needed requirements are available
     if state == 'present' and exists and not update_values:
         module.fail_json(msg="Group already exists. Please specify values to modify using the 'update_values' option or use the state 'reset' if you want to reset all or some group parameters.")
     elif state == 'present' and update_values and not exists:
         module.fail_json(msg="No group to modify. Please create the cache parameter group before using the 'update_values' option.")
+    elif state == 'present' and not exists and not (parameter_group_family or group_description):
+        module.fail_json(msg="Creating a group requires a group name, the group family, and a description.")
     elif state == 'reset' and not exists:
         module.fail_json(msg="No group %s to reset. Please create the group before using the state 'reset'." % parameter_group_name)
 
+    # Taking action
     changed = False
     if state == 'present':
         # modify existing group
