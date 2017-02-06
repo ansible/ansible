@@ -25,14 +25,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: aos_ip_pool
-author: damien@apstra.com (@dgarros)
+author: Damien Garros (@dgarros)
 version_added: "2.3"
 short_description: Manage AOS IP Pool
 description:
-  - Used to add an IP Pool to AOS-server from playbook
-  - Used to add an IP Pool to AOS-server from a JSON file
-  - Used to delete an IP Pool
-  - Used to gather an IP Pool
+  - Apstra AOS Ip Pool module let you manage your IP Pool easily. You can create
+    create and delete IP Pool by Name, ID or by using a JSON File. This module
+    is idempotent and support the I(check) mode. It's using the AOS REST API
 requirements:
   - aos-pyez
 options:
@@ -42,29 +41,28 @@ options:
     required: true
   name:
     description:
-      - Name of the IP Pool to manage
-        I(only one of - name, id or src - can be define)
+      - Name of the IP Pool to manage.
+        Only one of I(name), I(id) or I(src) can be set.
     required: false
   id:
     description:
       - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
-        I(only one of - name, id or src - can be define)
+        Only one of I(name), I(id) or I(src) can be set.
     required: false
   src:
     description:
-      - filepath to JSON file containing the collection item data
-        I(only one of - name, id or src - can be define)
+      - Filepath to JSON file containing the collection item data to upload.
+        Only one of I(name), I(id) or I(src) can be set.
     required: false
   state:
     description:
-      - Indicate
+      - Indicate what is the expected state of the IP Pool (present or not)
     default: present
     choices: ['present', 'absent']
     required: false
   subnets:
     description:
       - Filepath to JSON file containing the collection item data
-    default: []
     required: false
 
 '''
