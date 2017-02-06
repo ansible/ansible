@@ -95,7 +95,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-def create(conn, name, group_family, description):
+def create(module, conn, name, group_family, description):
     """ Create ElastiCache parameter group. """
     try:
         response = conn.create_cache_parameter_group(CacheParameterGroupName=name, CacheParameterGroupFamily=group_family, Description=description)
@@ -104,7 +104,7 @@ def create(conn, name, group_family, description):
         module.fail_json(msg=e.message)
     return response, changed
      
-def delete(conn, name):
+def delete(module, conn, name):
     """ Delete ElastiCache parameter group. """
     try:
         response = conn.delete_cache_parameter_group(CacheParameterGroupName=name)
@@ -176,7 +176,7 @@ def check_changed_parameter_values(update_values, old_parameters, new_parameters
     
     return changed_with_update
 
-def modify(conn, name, update_values):
+def modify(module, conn, name, update_values):
     """ Modify ElastiCache parameter group to reflect the new information if it differs from the current. """
     # compares current group parameters with the parameters we've specified to to a value to see if this will change the group
     format_parameters = []
@@ -190,7 +190,7 @@ def modify(conn, name, update_values):
         module.fail_json(msg=e.message)
     return response
 
-def reset(conn, name, update_values):
+def reset(module, conn, name, update_values):
     """ Reset ElastiCache parameter group if the current information is different from the new information. """
     # used to compare with the reset parameters' dict to see if there have been changes
     old_parameters_dict = make_current_modifiable_param_dict(conn, name)
@@ -277,20 +277,20 @@ def main():
         if exists:
             modifiable_params = make_current_modifiable_param_dict(connection, parameter_group_name)
             changed = check_valid_modification(module, update_values, modifiable_params)
-            result = modify(connection, parameter_group_name, update_values)
+            result = modify(module, connection, parameter_group_name, update_values)
         # create group
         else:
-            result, changed = create(connection, parameter_group_name, parameter_group_family, group_description)
+            result, changed = create(module, connection, parameter_group_name, parameter_group_family, group_description)
     elif state == 'absent':
         # delete group
         if exists:
-            result, changed = delete(connection, parameter_group_name)
+            result, changed = delete(module, connection, parameter_group_name)
         else:
             changed = False
     elif state == 'reset':
-        result, changed = reset(connection, parameter_group_name, update_values)
+        result, changed = reset(module, connection, parameter_group_name, update_values)
 
-    facts_result = dict(changed=changed, elasticache=get_info(connection, parameter_group_name))
+    facts_result = dict(changed=changed, elasticache=result)
 
     module.exit_json(**facts_result)
 
