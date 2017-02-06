@@ -70,71 +70,59 @@ options:
 '''
 
 EXAMPLES = '''
-# Create an IP Pool with one subnet
 
-    - name: "Create IP Pool"
-      aos_ip_pool:
-        session: "{{ session_ok }}"
-        name: "my-ip-pool"
-        subnets: [ 172.10.0.0/16 ]
-        state: present
+- name: "Create an IP Pool with one subnet"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    name: "my-ip-pool"
+    subnets: [ 172.10.0.0/16 ]
+    state: present
 
-# Create an IP Pool with multiple subnets
+- name: "Create an IP Pool with multiple subnets"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    name: "my-other-ip-pool"
+    subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
+    state: present
 
-    - name: "Create IP Pool with multiple subnets"
-      aos_ip_pool:
-        session: "{{ session_ok }}"
-        name: "my-other-ip-pool"
-        subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
-        state: present
+- name: "Check if an IP Pool exist with same subnets by ID"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    name: "45ab26fc-c2ed-4307-b330-0870488fa13e"
+    subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
+    state: present
 
-# Check if an IP Pool exist with same subnets by ID
+- name: "Delete an IP Pool by name"
+  aos_ip_pool:
+    session: "{{ session }}"
+    name: "my-ip-pool"
+    state: absent
 
-    - name: "Check if IP pool exist and is conform"
-      aos_ip_pool:
-        session: "{{ session_ok }}"
-        name: "45ab26fc-c2ed-4307-b330-0870488fa13e"
-        subnets: [ 172.10.0.0/16, 192.168.0.0./24 ]
-        state: present
-
-# Delete an IP Pool by name
-
-    - name: "Delete an IP pool "
-      aos_ip_pool:
-        session: "{{ session }}"
-        name: "my-ip-pool"
-        state: absent
-
-# Delete an IP Pool by ID
-
-    - name: "Delete an IP pool by id"
-      aos_ip_pool:
-        session: "{{ session }}"
-        id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
-        state: absent
+- name: "Delete an IP pool by id"
+  aos_ip_pool:
+    session: "{{ session }}"
+    id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
+    state: absent
 
 # Save an IP Pool to a file
 
-    - name: "Access IP Pool"
-      aos_ip_pool:
-        session: "{{ session_ok }}"
-        name: "my-ip-pool"
-        subnets: [ 172.10.0.0/16, 172.12.0.0/16 ]
-        state: present
-      register: ip_pool
+- name: "Access IP Pool 1/2"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    name: "my-ip-pool"
+    subnets: [ 172.10.0.0/16, 172.12.0.0/16 ]
+    state: present
+  register: ip_pool
+- name: "Save Ip Pool into a file 2/2"
+  copy:
+    content: "{{ ip_pool.value | to_nice_json }}"
+    dest: ip_pool_saved.json
 
-    - name: "Save Ip Pool into a file "
-      copy:
-        content: "{{ ip_pool.value | to_nice_json }}"
-        dest: ip_pool_saved.json
-
-# Load IP Pool from a file
-
-    - name: "Load Ip Pool from file, 1/2"
-      aos_ip_pool:
-        session: "{{ session_ok }}"
-        src: resources/ip_pool_saved.json
-        state: present
+- name: "Load IP Pool from a file"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    src: resources/ip_pool_saved.json
+    state: present
 
 '''
 
