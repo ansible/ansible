@@ -1191,7 +1191,7 @@ class PyVmomiHelper(object):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
 
-        if len(self.params['customization']) > 0:
+        if len(self.params['customization']) > 0 or len(self.params['networks']) > 0:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
