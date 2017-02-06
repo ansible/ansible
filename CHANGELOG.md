@@ -18,6 +18,8 @@ Ansible Changes By Release
 * ansible-doc now displays path to module
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
+* Refactored/standardized Windows modules, adding check-mode and diff support where possible
+* Extended Windows module API with parameter-type support, helper functions (i.e. Expand-Environment, Warn, Deprecate)
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -42,17 +44,25 @@ Ansible Changes By Release
   * Improved virtual machines and disks management.
 
 ###New Modules:
-- archive
-- beadm
-- aws
-  * ec2_lc_facts
+- a10_server_axapi3
+- amazon
   * aws_kms
-  * ecs_ecr
+  * cloudfront_facts
+  * ec2_group_facts
+  * ec2_lc_facts
   * ec2_vpc_igw_facts
   * ec2_vpc_nat_gateway_facts
   * ec2_vpc_vgw_facts
+  * ecs_ecr
+  * iam_role
+  * s3_sync
+- archive
+- beadm
 - bigswitch:
+  * bigmon_chain
   * bigmon_policy
+- cloudengine
+  * ce_command
 - cloudscale_server
 - cloudstack
   * cs_host
@@ -61,22 +71,34 @@ Ansible Changes By Release
   * cs_role
   * cs_vpc
 - dimensiondata_network
+- eos:
+  * eos_banner
+  * eos_system
+  * eos_user
 - f5
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
+  * bigip_sys_global
+- foreman:
+  * foreman
+  * katello
 - free_ipa:
   * ipa_group
   * ipa_hbacrule
-  * ipa_hostgroup
   * ipa_host
+  * ipa_hostgroup
   * ipa_role
-  * ipa_sudocmdgroup
   * ipa_sudocmd
+  * ipa_sudocmdgroup
   * ipa_sudorule
   * ipa_user
+- gconftool2
 - google
   * gce_eip
+  * gce_snapshot
+  * gcpubsub
+  * gcpubsub_facts
 - icinga2_feature
 - illumos:
   * dladm_iptun
@@ -85,15 +107,42 @@ Ansible Changes By Release
   * ipadm_addr
   * ipadm_addrprop
   * ipadm_ifprop
-- infinibox:
+- infinidat:
   * infini_export
   * infini_export_client
   * infini_fs
   * infini_host
   * infini_pool
   * infini_vol
+- ipa
+  * ipa_group
+  * ipa_hbacrule
+  * ipa_host
+  * ipa_hostgroup
+  * ipa_role
+  * ipa_sudocmd
+  * ipa_sudocmdgroup
+  * ipa_sudorule
+  * ipa_user
+- ipinfoio_facts
+- ios:
+  * ios_system
+  * ios_vrf
+- iosxr_system
+- jenkins_script
+- ldap:
+  * ldap_attr
+  * ldap_entry
 - logstash_plugin
+- net_command
+- nginx_status_facts
 - omapi_host
+- openssl:
+  * openssl_privatekey
+  * openssl_publickey
+- openstack
+  * os_nova_host_aggregate
+  * os_quota
 - openwrt_init
 - ovirt:
   * ovirt_affinity_groups
@@ -133,10 +182,11 @@ Ansible Changes By Release
   * ovirt_vmpools
   * ovirt_vmpools_facts
   * ovirt_vms_facts
+- pacemaker_cluster
 - packet:
   * packet_device
   * packet_sshkey
-- runit
+- pamd
 - panos:
   * panos_admin
   * panos_admpwd
@@ -150,19 +200,34 @@ Ansible Changes By Release
   * panos_pg
   * panos_restart
   * panos_service
+  * panos_loadcfg
+  * panos_mgtconfig
+  * panos_nat_policy
+  * panos_pg
+  * panos_restart
+  * panos_service
+- postgresql_schema
+- proxmox_kvm
+- pulp_repo
+- runit
+- serverless
+- set_stats
 - smartos:
   * imgadm
   * vmadm
+- sorcery
+- stacki_host
+- tempfile
 - tower:
   * tower_organization
 - web_infrastructure
   * jenkins_script
 - windows:
+  * win_path
+  * win_psexec
   * win_say
   * win_shortcut
-  * win_path
-- openstack
-  * os_quota
+- xbps
 - zfs:
   * zfs_facts
   * zpool_facts
