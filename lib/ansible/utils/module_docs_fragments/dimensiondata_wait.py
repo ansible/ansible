@@ -21,34 +21,10 @@
 
 class ModuleDocFragment(object):
 
-    # Dimension Data (with "wait-for-completion" parameters) doc fragment
+    # Dimension Data ("wait-for-completion" parameters) doc fragment
     DOCUMENTATION = '''
 
 options:
-  region:
-    description:
-      - The target region.
-    choices:
-      - Regions are defined in Apache libcloud project [libcloud/common/dimensiondata.py]
-      - They are also listed in U(https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html)
-      - Note that the default value "na" stands for "North America".
-      - The module prepends 'dd-' to the region choice.
-    default: na
-  mcp_user:
-    description:
-      - The username used to authenticate to the CloudControl API.
-      - If not specified, will fall back to C(MCP_USER) from environment variable or C(~/.dimensiondata).
-    required: false
-  mcp_password:
-    description:
-      - The password used to authenticate to the CloudControl API.
-      - If not specified, will fall back to C(MCP_PASSWORD) from environment variable or C(~/.dimensiondata).
-      - Required if I(mcp_user) is specified.
-    required: false
-  location:
-    description:
-      - The target datacenter.
-    required: true
   wait:
     description:
       - Should we wait for the task to complete before moving onto the next.

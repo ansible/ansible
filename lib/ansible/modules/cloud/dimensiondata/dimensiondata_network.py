@@ -32,7 +32,9 @@ DOCUMENTATION = '''
 ---
 module: dimensiondata_network
 short_description: Create, update, and delete MCP 1.0 & 2.0 networks
-extends_documentation_fragment: dimensiondata_with_wait
+extends_documentation_fragment:
+  - dimensiondata
+  - dimensiondata_wait
 description:
   - Create, update, and delete MCP 1.0 & 2.0 networks
 version_added: "2.3"
