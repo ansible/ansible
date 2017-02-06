@@ -43,17 +43,17 @@ options:
   name:
     description:
       - Name of the IP Pool to manage
-        I(only one of : name, id or src can be define)
+        I(only one of - name, id or src - can be define)
     required: false
   id:
     description:
       - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
-        I(only one of : name, id or src can be define)
+        I(only one of - name, id or src - can be define)
     required: false
   src:
     description:
       - filepath to JSON file containing the collection item data
-        I(only one of : name, id or src can be define)
+        I(only one of - name, id or src - can be define)
     required: false
   state:
     description:
