@@ -56,12 +56,14 @@ options:
     default: false
   wait_time:
     description:
-      - Only applicable if wait is true. This is the amount of time in seconds to wait
+      - The maximum amount of time (in seconds) to wait for the task to complete.
+      - Only applicable if I(wait=true).
     required: false
     default: 600
   wait_poll_interval:
     description:
-      - The length of time between successive polls for completion
+      - The amount of time (in seconds) to wait between checks for task completion.
+      - Only applicable if I(wait=true).
     required: false
     default: 2
   verify_ssl_cert:

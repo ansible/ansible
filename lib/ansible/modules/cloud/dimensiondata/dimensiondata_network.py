@@ -51,7 +51,7 @@ options:
       - The service plan, either “ESSENTIALS” or “ADVANCED”.
       - MCP 2.0 Only.
     choices: [ESSENTIALS, ADVANCED]
-    default: ADVANCED
+    default: ESSENTIALS
   state:
     description:
       - Should the resource be present or absent.
@@ -84,7 +84,7 @@ EXAMPLES = '''
 RETURN = '''
 network:
     description: Dictionary describing the network.
-    returned: On success when I(state) is 'present'
+    returned: On success when I(state=present).
     type: dictionary
     contains:
         id:
@@ -144,7 +144,7 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 argument_spec=DimensionDataModule.argument_spec_with_wait(
                     name=dict(type='str', required=True),
                     description=dict(type='str', required=False),
-                    service_plan=dict(default='ADVANCED', choices=['ADVANCED', 'ESSENTIALS']),
+                    service_plan=dict(default='ESSENTIALS', choices=['ADVANCED', 'ESSENTIALS']),
                     state=dict(default='present', choices=['present', 'absent'])
                 ),
                 required_together=DimensionDataModule.required_together()
