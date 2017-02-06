@@ -53,11 +53,9 @@ def get_aos_session(module, auth):
         module.fail_json(msg='aos-pyez is not installed.  Please see details '
                              'here: https://github.com/Apstra/aos-pyez')
 
-    try:
-        aos = Session()
-        aos.api.resume(auth['url'], auth['headers'])
-    except (aosExc.SessionError, aosExc.LoginError) as err:
-        module.fail_json(msg="unable to login: %r" % err)
+
+    aos = Session()
+    aos.api.resume(auth['url'], auth['headers'])
 
     return aos
 
