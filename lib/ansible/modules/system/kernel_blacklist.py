@@ -62,21 +62,31 @@ import re
 
 
 class Blacklist(object):
-    def __init__(self, module, filename):
-        if not os.path.exists(filename):
-            open(filename, 'a').close()
-
+    def __init__(self, module, filename, checkmode):
+        self.checkmode = checkmode
         self.filename = filename
         self.module = module
+        self.checkmodenofile = False
+
+        if checkmode:
+            if not os.path.exists(filename):
+                self.checkmodenofile = True
+        else:
+            if not os.path.exists(filename):
+                open(filename, 'a').close()
+
 
     def get_pattern(self):
         return '^blacklist\s*' + self.module + '$'
 
     def readlines(self):
-        f = open(self.filename, 'r')
-        lines = f.readlines()
-        f.close()
-        return lines
+        if self.checkmodenofile:
+            return []
+        else:
+            f = open(self.filename, 'r')
+            lines = f.readlines()
+            f.close()
+            return lines
 
     def module_listed(self):
         lines = self.readlines()
@@ -96,17 +106,19 @@ class Blacklist(object):
         lines = self.readlines()
         pattern = self.get_pattern()
 
-        f = open(self.filename, 'w')
+        if not self.checkmode and not self.checkmodenofile:
+            f = open(self.filename, 'w')
 
-        for line in lines:
-            if not re.match(pattern, line.strip()):
-                f.write(line)
+            for line in lines:
+                if not re.match(pattern, line.strip()):
+                    f.write(line)
 
-        f.close()
+            f.close()
 
     def add_module(self):
-        f = open(self.filename, 'a')
-        f.write('blacklist %s\n' % self.module)
+        if not self.checkmodenofile:
+            f = open(self.filename, 'a')
+            f.write('blacklist %s\n' % self.module)
 
 
 def main():
@@ -117,7 +129,7 @@ def main():
                        default='present'),
             blacklist_file=dict(required=False, default=None)
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     args = dict(changed=False, failed=False,
@@ -128,7 +140,7 @@ def main():
     if module.params['blacklist_file']:
         filename = module.params['blacklist_file']
 
-    blacklist = Blacklist(args['name'], filename)
+    blacklist = Blacklist(args['name'], filename, module.check_mode)
 
     if blacklist.module_listed():
         if args['state'] == 'absent':
