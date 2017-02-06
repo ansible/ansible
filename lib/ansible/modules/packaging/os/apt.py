@@ -116,7 +116,7 @@ options:
     version_added: "2.1"
   only_upgrade:
     description:
-      - Only install/upgrade a package if it is already installed.
+      - Only upgrade a package if it is already installed.
     required: false
     default: false
     version_added: "2.1"
