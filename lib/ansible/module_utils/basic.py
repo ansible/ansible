@@ -2345,15 +2345,13 @@ class AnsibleModule(object):
 
         return kwargs
 
-    def exit_json(self, **kwargs):
-        ''' return from the module, without error '''
-
+    def _format_exit_json(self, **kwargs):
         kwargs = self._return_formatted(kwargs)
         self.do_cleanup_files()
-
         return kwargs
 
     def exit_json(self, **kwargs):
+        ''' return from the module, without error '''
         kwargs = self._format_exit_json(**kwargs)
         raise AnsibleModuleExit(return_code=0,
                                 exception_data=kwargs)
