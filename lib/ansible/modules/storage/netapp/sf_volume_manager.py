@@ -163,6 +163,7 @@ import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
+# Set logging level to DEBUG to keep it consistent with other NetApp modules
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -213,7 +214,7 @@ class SolidFireVolume(object):
             required_if=[
                 ('state', 'present', ['size', 'enable512e'])
             ],
-            supports_check_mode=False
+            supports_check_mode=True
         )
 
         p = self.module.params
@@ -313,6 +314,8 @@ class SolidFireVolume(object):
             volume_exists = True
 
             if self.state == 'absent':
+                # Checking for state change(s) here, and applying it later in the code allows us to support
+                # check_mode
                 logger.debug(
                     "CHANGED: volume exists, but requested state is 'absent'")
                 changed = True
