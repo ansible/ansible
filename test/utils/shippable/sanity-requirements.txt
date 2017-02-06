@@ -1,6 +1,6 @@
 tox
 pyyaml
 jinja2
-setuptools
+setuptools<33.0.0
 mock
 voluptuous==0.8.8
