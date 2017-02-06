@@ -220,6 +220,8 @@ Ansible Changes By Release
 - tempfile
 - tower:
   * tower_organization
+- vmware_guest_facts
+- vmware_guest_snapshot
 - web_infrastructure
   * jenkins_script
 - windows:
