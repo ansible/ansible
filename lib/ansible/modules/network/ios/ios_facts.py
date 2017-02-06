@@ -23,7 +23,7 @@ DOCUMENTATION = """
 ---
 module: ios_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Collect facts from remote devices running IOS
 description:
   - Collects a base set of device facts from a remote device that
@@ -46,31 +46,19 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all
-    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - ios_facts:
     gather_subset:
       - config
-    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - ios_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -80,14 +68,6 @@ ansible_net_gather_subset:
   type: list
 
 # default
-ansible_net_model:
-  description: The model name returned from the device
-  returned: always
-  type: str
-ansible_net_serialnum:
-  description: The serial number of the remote device
-  returned: always
-  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
@@ -140,41 +120,39 @@ ansible_net_neighbors:
   type: dict
 """
 import re
-import itertools
 
-import ansible.module_utils.ios
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.ios import run_commands
+from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+
+BOGUS_RC_COMMANDS = {'show lldp', 'show lldp neighbors detail'}
 
 
 class FactsBase(object):
 
-    def __init__(self, module):
-        self.module = module
+    def __init__(self):
         self.facts = dict()
-        self.failed_commands = list()
+        self.commands()
 
-    def run(self, cmd):
-        try:
-            return self.module.cli(cmd)[0]
-        except:
-            self.failed_commands.append(cmd)
+    def commands(self):
+        raise NotImplementedError
 
 
 class Default(FactsBase):
 
-    def populate(self):
-        data = self.run('show version')
-        if data:
-            self.facts['version'] = self.parse_version(data)
-            self.facts['serialnum'] = self.parse_serialnum(data)
-            self.facts['model'] = self.parse_model(data)
-            self.facts['image'] = self.parse_image(data)
-            self.facts['hostname'] = self.parse_hostname(data)
+    def commands(self):
+        return(['show version'])
+
+    def populate(self, results):
+        self.facts['version'] = self.parse_version(results['show version'])
+        self.facts['serialnum'] = self.parse_serialnum(results['show version'])
+        self.facts['model'] = self.parse_model(results['show version'])
+        self.facts['image'] = self.parse_image(results['show version'])
+        self.facts['hostname'] = self.parse_hostname(results['show version'])
 
     def parse_version(self, data):
-        match = re.search(r'Version (\S+),', data)
+        match = re.search(r'Version (\S+)', data)
         if match:
             return match.group(1)
 
@@ -201,17 +179,19 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def populate(self):
-        data = self.run('dir | include Directory')
-        if data:
-            self.facts['filesystems'] = self.parse_filesystems(data)
+    def commands(self):
+        return(['dir | include Directory',
+                'show memory statistics | include Processor'])
 
-        data = self.run('show memory statistics | include Processor')
-        if data:
-            match = re.findall(r'\s(\d+)\s', data)
-            if match:
-                self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[1]) / 1024
+    def populate(self, results):
+        self.facts['filesystems'] = self.parse_filesystems(
+            results['dir | include Directory'])
+
+        match = re.findall(r'\s(\d+)\s',
+            results['show memory statistics | include Processor'])
+        if match:
+            self.facts['memtotal_mb'] = int(match[0]) / 1024
+            self.facts['memfree_mb'] = int(match[1]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
@@ -219,33 +199,33 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def populate(self):
-        data = self.run('show running-config')
-        if data:
-            self.facts['config'] = data
+    def commands(self):
+        return(['show running-config'])
+
+    def populate(self, results):
+        self.facts['config'] = results['show running-config']
 
 
 class Interfaces(FactsBase):
 
-    def populate(self):
+    def commands(self):
+        return(['show interfaces', 'show ipv6 interface',
+            'show lldp', 'show lldp neighbors detail'])
+
+    def populate(self, results):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interfaces')
-        if data:
-            interfaces = self.parse_interfaces(data)
-            self.facts['interfaces'] = self.populate_interfaces(interfaces)
-
-        data = self.run('show ipv6 interface')
-        if data:
+        interfaces = self.parse_interfaces(results['show interfaces'])
+        self.facts['interfaces'] = self.populate_interfaces(interfaces)
+        data = results['show ipv6 interface']
+        if len(data) > 0:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        data = self.run('show lldp')
-        if 'LLDP is not enabled' not in data:
-            neighbors = self.run('show lldp neighbors detail')
-            if neighbors:
-                self.facts['neighbors'] = self.parse_neighbors(neighbors)
+        if 'LLDP is not enabled' not in results['show lldp']:
+            neighbors = results['show lldp neighbors detail']
+            self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -288,7 +268,8 @@ class Interfaces(FactsBase):
 
     def parse_neighbors(self, neighbors):
         facts = dict()
-        for entry in neighbors.split('------------------------------------------------'):
+        nbors = neighbors.split('------------------------------------------------')
+        for entry in nbors[1:]:
             if entry == '':
                 continue
             intf = self.parse_lldp_intf(entry)
@@ -391,12 +372,13 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
     spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    module = LocalAnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -436,25 +418,34 @@ def main():
 
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](module))
-
-    failed_commands = list()
+        instances.append(FACT_SUBSETS[key]())
 
     try:
         for inst in instances:
-            inst.populate()
-            failed_commands.extend(inst.failed_commands)
+            commands = inst.commands()
+            bogus_rc_commands = set(commands) & BOGUS_RC_COMMANDS
+            commands = list(set(commands) - bogus_rc_commands)
+            responses = run_commands(module, commands)
+            for b in bogus_rc_commands:
+                rc, out, err = module.exec_command(b)
+                commands.append(b)
+                if rc == 0:
+                    responses.append(out)
+                else:
+                    responses.append(err)
+            results = dict(zip(commands, responses))
+            inst.populate(results)
             facts.update(inst.facts)
     except Exception:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+        import traceback; traceback.print_exc()
+        module.exit_json(out=module.from_json(results))
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts, failed_commands=failed_commands)
+    module.exit_json(ansible_facts=ansible_facts)
 
 
 if __name__ == '__main__':

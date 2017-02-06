@@ -1,0 +1,34 @@
+Current configuration : 4392 bytes
+!
+! Last configuration change at 07:39:49 UTC Wed Feb 1 2017 by cisco
+!
+version 15.6
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname ios01
+!
+ip domain lookup source-interface GigabitEthernet0/0
+ip domain name vrf Mgmt-intf eng.ansible.com
+ip domain name eng.ansible.com
+ip name-server 172.26.1.1
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+interface Loopback0
+ description Loopback
+ ip address 192.168.0.1 255.255.255.255
+!         
+!         
+interface GigabitEthernet0/0
+ description OOB Management
+ vrf forwarding Mgmt-intf
+ ip address 172.26.31.1 255.255.255.0
+ duplex full
+ speed auto
+ media-type rj45
+!
+no ip http server
+no ip http secure-server
