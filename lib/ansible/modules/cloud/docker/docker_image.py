@@ -231,7 +231,7 @@ EXAMPLES = '''
     load_path: my_sinatra.tar
 
 - name: Build image and with buildargs
-   docker_image:
+  docker_image:
      path: /path/to/build/dir
      name: myimage
      buildargs:

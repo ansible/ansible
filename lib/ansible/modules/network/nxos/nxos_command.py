@@ -91,6 +91,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -98,6 +99,7 @@ vars:
     password: admin
     transport: cli
 
+---
 - name: run show version on remote devices
   nxos_command:
     commands: show version
@@ -110,7 +112,7 @@ vars:
     provider: "{{ cli }}"
 
 - name: run multiple commands on remote nodes
-   nxos_command:
+  nxos_command:
     commands:
       - show version
       - show interfaces

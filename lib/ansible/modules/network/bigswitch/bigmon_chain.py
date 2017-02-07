@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Ansible module to manage Big Monitoring Fabric service chains
-# (c) 2016, Ted Elhourani <ted@bigswitch.com>
+# (c) 2016, Ted Elhourani <ted@bigswitch.com>,
 #
 # This file is part of Ansible
 #
@@ -59,11 +59,11 @@ options:
 
 EXAMPLES = '''
 - name: bigmon inline service chain
-      bigmon_chain:
-        name: MyChain
-        controller: '{{ inventory_hostname }}'
-        state: present
-        validate_certs: false
+  bigmon_chain:
+    name: MyChain
+    controller: '{{ inventory_hostname }}'
+    state: present
+    validate_certs: false
 '''
 
 

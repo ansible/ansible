@@ -73,6 +73,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -85,6 +86,7 @@ vars:
     password: netop
     transport: rest
 
+---
 - ops_facts:
     gather_subset: all
     provider: "{{ rest }}"

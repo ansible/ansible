@@ -95,7 +95,7 @@ tasks:
       wait_for: result[0] contains IOS-XR
 
   - name: run multiple commands on remote nodes
-     iosxr_command:
+    iosxr_command:
       commands:
         - show version
         - show interfaces

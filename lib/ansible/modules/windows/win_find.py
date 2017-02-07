@@ -149,7 +149,7 @@ EXAMPLES = r'''
 # Find files in path based on regex pattern
 - win_find:
     paths: D:\temp
-    patterns: "out_\d{8}-\d{6}.log"
+    patterns: 'out_\d{8}-\d{6}.log'
 
 # Find files older than 1 day
 - win_find:

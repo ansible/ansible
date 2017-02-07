@@ -68,33 +68,33 @@ EXAMPLES = '''
         username: "{{ un }}"
         password: "{{ pwd }}"
         transport: nxapi
-    rescue:
-      - name: Wait for device to perform checks
-        wait_for:
-          port: 22
-          state: stopped
-          timeout: 300
-          delay: 60
-          host: "{{ inventory_hostname }}"
-      - name: Wait for device to come back up
-        wait_for:
-          port: 22
-          state: started
-          timeout: 300
-          delay: 60
-          host: "{{ inventory_hostname }}"
-      - name: Check installed OS
-        nxos_command:
-          commands:
-            - show version
-          username: "{{ un }}"
-          password: "{{ pwd }}"
-          host: "{{ inventory_hostname }}"
-          transport: nxapi
-        register: output
-      - assert:
-          that:
-            - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I4(1)'
+  rescue:
+    - name: Wait for device to perform checks
+      wait_for:
+        port: 22
+        state: stopped
+        timeout: 300
+        delay: 60
+        host: "{{ inventory_hostname }}"
+    - name: Wait for device to come back up
+      wait_for:
+        port: 22
+        state: started
+        timeout: 300
+        delay: 60
+        host: "{{ inventory_hostname }}"
+    - name: Check installed OS
+      nxos_command:
+        commands:
+          - show version
+        username: "{{ un }}"
+        password: "{{ pwd }}"
+        host: "{{ inventory_hostname }}"
+        transport: nxapi
+      register: output
+    - assert:
+        that:
+          - output['stdout'][0]['kickstart_ver_str'] == '7.0(3)I4(1)'
 '''
 
 RETURN = '''

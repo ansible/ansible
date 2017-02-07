@@ -110,12 +110,14 @@ notes:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   netconf:
     host: "{{ inventory_hostname }}"
     username: ansible
     password: Ansible
 
+---
 - name: run a set of commands
   junos_command:
     commands: ['show version', 'show ip route']

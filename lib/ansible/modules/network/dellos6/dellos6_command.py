@@ -87,20 +87,20 @@ tasks:
  - name: run show version on remote devices
    dellos6_command:
      commands: show version
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run show version and check to see if output contains Dell
    dellos6_command:
      commands: show version
      wait_for: result[0] contains Dell
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run multiple commands on remote nodes
    dellos6_command:
      commands:
       - show version
       - show interfaces
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run multiple commands and evaluate the output
    dellos6_command:
@@ -110,7 +110,7 @@ tasks:
      wait_for:
       - result[0] contains Dell
       - result[1] contains Access
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 """
 
 RETURN = """

@@ -471,6 +471,12 @@ class ModuleValidator(Validator):
 
         if not bool(doc_info['EXAMPLES']['value']):
             self.errors.append('No EXAMPLES provided')
+        else:
+            _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
+                                           doc_info['EXAMPLES']['lineno'],
+                                           self.name, 'EXAMPLES', load_all=True)
+            self.errors.extend(errors)
+            self.traces.extend(traces)
 
         if not bool(doc_info['RETURN']['value']):
             if self._is_new_module():

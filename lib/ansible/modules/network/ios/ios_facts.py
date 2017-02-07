@@ -49,6 +49,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -56,6 +57,7 @@ vars:
     password: cisco
     transport: cli
 
+---
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all

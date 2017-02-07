@@ -102,7 +102,7 @@ tasks:
        # oVirt user's password, and include that yaml file with variable:
        - include_vars: ovirt_password.yml
 
-       - name: Obtain SSO token with using username/password credentials:
+       - name: Obtain SSO token with using username/password credentials
          ovirt_auth:
            url: https://ovirt.example.com/ovirt-engine/api
            username: admin@internal
@@ -116,11 +116,11 @@ tasks:
            state: absent
            name: myvm
 
-      always:
-        - name: Always revoke the SSO token
-          ovirt_auth:
-            state: absent
-            ovirt_auth: "{{ ovirt_auth }}"
+    always:
+      - name: Always revoke the SSO token
+        ovirt_auth:
+          state: absent
+          ovirt_auth: "{{ ovirt_auth }}"
 '''
 
 RETURN = '''
