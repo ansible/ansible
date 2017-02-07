@@ -86,33 +86,30 @@ EXAMPLES = """
 """
 
 RETURN = """
-elasticache:
-    description: cache parameter group information and response metadata
-    returned: always
-    type: dict
-    sample:
-        "cache_parameter_group": {
-            "cache_parameter_group_family": "redis3.2",
-            "cache_parameter_group_name": "test-please-delete",
-            "description": "initial description"
-        }
-        "response_metadata": {
-            "http_headers": {
-                "content-length": "562",
-                "content-type": "text/xml",
-                "date": "Mon, 06 Feb 2017 22:14:08 GMT",
-                "x-amzn-requestid": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1"
-            }
-            "http_status_code": 200,
-            "request_id": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1",
-            "retry_attempts": 0
-        }
-changed:
-    description: if the cache parameter group has changed
-    returned: always
-    type: bool
-    sample:
-        "changed": true
+elasticache: 
+  description: cache parameter group information and response metadata
+  returned: always
+  type: dict
+  sample: 
+    cache_parameter_group: 
+      cache_parameter_group_family: redis3.2
+      cache_parameter_group_name: test-please-delete
+      description: "initial description"
+    response_metadata: 
+      http_headers: 
+        content-length: "562"
+        content-type: text/xml
+        date: "Mon, 06 Feb 2017 22:14:08 GMT"
+        x-amzn-requestid: 947291f9-ecb9-11e6-85bd-3baa4eca2cc1
+      http_status_code: 200
+      request_id: 947291f9-ecb9-11e6-85bd-3baa4eca2cc1
+      retry_attempts: 0
+changed: 
+  description: if the cache parameter group has changed
+  returned: always
+  type: bool
+  sample: 
+    changed: true
 """
 
 from ansible.module_utils.ec2 import boto3_conn
