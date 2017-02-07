@@ -127,12 +127,11 @@ Target: February/March 2017
 
 - **Amazon resources** (ryansb)
 
-  - Refactor ec2.py (but first, better testing)
-  - ELB version 2
-  - Multifactor authentication support (STS feature, affects all modules)
-  - CloudFormation YAML, cross-stack reference, and roles support
-  - ECS module refactor
-  - AWS module unit testing w/ placebo (boto3 only)
+  - Improve ec2.py integration tests (pending, likely to make 2.3)
+  - ELB version 2 (pending, will make 2.3 easily)
+  - CloudFormation YAML, cross-stack reference, and roles support (done)
+  - ECS module refactor (partial, may slip to 2.4)
+  - AWS module unit testing w/ placebo (boto3 only) (pending, will make 2.3)
 
 - **Plugin Loader**
 
