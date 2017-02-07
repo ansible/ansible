@@ -63,12 +63,12 @@ Target: February/March 2017
   
 - **Azure modules** (nitzmahone/mattclay)
 
-  - Ensure Azure SDK rc6/RTM work
-  - Move tests from ansible/azure_rm repo to ansible/ansible
-  - Update/enhance tests
-  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack)
-  - Get Azure tests running in CI (stretch, depends on availability of sponsored account)
-  - azure_rm_loadbalancer module (stretch)
+  - Ensure Azure SDK rc6/RTM work (done)
+  - Move tests from ansible/azure_rm repo to ansible/ansible (bump to 2.4, no CI resources)
+  - Update/enhance tests (bump to 2.4, no CI resources)
+  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack) (bump to 2.4)
+  - Get Azure tests running in CI (stretch, depends on availability of sponsored account) (bump to 2.4, no CI resources)
+  - azure_rm_loadbalancer module (stretch) (bump to 2.4)
   
 - **Networking**
 
