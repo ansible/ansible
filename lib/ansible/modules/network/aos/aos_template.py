@@ -131,7 +131,7 @@ value:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, find_collection_item, get_display_name_from_file, do_load_resource
+from ansible.module_utils.aos import get_aos_session, find_collection_item, get_display_name_from_file, do_load_resource, check_aos_version
 
 #########################################################
 # State Processing
@@ -232,6 +232,9 @@ def main():
         required_one_of=[('name', 'id', 'src')],
         supports_check_mode=True
     )
+
+    # Check if aos-pyez is present and match the minimum version
+    check_aos_version(module, '0.6.0')
 
     aos_template(module)
 
