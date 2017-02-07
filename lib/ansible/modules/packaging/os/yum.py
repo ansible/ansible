@@ -915,7 +915,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         res['results'].append('Nothing to do here, all packages are up to date')
         return res
     elif rc == 100:
-        new_updates = parse_check_update(out)
+        updates = parse_check_update(out)
     elif rc == 1:
         res['msg'] = err
         res['rc'] = rc
