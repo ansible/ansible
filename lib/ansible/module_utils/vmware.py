@@ -17,11 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.module_utils.six import iteritems
+import atexit
+import ssl
+import time
 
 try:
-    import atexit
-    import time
-    import ssl
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
