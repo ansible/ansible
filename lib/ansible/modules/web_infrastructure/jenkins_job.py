@@ -189,7 +189,7 @@ class JenkinsJob:
         }
 
         # This kind of jobs do not have a property that makes them enabled/disabled
-        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder"]
+        self.job_classes_exceptions = ["jenkins.branch.OrganizationFolder","com.cloudbees.hudson.plugins.folder.Folder"]
 
         self.EXCL_STATE = "excluded state"
 
@@ -207,13 +207,14 @@ class JenkinsJob:
             e = get_exception()
             self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
 
-    def job_class_excluded(self, response):
-        return response['_class'] in self.job_classes_exceptions
+    def job_class_excluded(self, check_class):
+        return check_class in self.job_classes_exceptions
 
     def get_job_status(self):
         try:
+            check_class = ET.fromstring(self.get_current_config()).tag
             response = self.server.get_job_info(self.name)
-            if self.job_class_excluded(response):
+            if self.job_class_excluded(check_class):
                 return self.EXCL_STATE
             else:
                 return response['color'].encode('utf-8')
