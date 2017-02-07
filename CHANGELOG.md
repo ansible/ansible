@@ -136,6 +136,7 @@ Ansible Changes By Release
 - logstash_plugin
 - net_command
 - nginx_status_facts
+- nsupdate
 - omapi_host
 - openssl:
   * openssl_privatekey
