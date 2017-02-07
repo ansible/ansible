@@ -5,6 +5,11 @@ Ansible Changes By Release
 
 ###Major Changes:
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
+* Allow module_utils for custom modules to be placed in site-specific
+  directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of
+  select in the ssh connection plugin.  This removes one limitation on how many
+  parallel forks are feasible on these systems.
 
 ###Minor Changes:
 * The version and release facts for OpenBSD hosts were reversed.  This has been
@@ -20,6 +25,7 @@ Ansible Changes By Release
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 * Refactored/standardized Windows modules, adding check-mode and diff support where possible
 * Extended Windows module API with parameter-type support, helper functions (i.e. Expand-Environment, Warn, Deprecate)
+* Various fixes for Python3 compatibility
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line

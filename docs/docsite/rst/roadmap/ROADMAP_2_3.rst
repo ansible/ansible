@@ -26,8 +26,8 @@ Target: February/March 2017
 - **Metadata**
 
   - Add metadata to the modules we ship **(done)**
-  - Write code to use metadata in docs
-  - If needed for python2/3 write code to use metadata in module_common or pluginloader
+  - Write code to use metadata in docs **(done)**
+  - If needed for python2/3 write code to use metadata in module_common or pluginloader **(not needed)**
   
 - **Documentation**
   
@@ -83,7 +83,10 @@ Target: February/March 2017
 
   - For 2.3:
   
-    - We want all tests to pass (majority do but there’s 10-20 that still need fixes)
+    - We want all tests to pass
+      - Just the mercurial tests left because we haven't created an image with
+        both python2 and python3 to test it on yet.
+      - Check by doing ``grep skip/python3 test/integration/targets/\*/aliases``
     - If users report bugs on python3, these should be fixed and will prioritize our work on porting other modules.
   - Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don’t support py2-only or py3-only old style python modules. 
   - Note: Most of the currently tested ansible features now run.  But there’s still a lot of code that’s untested.
@@ -135,8 +138,8 @@ Target: February/March 2017
 
 - **Plugin Loader**
 
-  - Add module_utils to the plugin loader (feature)
-  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) (Stretch goal) (slip to 2.4)
+  - Add module_utils to the plugin loader (feature) [done]
+  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) [pushed to 2.4]
   
 - **ansible-ssh**
 
