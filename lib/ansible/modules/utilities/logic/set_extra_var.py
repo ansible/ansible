@@ -32,6 +32,13 @@ description:
     - The C(set_extra_var) module takes name=var_name value=var_value pairs as variables to set
       in the playbook scope. Or alternatively, accepts complex arguments
       using the C(args:) statement.
+options:
+  key_value:
+    description:
+      - The C(set_extra_var) module takes a key=value pair for the variable to set
+        in the playbook scope. 
+    required: true
+    default: null
 '''
 
 EXAMPLES = '''
