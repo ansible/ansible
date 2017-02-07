@@ -83,7 +83,7 @@ class DimensionDataModule(object):
         self.region = 'dd-{}'.format(region)
         self.location = self.module.params['location']
 
-        libcloud.security.VERIFY_SSL_CERT = self.module.params['verify_ssl_cert']
+        libcloud.security.VERIFY_SSL_CERT = self.module.params['validate_certs']
 
         self.driver = get_driver(Provider.DIMENSIONDATA)(
             self.user_id,
@@ -238,7 +238,7 @@ class DimensionDataModule(object):
             mcp_user=dict(type='str', required=False),
             mcp_password=dict(type='str', required=False, no_log=True),
             location=dict(type='str', required=True),
-            verify_ssl_cert=dict(type='bool', required=False, default=True)
+            validate_certs=dict(type='bool', required=False, default=True)
         )
 
         if additional_argument_spec:

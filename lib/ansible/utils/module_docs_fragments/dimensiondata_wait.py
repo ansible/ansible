@@ -42,9 +42,4 @@ options:
       - Only applicable if I(wait=true).
     required: false
     default: 2
-  verify_ssl_cert:
-    description:
-      - Check that SSL certificate is valid.
-    required: false
-    default: true
     '''

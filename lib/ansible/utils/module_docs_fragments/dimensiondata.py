@@ -49,9 +49,10 @@ options:
     description:
       - The target datacenter.
     required: true
-  verify_ssl_cert:
+  validate_certs:
     description:
-      - Check that SSL certificate is valid.
+      - If C(false), SSL certificates will not be validated.
+      - This should only be used on private instances of the CloudControl API that use self-signed certificates.
     required: false
     default: true
     '''
