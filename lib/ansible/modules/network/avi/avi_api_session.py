@@ -43,9 +43,10 @@ DOCUMENTATION = '''
 module: avi_api
 author: Gaurav Rastogi (grastogi@avinetworks.com)
 
-short_description: Avi API Module.
+short_description: Avi API Module
 description:
-    - This module can be used for calling any resources defined in Avi REST API. This module is useful for invoking HTTP Patch methods and accessing resources that do not have an REST object associated with them.
+    - This module can be used for calling any resources defined in Avi REST API.
+    - This module is useful for invoking HTTP Patch methods and accessing resources that do not have an REST object associated with them.
 version_added: 2.3
 requirements: [ avisdk ]
 options:
@@ -68,26 +69,26 @@ options:
             - Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).
     timeout:
         description:
-            - Timeout for Avi API calls.
+            - Timeout (in seconds) for Avi API calls.
 extends_documentation_fragment:
     - avi
 '''
 
 EXAMPLES = '''
-# Get Pool Information using avi_api_session
-- avi_api_session:
-    # get pool information
-    controller: "{{ controller }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    http_method: get
-    path: pool
-    params:
-      name: "{{ pool_name }}"
-  register: pool_results
 
-# Patch Pool with list of servers
-  - avi_api_session:
+  - name: Get Pool Information using avi_api_session
+    avi_api_session:
+      controller: "{{ controller }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      http_method: get
+      path: pool
+      params:
+        name: "{{ pool_name }}"
+    register: pool_results
+
+  - name: Patch Pool with list of servers
+    avi_api_session:
       controller: "{{ controller }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -102,6 +103,22 @@ EXAMPLES = '''
             - ip:
                 addr: 20.20.20.20
                 type: V4
+    register: updated_pool
+
+  - name: Fetch Pool metrics bandwidth and connections rate
+    avi_api_session:
+      controller: "{{ controller }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      http_method: get
+      path: analytics/metrics/pool
+      params:
+        name: "{{ pool_name }}"
+        metric_id: l4_server.avg_bandwidth,l4_server.avg_complete_conns
+        step: 300
+        limit: 10
+    register: pool_metrics
+
 '''
 
 
@@ -118,11 +135,11 @@ def main():
         http_method=dict(required=True,
                          choices=['get', 'put', 'post', 'patch',
                                   'delete']),
-        path=dict(required=True),
+        path=dict(type='str', required=True),
         params=dict(type='dict'),
         data=dict(type='dict'),
         data_json=dict(type='str'),
-        timeout=dict(default=60)
+        timeout=dict(type='int', default=60)
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
@@ -138,7 +155,8 @@ def main():
         tenant_uuid=tenant_uuid)
 
     tenant = module.params.get('tenant', '')
-    timeout = int(module.params.get('timeout', 60))
+    timeout = int(module.params.get('timeout'))
+    # path is a required argument
     path = module.params.get('path', '')
     params = module.params.get('params', None)
     data = module.params.get('data', None)

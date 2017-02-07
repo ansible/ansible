@@ -36,10 +36,10 @@ options:
             - Password of Avi user in Avi controller. The default value is the environment variable C(AVI_PASSWORD).
     tenant:
         description:
-            - Tenant for the operations
+            - Name of tenant used for all Avi API calls and context of object.
         default: admin
     tenant_uuid:
         description:
-            - Tenant uuid for the operations
+            - UUID of tenant used for all Avi API calls and context of object.
         default: ''
 """
