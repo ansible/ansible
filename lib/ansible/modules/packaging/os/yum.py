@@ -916,8 +916,6 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         return res
     elif rc == 100:
         new_updates = parse_check_update(out)
-        sys.stderr.write('updates:     %s\n' % pprint.pformat(updates))
-        sys.stderr.write('new_updates: %s\n' % pprint.pformat(new_updates))
     elif rc == 1:
         res['msg'] = err
         res['rc'] = rc
