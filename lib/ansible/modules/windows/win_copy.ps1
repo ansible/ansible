@@ -27,7 +27,7 @@ $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
 $original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str" -failifempty $true
 
 $result = @{
-    changed = $false
+    changed = $FALSE
     original_basename = $original_basename
     src = $src
     dest = $dest
@@ -42,46 +42,44 @@ if (($force -eq $false) -and (Test-Path -Path $dest)) {
     Exit-Json $result
 }
 
-# Detect if doing recursive folder copy and create any non-existent destination sub folder
+# detect if doing recursive folder copy and create any non-existent destination sub folder
 $parent = Split-Path -Path $original_basename -Parent
-if ($parent.length -gt 0) {
+if ($parent.length -gt 0)
+{
     $dest_folder = Join-Path $dest $parent
-    if (-not $check_mode) {
-        New-Item -Force $dest_folder -Type directory
-    }
+    New-Item -Path $dest_folder -Type Directory -Force -WhatIf:$check_mode
 }
 
-# If $dest is a dir, append $original_basename so the file gets copied with its intended name.
-if (Test-Path -Path $dest -PathType Container) {
+# if $dest is a dir, append $original_basename so the file gets copied with its intended name.
+if (Test-Path -Path $dest -PathType Container)
+{
     $dest = Join-Path -Path $dest -ChildPath $original_basename
 }
 
-$orig_checksum = Get-FileChecksum($dest)
-$src_checksum = Get-FileChecksum($src)
+$orig_checksum = Get-FileChecksum ($dest)
+$src_checksum = Get-FileChecksum ($src)
 
-if ($src_checksum.Equals($orig_checksum)) {
-
-    # If both are "3" then both are folders, ok to copy
-    if ($src_checksum.Equals("3")) {
+If ($src_checksum.Equals($orig_checksum))
+{
+    # if both are "3" then both are folders, ok to copy
+    If ($src_checksum.Equals("3"))
+    {
        # New-Item -Force creates subdirs for recursive copies
-       if (-not $check_mode) {
-           New-Item -Force $dest -Type file
-           Copy-Item -Path $src -Destination $dest -Force
-       }
+       New-Item -Path $dest -Type File -Force -WhatIf:$check_mode
+       Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
        $result.changed = $true
        $result.operation = "folder_copy"
     }
 
-} elseif (-not $src_checksum.Equals($orig_checksum)) {
-
-    if ($src_checksum.Equals("3")) {
+}
+ElseIf (-Not $src_checksum.Equals($orig_checksum))
+{
+    If ($src_checksum.Equals("3"))
+    {
         Fail-Json $result "If src is a folder, dest must also be a folder"
     }
-
     # The checksums don't match, there's something to do
-    if (-not $check_mode) {
-        Copy-Item -Path $src -Destination $dest -Force
-    }
+    Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
 
     $result.changed = $true
     $result.operation = "file_copy"
@@ -89,11 +87,11 @@ if ($src_checksum.Equals($orig_checksum)) {
 
 # Verify before we return that the file has changed
 $dest_checksum = Get-FileChecksum($dest)
-if (-not $src_checksum.Equals($dest_checksum) -and -not $check_mode) {
+If (-Not $src_checksum.Equals($dest_checksum) -And -Not $check_mode)
+{
     Fail-Json $result "src checksum $src_checksum did not match dest_checksum $dest_checksum, failed to place file $original_basename in $dest"
 }
 
-# Generate return values
 $info = Get-Item $dest
 $result.size = $info.Length
 $result.src = $src
