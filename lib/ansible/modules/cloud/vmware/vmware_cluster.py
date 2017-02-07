@@ -64,14 +64,16 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_cluster command from Ansible Playbooks
 - name: Create Cluster
-      local_action: >
-        vmware_cluster
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        datacenter_name="datacenter"
-        cluster_name="cluster"
-        enable_ha=True
-        enable_drs=True
-        enable_vsan=True
+  local_action:
+    module: vmware_cluster
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    datacenter_name: "datacenter"
+    cluster_name: "cluster"
+    enable_ha: True
+    enable_drs: True
+    enable_vsan: True
 '''
 
 try:

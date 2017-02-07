@@ -236,6 +236,7 @@ EXAMPLES = '''
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
 
+---
 # Example Playbook
 - name: Compute Engine Instance Examples
   hosts: localhost

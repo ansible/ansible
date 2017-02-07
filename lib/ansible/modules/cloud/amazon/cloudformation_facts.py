@@ -73,7 +73,7 @@ EXAMPLES = '''
 
 # Facts are published in ansible_facts['cloudformation'][<stack_name>]
 - debug:
-    msg: '{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}'
+    msg: "{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}"
 
 # Get all stack information about a stack
 - cloudformation_facts:

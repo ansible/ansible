@@ -76,14 +76,14 @@ options:
 
 EXAMPLES = """
 - name: set hostname with file lookup
-    ops_template:
+  ops_template:
     src: ./hostname.json
     backup: yes
     remote_user: admin
     become: yes
 
 - name: set hostname with var
-    ops_template:
+  ops_template:
     src: "{{ config }}"
     remote_user: admin
     become: yes

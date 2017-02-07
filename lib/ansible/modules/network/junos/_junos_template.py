@@ -99,10 +99,12 @@ EXAMPLES = """
     comment: update system config
 
 - name: replace config hierarchy
+  junos_template:
     src: config.j2
     action: replace
 
 - name: overwrite the config
+  junos_template:
     src: config.j2
     action: overwrite
 """

@@ -89,48 +89,49 @@ options:
 '''
 
 EXAMPLES = '''
-- name Ensure an interface is a Layer 3 port and that it has the proper description
+- name: Ensure an interface is a Layer 3 port and that it has the proper description
   nxos_interface:
     interface: Ethernet1/1
     description: 'Configured by Ansible'
     mode: layer3
     host: 68.170.147.165
 
-- name Admin down an interface
+- name: Admin down an interface
   nxos_interface:
     interface: Ethernet2/1
     host: 68.170.147.165
     admin_state: down
 
-- name Remove all loopback interfaces
+- name: Remove all loopback interfaces
   nxos_interface:
     interface: loopback
     state: absent
     host: 68.170.147.165
 
-- name Remove all logical interfaces
+- name: Remove all logical interfaces
   nxos_interface:
     interface_type: "{{ item }} "
     state: absent
     host: "{{ inventory_hostname }}"
-
   with_items:
     - loopback
     - portchannel
     - svi
     - nve
-- name Admin up all ethernet interfaces
+
+- name: Admin up all ethernet interfaces
   nxos_interface:
     interface: ethernet
     host: 68.170.147.165
     admin_state: up
 
-- name Admin down ALL interfaces (physical and logical)
+- name: Admin down ALL interfaces (physical and logical)
   nxos_interface:
     interface: all
     host: 68.170.147.165
     admin_state: down
 '''
+
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module

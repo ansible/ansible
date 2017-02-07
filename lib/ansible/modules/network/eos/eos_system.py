@@ -104,7 +104,7 @@ EXAMPLES = """
     lookup_source: Management1
 
 - name: configure DNS lookup sources with VRF support
-    eos_system:
+  eos_system:
       lookup_source:
         - interface: Management1
           vrf: mgmt

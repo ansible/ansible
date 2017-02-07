@@ -286,7 +286,7 @@ EXAMPLES = '''
 - proxmox:
     vmid: 100
     api_user: root@pam
-    api_passwordL 1q2w3e
+    api_password: 1q2w3e
     api_host: node1
     force: yes
     state: stopped

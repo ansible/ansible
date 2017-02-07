@@ -57,7 +57,8 @@ options:
 '''
 
 EXAMPLES = '''
-Simple Example:
+---
+# Simple Example:
 
 - name: "Create Product"
   local_action:
@@ -69,9 +70,8 @@ Simple Example:
       params:
         name: "Centos 7"
 
-Abstraction Example:
-
-katello.yml
+# Abstraction Example:
+# katello.yml
 ---
 - name: "{{ name }}"
   local_action:
@@ -82,7 +82,7 @@ katello.yml
       entity: "{{ entity }}"
       params: "{{ params }}"
 
-tasks.yml
+# tasks.yml
 ---
 - include: katello.yml
   vars:

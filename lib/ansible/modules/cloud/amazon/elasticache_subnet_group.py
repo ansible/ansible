@@ -54,7 +54,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Add or change a subnet group
-- elasticache_subnet_group
+- elasticache_subnet_group:
     state: present
     name: norwegian-blue
     description: My Fancy Ex Parrot Subnet Group

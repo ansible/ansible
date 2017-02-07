@@ -76,7 +76,7 @@ EXAMPLES = '''
 # Note - You must set the CLC_V2_API_USERNAME And CLC_V2_API_PASSWD Environment variables before running these examples
 
 - name: Deploy package
-      clc_blueprint_package:
+  clc_blueprint_package:
         server_ids:
             - UC1TEST-SERVER1
             - UC1TEST-SERVER2

@@ -162,7 +162,7 @@ EXAMPLES = """
         title: System load
         fields:
           - title: System A
-            value: load average: 0,74, 0,66, 0,63"
+            value: "load average: 0,74, 0,66, 0,63"
             short: True
           - title: System B
             value: 'load average: 5,16, 4,64, 2,43'

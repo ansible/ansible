@@ -182,15 +182,15 @@ EXAMPLES = '''
 
 # Rolling ASG Updates
 
-Below is an example of how to assign a new launch config to an ASG and terminate old instances.
-
-All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
-a rolling fashion with instances using the current launch configuration, "my_new_lc".
-
-This could also be considered a rolling deploy of a pre-baked AMI.
-
-If this is a newly created group, the instances will not be replaced since all instances
-will have the current launch configuration.
+# Below is an example of how to assign a new launch config to an ASG and terminate old instances.
+#
+# All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
+# a rolling fashion with instances using the current launch configuration, "my_new_lc".
+#
+# This could also be considered a rolling deploy of a pre-baked AMI.
+#
+# If this is a newly created group, the instances will not be replaced since all instances
+# will have the current launch configuration.
 
 - name: create launch config
   ec2_lc:
@@ -213,8 +213,8 @@ will have the current launch configuration.
     desired_capacity: 5
     region: us-east-1
 
-To only replace a couple of instances instead of all of them, supply a list
-to "replace_instances":
+# To only replace a couple of instances instead of all of them, supply a list
+# to "replace_instances":
 
 - ec2_asg:
     name: myasg

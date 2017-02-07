@@ -164,6 +164,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -171,6 +172,7 @@ vars:
     password: admin
     transport: cli
 
+---
 - name: configure top level configuration and save it
   nxos_config:
     lines: hostname {{ inventory_hostname }}

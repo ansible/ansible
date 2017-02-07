@@ -183,7 +183,7 @@ EXAMPLES = """
     state: present
 
 # Example privileges string format
-mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+# mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 
 # Example using login_unix_socket to connect to server
 - mysql_user:
@@ -200,10 +200,9 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
     sql_log_bin: no
 
 # Example .my.cnf file for setting the root password
-
-[client]
-user=root
-password=n<_665{vS43y
+# [client]
+# user=root
+# password=n<_665{vS43y
 """
 
 import getpass

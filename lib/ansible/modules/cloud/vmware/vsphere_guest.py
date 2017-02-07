@@ -153,6 +153,7 @@ requirements:
 
 
 EXAMPLES = '''
+---
 # Create a new VM on an ESX server
 # Returns changed = False when the VM already exists
 # Returns changed = True and a adds ansible_facts from the new VM
@@ -258,7 +259,7 @@ EXAMPLES = '''
     guest: newvm001
     vmware_guest_facts: yes
 
-
+---
 # Typical output of a vsphere_facts run on a guest
 # If vmware tools is not installed, ipadresses with return None
 
@@ -277,22 +278,22 @@ EXAMPLES = '''
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
 
-hw_power_status will be one of the following values:
-  - POWERED ON
-  - POWERED OFF
-  - SUSPENDED
-  - POWERING ON
-  - POWERING OFF
-  - SUSPENDING
-  - RESETTING
-  - BLOCKED ON MSG
-  - REVERTING TO SNAPSHOT
-  - UNKNOWN
-as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
+# hw_power_status will be one of the following values:
+#   - POWERED ON
+#   - POWERED OFF
+#   - SUSPENDED
+#   - POWERING ON
+#   - POWERING OFF
+#   - SUSPENDING
+#   - RESETTING
+#   - BLOCKED ON MSG
+#   - REVERTING TO SNAPSHOT
+#   - UNKNOWN
+# as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
 
+---
 # Remove a vm from vSphere
 # The VM must be powered_off or you need to use force to force a shutdown
-
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser

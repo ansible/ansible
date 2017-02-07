@@ -51,7 +51,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
+# Example from Ansible playbook
 
     - name: Perform vMotion of VM
       local_action:

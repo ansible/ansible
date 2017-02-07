@@ -175,7 +175,7 @@ EXAMPLES = '''
 
 # Modify the interface to enable the delete_on_terminaton flag
 - ec2_eni:
-    eni_id: {{ "eni.interface.id" }}
+    eni_id: "{{ eni.interface.id }}"
     delete_on_termination: true
 
 '''

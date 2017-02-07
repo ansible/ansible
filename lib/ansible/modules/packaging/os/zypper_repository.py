@@ -145,7 +145,7 @@ EXAMPLES = '''
 
 # Force refresh of a repository
 - zypper_repository:
-    repo: 'http://my_internal_ci_repo/repo
+    repo: 'http://my_internal_ci_repo/repo'
     name: my_ci_repo
     state: present
     runrefresh: yes

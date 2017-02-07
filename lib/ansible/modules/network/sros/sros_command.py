@@ -85,6 +85,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -92,6 +93,7 @@ vars:
     password: admin
     transport: cli
 
+---
 tasks:
   - name: run show version on remote devices
     sros_command:
@@ -105,7 +107,7 @@ tasks:
       provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     sros_command:
+    sros_command:
       commands:
         - show version
         - show port detail

@@ -361,26 +361,26 @@ EXAMPLES='''
       - '{{ nmcli_team_slave }}'
 
 ###### Working with all cloud nodes - Bonding
- - name: try nmcli add bond - conn_name only & ip4 gw4 mode
-   nmcli:
-     type: bond
-     conn_name: '{{ item.conn_name }}'
-     ip4: '{{ item.ip4 }}'
-     gw4: '{{ item.gw4 }}'
-     mode: '{{ item.mode }}'
-     state: present
-   with_items:
-     - '{{ nmcli_bond }}'
+  - name: try nmcli add bond - conn_name only & ip4 gw4 mode
+    nmcli:
+      type: bond
+      conn_name: '{{ item.conn_name }}'
+      ip4: '{{ item.ip4 }}'
+      gw4: '{{ item.gw4 }}'
+      mode: '{{ item.mode }}'
+      state: present
+    with_items:
+      - '{{ nmcli_bond }}'
 
- - name: try nmcli add bond-slave
-   nmcli:
-     type: bond-slave
-     conn_name: '{{ item.conn_name }}'
-     ifname: '{{ item.ifname }}'
-     master: '{{ item.master }}'
-     state: present
-   with_items:
-     - '{{ nmcli_bond_slave }}'
+  - name: try nmcli add bond-slave
+    nmcli:
+      type: bond-slave
+      conn_name: '{{ item.conn_name }}'
+      ifname: '{{ item.ifname }}'
+      master: '{{ item.master }}'
+      state: present
+    with_items:
+      - '{{ nmcli_bond_slave }}'
 
 ##### Working with all cloud nodes - Ethernet
   - name: nmcli add Ethernet - conn_name only & ip4 gw4
@@ -394,8 +394,6 @@ EXAMPLES='''
       - '{{ nmcli_ethernet }}'
 
 ## playbook-del.yml example
-
----
 - hosts: openstack-stage
   remote_user: root
   tasks:

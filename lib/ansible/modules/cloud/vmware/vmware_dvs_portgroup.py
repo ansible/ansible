@@ -65,7 +65,7 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
    - name: Create Management portgroup
-      local_action:
+     local_action:
         module: vmware_dvs_portgroup
         hostname: vcenter_ip_or_hostname
         username: vcenter_username

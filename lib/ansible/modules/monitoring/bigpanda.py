@@ -88,7 +88,7 @@ EXAMPLES = '''
     version: '1.3'
     token: '{{ bigpanda_token }}'
     state: started
-...
+
 - bigpanda:
     component: myapp
     version: '1.3'
@@ -104,7 +104,7 @@ EXAMPLES = '''
     state: started
   delegate_to: localhost
   register: deployment
-...
+
 - bigpanda:
     component: '{{ deployment.component }}'
     version: '{{ deployment.version }}'

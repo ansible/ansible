@@ -97,7 +97,7 @@ tasks:
       provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     dellos10_command:
+    dellos10_command:
       commands:
         - show version
         - show interface

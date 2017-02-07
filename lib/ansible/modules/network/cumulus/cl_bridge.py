@@ -140,6 +140,7 @@ EXAMPLES = '''
 
 # In vars file
 # ============
+---
 cl_bridge:
   br0:
     alias_name: 'vlan aware bridge'

@@ -151,14 +151,14 @@ author:
 
 EXAMPLES = '''
     - name: Create a network interface with minimal parameters
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
             subnet_name: subnet001
 
-     - name: Create a network interface with private IP address only (no Public IP)
-        azure_rm_networkinterface:
+    - name: Create a network interface with private IP address only (no Public IP)
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
@@ -166,7 +166,7 @@ EXAMPLES = '''
             public_ip: no
 
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic002
             resource_group: Testing
             virtual_network_name: vnet001
@@ -175,7 +175,7 @@ EXAMPLES = '''
             rdp_port: 3399
 
     - name: Create a network interface using existing security group and public IP
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic003
             resource_group: Testing
             virtual_network_name: vnet001
@@ -184,7 +184,7 @@ EXAMPLES = '''
             public_ip_address_name: publicip001
 
     - name: Delete network interface
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             resource_group: Testing
             name: nic003
             state: absent
