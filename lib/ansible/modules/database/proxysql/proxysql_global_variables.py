@@ -107,7 +107,7 @@ stdout:
 ANSIBLE_METADATA = {
     'version': '1.0',
     'supported_by': 'community',
-    'status': 'stableinterface'
+    'status': ['stableinterface']
 }
 
 from ansible.module_utils.basic import AnsibleModule
