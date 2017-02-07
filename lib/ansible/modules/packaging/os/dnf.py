@@ -316,8 +316,12 @@ def ensure(module, base, state, names):
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
-    if module.params.get('update_cache') and state in ['installed', 'present', 'latest']:
-        base.update_cache()
+    if module.params.get('update_cache'):
+        try:
+            base.update_cache()
+        except AttributeError:
+            module.fail_json(msg="Could not update cache."
+                                 " Please update `dnf` package.")
 
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
