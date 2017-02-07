@@ -95,14 +95,14 @@ elasticache:
             "cache_parameter_group_family": "redis3.2",
             "cache_parameter_group_name": "test-please-delete",
             "description": "initial description"
-        },
+        }
         "response_metadata": {
             "http_headers": {
                 "content-length": "562",
                 "content-type": "text/xml",
                 "date": "Mon, 06 Feb 2017 22:14:08 GMT",
                 "x-amzn-requestid": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1"
-            },
+            }
             "http_status_code": 200,
             "request_id": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1",
             "retry_attempts": 0
@@ -177,10 +177,9 @@ def check_valid_modification(module, values, modifiable_params):
                              (new_value, type(new_value), parameter, modifiable_params[parameter][1]))
 
         # check allowed values for modifiable parameters
-        if text_type(new_value) not in modifiable_params[parameter][0]:
-            if "-" not in modifiable_params[parameter][0]:
-                module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." %
-                                 (value, modified, modifiable_params[parameter][0]))
+        if text_type(new_value) not in modifiable_params[parameter][0] and not isinstance(new_value, int):
+            module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." %
+                                 (new_value, parameter, modifiable_params[parameter][0]))
 
         # check if a new value is different from current value
         if text_type(new_value) != modifiable_params[parameter][2]:
