@@ -30,6 +30,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleModuleExit
 from ansible.modules.network.vyos import vyos_system
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils import basic
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -38,7 +39,7 @@ fixture_data = {}
 
 def set_module_args(args):
     json_args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    ansible.module_utils.basic._ANSIBLE_ARGS = to_bytes(json_args)
+    basic._ANSIBLE_ARGS = to_bytes(json_args)
 
 
 def load_fixture(name):
