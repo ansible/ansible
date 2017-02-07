@@ -20,7 +20,6 @@ from ansible.modules.network.cumulus import nclu
 
 import sys
 import time
-import StringIO
 from ansible.module_utils.basic import *
 
 
