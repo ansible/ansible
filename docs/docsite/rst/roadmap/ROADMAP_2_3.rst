@@ -25,7 +25,7 @@ Target: February/March 2017
   
 - **Metadata**
 
-  - Add metadata to the modules we ship *(done)*
+  - Add metadata to the modules we ship **(done)**
   - Write code to use metadata in docs
   - If needed for python2/3 write code to use metadata in module_common or pluginloader
   
