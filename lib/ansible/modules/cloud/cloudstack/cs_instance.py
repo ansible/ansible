@@ -584,9 +584,18 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if ssh_key_name == instance_ssh_key_name:
             return False
 
-        res = self.cs.listSSHKeyPairs(name=instance_ssh_key_name)
+        args = {
+            'domainid': self.get_domain('id'),
+            'account': self.get_account('name'),
+            'projectid': self.get_project('id')
+        }
+
+        args['name'] = instance_ssh_key_name
+        res = self.cs.listSSHKeyPairs(**args)
         instance_ssh_key = res['sshkeypair'][0]
-        res = self.cs.listSSHKeyPairs(name=ssh_key_name)
+
+        args['name'] = ssh_key_name
+        res = self.cs.listSSHKeyPairs(**args)
         param_ssh_key = res['sshkeypair'][0]
         if param_ssh_key['fingerprint'] != instance_ssh_key['fingerprint']:
             return True
