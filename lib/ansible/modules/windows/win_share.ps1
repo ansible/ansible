@@ -67,7 +67,7 @@ Function UserSearch
             $Searcher.Filter = "userPrincipalName=$($accountName)"
         }
 
-        $result = $Searcher.FindOne() 
+        $result = $Searcher.FindOne()
         if ($result)
         {
             $user = $result.GetDirectoryEntry()
@@ -137,6 +137,8 @@ Try {
         $permissionFull = Get-Attr $params "full" "" | NormalizeAccounts
         $permissionDeny = Get-Attr $params "deny" "" | NormalizeAccounts
 
+        $cachingMode = Get-Attr $params "caching_mode" "" -validateSet "BranchCache","Documents","Manual","None","Programs", "Unkown"
+
         If (-Not (Test-Path -Path $path)) {
             Fail-Json $result "$path directory does not exist on the host"
         }
@@ -167,6 +169,10 @@ Try {
         }
         If ($share.FolderEnumerationMode -ne $folderEnum) {
             Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum
+            Set-Attr $result "changed" $true;
+        }
+        if ($share.CachingMode -ne $cachingMode) {
+            Set-SmbShare -Force -Name $name -CachingMode $cachingMode
             Set-Attr $result "changed" $true;
         }
 
@@ -224,7 +230,7 @@ Try {
                 }
             }
         }
-        
+
         # add missing permissions
         ForEach ($user in $permissionRead) {
             Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Read"
