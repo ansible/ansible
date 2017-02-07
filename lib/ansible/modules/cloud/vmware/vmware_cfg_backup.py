@@ -108,27 +108,27 @@ class VMwareConfigurationBackup(object):
 
         if self.state == 'loaded':
             self.load_configuration()
-            
+
     def load_configuration(self):
         if not os.path.isfile(self.src):
             self.module.fail_json(msg="Source file {} does not exist".format(self.src))
-            
+
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
         url = url.replace('*', self.hostname)
-        
+
         #find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
         try:
             request = open_url(url=url, method='HEAD', validate_certs=self.validate_certs)
         except HTTPError as e:
             url = e.geturl()
-            
+
         try:
             with open(self.src, 'rb') as file:
                 data = file.read()
             request = open_url(url=url, data=data, method='PUT', validate_certs=self.validate_certs, url_username=self.username, url_password=self.password, force_basic_auth=True)
         except Exception as e:
             self.module.fail_json(msg=str(e))
-          
+
         if not self.host.runtime.inMaintenanceMode:
             self.enter_maintenance()      
         try:
@@ -137,7 +137,7 @@ class VMwareConfigurationBackup(object):
         except Exception as e:
             self.exit_maintenance()
             self.module.fail_json(msg=str(e))
-        
+
     def reset_configuration(self):
         if not self.host.runtime.inMaintenanceMode:
             self.enter_maintenance()        
@@ -147,7 +147,7 @@ class VMwareConfigurationBackup(object):
         except Exception as e:
             self.exit_maintenance()
             self.module.fail_json(msg=str(e))
-            
+
     def save_configuration(self): 
         if os.path.isdir(self.dest):
             url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
@@ -156,7 +156,7 @@ class VMwareConfigurationBackup(object):
             self.dest = os.path.join(self.dest, filename)
         else:
             self.module.fail_json(msg="Dest directory {} does not exist".format(self.dest))            
-                             
+
         try:
             request = open_url(url=url, validate_certs=self.validate_certs)
             with open(self.dest, "wb") as file:
@@ -171,15 +171,15 @@ class VMwareConfigurationBackup(object):
             success, result = wait_for_task(task)
         except Exception as e:
             self.module.fail_json(msg="Failed to enter maintenance mode. Ensure that there are no powered on machines on the host.")
-            
+
     def exit_maintenance(self):
         try:
             task = self.host.ExitMaintenanceMode_Task(timeout=15)
             success, result = wait_for_task(task)
         except Exception as e:
             self.module.fail_json(msg="Failed to exit maintenance mode")
-      
-    
+
+
 def main():
 
     argument_spec = vmware_argument_spec()
@@ -188,12 +188,12 @@ def main():
                               state=dict(required=True, choices=['saved', 'absent', 'loaded'], type='str')))
     required_if = [('state', 'saved', ['dest']),
                    ('state', 'loaded', ['src'])]
-    
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
-        
+
     vmware_cfg_backup = VMwareConfigurationBackup(module)
     vmware_cfg_backup.process_state()
 
