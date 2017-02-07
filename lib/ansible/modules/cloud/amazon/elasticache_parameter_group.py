@@ -51,7 +51,7 @@ options:
     description:
       - A user-specified list of parameters to reset or modify for the cache parameter group.
     required: no
-    type: list
+    type: dict
     default: None
 """
 
