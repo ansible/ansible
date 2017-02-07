@@ -7,3 +7,4 @@
     - { role: win_async_wrapper, tags: ["test_win_async_wrapper", "test_async_wrapper", "test_win_async_status", "test_async_status"] }
     - { role: win_shell, tags: test_win_shell }
     - { role: win_command, tags: test_win_command }
+    - { role: win_reg_stat, tags: test_win_reg_stat }
