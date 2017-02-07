@@ -169,7 +169,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 
-from ansible.module_utils.basic import AnsibleModule, get_exception
 
 SUBMAN_CMD = None
 
