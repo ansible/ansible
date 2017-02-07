@@ -46,7 +46,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
     * For password / secret arguments no_log=True should be set.
     * Requirements should be documented, using the `requirements=[]` field.
     * Author should be set, with their name and their github id, at the least.
-    * Ensure that you make use of U() for urls, C() for files and options, I() for params, M() for modules.
+    * Ensure that you make use of `U()` for URLs, `I()` for option names, `C()` for files and option values, `M()` for module names.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when C(state=present)."
     * Verify that a GPL 3 License header is included.
     * Does module use check_mode? Could it be modified to use it? Document it. Documentation is everyone's friend.
