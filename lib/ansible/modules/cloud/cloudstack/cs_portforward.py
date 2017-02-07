@@ -217,6 +217,18 @@ vm_guest_ip:
   returned: success
   type: string
   sample: 10.101.65.152
+vpc:
+  description: Name of the VPC.
+  version_added: "2.3"
+  returned: success
+  type: string
+  sample: my_vpc
+network:
+  description: Name of the network.
+  version_added: "2.3"
+  returned: success
+  type: string
+  sample: dmz
 '''
 
 # import cloudstack common
@@ -348,6 +360,15 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
     def get_result(self, portforwarding_rule):
         super(AnsibleCloudStackPortforwarding, self).get_result(portforwarding_rule)
+
+        network_name = self.get_network(key='name')
+        if network_name:
+            self.result['network'] = network_name
+
+        vpc_name = self.get_vpc(key='name')
+        if vpc_name:
+            self.result['vpc'] = vpc_name
+
         if portforwarding_rule:
             # Bad bad API does not always return int when it should.
             for search_key, return_key in self.returns_to_int.items():
