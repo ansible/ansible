@@ -115,7 +115,6 @@ class VMwareConfigurationBackup(object):
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
         url = url.replace('*', self.hostname)
-
         #find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
         try:
             request = open_url(url=url, method='HEAD', validate_certs=self.validate_certs)
@@ -125,12 +124,13 @@ class VMwareConfigurationBackup(object):
         try:
             with open(self.src, 'rb') as file:
                 data = file.read()
-            request = open_url(url=url, data=data, method='PUT', validate_certs=self.validate_certs, url_username=self.username, url_password=self.password, force_basic_auth=True)
+            request = open_url(url=url, data=data, method='PUT', validate_certs=self.validate_certs,
+                               url_username=self.username, url_password=self.password, force_basic_auth=True)
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
         if not self.host.runtime.inMaintenanceMode:
-            self.enter_maintenance()      
+            self.enter_maintenance()
         try:
             self.host.configManager.firmwareSystem.RestoreFirmwareConfiguration(force=True)
             self.module.exit_json(changed=True)
@@ -140,7 +140,7 @@ class VMwareConfigurationBackup(object):
 
     def reset_configuration(self):
         if not self.host.runtime.inMaintenanceMode:
-            self.enter_maintenance()        
+            self.enter_maintenance()
         try:
             self.host.configManager.firmwareSystem.ResetFirmwareToFactoryDefaults()
             self.module.exit_json(changed=True)
@@ -148,14 +148,14 @@ class VMwareConfigurationBackup(object):
             self.exit_maintenance()
             self.module.fail_json(msg=str(e))
 
-    def save_configuration(self): 
+    def save_configuration(self):
         if os.path.isdir(self.dest):
             url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
             url = url.replace('*', self.hostname)
             filename = url.rsplit('/', 1)[1]
             self.dest = os.path.join(self.dest, filename)
         else:
-            self.module.fail_json(msg="Dest directory {} does not exist".format(self.dest))            
+            self.module.fail_json(msg="Dest directory {} does not exist".format(self.dest))
 
         try:
             request = open_url(url=url, validate_certs=self.validate_certs)
