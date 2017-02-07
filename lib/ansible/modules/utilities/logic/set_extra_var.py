@@ -36,7 +36,7 @@ options:
   key_value:
     description:
       - The C(set_extra_var) module takes a key=value pair for the variable to set
-        in the playbook scope. 
+        in the playbook scope.
     required: true
     default: null
 '''
