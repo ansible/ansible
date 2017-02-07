@@ -88,13 +88,13 @@ options:
     description:
       - Name of the network.
     required: false
-    default: false
+    default: null
     version_added: "2.3"
   vpc:
     description:
       - Name of the VPC.
     required: false
-    default: false
+    default: null
     version_added: "2.3"
   domain:
     description:
