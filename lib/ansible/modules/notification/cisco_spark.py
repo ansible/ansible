@@ -125,65 +125,38 @@ message:
 """
 
 
-def authenticated_user(module):
-    """ Establish a read only connection, that does not return any user specific
-    data, to validate connectivity when "check mode" is specified. """
-
-    # Ansible Specific Variables
-    results = {}
-    ansible = module.params
-
-    # Cisco Spark API Variables
-    url = "https://api.ciscospark.com/v1/people/me"
-
-    headers = {
-        'Authorization': 'Bearer {}'.format(ansible['personal_token']),
-        'content-type': 'application/json'
-    }
-
-    response, info = fetch_url(module, url, headers=headers)
-
-    status_code = info['status']
-    message = info['msg']
-
-    # Module will fail if the response is not 200
-    if status_code != 200:
-        results['failed'] = True
-        results['status_code'] = status_code
-        results['message'] = message
-
-    else:
-        results['failed'] = False
-        results['status_code'] = status_code
-        results['message'] = 'Authentication Successful'
-
-    return results
-
-
 def spark_message(module):
-    """ Send a message to a Cisco Spark Room or Individual """
+    """ When check mode is specified, establish a read only connection, that does not return any user specific
+    data, to validate connectivity. In regular mode, send a message to a Cisco Spark Room or Individual"""
 
     # Ansible Specific Variables
     results = {}
     ansible = module.params
-
-    # Cisco Spark API Variables
-    url = "https://api.ciscospark.com/v1/messages"
 
     headers = {
         'Authorization': 'Bearer {}'.format(ansible['personal_token']),
         'content-type': 'application/json'
     }
 
-    # By Room ID
-    payload = {
-        ansible['recipient_type']: ansible['recipient_id'],
-        ansible['message_type']: ansible['message']
-    }
+    if module.check_mode:
 
-    payload = module.jsonify(payload)
+        url = "https://api.ciscospark.com/v1/people/me"
 
-    response, info = fetch_url(module, url, data=payload, headers=headers)
+        response, info = fetch_url(module, url, headers=headers)
+
+    else:
+
+        url = "https://api.ciscospark.com/v1/messages"
+
+        # By Room ID
+        payload = {
+            ansible['recipient_type']: ansible['recipient_id'],
+            ansible['message_type']: ansible['message']
+        }
+
+        payload = module.jsonify(payload)
+
+        response, info = fetch_url(module, url, data=payload, headers=headers)
 
     status_code = info['status']
     message = info['msg']
@@ -193,11 +166,14 @@ def spark_message(module):
         results['failed'] = True
         results['status_code'] = status_code
         results['message'] = message
-
     else:
         results['failed'] = False
         results['status_code'] = status_code
-        results['message'] = message
+
+        if module.check_mode:
+            results['message'] = 'Authentication Successful.'
+        else:
+            results['message'] = message
 
     return results
 
@@ -219,11 +195,7 @@ def main():
         supports_check_mode=True
     )
 
-    # Add Check Mode Support
-    if module.check_mode:
-        results = authenticated_user(module)
-    else:
-        results = spark_message(module)
+    results = spark_message(module)
 
     module.exit_json(**results)
 
