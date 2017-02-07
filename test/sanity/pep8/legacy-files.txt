@@ -1,12 +1,3 @@
-contrib/inventory/abiquo.py
-contrib/inventory/digital_ocean.py
-contrib/inventory/docker.py
-contrib/inventory/ec2.py
-contrib/inventory/mdt_dynamic_inventory.py
-contrib/inventory/openvz.py
-contrib/inventory/rax.py
-hacking/metadata-tool.py
-hacking/module_formatter.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/galaxy.py
 lib/ansible/cli/playbook.py
