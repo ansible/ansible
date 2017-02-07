@@ -271,7 +271,7 @@ def main():
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
         )
 
-    systemctl = module.get_bin_path('systemctl')
+    systemctl = module.get_bin_path('systemctl', True)
     if module.params['user']:
         systemctl = systemctl + " --user"
     if module.params['no_block']:

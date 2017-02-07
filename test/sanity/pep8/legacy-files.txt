@@ -25,7 +25,6 @@ lib/ansible/module_utils/f5.py
 lib/ansible/module_utils/facts.py
 lib/ansible/module_utils/known_hosts.py
 lib/ansible/module_utils/mysql.py
-lib/ansible/module_utils/vmware.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
@@ -257,7 +256,6 @@ lib/ansible/playbook/attribute.py
 lib/ansible/playbook/block.py
 lib/ansible/playbook/role/__init__.py
 lib/ansible/playbook/role/metadata.py
-lib/ansible/plugins/action/async.py
 lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/synchronize.py

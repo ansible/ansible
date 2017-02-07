@@ -91,10 +91,39 @@ Target: February/March 2017
 - **Testing and CI** (mattclay)  
 
   - *Static Code Analysis:* Create custom pylint extensions to automate detection of common Ansible specific issues reported during code review. Automate feedback on PRs for new code only to avoid noise from existing code which does not pass.
+
+    **Ongoing:** Some static code analysis is now part of the CI process:
+
+    - pep8 is now being run by CI, although not all PEP 8 rules are being enforced.
+    - pylint is now being run by CI, but currently only on the ansible-test portion of codebase.
+
   - *Test Reliability:* Eliminate transient test failures by fixing unreliable tests. Reduce network dependencies by moving network resources into httptester.
+
+    **Ongoing:** Many of the frequent sources of test instability have been resolved. However, more work still remains.
+
+    Some new issues have also appeared, which are currently being worked on.
+
   - *Enable Remaining Tests:* Implement fixes for OS X, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
+
+    **Ongoing:** More tests have been enabled for OS X, FreeBSD and Python 3. However, work still remains to enable more tests.
+
   - *Windows Server 2016:* Add Windows Server 2016 to CI when official AMIs become available.
+
+    **Delayed:** Integration tests pass on Windows Server 2016. However, due to intermittent WinRM issues, the tests have been disabled.
+
+    Once the issues with WinRM have been resolved, the tests will be re-enabled.
+
   - *Repository Consolidation:* Update CI to maintain and improve upon existing functionality after repository consolidation.
+
+    **Done:** A new test runner, ansible-test, has been deployed to manage CI jobs on Shippable.
+
+    Tests executed on PRs are based on the changes made in the PR, for example:
+
+    - Changes to a module will only run tests appropriate for that module.
+    - Changes to Windows modules or the Windows connection plugin run tests on Windows.
+    - Changes to network modules run tests on the appropriate virtual network device (currently supporting VyOS and IOS).
+
+    Tests executed on merges are based on changes since the last successful merge test.
 
 - **Amazon resources** (ryansb)
 

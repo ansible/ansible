@@ -31,10 +31,14 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = True
+        self._supports_async      = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
+        if result.get('skipped', False):
+            return result
 
         module = self._task.args.get('use', 'auto').lower()
 
@@ -73,7 +77,7 @@ class ActionModule(ActionBase):
                         self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
 
             self._display.vvvv("Running %s" % module)
-            result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async))
         else:
             result['failed'] = True
             result['msg'] = 'Could not detect which service manager to use. Try gathering facts or setting the "use" option.'

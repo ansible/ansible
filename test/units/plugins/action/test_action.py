@@ -89,7 +89,7 @@ class TestActionBase(unittest.TestCase):
         mock_task.async = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
-        self.assertEqual(results, dict(invocation=dict(module_name='foo', module_args=dict(a=1, b=2, c=3))))
+        self.assertEqual(results, {})
 
     def test_action_base__configure_module(self):
         fake_loader = DictDataLoader({
@@ -229,60 +229,6 @@ class TestActionBase(unittest.TestCase):
 
         action_base.TRANSFERS_FILES = True
         self.assertTrue(action_base._early_needs_tmp_path())
-
-    def test_action_base__late_needs_tmp_path(self):
-        # create our fake task
-        mock_task = MagicMock()
-
-        # create a mock connection, so we don't actually try and connect to things
-        mock_connection = MagicMock()
-
-        # we're using a real play context here
-        play_context = PlayContext()
-
-        # our test class
-        action_base = DerivedActionBase(
-            task=mock_task,
-            connection=mock_connection,
-            play_context=play_context,
-            loader=None,
-            templar=None,
-            shared_loader_obj=None,
-        )
-
-        # assert no temp path is required because tmp is set
-        self.assertFalse(action_base._late_needs_tmp_path("/tmp/foo", "new"))
-
-        # assert no temp path is required when using a new-style module
-        # with pipelining supported and enabled with no become method
-        mock_connection.has_pipelining = True
-        play_context.pipelining = True
-        play_context.become_method = None
-        self.assertFalse(action_base._late_needs_tmp_path(None, "new"))
-
-        # assert a temp path is required for each of the following:
-        # the module style is not 'new'
-        mock_connection.has_pipelining = True
-        play_context.pipelining = True
-        play_context.become_method = None
-        self.assertTrue(action_base._late_needs_tmp_path(None, "old"))
-        # connection plugin does not support pipelining
-        mock_connection.has_pipelining = False
-        play_context.pipelining = True
-        play_context.become_method = None
-        self.assertTrue(action_base._late_needs_tmp_path(None, "new"))
-        # pipelining is disabled via the play context settings
-        mock_connection.has_pipelining = True
-        play_context.pipelining = False
-        play_context.become_method = None
-        self.assertTrue(action_base._late_needs_tmp_path(None, "new"))
-        # keep remote files is enabled
-        # FIXME: implement
-        # the become method is 'su'
-        mock_connection.has_pipelining = True
-        play_context.pipelining = True
-        play_context.become_method = 'su'
-        self.assertTrue(action_base._late_needs_tmp_path(None, "new"))
 
     def test_action_base__make_tmp_path(self):
         # create our fake task
@@ -483,7 +429,7 @@ class TestActionBase(unittest.TestCase):
         # fake a lot of methods as we test those elsewhere
         action_base._configure_module = MagicMock()
         action_base._supports_check_mode = MagicMock()
-        action_base._late_needs_tmp_path = MagicMock()
+        action_base._is_pipelining_enabled = MagicMock()
         action_base._make_tmp_path = MagicMock()
         action_base._transfer_data = MagicMock()
         action_base._compute_environment_string = MagicMock()
@@ -491,9 +437,10 @@ class TestActionBase(unittest.TestCase):
         action_base._fixup_perms2 = MagicMock()
 
         action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
-        action_base._late_needs_tmp_path.return_value = False
+        action_base._is_pipelining_enabled.return_value = False
         action_base._compute_environment_string.return_value = ''
-        action_base._connection.has_pipelining = True
+        action_base._connection.has_pipelining = False
+        action_base._make_tmp_path.return_value = '/the/tmp/path'
         action_base._low_level_execute_command.return_value = dict(stdout='{"rc": 0, "stdout": "ok"}')
         self.assertEqual(action_base._execute_module(module_name=None, module_args=None), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
         self.assertEqual(action_base._execute_module(module_name='foo',
@@ -503,7 +450,7 @@ class TestActionBase(unittest.TestCase):
 
         # test with needing/removing a remote tmp path
         action_base._configure_module.return_value = ('old', '#!/usr/bin/python', 'this is the module data', 'path')
-        action_base._late_needs_tmp_path.return_value = True
+        action_base._is_pipelining_enabled.return_value = False
         action_base._make_tmp_path.return_value = '/the/tmp/path'
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
 
@@ -516,7 +463,8 @@ class TestActionBase(unittest.TestCase):
 
         # test an invalid shebang return
         action_base._configure_module.return_value = ('new', '', 'this is the module data', 'path')
-        action_base._late_needs_tmp_path.return_value = False
+        action_base._is_pipelining_enabled.return_value = False
+        action_base._make_tmp_path.return_value = '/the/tmp/path'
         self.assertRaises(AnsibleError, action_base._execute_module)
 
         # test with check mode enabled, once with support for check
