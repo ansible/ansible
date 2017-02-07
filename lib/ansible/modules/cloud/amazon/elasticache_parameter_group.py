@@ -47,7 +47,7 @@ options:
       - Idempotent actions that will create/modify, destroy, or reset a cache parameter group as needed.
     choices: ['present', 'absent', 'reset']
     required: true
-  update_values:
+  values:
     description:
       - A user-specified list of parameters to reset or modify for the cache parameter group.
     required: no
@@ -71,7 +71,7 @@ EXAMPLES = """
     - name: 'Modify a test parameter group'
       elasticache_parameter_group:
         name: 'test-param-group'
-        update_values:
+        values:
           - ['activerehashing', 'yes']
           - ['client-output-buffer-limit-normal-hard-limit', 4]
         state: 'present'
@@ -83,10 +83,40 @@ EXAMPLES = """
       elasticache_parameter_group:
         name: 'test-param-group'
         state: 'absent'
-
 """
 
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
+RETURN = """
+elasticache:
+    description: cache parameter group information and response metadata
+    returned: always
+    type: dict
+    sample:
+        "cache_parameter_group": {
+            "cache_parameter_group_family": "redis3.2",
+            "cache_parameter_group_name": "test-please-delete",
+            "description": "initial description"
+        },
+        "response_metadata": {
+            "http_headers": {
+                "content-length": "562",
+                "content-type": "text/xml",
+                "date": "Mon, 06 Feb 2017 22:14:08 GMT",
+                "x-amzn-requestid": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1"
+            },
+            "http_status_code": 200,
+            "request_id": "947291f9-ecb9-11e6-85bd-3baa4eca2cc1",
+            "retry_attempts": 0
+        }
+changed:
+    description: if the cache parameter group has changed
+    returned: always
+    type: bool
+    sample:
+        "changed": true
+"""
+
+
+from ansible.module_utils.ec2 import boto3_conn
 
 try:
     import boto3
@@ -107,7 +137,8 @@ def create(module, conn, name, group_family, description):
 def delete(module, conn, name):
     """ Delete ElastiCache parameter group. """
     try:
-        response = conn.delete_cache_parameter_group(CacheParameterGroupName=name)
+        conn.delete_cache_parameter_group(CacheParameterGroupName=name)
+        response = {}
         changed = True
     except boto.exception.BotoServerError as e:
         module.fail_json(msg=e.message)
@@ -127,11 +158,11 @@ def make_current_modifiable_param_dict(conn, name):
             modifiable_params[param["ParameterName"]] = [param["AllowedValues"], param["DataType"], param["ParameterValue"]]
     return modifiable_params
 
-def check_valid_modification(module, update_values, modifiable_params):
-    """ Check if the parameters and values in update_values are valid.  """
+def check_valid_modification(module, values, modifiable_params):
+    """ Check if the parameters and values in values are valid.  """
     changed_with_update = False
 
-    for param_value_pair in update_values:
+    for param_value_pair in values:
         parameter = param_value_pair[0]
         new_value = param_value_pair[1]
 
@@ -157,13 +188,13 @@ def check_valid_modification(module, update_values, modifiable_params):
 
     return changed_with_update
 
-def check_changed_parameter_values(update_values, old_parameters, new_parameters):
+def check_changed_parameter_values(values, old_parameters, new_parameters):
     """ Checking if the new values are different than the old values.  """
     changed_with_update = False
 
     # if the user specified parameters to reset, only check those for change
-    if update_values:
-        for param_value_pair in update_values:
+    if values:
+        for param_value_pair in values:
             parameter = param_value_pair[0]
             if old_parameters[parameter] != new_parameters[parameter]:
                 changed_with_update = True
@@ -177,11 +208,11 @@ def check_changed_parameter_values(update_values, old_parameters, new_parameters
 
     return changed_with_update
 
-def modify(module, conn, name, update_values):
+def modify(module, conn, name, values):
     """ Modify ElastiCache parameter group to reflect the new information if it differs from the current. """
     # compares current group parameters with the parameters we've specified to to a value to see if this will change the group
     format_parameters = []
-    for key_value_pair in update_values:
+    for key_value_pair in values:
         key = key_value_pair[0]
         value = str(key_value_pair[1])
         format_parameters.append({'ParameterName': key, 'ParameterValue': value})
@@ -191,7 +222,7 @@ def modify(module, conn, name, update_values):
         module.fail_json(msg=e.message)
     return response
 
-def reset(module, conn, name, update_values):
+def reset(module, conn, name, values):
     """ Reset ElastiCache parameter group if the current information is different from the new information. """
     # used to compare with the reset parameters' dict to see if there have been changes
     old_parameters_dict = make_current_modifiable_param_dict(conn, name)
@@ -199,10 +230,10 @@ def reset(module, conn, name, update_values):
     format_parameters = []
 
     # determine whether to reset all or specific parameters
-    if update_values:
+    if values:
         all_parameters = False
         format_parameters = []
-        for key_value_pair in update_values:
+        for key_value_pair in values:
             key = key_value_pair[0]
             value = str(key_value_pair[1])
             format_parameters.append({'ParameterName': key, 'ParameterValue': value})
@@ -216,7 +247,7 @@ def reset(module, conn, name, update_values):
 
     # determine changed
     new_parameters_dict = make_current_modifiable_param_dict(conn, name)
-    changed = check_changed_parameter_values(update_values, old_parameters_dict, new_parameters_dict)
+    changed = check_changed_parameter_values(values, old_parameters_dict, new_parameters_dict)
 
     return response, changed
 
@@ -236,7 +267,7 @@ def main():
         name            = dict(required=True, type='str'),
         description     = dict(required=False),
         state           = dict(required=True),
-        update_values   = dict(required=False, type='list'),
+        values          = dict(required=False, type='list'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -248,7 +279,7 @@ def main():
     parameter_group_name    = module.params.get('name')
     group_description       = module.params.get('description')
     state                   = module.params.get('state')
-    update_values           = module.params.get('update_values')
+    values                  = module.params.get('values')
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -262,15 +293,15 @@ def main():
     exists = get_info(connection, parameter_group_name)
 
     # check that the needed requirements are available
-    if state == 'present' and exists and not update_values:
-        module.fail_json(msg="Group already exists. Please specify values to modify using the 'update_values' option or use the state "
+    if state == 'present' and exists and not values:
+        module.fail_json(msg="Group already exists. Please specify values to modify using the 'values' option or use the state "
                          "'reset' if you want to reset all or some group parameters.")
-    elif state == 'present' and update_values and not exists:
-        module.fail_json(msg="No group to modify. Please create the cache parameter group before using the 'update_values' option.")
     elif state == 'present' and not exists and not (parameter_group_family or group_description):
         module.fail_json(msg="Creating a group requires a group name, the group family, and a description.")
     elif state == 'reset' and not exists:
         module.fail_json(msg="No group %s to reset. Please create the group before using the state 'reset'." % parameter_group_name)
+    elif state == 'absent' and not exists:
+        module.fail_json(msg="No group %s to delete." % parameter_group_name)
 
     # Taking action
     changed = False
@@ -278,21 +309,22 @@ def main():
         # modify existing group
         if exists:
             modifiable_params = make_current_modifiable_param_dict(connection, parameter_group_name)
-            changed = check_valid_modification(module, update_values, modifiable_params)
-            result = modify(module, connection, parameter_group_name, update_values)
+            changed = check_valid_modification(module, values, modifiable_params)
+            response = modify(module, connection, parameter_group_name, values)
         # create group
         else:
-            result, changed = create(module, connection, parameter_group_name, parameter_group_family, group_description)
+            response, changed = create(module, connection, parameter_group_name, parameter_group_family, group_description)
+            if values:
+                modifiable_params = make_current_modifiable_param_dict(connection, parameter_group_name)
+                changed = check_valid_modification(module, values, modifiable_params)
+                response = modify(module, connection, parameter_group_name, values)
     elif state == 'absent':
         # delete group
-        if exists:
-            result, changed = delete(module, connection, parameter_group_name)
-        else:
-            changed = False
+        response, changed = delete(module, connection, parameter_group_name)
     elif state == 'reset':
-        result, changed = reset(module, connection, parameter_group_name, update_values)
+        response, changed = reset(module, connection, parameter_group_name, values)
 
-    facts_result = dict(changed=changed, elasticache=result)
+    facts_result = dict(changed=changed, elasticache=camel_dict_to_snake_dict(response))
 
     module.exit_json(**facts_result)
 
