@@ -9,7 +9,7 @@ Target: February/March 2017
 
   - The 2.3 Ansible Core is just a little different than the past two major releases we've done.  In addition to feature work, we're using part of the time for this release to reduce some of our backlog in other areas than pure development.
   - *Administration:* Clean up our GitHub repos and move to one repo so that contributions, tickets, submissions, etc are centralized and easier for both the community and the Core Team to manage.
-  - *Metadata:* Move to a Metadata based system for modules.  This has been discussed here: https://github.com/ansible/proposals/blob/master/modules-management.md
+   - *Metadata:* Move to a Metadata based system for modules.  This has been discussed here: https://github.com/ansible/proposals/blob/master/modules-management.md
   - *Documentation:* We're aware that Docs have issues.  Scott Butler, aka Dharmabumstead will be leading the charge on how he and we as a community can clean them up.
   - *Backlog & Stability:* We're spending some of the cycles for 2.3 trying to reduce our ticket/PR backlog, and clean up some particular areas of the project that the community has expressed particular frustrations about.
   - *Python 3:* The community and Toshio have done TONS of work getting Python 3 working.  Still more to go...
@@ -136,12 +136,14 @@ Target: February/March 2017
 - **Plugin Loader**
 
   - Add module_utils to the plugin loader (feature)
-  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) (Stretch goal)
-  - Add a ‘ansible-ssh’ convenience and debugging tool
+  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) (Stretch goal) (slip to 2.4)
   
-    - Tool to invoke an interactive ssh to a host with the same args/env/config that ansible would.
-    - There are at least three external versions
-    
-      - https://github.com/2ndQuadrant/ansible-ssh
-      - https://github.com/haad/ansible-ssh
-      - https://github.com/mlvnd/ansible-ssh
+- **ansible-ssh**
+
+  - Add a ‘ansible-ssh’ convenience and debugging tool (will slip to 2.4)
+  - Tool to invoke an interactive ssh to a host with the same args/env/config that ansible would.
+  - There are at least three external versions
+  
+    - https://github.com/2ndQuadrant/ansible-ssh
+    - https://github.com/haad/ansible-ssh
+    - https://github.com/mlvnd/ansible-ssh
