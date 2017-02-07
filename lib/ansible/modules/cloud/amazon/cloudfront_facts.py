@@ -495,24 +495,24 @@ def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, ali
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        distribution_id                   = dict(required=False, type='str'),
-        invalidation_id                   = dict(required=False, type='str'),
-        origin_access_identity_id         = dict(required=False, type='str'),
-        domain_name_alias                 = dict(required=False, type='str'),
-        all_lists                         = dict(required=False, default=False, type='bool'),
-        distribution                      = dict(required=False, default=False, type='bool'),
-        distribution_config               = dict(required=False, default=False, type='bool'),
-        origin_access_identity            = dict(required=False, default=False, type='bool'),
-        origin_access_identity_config     = dict(required=False, default=False, type='bool'),
-        invalidation                      = dict(required=False, default=False, type='bool'),
-        streaming_distribution            = dict(required=False, default=False, type='bool'),
-        streaming_distribution_config     = dict(required=False, default=False, type='bool'),
-        list_origin_access_identities     = dict(required=False, default=False, type='bool'),
-        list_distributions                = dict(required=False, default=False, type='bool'),
-        list_distributions_by_web_acl_id  = dict(required=False, default=False, type='bool'),
-        list_invalidations                = dict(required=False, default=False, type='bool'),
-        list_streaming_distributions      = dict(required=False, default=False, type='bool'),
-        summary                           = dict(required=False, default=False, type='bool')
+        distribution_id = dict(required=False, type='str'),
+        invalidation_id = dict(required=False, type='str'),
+        origin_access_identity_id = dict(required=False, type='str'),
+        domain_name_alias = dict(required=False, type='str'),
+        all_lists = dict(required=False, default=False, type='bool'),
+        distribution = dict(required=False, default=False, type='bool'),
+        distribution_config = dict(required=False, default=False, type='bool'),
+        origin_access_identity = dict(required=False, default=False, type='bool'),
+        origin_access_identity_config = dict(required=False, default=False, type='bool'),
+        invalidation = dict(required=False, default=False, type='bool'),
+        streaming_distribution = dict(required=False, default=False, type='bool'),
+        streaming_distribution_config = dict(required=False, default=False, type='bool'),
+        list_origin_access_identities = dict(required=False, default=False, type='bool'),
+        list_distributions = dict(required=False, default=False, type='bool'),
+        list_distributions_by_web_acl_id = dict(required=False, default=False, type='bool'),
+        list_invalidations = dict(required=False, default=False, type='bool'),
+        list_streaming_distributions = dict(required=False, default=False, type='bool'),
+        summary = dict(required=False, default=False, type='bool')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
@@ -522,25 +522,25 @@ def main():
 
     service_mgr = CloudFrontServiceManager(module)
 
-    distribution_id                   = module.params.get('distribution_id')
-    invalidation_id                   = module.params.get('invalidation_id')
-    origin_access_identity_id         = module.params.get('origin_access_identity_id')
-    web_acl_id                        = module.params.get('web_acl_id')
-    domain_name_alias                 = module.params.get('domain_name_alias')
-    all_lists                         = module.params.get('all_lists')
-    distribution                      = module.params.get('distribution')
-    distribution_config               = module.params.get('distribution_config')
-    origin_access_identity            = module.params.get('origin_access_identity')
-    origin_access_identity_config     = module.params.get('origin_access_identity_config')
-    invalidation                      = module.params.get('invalidation')
-    streaming_distribution            = module.params.get('streaming_distribution')
-    streaming_distribution_config     = module.params.get('streaming_distribution_config')
-    list_origin_access_identities     = module.params.get('list_origin_access_identities')
-    list_distributions                = module.params.get('list_distributions')
-    list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id')
-    list_invalidations                = module.params.get('list_invalidations')
-    list_streaming_distributions      = module.params.get('list_streaming_distributions')
-    summary                           = module.params.get('summary')
+    distribution_id = module.params.get('distribution_id')
+    invalidation_id = module.params.get('invalidation_id')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
+    web_acl_id = module.params.get('web_acl_id')
+    domain_name_alias = module.params.get('domain_name_alias')
+    all_lists = module.params.get('all_lists')
+    distribution = module.params.get('distribution')
+    distribution_config = module.params.get('distribution_config')
+    origin_access_identity = module.params.get('origin_access_identity')
+    origin_access_identity_config = module.params.get('origin_access_identity_config')
+    invalidation = module.params.get('invalidation')
+    streaming_distribution = module.params.get('streaming_distribution')
+    streaming_distribution_config = module.params.get('streaming_distribution_config')
+    list_origin_access_identities = module.params.get('list_origin_access_identities')
+    list_distributions = module.params.get('list_distributions')
+    list_distributions_by_web_acl_id = module.params.get('list_distributions_by_web_acl_id')
+    list_invalidations = module.params.get('list_invalidations')
+    list_streaming_distributions = module.params.get('list_streaming_distributions')
+    summary = module.params.get('summary')
 
     result = { 'cloudfront': {} }
     facts = {}
