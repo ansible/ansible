@@ -38,12 +38,12 @@ options:
         default: null
     key_filename:
         description:
-            - Location of the filename that is used for authentication (either key or password is required).
+            - Location of the filename that is used for the auth. Either I(key_filename) or I(password) is required.
         required: true
         default: null
     password:
         description:
-            - Credentials password to use for authentication (either key or password is required).
+            - Password credentials to use for auth. Either I(key_filename) or I(password) is required.
         required: true
         default: null
     cert_friendly_name:
