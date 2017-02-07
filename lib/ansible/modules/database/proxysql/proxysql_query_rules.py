@@ -368,8 +368,8 @@ class ProxyQueryRule(object):
 
     def get_rule_config(self, cursor, created_rule_id=None):
         query_string = \
-                    """SELECT *
-                       FROM mysql_query_rules"""
+            """SELECT *
+               FROM mysql_query_rules"""
 
         if created_rule_id:
             query_data = [created_rule_id, ]
@@ -599,7 +599,7 @@ def main():
         try:
             if not proxysql_query_rule.check_rule_cfg_exists(cursor):
                 if proxysql_query_rule.config_data["rule_id"] and \
-                       proxysql_query_rule.check_rule_pk_exists(cursor):
+                   proxysql_query_rule.check_rule_pk_exists(cursor):
                     proxysql_query_rule.update_rule(module.check_mode,
                                                     result,
                                                     cursor)
@@ -626,7 +626,7 @@ def main():
             existing_rules = proxysql_query_rule.check_rule_cfg_exists(cursor)
             if existing_rules > 0:
                 if existing_rules == 1 or \
-                       proxysql_query_rule.force_delete:
+                   proxysql_query_rule.force_delete:
                     proxysql_query_rule.delete_rule(module.check_mode,
                                                     result,
                                                     cursor)
