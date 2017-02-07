@@ -153,7 +153,7 @@ class Facts(object):
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
                  { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
-                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg5' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
                  { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
