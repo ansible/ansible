@@ -130,7 +130,7 @@ def create(module, conn, name, group_family, description):
     try:
         response = conn.create_cache_parameter_group(CacheParameterGroupName=name, CacheParameterGroupFamily=group_family, Description=description)
         changed = True
-    except boto.exception.BotoServerError as e:
+    except boto.exception.ClientError as e:
         module.fail_json(msg=e.message)
     return response, changed
 
@@ -140,7 +140,7 @@ def delete(module, conn, name):
         conn.delete_cache_parameter_group(CacheParameterGroupName=name)
         response = {}
         changed = True
-    except boto.exception.BotoServerError as e:
+    except boto.exception.ClientError as e:
         module.fail_json(msg=e.message)
     return response, changed
 
@@ -218,7 +218,7 @@ def modify(module, conn, name, values):
         format_parameters.append({'ParameterName': key, 'ParameterValue': value})
     try:
         response = conn.modify_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters)
-    except boto.exception.BotoServerError as e:
+    except boto.exception.ClientError as e:
         module.fail_json(msg=e.message)
     return response
 
@@ -242,7 +242,7 @@ def reset(module, conn, name, values):
 
     try:
         response = conn.reset_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters, ResetAllParameters=all_parameters)
-    except boto.exception.BotoServerError as e:
+    except boto.exception.ClientError as e:
         module.fail_json(msg=e.message)
 
     # determine changed
