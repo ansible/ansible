@@ -18,10 +18,10 @@ Target: February/March 2017
 
 - **Repo Merge**
 
-  - Script that a submitter can run to migrate their PR
-  - Script that a committer can run to fork a PR and then merge to ansible/ansible
-  - Move all the issues (remove old ones that can be removed)
-  - Enhance ansibullbot to accommodate the changes (jctanner)
+  - Script that a submitter can run to migrate their PR *(done)*
+  - Script that a committer can run to fork a PR and then merge to ansible/ansible *(mostly done)*
+  - Move all the issues (remove old ones that can be removed) *(done)*
+  - Enhance ansibullbot to accommodate the changes (jctanner) *(in progress, going well)*
   
 - **Metadata**
 
