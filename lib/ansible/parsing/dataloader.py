@@ -312,7 +312,57 @@ class DataLoader:
 
         return candidate
 
-    def path_dwim_relative_stack(self, paths, dirname, source, is_role=False):
+    def get_path_dwim_relative_stack(self, paths, dirname, source, is_role=False):
+        if source is None:
+            display.warning('Invalid request to find a file that matches a "null" value')
+            return []
+
+        b_dirname = to_bytes(dirname)
+        b_source = to_bytes(source)
+
+        search = []
+        display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
+
+        if source and (source.startswith('~') or source.startswith(os.path.sep)):
+            # path is absolute, no relative needed,
+            # path_dwim_relative_stack will check existence
+            search.append(b_source)
+            # We could return here if we dont want to populate the other candidate paths
+            # when we are given an absolute path. Tiny optimization, but changes behavior
+            # of method...
+
+        for path in paths:
+            b_path = to_bytes(path, errors='surrogate_or_strict')
+            b_mydir = os.path.dirname(b_path)
+
+            # FIXME: this detection fails with non main.yml roles
+            # if path is in role and 'tasks' not there already, add it into the search
+            if is_role or self._is_role(path):
+                if b_mydir.endswith(b'tasks'):
+                    search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
+                    search.append(os.path.join(b_mydir, b_source))
+                else:
+                    # don't add dirname if user already is using it in source
+                    if b_source.split(b'/')[0] != b_dirname:
+                        search.append(os.path.join(b_path, b_dirname, b_source))
+                    search.append(os.path.join(b_path, b_source))
+
+            elif b_dirname not in b_source.split(b'/'):
+                # don't add dirname if user already is using it in source
+                if b_source.split(b'/')[0] != dirname:
+                    search.append(os.path.join(b_path, b_dirname, b_source))
+                search.append(os.path.join(b_path, b_source))
+
+        # always append basedir as last resort
+        # don't add dirname if user already is using it in source
+        if b_source.split(b'/')[0] != dirname:
+            search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+
+        search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
+
+        return search
+
+    def path_dwim_relative_stack(self, b_candidate_paths, source):
         '''
         find one file in first path in stack taking roles into account and adding play basedir as fallback
 
@@ -323,57 +373,39 @@ class DataLoader:
         :rtype: A text string
         :returns: An absolute path to the filename ``source``
         '''
-        b_dirname = to_bytes(dirname)
-        b_source = to_bytes(source)
 
+        display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(b_candidate_paths)))
         result = None
-        if source is None:
-            display.warning('Invalid request to find a file that matches a "null" value')
-        elif source and (source.startswith('~') or source.startswith(os.path.sep)):
-            # path is absolute, no relative needed, check existence and return source
-            test_path = unfrackpath(b_source)
-            if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
-                result = test_path
-        else:
-            search = []
-            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
-            for path in paths:
-                upath = unfrackpath(path)
-                b_upath = to_bytes(upath, errors='surrogate_or_strict')
-                b_mydir = os.path.dirname(b_upath)
 
-                # FIXME: this detection fails with non main.yml roles
-                # if path is in role and 'tasks' not there already, add it into the search
-                if is_role or self._is_role(path):
-                    if b_mydir.endswith(b'tasks'):
-                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
-                        search.append(os.path.join(b_mydir, b_source))
-                    else:
-                        # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] != b_dirname:
-                            search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b_source))
+        for b_candidate_path in b_candidate_paths:
+            u_path = unfrackpath(b_candidate_path)
 
-                elif b_dirname not in b_source.split(b'/'):
-                    # don't add dirname if user already is using it in source
-                    if b_source.split(b'/')[0] != dirname:
-                        search.append(os.path.join(b_upath, b_dirname, b_source))
-                    search.append(os.path.join(b_upath, b_source))
+            b_path = to_bytes(u_path)
+            display.vvvvv(u'looking for "%s" at "%s"' % (source, u_path))
 
-            # always append basedir as last resort
-            # don't add dirname if user already is using it in source
-            if b_source.split(b'/')[0] != dirname:
-                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
-
-            display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
-            for b_candidate in search:
-                display.vvvvv(u'looking for "%s" at "%s"' % (source, to_text(b_candidate)))
-                if os.path.exists(b_candidate):
-                    result = to_text(b_candidate)
-                    break
+            if os.path.exists(b_path):
+                result = to_text(b_path)
+                break
 
         return result
+
+    def uniq_path_list(self, paths):
+        '''Remove duplicate path entries while preserving order.
+
+        For duplicates, the first entry with the path will be kept in place
+        and the rest discarded.
+
+        paths = ['a','b', 'c', 'b', 'b', 'a']
+        unit_path_list(paths)
+        > ['a', 'b', 'c']
+        '''
+
+        # TODO: likely replace with comprehension
+        uniq_paths = []
+        for path in paths:
+            if path not in uniq_paths:
+                uniq_paths.append(path)
+        return uniq_paths
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''

@@ -20,8 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
+import os
 
 from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
@@ -112,8 +114,14 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         else:
             paths = self.get_basedir(myvars)
 
-        result = self._loader.path_dwim_relative_stack(paths, subdir, needle)
+        b_candidate_paths = self._loader.get_path_dwim_relative_stack(paths, subdir, needle)
+        b_candidate_paths = self._loader.uniq_path_list(b_candidate_paths)
+
+        result = self._loader.path_dwim_relative_stack(b_candidate_paths, needle)
+
         if result is None and not ignore_missing:
-            self._display.warning("Unable to find '%s' in expected paths." % needle)
+            paths_msg = os.path.pathsep.join([to_native(b_path) for b_path in b_candidate_paths])
+            self._display.warning("%s was unable to find '%s' in expected locations %s" %
+                                  (self._name_slug('Lookup'), needle, paths_msg))
 
         return result
