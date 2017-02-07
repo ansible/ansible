@@ -42,17 +42,25 @@ options:
   name:
     description:
       - Name of the IP Pool to manage.
-        Only one of I(name), I(id) or I(src) can be set.
+        Only one of I(name), I(id) or I(content) can be set.
     required: false
   id:
     description:
       - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
-        Only one of I(name), I(id) or I(src) can be set.
+        Only one of I(name), I(id) or I(content) can be set.
     required: false
-  src:
+  content:
     description:
-      - Filepath to JSON file containing the collection item data to upload.
-        Only one of I(name), I(id) or I(src) can be set.
+      - Datastructure of the IP Pool to create. The format is defined by the
+        I(content_format) parameter. It's the same datastructure that is returned
+        on success in I(value)
+    required: false
+  content_format:
+    description:
+      - Indicate in which format is the content provided. It can be either provided
+        directly as a variable, as a JSON string or as a Yaml String
+    default: json
+    choices: ['var', 'json', 'yaml']
     required: false
   state:
     description:
@@ -62,9 +70,8 @@ options:
     required: false
   subnets:
     description:
-      - Filepath to JSON file containing the collection item data
+      - List of subnet that needs to be part of the IP Pool
     required: false
-
 '''
 
 EXAMPLES = '''
@@ -104,24 +111,48 @@ EXAMPLES = '''
 
 # Save an IP Pool to a file
 
-- name: "Access IP Pool 1/2"
+- name: "Access IP Pool 1/3"
   aos_ip_pool:
     session: "{{ session_ok }}"
     name: "my-ip-pool"
     subnets: [ 172.10.0.0/16, 172.12.0.0/16 ]
     state: present
   register: ip_pool
-- name: "Save Ip Pool into a file 2/2"
+
+- name: "Save Ip Pool into a file in JSON 2/3"
   copy:
     content: "{{ ip_pool.value | to_nice_json }}"
     dest: ip_pool_saved.json
 
-- name: "Load IP Pool from a file"
+- name: "Save Ip Pool into a file in YAML 3/3"
+  copy:
+    content: "{{ ip_pool.value | to_nice_yaml }}"
+    dest: ip_pool_saved.yaml
+
+- name: "Load IP Pool from a JSON file"
   aos_ip_pool:
     session: "{{ session_ok }}"
-    src: resources/ip_pool_saved.json
+    content: "{{ lookup('file', 'resources/ip_pool_saved.json') }}"
     state: present
 
+- name: "Load IP Pool from a YAML file"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/ip_pool_saved.yaml') }}"
+    content_format: yaml
+    state: present
+
+- name: "Load IP Pool from a Variable"
+  aos_ip_pool:
+    session: "{{ session_ok }}"
+    content:
+      display_name: my-ip-pool
+      id: 4276738d-6f86-4034-9656-4bff94a34ea7
+      subnets:
+        - network: 172.10.0.0/16
+        - network: 172.12.0.0/16
+    content_format: var
+    state: present
 '''
 
 RETURNS = '''
@@ -147,7 +178,7 @@ value:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, find_collection_item, get_display_name_from_file, do_load_resource, check_aos_version
+from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
 def get_list_of_subnets(ip_pool):
     subnets = []
@@ -203,13 +234,13 @@ def ip_pool_present(module, aos, my_pool):
 
     margs = module.params
 
-    # if src is defined
-    if margs['src'] is not None:
-        do_load_resource(module, aos.IpPools, margs['src'])
+    # if content is defined, create object from Content
+    if margs['content'] is not None:
+        do_load_resource(module, aos.IpPools, module.params['content']['display_name'])
 
     # if ip_pool doesn't exist already, create a new one
     if my_pool.exists is False and 'name' not in margs.keys():
-        module.fail_json(msg="name is mandatory for module that don't exist currently")
+        module.fail_json(msg="Name is mandatory for module that don't exist currently")
 
     elif my_pool.exists is False:
 
@@ -248,8 +279,14 @@ def ip_pool(module):
     item_name = False
     item_id = False
 
-    if margs['src'] is not None:
-        item_name = get_display_name_from_file(module, margs['src'])
+    if margs['content'] is not None:
+
+        content = content_to_dict(module, margs['content'], margs['content_format'] )
+
+        if 'display_name' in content.keys():
+            item_name = content['display_name']
+        else:
+            module.fail_json(msg="Unable to extract 'display_name' from 'content'")
 
     elif margs['name'] is not None:
         item_name = margs['name']
@@ -281,14 +318,17 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
-            src=dict(required=False),
+            content=dict(required=False),
+            content_format=dict(required=False,
+                                choices=['json', 'yaml', 'var'],
+                                default="json"),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present"),
             subnets=dict(required=False, type="list")
         ),
-        mutually_exclusive = [('name', 'id', 'src')],
-        required_one_of=[('name', 'id', 'src')],
+        mutually_exclusive = [('name', 'id', 'content')],
+        required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
 

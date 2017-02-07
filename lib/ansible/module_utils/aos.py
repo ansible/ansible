@@ -36,6 +36,8 @@ from ansible.module_utils.aos import *
 
 """
 import json
+import yaml
+
 from distutils.version import LooseVersion
 
 try:
@@ -107,36 +109,48 @@ def find_collection_item(collection, item_name=False, item_id=False):
     else:
         return my_dict
 
-def get_display_name_from_file(module, file=''):
+def content_to_dict(module, content, format):
     """
-    Read a JSON file and extract the display_name
+    Convert 'content' into a Python Dict based on 'content_format'
     """
-    datum = None
 
-    try:
-        datum = json.load(open(file))
-    except Exception:
-        module.fail_json(msg="unable to read file'%s'" % file)
+    content_dict = None
 
-    if 'display_name' in datum.keys():
-        return datum['display_name']
+    if format == 'json':
+        try:
+            content_dict = json.loads(content.replace("\'", '"'))
+        except:
+            module.fail_json(msg="Unable to convert 'content' from JSON, please check if valid")
+
+    elif format in ['yaml', 'var']:
+        try:
+            content_dict = yaml.load(content)
+
+            if not isinstance(content_dict, dict):
+                raise
+
+            # Check if dict is empty and return an error if it's
+            if not content_dict:
+                raise
+
+        except:
+            module.fail_json(msg="Unable to convert 'content' from %s, please check if valid" % format)
+
     else:
-        module.fail_json(msg="unable to find display_name in file'%s'" % file)
+        module.fail_json(msg="'content_format' is not supported")
 
-def do_load_resource(module, collection, file=''):
-    """
-    Load a JSON file directly to the AOS API
-    """
+    # replace the string with the dict
+    module.params['content'] = content_dict
 
-    datum = None
+    return content_dict
+
+def do_load_resource(module, collection, name):
+    """
+    Create a new object (collection.item) by loading a datastructure directly
+    """
 
     try:
-        datum = json.load(open(file))
-    except Exception:
-        module.fail_json(msg="unable to load src file '%s'" % file)
-
-    try:
-        item = find_collection_item(collection, datum['display_name'], '')
+        item = find_collection_item(collection, name, '')
         if item.exists:
             module.exit_json( changed=False,
                               name=item.name,
@@ -144,15 +158,15 @@ def do_load_resource(module, collection, file=''):
                               value=item.value )
 
         if not module.check_mode:
-            item.datum = datum
+            item.datum = module.params['content']
             item.write()
 
     except KeyError:
         module.fail_json(msg="src data missing display_name, check file contents")
 
-    except SessionRqstError:
-        module.fail_json(msg="unable to write item content",
-                         content=datum)
+    except:
+        module.fail_json(msg="Unable to write item content",
+                         content=content)
 
     module.exit_json( changed=True,
                       name=item.name,
