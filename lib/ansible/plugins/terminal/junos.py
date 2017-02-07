@@ -26,11 +26,17 @@ from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
 
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class TerminalModule(TerminalBase):
 
     terminal_prompts_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|%) ?$"),
     ]
 
     terminal_errors_re = [
@@ -40,6 +46,10 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         try:
+            prompt = self._get_prompt()
+            if prompt.strip().endswith('%'):
+                display.vvv('starting cli', self._connection._play_context.remote_addr)
+                self._exec_cli_command('cli')
             for c in ['set cli timestamp disable', 'set cli screen-length 0']:
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:
