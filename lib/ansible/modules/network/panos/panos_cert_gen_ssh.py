@@ -33,39 +33,39 @@ requirements:
 options:
     ip_address:
         description:
-            - IP address (or hostname) of PAN-OS device
+            - IP address (or hostname) of PAN-OS device being configured.
         required: true
         default: null
     key_filename:
         description:
-            - filename of the SSH Key to use for authentication (either key or password is required)
+            - Location of the filename that is used for authentication (either key or password is required).
         required: true
         default: null
     password:
         description:
-            - password to use for authentication (either key or password is required)
+            - Credentials password to use for authentication (either key or password is required).
         required: true
         default: null
     cert_friendly_name:
         description:
-            - certificate name (not CN but just a friendly name)
+            - Human friendly certificate name (not CN but just a friendly name).
         required: true
         default: null
     cert_cn:
         description:
-            - certificate cn
+            - Certificate CN (common name) embeded in the certificate signature.
         required: true
         default: null
     signed_by:
         description:
-            - undersigning authorithy which MUST be presents on the device already
+            - Undersigning authority (CA) that MUST already be presents on the device.
         required: true
         default: null
     rsa_nbits:
         description:
-            - number of bits used by the RSA alg
+            - Number of bits used by the RSA algorithm for the certificate generation.
         required: false
-        default: "1024"
+        default: "2048"
 '''
 
 EXAMPLES = '''
@@ -161,7 +161,7 @@ def main():
     argument_spec = dict(
         ip_address=dict(required=True),
         key_filename=dict(),
-        password=dict(),
+        password=dict(no_log=True),
         cert_cn=dict(required=True),
         cert_friendly_name=dict(required=True),
         rsa_nbits=dict(default='2048'),
