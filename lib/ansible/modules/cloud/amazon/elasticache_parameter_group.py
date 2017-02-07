@@ -173,13 +173,13 @@ def check_valid_modification(module, values, modifiable_params):
         # check allowed datatype for modified parameters
         str_to_type = {"integer": int, "string": str}
         if type(new_value) != str_to_type[modifiable_params[parameter][1]]:
-            module.fail_json(msg="%s (type %s) is not an allowed value for the parameter %s. Expected a type %s." % 
+            module.fail_json(msg="%s (type %s) is not an allowed value for the parameter %s. Expected a type %s." %
                              (new_value, type(new_value), parameter, modifiable_params[parameter][1]))
 
         # check allowed values for modifiable parameters
         if str(new_value) not in modifiable_params[parameter][0]:
             if "-" not in modifiable_params[parameter][0]:
-                module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." % 
+                module.fail_json(msg="%s is not an allowed value for the parameter %s. Valid parameters are: %s." %
                                  (value, modified, modifiable_params[parameter][0]))
 
         # check if a new value is different from current value
@@ -199,7 +199,7 @@ def check_changed_parameter_values(values, old_parameters, new_parameters):
             if old_parameters[parameter] != new_parameters[parameter]:
                 changed_with_update = True
                 break
-    # otherwise check all to find a change 
+    # otherwise check all to find a change
     else:
         for parameter in old_parameters.keys():
             if old_parameters[parameter] != new_parameters[parameter]:
