@@ -30,9 +30,9 @@ version_added: "2.3"
 author: "Nathaniel Case (@qalthos)"
 short_description: Run `set system` commands on VyOS devices
 description:
-  - The vyos_system module allows running one or more commands on remote
-    devices running VyOS.  This module can also be introspected
-    to validate key parameters before returning successfully.
+  - Runs one or more commands on remote devices running VyOS.
+    This module can also be introspected to validate key parameters before
+    returning successfully.
 options:
   hostname:
     description:
@@ -46,12 +46,14 @@ options:
     default: null
   name_server:
     description:
-      - A list of name servers to use with the device.
+      - A list of name servers to use with the device. Mutually exclusive with
+        I(domain_search)
     required: false
     default: null
   domain_search:
     description:
-      - A list of domain names to search.
+      - A list of domain names to search. Mutually exclusive with
+        I(name_server)
     required: false
     default: null
   state:
