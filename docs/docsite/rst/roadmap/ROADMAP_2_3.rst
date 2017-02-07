@@ -31,16 +31,16 @@ Target: February/March 2017
   
 - **Documentation**
   
-  - Update developing_modules (in progress, will continue in 2.4)
+  - Update developing_modules **(in progress, will continue in 2.4)**
   - Set up rst skeleton for module_utils docs.
   - Plugin development docs
-  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   (done)
+  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   **(done)**
   
 - **Windows platform** (nitzmahone)
   
   - Pipelining support
   - Become support
-  - Integrated kerberos ticket management (via ansible_user/ansible_password) (done)
+  - Integrated kerberos ticket management (via ansible_user/ansible_password) **(done)**
   - Switch PS input encoding to BOM-less UTF8
   - Server 2016 support/testing (now RTM’d)
   - Modularize Windows module_utils (allow N files)
@@ -63,12 +63,12 @@ Target: February/March 2017
   
 - **Azure modules** (nitzmahone/mattclay)
 
-  - Ensure Azure SDK rc6/RTM work (done)
-  - Move tests from ansible/azure_rm repo to ansible/ansible (bump to 2.4, no CI resources)
-  - Update/enhance tests (bump to 2.4, no CI resources)
-  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack) (bump to 2.4)
-  - Get Azure tests running in CI (stretch, depends on availability of sponsored account) (bump to 2.4, no CI resources)
-  - azure_rm_loadbalancer module (stretch) (bump to 2.4)
+  - Ensure Azure SDK rc6/RTM work **(done)**
+  - Move tests from ansible/azure_rm repo to ansible/ansible **(bump to 2.4, no CI resources)**
+  - Update/enhance tests **(bump to 2.4, no CI resources)**
+  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack) **(bump to 2.4)**
+  - Get Azure tests running in CI (stretch, depends on availability of sponsored account) **(bump to 2.4, no CI resources)**
+  - azure_rm_loadbalancer module (stretch) **(bump to 2.4)**
   
 - **Networking**
 
