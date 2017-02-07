@@ -102,6 +102,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -111,6 +112,7 @@ vars:
     authorize: yes
     auth_pass: cisco
 
+---
 - asa_acl:
     lines:
       - access-list ACL-ANSIBLE extended permit tcp any any eq 82
@@ -127,7 +129,7 @@ vars:
     lines:
       - access-list ACL-OUTSIDE extended permit tcp any any eq www
       - access-list ACL-OUTSIDE extended permit tcp any any eq https
-     context: customer_a
+    context: customer_a
     provider: "{{ cli }}"
 """
 

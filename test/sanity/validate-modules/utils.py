@@ -71,12 +71,20 @@ class CaptureStd():
         return self.stdout.getvalue(), self.stderr.getvalue()
 
 
-def parse_yaml(value, lineno, module, name):
+def parse_yaml(value, lineno, module, name, load_all=False):
     traces = []
     errors = []
     data = None
+
+    if load_all:
+        loader = yaml.safe_load_all
+    else:
+        loader = yaml.safe_load
+
     try:
-        data = yaml.safe_load(value)
+        data = loader(value)
+        if load_all:
+            data = list(data)
     except yaml.MarkedYAMLError as e:
         e.problem_mark.line += lineno - 1
         e.problem_mark.name = '%s.%s' % (module, name)

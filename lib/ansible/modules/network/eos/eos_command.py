@@ -94,7 +94,7 @@ EXAMPLES = """
     wait_for: result[0] contains Arista
 
 - name: run multiple commands on remote nodes
-   eos_command:
+  eos_command:
     commands:
       - show version
       - show interfaces

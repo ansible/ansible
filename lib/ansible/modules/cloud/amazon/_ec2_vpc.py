@@ -105,14 +105,14 @@ EXAMPLES = '''
 # It is assumed that their matching environment variables are set.
 
 # Basic creation example:
-      ec2_vpc:
+    - ec2_vpc:
         state: present
         cidr_block: 172.23.0.0/16
         resource_tags: { "Environment":"Development" }
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
 # The absence or presence of subnets deletes or creates them respectively.
-      ec2_vpc:
+    - ec2_vpc:
         state: present
         cidr_block: 172.22.0.0/16
         resource_tags: { "Environment":"Development" }
@@ -143,12 +143,12 @@ EXAMPLES = '''
       register: vpc
 
 # Removal of a VPC by id
-      ec2_vpc:
+    - ec2_vpc:
         state: absent
         vpc_id: vpc-aaaaaaa
         region: us-west-2
-If you have added elements not managed by this module, e.g. instances, NATs, etc then
-the delete will fail until those dependencies are removed.
+# If you have added elements not managed by this module, e.g. instances, NATs, etc then
+# the delete will fail until those dependencies are removed.
 '''
 
 

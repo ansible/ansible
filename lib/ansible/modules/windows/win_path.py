@@ -75,11 +75,11 @@ EXAMPLES = r'''
 - name: Ensure that system32 and Powershell are present on the global system path, and in the specified order
   win_path:
     elements:
-    - %SystemRoot%\system32
-    - %SystemRoot%\system32\WindowsPowerShell\v1.0
+    - '%SystemRoot%\system32'
+    - '%SystemRoot%\system32\WindowsPowerShell\v1.0'
 
 - name: Ensure that C:\Program Files\MyJavaThing is not on the current user's CLASSPATH
-  win_path
+  win_path:
     name: CLASSPATH
     elements: C:\Program Files\MyJavaThing
     scope: user

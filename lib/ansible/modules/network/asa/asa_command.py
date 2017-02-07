@@ -84,6 +84,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -93,7 +94,7 @@ vars:
     auth_pass: cisco
     transport: cli
 
-
+---
 - asa_command:
     commands:
       - show version
