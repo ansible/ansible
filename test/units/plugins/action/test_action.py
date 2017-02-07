@@ -44,7 +44,6 @@ from ansible.template import Templar
 from units.mock.loader import DictDataLoader
 from ansible.module_utils._text import to_bytes
 
-
 python_module_replacers = b"""
 #!/usr/bin/python
 
@@ -588,7 +587,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         res = action_base._parse_returned_data(returned_data)
         self.assertFalse(res['_ansible_parsed'])
         self.assertTrue(res['failed'])
-        self.assertEquals(res['module_stderr'], err)
+        self.assertEqual(res['module_stderr'], err)
 
     def test_json_empty(self):
         action_base = self._action_base()
@@ -600,7 +599,8 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        self.assertTrue(res['_ansible_parsed'])
+        self.assertEqual(len(res), 0)
+        self.assertFalse(res)
 
     def test_json_facts(self):
         action_base = self._action_base()
@@ -613,7 +613,8 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        self.assertTrue(res['_ansible_parsed'])
+        self.assertTrue(res['ansible_facts'])
+        self.assertIn('ansible_blip', res['ansible_facts'])
         # TODO: Should this be an AnsibleUnsafe?
         #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
 
@@ -631,6 +632,8 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
-        self.assertTrue(res['_ansible_parsed'])
+        self.assertTrue(res['ansible_facts'])
+        self.assertIn('ansible_blip', res['ansible_facts'])
+        self.assertIn('add_host', res)
         # TODO: Should this be an AnsibleUnsafe?
         #self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
