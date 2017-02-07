@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from ansible.modules.network.nclu import nclu
+from ansible.modules.network.cumulus import nclu
 
 import nclu
 import sys
