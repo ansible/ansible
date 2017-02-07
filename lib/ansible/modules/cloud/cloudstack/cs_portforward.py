@@ -270,8 +270,6 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             args['account'] = self.get_account(key='name')
             args['domainid'] = self.get_domain(key='id')
             args['projectid'] = self.get_project(key='id')
-            # TODO: check if networkid is required for VPC
-            args['networkid'] = self.get_network(key='id')
             portforwarding_rules = self.cs.listPortForwardingRules(**args)
 
             if portforwarding_rules and 'portforwardingrule' in portforwarding_rules:
@@ -370,7 +368,6 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             self.result['vpc'] = vpc_name
 
         if portforwarding_rule:
-            # Bad bad API does not always return int when it should.
             for search_key, return_key in self.returns_to_int.items():
                 if search_key in portforwarding_rule:
                     self.result[return_key] = int(portforwarding_rule[search_key])
