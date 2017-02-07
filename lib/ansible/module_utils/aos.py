@@ -36,6 +36,7 @@ from ansible.module_utils.aos import *
 
 """
 import json
+from distutils.version import LooseVersion
 
 try:
     from apstra.aosom.session import Session
@@ -45,6 +46,24 @@ try:
 except ImportError:
     HAS_AOS_PYEZ = False
 
+def check_aos_version(module, min=False):
+    """
+    Check if the library aos-pyez is present.
+    If provided, also check if the minimum version requirement is met
+    """
+    if not HAS_AOS_PYEZ:
+        module.fail_json(msg='aos-pyez is not installed.  Please see details '
+                             'here: https://github.com/Apstra/aos-pyez')
+
+    elif min:
+        import apstra.aosom
+        AOS_PYEZ_VERSION = apstra.aosom.__version__
+
+        if not LooseVersion(AOS_PYEZ_VERSION) >= LooseVersion(min):
+            module.fail_json(msg='aos-pyez >= %s is required for this module' % min)
+
+    return True
+
 def get_aos_session(module, auth):
     """
     Resume an existing session and return an AOS object.
@@ -52,20 +71,19 @@ def get_aos_session(module, auth):
     Args:
         auth (dict): An AOS session as obtained by aos_login module blocks::
 
-            dict( headers=dict(AUTHTOKEN=<token>),
-                  url=http://<ip>:<port>/api
+            dict( token=<token>,
+                  server=<ip>,
+                  port=<port>
                 )
 
     Return:
         Aos object
     """
-    if not HAS_AOS_PYEZ:
-        module.fail_json(msg='aos-pyez is not installed.  Please see details '
-                             'here: https://github.com/Apstra/aos-pyez')
 
+    check_aos_version(module)
 
     aos = Session()
-    aos.api.resume(auth['url'], auth['headers'])
+    aos.session = auth
 
     return aos
 
