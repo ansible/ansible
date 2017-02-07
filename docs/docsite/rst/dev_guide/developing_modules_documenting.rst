@@ -54,10 +54,10 @@ The following fields can be used and are all required unless specified otherwise
 
   * ``description:``
 
-    * Detailed explanation of what this option does and what it does. Written in full sentences.
-    * Should not list the options (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
-    * If an argument takes both True)/False and Yes)/No, the documentation should use True and False.
-    * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when C(state=present)."
+    * Detailed explanation of what this option does and what it does. It should be written in full sentences.
+    * Should not list the option values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
+    * If an argument takes both True/False and Yes/No, the documentation should use True and False.
+    * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
   * ``required:``
     Only needed if true, otherwise it is assumed to be false.
@@ -65,9 +65,9 @@ The following fields can be used and are all required unless specified otherwise
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
     * Ensure that the default parameter in docs matches default parameter in code. The default option must not be listed as part of the description.
   * ```choices``
-    Should be absent if empty.
+    List of option values. Should be absent if empty.
   * ``aliases:``
-    Should be absent if empty.
+    List of option name aliases, generally not needed. Should be absent if empty.
   * ``version_added:``
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. `version_added: "2.3"`
@@ -139,10 +139,7 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
 
 Formatting options
 ''''''''''''''''''
-These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
-for URL, link to help for another module, `italic`, and ``constant-width`` respectively. It is suggested
-to use ``C()`` for file and option names, and ``I()`` when referencing
-parameters; module names should be specified as ``M(module)`` to create a
+These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values, ``M()`` for module names. Module names should be specified as ``M(module)`` to create a
 link to the online documentation for that module.
 
 
@@ -152,7 +149,9 @@ Example usage::
     ...
     Required if I(state=present)
     ...
-    Mutually exclusive with C(project_src) and C(files).
+    Required if I(state) is C(preset)
+    ...
+    Mutually exclusive with I(project_src) and I(files).
     ...
     See also M(win_copy) or M(win_template).
     ...
