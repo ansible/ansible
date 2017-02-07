@@ -334,7 +334,7 @@ class PacketInventory(object):
         if self.group_by_hostname:
             self.push(self.inventory, device.hostname, dest)
             if self.nested_groups:
-                self.push_group(self.inventory, 'hostnames', project.name)                
+                self.push_group(self.inventory, 'hostnames', project.name)
 
         # Inventory: Group by project
         if self.group_by_project:
