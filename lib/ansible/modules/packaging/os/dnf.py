@@ -316,6 +316,8 @@ def ensure(module, base, state, names):
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
+    base.conf.sslverify = module.params['validate_certs']
+
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -462,6 +464,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
+            validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(default='/', type='path'),
         ),
         required_one_of=[['name', 'list']],
