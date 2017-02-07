@@ -65,10 +65,13 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_datacenter command from Ansible Playbooks
 - name: Create Datacenter
-      local_action: >
-        vmware_datacenter
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        datacenter_name="datacenter" state=present
+  local_action:
+    module: vmware_datacenter
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    datacenter_name: "datacenter"
+    state: present
 '''
 
 try:

@@ -61,7 +61,7 @@ notes:
     - The ejabberd configuration file must include mod_admin_extra as a module.
 '''
 EXAMPLES = '''
-Example playbook entries using the ejabberd_user module to manage users state.
+# Example playbook entries using the ejabberd_user module to manage users state.
 
 - name: create a user if it does not exists
   ejabberd_user:

@@ -145,10 +145,10 @@ EXAMPLES = '''
 
 # Facts are published in ansible_facts['cloudfront'][<distribution_name>]
 - debug:
-    msg: '{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}'
+    msg: "{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}"
 
 - debug:
-    msg: '{{ ansible_facts['cloudfront']['www.my-website.com'] }}'
+    msg: "{{ ansible_facts['cloudfront']['www.my-website.com'] }}"
 
 # Get all information about an invalidation for a distribution.
 - cloudfront_facts:

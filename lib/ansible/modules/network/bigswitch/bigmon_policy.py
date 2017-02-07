@@ -84,13 +84,13 @@ options:
 
 EXAMPLES = '''
 - name: policy to aggregate filter and deliver data center (DC) 1 traffic
-      bigmon_policy:
-        name: policy1
-        policy_description: DC 1 traffic policy
-        action: drop
-        controller: '{{ inventory_hostname }}'
-        state: present
-        validate_certs: false
+  bigmon_policy:
+    name: policy1
+    policy_description: DC 1 traffic policy
+    action: drop
+    controller: '{{ inventory_hostname }}'
+    state: present
+    validate_certs: false
 '''
 
 RETURN = '''

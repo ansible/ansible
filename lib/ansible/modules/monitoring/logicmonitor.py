@@ -230,7 +230,7 @@ EXAMPLES = '''
   tasks:
   - name: Create a host group
     # All tasks except for target=collector should use delegate_to: localhost
-    logicmonitor
+    logicmonitor:
       target: hostgroup
       action: add
       fullpath: /servers/development

@@ -84,7 +84,7 @@ EXAMPLES = '''
 # register your existing local public key:
 - cs_sshkeypair:
     name: linus@example.com
-    public_key: '{{ lookup('file', '~/.ssh/id_rsa.pub') }}'
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
   delegate_to: localhost
 '''
 

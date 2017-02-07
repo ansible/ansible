@@ -160,6 +160,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -167,19 +168,20 @@ vars:
     password: admin
     transport: cli
 
+---
 - name: enable rollback location
-    sros_config:
+  sros_config:
     lines: configure system rollback rollback-location "cf3:/ansible"
     provider: "{{ cli }}"
 
 - name: set system name to {{ inventory_hostname }} using one line
-    sros_config:
+  sros_config:
     lines:
         - configure system name "{{ inventory_hostname }}"
     provider: "{{ cli }}"
 
 - name: set system name to {{ inventory_hostname }} using parents
-    sros_config:
+  sros_config:
     lines:
         - 'name "{{ inventory_hostname }}"'
     parents:
@@ -189,7 +191,7 @@ vars:
     backup: yes
 
 - name: load config from file
-    sros_config:
+  sros_config:
       src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes

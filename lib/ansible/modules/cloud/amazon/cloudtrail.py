@@ -83,7 +83,8 @@ extends_documentation_fragment: aws
 
 EXAMPLES = """
   - name: enable cloudtrail
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: enabled
       name: main
       s3_bucket_name: ourbucket
@@ -91,7 +92,8 @@ EXAMPLES = """
       region: us-east-1
 
   - name: enable cloudtrail with different configuration
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: enabled
       name: main
       s3_bucket_name: ourbucket2
@@ -99,7 +101,8 @@ EXAMPLES = """
       region: us-east-1
 
   - name: remove cloudtrail
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: disabled
       name: main
       region: us-east-1

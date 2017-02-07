@@ -58,7 +58,7 @@ EXAMPLES = '''
     var: openstack_domains
 
 # Gather facts about a previously created domain with filter
-- os_keystone_domain_facts
+- os_keystone_domain_facts:
     cloud: awesomecloud
     name: demodomain
     filters:

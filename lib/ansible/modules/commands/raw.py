@@ -76,5 +76,5 @@ EXAMPLES = '''
     executable: /bin/bash
 
 - name: safely use templated variables. Always use quote filter to avoid injection issues.
-  raw: {{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}
+  raw: "{{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}"
 '''

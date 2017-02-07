@@ -91,7 +91,7 @@ EXAMPLES = '''
     state: opts_present
     opts: discard
   with_items: '{{ ansible_mounts }}'
-  when: '/dev/mapper/luks-' in {{ item.device }}
+  when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
 from ansible.module_utils.basic import *

@@ -49,7 +49,7 @@ options:
 '''
 
 EXAMPLES = '''
-Example playbook entries using the cl_interface_policy module.
+# Example playbook entries using the cl_interface_policy module.
 
     - name: shows types of interface ranges supported
       cl_interface_policy:

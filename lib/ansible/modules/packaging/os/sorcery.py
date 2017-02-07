@@ -128,8 +128,8 @@ EXAMPLES = '''
 
 # Playbook: make sure spells with/without required dependencies (if any) are installed
 - sorcery:
-    name: {{ item.spell }}
-    depends: {{ item.depends | default(None) }}
+    name: "{{ item.spell }}"
+    depends: "{{ item.depends | default(None) }}"
     state: present
   with_items:
     - { spell: 'vifm', depends: '+file,-gtk+2' }

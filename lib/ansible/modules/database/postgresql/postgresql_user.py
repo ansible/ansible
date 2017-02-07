@@ -189,7 +189,7 @@ EXAMPLES = '''
     state: absent
 
 # Example privileges string format
-INSERT,UPDATE/table:SELECT/anothertable:ALL
+# INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 # Remove an existing user's password
 - postgresql_user:

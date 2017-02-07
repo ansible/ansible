@@ -96,7 +96,7 @@ EXAMPLES = """
     - name: Snapshot volume
       netapp_e_snapshot_volume:
         ssid: "{{ ssid }}"
-        api_url: "{{ netapp_api_url }}"/
+        api_url: "{{ netapp_api_url }}/"
         api_username: "{{ netapp_api_username }}"
         api_password: "{{ netapp_api_password }}"
         state: present

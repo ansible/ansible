@@ -146,8 +146,8 @@ EXAMPLES = '''
 # define cl_interfaces once in tasks
 # then write interfaces in variables file
 # with just the options you want.
-  - name: Create interfaces
-    cl_interface:
+- name: Create interfaces
+  cl_interface:
       name: '{{ item.key }}'
       ipv4: '{{ item.value.ipv4 | default(omit) }}'
       ipv6: '{{ item.value.ipv6 | default(omit) }}'
@@ -165,11 +165,12 @@ EXAMPLES = '''
       mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork | default('no') }}"
       mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge | default('no') }}"
       mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard | default('no') }}"
-    with_dict: '{{ cl_interfaces }}'
-    notify: reload networking
+  with_dict: '{{ cl_interfaces }}'
+  notify: reload networking
 
 # In vars file
 # ============
+---
 cl_interfaces:
   swp1:
     alias_name: uplink to isp

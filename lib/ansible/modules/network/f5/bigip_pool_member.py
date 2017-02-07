@@ -132,7 +132,7 @@ EXAMPLES = '''
       state: "present"
       pool: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
       description: "web server"
       connection_limit: 100
@@ -148,7 +148,7 @@ EXAMPLES = '''
       state: "present"
       pool: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
       ratio: 1
       description: "nginx server"
@@ -162,7 +162,7 @@ EXAMPLES = '''
       state: "absent"
       pool: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
   delegate_to: localhost
 
@@ -190,7 +190,7 @@ EXAMPLES = '''
       monitor_state: "disabled"
       pool: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
   delegate_to: localhost
 '''

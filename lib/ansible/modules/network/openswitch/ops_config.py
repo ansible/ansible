@@ -139,12 +139,14 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
     username: netop
     password: netop
 
+---
 - name: configure hostname over cli
   ops_config:
     lines:

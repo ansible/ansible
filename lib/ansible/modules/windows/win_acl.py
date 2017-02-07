@@ -129,6 +129,7 @@ EXAMPLES = r'''
 
 # Remove previously added rule for IIS_IUSRS
 - name: Remove FullControl AccessRule for IIS_IUSRS
+  win_acl:
     path: C:\inetpub\wwwroot\MySite
     user: IIS_IUSRS
     rights: FullControl
@@ -139,6 +140,7 @@ EXAMPLES = r'''
 
 # Deny Intern
 - name: Deny Deny
+  win_acl:
     path: C:\Administrator\Documents
     user: Intern
     rights: Read,Write,Modify,FullControl,Delete

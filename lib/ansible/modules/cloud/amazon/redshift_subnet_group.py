@@ -67,7 +67,7 @@ EXAMPLES = '''
         - 'subnet-bbbbb'
 
 # Remove subnet group
-redshift_subnet_group: >
+- redshift_subnet_group:
     state: absent
     group_name: redshift-subnet
 '''

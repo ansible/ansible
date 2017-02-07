@@ -45,10 +45,12 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 # Example vmware_target_canonical_facts command from Ansible Playbooks
 - name: Get Canonical name
-      local_action: >
-        vmware_target_canonical_facts
-        hostname="{{ ansible_ssh_host }}" username=root password=vmware
-        target_id=7
+  local_action:
+    module: vmware_target_canonical_facts
+    hostname: "{{ ansible_ssh_host }}"
+    username: root
+    password: vmware
+    target_id: 7
 '''
 
 try:

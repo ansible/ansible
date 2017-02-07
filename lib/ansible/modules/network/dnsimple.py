@@ -136,7 +136,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 # create a my.com CNAME record to example.com
-- dnsimple
+- dnsimple:
     domain: my.com
     record: ''
     type: CNAME

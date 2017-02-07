@@ -58,6 +58,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -65,6 +66,7 @@ vars:
     password: Ansible
     transport: cli
 
+---
 - name: enable netconf service on port 830
   junos_netconf:
     listens_on: 830

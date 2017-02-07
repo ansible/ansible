@@ -146,12 +146,14 @@ notes:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   netconf:
     host: "{{ inventory_hostname }}"
     username: ansible
     password: Ansible
 
+---
 - name: load configure file into device
   junos_config:
     src: srx.cfg

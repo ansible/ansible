@@ -259,8 +259,8 @@ options:
         choices: ['present','absent']
 '''
 EXAMPLES = '''
-configure RR client
-- nxos_bgp_neighbor_af:
+- name: configure RR client
+  nxos_bgp_neighbor_af:
     asn: 65535
     neighbor: '3.3.3.3'
     afi: ipv4
