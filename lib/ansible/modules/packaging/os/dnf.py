@@ -318,7 +318,11 @@ def ensure(module, base, state, names, exclude):
     allow_erasing = False
 
     if exclude:
-        base.conf.exclude_pkgs(exclude)
+        try:
+            base.conf.exclude_pkgs(exclude)
+        except AttributeError:
+            module.fail_json(msg="Could not exclude packages."
+                                 " Please update `dnf` package.")
 
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
