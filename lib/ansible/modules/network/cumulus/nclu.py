@@ -17,7 +17,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '3.2.1'}
+                    'version': '1.0'}
 DOCUMENTATION = '''
 ---
 module: nclu
