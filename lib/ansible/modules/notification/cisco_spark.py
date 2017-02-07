@@ -139,16 +139,12 @@ def spark_message(module):
     }
 
     if module.check_mode:
-
         url = "https://api.ciscospark.com/v1/people/me"
-
-        response, info = fetch_url(module, url, headers=headers)
+        payload = None
 
     else:
-
         url = "https://api.ciscospark.com/v1/messages"
 
-        # By Room ID
         payload = {
             ansible['recipient_type']: ansible['recipient_id'],
             ansible['message_type']: ansible['message']
@@ -156,7 +152,7 @@ def spark_message(module):
 
         payload = module.jsonify(payload)
 
-        response, info = fetch_url(module, url, data=payload, headers=headers)
+    response, info = fetch_url(module, url, data=payload, headers=headers)
 
     status_code = info['status']
     message = info['msg']
