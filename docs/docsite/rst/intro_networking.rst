@@ -69,10 +69,10 @@ The following two config modules are essentially identical (using nxos_config) a
     ---
     vars:
        cli:
-       host: "{{ inventory_hostname }}"
-       username: "{{ ansible_ssh_user }}" 
-       password: "{{ ansible_ssh_pass }} "
-       transport: cli
+          host: "{{ inventory_hostname }}"
+          username: "{{ ansible_ssh_user }}" 
+          password: "{{ ansible_ssh_pass }} "
+          transport: cli
    
 
     nxos_config:
@@ -84,10 +84,10 @@ Given the above two examples that are equivalent, the arguments can also be used
     ---
     vars:
         cli:
-        host: "{{ inventory_hostname }}"
-        username: operator
-        password: secret
-        transport: cli
+           host: "{{ inventory_hostname }}"
+           username: operator
+           password: secret
+           transport: cli
    
     tasks:
     - nxos_config:
@@ -105,10 +105,10 @@ This is true for all values in the provider including transport.  So you could h
     ---
     vars:
         cli:
-        host: "{{ inventory_hostname }}"
-        username: operator
-        password: secret
-        transport: cli
+           host: "{{ inventory_hostname }}"
+           username: operator
+           password: secret
+           transport: cli
    
     tasks:
       - nxos_config:
@@ -121,8 +121,8 @@ If all values are provided via the provider argument, the rules for requirements
     ---
     vars:
       conn:
-      password: cisco_pass
-      transport: cli
+         password: cisco_pass
+         transport: cli
    
     tasks:
     - nxos_config:
