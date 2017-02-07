@@ -378,23 +378,18 @@ or environment variables (DO_API_TOKEN)\n''')
             self.inventory[droplet['name']] = [dest]
 
             # groups that are always present
-            for group in [
-                'region_' + droplet['region']['slug'],
-                'image_' + str(droplet['image']['id']),
-                'size_' + droplet['size']['slug'],
-                'distro_' + self.to_safe(droplet['image']['distribution']),
-                'status_' + droplet['status'],
-
-                ]:
+            for group in ('region_' + droplet['region']['slug'],
+                          'image_' + str(droplet['image']['id']),
+                          'size_' + droplet['size']['slug'],
+                          'distro_' + self.to_safe(droplet['image']['distribution']),
+                          'status_' + droplet['status']):
                 if group not in self.inventory:
                     self.inventory[group] = { 'hosts': [ ], 'vars': {} }
                 self.inventory[group]['hosts'].append(dest)
 
             # groups that are not always present
-            for group in [
-                droplet['image']['slug'],
-                droplet['image']['name']
-                ]:
+            for group in (droplet['image']['slug'],
+                          droplet['image']['name']):
                 if group:
                     image = 'image_' + self.to_safe(group)
                     if image not in self.inventory:
