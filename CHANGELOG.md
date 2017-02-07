@@ -54,6 +54,8 @@ Ansible Changes By Release
   * ec2_vpc_nat_gateway_facts
   * ec2_vpc_vgw_facts
   * ecs_ecr
+  * elasticache_parameter_group.py
+  * elasticache_snapshot.py
   * iam_role
   * s3_sync
 - archive
