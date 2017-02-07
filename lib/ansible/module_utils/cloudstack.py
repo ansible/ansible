@@ -274,6 +274,9 @@ class AnsibleCloudStack(object):
 
         network = self.module.params.get('network')
         if not network:
+            vpc_name = self.get_vpc(key='name')
+            if vpc_name:
+                self.module.fail_json(msg="Could not find network for VPC '%s' due missing argument: network" % vpc_name)
             return None
 
         args = {
@@ -383,6 +386,7 @@ class AnsibleCloudStack(object):
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'networkid': self.get_network(key='id'),
             'vpcid': vpc_id,
         }
         vms = self.cs.listVirtualMachines(**args)
