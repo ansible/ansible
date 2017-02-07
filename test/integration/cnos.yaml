@@ -1,0 +1,12 @@
+- hosts: cnos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+        - { role: cnos_vlan, when: "limit_to in ['*', 'cnos_vlan']" }
+
+
