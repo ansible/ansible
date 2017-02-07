@@ -18,7 +18,6 @@
 import unittest
 from ansible.modules.network.cumulus import nclu
 
-import nclu
 import sys
 import time
 import StringIO
