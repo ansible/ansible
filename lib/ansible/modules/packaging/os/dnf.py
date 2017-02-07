@@ -316,6 +316,9 @@ def ensure(module, base, state, names):
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
+    if module.params.get('update_cache') and state in ['installed', 'present', 'latest']:
+        base.update_cache()
+
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -462,6 +465,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None, type='path'),
             disable_gpg_check=dict(default=False, type='bool'),
+            update_cache=dict(required=False, default="no", type='bool'),
             installroot=dict(default='/', type='path'),
         ),
         required_one_of=[['name', 'list']],
