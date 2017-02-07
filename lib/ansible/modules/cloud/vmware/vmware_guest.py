@@ -45,7 +45,7 @@ options:
             - What state should the virtual machine be in?
             - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments
         required: True
-        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
+        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']
    name:
         description:
             - Name of the VM to work with
@@ -507,12 +507,23 @@ class PyVmomiHelper(object):
                     else:
                         result = {'changed': False, 'failed': True,
                                   'msg': "Cannot restart VM in the current state %s" % current_state}
+
                 elif expected_state == 'suspended':
                     if current_state in ('poweredon', 'poweringon'):
                         task = vm.Suspend()
                     else:
                         result = {'changed': False, 'failed': True,
                                   'msg': 'Cannot suspend VM in the current state %s' % current_state}
+
+                elif expected_state in ['shutdownguest', 'rebootguest']:
+                    if current_state == 'poweredon' and vm.guest.toolsRunningStatus == 'guestToolsRunning':
+                        if expected_state == 'shutdownguest':
+                            task = vm.ShutdownGuest()
+                        else:
+                            task = vm.RebootGuest()
+                    else:
+                        result = {'changed': False, 'failed': True,
+                                  'msg': "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name}
 
             except Exception:
                 e = get_exception()
@@ -1233,6 +1244,8 @@ def main():
                     'absent',
                     'restarted',
                     'suspended',
+                    'shutdownguest',
+                    'rebootguest'
                 ],
                 default='present'),
             validate_certs=dict(required=False, type='bool', default=True),
@@ -1289,7 +1302,7 @@ def main():
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended']:
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
             tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
