@@ -1,0 +1,4 @@
+---
+test_runcommand_data1:
+  - {clicommand: "display users"}
+
