@@ -264,7 +264,7 @@ class ProxySQLUser(object):
              self.backend,
              self.frontend]
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 query_data.append(val)
                 query_string += "\n  AND " + col + " = %s"
@@ -303,7 +303,7 @@ class ProxySQLUser(object):
              self.backend,
              self.frontend]
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 cols += 1
                 query_data.append(val)
@@ -326,7 +326,7 @@ class ProxySQLUser(object):
         cols = 0
         query_data = []
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 cols += 1
                 query_data.append(val)

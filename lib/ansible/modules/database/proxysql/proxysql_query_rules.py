@@ -350,7 +350,7 @@ class ProxyQueryRule(object):
         cols = 0
         query_data = []
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 cols += 1
                 query_data.append(val)
@@ -381,7 +381,7 @@ class ProxyQueryRule(object):
             cols = 0
             query_data = []
 
-            for col, val in self.config_data.iteritems():
+            for col, val in iteritems(self.config_data):
                 if val is not None:
                     cols += 1
                     query_data.append(val)
@@ -405,7 +405,7 @@ class ProxyQueryRule(object):
         cols = 0
         query_data = []
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 cols += 1
                 query_data.append(val)
@@ -431,7 +431,7 @@ class ProxyQueryRule(object):
         cols = 0
         query_data = []
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None and col != "rule_id":
                 cols += 1
                 query_data.append(val)
@@ -455,7 +455,7 @@ class ProxyQueryRule(object):
         cols = 0
         query_data = []
 
-        for col, val in self.config_data.iteritems():
+        for col, val in iteritems(self.config_data):
             if val is not None:
                 cols += 1
                 query_data.append(val)
