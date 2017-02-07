@@ -27,7 +27,6 @@ try:
 except ImportError:
     import __builtin__ as builtins
 
-from nose.tools import eq_, raises
 
 from ansible import constants as C
 from ansible.compat.six import text_type
@@ -38,7 +37,6 @@ from ansible.compat.tests.mock import patch, MagicMock, mock_open
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
-from ansible.vars.unsafe_proxy import AnsibleUnsafe
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
@@ -130,8 +128,8 @@ class TestActionBase(unittest.TestCase):
         )
 
         # test python module formatting
-        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))) as m:
-            with patch.object(os, 'rename') as m:
+        with patch.object(builtins, 'open', mock_open(read_data=to_bytes(python_module_replacers.strip(), encoding='utf-8'))):
+            with patch.object(os, 'rename'):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
                 (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args)
@@ -164,7 +162,7 @@ class TestActionBase(unittest.TestCase):
 
         # create a mock connection, so we don't actually try and connect to things
         def env_prefix(**args):
-            return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in args.items()])
+            return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in args.items()])
         mock_connection = MagicMock()
         mock_connection._shell.env_prefix.side_effect = env_prefix
 
@@ -547,7 +545,7 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
                 'ansible_ssh_some_var': 'whatever',
                 'ansible_ssh_host_key_somehost': 'some key here',
                 'some_other_var': 'foo bar'}
-        res = action_base._clean_returned_data(data)
+        action_base._clean_returned_data(data)
         self.assertNotIn('ansible_playbook_python', data)
         self.assertNotIn('ansible_python_interpreter', data)
         self.assertIn('ansible_ssh_host_key_somehost', data)
