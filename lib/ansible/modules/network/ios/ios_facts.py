@@ -288,7 +288,7 @@ class Interfaces(FactsBase):
 
         data = self.responses[2]
         if data:
-            neighbors = self.run('show lldp neighbors detail')
+            neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
                 self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
 
