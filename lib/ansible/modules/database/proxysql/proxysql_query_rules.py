@@ -251,6 +251,12 @@ stdout:
     }
 '''
 
+ANSIBLE_METADATA = {
+    'version': '1.0',
+    'supported_by': 'community',
+    'status': 'stableinterface'
+}
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
 from ansible.module_utils.pycompat24 import get_exception
