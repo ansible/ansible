@@ -285,7 +285,8 @@ class Rhsm(RegistrationBase):
             return False
 
     def register(self, username, password, autosubscribe, activationkey, org_id,
-                 consumer_type, consumer_name, consumer_id, force_register, environment):
+                 consumer_type, consumer_name, consumer_id, force_register, environment,
+                 rhsm_baseurl, server_insecure):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -296,6 +297,12 @@ class Rhsm(RegistrationBase):
         # Generate command arguments
         if force_register:
             args.extend(['--force'])
+
+        if rhsm_baseurl:
+            args.extend(['--baseurl', rhsm_baseurl])
+
+        if server_insecure:
+            args.extend(['--insecure'])
 
         if activationkey:
             args.extend(['--activationkey', activationkey])
@@ -534,7 +541,7 @@ def main():
                 rhsm.configure(**module.params)
                 rhsm.register(username, password, autosubscribe, activationkey, org_id,
                              consumer_type, consumer_name, consumer_id, force_register,
-                             environment)
+                             environment, rhsm_baseurl, server_insecure)
                 subscribed_pool_ids = rhsm.subscribe(pool)
             except Exception:
                 e = get_exception()
