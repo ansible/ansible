@@ -865,10 +865,10 @@ def parse_check_update(check_update_output):
     # Loading mirror speeds from cached hostfile
     #
     # ceph.x86_64                               1:11.2.0-0.el7                    ceph
-    #
+
     # preprocess string and filter out empty lines so the regex below works
-    out = re.sub('\n^\s*$', '', check_update_output, flags=re.MULTILINE)
-    out = re.sub('\n\W+(.*)', ' \1', out)
+    out = re.sub('\n[^\w]\W+(.*)', ' \1',
+                 check_update_output)
 
     available_updates = out.split('\n')
 
