@@ -36,6 +36,7 @@ try:
 except ImportError:
     HAS_AVI = False
 
+ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -44,7 +45,7 @@ author: Gaurav Rastogi (grastogi@avinetworks.com)
 
 short_description: Avi API Module
 description:
-    - This module can be used for calling any resources defined in Avi REST API.
+    - This module can be used for calling any resources defined in Avi REST API. U(https://avinetworks.com/)
     - This module is useful for invoking HTTP Patch methods and accessing resources that do not have an REST object associated with them.
 version_added: 2.3
 requirements: [ avisdk ]
