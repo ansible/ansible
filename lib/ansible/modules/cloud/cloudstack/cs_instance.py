@@ -530,19 +530,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         return self._get_by_key(key, self.iso)
             self.module.fail_json(msg="ISO '%s' not found" % iso)
 
-    def get_disk_offering_id(self):
-        disk_offering = self.module.params.get('disk_offering')
-
-        if not disk_offering:
-            return None
-
-        disk_offerings = self.cs.listDiskOfferings()
-        if disk_offerings:
-            for d in disk_offerings['diskoffering']:
-                if disk_offering in [d['displaytext'], d['name'], d['id']]:
-                    return d['id']
-        self.module.fail_json(msg="Disk offering '%s' not found" % disk_offering)
-
     def get_instance(self):
         instance = self.instance
         if not instance:
@@ -722,7 +709,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'diskofferingid': self.get_disk_offering_id(),
+            'diskofferingid': self.get_disk_offering(key='id'),
             'networkids': networkids,
             'iptonetworklist': self.get_iptonetwork_mappings(),
             'userdata': self.get_user_data(),
