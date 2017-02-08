@@ -1241,5 +1241,4 @@ ignore_certs
 
 If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
 .
-ver with a self-signed certificate
-.
+
