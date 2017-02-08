@@ -179,7 +179,7 @@ def get_list_of_subnets(ip_pool):
 
     return subnets
 
-def create_new_ip_pool(ip_pool, name, subnets=[]):
+def create_new_ip_pool(ip_pool, name, subnets):
 
     # Create value
     datum = dict(display_name=name, subnets=[])
