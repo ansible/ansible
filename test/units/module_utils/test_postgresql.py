@@ -2,7 +2,7 @@ import json
 
 from ansible.compat.tests import unittest
 
-from ansible.module_utils import postgres
+from ansible.module_utils import postgres, basic
 from ansible.module_utils.basic import AnsibleModule
 from units.mock.procenv import swap_stdin_and_argv
 
