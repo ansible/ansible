@@ -164,10 +164,12 @@ host_diff:
   type: list
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class HostIPAClient(IPAClient):
 
+class HostIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(HostIPAClient, self).__init__(module, host, port, protocol)
 
@@ -209,23 +211,13 @@ def get_host_dict(description=None, force=None, ip_address=None, ns_host_locatio
     return data
 
 
-def get_host_diff(ipa_host, module_host):
+def get_host_diff(client, ipa_host, module_host):
     non_updateable_keys = ['force', 'ip_address']
-    data = []
     for key in non_updateable_keys:
         if key in module_host:
             del module_host[key]
-    for key in module_host.keys():
-        ipa_value = ipa_host.get(key, None)
-        module_value = module_host.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(module_value, list):
-            module_value = [module_value]
-        if isinstance(ipa_value, list) and isinstance(module_value, list):
-            ipa_value = sorted(ipa_value)
-            module_value = sorted(module_value)
-        if ipa_value != module_value:
-            data.append(key)
-    return data
+
+    return client.get_diff(ipa_data=ipa_host, module_data=module_host)
 
 
 def ensure(module, client):
@@ -247,7 +239,7 @@ def ensure(module, client):
             if not module.check_mode:
                 client.host_add(name=name, host=module_host)
         else:
-            diff = get_host_diff(ipa_host, module_host)
+            diff = get_host_diff(client, ipa_host, module_host)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -303,9 +295,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

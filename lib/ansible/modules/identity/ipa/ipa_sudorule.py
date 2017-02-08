@@ -155,10 +155,12 @@ sudorule:
   type: dict
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class SudoRuleIPAClient(IPAClient):
 
+class SudoRuleIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(SudoRuleIPAClient, self).__init__(module, host, port, protocol)
 
@@ -259,25 +261,6 @@ def get_sudorule_diff(ipa_sudorule, module_sudorule):
     return data
 
 
-def modify_if_diff(module, name, ipa_list, module_list, add_method, remove_method):
-    changed = False
-    diff = list(set(ipa_list) - set(module_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            for item in diff:
-                remove_method(name=name, item=item)
-
-    diff = list(set(module_list) - set(ipa_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            for item in diff:
-                add_method(name=name, item=item)
-
-    return changed
-
-
 def category_changed(module, client, category_name, ipa_sudorule):
     if ipa_sudorule.get(category_name, None) == ['all']:
         if not module.check_mode:
@@ -320,7 +303,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_sudorule = client.sudorule_add(name=name, item=module_sudorule)
         else:
-            diff = get_sudorule_diff(ipa_sudorule, module_sudorule)
+            diff = get_sudorule_diff(client, ipa_sudorule, module_sudorule)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -340,29 +323,29 @@ def ensure(module, client):
 
         if host is not None:
             changed = category_changed(module, client, 'hostcategory', ipa_sudorule) or changed
-            changed = modify_if_diff(module, name, ipa_sudorule.get('memberhost_host', []), host,
-                                     client.sudorule_add_host_host,
-                                     client.sudorule_remove_host_host) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberhost_host', []), host,
+                                            client.sudorule_add_host_host,
+                                            client.sudorule_remove_host_host) or changed
 
         if hostgroup is not None:
             changed = category_changed(module, client, 'hostcategory', ipa_sudorule) or changed
-            changed = modify_if_diff(module, name, ipa_sudorule.get('memberhost_hostgroup', []), hostgroup,
-                                     client.sudorule_add_host_hostgroup,
-                                     client.sudorule_remove_host_hostgroup) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberhost_hostgroup', []), hostgroup,
+                                            client.sudorule_add_host_hostgroup,
+                                            client.sudorule_remove_host_hostgroup) or changed
         if sudoopt is not None:
-            changed = modify_if_diff(module, name, ipa_sudorule.get('ipasudoopt', []), sudoopt,
-                                     client.sudorule_add_option_ipasudoopt,
-                                     client.sudorule_remove_option_ipasudoopt) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudoopt', []), sudoopt,
+                                            client.sudorule_add_option_ipasudoopt,
+                                            client.sudorule_remove_option_ipasudoopt) or changed
         if user is not None:
             changed = category_changed(module, client, 'usercategory', ipa_sudorule) or changed
-            changed = modify_if_diff(module, name, ipa_sudorule.get('memberuser_user', []), user,
-                                     client.sudorule_add_user_user,
-                                     client.sudorule_remove_user_user) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberuser_user', []), user,
+                                            client.sudorule_add_user_user,
+                                            client.sudorule_remove_user_user) or changed
         if usergroup is not None:
             changed = category_changed(module, client, 'usercategory', ipa_sudorule) or changed
-            changed = modify_if_diff(module, name, ipa_sudorule.get('memberuser_group', []), usergroup,
-                                     client.sudorule_add_user_group,
-                                     client.sudorule_remove_user_group) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberuser_group', []), usergroup,
+                                            client.sudorule_add_user_group,
+                                            client.sudorule_remove_user_group) or changed
     else:
         if ipa_sudorule:
             changed = True
@@ -416,9 +399,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

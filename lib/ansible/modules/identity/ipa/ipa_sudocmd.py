@@ -96,10 +96,12 @@ sudocmd:
   type: dict
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class SudoCmdIPAClient(IPAClient):
 
+class SudoCmdIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(SudoCmdIPAClient, self).__init__(module, host, port, protocol)
 
@@ -123,19 +125,8 @@ def get_sudocmd_dict(description=None):
     return data
 
 
-def get_sudocmd_diff(ipa_sudocmd, module_sudocmd):
-    data = []
-    for key in module_sudocmd.keys():
-        module_value = module_sudocmd.get(key, None)
-        ipa_value = ipa_sudocmd.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(module_value, list):
-            module_value = [module_value]
-        if isinstance(ipa_value, list) and isinstance(module_value, list):
-            ipa_value = sorted(ipa_value)
-            module_value = sorted(module_value)
-        if ipa_value != module_value:
-            data.append(key)
-    return data
+def get_sudocmd_diff(client, ipa_sudocmd, module_sudocmd):
+    return client.get_diff(ipa_data=ipa_sudocmd, module_data=module_sudocmd)
 
 
 def ensure(module, client):
@@ -152,7 +143,7 @@ def ensure(module, client):
             if not module.check_mode:
                 client.sudocmd_add(name=name, item=module_sudocmd)
         else:
-            diff = get_sudocmd_diff(ipa_sudocmd, module_sudocmd)
+            diff = get_sudocmd_diff(client, ipa_sudocmd, module_sudocmd)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -199,9 +190,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

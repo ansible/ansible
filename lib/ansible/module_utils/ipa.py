@@ -32,11 +32,12 @@ try:
 except ImportError:
     import simplejson as json
 
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six.moves.urllib.parse import quote
-from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import PY3
+from ansible.module_utils.six.moves.urllib.parse import quote
+from ansible.module_utils.urls import fetch_url
+
 
 class IPAClient(object):
     def __init__(self, module, host, port, protocol):
@@ -117,3 +118,43 @@ class IPAClient(object):
                         return {}
             return result
         return None
+
+    def get_diff(self, ipa_data, module_data):
+        result = []
+        for key in module_data.keys():
+            mod_value = module_data.get(key, None)
+            if isinstance(mod_value, list):
+                default = []
+            else:
+                default = None
+            ipa_value = ipa_data.get(key, default)
+            if isinstance(ipa_value, list) and not isinstance(mod_value, list):
+                mod_value = [mod_value]
+            if isinstance(ipa_value, list) and isinstance(mod_value, list):
+                mod_value = sorted(mod_value)
+                ipa_value = sorted(ipa_value)
+            if mod_value != ipa_value:
+                result.append(key)
+        return result
+
+    def modify_if_diff(self, name, ipa_list, module_list, add_method, remove_method, item=None):
+        changed = False
+        diff = list(set(ipa_list) - set(module_list))
+        if len(diff) > 0:
+            changed = True
+            if not self.module.check_mode:
+                if item:
+                    remove_method(name=name, item={item: diff})
+                else:
+                    remove_method(name=name, item=diff)
+
+        diff = list(set(module_list) - set(ipa_list))
+        if len(diff) > 0:
+            changed = True
+            if not self.module.check_mode:
+                if item:
+                    add_method(name=name, item={item: diff})
+                else:
+                    add_method(name=name, item=diff)
+
+        return changed
