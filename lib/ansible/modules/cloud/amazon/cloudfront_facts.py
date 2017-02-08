@@ -574,7 +574,7 @@ def main():
     invalidation = module.params.get('invalidation')
     streaming_distribution = module.params.get('streaming_distribution')
     streaming_distribution_config = module.params.get('streaming_distribution_config')
-    
+ 
     list_origin_access_identities = module.params.get('list_origin_access_identities')
     list_distributions = module.params.get('list_distributions')
     list_distributions_by_web_acl_id = module.params.get('list_distributions_by_web_acl_id')
