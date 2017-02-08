@@ -17,6 +17,7 @@
 /lib/ansible/modules/database/mssql/
 /lib/ansible/modules/remote_management/foreman/
 /lib/ansible/modules/monitoring/zabbix.*.py
+/lib/ansible/modules/network/avi/
 /lib/ansible/modules/network/f5/
 /lib/ansible/modules/network/nmcli.py
 /lib/ansible/modules/notification/pushbullet.py
