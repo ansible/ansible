@@ -254,9 +254,8 @@ def main():
         pc.deserialize(pc_data)
     except Exception as e:
         # FIXME: better error message/handling/logging
-        print("FAIL: %s" % e)
-        print(traceback.format_exc())
-        sys.exit(1)
+        sys.stderr.write(traceback.format_exc())
+        sys.exit("FAIL: %s" % e)
 
     display.verbosity = pc.verbosity
 
