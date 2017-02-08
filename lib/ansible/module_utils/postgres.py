@@ -62,8 +62,8 @@ def params_to_kwmap(module):
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
+    if is_localhost and module.params.get("login_unix_socket") != "":
+        kw["host"] = module.params.get("login_unix_socket")
 
     if psycopg2.__version__ < '2.4.3' and module.params.get('ssl_rootcert') is not None:
         raise Exception('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
