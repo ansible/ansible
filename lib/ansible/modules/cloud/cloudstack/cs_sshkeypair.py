@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -109,7 +111,7 @@ private_key:
   description: Private key of generated SSH keypair.
   returned: changed
   type: string
-  sample: "-----BEGIN RSA PRIVATE KEY-----\nMIICXQIBAAKBgQCkeFYjI+4k8bWfIRMzp4pCzhlopNydbbwRu824P5ilD4ATWMUG\nvEtuCQ2Mp5k5Bma30CdYHgh2/SbxC5RxXSUKTUJtTKpoJUy8PAhb1nn9dnfkC2oU\naRVi9NRUgypTIZxMpgooHOxvAzWxbZCyh1W+91Ld3FNaGxTLqTgeevY84wIDAQAB\nAoGAcwQwgLyUwsNB1vmjWwE0QEmvHS4FlhZyahhi4hGfZvbzAxSWHIK7YUT1c8KU\n9XsThEIN8aJ3GvcoL3OAqNKRnoNb14neejVHkYRadhxqc0GVN6AUIyCqoEMpvhFI\nQrinM572ORzv5ffRjCTbvZcYlW+sqFKNo5e8pYIB8TigpFECQQDu7bg9vkvg8xPs\nkP1K+EH0vsR6vUfy+m3euXjnbJtiP7RoTkZk0JQMOmexgy1qQhISWT0e451wd62v\nJ7M0trl5AkEAsDivJnMIlCCCypwPN4tdNUYpe9dtidR1zLmb3SA7wXk5xMUgLZI9\ncWPjBCMt0KKShdDhQ+hjXAyKQLF7iAPuOwJABjdHCMwvmy2XwhrPjCjDRoPEBtFv\n0sFzJE08+QBZVogDwIbwy+SlRWArnHGmN9J6N+H8dhZD3U4vxZPJ1MBAOQJBAJxO\nCv1dt1Q76gbwmYa49LnWO+F+2cgRTVODpr5iYt5fOmBQQRRqzFkRMkFvOqn+KVzM\nQ6LKM6dn8BEl295vLhUCQQCVDWzoSk3GjL3sOjfAUTyAj8VAXM69llaptxWWySPM\nE9pA+8rYmHfohYFx7FD5/KWCO+sfmxTNB48X0uwyE8tO\n-----END RSA PRIVATE KEY-----\n"
+  sample: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\n"
 '''
 
 try:
@@ -118,26 +120,33 @@ try:
 except ImportError:
     has_lib_sshpubkeys = False
 
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
+
 
 class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackSshKey, self).__init__(module)
         self.returns = {
-            'privatekey':   'private_key',
-            'fingerprint':  'fingerprint',
+            'privatekey': 'private_key',
+            'fingerprint': 'fingerprint',
         }
         self.ssh_key = None
 
-
     def register_ssh_key(self, public_key):
         ssh_key = self.get_ssh_key()
-        args                = {}
-        args['domainid']    = self.get_domain('id')
-        args['account']     = self.get_account('name')
-        args['projectid']   = self.get_project('id')
-        args['name']        = self.module.params.get('name')
+        args = {
+            'domainid': self.get_domain('id'),
+            'account': self.get_account('name'),
+            'projectid': self.get_project('id'),
+            'name': self.module.params.get('name'),
+        }
 
         res = None
         if not ssh_key:
@@ -160,50 +169,48 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
         return ssh_key
 
-
     def create_ssh_key(self):
         ssh_key = self.get_ssh_key()
         if not ssh_key:
             self.result['changed'] = True
-            args                = {}
-            args['domainid']    = self.get_domain('id')
-            args['account']     = self.get_account('name')
-            args['projectid']   = self.get_project('id')
-            args['name']        = self.module.params.get('name')
+            args = {
+                'domainid': self.get_domain('id'),
+                'account': self.get_account('name'),
+                'projectid': self.get_project('id'),
+                'name': self.module.params.get('name'),
+            }
             if not self.module.check_mode:
                 res = self.cs.createSSHKeyPair(**args)
                 ssh_key = res['keypair']
         return ssh_key
 
-
     def remove_ssh_key(self):
         ssh_key = self.get_ssh_key()
         if ssh_key:
             self.result['changed'] = True
-            args                = {}
-            args['domainid']    = self.get_domain('id')
-            args['account']     = self.get_account('name')
-            args['projectid']   = self.get_project('id')
-            args['name']        = self.module.params.get('name')
+            args = {
+                'domainid': self.get_domain('id'),
+                'account': self.get_account('name'),
+                'projectid': self.get_project('id'),
+                'name': self.module.params.get('name'),
+            }
             if not self.module.check_mode:
                 res = self.cs.deleteSSHKeyPair(**args)
         return ssh_key
 
-
     def get_ssh_key(self):
         if not self.ssh_key:
-            args                = {}
-            args['domainid']    = self.get_domain('id')
-            args['account']     = self.get_account('name')
-            args['projectid']   = self.get_project('id')
-            args['name']        = self.module.params.get('name')
+            args = {
+                'domainid': self.get_domain('id'),
+                'account': self.get_account('name'),
+                'projectid': self.get_project('id'),
+                'name': self.module.params.get('name'),
+            }
 
             ssh_keys = self.cs.listSSHKeyPairs(**args)
             if ssh_keys and 'sshkeypair' in ssh_keys:
                 self.ssh_key = ssh_keys['sshkeypair'][0]
         return self.ssh_key
-
-
 
     def _get_ssh_fingerprint(self, public_key):
         key = sshpubkeys.SSHKey(public_key)
@@ -213,12 +220,12 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        public_key = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        state = dict(choices=['present', 'absent'], default='present'),
+        name=dict(required=True),
+        public_key=dict(default=None),
+        domain=dict(default=None),
+        account=dict(default=None),
+        project=dict(default=None),
+        state=dict(choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(
@@ -249,7 +256,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

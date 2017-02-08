@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -176,8 +178,13 @@ domain:
   sample: ROOT
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackAccount(AnsibleCloudStack):
@@ -189,8 +196,8 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
         }
         self.account = None
         self.account_types = {
-            'user':         0,
-            'root_admin':   1,
+            'user': 0,
+            'root_admin': 1,
             'domain_admin': 2,
         }
 
@@ -211,7 +218,6 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
                     if account_name == a['name']:
                         self.account = a
                         break
-
         return self.account
 
     def enable_account(self):
@@ -379,7 +385,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
