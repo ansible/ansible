@@ -2826,13 +2826,14 @@ def checkOutputForError(output):
 
     errorFile = "dictionary/ErrorCodes.lvo"
     try:
-        with open(errorFile, 'r') as f:
-            for line in f:
-                if('=' in line):
-                    data = line.split('=')
-                    if(data[0].strip() == errorCode):
-                        errorString = data[1].strip()
-                        return errorString
+        #with open(errorFile, 'r') as f:
+        f = open(errorFile, 'r') 
+        for line in f:
+            if('=' in line):
+                data = line.split('=')
+                if(data[0].strip() == errorCode):
+                    errorString = data[1].strip()
+                    return errorString
     except Exception:
         errorString = cnos_errorcodes.getErrorString(errorCode)
         errorString = errorString.strip()
@@ -2851,14 +2852,15 @@ def checkSanityofVariable(deviceType, variableId, variableValue):
 def getRuleStringForVariable(deviceType, ruleFile, variableId):
     retVal = ""
     try:
-        with open(ruleFile, 'r') as f:
-            for line in f:
-            #debugOutput(line)
-                if(':' in line):
-                    data = line.split(':')
-                    #debugOutput(data[0])
-                    if(data[0].strip() == variableId):
-                        retVal = line
+        #with open(ruleFile, 'r') as f:
+        f = open(errorFile, 'r') 
+        for line in f:
+        #debugOutput(line)
+            if(':' in line):
+                data = line.split(':')
+                #debugOutput(data[0])
+                if(data[0].strip() == variableId):
+                    retVal = line
     except Exception:
         ruleString = cnos_devicerules.getRuleString(deviceType, variableId)
         retVal = ruleString.strip()
