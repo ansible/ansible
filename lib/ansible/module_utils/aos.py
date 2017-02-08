@@ -48,7 +48,6 @@ except ImportError:
 
 try:
     from apstra.aosom.session import Session
-    import apstra.aosom.exc as aosExc
 
     HAS_AOS_PYEZ = True
 except ImportError:
