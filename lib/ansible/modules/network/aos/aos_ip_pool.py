@@ -223,7 +223,10 @@ def ip_pool_absent(module, aos, my_pool):
 
     # If not in check mode, delete Ip Pool
     if not module.check_mode:
-        my_pool.delete()
+        try:
+            my_pool.delete()
+        except:
+            module.fail_json(msg="An error occured, while trying to delete the IP Pool")
 
     module.exit_json( changed=True,
                       name=my_pool.name,
@@ -235,18 +238,25 @@ def ip_pool_present(module, aos, my_pool):
     margs = module.params
 
     # if content is defined, create object from Content
-    if margs['content'] is not None:
-        do_load_resource(module, aos.IpPools, module.params['content']['display_name'])
+    try:
+        if margs['content'] is not None:
+            do_load_resource(module, aos.IpPools, module.params['content']['display_name'])
+    except:
+        module.fail_json(msg="Unable to load resource from content, something went wrong")
 
     # if ip_pool doesn't exist already, create a new one
+
     if my_pool.exists is False and 'name' not in margs.keys():
         module.fail_json(msg="Name is mandatory for module that don't exist currently")
 
     elif my_pool.exists is False:
 
         if not module.check_mode:
-            my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
-            my_pool = my_new_pool
+            try:
+                my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
+                my_pool = my_new_pool
+            except:
+                module.fail_json(msg="An error occured while trying to create a new IP Pool ")
 
         module.exit_json( changed=True,
                           name=my_pool.name,
@@ -279,6 +289,7 @@ def ip_pool(module):
     item_name = False
     item_id = False
 
+
     if margs['content'] is not None:
 
         content = content_to_dict(module, margs['content'], margs['content_format'] )
@@ -297,9 +308,12 @@ def ip_pool(module):
     #----------------------------------------------------
     # Find Object if available based on ID or Name
     #----------------------------------------------------
-    my_pool = find_collection_item(aos.IpPools,
-                        item_name=item_name,
-                        item_id=item_id)
+    try:
+        my_pool = find_collection_item(aos.IpPools,
+                            item_name=item_name,
+                            item_id=item_id)
+    except:
+        module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     #----------------------------------------------------
     # Proceed based on State value
