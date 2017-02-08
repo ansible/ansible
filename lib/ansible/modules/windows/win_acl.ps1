@@ -143,7 +143,7 @@ ElseIf ($inherit -eq "") {
 }
  
 Try {
-    If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
     $colRights = [System.Security.AccessControl.RegistryRights]$rights
     }
     Else {
@@ -160,7 +160,7 @@ Try {
     }
  
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
-    If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
     $objACE = New-Object System.Security.AccessControl.RegistryAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
     Else {
@@ -170,7 +170,7 @@ Try {
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
-    If ($path -match "^H[KC][CLU][MURC]{0,1}:\\") {
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
     ForEach($rule in $objACL.Access){
         $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
         If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
