@@ -22,6 +22,7 @@ import sys
 
 # to work around basic.py reading stdin
 import json
+import pytest
 
 from units.mock.procenv import swap_stdin_and_argv
 
@@ -705,7 +706,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 ]
 
 
-def test_distribution_version():
+@pytest.mark.parametrize("testcase", TESTSETS, ids=lambda x: x['name'])
+def test_distribution_version(testcase):
     """tests the distribution parsing code of the Facts class
 
     testsets have
@@ -724,11 +726,7 @@ def test_distribution_version():
         basic._ANSIBLE_ARGS = None
         module = basic.AnsibleModule(argument_spec=dict())
 
-        for t in TESTSETS:
-            # run individual tests via generator
-            # set nicer stdout output for nosetest
-            _test_one_distribution.description = "check distribution_version for %s" % t['name']
-            yield _test_one_distribution, facts, module, t
+        _test_one_distribution(facts, module, testcase)
 
 def _test_one_distribution(facts, module, testcase):
     """run the test on one distribution testcase
