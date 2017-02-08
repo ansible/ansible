@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -230,8 +232,12 @@ pod:
   sample: pod01
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
@@ -239,14 +245,14 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackCluster, self).__init__(module)
         self.returns = {
-            'allocationstate':       'allocation_state',
-            'hypervisortype':        'hypervisor',
-            'clustertype':           'cluster_type',
-            'podname':               'pod',
-            'managedstate':          'managed_state',
+            'allocationstate': 'allocation_state',
+            'hypervisortype': 'hypervisor',
+            'clustertype': 'cluster_type',
+            'podname': 'pod',
+            'managedstate': 'managed_state',
             'memoryovercommitratio': 'memory_overcommit_ratio',
-            'cpuovercommitratio':    'cpu_overcommit_ratio',
-            'ovm3vip':               'ovm3_vip',
+            'cpuovercommitratio': 'cpu_overcommit_ratio',
+            'ovm3vip': 'ovm3_vip'
         }
         self.cluster = None
 
@@ -264,7 +270,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
     def get_pod(self, key=None):
         args = {
             'name': self.module.params.get('pod'),
-            'zoneid': self.get_zone(key='id'),
+            'zoneid': self.get_zone(key='id')
         }
         pods = self.cs.listPods(**args)
         if pods:
@@ -308,22 +314,23 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         self.module.fail_on_missing_params(required_params=required_params)
 
         args = self._get_common_cluster_args()
-        args['zoneid'] = self.get_zone(key='id')
-        args['podid'] = self.get_pod(key='id')
-        args['url'] = self.module.params.get('url')
-        args['username'] = self.module.params.get('username')
-        args['password'] = self.module.params.get('password')
-        args['guestvswitchname'] = self.module.params.get('guest_vswitch_name')
-        args['guestvswitchtype'] = self.module.params.get('guest_vswitch_type')
-        args['publicvswitchtype'] = self.module.params.get('public_vswitch_name')
-        args['publicvswitchtype'] = self.module.params.get('public_vswitch_type')
-        args['vsmipaddress'] = self.module.params.get('vms_ip_address')
-        args['vsmusername'] = self.module.params.get('vms_username')
-        args['vmspassword'] = self.module.params.get('vms_password')
-        args['ovm3cluster'] = self.module.params.get('ovm3_cluster')
-        args['ovm3pool'] = self.module.params.get('ovm3_pool')
-        args['ovm3vip'] = self.module.params.get('ovm3_vip')
-
+        args.update({
+            'zoneid': self.get_zone(key='id'),
+            'podid': self.get_pod(key='id'),
+            'url': self.module.params.get('url'),
+            'username': self.module.params.get('username'),
+            'password': self.module.params.get('password'),
+            'guestvswitchname': self.module.params.get('guest_vswitch_name'),
+            'guestvswitchtype': self.module.params.get('guest_vswitch_type'),
+            'publicvswitchtype': self.module.params.get('public_vswitch_name'),
+            'publicvswitchtype': self.module.params.get('public_vswitch_type'),
+            'vsmipaddress': self.module.params.get('vms_ip_address'),
+            'vsmusername': self.module.params.get('vms_username'),
+            'vmspassword': self.module.params.get('vms_password'),
+            'ovm3cluster': self.module.params.get('ovm3_cluster'),
+            'ovm3pool': self.module.params.get('ovm3_pool'),
+            'ovm3vip': self.module.params.get('ovm3_vip')
+        })
         self.result['changed'] = True
 
         cluster = None
@@ -415,7 +422,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
