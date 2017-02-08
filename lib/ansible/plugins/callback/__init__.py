@@ -74,6 +74,10 @@ class CallbackBase:
     _copy_result = deepcopy
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
+
+        #process warnings/deprecations first
+        self._handle_warnings(result)
+
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
@@ -194,6 +198,9 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
+        ''' this should filter out any internal use data '''
+
+        # dont show invocation info for debug task
         if 'invocation' in result and task_name in ['debug']:
             del result['invocation']
 

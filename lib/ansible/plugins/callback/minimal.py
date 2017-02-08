@@ -69,7 +69,6 @@ class CallbackModule(CallbackBase):
                 self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_CHANGED)
             else:
                 self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_OK)
-            self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)

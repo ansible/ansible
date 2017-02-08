@@ -319,9 +319,6 @@ class CallbackModule_dense(CallbackModule_default):
             sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
             sys.stdout.flush()
 
-        if status == 'changed':
-            self._handle_warnings(result._result)
-
     def v2_playbook_on_play_start(self, play):
         # Leave the previous task on screen (as it has changes/errors)
         if self._display.verbosity == 0 and self.keep:
