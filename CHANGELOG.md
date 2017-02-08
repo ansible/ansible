@@ -233,6 +233,7 @@ Ansible Changes By Release
 - web_infrastructure
   * jenkins_script
 - windows:
+  * win_find
   * win_path
   * win_psexec
   * win_say
