@@ -204,10 +204,8 @@ def ip_pool_absent(module, aos, my_pool):
 
     ## Check if object is currently in Use or Not
     # If in Use, return an error
-    in_use = False
     if my_pool.value:
         if my_pool.value['status'] != 'not_in_use':
-            in_use = True
             module.fail_json(msg="unable to delete this ip Pool, currently in use")
     else:
         module.fail_json(msg="Ip Pool object has an invalid format, value['status'] must be defined")
