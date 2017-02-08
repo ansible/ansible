@@ -15,3 +15,4 @@ unittest2
 mock
 nose
 pytest
+pytest-mock
