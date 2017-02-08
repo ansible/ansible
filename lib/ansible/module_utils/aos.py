@@ -36,9 +36,9 @@ from ansible.module_utils.aos import *
 
 """
 import json
-import yaml
 
 from distutils.version import LooseVersion
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     import yaml
@@ -115,39 +115,36 @@ def find_collection_item(collection, item_name=False, item_id=False):
     else:
         return my_dict
 
-def content_to_dict(module, content, format):
+def content_to_dict(module, content):
     """
     Convert 'content' into a Python Dict based on 'content_format'
     """
 
+    # if not HAS_YAML:
+    #     module.fail_json(msg="Python Library Yaml is not present, mandatory to use 'content'")
+
     content_dict = None
 
-    if format == 'json':
-        try:
-            content_dict = json.loads(content.replace("\'", '"'))
-        except:
-            module.fail_json(msg="Unable to convert 'content' from JSON, please check if valid")
+    #     try:
+    #         content_dict = json.loads(content.replace("\'", '"'))
+    #     except:
+    #         module.fail_json(msg="Unable to convert 'content' from JSON, please check if valid")
+    #
+    # elif format in ['yaml', 'var']:
 
-    elif format in ['yaml', 'var']:
+    try:
+        content_dict = yaml.load(content)
 
-        if not HAS_YAML:
-            module.fail_json(msg="Python Library  Yaml is not present, mandatory to use 'content_format: yaml'")
+        if not isinstance(content_dict, dict):
+            raise
 
-        try:
-            content_dict = yaml.load(content)
+        # Check if dict is empty and return an error if it's
+        if not content_dict:
+            raise
 
-            if not isinstance(content_dict, dict):
-                raise
+    except:
+        module.fail_json(msg="Unable to convert 'content' to a dict, please check if valid")
 
-            # Check if dict is empty and return an error if it's
-            if not content_dict:
-                raise
-
-        except:
-            module.fail_json(msg="Unable to convert 'content' from %s, please check if valid" % format)
-
-    else:
-        module.fail_json(msg="'content_format' is not supported")
 
     # replace the string with the dict
     module.params['content'] = content_dict
@@ -161,22 +158,23 @@ def do_load_resource(module, collection, name):
 
     try:
         item = find_collection_item(collection, name, '')
-        if item.exists:
-            module.exit_json( changed=False,
-                              name=item.name,
-                              id=item.id,
-                              value=item.value )
+    except:
+        module.fail_json(msg="Ans error occured while running 'find_collection_item'")
 
-        if not module.check_mode:
+    if item.exists:
+        module.exit_json( changed=False,
+                          name=item.name,
+                          id=item.id,
+                          value=item.value )
+
+    # If not in check mode, apply the changes
+    if not module.check_mode:
+        try:
             item.datum = module.params['content']
             item.write()
-
-    except KeyError:
-        module.fail_json(msg="src data missing display_name, check file contents")
-
-    except:
-        module.fail_json(msg="Unable to write item content",
-                         content=module.params['content'])
+        except:
+            e = get_exception()
+            module.fail_json(msg="Unable to write item content : %r" % e)
 
     module.exit_json( changed=True,
                       name=item.name,

@@ -51,16 +51,9 @@ options:
     required: false
   content:
     description:
-      - Datastructure of the IP Pool to create. The format is defined by the
-        I(content_format) parameter. It's the same datastructure that is returned
-        on success in I(value)
-    required: false
-  content_format:
-    description:
-      - Indicate in which format is the content provided. It can be either provided
-        directly as a variable, as a JSON string or as a Yaml String
-    default: json
-    choices: ['var', 'json', 'yaml']
+      - Datastructure of the IP Pool to create. The data can be in YAML / JSON or
+      directly a variable.
+       It's the same datastructure that is returned on success in I(value)
     required: false
   state:
     description:
@@ -139,7 +132,6 @@ EXAMPLES = '''
   aos_ip_pool:
     session: "{{ session_ok }}"
     content: "{{ lookup('file', 'resources/ip_pool_saved.yaml') }}"
-    content_format: yaml
     state: present
 
 - name: "Load IP Pool from a Variable"
@@ -151,7 +143,6 @@ EXAMPLES = '''
       subnets:
         - network: 172.10.0.0/16
         - network: 172.12.0.0/16
-    content_format: var
     state: present
 '''
 
@@ -240,7 +231,12 @@ def ip_pool_present(module, aos, my_pool):
     # if content is defined, create object from Content
     try:
         if margs['content'] is not None:
-            do_load_resource(module, aos.IpPools, module.params['content']['display_name'])
+
+            if 'display_name' in module.params['content'].keys():
+                do_load_resource(module, aos.IpPools, module.params['content']['display_name'])
+            else:
+                module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
+
     except:
         module.fail_json(msg="Unable to load resource from content, something went wrong")
 
@@ -273,7 +269,6 @@ def ip_pool_present(module, aos, my_pool):
     else:
         module.fail_json(msg="ip_pool already exist but value is different, currently not supported to update a module")
 
-
 #########################################################
 # Main Function
 #########################################################
@@ -289,10 +284,9 @@ def ip_pool(module):
     item_name = False
     item_id = False
 
-
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'], margs['content_format'] )
+        content = content_to_dict(module, margs['content'] )
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -332,10 +326,7 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
-            content=dict(required=False),
-            content_format=dict(required=False,
-                                choices=['json', 'yaml', 'var'],
-                                default="json"),
+            content=dict(required=False, type="json"),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present"),
