@@ -1,5 +1,5 @@
-Partner information for submitting modules
-==========================================
+Information for submitting a group of modules
+=============================================
 
 .. contents:: Topics
 
@@ -7,26 +7,25 @@ Partner information for submitting modules
 
 Welcome
 ```````
-This section discusses some of the specifics around getting multiple related modules into Ansible.
+This section discusses how to get multiple related modules into Ansible.
 
-The information in the page is useful for both companies wishing to add modules for their own products, as well as for users of 3rd party products wishing to add Ansible support.
+This document is intended for both companies wishing to add modules for their own products as well as users of 3rd party products wishing to add Ansible support.
 
-It's based on the knowledge on the Core Team and Community on what we've found is the best practice for the module developer(s), the Community, and the Ansible Core Team.
-
+It's based on module development best practices that the Ansible core team and community have accumulated.
 
 
 Before you start coding
 ```````````````````````
 
-Although it's tempting to get straight into coding, there are a few things to be aware of first. This list has been drawn to ensure the best modules are developed and to speed up the review process, which means your modules get accepted into Ansible with minimal fuss.
+Although it's tempting to get straight into coding, there are a few things to be aware of first. This list of prerequisites is designed to help ensure that you develop high-quality modules that flow easily through the review process and get into Ansible more quickly.
 
-* Read though all the pages linked off :doc:`developing_modules`, paying particular focus to the :doc:`developing_modules_checklist`.
+* Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
 * For new modules going into Ansible 2.4 we are raising the bar so they must pass `pep8 --ignore=E402 --max-line-length=160` cleanly.
-* All new modules for Ansible 2.4 must support Python 2.6 and Python 3.5+. If this is an issues mention it in the "Speak to us" section later in this document.
-* Understand that all modules shipped with Ansible must be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should generally be done so under the BSD license (or GPLv3).
-* Have a look at the existing modules, especially in the same functional area (such as cloud, networking, databases) in the :doc:`../list_of_all_modules` for a list of existing modules and how they've been named.
-* Shared code can be places into `lib/ansible/module_utils/`
-* Shared documentation, for example describing common arguments, can be placed in `lib/ansible/utils/module_docs_fragments/`
+* Starting with Ansible version 2.4, all new modules must support Python 2.6 and Python 3.5+. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
+* All modules shipped with Ansible must be done so under the GPLv3 license. Files under the `lib/ansible/module_utils/` directory should be done so under the BSD license.
+* Have a look at the existing modules and how they've been named in the :doc:../list_of_all_modules, especially in the same functional area (such as cloud, networking, databases).
+* Shared code can be placed into `lib/ansible/module_utils/`
+* Shared documentation (for example describing common arguments) can be placed in `lib/ansible/utils/module_docs_fragments/`
 * Although not required, unit and/or integration tests are strongly recomended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see `test/` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Naming Convention
@@ -36,7 +35,7 @@ As you may have noticed when looking under `lib/ansible/modules/` we support up 
 
 The directory name should represent the **product** or **OS** name, not the company name.
 
-Each module should have the above (or similar) prefix, see existing :doc:`../list_of_all_modules` for existing examples.
+Each module should have the above (or similar) prefix; see existing :doc:`../list_of_all_modules` for existing examples.
 
 **Note:**
 
@@ -61,9 +60,8 @@ FIXME: Some light weight review process of the above, maybe in IRC Core Meetings
 
 Where to get support
 ````````````````````
-Ansible has a very strong community, and we trust you as module developers will help grow.
 
-The community is a great pool of resource and knowledge.
+Ansible has a thriving and knowledgeable community of module developers that is a great resource for getting your questions answered.
 
 On :doc:`community` you can find how to:
 
@@ -72,17 +70,17 @@ On :doc:`community` you can find how to:
 * Join the various weekly IRC meetings
 
 
-Your First PR
-``````````````
+Your First Pull Request
+````````````````````````
 
-Assuming you've been through the rest of this document, and not just skipped ahead, you should now be ready to raise your first PR.
+Now that you've reviewed this document, you should be ready to open your first pull request.
 
-The first PR is slightly different to the rest as:
+The first PR is slightly different to the rest because it:
 
-* it defines the namespace
-* it provides a bases for detailed review that will help shape your future PRs
-* it may include shared documentation (`docs_fragments`) that multiple modules require
-* it may include shared code (`module_utils`) that multiple modules require
+* defines the namespace
+* provides a basis for detailed review that will help shape your future PRs
+* may include shared documentation (`docs_fragments`) that multiple modules require
+* may include shared code (`module_utils`) that multiple modules require
 
 
 The first PR should include the following files:
@@ -95,11 +93,11 @@ The first PR should include the following files:
 
 And that's it.
 
-Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again
+Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
 
-After publishing your PR on https://github.com/ansible/ansible a Shippable CI test should run (generally within a few minutes), check the results (at the end of the PR page) and ensure it's passing (green), if not inspect each of the results. Most of the errors should be self explanatory and are generally related to badly formatted documentation (see :doc:`YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means copy it into the PR and add as a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
-If you need further advice join the `#ansible-devel` IRC channel (details in "Where to get support")
+If you need further advice, consider join the `#ansible-devel` IRC channel (see how in the "Where to get support").
 
 
 We have a "ansibot" helper that comments on GitHub Issues and PRs which should highlight important information.
@@ -112,11 +110,11 @@ By this point you first PR that defined the module namespace should have been me
 
 Raise exactly one PR per module for the remaining modules.
 
-Over the years we've experimented with different sized PRs, some containing one module, some containing five, some even containing many tens of modules in, we've found the following:
+Over the years we've experimented with different sized module PRs, ranging from one module to many tens of modules, and during that time we've found the following:
 
 * A PR with a single file gets a higher quality review
 * PRs with multiple modules are harder for the creator to ensure all feedback has been applied
-* Lower priority to review. People generally review the easier things first, what would you review first a PR with one file, or five?
+* PRs with many modules take a lot more work to review, and tend to get passed over for easier-to-review PRs.
 
 FIXME, should we tell people to only raise one at a time, or (say) 5 PRs at once?
 
@@ -136,8 +134,7 @@ If there are multiple people that can be notified, please list them. That avoids
 **Review Module web docs**
 Review the autogenerated module documentation for each of your modules, found in `Module Docs <http://docs.ansible.com/ansible/modules_by_category.html>`_ to ensure they are correctly formatted. If there are any issues please fix by raising a single PR.
 
-If the module documentation hasn't been put live yet let a member of the Ansible Core Team know in `#ansible-devel` IRC channel.
-
+If the module documentation hasn't been published live yet, please let a member of the Ansible Core Team know in the `#ansible-devel` IRC channel.
 
 .. seealso::
 
