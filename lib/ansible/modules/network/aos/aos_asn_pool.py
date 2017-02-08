@@ -64,7 +64,6 @@ options:
   ranges:
     description:
       - List of ASNs ranges to add to the ASN Pool
-    default: []
     required: false
 '''
 
@@ -174,7 +173,7 @@ def get_list_of_range(asn_pool):
 
     return ranges
 
-def create_new_asn_pool(asn_pool, name, ranges=[]):
+def create_new_asn_pool(asn_pool, name, ranges):
 
     # Create value
     datum = dict(display_name=name, ranges=[])
@@ -192,7 +191,7 @@ def asn_pool_absent(module, aos, my_pool):
     margs = module.params
 
     # If the module do not exist, return directly
-    if my_pool.exists == False:
+    if my_pool.exists is False:
         module.exit_json(changed=False, name=margs['name'], id='', value={})
 
     ## Check if object is currently in Use or Not
@@ -229,14 +228,17 @@ def asn_pool_present(module, aos, my_pool):
             module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
 
     # if asn_pool doesn't exist already, create a new one
-    if my_pool.exists == False and 'name' not in margs.keys():
+    if my_pool.exists is False and 'name' not in margs.keys():
         module.fail_json(msg="name is mandatory for module that don't exist currently")
 
-    elif my_pool.exists == False:
+    elif my_pool.exists is False:
 
         if not module.check_mode:
-            my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
-            my_pool = my_new_pool
+            try:
+                my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
+                my_pool = my_new_pool
+            except:
+                module.fail_json(msg="An error occured while trying to create a new ASN Pool ")
 
         module.exit_json( changed=True,
                           name=my_pool.name,
