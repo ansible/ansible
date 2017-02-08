@@ -584,8 +584,7 @@ def main():
 
     kw = pgutils.params_to_kwmap(module)
 
-    #db_connection = pgutils.postgres_conn(module, database=database, kw=kw, enable_autocommit=True)
-    db_connection = pgutils.postgres_conn(module, kw=kw, enable_autocommit=False)
+    db_connection = pgutils.postgres_conn(module, database=db, enable_autocommit=False)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     kw = dict(user=user)
