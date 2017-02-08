@@ -141,6 +141,10 @@ EXAMPLES = """
 
 RETURN = """
 
+schedule_id:
+    description: Schedule ID of the newly created schedule
+    returned: success
+    type: string
 
 """
 
@@ -208,6 +212,8 @@ class SolidFireSnapShotSchedule(object):
 
         self.schedule_id = p['schedule_id']
 
+        self.create_schedule_result = None
+
         if HAS_SF_SDK is False:
             self.module.fail_json(msg="Unable to import the SolidFire Python SDK")
         else:
@@ -247,7 +253,7 @@ class SolidFireSnapShotSchedule(object):
             sched.recurring = self.recurring
             sched.starting_date = self.starting_date
 
-            self.sfe.create_schedule(schedule=sched)
+            self.create_schedule_result = self.sfe.create_schedule(schedule=sched)
 
         except:
             err = get_exception()
@@ -378,7 +384,10 @@ class SolidFireSnapShotSchedule(object):
                 elif self.state == 'absent':
                     self.delete_schedule()
 
-        self.module.exit_json(changed=changed)
+        if self.create_schedule_result is not None:
+            self.module.exit_json(changed=changed, schedule_id=self.create_schedule_result.schedule_id)
+        else:
+            self.module.exit_json(changed=changed)
 
 
 def main():
