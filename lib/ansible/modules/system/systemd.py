@@ -33,7 +33,7 @@ options:
     name:
         required: true
         description:
-            - Name of the service.
+            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: ['unit', 'service']
     state:
         required: false
@@ -330,12 +330,8 @@ def main():
 
     elif out.find('ignoring request') != -1:
         # fallback list-unit-files as show does not work on some systems (chroot)
-        # not used as primary as it skips some services (like those using init.d) and requires .service notation
-        if unit.endswith('.service'):
-            service = unit
-        else:
-            service = '%s.service' % unit
-        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, service))
+        # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
+        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
         if rc == 0:
             is_systemd = True
 
