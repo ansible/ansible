@@ -177,7 +177,7 @@ options:
     default: present
   pubkey:
     description:
-      - Public key to add to /root/.ssh/authorized_keys.
+      - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
     version_added: "2.3"
     default: null
     required: false
