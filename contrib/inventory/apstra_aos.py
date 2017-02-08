@@ -392,4 +392,6 @@ class AosInventory(object):
 
         self.inventory['_meta']['hostvars'][host][var] = value
 
-AosInventory()
+# Run the script
+if __name__ == '__main__':
+    AosInventory()
