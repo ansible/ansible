@@ -49,10 +49,11 @@ options:
       - AOS Id of the Template to manage (can't be used to create a new Template),
         Only one of I(name), I(id) or I(src) can be set.
     required: false
-  src:
+  content:
     description:
-      - Filepath to JSON file containing the collection item data to upload.
-        Only one of I(name), I(id) or I(src) can be set.
+      - Datastructure of the Template to create. The data can be in YAML / JSON or
+        directly a variable. It's the same datastructure that is returned
+        on success in I(value).
     required: false
   state:
     description:
@@ -88,23 +89,31 @@ EXAMPLES = '''
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
-# Save an Template to a file
-
-- name: "Access Template 1/2"
+- name: "Access Template 1/3"
   aos_template:
     session: "{{ session_ok }}"
     name: "my-template"
     state: present
   register: template
-- name: "Save Template into a file 2/2"
+- name: "Save Template into a JSON file 2/3"
   copy:
     content: "{{ template.value | to_nice_json }}"
     dest: template_saved.json
+- name: "Save Template into a YAML file 2/3"
+  copy:
+    content: "{{ template.value | to_nice_yaml }}"
+    dest: template_saved.yaml
 
-- name: "Load Template from a file"
+- name: "Load Template from File (Json)"
   aos_template:
     session: "{{ session_ok }}"
-    src: resources/template_saved.json
+    content: "{{ lookup('file', 'resources/template_saved.json') }}"
+    state: present
+
+- name: "Load Template from File (yaml)"
+  aos_template:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/template_saved.yaml') }}"
     state: present
 '''
 
@@ -128,10 +137,11 @@ value:
   sample: {'...'}
 '''
 
+import time
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, find_collection_item, get_display_name_from_file, do_load_resource, check_aos_version
+from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
 #########################################################
 # State Processing
@@ -149,7 +159,11 @@ def template_absent(module, aos, my_template):
 
     # If not in check mode, delete Template
     if not module.check_mode:
-        my_template.delete()
+        try:
+            time.sleep(2)
+            my_template.delete()
+        except:
+            module.fail_json(msg="An error occured, while trying to delete the Template")
 
     module.exit_json( changed=True,
                       name=my_template.name,
@@ -160,13 +174,18 @@ def template_present(module, aos, my_template):
 
     margs = module.params
 
-    # if src is defined
-    if margs['src'] is not None:
-        do_load_resource(module, aos.DesignTemplates, margs['src'])
+    # if content is defined, create object from Content
 
-    # if ip_pool doesn't exist already, create a new one
-    if my_template.exists is False and 'src' not in margs.keys():
-        module.fail_json(msg="src is mandatory for module that don't exist currently")
+    if margs['content'] is not None:
+
+        if 'display_name' in module.params['content'].keys():
+            do_load_resource(module, aos.DesignTemplates, module.params['content']['display_name'])
+        else:
+            module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
+
+    # if template doesn't exist already, create a new one
+    if my_template.exists is False and 'content' not in margs.keys():
+        module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
     # if module already exist, just return it
     module.exit_json( changed=False,
@@ -190,8 +209,14 @@ def aos_template(module):
     item_name = False
     item_id = False
 
-    if margs['src'] is not None:
-        item_name = get_display_name_from_file(module, margs['src'])
+    if margs['content'] is not None:
+
+        content = content_to_dict(module, margs['content'] )
+
+        if 'display_name' in content.keys():
+            item_name = content['display_name']
+        else:
+            module.fail_json(msg="Unable to extract 'display_name' from 'content'")
 
     elif margs['name'] is not None:
         item_name = margs['name']
@@ -202,9 +227,12 @@ def aos_template(module):
     #----------------------------------------------------
     # Find Object if available based on ID or Name
     #----------------------------------------------------
-    my_template = find_collection_item(aos.DesignTemplates,
-                        item_name=item_name,
-                        item_id=item_id)
+    try:
+        my_template = find_collection_item(aos.DesignTemplates,
+                            item_name=item_name,
+                            item_id=item_id)
+    except:
+        module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     #----------------------------------------------------
     # Proceed based on State value
@@ -223,13 +251,13 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
-            src=dict(required=False),
+            content=dict(required=False, type="json"),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present")
         ),
-        mutually_exclusive = [('name', 'id', 'src')],
-        required_one_of=[('name', 'id', 'src')],
+        mutually_exclusive = [('name', 'id', 'content')],
+        required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
 
