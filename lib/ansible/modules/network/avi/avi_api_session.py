@@ -23,19 +23,6 @@
 #
 """
 
-import json
-import time
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.avi import avi_common_argument_spec, ansible_return
-from copy import deepcopy
-
-HAS_AVI = True
-try:
-    from avi.sdk.avi_api import ApiSession
-    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
-except ImportError:
-    HAS_AVI = False
-
 ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
 
 DOCUMENTATION = '''
@@ -63,7 +50,7 @@ options:
             - Query parameters passed to the HTTP API.
     path:
         description:
-            - Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).
+            - 'Path for Avi API resource. For example, C(path: virtualservice) will translate to C(api/virtualserivce).'
     timeout:
         description:
             - Timeout (in seconds) for Avi API calls.
@@ -125,6 +112,20 @@ obj:
     returned: success, changed
     type: dict
 '''
+
+import json
+import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.avi import avi_common_argument_spec, ansible_return
+from copy import deepcopy
+
+HAS_AVI = True
+try:
+    from avi.sdk.avi_api import ApiSession
+    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
+except ImportError:
+    HAS_AVI = False
+
 
 def main():
     argument_specs = dict(
