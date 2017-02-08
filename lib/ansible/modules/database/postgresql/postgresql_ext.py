@@ -65,9 +65,6 @@ except ImportError:
 else:
     postgresqldb_found = True
 
-class NotSupportedError(Exception):
-    pass
-
 
 # ===========================================
 # PostgreSQL module specific support methods.
@@ -137,7 +134,7 @@ def main():
 
             elif state == "present":
                 changed = ext_create(cursor, ext)
-    except NotSupportedError:
+    except pgutils.NotSupportedError:
         e = get_exception()
         module.fail_json(msg=str(e))
     except Exception:

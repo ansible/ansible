@@ -253,7 +253,7 @@ def main():
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
-    except NotSupportedError:
+    except pgutils.NotSupportedError:
         e = get_exception()
         module.fail_json(msg=str(e))
     except SystemExit:
