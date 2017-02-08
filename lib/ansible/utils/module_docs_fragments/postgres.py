@@ -14,9 +14,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 class ModuleDocFragment(object):
-
     # Postgres documentation fragment
     DOCUMENTATION = """
 options:

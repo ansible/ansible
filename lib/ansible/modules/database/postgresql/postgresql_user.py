@@ -86,7 +86,8 @@ options:
     choices: [ "present", "absent" ]
   encrypted:
     description:
-      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the stored password is hashed when encrypted is set.
+      - whether the password is stored hashed in the database. boolean. Passwords can be passed already
+        hashed or unhashed, and postgresql ensures the stored password is hashed when encrypted is set.
     required: false
     default: false
     version_added: '1.4'
@@ -98,7 +99,8 @@ options:
     version_added: '1.4'
   no_password_changes:
     description:
-      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make password changes as necessary.
+      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is
+        not accessible (such as AWS RDS). Otherwise, make password changes as necessary.
     required: false
     default: 'no'
     choices: [ "yes", "no" ]
@@ -636,9 +638,9 @@ def main():
     module.exit_json(**kw)
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule,get_exception
+from ansible.module_utils.basic import AnsibleModule, get_exception
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.database import pg_quote_identifier,SQLParseError
+from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 
 if __name__ == '__main__':
     main()
