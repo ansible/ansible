@@ -122,11 +122,6 @@ lib/ansible/modules/database/mysql/mysql_db.py
 lib/ansible/modules/database/mysql/mysql_replication.py
 lib/ansible/modules/database/mysql/mysql_user.py
 lib/ansible/modules/database/mysql/mysql_variables.py
-lib/ansible/modules/database/postgresql/postgresql_db.py
-lib/ansible/modules/database/postgresql/postgresql_ext.py
-lib/ansible/modules/database/postgresql/postgresql_privs.py
-lib/ansible/modules/database/postgresql/postgresql_schema.py
-lib/ansible/modules/database/postgresql/postgresql_user.py
 lib/ansible/modules/database/vertica/vertica_schema.py
 lib/ansible/modules/database/vertica/vertica_user.py
 lib/ansible/modules/files/acl.py
