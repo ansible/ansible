@@ -154,18 +154,11 @@ RETURN = """
 
 """
 
-import logging
-from traceback import format_exc
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
-
-# Set logging level to DEBUG to keep it consistent with other NetApp modules
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class SolidFireVolume(object):
@@ -261,8 +254,6 @@ class SolidFireVolume(object):
         return None
 
     def create_volume(self):
-        logger.debug('Creating volume %s of size %s', self.name, self.size)
-
         try:
             self.sfe.create_volume(name=self.name,
                                    account_id=self.account_id,
@@ -273,24 +264,19 @@ class SolidFireVolume(object):
 
         except:
             err = get_exception()
-            logger.exception('Error provisioning volume %s of size %s : %s',
-                             self.name, self.size, str(err))
-            raise
+            self.module.fail_json(msg="Error provisioning volume %s of size %s" % (self.name, self.size),
+                                  exception=str(err))
 
     def delete_volume(self):
-        logger.debug('Deleting volume %s', self.name)
-
         try:
             self.sfe.delete_volume(volume_id=self.volume_id)
 
         except:
             err = get_exception()
-            logger.exception('Error deleting volume %s : %s', self.volume_id, str(err))
-            raise
+            self.module.fail_json(msg="Error deleting volume %s" % self.volume_id,
+                                  exception=str(err))
 
     def update_volume(self):
-        logger.debug('DEBUG: Updating volume %s', self.name)
-
         try:
             self.sfe.modify_volume(self.volume_id,
                                    account_id=self.new_account_id,
@@ -301,8 +287,8 @@ class SolidFireVolume(object):
 
         except:
             err = get_exception()
-            logger.exception('Error updating volume %s : %s', self.volume_id, str(err))
-            raise
+            self.module.fail_json(msg="Error updating volume %s" % self.name,
+                                  exception=str(err))
 
     def apply(self):
         changed = False
@@ -316,24 +302,19 @@ class SolidFireVolume(object):
             if self.state == 'absent':
                 # Checking for state change(s) here, and applying it later in the code allows us to support
                 # check_mode
-                logger.debug(
-                    "CHANGED: volume exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
                 if volume_detail.access is not None and self.access is not None and volume_detail.access != self.access:
-                    logger.debug("CHANGED: Volume access needs to be updated")
                     update_volume = True
                     changed = True
 
                 elif volume_detail.account_id is not None and self.new_account_id is not None \
                         and volume_detail.account_id != self.new_account_id:
-                    logger.debug("CHANGED: Account ID for volume needs to be updated")
                     update_volume = True
                     changed = True
 
                 elif volume_detail.qos is not None and self.qos is not None and volume_detail.qos != self.qos:
-                    logger.debug("CHANGED: Volume QOS needs to be updated")
                     update_volume = True
                     changed = True
 
@@ -341,30 +322,21 @@ class SolidFireVolume(object):
                     size_difference = abs(float(volume_detail.total_size - self.size))
                     # Change size only if difference is bigger than 0.001
                     if size_difference/self.size > 0.001:
-                        log_msg = "CHANGED: Volume needs to be re-sized. Reported size is %s and new size is %s" % \
-                                  (str(volume_detail.total_size), str(self.size))
-
-                        logger.debug(log_msg)
                         update_volume = True
                         changed = True
 
                 elif volume_detail.attributes is not None and self.attributes is not None and \
                         volume_detail.attributes != self.attributes:
-                    logger.debug("CHANGED: Volume attributes need to be updated")
                     update_volume = True
                     changed = True
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: volume does not exist, but requested state is "
-                    "'present'")
-
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
@@ -374,21 +346,13 @@ class SolidFireVolume(object):
 
                 elif self.state == 'absent':
                     self.delete_volume()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = SolidFireVolume()
-
-    try:
-        v.apply()
-    except:
-        err = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(err))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
