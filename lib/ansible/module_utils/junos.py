@@ -116,6 +116,10 @@ class Netconf(object):
             exc = get_exception()
             self.raise_exc('unable to connect to %s: %s' % (host, str(exc)))
 
+        timeout = params.get('netconf_timeout', 0)
+        if timeout > 0:
+            self.device.timeout = timeout
+
         self.config = Config(self.device)
         self._connected = True
 
