@@ -65,15 +65,17 @@ def params_to_kwmap(module):
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and module.params.get('sslrootcert') is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+    if psycopg2.__version__ < '2.4.3' and module.params.get('ssl_rootcert') is not None:
+        raise Exception('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     return kw
 
-def postgres_conn(module, database=None, kw={}, enable_autocommit=False):
+def postgres_conn(module, database=None, kw=kw, enable_autocommit=False):
+    # make sure kw is mutable and isn't None
+    kw = kw or None
 
     try:
-        if psycopg2.__version__ < '2.4.3' and module.params['sslrootcert'] is not None:
+        if psycopg2.__version__ < '2.4.3' and module.params.get('ssl_rootcert') is not None:
             module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
 
         db_connection = psycopg2.connect(database=database, **kw)
@@ -85,18 +87,15 @@ def postgres_conn(module, database=None, kw={}, enable_autocommit=False):
             else:
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-        # TODO: part of autocommit?
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % e)
+            raise Exception('Postgresql server must be at least version 8.4 to support sslrootcert. Original exception: %s' % e)
+        raise
 
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+        raise
 
     return db_connection
 
