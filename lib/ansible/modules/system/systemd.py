@@ -283,7 +283,6 @@ def main():
         'name':  unit,
         'changed': False,
         'status': {},
-        'warnings': [],
     }
 
     # Run daemon-reload first, if requested
@@ -331,7 +330,7 @@ def main():
     # Does service exist?
     found = is_systemd or is_initd
     if is_initd and not is_systemd:
-        result['warnings'].append('The service (%s) is actually an init script but the system is managed by systemd' % unit)
+        module.warn('The service (%s) is actually an init script but the system is managed by systemd' % unit)
 
     # mask/unmask the service, if requested, can operate on services before they are installed
     if module.params['masked'] is not None:
