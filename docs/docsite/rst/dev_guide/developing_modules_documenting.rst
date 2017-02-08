@@ -70,7 +70,7 @@ The following fields can be used and are all required unless specified otherwise
     List of option name aliases; generally not needed..
   * ``version_added:``
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    This is a string, and not a float, i.e. `version_added: "2.3"`
+    This is a string, and not a float, i.e. ``version_added: "2.3"``.
 * ``requirements:``
     List of requirements, and minimum versions (if applicable)
 * ``notes:``
