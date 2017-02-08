@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = """
 ---
-module: elasticache
+module: elasticache_group_parameter
 short_description: Manage cache security groups in Amazon Elasticache.
 description:
   - Manage cache security groups in Amazon Elasticache.
