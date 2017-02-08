@@ -119,12 +119,15 @@ def enforce_state(module, params):
 
     found,replace_or_add,found_line,key=search_for_host_key(module,host,key,hash_host,path,sshkeygen)
 
+    params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
+
     #We will change state if found==True & state!="present"
     #or found==False & state=="present"
     #i.e found XOR (state=="present")
     #Alternatively, if replace is true (i.e. key present, and we must change it)
     if module.check_mode:
-        module.exit_json(changed = replace_or_add or (state=="present") != found)
+        module.exit_json(changed = replace_or_add or (state=="present") != found,
+                         diff=params['diff'])
 
     #Now do the work.
 
@@ -145,7 +148,7 @@ def enforce_state(module, params):
                 module.fail_json(msg="Failed to read %s: %s" % \
                                      (path,str(e)))
         try:
-            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path))
+            outf = tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path))
             if inf is not None:
                 for line_number, line in enumerate(inf):
                     if found_line==(line_number + 1) and (replace_or_add or state=='absent'):
@@ -188,7 +191,7 @@ def sanity_check(module,host,key,sshkeygen):
     #The approach is to write the key to a temporary file,
     #and then attempt to look up the specified host in that file.
     try:
-        outf=tempfile.NamedTemporaryFile()
+        outf = tempfile.NamedTemporaryFile(mode='w+')
         outf.write(key)
         outf.flush()
     except IOError:
@@ -240,7 +243,7 @@ def search_for_host_key(module,host,key,hash_host,path,sshkeygen):
 
     sshkeygen_command.insert(1,'-H')
     rc,stdout,stderr=module.run_command(sshkeygen_command,check_rc=False)
-    if rc!=0: #something went wrong
+    if rc not in (0, 1) or stderr != '': #something went wrong
         module.fail_json(msg="ssh-keygen failed to hash host (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
     hashed_lines=stdout.split('\n')
 
@@ -293,6 +296,30 @@ def normalize_known_hosts_key(key):
         d['type']=k[1]
         d['key']=k[2]
     return d
+
+def compute_diff(path, found_line, replace_or_add, state, key):
+    diff = {
+        'before_header': path,
+        'after_header': path,
+        'before': '',
+        'after': '',
+    }
+    try:
+        inf = open(path, "r")
+    except IOError:
+        e = get_exception()
+        if e.errno == errno.ENOENT:
+            diff['before_header'] = '/dev/null'
+    else:
+        diff['before'] = inf.read()
+        inf.close()
+    lines = diff['before'].splitlines(1)
+    if (replace_or_add or state == 'absent') and found_line is not None and 1 <= found_line <= len(lines):
+        del lines[found_line - 1]
+    if state == 'present' and (replace_or_add or found_line is None):
+        lines.append(key)
+    diff['after'] = ''.join(lines)
+    return diff
 
 def main():
 
