@@ -422,7 +422,7 @@ def main():
             lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
             if snapshot is not None:
                 cmd = "%s %s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
-            if thinpool and lv:
+            elif thinpool and lv:
                 if size_opt == 'l':
                     module.fail_json(changed=False, msg="Thin volume sizing with percentage not supported.")
                 size_opt = 'V'
