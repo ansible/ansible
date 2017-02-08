@@ -1374,10 +1374,12 @@ class AnsibleModule(object):
             e = get_exception()
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
-    def _handle_aliases(self):
+    def _handle_aliases(self, spec=None):
         # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {} #alias:canon
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        for (k,v) in spec.items():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
@@ -1479,10 +1481,12 @@ class AnsibleModule(object):
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % (check,))
 
-    def _check_required_arguments(self):
+    def _check_required_arguments(self, spec=None):
         ''' ensure all required arguments are present '''
         missing = []
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        for (k,v) in spec.items():
             required = v.get('required', False)
             if required and k not in self.params:
                 missing.append(k)
@@ -1515,9 +1519,11 @@ class AnsibleModule(object):
             if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
-    def _check_argument_values(self):
+    def _check_argument_values(self, spec=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        for (k,v) in spec.items():
             choices = v.get('choices',None)
             if choices is None:
                 continue
@@ -1700,9 +1706,12 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
-    def _check_argument_types(self):
+    def _check_argument_types(self, spec=None):
         ''' ensure all arguments have the requested type '''
-        for (k, v) in self.argument_spec.items():
+
+        if spec is None:
+            spec = self.argument_spec
+        for (k, v) in spec.items():
             wanted = v.get('type', None)
             if k not in self.params:
                 continue
@@ -1727,6 +1736,15 @@ class AnsibleModule(object):
             except (TypeError, ValueError):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
+
+            spec = None
+            # deal with subspecs
+            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
+                spec = v.get('spec', None)
+                if spec:
+                    self._check_required_arguments(spec)
+                    self._check_argument_types(spec)
+                    self._check_argument_values(spec)
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
