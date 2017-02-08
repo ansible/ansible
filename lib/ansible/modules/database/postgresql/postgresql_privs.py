@@ -92,70 +92,22 @@ options:
       - 'Alias: I(admin_option)'
     required: no
     choices: ['yes', 'no']
-  host:
-    description:
-      - Database host address. If unspecified, connect via Unix socket.
-      - 'Alias: I(login_host)'
-    default: null
-    required: no
-  port:
-    description:
-      - Database port to connect to.
-    required: no
-    default: 5432
-  unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections.
-      - 'Alias: I(login_unix_socket)'
-    required: false
-    default: null
-  login:
-    description:
-      - The username to authenticate with.
-      - 'Alias: I(login_user)'
-    default: postgres
-  password:
-    description:
-      - The password to authenticate with.
-      - 'Alias: I(login_password))'
-    default: null
-    required: no
-  ssl_mode:
-    description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
-    required: false
-    default: disable
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
-    version_added: '2.3'
-  ssl_rootcert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    required: false
-    default: null
-    version_added: '2.3'
 notes:
-  - Default authentication assumes that postgresql_privs is run by the
-    C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
-  - This module requires Python package I(psycopg2) to be installed on the
-    remote host. In the default case of the remote host also being the
-    PostgreSQL server, PostgreSQL has to be installed there as well, obviously.
-    For Debian/Ubuntu-based systems, install packages I(postgresql) and
-    I(python-psycopg2).
   - Parameters that accept comma separated lists (I(privs), I(objs), I(roles))
     have singular alias names (I(priv), I(obj), I(role)).
   - To revoke only C(GRANT OPTION) for a specific object, set I(state) to
     C(present) and I(grant_option) to C(no) (see examples).
-  - Note that when revoking privileges from a role R, this role  may still have
+  - Note that when revoking privileges from a role R, this role may still have
     access via privileges granted to any role R is a member of including
     C(PUBLIC).
   - Note that when revoking privileges from a role R, you do so as the user
     specified via I(login). If R has been granted the same privileges by
     another user also, R can still access database objects via these privileges.
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
-  - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [psycopg2]
 author: "Bernhard Weitzhofer (@b6d)"
+extends_documentation_fragment:
+- postgres
 """
 
 EXAMPLES = """
@@ -248,11 +200,14 @@ EXAMPLES = """
     role: librarian
 """
 
+import sys
 try:
     import psycopg2
     import psycopg2.extensions
 except ImportError:
-    psycopg2 = None
+    postgresqldb_found = False
+else:
+    postgresqldb_found = True
 
 
 VALID_PRIVS = frozenset(('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
@@ -278,42 +233,12 @@ def partial(f, *args, **kwargs):
 class Connection(object):
     """Wrapper around a psycopg2 connection with some convenience methods"""
 
-    def __init__(self, params):
+    def __init__(self, params, module):
         self.database = params.database
-        # To use defaults values, keyword arguments must be absent, so
-        # check which values are empty and don't include in the **kw
-        # dictionary
-        params_map = {
-            "host":"host",
-            "login":"user",
-            "password":"password",
-            "port":"port",
-            "database": "database",
-            "ssl_mode":"sslmode",
-            "ssl_rootcert":"sslrootcert"
-        }
+        kw = pgutils.params_to_kwmap(module)
 
-        kw = dict( (params_map[k], getattr(params, k)) for k in params_map
-                   if getattr(params, k) != '' and getattr(params, k) is not None )
-
-        # If a unix_socket is specified, incorporate it here.
-        is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-        if is_localhost and params.unix_socket != "":
-            kw["host"] = params.unix_socket
-
-        sslrootcert = params.ssl_rootcert
-        if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-            module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
-
-        try:
-            self.connection = psycopg2.connect(**kw)
-            self.cursor = self.connection.cursor()
-
-        except TypeError:
-            e = get_exception()
-            if 'sslrootcert' in e.args[0]:
-                module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-            module.fail_json(msg="unable to connect to database: %s" % e)
+        self.connection = pgutils.postgres_conn(module, database=params.database, kw=kw, enable_autocommit=True)
+        self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 
     def commit(self):
@@ -547,33 +472,20 @@ class Connection(object):
 
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        database=dict(required=True, aliases=['db']),
+        state=dict(default='present', choices=['present', 'absent']),
+        privs=dict(required=False, aliases=['priv']),
+        type=dict(default='table', choices=['table', 'sequence', 'function', 'database', 'schema', 'language', 'tablespace', 'group']),
+        objs=dict(required=False, aliases=['obj']),
+        schema=dict(required=False),
+        roles=dict(required=True, aliases=['role']),
+        grant_option=dict(required=False, type='bool', aliases=['admin_option']),
+    ))
+
     module = AnsibleModule(
-        argument_spec = dict(
-            database=dict(required=True, aliases=['db']),
-            state=dict(default='present', choices=['present', 'absent']),
-            privs=dict(required=False, aliases=['priv']),
-            type=dict(default='table',
-                      choices=['table',
-                               'sequence',
-                               'function',
-                               'database',
-                               'schema',
-                               'language',
-                               'tablespace',
-                               'group']),
-            objs=dict(required=False, aliases=['obj']),
-            schema=dict(required=False),
-            roles=dict(required=True, aliases=['role']),
-            grant_option=dict(required=False, type='bool',
-                              aliases=['admin_option']),
-            host=dict(default='', aliases=['login_host']),
-            port=dict(type='int', default=5432),
-            unix_socket=dict(default='', aliases=['login_unix_socket']),
-            login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True),
-            ssl_mode=dict(default="disable", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
@@ -604,10 +516,11 @@ def main():
                              'for type "%s".' % p.type)
 
     # Connect to Database
-    if not psycopg2:
+    if not postgresqldb_found:
         module.fail_json(msg='Python module "psycopg2" must be installed.')
+
     try:
-        conn = Connection(p)
+        conn = Connection(p, module)
     except psycopg2.Error:
         e = get_exception()
         module.fail_json(msg='Could not connect to database: %s' % e)
@@ -658,8 +571,7 @@ def main():
         e = get_exception()
         conn.rollback()
         # psycopg2 errors come in connection encoding, reencode
-        msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(),
-                                                     'replace')
+        msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(), 'replace')
         module.fail_json(msg=msg)
 
     if module.check_mode:
@@ -670,7 +582,9 @@ def main():
 
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
+from ansible.module_utils.basic import AnsibleModule,get_exception
+import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.database import pg_quote_identifier
+
 if __name__ == '__main__':
     main()

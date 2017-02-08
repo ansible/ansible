@@ -66,7 +66,8 @@ options:
   fail_on_drop:
     description:
       - if C(yes), fail when removing a language. Otherwise just log and continue
-      - in some cases, it is not possible to remove a language (used by the db-system). When         dependencies block the removal, consider using C(cascade).
+      - in some cases, it is not possible to remove a language (used by the db-system). When
+        dependencies block the removal, consider using C(cascade).
     required: false
     default: 'yes'
     choices: [ "yes", "no" ]
@@ -77,43 +78,16 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
-  login_user:
-    description:
-      - User used to authenticate with PostgreSQL
-    required: false
-    default: postgres
-  login_password:
-    description:
-      - Password used to authenticate with PostgreSQL (must match C(login_user))
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running PostgreSQL where you want to execute the actions.
-    required: false
-    default: localhost
   state:
     description:
       - The state of the language for the selected database
     required: false
     default: present
     choices: [ "present", "absent" ]
-notes:
-   - The default authentication assumes that you are either logging in as or
-     sudo'ing to the postgres account on the host.
-   - This module uses psycopg2, a Python PostgreSQL database adapter. You must
-     ensure that psycopg2 is installed on the host before using this module. If
-     the remote host is the PostgreSQL server (which is the default case), then
-     PostgreSQL must also be installed on the remote host. For Ubuntu-based
-     systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-     on the remote host before using this module.
 requirements: [ psycopg2 ]
 author: "Jens Depuydt (@jensdepuydt)"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -201,20 +175,19 @@ def lang_drop(cursor, lang, cascade):
     return True
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        db=dict(required=True),
+        lang=dict(required=True),
+        state=dict(default="present", choices=["absent", "present"]),
+        trust=dict(type='bool', default='no'),
+        force_trust=dict(type='bool', default='no'),
+        cascade=dict(type='bool', default='no'),
+        fail_on_drop=dict(type='bool', default='yes'),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            db=dict(required=True),
-            port=dict(default='5432'),
-            lang=dict(required=True),
-            state=dict(default="present", choices=["absent", "present"]),
-            trust=dict(type='bool', default='no'),
-            force_trust=dict(type='bool', default='no'),
-            cascade=dict(type='bool', default='no'),
-            fail_on_drop=dict(type='bool', default='yes'),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
@@ -230,21 +203,11 @@ def main():
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
 
-    params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "db":"database"
-    }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != "" )
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+    kw = pgutils.params_to_kwmap(module)
+
+    db_connection = pgutils.postgres_conn(module, database=db, kw=kw, enable_autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
     changed = False
     lang_dropped = False
     kw = dict(db=db,lang=lang,trust=trust)
@@ -287,8 +250,8 @@ def main():
     module.exit_json(**kw)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule,get_exception
+import ansible.module_utils.postgres as pgutils
 
 if __name__ == '__main__':
     main()
