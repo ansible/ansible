@@ -25,14 +25,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: aos_asn_pool
-author: damien@apstra.com (@dgarros)
+author: Damien Garros (@dgarros)
 version_added: "2.3"
 short_description: Manage AOS ASN Pool
 description:
-  - Used to add an ASN Pool to AOS-server from playbook
-  - Used to add an ASN Pool to AOS-server from a JSON file
-  - Used to delete an ASN Pool
-  - Used to gather an ASN Pool
+  - Apstra AOS ASN Pool module let you manage your ASN Pool easily. You can create
+    create and delete ASN Pool by Name, ID or by using a JSON File. This module
+    is idempotent and support the I(check) mode. It's using the AOS REST API
 requirements:
   - aos-pyez
 options:
@@ -42,16 +41,23 @@ options:
     required: true
   name:
     description:
-      - Name of the ASN Pool to manage
+      - Name of the ASN Pool to manage.
+        Only one of I(name), I(id) or I(content) can be set.
     required: false
   id:
     description:
-      - AOS Id of the ASN Pool to manage (can't be used to create a new ASN Pool),
-        it's an alternative to C(name) and can't be use with C(name)
+      - AOS Id of the ASN Pool to manage.
+        Only one of I(name), I(id) or I(content) can be set.
+    required: false
+  content:
+    description:
+      - Datastructure of the ASN Pool to create. The data can be in YAML / JSON or
+        directly a variable. It's the same datastructure that is returned
+        on success in I(value).
     required: false
   state:
     description:
-      - Indicate 
+      - Indicate what is the expected state of the ASN Pool (present or not)
     default: present
     choices: ['present', 'absent']
     required: false
@@ -60,16 +66,60 @@ options:
       - List of ASNs ranges to add to the ASN Pool
     default: []
     required: false
-  src:
-    description:
-      - Filepath to JSON file containing the collection item data
-    required: false
 '''
 
 EXAMPLES = '''
-# add an ASN pool to AOS-server
+
+- name: "Create ASN Pool"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    name: "my-asn-pool"
+    ranges:
+      - [ 100, 200 ]
+    state: present
+  register: asnpool
+
+- name: "Save ASN Pool into a file in JSON"
+  copy:
+    content: "{{ asnpool.value | to_nice_json }}"
+    dest: resources/asn_pool_saved.json
+
+- name: "Save ASN Pool into a file in YAML"
+  copy:
+    content: "{{ asnpool.value | to_nice_yaml }}"
+    dest: resources/asn_pool_saved.yaml
 
 
+- name: "Delete ASN Pool"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    name: "my-asn-pool"
+    state: absent
+
+- name: "Load ASN Pool from File(JSON)"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/asn_pool_saved.json') }}"
+    state: present
+
+- name: "Delete ASN Pool from File(JSON)"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/asn_pool_saved.json') }}"
+    state: absent
+
+- name: "Load ASN Pool from File(Yaml)"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/asn_pool_saved.yaml') }}"
+    state: present
+  register: test
+
+- name: "Delete ASN Pool from File(Yaml)"
+  aos_asn_pool:
+    session: "{{ session_ok }}"
+    content: "{{ lookup('file', 'resources/asn_pool_saved.yaml') }}"
+    state: absent
 '''
 
 RETURNS = '''
@@ -95,8 +145,7 @@ value:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import *
-
+from ansible.module_utils.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
 
 def check_ranges_are_valid(module, ranges):
 
@@ -137,94 +186,130 @@ def create_new_asn_pool(asn_pool, name, ranges=[]):
     ## Write to AOS
     return asn_pool.write()
 
-#########################################################
-# Main Function
-#########################################################
-def asn_pool(module):
+
+def asn_pool_absent(module, aos, my_pool):
 
     margs = module.params
 
-    aos = get_aos_session(margs['session'])
+    # If the module do not exist, return directly
+    if my_pool.exists == False:
+        module.exit_json(changed=False, name=margs['name'], id='', value={})
 
-    item_name = False
-    item_id = False
+    ## Check if object is currently in Use or Not
+    # If in Use, return an error
+    if my_pool.value:
+        if my_pool.value['status'] != 'not_in_use':
+            module.fail_json(msg="Unable to delete this Asn Pool is currently in use")
+    else:
+        module.fail_json(msg="Asn Pool object has an invalid format, value['status'] must be defined")
 
-    if 'name' in margs.keys():
-        item_name = margs['name']
-
-    if 'id' in margs.keys():
-        item_id = margs['id']
-
-    if 'ranges' in margs.keys():
-        check_ranges_are_valid(module, margs['ranges'])
-
-    #----------------------------------------------------
-    # Find Object if available based on ID or Name
-    #----------------------------------------------------
-    my_pool = find_collection_item(aos.AsnPools,
-                        item_name=item_name,
-                        item_id=item_id)
-
-    #----------------------------------------------------
-    # State == Absent
-    #----------------------------------------------------
-    if margs['state'] == 'absent':
-
-        # If the module do not exist, return directly
-        if my_pool.exists == False:
-            module.exit_json(changed=False, name=margs['name'], id='', value={})
-
-        ## Check if object is currently in Use or Not
-        # If in Use, return an error
-        in_use = False
-        if my_pool.value:
-            if my_pool.value['status'] != 'not_in_use':
-                in_use = True
-                module.fail_json(msg="Unable to delete this Asn Pool is currently in use")
-        else:
-            module.fail_json(msg="Asn Pool object has an invalid format, value['status'] must be defined")
-
-        # If not in check mode, delete Ip Pool
-        if not module.check_mode:
+    # If not in check mode, delete Ip Pool
+    if not module.check_mode:
+        try:
             my_pool.delete()
+        except:
+            module.fail_json(msg="An error occured, while trying to delete the ASN Pool")
+
+    module.exit_json( changed=True,
+                      name=my_pool.name,
+                      id=my_pool.id,
+                      value={} )
+
+
+def asn_pool_present(module, aos, my_pool):
+
+    margs = module.params
+
+    # if content is defined, create object from Content
+    if margs['content'] is not None:
+
+        if 'display_name' in module.params['content'].keys():
+            do_load_resource(module, aos.AsnPools, module.params['content']['display_name'])
+        else:
+            module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
+
+    # if asn_pool doesn't exist already, create a new one
+    if my_pool.exists == False and 'name' not in margs.keys():
+        module.fail_json(msg="name is mandatory for module that don't exist currently")
+
+    elif my_pool.exists == False:
+
+        if not module.check_mode:
+            my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
+            my_pool = my_new_pool
 
         module.exit_json( changed=True,
                           name=my_pool.name,
                           id=my_pool.id,
-                          value={} )
+                          value=my_pool.value )
 
-    #----------------------------------------------------
-    # State == Present
-    #----------------------------------------------------
+    # Currently only check if the pool exist or not
+    #    if exist return change false
+    #
+    # Later it would be good to check if the list of ASN are same
+    # if pool already exist, check if list of ASN is the same
+    # if same just return the object and report change false
+    # if set(get_list_of_range(my_pool)) == set(margs['ranges']):
+    module.exit_json( changed=False,
+                      name=my_pool.name,
+                      id=my_pool.id,
+                      value=my_pool.value )
+
+# ########################################################
+# Main Function
+# ########################################################
+def asn_pool(module):
+
+    margs = module.params
+
+    try:
+        aos = get_aos_session(module, margs['session'])
+    except:
+        module.fail_json(msg="Unable to login to the AOS server")
+
+    item_name = False
+    item_id = False
+
+    # Check ID / Name and Content
+    if margs['content'] is not None:
+
+        content = content_to_dict(module, margs['content'] )
+
+        if 'display_name' in content.keys():
+            item_name = content['display_name']
+        else:
+            module.fail_json(msg="Unable to extract 'display_name' from 'content'")
+
+    elif margs['name'] is not None:
+        item_name = margs['name']
+
+    elif margs['id'] is not None:
+        item_id = margs['id']
+
+    # If ranges are provided, check if they are valid
+    if 'ranges' in margs.keys():
+        check_ranges_are_valid(module, margs['ranges'])
+
+    # ----------------------------------------------------
+    # Find Object if available based on ID or Name
+    # ----------------------------------------------------
+    try:
+        my_pool = find_collection_item(aos.AsnPools,
+                            item_name=item_name,
+                            item_id=item_id)
+    except:
+        module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
+
+    # ----------------------------------------------------
+    # Proceed based on State value
+    # ----------------------------------------------------
+    if margs['state'] == 'absent':
+
+        asn_pool_absent(module, aos, my_pool)
+
     elif margs['state'] == 'present':
 
-        # if asn_pool doesn't exist already, create a new one
-        if my_pool.exists == False and 'name' not in margs.keys():
-            module.fail_json(msg="name is mandatory for module that don't exist currently")
-
-        elif my_pool.exists == False:
-
-            if not module.check_mode:
-                my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
-                my_pool = my_new_pool
-
-            module.exit_json( changed=True,
-                              name=my_pool.name,
-                              id=my_pool.id,
-                              value=my_pool.value )
-
-        # Currently only check if the pool exist or not
-        #    if exist return change false
-        # Later it would be good to check if the list of ASN are same
-        # if pool already exist, check if list of ASN is the same
-        # if same just return the object and report change false
-        # if set(get_list_of_range(my_pool)) == set(margs['ranges']):
-        module.exit_json( changed=False,
-                          name=my_pool.name,
-                          id=my_pool.id,
-                          value=my_pool.value )
-        # else:
-        #     module.fail_json(msg="ASN Pool already exist but value is different, currently not supported to update a module")
+        asn_pool_present(module, aos, my_pool)
 
 def main():
     module = AnsibleModule(
@@ -232,14 +317,19 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
+            content=dict(required=False, type="json"),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present"),
             ranges=dict(required=False, type="list", default=[])
         ),
-        mutually_exclusive = [('name', 'id')],
+        mutually_exclusive = [('name', 'id', 'content')],
+        required_one_of=[('name', 'id', 'content')],
         supports_check_mode=True
     )
+
+    # Check if aos-pyez is present and match the minimum version
+    check_aos_version(module, '0.6.0')
 
     asn_pool(module)
 
