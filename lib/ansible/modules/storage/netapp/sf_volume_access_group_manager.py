@@ -123,17 +123,11 @@ RETURN = """
 """
 
 
-import logging
-from traceback import format_exc
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class SolidFireVolumeAccessGroup(object):
@@ -191,8 +185,6 @@ class SolidFireVolumeAccessGroup(object):
         return None
 
     def create_volume_access_group(self):
-        logger.debug('Creating volume access group %s', self.name)
-
         try:
             self.sfe.create_volume_access_group(name=self.name,
                                                 initiators=self.initiators,
@@ -202,24 +194,19 @@ class SolidFireVolumeAccessGroup(object):
                                                 attributes=self.attributes)
         except:
             err = get_exception()
-            logger.exception('Error creating volume access group %s : %s',
-                             self.name, str(err))
-            raise
+            self.module.fail_json(msg="Error creating volume access group %s" % self.name,
+                                  exception=str(err))
 
     def delete_volume_access_group(self):
-        logger.debug('Deleting volume access group %s', self.volume_access_group_id)
-
         try:
             self.sfe.delete_volume_access_group(volume_access_group_id=self.volume_access_group_id)
 
         except:
             err = get_exception()
-            logger.exception('Error deleting volume access group %s : %s', self.volume_access_group_id, str(err))
-            raise
+            self.module.fail_json(msg="Error deleting volume access group %s" % self.volume_access_group_id,
+                                  exception=str(err))
 
     def update_volume_access_group(self):
-        logger.debug('Updating volume access group %s', self.volume_access_group_id)
-
         try:
             self.sfe.modify_volume_access_group(volume_access_group_id=self.volume_access_group_id,
                                                 virtual_network_id=self.virtual_network_id,
@@ -230,8 +217,8 @@ class SolidFireVolumeAccessGroup(object):
                                                 attributes=self.attributes)
         except:
             err = get_exception()
-            logger.exception('Error updating volume access group %s : %s', self.volume_access_group_id, str(err))
-            raise
+            self.module.fail_json(msg="Error updating volume access group %s" % self.volume_access_group_id,
+                                  exception=str(err))
 
     def apply(self):
         changed = False
@@ -243,36 +230,28 @@ class SolidFireVolumeAccessGroup(object):
             group_exists = True
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: group exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
                 # Check if we need to update the group
                 if self.volumes is not None and group_detail.volumes != self.volumes:
-                    logger.debug("CHANGED: Volume access group - volumes need to be updated")
                     update_group = True
                     changed = True
                 elif self.initiators is not None and group_detail.initiators != self.initiators:
-                    logger.debug("CHANGED: Volume access group - initiators need to be updated")
                     update_group = True
                     changed = True
                 elif self.virtual_network_id is not None or self.virtual_network_tags is not None or \
                                 self.attributes is not None:
-                    logger.debug("CHANGED: Volume access group needs to be updated")
                     update_group = True
                     changed = True
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: group does not exist, but requested state is "
-                    "'present'")
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not group_exists:
@@ -282,21 +261,13 @@ class SolidFireVolumeAccessGroup(object):
 
                 elif self.state == 'absent':
                     self.delete_volume_access_group()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = SolidFireVolumeAccessGroup()
-
-    try:
-        v.apply()
-    except:
-        err = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(err))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
