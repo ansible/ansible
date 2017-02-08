@@ -181,7 +181,6 @@ options:
     version_added: "2.3"
     default: null
     required: false
-    type: string
 
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
