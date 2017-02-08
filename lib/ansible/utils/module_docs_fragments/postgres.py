@@ -32,7 +32,7 @@ options:
     description:
       - Host running the database
     required: false
-    default: localhost
+    default: null
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections

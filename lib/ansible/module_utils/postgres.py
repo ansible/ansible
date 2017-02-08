@@ -109,7 +109,7 @@ def postgres_common_argument_spec(password_alias=True):
     return dict(
         login_user        = dict(default='postgres', aliases=['login']),
         login_password    = dict(default='', no_log=True, aliases=password_aliases),
-        login_host        = dict(default='localhost', aliases=['host']),
+        login_host        = dict(default='', aliases=['host']),
         login_unix_socket = dict(default='', aliases=['unix_socket']),
         port              = dict(type='int', default=5432),
         ssl_mode          = dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
