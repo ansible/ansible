@@ -30,7 +30,7 @@ author: "Sloane Hertel (@s-hertel)"
 options:
   name:
     description:
-      - The name of the snapshot we want to create, copy, delete, or get information regarding
+      - The name of the snapshot we want to create, copy, delete
     type: string
     required: yes
   state:
@@ -174,7 +174,8 @@ def delete(module, connection, name):
             response = {}
             changed = False
         elif e.response['Error']['Code'] == "InvalidSnapshotState":
-            module.fail_json(msg="Error: InvalidSnapshotState. The snapshot is not in an available state or failed state to allow deletion. You may need to wait a few minutes.")
+            module.fail_json(msg="Error: InvalidSnapshotState. The snapshot is not in an available state or failed state to allow deletion."
+                             "You may need to wait a few minutes.")
         else:
             module.fail_json(msg="Unable to delete the snapshot.", exception=traceback.format_exc(e))
     return response, changed
