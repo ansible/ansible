@@ -32,23 +32,23 @@ author: Willem van Ketwich (@wilvk)
 options:
     distribution_id:
         description:
-            - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+          - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
         required: false
     invalidation_id:
         description:
-            - The id of the invalidation to get information about. Used with invalidation.
+          - The id of the invalidation to get information about. Used with invalidation.
         required: false
     origin_access_identity_id:
         description:
-            - The id of the cloudfront origin access identity to get information about.
+          - The id of the cloudfront origin access identity to get information about.
         required: false
     web_acl_id:
         description:
-            - Used with list_distributions_by_web_acl_id.
+          - Used with list_distributions_by_web_acl_id.
         required: false
     domain_name_alias:
         description:
-            - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
+          - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
         required: false
     all_lists:
         description:
