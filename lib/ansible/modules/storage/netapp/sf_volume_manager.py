@@ -52,14 +52,7 @@ options:
         description:
         - account_id for the owner of this volume
 
-    new_account_id:
-        required: false
-        type: int
-        description:
-        - new account_id for the volume
-        default: None
-
-    enable512e:
+    512emulation:
         required: false
         type: bool
         description:
@@ -136,7 +129,6 @@ EXAMPLES = """
        state: present
        name: AnsibleVol
        account_id: 3
-       new_account_id: 2
        access: readWrite
 
    - name: Delete Volume
@@ -186,7 +178,6 @@ class SolidFireVolume(object):
             name=dict(required=True, type='str'),
             account_id=dict(required=True, type='int'),
 
-            new_account_id=dict(required=False, type='int', default=None),
             enable512e=dict(type='bool'),
             qos=dict(required=False, type='str', default=None),
             attributes=dict(required=False, type='dict', default=None),
@@ -216,7 +207,6 @@ class SolidFireVolume(object):
         self.state = p['state']
         self.name = p['name']
         self.account_id = p['account_id']
-        self.new_account_id = p['new_account_id']
         self.enable512e = p['enable512e']
         self.qos = p['qos']
         self.attributes = p['attributes']
@@ -279,7 +269,7 @@ class SolidFireVolume(object):
     def update_volume(self):
         try:
             self.sfe.modify_volume(self.volume_id,
-                                   account_id=self.new_account_id,
+                                   account_id=self.account_id,
                                    access=self.access,
                                    qos=self.qos,
                                    total_size=self.size,
@@ -309,8 +299,8 @@ class SolidFireVolume(object):
                     update_volume = True
                     changed = True
 
-                elif volume_detail.account_id is not None and self.new_account_id is not None \
-                        and volume_detail.account_id != self.new_account_id:
+                elif volume_detail.account_id is not None and self.account_id is not None \
+                        and volume_detail.account_id != self.account_id:
                     update_volume = True
                     changed = True
 
@@ -329,7 +319,6 @@ class SolidFireVolume(object):
                         volume_detail.attributes != self.attributes:
                     update_volume = True
                     changed = True
-
         else:
             if self.state == 'present':
                 changed = True
