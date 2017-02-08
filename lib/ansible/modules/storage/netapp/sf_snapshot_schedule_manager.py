@@ -163,7 +163,7 @@ class SolidFireSnapShotSchedule(object):
             time_interval_hours=dict(required=False, type='int', default=0),
             time_interval_minutes=dict(required=False, type='int', default=0),
 
-            pause=dict(required=False, type='bool'),
+            paused=dict(required=False, type='bool'),
             recurring=dict(required=False, type='bool'),
 
             starting_date=dict(type='str'),
@@ -195,7 +195,7 @@ class SolidFireSnapShotSchedule(object):
         self.time_interval_hours = p['time_interval_hours']
         self.time_interval_minutes = p['time_interval_minutes']
 
-        self.pause = p['pause']
+        self.paused = p['paused']
         self.recurring = p['recurring']
 
         self.starting_date = p['starting_date']
@@ -243,7 +243,7 @@ class SolidFireSnapShotSchedule(object):
                 snapshot_name=self.snapshot_name,
                 retention=self.retention
             )
-            sched.paused = self.pause
+            sched.paused = self.paused
             sched.recurring = self.recurring
             sched.starting_date = self.starting_date
 
@@ -290,8 +290,8 @@ class SolidFireSnapShotSchedule(object):
                 sched.schedule_info.retention = self.retention
             if self.snapshot_name is not None:
                 sched.schedule_info.snapshot_name = self.snapshot_name
-            if self.pause is not None:
-                sched.paused = self.pause
+            if self.paused is not None:
+                sched.paused = self.paused
             if self.recurring is not None:
                 sched.recurring = self.recurring
             if self.starting_date is not None:
@@ -335,7 +335,7 @@ class SolidFireSnapShotSchedule(object):
                     update_schedule = True
                     changed = True
 
-                elif self.pause is not None and schedule_detail.paused != self.pause:
+                elif self.paused is not None and schedule_detail.paused != self.paused:
                     update_schedule = True
                     changed = True
 
