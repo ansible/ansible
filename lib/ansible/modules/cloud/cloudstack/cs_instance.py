@@ -428,17 +428,10 @@ from ansible.module_utils.cloudstack import (
     CloudStackException,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS
+    CS_HYPERVISORS,
+    CS_TEMPLATE_FILTER
 )
 
-CS_TEMPLATE_FILTER = [
-    'featured',
-    'self',
-    'selfexecutable',
-    'sharedexecutable',
-    'executable',
-    'community'
-]
 CS_KEYBOARD = [
     'de',
     'de-ch',
