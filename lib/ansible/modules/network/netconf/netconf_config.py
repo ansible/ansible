@@ -142,7 +142,7 @@ def netconf_edit_config(m, xml, commit, retkwargs):
         m.edit_config(target=datastore, config=xml)
         config_after = m.get_config(source=datastore)
         changed = config_before.data_xml != config_after.data_xml
-        if changed and commit:
+        if changed and commit and ":candidate" in m.server_capabilities:
             if ":confirmed-commit" in m.server_capabilities:
                 m.commit(confirmed=True)
                 m.commit()
