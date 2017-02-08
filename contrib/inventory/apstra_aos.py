@@ -265,6 +265,8 @@ Expected output format
   }
 }
 """
+
+
 class AosInventory(object):
 
     def __init__(self):
@@ -283,9 +285,9 @@ class AosInventory(object):
         self.read_settings()
         self.parse_cli_args()
 
-        #----------------------------------------------------
+        # ----------------------------------------------------
         # Open session to AOS
-        #----------------------------------------------------
+        # ----------------------------------------------------
 
         aos = Session(self.aos_server)
         # aos = Session(  server=self.aos_server,
@@ -295,9 +297,9 @@ class AosInventory(object):
 
         aos.login()
 
-        #----------------------------------------------------
+        # ----------------------------------------------------
         # Build the inventory
-        #----------------------------------------------------
+        # ----------------------------------------------------
         for device in aos.Devices:
             # If not reacheable, create by key and
             # If reacheable, create by hostname
@@ -313,7 +315,7 @@ class AosInventory(object):
                 for key, value in device.value['user_config'].items():
                     self.add_var_to_host(device.name, key, value)
 
-            ## Based on device status online|offline, collect facts as well
+            # Based on device status online|offline, collect facts as well
             if device.value['status']['comm_state'] == 'on':
 
                 # Populate variables for this host
@@ -330,8 +332,8 @@ class AosInventory(object):
                     elif key == 'hw_model':
                         self.add_host_to_group(value, device.name)
 
-            ## Check if device is associated with a blueprint
-            ##   if it's create a new group
+            # Check if device is associated with a blueprint
+            #  if it's create a new group
             if 'blueprint_active' in device.value['status'].keys():
                 if 'blueprint_id' in device.value['status'].keys():
                     bp = aos.Blueprints.find(method='id', key=device.value['status']['blueprint_id'])
@@ -339,9 +341,9 @@ class AosInventory(object):
                     if bp:
                         self.add_host_to_group(bp['display_name'], device.name)
 
-        #----------------------------------------------------
+        # ----------------------------------------------------
         # Convert the inventory and return a JSON String
-        #----------------------------------------------------
+        # ----------------------------------------------------
         data_to_print = ""
         data_to_print += self.json_format_dict(self.inventory, True)
 
@@ -391,6 +393,7 @@ class AosInventory(object):
             self.inventory['_meta']['hostvars'][host] = {}
 
         self.inventory['_meta']['hostvars'][host][var] = value
+
 
 # Run the script
 if __name__ == '__main__':
