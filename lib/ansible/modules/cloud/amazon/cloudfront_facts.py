@@ -564,9 +564,7 @@ def main():
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     web_acl_id = module.params.get('web_acl_id')
     domain_name_alias = module.params.get('domain_name_alias')
-
     all_lists = module.params.get('all_lists')
-
     distribution = module.params.get('distribution')
     distribution_config = module.params.get('distribution_config')
     origin_access_identity = module.params.get('origin_access_identity')
@@ -574,7 +572,6 @@ def main():
     invalidation = module.params.get('invalidation')
     streaming_distribution = module.params.get('streaming_distribution')
     streaming_distribution_config = module.params.get('streaming_distribution_config')
-
     list_origin_access_identities = module.params.get('list_origin_access_identities')
     list_distributions = module.params.get('list_distributions')
     list_distributions_by_web_acl_id = module.params.get('list_distributions_by_web_acl_id')
