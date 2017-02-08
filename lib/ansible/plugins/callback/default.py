@@ -34,11 +34,11 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'default'
 
-    def __init__(self):
+    def __init__(self, display=None):
 
         self._play = None
         self._last_task_banner = None
-        super(CallbackModule, self).__init__()
+        super(CallbackModule, self).__init__(display=display)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
