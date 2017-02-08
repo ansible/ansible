@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http//www.gnu.or/license/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -255,7 +257,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         if vpcs:
             vpc_name = self.module.params.get('name')
             for v in vpcs['vpc']:
-                if vpc_name.lower() in [ v['name'].lower(), v['id']]:
+                if vpc_name.lower() in [v['name'].lower(), v['id']]:
                     self.vpc = v
                     break
         return self.vpc
@@ -344,7 +346,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
 
 def main():
-    argument_spec=cs_argument_spec()
+    argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
         cidr=dict(default=None),
@@ -386,6 +388,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
