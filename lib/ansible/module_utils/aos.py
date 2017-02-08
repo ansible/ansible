@@ -166,7 +166,7 @@ def do_load_resource(module, collection, name):
 
     except:
         module.fail_json(msg="Unable to write item content",
-                         content=content)
+                         content=module.params['content'])
 
     module.exit_json( changed=True,
                       name=item.name,
