@@ -287,11 +287,10 @@ class AosInventory(object):
         # Open session to AOS
         # ----------------------------------------------------
 
-        aos = Session(self.aos_server)
-        # aos = Session(  server=self.aos_server,
-        #                 port=self.aos_server_port,
-        #                 user=self.aos_username,
-        #                 passwd=self.aos_password)
+        aos = Session(  server=self.aos_server,
+                        port=self.aos_server_port,
+                        user=self.aos_username,
+                        passwd=self.aos_password)
 
         aos.login()
 
@@ -316,19 +315,20 @@ class AosInventory(object):
             # Based on device status online|offline, collect facts as well
             if device.value['status']['comm_state'] == 'on':
 
-                # Populate variables for this host
-                self.add_var_to_host(device.name,
-                                     'ansible_ssh_host',
-                                     device.value['facts']['mgmt_ipaddr'])
+                if 'facts' in device.value.keys():
+                    # Populate variables for this host
+                    self.add_var_to_host(device.name,
+                                         'ansible_ssh_host',
+                                         device.value['facts']['mgmt_ipaddr'])
 
-                # self.add_host_to_group('all', device.name)
-                for key, value in device.value['facts'].items():
-                    self.add_var_to_host(device.name, key, value)
+                    # self.add_host_to_group('all', device.name)
+                    for key, value in device.value['facts'].items():
+                        self.add_var_to_host(device.name, key, value)
 
-                    if key == 'os_family':
-                        self.add_host_to_group(value, device.name)
-                    elif key == 'hw_model':
-                        self.add_host_to_group(value, device.name)
+                        if key == 'os_family':
+                            self.add_host_to_group(value, device.name)
+                        elif key == 'hw_model':
+                            self.add_host_to_group(value, device.name)
 
             # Check if device is associated with a blueprint
             #  if it's create a new group
