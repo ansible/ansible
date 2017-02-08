@@ -40,7 +40,7 @@ options:
         - Whether the specified schedule should exist or not.
         choices: ['present', 'absent']
 
-    pause:
+    paused:
         required: false
         type: bool
         description:
@@ -74,12 +74,6 @@ options:
         required: true
         description:
         - Name for the snapshot schedule
-
-    new_name:
-        required: false
-        description:
-        - New name for the snapshot schedule
-        default: None
 
     snapshot_name:
         required: false
@@ -150,18 +144,11 @@ RETURN = """
 
 """
 
-import logging
-from traceback import format_exc
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireSnapShotSchedule(object):
 
@@ -171,7 +158,6 @@ class SolidFireSnapShotSchedule(object):
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
-            new_name=dict(required=False, type='str', default=None),
 
             time_interval_days=dict(required=False, type='int', default=1),
             time_interval_hours=dict(required=False, type='int', default=0),
@@ -202,7 +188,6 @@ class SolidFireSnapShotSchedule(object):
         # set up state variables
         self.state = p['state']
         self.name = p['name']
-        self.new_name = p['new_name']
 
         # self.interval = p['interval']
 
@@ -243,7 +228,6 @@ class SolidFireSnapShotSchedule(object):
         return None
 
     def create_schedule(self):
-        logger.debug('Creating schedule %s', self.name)
 
         try:
             sched = netapp_utils.Schedule()
@@ -267,12 +251,9 @@ class SolidFireSnapShotSchedule(object):
 
         except:
             err = get_exception()
-            logger.exception('Error creating schedule %s : %s',
-                             self.name, str(err))
-            raise
+            self.module.fail_json(msg='Error creating schedule %s' % self.name, exception=str(err))
 
     def delete_schedule(self):
-        logger.debug('Deleting schedule %s', self.schedule_id)
 
         try:
             get_schedule_result = self.sfe.get_schedule(schedule_id=self.schedule_id)
@@ -282,11 +263,9 @@ class SolidFireSnapShotSchedule(object):
 
         except:
             err = get_exception()
-            logger.exception('Error deleting schedule %s : %s', self.schedule_id, str(err))
-            raise
+            self.module.fail_json(msg='Error deleting schedule %s' % self.name, exception=str(err))
 
     def update_schedule(self):
-        logger.debug('Updating schedule %s', self.schedule_id)
 
         try:
             get_schedule_result = self.sfe.get_schedule(schedule_id=self.schedule_id)
@@ -304,14 +283,13 @@ class SolidFireSnapShotSchedule(object):
                     or sched.frequency.minutes != temp_frequency.minutes:
                 sched.frequency = temp_frequency
 
+            sched.name = self.name
             if self.volumes is not None:
                 sched.schedule_info.volume_ids = self.volumes
             if self.retention is not None:
                 sched.schedule_info.retention = self.retention
             if self.snapshot_name is not None:
                 sched.schedule_info.snapshot_name = self.snapshot_name
-            if self.new_name is not None:
-                sched.name = self.new_name
             if self.pause is not None:
                 sched.paused = self.pause
             if self.recurring is not None:
@@ -324,8 +302,7 @@ class SolidFireSnapShotSchedule(object):
 
         except:
             err = get_exception()
-            logger.exception('Error updating account %s : %s', self.schedule_id, str(err))
-            raise
+            self.module.fail_json(msg='Error updating schedule %s' % self.name, exception=str(err))
 
     def apply(self):
         changed = False
@@ -337,45 +314,36 @@ class SolidFireSnapShotSchedule(object):
             schedule_exists = True
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: schedule exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
                 # Check if we need to update the account
 
                 if self.retention is not None and schedule_detail.schedule_info.retention !=self.retention:
-                    logger.debug("CHANGED: retention needs to be updated")
                     update_schedule = True
                     changed = True
 
-                elif self.new_name is not None and schedule_detail.name !=self.new_name:
-                    logger.debug("CHANGED: schedule needs to be renamed")
+                elif schedule_detail.name !=self.name:
                     update_schedule = True
                     changed = True
 
                 elif self.snapshot_name is not None and schedule_detail.schedule_info.snapshot_name != self.snapshot_name:
-                    logger.debug("CHANGED: snapshot name needs to be updated")
                     update_schedule = True
                     changed = True
 
                 elif self.volumes is not None and schedule_detail.schedule_info.volume_ids != self.volumes:
-                    logger.debug("CHANGED: snapshot name needs to be updated")
                     update_schedule = True
                     changed = True
 
                 elif self.pause is not None and schedule_detail.paused != self.pause:
-                    logger.debug("CHANGED: Schedule pause status needs to be updated")
                     update_schedule = True
                     changed = True
 
                 elif self.recurring is not None and schedule_detail.recurring != self.recurring:
-                    logger.debug("CHANGED: Recurring status needs to be updated")
                     update_schedule = True
                     changed = True
 
                 elif self.starting_date is not None and schedule_detail.starting_date != self.starting_date:
-                    logger.debug("CHANGED: Starting date needs to be updated")
                     update_schedule = True
                     changed = True
 
@@ -389,20 +357,17 @@ class SolidFireSnapShotSchedule(object):
                     if schedule_detail.frequency.days != temp_frequency.days or \
                             schedule_detail.frequency.hours != temp_frequency.hours \
                             or schedule_detail.frequency.minutes != temp_frequency.minutes:
-                        logger.debug("CHANGED: schedule interval needs to be updated")
                         update_schedule = True
                         changed = True
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: schedule does not exist, but requested state is "
-                    "'present'")
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                # Skip changes
+                pass
             else:
                 if self.state == 'present':
                     if not schedule_exists:
@@ -412,21 +377,13 @@ class SolidFireSnapShotSchedule(object):
 
                 elif self.state == 'absent':
                     self.delete_schedule()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = SolidFireSnapShotSchedule()
-
-    try:
-        v.apply()
-    except:
-        err = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(err))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
