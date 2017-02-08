@@ -1481,14 +1481,16 @@ class AnsibleModule(object):
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % (check,))
 
-    def _check_required_arguments(self, spec=None):
+    def _check_required_arguments(self, spec=None, param=None ):
         ''' ensure all required arguments are present '''
         missing = []
         if spec is None:
             spec = self.argument_spec
+        if param is None:
+            param = self.params
         for (k,v) in spec.items():
             required = v.get('required', False)
-            if required and k not in self.params:
+            if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
@@ -1519,39 +1521,41 @@ class AnsibleModule(object):
             if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
-    def _check_argument_values(self, spec=None):
+    def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
         if spec is None:
             spec = self.argument_spec
+        if param is None:
+            param = self.params
         for (k,v) in spec.items():
             choices = v.get('choices',None)
             if choices is None:
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
-                if k in self.params:
-                    if self.params[k] not in choices:
+                if k in param:
+                    if param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
-                        if self.params[k] == 'False':
+                        if param[k] == 'False':
                             lowered_choices = _lenient_lowercase(choices)
                             FALSEY = frozenset(BOOLEANS_FALSE)
                             overlap = FALSEY.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] == 'True':
+                        if param[k] == 'True':
                             if lowered_choices is None:
                                 lowered_choices = _lenient_lowercase(choices)
                             TRUTHY = frozenset(BOOLEANS_TRUE)
                             overlap = TRUTHY.intersection(choices)
                             if len(overlap) == 1:
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] not in choices:
+                        if param[k] not in choices:
                             choices_str=",".join([to_native(c) for c in choices])
-                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
@@ -1706,14 +1710,16 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
-    def _check_argument_types(self, spec=None):
+    def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
 
         if spec is None:
             spec = self.argument_spec
+        if param is None:
+            param= self.params
         for (k, v) in spec.items():
             wanted = v.get('type', None)
-            if k not in self.params:
+            if k not in param:
                 continue
             if wanted is None:
                 # Mostly we want to default to str.
@@ -1737,14 +1743,14 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
-            spec = None
             # deal with subspecs
+            spec = None
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('spec', None)
                 if spec:
-                    self._check_required_arguments(spec)
-                    self._check_argument_types(spec)
-                    self._check_argument_values(spec)
+                    self._check_required_arguments(spec, param[k])
+                    self._check_argument_types(spec, param[k])
+                    self._check_argument_values(spec, param[k])
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
