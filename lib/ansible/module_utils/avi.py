@@ -41,3 +41,24 @@ def avi_common_argument_spec():
         password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
         tenant=dict(default='admin'),
         tenant_uuid=dict(default=''))
+
+
+def ansible_return(module, rsp, changed, req=None, existing_obj=None):
+    """
+    Helper function to return the right ansible return based on the error code and
+    changed status.
+    :param module: AnsibleModule
+    :param rsp: ApiResponse object returned from ApiSession.
+    :param changed: Whether something changed in this module.
+    :param req: Dict data for Avi API call.
+    :param existing_obj: Dict representing current HTTP resource in Avi Controller.
+
+    Returns: specific ansible module exit function
+    """
+    if rsp.status_code > 299:
+        return module.fail_json(msg='Error %d Msg %s req: %s' % (
+            rsp.status_code, rsp.text, req))
+    if changed and existing_obj:
+        return module.exit_json(
+            changed=changed, obj=rsp.json(), old_obj=existing_obj)
+    return module.exit_json(changed=changed, obj=rsp.json())

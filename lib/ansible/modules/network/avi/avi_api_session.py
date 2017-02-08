@@ -26,14 +26,13 @@
 import json
 import time
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.avi import avi_common_argument_spec, ansible_return
 from copy import deepcopy
 
 HAS_AVI = True
 try:
-    from avi.sdk.avi_api import ApiSession, ObjectNotFound
-    from avi.sdk.utils.ansible_utils import (
-        ansible_return, avi_obj_cmp, cleanup_absent_fields,
-        avi_common_argument_spec)
+    from avi.sdk.avi_api import ApiSession
+    from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 except ImportError:
     HAS_AVI = False
 
@@ -57,10 +56,7 @@ options:
         required: true
     data:
         description:
-            - HTTP body in YAML format.
-    data_json:
-        description:
-            - HTTP body in JSON format.
+            - HTTP body in YAML or JSON format.
     params:
         description:
             - Query parameters passed to the HTTP API.
@@ -129,7 +125,6 @@ obj:
     type: dict
 '''
 
-
 def main():
     argument_specs = dict(
         http_method=dict(required=True,
@@ -137,8 +132,7 @@ def main():
                                   'delete']),
         path=dict(type='str', required=True),
         params=dict(type='dict'),
-        data=dict(type='dict'),
-        data_json=dict(type='str'),
+        data=dict(type='jsonarg'),
         timeout=dict(type='int', default=60)
     )
     argument_specs.update(avi_common_argument_spec())
@@ -160,33 +154,67 @@ def main():
     path = module.params.get('path', '')
     params = module.params.get('params', None)
     data = module.params.get('data', None)
-    if ((data is None) and
-            (module.params.get('data_json', None) is not None)):
-        data = json.loads(module.params.get('data_json', None))
+
+    if data is not None:
+        data = json.loads(data)
     method = module.params['http_method']
 
     existing_obj = None
     changed = method != 'get'
-    if method == 'put':
-        gparams = deepcopy(params) if params else {}
-        gparams.update({'include_refs': '', 'include_name': ''})
+    gparams = deepcopy(params) if params else {}
+    gparams.update({'include_refs': '', 'include_name': ''})
+
+    if method == 'post':
+        # need to check if object already exists. In that case
+        # change the method to be put
+        gparams['name'] = data['name']
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                      params=gparams)
-        if rsp.status_code == 404:
-            method = 'post'
+                        params=gparams)
+        try:
+            existing_obj = rsp.json()['results'][0]
+        except IndexError:
+            # object is not found
+            pass
         else:
-            existing_obj = rsp.json()
+            # object is present
+            method = 'put'
+            path += '/' + existing_obj['uuid']
+
+    if method == 'put':
+        # put can happen with when full path is specified or it is put + post
+        if existing_obj is None:
+            using_collection = False
+            if (len(path.split('/')) == 1) and ('name' in data):
+                gparams['name'] = data['name']
+                using_collection = True
+            rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
+                          params=gparams)
+            rsp_data = rsp.json()
+            if using_collection:
+                if rsp_data['results']:
+                    existing_obj = rsp_data['results'][0]
+                    path += '/' + existing_obj['uuid']
+                else:
+                    method = 'post'
+            else:
+                if rsp.status_code == 404:
+                    method = 'post'
+                else:
+                    existing_obj = rsp_data
+        if existing_obj:
             changed = not avi_obj_cmp(data, existing_obj)
             cleanup_absent_fields(data)
     if method == 'patch':
-        gparams = deepcopy(params) if params else {}
-        gparams.update({'include_refs': '', 'include_name': ''})
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
                       params=gparams)
         existing_obj = rsp.json()
-    fn = getattr(api, method)
-    rsp = fn(path, tenant=tenant, tenant_uuid=tenant, timeout=timeout,
-             params=params, data=data)
+
+    if (method == 'put' and changed) or (method != 'put'):
+        fn = getattr(api, method)
+        rsp = fn(path, tenant=tenant, tenant_uuid=tenant, timeout=timeout,
+                params=params, data=data)
+    else:
+        rsp = None
     if method == 'delete' and rsp.status_code == 404:
         changed = False
         rsp.status_code = 200
@@ -203,6 +231,8 @@ def main():
                       params=gparams)
         new_obj = rsp.json()
         changed = not avi_obj_cmp(new_obj, existing_obj)
+    if rsp is None:
+        return module.exit_json(changed=changed, obj=existing_obj)
     return ansible_return(module, rsp, changed, req=data)
 
 
