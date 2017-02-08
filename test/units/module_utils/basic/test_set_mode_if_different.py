@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import pytest
 
 try:
     import builtins
@@ -100,7 +101,8 @@ class TestSetModeIfDifferent(TestSetModeIfDifferentBase):
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [self.mock_stat1, self.mock_stat2, self.mock_stat2]
                 self.am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                self.assertRaises(SystemExit, self.am.set_mode_if_different, '/path/to/file', 'o+w,g+w,a-r', False)
+                with pytest.raises(SystemExit):
+                    self.am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False)
 
         original_hasattr = hasattr
         def _hasattr(obj, name):
