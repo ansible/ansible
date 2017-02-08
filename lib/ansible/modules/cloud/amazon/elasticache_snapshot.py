@@ -61,20 +61,6 @@ options:
     type: string
     required: no
     default: null
-  source:
-    description:
-      - If set to system , the output shows snapshots that were automatically created by ElastiCache. If set to user the output shows snapshots that were manually created. If omitted, the output shows both automatically and manually created snapshots.
-    type: string
-    choices: ['system', 'user']
-    required: no
-    default: null
-  show_config:
-    description:
-      - Includes node group (shard) configuration in the snapshot description.
-    type: string
-    choices: ['yes', 'no']
-    required: no
-    default: 'no'
 """
 
 EXAMPLES = """
@@ -89,7 +75,7 @@ EXAMPLES = """
         name: 'test-snapshot'
         state: 'present'
         cluster_id: '{{ cluster }}'
-        replication_id: '{{ replica }}'
+        replication_id: '{{ replication }}'
 """
 
 RETURN = """
@@ -183,23 +169,10 @@ def delete(module, connection, name):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "SnapshotNotFoundFault":
             response = {}
-            changed = False        
+            changed = False
         else:
             module.fail_json(msg="Unable to delete the snapshot.", exception=traceback.format_exc(e))
     return response, changed
-
-def get_info(module, connection, replication_id, cluster_id, name, source, show_config):
-    """ Describe an Elasticache backup. Return false if it doesn't exist or isn't accessible. """
-    try:
-        info = connection.describe_snapshots(ReplicationGroupId=replication_id,
-                                             CacheClusterId=cluster_id,
-                                             SnapshotName=name,
-                                             SnapshotSource=source,
-                                             ShowNodeGroupConfig=show_config)
-        return info
-    except botocore.exceptions.ClientError as e:
-        return False
-    return info
 
 
 def main():
@@ -211,8 +184,6 @@ def main():
         cluster_id      = dict(required=False, type='str'),
         target          = dict(required=False, type='str'),
         bucket          = dict(required=False, type='str'),
-        source          = dict(required=False, type='str', choices=['system', 'user']),
-        show_config     = dict(required=False, type='str', default='no', choices=['yes', 'no']),
     )
     )
         
@@ -227,8 +198,6 @@ def main():
     cluster_id              = module.params.get('cluster_id')
     target                  = module.params.get('target')
     bucket                  = module.params.get('bucket')
-    source                  = module.params.get('source')
-    show_config             = module.params.get('show_config')
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
