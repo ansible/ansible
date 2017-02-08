@@ -35,14 +35,15 @@ notes:
     - Tested on ESXi 6.0
     - Works only for ESXi hosts
     - For configuration save or reset, the host will be switched automatically to maintenance mode.
-    - For configuration save, the backup file will be saved in the dest folder with the original filename / format (.tgz) generated from the ESXi server.
 requirements:
     - "python >= 2.6"
     - PyVmomi installed
 options:
     dest:
         description:
-            - The destination folder where the ESXi configuration bundle will be saved
+            - The destination where the ESXi configuration bundle will be saved. The I(dest) can be a folder or a file.
+            - If I(dest) is a folder, the backup file will be saved in the folder with the default filename generated from the ESXi server.
+            - If I(dest) is a file, the backup file will be saved with that filename. The file extension will always be .tgz.
         required: False
     src:
         description:
@@ -50,7 +51,7 @@ options:
         required: False
     state:
         description:
-            - If C(saved), the .tgz backup bundle will be saved in the I(dest) folder.
+            - If C(saved), the .tgz backup bundle will be saved in I(dest).
             - If C(absent), the host configuration will be resetted to default values.
             - If C(loaded), the backup file in I(src) will be loaded to the ESXi host rewriting the hosts settings.
         choices: ['saved', 'absent', 'loaded']
@@ -153,19 +154,25 @@ class VMwareConfigurationBackup(object):
             self.module.fail_json(msg=str(e))
 
     def save_configuration(self):
+        url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
+        url = url.replace('*', self.hostname)
         if os.path.isdir(self.dest):
-            url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
-            url = url.replace('*', self.hostname)
             filename = url.rsplit('/', 1)[1]
             self.dest = os.path.join(self.dest, filename)
         else:
-            self.module.fail_json(msg="Dest directory {} does not exist".format(self.dest))
-
+            try:
+                file_extension = self.dest.rsplit('.', 1)[1]
+                if file_extension != "tgz":
+                    self.dest += ".tgz"
+            except:
+                self.dest += ".tgz"
         try:
             request = open_url(url=url, validate_certs=self.validate_certs)
             with open(self.dest, "wb") as file:
                 file.write(request.read())
             self.module.exit_json(changed=True, dest_file=self.dest)
+        except IOError as e:
+            self.module.fail_json(msg="Failed to write backup file. Ensure that the dest path exists and is writable.")
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
