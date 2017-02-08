@@ -78,8 +78,8 @@ For example, if you want to run all tasks as ``root`` on a server named ``webser
 
     webserver ansible_user=manager ansible_become=true
 
-New command line options
-------------------------
+Command line options
+--------------------
 
 --ask-become-pass, -K
     ask for privilege escalation password, does not imply become will be used
