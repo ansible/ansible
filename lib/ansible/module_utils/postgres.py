@@ -65,7 +65,7 @@ def params_to_kwmap(module):
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+    if psycopg2.__version__ < '2.4.3' and module.params.get('sslrootcert') is not None:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     return kw
