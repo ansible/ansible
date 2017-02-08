@@ -206,7 +206,6 @@ def main():
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present"]),
-        ssl_rootcert=dict(default=None),
     ))
 
     module = AnsibleModule(
