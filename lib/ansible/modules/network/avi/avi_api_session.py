@@ -169,7 +169,7 @@ def main():
         # change the method to be put
         gparams['name'] = data['name']
         rsp = api.get(path, tenant=tenant, tenant_uuid=tenant_uuid,
-                        params=gparams)
+                      params=gparams)
         try:
             existing_obj = rsp.json()['results'][0]
         except IndexError:
@@ -212,7 +212,7 @@ def main():
     if (method == 'put' and changed) or (method != 'put'):
         fn = getattr(api, method)
         rsp = fn(path, tenant=tenant, tenant_uuid=tenant, timeout=timeout,
-                params=params, data=data)
+                 params=params, data=data)
     else:
         rsp = None
     if method == 'delete' and rsp.status_code == 404:
