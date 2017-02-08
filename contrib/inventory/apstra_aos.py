@@ -40,11 +40,9 @@ This script has been inspired by the cobbler.py inventory. thanks
 import argparse
 import ConfigParser
 import os
-import xmlrpclib
 
 try:
     from apstra.aosom.session import Session
-    from apstra.aosom.exc import SessionError, SessionRqstError, LoginError
 
     HAS_AOS_PYEZ = True
 except ImportError:
