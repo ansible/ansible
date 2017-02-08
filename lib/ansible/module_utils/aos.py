@@ -41,6 +41,12 @@ import yaml
 from distutils.version import LooseVersion
 
 try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
+try:
     from apstra.aosom.session import Session
     import apstra.aosom.exc as aosExc
 
@@ -123,6 +129,10 @@ def content_to_dict(module, content, format):
             module.fail_json(msg="Unable to convert 'content' from JSON, please check if valid")
 
     elif format in ['yaml', 'var']:
+
+        if not HAS_YAML:
+            module.fail_json(msg="Python Library  Yaml is not present, mandatory to use 'content_format: yaml'")
+
         try:
             content_dict = yaml.load(content)
 
