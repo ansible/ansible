@@ -29,5 +29,5 @@ Files which have been removed from the repository must be removed from the legac
 
 You can do a quick pep8 spotcheck by approximating `command_sanity_pep8` in `test/runner/lib/executor.py` like this:
 
-    pep8 --ignore `paste -sd "," test/sanity/pep8/current-ignore.txt` --max-line-length=160 --config=/dev/null lib/ansible/modules/mymodule.py
+    ./test/runner/ansible-test sanity -v --test pep8 <files to sanity-check>
 
