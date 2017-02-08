@@ -117,11 +117,11 @@ elasticache:
       snapshot_window: 10:00-11:00
       vpc_id: vpc-c248fda4
 changed:
-    description: if a snapshot has been created, deleted, or copied
-    returned: always
-    type: bool
-    sample:
-      changed: true
+  description: if a snapshot has been created, deleted, or copied
+  returned: always
+  type: bool
+  sample:
+    changed: true
 """
 
 
