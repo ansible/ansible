@@ -52,8 +52,8 @@ options:
   content:
     description:
       - Datastructure of the IP Pool to create. The data can be in YAML / JSON or
-      directly a variable.
-       It's the same datastructure that is returned on success in I(value)
+        directly a variable. It's the same datastructure that is returned
+        on success in I(value).
     required: false
   state:
     description:
