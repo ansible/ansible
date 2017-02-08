@@ -70,9 +70,9 @@ def params_to_kwmap(module):
 
     return kw
 
-def postgres_conn(module, database=None, kw=kw, enable_autocommit=False):
+def postgres_conn(module, database=None, kw=None, enable_autocommit=False):
     # make sure kw is mutable and isn't None
-    kw = kw or None
+    kw = kw or {}
 
     try:
         if psycopg2.__version__ < '2.4.3' and module.params.get('ssl_rootcert') is not None:
