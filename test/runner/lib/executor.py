@@ -624,7 +624,6 @@ def command_units(args):
 
         cmd = [
             'pytest',
-            '--boxed',
             '-r', 'a',
             '--color',
             'yes' if args.color else 'no',
