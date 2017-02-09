@@ -40,16 +40,17 @@ class TimedOutException(Exception):
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
-    DEFAULT_SLEEP = 1
     DEFAULT_CONNECT_TIMEOUT = 5
+    DEFAULT_DELAY = 0
+    DEFAULT_SLEEP = 1
     DEFAULT_TIMEOUT = 600
 
-    def do_until_success_or_timeout(self, what, timeout, what_desc, sleep=1):
+    def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
         while datetime.utcnow() < max_end_time:
             try:
-                what()
+                what(connect_timeout)
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
@@ -65,23 +66,18 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         connect_timeout = int(self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))
-        timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
+        delay = int(self._task.args.get('delay', self.DEFAULT_DELAY))
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
+        timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
         if self._play_context.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
             return dict(skipped=True)
 
-        winrm_host = self._connection._winrm_host
-        winrm_port = self._connection._winrm_port
-
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        def connect_winrm_port():
-            sock = socket.create_connection((winrm_host, winrm_port), connect_timeout)
-            sock.close()
-
-        def ping_module_test():
+        def ping_module_test(connect_timeout):
+            ''' Test ping module, if available '''
             display.vvv("attempting ping module test")
             # call connection reset between runs if it's there
             try:
@@ -89,16 +85,34 @@ class ActionModule(ActionBase):
             except AttributeError:
                 pass
 
-            result = self._execute_module(module_name='win_ping')
+            # Use win_ping on winrm/powershell, else use ping
+            if self._connection.transport == 'winrm' and self._connection._shell_type == 'powershell':
+                result = self._execute_module(module_name='win_ping', module_args={})
+            else:
+                result = self._execute_module(module_name='ping', module_args={})
+
+            # Test module output
             if result['ping'] != 'pong':
-                 raise Exception('ping test failed')
+                raise Exception('ping test failed')
+
+        start = datetime.now()
+
+        if delay:
+            time.sleep(delay)
 
         try:
-            self.do_until_success_or_timeout(connect_winrm_port, timeout, what_desc="connection port up", sleep=sleep)
-            self.do_until_success_or_timeout(ping_module_test, timeout, what_desc="ping module test success", sleep=sleep)
+            # If the connection has a transport_test method, use it first
+            if hasattr(self._connection, 'transport_test'):
+                self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
+
+            # Use the ping module test to determine end-to-end connectivity
+            self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
 
         except TimedOutException as e:
             result['failed'] = True
-            result['msg'] = e.message
+            result['msg'] = str(e)
+
+        elapsed = datetime.now() - start
+        result['elapsed'] = elapsed.seconds
 
         return result

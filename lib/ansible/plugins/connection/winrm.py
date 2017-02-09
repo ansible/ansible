@@ -23,6 +23,7 @@ import inspect
 import os
 import re
 import shlex
+import socket
 import traceback
 import json
 import tempfile
@@ -88,6 +89,11 @@ class Connection(ConnectionBase):
         # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        sock = socket.create_connection((self._winrm_host, self._winrm_port), connect_timeout)
+        sock.close()
 
     def set_host_overrides(self, host, hostvars=None):
         '''

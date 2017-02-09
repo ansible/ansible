@@ -1,6 +1,8 @@
-# -*- mode: python -*-
-# (c) 2017, Dag Wieers <dag@wieers.com>
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
+# (c) 2017, Dag Wieers <dag@wieers.com>
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -23,33 +25,40 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: wait_for_connection
-short_description: Waitis until remote system is reachable
+short_description: Waitis until remote system is reachable/usable
 description:
-  - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
-  - Waiting until the ansible connection works is useful for when systems are expected to be down and it is essential that the system is reachable before continuing.
-  - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct functioning of transport.
-version_added: '2.3'
+- Waits for a total of C(timeout) seconds.
+- Retries the transport connection after a timeout of C(connect_timeout).
+- Tests the transport connection every C(sleep) seconds.
+- This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+version_added: "2.3"
 options:
   connect_timeout:
     description:
       - Maximum number of seconds to wait for a connection to happen before closing and retrying.
-    required: false
     default: 5
+  delay:
+    description:
+      - Number of seconds to wait before starting to poll.
+    default: 0
   sleep:
+    default: 1
     description:
       - Number of seconds to sleep between checks.
-    required: false
-    default: 1
   timeout:
     description:
       - Maximum number of seconds to wait for.
-    required: false
     default: 300
-author: 'Dag Wieers (@dagwieers)'
+author: "Dag Wieers (@dagwieers)"
 '''
 
 EXAMPLES = '''
-# Wait for the remote system to be reachable
+
+# Wait 300 seconds for system's connection to become reachable/usable by Ansible
 - wait_for_connection:
-    timeout: 120
+
+# Wait 600 seconds for system's connection, but only start checking after 60 seconds
+- wait_for_connection:
+    delay: 60
+    timeout: 600
 '''
