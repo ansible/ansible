@@ -165,7 +165,7 @@ def generate_egg_info(args):
 def generate_pip_install(command):
     """
     :type command: str
-    :return: list[str] | None
+    :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
