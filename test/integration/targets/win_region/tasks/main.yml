@@ -1,0 +1,204 @@
+# test code for the win_region module
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: expect failure when only setting copy_settings
+  win_region:
+    copy_settings: False
+  register: actual
+  failed_when: actual.msg != "An argument for 'format', 'location' or 'unicode_language' needs to be supplied"
+
+- name: expect failure when using invalid geo id for the location
+  win_region:
+    location: 111111
+  register: actual
+  failed_when: actual.msg != "The argument location '111111' does not contain a valid Geo ID"
+
+- name: expect failure when using invalid culture for format
+  win_region:
+    format: ab-CD
+  register: actual
+  failed_when: actual.msg != "The argument format 'ab-CD' does not contain a valid Culture Name"
+
+- name: expect failure when using invalid culture for unicode_language
+  win_region:
+    unicode_language: ab-CD
+  register: actual
+  failed_when: actual.msg != "The argument unicode_language 'ab-CD' does not contain a valid Culture Name"
+
+- name: set settings all to English Australia before tests for a baseline
+  win_region:
+    location: 12
+    format: en-AU
+    unicode_language: en-AU
+
+- name: reboot server to set properties
+  win_reboot:
+
+- name: set location to United States
+  win_region:
+    location: 244
+  register: result
+
+- name: set expected location value to United States
+  set_fact:
+    expected: "United States\r\n"
+
+- name: get current location value
+  win_command: powershell (Get-WinHomeLocation).HomeLocation
+  register: actual
+
+- name: check assertion about location change
+  assert:
+    that:
+    - "actual.stdout == expected"
+    - "result.changed == True"
+    - "result.restart_required == False"
+
+- name: set location to United States again
+  win_region:
+    location: 244
+  register: result
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "result.changed == False"
+    - "result.restart_required == False"
+
+- name: set format to English United States
+  win_region:
+    format: en-US
+  register: result
+
+- name: set expected format value to English United States
+  set_fact:
+    expected: "en-US\r\n"
+
+- name: get actual format value
+  win_command: powershell (Get-Culture).Name
+  register: actual
+
+- name: check assertion about format change
+  assert:
+    that:
+    - "actual.stdout == expected"
+    - "result.changed == True"
+    - "result.restart_required == False"
+
+- name: set format to English United States again
+  win_region:
+    format: en-US
+  register: result
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "result.changed == False"
+    - "result.restart_required == False"
+
+- name: set unicode_language to English United States
+  win_region:
+    unicode_language: en-US
+  register: result
+
+- name: reboot the server after changing unicode language
+  action: win_reboot
+  when: result.restart_required
+
+- name: set expected unicode value to English United States
+  set_fact:
+    expected: "en-US\r\n"
+
+- name: get actual unicode value
+  win_command: powershell (Get-WinSystemLocale).Name
+  register: actual
+
+- name: check assertion about unicode lanaugage change
+  assert:
+    that:
+    - "actual.stdout == expected"
+    - "result.changed == True"
+    - "result.restart_required == True"
+
+- name: set unicode_language to English United States again
+  win_region:
+    unicode_language: en-US
+  register: result
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "result.changed == False"
+    - "result.restart_required == False"
+
+- name: copy settings when setting to the same format
+  win_region:
+    format: en-US
+    copy_settings: True
+  register: actual
+
+- name: check that the result did not change
+  assert:
+    that:
+    - "result.changed == False"
+    - "result.restart_required == False"
+
+- name: copy setting when setting to a different format
+  win_region:
+    format: en-GB
+    copy_settings: True
+  register: result
+
+- name: set expected format value after copy_settings
+  set_fact:
+    expected: "en-GB\r\n"
+
+- name: get actual format value after copy_settings
+  win_command: powershell (Get-Culture).Name
+  register: actual
+
+- name: get locale name for local service registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\S-1-5-19\Control Panel\International').LocaleName"
+  register: actual_local
+
+- name: get locale name for network service registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\S-1-5-20\Control Panel\International').LocaleName"
+  register: actual_network
+
+- name: load temp hive
+  win_command: reg load HKU\TEMP C:\Users\Default\NTUSER.DAT
+
+- name: get locale name for default registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\TEMP\Control Panel\International').LocaleName"
+  register: actual_temp
+
+- name: unload temp hive
+  win_command: reg unload HKU\TEMP
+
+- name: get locale name for default registry hive
+  win_command: powershell "New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null; (Get-ItemProperty 'HKU:\.DEFAULT\Control Panel\International').LocaleName"
+  register: actual_default
+
+- name: check assertions about copy setting when setting to a different format
+  assert:
+    that:
+    - "actual.stdout == expected"
+    - "actual_local.stdout_lines == ['en-GB']"
+    - "actual_network.stdout_lines == ['en-GB']"
+    - "actual_temp.stdout_lines == ['en-GB']"
+    - "actual_default.stdout_lines == ['en-GB']"
+    - "result.changed == True"
+    - "result.restart_required == False"
