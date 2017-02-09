@@ -39,10 +39,6 @@ class TestGalaxy(unittest.TestCase):
         '''creating prerequisites for installing a role; setUpClass occurs ONCE whereas setUp occurs with every method tested.'''
         # class data for easy viewing: role_dir, role_tar, role_name, role_req, role_path
 
-        cls.temp_dir = tempfile.mkdtemp('galaxy')
-
-        os.chdir(cls.temp_dir)
-
         if os.path.exists("./delete_me"):
             shutil.rmtree("./delete_me")
 
@@ -92,8 +88,6 @@ class TestGalaxy(unittest.TestCase):
             os.remove(cls.role_tar)
         if os.path.isdir(cls.role_path):
             shutil.rmtree(cls.role_path)
-        if os.path.isdir(cls.temp_dir):
-            shutil.rmtree(cls.temp_dir)
 
     def setUp(self):
         self.default_args = []
