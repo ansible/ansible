@@ -144,6 +144,8 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
+PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
 # Deprecated compat.  Only kept in case another module used these names  Using
@@ -1666,17 +1668,19 @@ class AnsibleModule(object):
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
-        passwd_keys = ['password', 'login_password', 'url_password']
 
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
+            arg_type = arg_opts.get('type', 'str')
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
-            elif param in passwd_keys:
+            # try to capture all passwords/passphrase named fields
+            elif arg_type != 'bool' and PASSWORD_MATCH.search(param):
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
+                self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):
