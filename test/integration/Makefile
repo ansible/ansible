@@ -326,3 +326,6 @@ test_lookup_properties:
 
 args:
 	(cd targets/args && ./runme.sh $(TEST_FLAGS))
+
+test_callback_retry_task_name:
+	(cd targets/callback_retry_task_name && ./runme.sh $(TEST_FLAGS))
