@@ -36,54 +36,49 @@ description:
 options:
 
     state:
-        required: true
         description:
         - Whether the specified volume access group should exist or not.
+        required: true
         choices: ['present', 'absent']
 
     name:
-        required: true
         description:
         - Name of the volume access group. It is not required to be unique, but recommended.
+        required: true
 
     initiators:
-        required: false
-        type: str[]
         description:
         - List of initiators to include in the volume access group. If unspecified, the access group will start out without configured initiators.
+        required: false
         default: None
 
     volumes:
-        required: false
-        type: int[]
         description:
         - List of volumes to initially include in the volume access group. If unspecified, the access group will start without any volumes.
+        required: false
         default: None
 
     virtual_network_id:
-        required: false
-        type: int[]
         description:
         - The ID of the SolidFire Virtual Network ID to associate the volume access group with.
+        required: false
         default: None
 
     virtual_network_tags:
-        required: false
-        type: int[]
         description:
         - The ID of the VLAN Virtual Network Tag to associate the volume access group with.
+        required: false
         default: None
 
     attributes:
-        required: false
-        type: dict
         description: List of Name/Value pairs in JSON object format.
+        required: false
         default: None
 
     volume_access_group_id:
-        required: false
         description:
         - The ID of the volume access group to modify or delete.
+        required: false
         default: None
 
 '''
