@@ -254,9 +254,10 @@ class DimensionDataVlanModule(DimensionDataModule):
 
             if diff.needs_expand() and not self.allow_expand:
                 self.module.fail_json(
-                    msg='The configured private IPv4 network size ({}-bit prefix) for the VLAN differs from its current network size ({}-bit prefix) and needs to be expanded. Use allow_expand=true if this is what you want.'.format(
-                        self.private_ipv4_prefix_size, vlan.private_ipv4_range_size
-                    )
+                    msg='The configured private IPv4 network size ({}-bit prefix) for the VLAN differs from its current network size ({}-bit prefix) ' +
+                        'and needs to be expanded. Use allow_expand=true if this is what you want.'.format(
+                            self.private_ipv4_prefix_size, vlan.private_ipv4_range_size
+                        )
                 )
 
                 return
