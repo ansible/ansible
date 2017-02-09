@@ -495,24 +495,24 @@ def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, ali
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        distribution_id = dict(required=False, type='str'),
-        invalidation_id = dict(required=False, type='str'),
-        origin_access_identity_id = dict(required=False, type='str'),
-        domain_name_alias = dict(required=False, type='str'),
-        all_lists = dict(required=False, default=False, type='bool'),
-        distribution = dict(required=False, default=False, type='bool'),
-        distribution_config = dict(required=False, default=False, type='bool'),
-        origin_access_identity = dict(required=False, default=False, type='bool'),
-        origin_access_identity_config = dict(required=False, default=False, type='bool'),
-        invalidation = dict(required=False, default=False, type='bool'),
-        streaming_distribution = dict(required=False, default=False, type='bool'),
-        streaming_distribution_config = dict(required=False, default=False, type='bool'),
-        list_origin_access_identities = dict(required=False, default=False, type='bool'),
-        list_distributions = dict(required=False, default=False, type='bool'),
-        list_distributions_by_web_acl_id = dict(required=False, default=False, type='bool'),
-        list_invalidations = dict(required=False, default=False, type='bool'),
-        list_streaming_distributions = dict(required=False, default=False, type='bool'),
-        summary = dict(required=False, default=False, type='bool')
+        distribution_id=dict(required=False, type='str'),
+        invalidation_id=dict(required=False, type='str'),
+        origin_access_identity_id=dict(required=False, type='str'),
+        domain_name_alias=dict(required=False, type='str'),
+        all_lists=dict(required=False, default=False, type='bool'),
+        distribution=dict(required=False, default=False, type='bool'),
+        distribution_config=dict(required=False, default=False, type='bool'),
+        origin_access_identity=dict(required=False, default=False, type='bool'),
+        origin_access_identity_config=dict(required=False, default=False, type='bool'),
+        invalidation=dict(required=False, default=False, type='bool'),
+        streaming_distribution=dict(required=False, default=False, type='bool'),
+        streaming_distribution_config=dict(required=False, default=False, type='bool'),
+        list_origin_access_identities=dict(required=False, default=False, type='bool'),
+        list_distributions=dict(required=False, default=False, type='bool'),
+        list_distributions_by_web_acl_id=dict(required=False, default=False, type='bool'),
+        list_invalidations=dict(required=False, default=False, type='bool'),
+        list_streaming_distributions=dict(required=False, default=False, type='bool'),
+        summary=dict(required=False, default=False, type='bool')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
