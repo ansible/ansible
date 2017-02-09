@@ -24,26 +24,30 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: swupd
-short_description: Manages bundles with M(swupd).
+short_description: Manages updates and bundles in ClearLinux systems.
 description:
-  - Manages bundles with the M(swupd) update manager, which is used by the
+  - Manages updates and bundles with the swupd bundle manager, which is used by the
     Clear Linux Project for Intel Architecture.
 version_added: "2.3"
 author: Alberto Murillo (@albertomurillo)
 options:
   contenturl:
     description:
-      - URL for content file download.
+      - URL pointing to the contents of available bundles.
+        If not specified, the contents are retrieved from clearlinux.org.
     required: false
     default: null
   format:
     description:
-      - The format suffix for version file downloads.
+      - The format suffix for version file downloads. For example [1,2,3,staging,etc].
+        If not specified, the default format is used.
     required: false
     default: null
   manifest:
     description:
-      - Manifest to verify against to.
+      - The manifest contains information about the bundles at certaion version of the OS.
+        Specify a Manifest version to verify against that version or leave unspecified to
+        verify against the current version.
     required: false
     default: null
     aliases: [release, version]
