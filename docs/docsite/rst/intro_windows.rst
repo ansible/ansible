@@ -26,14 +26,42 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install "pywinrm>=0.1.1"
+   pip install "pywinrm>=0.2.2"
 
 Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
 
-Active Directory Support
-++++++++++++++++++++++++
 
-If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module on the Ansible control host (and the MIT krb5 libraries it depends on). The Ansible control host also requires a properly configured computer account in Active Directory.
+Authentication Options
+``````````````````````
+
+When connecting to a Windows host there are different authentication options that can be used. The options and the features they support are:
+
++-------------+----------------+---------------------------+-----------------------+
+| Option      | Local Accounts | Active Directory Accounts | Credential Delegation |
++=============+================+===========================+=======================+
+| Basic       | Yes            | No                        | No                    |
++-------------+----------------+---------------------------+-----------------------+
+| Certificate | Yes            | No                        | No                    |
++-------------+----------------+---------------------------+-----------------------+
+| Kerberos    | No             | Yes                       | Yes                   |
++-------------+----------------+---------------------------+-----------------------+
+| NTLM        | Yes            | Yes                       | No                    |
++-------------+----------------+---------------------------+-----------------------+
+| CredSSP     | Yes            | Yes                       | Yes                   |
++-------------+----------------+---------------------------+-----------------------+
+
+You can specify which authentication option you wish to use by setting it to the ``ansible_winrm_transport`` variable.
+
+Certificate
++++++++++++
+
+Certificate authentication is similar to SSH where a certificate is assigned to a local user and instead of using a password to authenticate a certificate is used instead.
+
+
+Kerberos
+++++++++
+
+Kerberos is the preferred option compared to NTLM to use when using an Active Directory account but it requires a few extra steps to set up on the Ansible control host. You will need to install the "python-kerberos" module on the Ansible control host (and the MIT krb5 libraries it depends on). The Ansible control host also requires a properly configured computer account in Active Directory.
 
 Installing python-kerberos dependencies
 ---------------------------------------
@@ -68,7 +96,7 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 .. code-block:: bash
 
-   pip install kerberos requests_kerberos
+   pip install pywinrm[kerberos]
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
@@ -121,7 +149,6 @@ To see what tickets if any you have acquired, use the command klist
 
    klist
 
-
 Troubleshooting kerberos connections
 ------------------------------------
 
@@ -148,6 +175,34 @@ Check you are using the real fully qualified domain name for the domain.  Someti
 If the domain name returned by klist is different from the domain name you requested, you are requesting using an alias, and you need to update your krb5.conf so you are using the fully qualified domain name, not its alias.
 
 .. _windows_inventory:
+
+
+CredSSP
++++++++
+
+CredSSP authentication can be used to authenticate with both domain and local accounts. It allows credential delegation to do second hop authentication on a remote host by sending an encrypted form of the credentials to the remote host using the CredSSP protocol.
+
+Installing requests-credssp
+---------------------------
+
+To install credssp you can use pip to install the requests-credssp library:
+
+.. code-block:: bash
+
+   pip install pywinrm[credssp]
+
+CredSSP and TLS 1.2
+-------------------
+
+CredSSP requires the remote host to have TLS 1.2 configured or else the connection will fail. TLS 1.2 is installed by default from Server 2012 and Windows 8 onwards. For Server 2008, 2008 R2 and Windows 7 you can add TLS 1.2 support by:
+
+* Installing the `TLS 1.2 update from Microsoft <https://support.microsoft.com/en-us/help/3080079/update-to-add-rds-support-for-tls-1.1-and-tls-1.2-in-windows-7-or-windows-server-2008-r2>`_
+* Adding the TLS 1.2 registry keys as shown on this `page <https://technet.microsoft.com/en-us/library/dn786418.aspx#BKMK_SchannelTR_TLS12>`_
+
+Credential Delegation
++++++++++++++++++++++
+
+If you need to interact with a remote resource or run a process that requires the credentials to be stored in the current session like a certreq.exe then an authentication protocol that supports credential delegation needs to be used.
 
 Inventory
 `````````
@@ -222,6 +277,10 @@ Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC 
 Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)::
 
     powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
+
+Pass the -EnableCredSSP switch to enable CredSSP as an authentication option::
+
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -EnableCredSSP
 
 To troubleshoot the ``ConfigureRemotingForAnsible.ps1`` writes every change it makes to the Windows EventLog (useful when run unattendedly). Additionally the ``-Verbose`` option can be used to get more information on screen about what it is doing.
 
@@ -343,13 +402,13 @@ Here is an example of pushing and running a PowerShell script::
         - name: run test script
           script: files/test_script.ps1
 
-Running individual commands uses the 'raw' module, as opposed to the shell or command module as is common on Linux/Unix operating systems::
+Running individual commands uses the 'win_command <https://docs.ansible.com/ansible/win_command_module.html>' or 'win_shell <https://docs.ansible.com/ansible/win_shell_module.html>' module, as opposed to the shell or command module as is common on Linux/Unix operating systems::
 
     - name: test raw module
       hosts: windows
       tasks:
         - name: run ipconfig
-          raw: ipconfig
+          win_command: ipconfig
           register: ipconfig
         - debug: var=ipconfig
 
@@ -359,7 +418,7 @@ Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on
       hosts: windows
       tasks:
          - name: Move file on remote Windows Server from one location to another
-           raw: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
+           win_command: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
 You may wind up with a more readable playbook by using the PowerShell equivalents of DOS commands.  For example, to achieve the same effect as the example above, you could use::
 
@@ -367,9 +426,9 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
       hosts: windows
       tasks:
          - name: Move file on remote Windows Server from one location to another
-           raw: Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf
+           win_command: Powershell.exe "Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-Bear in mind that using C(raw) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using C(win_command) or C(win_shell) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
 Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
