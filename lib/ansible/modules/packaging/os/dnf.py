@@ -94,6 +94,14 @@ options:
     version_added: "2.3"
     default: "/"
 
+  validate_certs:
+    description:
+      - If set to C(no), the SSL certificates will not be validated.
+      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+
 notes: []
 # informational: requirements for nodes
 requirements:
