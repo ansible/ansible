@@ -33,7 +33,7 @@ description:
     create and delete IP Pool by Name, ID or by using a JSON File. This module
     is idempotent and support the I(check) mode. It's using the AOS REST API
 requirements:
-  - aos-pyez
+  - "aos-pyez >= 0.6.0"
 options:
   session:
     description:
