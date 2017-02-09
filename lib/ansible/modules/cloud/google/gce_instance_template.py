@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gce import gce_connect
-
 ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community',
@@ -228,6 +224,9 @@ gce_template:
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect
 
 try:
     import libcloud
